@@ -4,10 +4,22 @@ Tema escuro, players grandes e galerias pra vários sites (Bunkr, Pixeldrain, Fi
 
 ## Instalar
 
-1. Instale o **[Violentmonkey](https://violentmonkey.github.io/)** (ou Tampermonkey).
-2. Clique em **[⬇ Instalar tudo](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js)** — um clique instala todos os meus scripts de uma vez, e cada um atualiza sozinho.
+Primeiro instale o **[Violentmonkey](https://violentmonkey.github.io/)** (ou Tampermonkey).
 
-Quer só um? Pega na tabela abaixo.
+### Opção 1 — todos de uma vez, como scripts separados (recomendado)
+
+Baixe **[userscripts.zip](https://github.com/claudiogepeto/userscripts/releases/latest/download/userscripts.zip)** e importe no painel — cada script entra **separado** (liga/desliga/atualiza sozinho):
+
+- **Violentmonkey:** ⚙ Settings → *Import from file* → escolha o `.zip`.
+- **Tampermonkey:** *Utilities* → *Import from URL* → cole `https://github.com/claudiogepeto/userscripts/releases/latest/download/userscripts.zip` (ou *Import from file*).
+
+### Opção 2 — tudo num arquivo só (1 clique)
+
+**[⬇ Instalar pack](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js)** — um único userscript com todos os módulos dentro. Prático, mas monolítico (entra como 1 entrada só, all-or-nothing).
+
+### Avulsos
+
+Quer só alguns? Tabela abaixo, um por um.
 
 ## Meus scripts (avulsos)
 
@@ -56,7 +68,8 @@ Instalam do original — atualizam pelo autor.
 
 ## Desenvolvimento
 
-- Fontes: `scripts/*.user.js` e `xenforo/parts/` (build próprio do xenforo).
-- `node build.mjs` regenera `dist/` (avulsos + `pack.user.js`) e este README.
+- Fontes: `scripts/*.user.js` e `xenforo/parts/` (build próprio do xenforo). **Edite só os fontes** — `dist/` e este README são gerados.
+- **CI:** ao dar push num fonte, a Action `.github/workflows/build.yml` roda `node build.mjs`, commita `dist/` + README e publica o `userscripts.zip` no release `pack`. Não precisa buildar na mão.
+- `node build.mjs` (local) regenera `dist/` (avulsos + `pack.user.js` + `userscripts.zip`) e o README.
 - Auto-update: cada `dist/*.user.js` aponta o `@updateURL` pra si mesmo; suba o `@version` no fonte e dê push.
-- Trocar a conta/repo do GitHub: edite `GH` no topo do `build.mjs` e rode de novo.
+- Trocar a conta/repo do GitHub: edite `GH` no topo do `build.mjs`.

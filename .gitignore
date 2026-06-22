@@ -4,6 +4,10 @@
 # node
 node_modules/
 
+# zip de import vai pro Release (não pro git — é binário e muda a cada build)
+/dist/userscripts.zip
+/dist/.bundle/
+
 # Fixtures de dev (páginas/vídeos salvos p/ testar seletores) — pesados, descartáveis,
 # e o HTML salvo às vezes traz token de sessão embutido. NUNCA versionar.
 /fixtures/

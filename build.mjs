@@ -178,7 +178,26 @@ ${modules}
 
 fs.writeFileSync(path.join(distDir, "pack.user.js"), pack);
 
+// ---- 2b) dist/userscripts.zip (backup importável → instala TODOS separados)
+// Formato de backup compartilhado por Violentmonkey/Tampermonkey: por script, o
+// trio nome.user.js + nome.options.json + nome.storage.json (flat no zip).
+// Importar pelo painel instala cada um como entrada SEPARADA (auto-update próprio).
+const stage = path.join(distDir, ".bundle");
+fs.rmSync(stage, { recursive: true, force: true });
+fs.mkdirSync(stage, { recursive: true });
+for (const p of parsed) {
+  const body = fs.readFileSync(path.join(distDir, `${p.name}.user.js`), "utf8");
+  fs.writeFileSync(path.join(stage, `${p.name}.user.js`), body);
+  fs.writeFileSync(path.join(stage, `${p.name}.options.json`), "{}");
+  fs.writeFileSync(path.join(stage, `${p.name}.storage.json`), "{}");
+}
+const zipPath = path.join(distDir, "userscripts.zip");
+fs.rmSync(zipPath, { force: true });
+execFileSync("zip", ["-j", "-q", zipPath, ...fs.readdirSync(stage).map(f => path.join(stage, f))]);
+fs.rmSync(stage, { recursive: true, force: true });
+
 // ---- 3) página de instalação (README.md) ----------------------------------
+const ZIP_URL = `https://github.com/${GH.user}/${GH.repo}/releases/latest/download/userscripts.zip`;
 // dados de cada script p/ as tabelas
 const cards = parsed
   .filter(p => p.name !== "xenforo")
@@ -200,10 +219,22 @@ Tema escuro, players grandes e galerias pra vários sites (Bunkr, Pixeldrain, Fi
 
 ## Instalar
 
-1. Instale o **[Violentmonkey](https://violentmonkey.github.io/)** (ou Tampermonkey).
-2. Clique em **[⬇ Instalar tudo](${RAW}/pack.user.js)** — um clique instala todos os meus scripts de uma vez, e cada um atualiza sozinho.
+Primeiro instale o **[Violentmonkey](https://violentmonkey.github.io/)** (ou Tampermonkey).
 
-Quer só um? Pega na tabela abaixo.
+### Opção 1 — todos de uma vez, como scripts separados (recomendado)
+
+Baixe **[userscripts.zip](${ZIP_URL})** e importe no painel — cada script entra **separado** (liga/desliga/atualiza sozinho):
+
+- **Violentmonkey:** ⚙ Settings → *Import from file* → escolha o \`.zip\`.
+- **Tampermonkey:** *Utilities* → *Import from URL* → cole \`${ZIP_URL}\` (ou *Import from file*).
+
+### Opção 2 — tudo num arquivo só (1 clique)
+
+**[⬇ Instalar pack](${RAW}/pack.user.js)** — um único userscript com todos os módulos dentro. Prático, mas monolítico (entra como 1 entrada só, all-or-nothing).
+
+### Avulsos
+
+Quer só alguns? Tabela abaixo, um por um.
 
 ## Meus scripts (avulsos)
 
@@ -221,10 +252,11 @@ ${thirdRows}
 ` : ""}
 ## Desenvolvimento
 
-- Fontes: \`scripts/*.user.js\` e \`xenforo/parts/\` (build próprio do xenforo).
-- \`node build.mjs\` regenera \`dist/\` (avulsos + \`pack.user.js\`) e este README.
+- Fontes: \`scripts/*.user.js\` e \`xenforo/parts/\` (build próprio do xenforo). **Edite só os fontes** — \`dist/\` e este README são gerados.
+- **CI:** ao dar push num fonte, a Action \`.github/workflows/build.yml\` roda \`node build.mjs\`, commita \`dist/\` + README e publica o \`userscripts.zip\` no release \`pack\`. Não precisa buildar na mão.
+- \`node build.mjs\` (local) regenera \`dist/\` (avulsos + \`pack.user.js\` + \`userscripts.zip\`) e o README.
 - Auto-update: cada \`dist/*.user.js\` aponta o \`@updateURL\` pra si mesmo; suba o \`@version\` no fonte e dê push.
-- Trocar a conta/repo do GitHub: edite \`GH\` no topo do \`build.mjs\` e rode de novo.
+- Trocar a conta/repo do GitHub: edite \`GH\` no topo do \`build.mjs\`.
 `;
 fs.writeFileSync(path.join(__dirname, "README.md"), readme);
 
