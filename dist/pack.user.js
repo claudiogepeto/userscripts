@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Userscripts — pack (todos num arquivo só)
 // @namespace    claudiogepeto-userscripts
-// @version      1.0.0
+// @version      1.0.4
 // @description  Instala todos os userscripts de uma vez. Cada site roda seu módulo (isolado, guardado por hostname). Edite/atualize os fontes em scripts/ e rode build.mjs.
 // @author       claudiogepeto
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js

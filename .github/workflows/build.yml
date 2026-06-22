@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # histórico completo → contagem de commits p/ o PACK_VERSION
 
       - uses: actions/setup-node@v4
         with:
@@ -48,7 +50,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create pack --title "Pack (zip de import)" \
-            --notes "Backup importável no Violentmonkey/Tampermonkey — instala todos os scripts como entradas separadas. Regenerado a cada build." \
-            2>/dev/null || true
-          gh release upload pack dist/userscripts.zip --clobber
+          VER=$(grep -m1 '@version' dist/pack.user.js | awk '{print $3}')
+          # recria o release a cada build → data e versão sempre frescas (não fica "20 min atrás")
+          gh release delete pack --cleanup-tag -y 2>/dev/null || true
+          gh release create pack dist/userscripts.zip \
+            --title "Pack v${VER} — zip de import" \
+            --notes "Backup importável no Violentmonkey/Tampermonkey — instala todos os scripts (meus + recomendados) como entradas separadas. Recriado a cada build."

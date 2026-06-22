@@ -28,9 +28,14 @@ const GH = {
   repo: "userscripts",
   branch: "main",
 };
-// versão do pack — INDEPENDENTE dos scripts. Suba este número a cada release
-// pro Violentmonkey detectar atualização do "Instalar tudo".
-const PACK_VERSION = "1.0.0";
+// versão do pack — INDEPENDENTE dos scripts (eles têm @version próprio).
+// AUTO-BUMP: base manual + nº de build = contagem de commits do git. Sobe sozinho
+// a cada commit → quem instalou o pack sempre recebe update, sem você lembrar.
+// Suba PACK_BASE só pra marcar um release "grande".
+const PACK_BASE = "1.0";
+let PACK_BUILD = "0";
+try { PACK_BUILD = execFileSync("git", ["rev-list", "--count", "HEAD"], { cwd: __dirname }).toString().trim(); } catch { /* sem git → 0 */ }
+const PACK_VERSION = `${PACK_BASE}.${PACK_BUILD}`;
 const RAW = `https://raw.githubusercontent.com/${GH.user}/${GH.repo}/${GH.branch}/dist`;
 
 // ordem dos módulos no pack (cosmética; cada um é isolado de qualquer forma)
