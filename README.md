@@ -4,16 +4,23 @@ A collection of browser userscripts for specialized media sites and communities.
 
 ## Install
 
-Install a userscript manager first, then choose either the complete pack or individual scripts:
+Install a userscript manager first, then choose the scripts you need:
 
 - [Violentmonkey](https://violentmonkey.github.io/)
 - [Tampermonkey](https://www.tampermonkey.net/)
 
-### All scripts
+### Enable full script access
 
-Install the **[all-in-one pack](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js)** to run every other script from one userscript entry. Each site runs in its own isolated module.
+For all userscript features to work, allow the userscript manager to run scripts on the target sites:
 
-### Individual scripts
+1. Open your browser's extensions page (chrome://extensions on Chrome/Chromium; about:addons on Firefox).
+2. Open the details for **Tampermonkey** or **Violentmonkey**.
+3. On Chrome/Chromium, enable **Allow User Scripts**.
+4. Allow the manager to access the sites you want to customize, then install one of the scripts above.
+
+If **Allow User Scripts** is not available, update the browser and userscript manager first.
+
+### Available scripts
 
 Install only the scripts you need:
 
@@ -35,7 +42,7 @@ Install only the scripts you need:
 - `scripts/*.user.js` contains standalone userscript sources.
 - `scripts/xenforo/parts/*.js` contains the modular XenForo source.
 - `scripts/xenforo/script.js` is assembled from the XenForo parts.
-- `dist/` contains generated installable files and the all-in-one pack.
+- `dist/` contains generated installable files.
 
 ## Development
 
@@ -47,4 +54,4 @@ node --check scripts/xenforo/script.js
 node scripts/xenforo/test-mock.js
 ```
 
-The build regenerates XenForo, every individual file, the all-in-one pack, and this README. Do not edit generated files in `dist/` or the assembled XenForo file directly. Every installable file includes its GitHub auto-update URL.
+The build regenerates XenForo, every individual file, and this README. Do not edit generated files in `dist/` or the assembled XenForo file directly. Every installable file includes its GitHub auto-update URL.
