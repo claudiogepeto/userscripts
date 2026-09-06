@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Userscripts — All-in-One Pack
 // @namespace    claudiogepeto-userscripts
-// @version      1.0.0
+// @version      1.0.2
 // @description  Installs all personal userscripts in one file. Each site runs its own isolated module.
 // @author       claudiogepeto
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js
@@ -5178,7 +5178,7 @@
   } catch (e) { console.error("[pack:filester]", e); }
 })();
 
-/* ===================== gofile (v3.2.3) ===================== */
+/* ===================== gofile (v3.2.4) ===================== */
 ;(function () {
   if (!(hostIn(["gofile.io","gofile.to"]) && window.top === window.self)) return;
   try {
@@ -5612,6 +5612,98 @@
             loadStageItem(cards[(i + dir + cards.length) % cards.length]);
         }
 
+        const IMAGE_SOURCE_ATTRS = ["data-src", "data-original", "data-url", "data-lazy-src", "data-original-src", "src"];
+        const UI_IMAGE_RE = /\b(?:favicon|logo|icon|avatar|spinner|placeholder|loading|loader|sprite|transparent)\b/i;
+        const IMAGE_MODAL_SELECTOR = ".fixed, dialog, [role='dialog'], .media-viewer, #modal-root";
+
+        function imageSourceCandidates(img) {
+            const out = [];
+            const add = value => {
+                if (!value || typeof value !== "string") return;
+                const src = value.trim();
+                if (src && src !== "about:blank" && !out.includes(src)) out.push(src);
+            };
+            IMAGE_SOURCE_ATTRS.forEach(attr => add(img.getAttribute(attr)));
+            add(img.currentSrc);
+            add(img.src);
+            return out;
+        }
+
+        function decodedImageText(value) {
+            try { return decodeURIComponent(String(value || "")); } catch (e) { return String(value || ""); }
+        }
+
+        function normalizedAssetName(value) {
+            return decodedImageText(value)
+                .normalize("NFKD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "");
+        }
+
+        function imageSourceLooksUsable(src) {
+            return !!src && !/^(?:about:blank|javascript:)/i.test(src) && !UI_IMAGE_RE.test(decodedImageText(src));
+        }
+
+        function mediaImageSource(img) {
+            return imageSourceCandidates(img).find(imageSourceLooksUsable) || "";
+        }
+
+        function imageMatchesName(img, fileName, src) {
+            const wanted = normalizedAssetName(fileName);
+            if (!wanted) return false;
+            const haystack = [
+                src,
+                img.alt,
+                img.title,
+                img.getAttribute("data-name"),
+                img.getAttribute("aria-label"),
+            ].map(normalizedAssetName).join(" ");
+            return haystack.includes(wanted);
+        }
+
+        function isMediaImage(img, fileName = "") {
+            if (!img || (stage && stage.contains(img))) return false;
+            const src = mediaImageSource(img);
+            if (!src) return false;
+
+            const metadata = [
+                img.alt,
+                img.title,
+                img.id,
+                img.getAttribute("class"),
+                img.getAttribute("aria-label"),
+            ].join(" ");
+            const matchesName = imageMatchesName(img, fileName, src);
+            if (UI_IMAGE_RE.test(metadata) && !matchesName) return false;
+
+            // Tiny, already-loaded assets are almost always UI icons. Keep a real
+            // file with the expected name, even when the user uploaded a small one.
+            if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0 &&
+                img.naturalWidth <= 64 && img.naturalHeight <= 64 && !matchesName) return false;
+            return true;
+        }
+
+        function findNativeImage(fileName) {
+            const candidates = Array.from(document.querySelectorAll("img"))
+                .filter(img => img.closest(IMAGE_MODAL_SELECTOR))
+                .filter(img => isMediaImage(img, fileName));
+            if (!candidates.length) return null;
+
+            const score = img => {
+                const src = mediaImageSource(img);
+                const matchesName = imageMatchesName(img, fileName, src);
+                const width = img.naturalWidth || img.width || 0;
+                const height = img.naturalHeight || img.height || 0;
+                let value = matchesName ? 1000 : 0;
+                if (img.closest(".media-viewer, #modal-root")) value += 100;
+                if (width > 0 && height > 0) value += Math.min(100, Math.round(Math.log2(width * height)));
+                if (/\/thumbs?\//i.test(decodedImageText(src))) value -= 30;
+                return value;
+            };
+            return candidates.sort((a, b) => score(b) - score(a))[0];
+        }
+
         let curAc = null;
         function mountPhotoZoom(mid, imgUrl) {
             const host = el("div", { class: "gf-img-host" });
@@ -5675,7 +5767,7 @@
             const iv = setInterval(() => {
                 // Busca qualquer tag <video> ou <img> no documento fora do stage
                 const nativeVid = Array.from(document.querySelectorAll("video")).find(v => !stage || !stage.contains(v));
-                const nativeImg = Array.from(document.querySelectorAll("img")).find(img => (!stage || !stage.contains(img)) && img.closest(".fixed, dialog, [role='dialog'], .media-viewer, #modal-root"));
+                const nativeImg = findNativeImage(d.name);
 
                 if (nativeVid) {
                     clearInterval(iv);
@@ -5709,7 +5801,7 @@
 
                     const p = nativeVid.play && nativeVid.play();
                     if (p && p.catch) p.catch(() => {});
-                } else if (nativeImg && nativeImg.src) {
+                } else if (nativeImg) {
                     clearInterval(iv);
                     spin.remove();
                     const nativeModal = nativeImg.closest(".fixed, [role='dialog'], dialog, .modal");
@@ -5717,7 +5809,7 @@
                         nativeModal.style.opacity = "0";
                         nativeModal.style.pointerEvents = "none";
                     }
-                    mountPhotoZoom(stMid, nativeImg.src);
+                    mountPhotoZoom(stMid, mediaImageSource(nativeImg));
                 } else if (++tries > 50) {
                     clearInterval(iv);
                     spin.remove();
@@ -5799,8 +5891,8 @@
             const nameEl = it.querySelector("p.truncate, a.item_open, .item-name, [data-action='open-file'] p");
             const name = nameEl ? (nameEl.textContent || "").trim() : "";
             const sizeText = Array.from(it.querySelectorAll("span, p, div")).map(e => (e.textContent || "").trim()).find(t => SIZE_RE.test(t)) || "";
-            const img = it.querySelector("img");
-            const thumbSrc = img ? (img.getAttribute("src") || img.src || "") : "";
+            const img = Array.from(it.querySelectorAll("img")).find(candidate => isMediaImage(candidate, name));
+            const thumbSrc = img ? mediaImageSource(img) : "";
             const isVid = /\.(mp4|m4v|mov|webm|mkv|avi|ts|flv)$/i.test(name) || !!it.querySelector(".lucide-file-video, .fa-video, .item_play");
             const isImg = /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i.test(name) || !!it.querySelector(".lucide-image, .fa-image");
             const kind = isImg ? "image" : (isVid ? "video" : "other");
