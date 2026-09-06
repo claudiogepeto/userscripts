@@ -1,6 +1,6 @@
-# Adult Userscripts
+# Userscripts
 
-A collection of browser userscripts for adult media sites and XenForo communities, maintained by claudiogepeto.
+A collection of browser userscripts for specialized media sites and communities.
 
 ## Install
 
@@ -11,7 +11,7 @@ Install a userscript manager first, then choose either the complete pack or indi
 
 ### All scripts
 
-Install the **[all-in-one pack](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js)** to run every adult script from one userscript entry. Each site runs in its own isolated module.
+Install the **[all-in-one pack](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/pack.user.js)** to run every other script from one userscript entry. Each site runs in its own isolated module.
 
 ### Individual scripts
 

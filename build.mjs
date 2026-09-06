@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // =============================================================================
-//  build.mjs — build all adult userscripts into dist/.
+//  build.mjs — build all other userscripts into dist/.
 //
 //  Sources live in scripts/. XenForo keeps its modular source in
 //  scripts/xenforo/parts/ and is assembled into scripts/xenforo/script.js.
@@ -205,9 +205,9 @@ const scriptRows = cards.map(c => {
   const description = trunc(c.desc || c.title, 180).replace(/[\r\n]+/g, " ").replace(/\|/g, "\\|");
   return `| **${c.id}** | ${description} | [Install](${RAW}/${c.id}.user.js) |`;
 }).join("\n");
-const readme = `# Adult Userscripts
+const readme = `# Userscripts
 
-A collection of browser userscripts for adult media sites and XenForo communities, maintained by claudiogepeto.
+A collection of browser userscripts for specialized media sites and communities.
 
 ## Install
 
@@ -218,7 +218,7 @@ Install a userscript manager first, then choose either the complete pack or indi
 
 ### All scripts
 
-Install the **[all-in-one pack](${RAW}/pack.user.js)** to run every adult script from one userscript entry. Each site runs in its own isolated module.
+Install the **[all-in-one pack](${RAW}/pack.user.js)** to run every other script from one userscript entry. Each site runs in its own isolated module.
 
 ### Individual scripts
 
