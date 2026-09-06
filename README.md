@@ -36,12 +36,15 @@ Install only the scripts you need:
 | **rule34** | Dark theme, responsive media grid, infinite scroll, tag search, and fullscreen viewer for Rule34. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/rule34.user.js) |
 | **turbo** | Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js) |
 | **xenforo** | Full redesign for SimpCity and SocialMediaGirls with custom navigation, feeds, media tools, and forum layouts. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js) |
+| **bypassbr** | Age-gate and sensitive-media bypass adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, and Sex.com. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js) |
 
 ## Repository layout
 
 - `scripts/*.user.js` contains standalone userscript sources.
 - `scripts/xenforo/parts/*.js` contains the modular XenForo source.
 - `scripts/xenforo/script.js` is assembled from the XenForo parts.
+- `scripts/bypassbr/parts/*.js` contains the modular BypassBR source.
+- `scripts/bypassbr/script.js` is assembled from the BypassBR parts.
 - `dist/` contains generated installable files.
 
 ## Development
@@ -51,6 +54,7 @@ Edit the sources, then run:
 ```bash
 node build.mjs
 node --check scripts/xenforo/script.js
+node --check scripts/bypassbr/script.js
 node scripts/xenforo/test-mock.js
 ```
 

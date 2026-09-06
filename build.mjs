@@ -71,11 +71,17 @@ function withUpdate(header, fileName) {
 // ---- load sources ----------------------------------------------------------
 const scriptsDir = path.join(__dirname, "scripts");
 const xenforoDir = path.join(scriptsDir, "xenforo");
+const bypassbrDir = path.join(scriptsDir, "bypassbr");
 
 try {
   execFileSync("node", [path.join(xenforoDir, "build.js")], { stdio: "inherit" });
 } catch {
   console.warn("! scripts/xenforo/build.js failed — using the existing script.js");
+}
+try {
+  execFileSync("node", [path.join(bypassbrDir, "build.js")], { stdio: "inherit" });
+} catch {
+  console.warn("! scripts/bypassbr/build.js failed — using the existing script.js");
 }
 
 const standaloneFiles = fs.readdirSync(scriptsDir)
@@ -88,6 +94,10 @@ const entries = standaloneFiles.map(file => ({
 entries.push({
   name: "xenforo",
   src: fs.readFileSync(path.join(xenforoDir, "script.js"), "utf8"),
+});
+entries.push({
+  name: "bypassbr",
+  src: fs.readFileSync(path.join(bypassbrDir, "script.js"), "utf8"),
 });
 
 // ---- 1) dist/NOME.user.js (com auto-update) -------------------------------
@@ -113,6 +123,7 @@ const README_DESCRIPTIONS = {
   rule34: "Dark theme, responsive media grid, infinite scroll, tag search, and fullscreen viewer for Rule34.",
   turbo: "Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling.",
   xenforo: "Full redesign for SimpCity and SocialMediaGirls with custom navigation, feeds, media tools, and forum layouts.",
+  bypassbr: "Age-gate and sensitive-media bypass adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, and Sex.com.",
 };
 const cards = parsed.map(p => ({
   id: p.name,
@@ -159,6 +170,8 @@ ${scriptRows}
 - \`scripts/*.user.js\` contains standalone userscript sources.
 - \`scripts/xenforo/parts/*.js\` contains the modular XenForo source.
 - \`scripts/xenforo/script.js\` is assembled from the XenForo parts.
+- \`scripts/bypassbr/parts/*.js\` contains the modular BypassBR source.
+- \`scripts/bypassbr/script.js\` is assembled from the BypassBR parts.
 - \`dist/\` contains generated installable files.
 
 ## Development
@@ -168,6 +181,7 @@ Edit the sources, then run:
 \`\`\`bash
 node build.mjs
 node --check scripts/xenforo/script.js
+node --check scripts/bypassbr/script.js
 node scripts/xenforo/test-mock.js
 \`\`\`
 
