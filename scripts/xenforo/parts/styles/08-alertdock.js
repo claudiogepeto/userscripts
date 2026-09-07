@@ -84,15 +84,31 @@
             .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
             .smg-rail-wt:last-child { border-bottom: 0; }
             .smg-rail-wt:hover { background: rgba(255,255,255,0.055); }
-            .smg-rail-wt.is-unread { background: transparent; }
-            .smg-rail-wt.is-unread::before {
-                content: ""; position: absolute; right: 14px; top: 50%; left: auto; bottom: auto; width: 8px; height: 8px;
-                border-radius: 50%; background: #54d66a; box-shadow: 0 0 0 3px rgba(84,214,106,0.14);
-                transform: translateY(-50%); pointer-events: none; z-index: 2;
+            .smg-rail-wt.is-unread { background: transparent; opacity: 1; }
+            .smg-rail-wt:not(.is-unread) {
+                opacity: 0.55;
+                transition: opacity .15s ease, background .14s ease;
             }
-            .smg-rail-wt:not(.is-unread) { opacity: 1; }
+            .smg-rail-wt:not(.is-unread):hover {
+                opacity: 1;
+            }
+            .smg-rail-wt-dot {
+                display: inline-block !important;
+                width: 8px !important;
+                height: 8px !important;
+                min-width: 8px !important;
+                min-height: 8px !important;
+                border-radius: 50% !important;
+                background: #54d66a !important;
+                box-shadow: 0 0 0 2.5px rgba(84, 214, 106, 0.22) !important;
+                margin-right: 7px !important;
+                vertical-align: 1px !important;
+                flex-shrink: 0 !important;
+            }
+            .smg-rail-wt:not(.is-unread) .smg-rail-wt-dot {
+                display: none !important;
+            }
             .smg-rail-wt-link { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; text-decoration: none !important; }
-            .smg-rail-wt.is-unread .smg-rail-wt-link { padding-right: 30px; }
             .smg-rail-wt-thumb {
                 flex: 0 0 auto; width: 72px; height: 72px; min-width: 72px; border-radius: 12px; aspect-ratio: 1 / 1; overflow: hidden;
                 display: flex; align-items: center; justify-content: center;
@@ -146,8 +162,6 @@
             .smg-aldock-body.is-grid .smg-rail-wt-title { font-size: 12.5px; }
             .smg-aldock-body.is-grid .smg-rail-wt-meta { font-size: 10.5px; }
             .smg-aldock-body.is-grid .smg-al-tags { display: flex; }   /* badges permanecem visíveis nos cards */
-            /* não lida na grade: o ponto continua na direita do card */
-            .smg-aldock-body.is-grid .smg-rail-wt.is-unread .smg-rail-wt-link { padding-right: 0; }
             .smg-aldock-btn[hidden] { display: none !important; }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }

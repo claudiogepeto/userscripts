@@ -423,8 +423,8 @@
                 display: flex !important;
                 flex-direction: column !important;
                 width: 100% !important;
-                max-width: 560px !important;
-                margin: 14px auto !important;
+                max-width: 100% !important;
+                margin: 14px 0 !important;
                 padding: 16px 18px !important;
                 background: var(--smg-s1, #16171b) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
@@ -500,13 +500,62 @@
                 color: var(--smg-tx, #e7e7ea) !important;
             }
             .smg-tw-media {
+                position: relative !important;
                 margin: 4px 0 12px !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
+                background: #000 !important;
+            }
+            .smg-tw-play-overlay {
+                position: absolute !important;
+                inset: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: rgba(0, 0, 0, 0.25) !important;
+                cursor: pointer !important;
+                z-index: 2 !important;
+                transition: background 0.2s ease !important;
+            }
+            .smg-tw-play-overlay:hover {
+                background: rgba(0, 0, 0, 0.45) !important;
+            }
+            .smg-tw-play-icon {
+                width: 58px !important;
+                height: 58px !important;
+                border-radius: 50% !important;
+                background: rgba(29, 155, 240, 0.95) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+                transition: transform 0.15s ease, background 0.15s ease !important;
+            }
+            .smg-tw-play-icon svg {
+                margin-left: 3px !important;
+            }
+            .smg-tw-play-overlay:hover .smg-tw-play-icon {
+                transform: scale(1.08) !important;
+                background: #1d9bf0 !important;
+            }
+            .smg-tw-play-overlay.loading .smg-tw-play-icon {
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            .smg-tw-spinner {
+                width: 38px !important;
+                height: 38px !important;
+                border: 3px solid rgba(255, 255, 255, 0.3) !important;
+                border-top-color: #1d9bf0 !important;
+                border-radius: 50% !important;
+                animation: smg-tw-spin 0.75s linear infinite !important;
+            }
+            @keyframes smg-tw-spin {
+                to { transform: rotate(360deg); }
             }
             .smg-tw-media img {
                 width: 100% !important;
-                max-height: 520px !important;
+                max-height: 640px !important;
                 object-fit: contain !important;
                 display: block !important;
                 border-radius: 12px !important;
@@ -514,7 +563,8 @@
             }
             .smg-tw-media video {
                 width: 100% !important;
-                max-height: 540px !important;
+                max-height: 640px !important;
+                object-fit: contain !important;
                 display: block !important;
                 border-radius: 12px !important;
                 background: #000 !important;
@@ -525,7 +575,7 @@
                 gap: 6px !important;
             }
             .smg-tw-media-grid img {
-                height: 220px !important;
+                height: 320px !important;
                 object-fit: cover !important;
             }
             .smg-tw-foot {
@@ -1000,16 +1050,16 @@
                .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
                EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
                ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
-            html:not(.smg-home-page) .p-body-sidebar,
-            html:not(.smg-home-page) .p-body-sidebarCol { display: none !important; }
+            html:not(.smg-home) .p-body-sidebar,
+            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
             /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
                o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
                mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main--withSidebar {
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
                 display: block !important; grid-template-columns: none !important; gap: 0 !important;
             }
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main .p-body-content,
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
                 width: 100% !important; max-width: 100% !important; min-width: 0 !important;
                 flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
             }

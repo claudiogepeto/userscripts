@@ -162,6 +162,11 @@ async function runTests() {
             this.indices.set(name, keyPath);
             return {};
         }
+        get indexNames() {
+            return {
+                contains: (name) => this.indices.has(name)
+            };
+        }
         get(key) {
             const req = new MockIDBRequest();
             const val = mockStorage[this.name]?.get(key);
@@ -283,9 +288,11 @@ async function runTests() {
         open: (name, version) => {
             const req = new MockIDBRequest();
             const db = new MockIDBDatabase();
+            const tx = new MockIDBTransaction(['followed', 'timeline', 'meta', 'bookmarks']);
+            req.transaction = tx;
             setTimeout(() => {
                 req.result = db;
-                if (req.onupgradeneeded) req.onupgradeneeded({ result: db });
+                if (req.onupgradeneeded) req.onupgradeneeded({ result: db, target: req, transaction: tx });
                 if (req.onsuccess) req.onsuccess({ target: req });
             }, 0);
             return req;
@@ -305,7 +312,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.10.1'), 'Userscript deve estar na versão 3.10.1');
+    assert(scriptContent.includes('// @version      3.12.3'), 'Userscript deve estar na versão 3.12.3');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -400,8 +407,8 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 1: feedSyncRunning & River Loading ---');
     assert(window.__feedExports !== undefined, 'window.__feedExports deve estar exposto');
-    assert(window.__feedExports.FEED_DATA_VERSION === 11, 'FEED_DATA_VERSION deve ser 11');
-    assert(window.__feedExports.FEED_SYNC_VERSION === 6, 'FEED_SYNC_VERSION deve ser 6');
+    assert(window.__feedExports.FEED_DATA_VERSION === 12, 'FEED_DATA_VERSION deve ser 12');
+    assert(window.__feedExports.FEED_SYNC_VERSION === 7, 'FEED_SYNC_VERSION deve ser 7');
     assert(typeof window.__feedExports.feedSyncRunning === 'boolean', 'feedSyncRunning deve ser booleano');
     assert(window.__feedExports.feedSyncRunning === false, 'feedSyncRunning deve iniciar como false');
 
@@ -463,11 +470,15 @@ async function runTests() {
 
     // Testar sanitização defensiva em riverCard
     assert(typeof riverCard === 'function', 'riverCard deve ser função');
+    assert(riverCard(null) === null, 'riverCard deve retornar null para entrada nula');
+    assert(riverCard({ post_id: '', content_html: '<div class="bbWrapper">ok</div>' }) === null, 'riverCard deve retornar null para post sem post_id');
+    assert(riverCard({ post_id: '120', content_html: '' }) === null, 'riverCard deve retornar null para post sem content_html');
 
     // 1. Caso threadTitle é "Editar" -> extrai slug da URL
     const cardEditar = riverCard({
         post_id: '123',
         thread_name: 'Editar',
+        content_html: '<div class="bbWrapper">Texto do post</div>',
         permalink: 'https://forums.socialmediagirls.com/threads/minha-modelo-famosa.12345/post-999'
     }, 0);
     const titleEditar = cardEditar.querySelector('.smg-fp-tname').textContent;
@@ -477,6 +488,7 @@ async function runTests() {
     const cardAvisos = riverCard({
         post_id: '124',
         thread_name: 'Lett1Avisos We have a new domain whitelist, please request any domains missing here',
+        content_html: '<div class="bbWrapper">Texto do post</div>',
         permalink: 'https://forums.socialmediagirls.com/threads/lett1.1111/'
     }, 0);
     const titleAvisos = cardAvisos.querySelector('.smg-fp-tname').textContent;
@@ -486,6 +498,7 @@ async function runTests() {
     const cardBadges = riverCard({
         post_id: '125',
         thread_name: 'Thread com Badges',
+        content_html: '<div class="bbWrapper">Texto do post</div>',
         prefixes_html: '<a class="labelLink" href="/tags/brasil/"><span class="label label--blue">Brasil</span></a> <span class="label label--blue">Brasil</span> <span class="label label--purple">Twitch</span> <span class="label label--purple">Twitch</span>',
         permalink: 'https://forums.socialmediagirls.com/threads/badges.2222/'
     }, 0);
@@ -1319,20 +1332,23 @@ async function runTests() {
     assert(ingestedCount === 3, `ingestWatchedPageToFollowed deve atualizar 3 tópicos (obtido: ${ingestedCount})`);
 
     const ashley = mockStorage.followed.get('/threads/ashley-tervort.1111/');
-    assert(ashley.updated_at === 9500, `Ashley Tervort updated_at deve ter sido atualizado para 9500 (obtido: ${ashley.updated_at})`);
+    assert(ashley.forum_activity_ts === 9500, `Ashley Tervort forum_activity_ts deve ser 9500 (obtido: ${ashley.forum_activity_ts})`);
+    assert(ashley.updated_at === 1000, `Ashley Tervort updated_at deve ser preservado em 1000 (obtido: ${ashley.updated_at})`);
     assert(ashley.last_page === 2, `Ashley Tervort last_page deve ter sido atualizado para 2 (obtido: ${ashley.last_page})`);
     assert(Array.isArray(ashley.saved_pages) && ashley.saved_pages.length === 1 && ashley.saved_pages[0] === 1, 'Ashley Tervort deve preservar saved_pages');
     assert(ashley.last_sync_at === 1000, 'Ashley Tervort deve preservar last_sync_at');
 
     const lumineiia = mockStorage.followed.get('/threads/lumineiia.2222/');
-    assert(lumineiia.updated_at === 9000, `Lumineiia updated_at deve ter sido atualizado para 9000 (obtido: ${lumineiia.updated_at})`);
+    assert(lumineiia.forum_activity_ts === 9000, `Lumineiia forum_activity_ts deve ser 9000 (obtido: ${lumineiia.forum_activity_ts})`);
+    assert(lumineiia.updated_at === 1200, `Lumineiia updated_at deve ser preservado em 1200 (obtido: ${lumineiia.updated_at})`);
 
     const lien = mockStorage.followed.get('/threads/lien-sue.3333/');
-    assert(lien.updated_at === 8500, `Lien Sue updated_at deve ter sido atualizado para 8500 (obtido: ${lien.updated_at})`);
+    assert(lien.forum_activity_ts === 8500, `Lien Sue forum_activity_ts deve ser 8500 (obtido: ${lien.forum_activity_ts})`);
+    assert(lien.updated_at === 800, `Lien Sue updated_at deve ser preservado em 800 (obtido: ${lien.updated_at})`);
 
-    // 8.5 Priorização estrita por updated_at DESC
+    // 8.5 Priorização estrita por atividade recente (forum_activity_ts || updated_at) DESC
     const all = Array.from(mockStorage.followed.values());
-    all.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+    all.sort((a, b) => ((b.forum_activity_ts || b.updated_at || 0) - (a.forum_activity_ts || a.updated_at || 0)));
     assert(all[0].path === '/threads/ashley-tervort.1111/', 'Primeiro tópico na fila deve ser Ashley Tervort (9500)');
     assert(all[1].path === '/threads/lumineiia.2222/', 'Segundo tópico na fila deve ser Lumineiia (9000)');
     assert(all[2].path === '/threads/lien-sue.3333/', 'Terceiro tópico na fila deve ser Lien Sue (8500)');
@@ -1568,9 +1584,10 @@ async function runTests() {
     assert(injectedStyles.includes('width: 72px') && injectedStyles.includes('height: 72px'), 'CSS deve definir width/height 72px para .smg-rail-wt-thumb');
     assert(injectedStyles.includes('border-radius: 12px'), 'CSS deve definir border-radius: 12px para .smg-rail-wt-thumb');
     assert(injectedStyles.includes('font-size: 14.5px'), 'CSS deve definir font-size: 14.5px para .smg-rail-wt-title');
-    assert(injectedStyles.includes('right: 14px') && injectedStyles.includes('width: 8px') && injectedStyles.includes('height: 8px'), 'CSS deve definir ponto verde à direita para rows não lidas');
-    assert(injectedStyles.includes('.smg-rail-wt.is-unread { background: transparent; }'), 'CSS deve manter row não lida sem escurecimento');
-    assert(injectedStyles.includes('.smg-rail-wt:not(.is-unread) { opacity: 1; }'), 'CSS deve manter rows lidas com opacidade normal');
+    assert(injectedStyles.includes('.smg-rail-wt-dot') && injectedStyles.includes('background: #54d66a'), 'CSS deve definir estilos para .smg-rail-wt-dot');
+    assert(injectedStyles.includes('.smg-rail-wt.is-unread { background: transparent; opacity: 1; }'), 'CSS deve manter row não lida sem escurecimento');
+    assert(injectedStyles.includes('.smg-rail-wt:not(.is-unread) {') && injectedStyles.includes('opacity: 0.55;'), 'CSS deve definir opacidade 0.55 para rows lidas');
+    assert(injectedStyles.includes('.smg-rail-wt:not(.is-unread):hover {') && injectedStyles.includes('opacity: 1;'), 'CSS deve restaurar opacidade no hover');
     assert(injectedStyles.includes('padding: 1.5px 5.5px !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
     assert(injectedStyles.includes('font-size: 9.5px !important'), 'CSS deve definir font-size: 9.5px para .label e .smg-badge-chip');
     assert(!injectedStyles.includes('.smg-aldock-body.is-grid .smg-al-tags { display: none; }'), 'CSS da grade não deve esconder os badges');
@@ -1791,13 +1808,19 @@ async function runTests() {
     const kira = mockStorage.followed.get('/threads/kira-pregiato.4444/');
     assert(kira !== undefined, 'Kira Pregiato deve estar gravada na tabela followed do IndexedDB');
     assert(kira.thread_name === 'Kira Pregiato', 'Kira Pregiato deve ter thread_name correto');
+    assert(kira.forum_activity_ts === 9996, `Kira Pregiato deve ter forum_activity_ts 9996 (obtido: ${kira.forum_activity_ts})`);
     assert(kira.updated_at === 9996, `Kira Pregiato deve ter updated_at 9996 (obtido: ${kira.updated_at})`);
+    assert(kira.last_seen_at === 9996, `Kira Pregiato deve ter last_seen_at 9996 na primeira ingestão (obtido: ${kira.last_seen_at})`);
+    assert(kira.unread === false, 'Kira Pregiato deve ter unread false na primeira ingestão');
     assert(kira.last_page === 3, `Kira Pregiato deve ter last_page 3 (obtido: ${kira.last_page})`);
 
     const cubeu = mockStorage.followed.get('/threads/cubeu.5555/');
     assert(cubeu !== undefined, 'Cubeu deve estar gravada na tabela followed do IndexedDB');
     assert(cubeu.thread_name === 'Cubeu', 'Cubeu deve ter thread_name correto');
+    assert(cubeu.forum_activity_ts === 9991, `Cubeu deve ter forum_activity_ts 9991 (obtido: ${cubeu.forum_activity_ts})`);
     assert(cubeu.updated_at === 9991, `Cubeu deve ter updated_at 9991 (obtido: ${cubeu.updated_at})`);
+    assert(cubeu.last_seen_at === 9991, `Cubeu deve ter last_seen_at 9991 na primeira ingestão (obtido: ${cubeu.last_seen_at})`);
+    assert(cubeu.unread === false, 'Cubeu deve ter unread false na primeira ingestão');
     assert(cubeu.last_page === 2, `Cubeu deve ter last_page 2 (obtido: ${cubeu.last_page})`);
 
     window.removeEventListener('smg-followed-updated', onFollowedUpdated);
@@ -2020,8 +2043,10 @@ async function runTests() {
     const autoModel = mockStorage.followed.get('/threads/auto-model.8888/');
     assert(autoModel !== undefined, 'Tópico auto-model.8888 deve estar gravado na store followed do IndexedDB sem necessidade de navegação');
     assert(autoModel.thread_name === 'Auto Model', 'Auto Model deve ter thread_name correto');
-    assert(autoModel.last_page === 3, 'Auto Model deve ter last_page 3');
-    assert(autoModel.updated_at === 10500, 'Auto Model deve ter updated_at 10500');
+    assert(autoModel.forum_activity_ts === 10500, 'Auto Model deve ter forum_activity_ts 10500');
+    assert(autoModel.updated_at === 10500, 'Auto Model deve ter updated_at 10500 inicializado com forum_activity_ts');
+    assert(autoModel.last_seen_at === 10500, 'Auto Model deve ter last_seen_at 10500 inicializado com updated_at');
+    assert(autoModel.unread === false, 'Auto Model deve ter unread false na primeira ingestão');
 
     window.removeEventListener('smg-followed-updated', onFollowedEvent);
 
@@ -2611,11 +2636,13 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 19: Contexto de Página & Paint Gate ---');
     assert(window.__paintExports !== undefined, 'window.__paintExports deve estar exposto');
-    const { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError } = window.__paintExports;
+    const { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS } = window.__paintExports;
     assert(typeof classifyPaintPage === 'function', 'classifyPaintPage deve ser função');
     assert(typeof paintSkeletonMarkup === 'function', 'paintSkeletonMarkup deve ser função');
     assert(typeof paintRailMarkup === 'function', 'paintRailMarkup deve ser função');
     assert(typeof paintHasFatalError === 'function', 'paintHasFatalError deve ser função');
+    assert(typeof paintPageCanFallback === 'function', 'paintPageCanFallback deve ser função');
+    assert(typeof paintPageIsReady === 'function', 'paintPageIsReady deve ser função');
 
     const originalTemplate19 = document.documentElement.getAttribute('data-template');
     const originalUrl19 = window.location.href;
@@ -2670,9 +2697,536 @@ async function runTests() {
     assert(paintCss19.includes('position: absolute; left: 0; right: 0; bottom: 0'), 'Navbar do skeleton deve ocupar a base inteira do shell');
     assert(paintCss19.includes('z-index: 1000'), 'Skeleton deve ficar acima da página nativa durante a composição');
 
+    // -------------------------------------------------------------------------
+    // Paint Gate Fallback & Setup State no River
+    // -------------------------------------------------------------------------
+    const timelineCtx = { kind: (PAINT_PAGE_KINDS && PAINT_PAGE_KINDS.TIMELINE) || 'timeline' };
+    let riverEl = document.getElementById('smg-river');
+    if (!riverEl) {
+        riverEl = document.createElement('div');
+        riverEl.id = 'smg-river';
+        document.body.appendChild(riverEl);
+    }
+    riverEl.dataset.smgPaintReady = '0';
+
+    // 1. paintPageCanFallback com contexto timeline e #smg-river presente retorna true
+    assert(paintPageCanFallback(timelineCtx) === true, 'paintPageCanFallback com contexto timeline e #smg-river presente retorna true');
+
+    // 2. showSetupState define smgPaintReady = "1" no #smg-river
+    let riverListEl = riverEl.querySelector('.smg-fp-list');
+    if (!riverListEl) {
+        riverListEl = document.createElement('div');
+        riverListEl.className = 'smg-fp-list';
+        riverEl.appendChild(riverListEl);
+    }
+    window.__feedExports.riverList = riverListEl;
+    window.__feedExports.riverFirstPainted = false;
+    riverEl.dataset.smgPaintReady = '0';
+    assert(typeof window.__feedExports.showSetupState === 'function', 'showSetupState deve estar exposto em __feedExports');
+    window.__feedExports.showSetupState();
+    assert(riverEl.dataset.smgPaintReady === '1', 'showSetupState define smgPaintReady = "1" no #smg-river');
+    assert(!!riverListEl.querySelector('.smg-fp-setup'), 'riverList deve conter .smg-fp-setup após showSetupState');
+
+    // 3. paintPageIsReady retorna true quando riverList contém .smg-fp-setup e smgPaintReady === '1'
+    if (!document.getElementById('smg-topbar-wrap')) {
+        const topbarMock = document.createElement('div');
+        topbarMock.id = 'smg-topbar-wrap';
+        document.body.appendChild(topbarMock);
+    }
+    if (!document.getElementById('smg-aldock')) {
+        const dockMock = document.createElement('div');
+        dockMock.id = 'smg-aldock';
+        document.body.appendChild(dockMock);
+    }
+    assert(paintPageIsReady(timelineCtx) === true, 'paintPageIsReady retorna true quando riverList contém .smg-fp-setup e smgPaintReady === "1"');
+
     window.history.pushState({}, '', originalUrl19);
     if (originalTemplate19 == null) document.documentElement.removeAttribute('data-template');
     else document.documentElement.setAttribute('data-template', originalTemplate19);
+
+    // =========================================================================
+    // TESTE 20: Desencapsulamento de Proxy, Links Externos e Interceptação de Clique
+    // =========================================================================
+    console.log('--- TESTE 20: Proxy Helpers, Links Externos e fhBuildCardNow ---');
+
+    const b64decode = window.__b64decode;
+    const rawParam = window.__rawParam;
+    const decodeProxyHref = window.__decodeProxyHref;
+    const resolveProxyHref = window.__resolveProxyHref;
+    const absUrl = window.__absUrl;
+
+    assert(typeof b64decode === 'function', 'b64decode deve estar disponível');
+    assert(typeof decodeProxyHref === 'function', 'decodeProxyHref deve estar disponível');
+    assert(typeof resolveProxyHref === 'function', 'resolveProxyHref deve estar disponível');
+    assert(typeof absUrl === 'function', 'absUrl deve estar disponível');
+
+    // 1. b64decode: base64 padrão, url-safe e unpadded
+    assert(b64decode('aHR0cHM6Ly9leGFtcGxlLmNvbQ==') === 'https://example.com', 'b64decode deve decodificar base64 com padding padrão');
+    assert(b64decode('aHR0cHM6Ly9leGFtcGxlLmNvbQ') === 'https://example.com', 'b64decode deve decodificar base64 sem padding (unpadded)');
+    // URL-safe (- e _)
+    const sampleUrl = 'https://example.com/?query=1&test=true';
+    const b64UrlSafe = Buffer.from(sampleUrl).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    assert(b64decode(b64UrlSafe) === sampleUrl, 'b64decode deve decodificar base64 url-safe unpadded');
+
+    // 2. decodeProxyHref & resolveProxyHref
+    const gotoProxy = '/goto/link-confirmation?url=' + Buffer.from('https://external-site.org/path').toString('base64');
+    assert(decodeProxyHref(gotoProxy) === 'https://external-site.org/path', 'decodeProxyHref deve decodificar /goto/link-confirmation');
+    assert(resolveProxyHref(gotoProxy) === 'https://external-site.org/path', 'resolveProxyHref deve resolver /goto/link-confirmation');
+
+    const redirectPlain = '/redirect/?to=https%3A%2F%2Fdestination.com%2Fsub';
+    assert(decodeProxyHref(redirectPlain) === 'https://destination.com/sub', 'decodeProxyHref deve decodificar /redirect/?to com plain URL');
+    assert(resolveProxyHref(redirectPlain) === 'https://destination.com/sub', 'resolveProxyHref deve resolver /redirect/?to com plain URL');
+
+    const proxyPhp = '/proxy.php?link=https%3A%2F%2Fimage-site.net%2Ffile.jpg';
+    assert(decodeProxyHref(proxyPhp) === 'https://image-site.net/file.jpg', 'decodeProxyHref deve decodificar /proxy.php?link');
+    assert(resolveProxyHref(proxyPhp) === 'https://image-site.net/file.jpg', 'resolveProxyHref deve resolver /proxy.php?link');
+
+    const linkProxy = '/link-proxy/?url=' + Buffer.from('https://proxy-target.com').toString('base64');
+    assert(decodeProxyHref(linkProxy) === 'https://proxy-target.com', 'decodeProxyHref deve decodificar /link-proxy/?url');
+    assert(resolveProxyHref(linkProxy) === 'https://proxy-target.com', 'resolveProxyHref deve resolver /link-proxy/?url');
+
+    // Link externo direto NÃO proxy
+    const directExt = 'https://www.instagram.com/p/DB12345/';
+    assert(decodeProxyHref(directExt) === null, 'decodeProxyHref deve retornar null para link externo direto não-proxy');
+    assert(resolveProxyHref(directExt) === directExt, 'resolveProxyHref DEVE retornar o link original para link externo direto');
+
+    // absUrl
+    assert(absUrl('') === '', 'absUrl("") NUNCA deve resolver para location.href');
+    assert(absUrl('   ') === '', 'absUrl de whitespace deve retornar vazio');
+    assert(absUrl('https://example.com') === 'https://example.com/', 'absUrl de URL absoluta válida deve ser preservada');
+
+    // 3. Teste de clique e interceptação de link externo (bindProxyClick)
+    const extLink = document.createElement('a');
+    extLink.className = 'link link--external';
+    extLink.href = 'https://forums.socialmediagirls.com/goto/link-confirmation?url=' + Buffer.from('https://final-dest.com').toString('base64');
+    extLink.setAttribute('data-proxy-href', extLink.href);
+    extLink.setAttribute('data-blank-handler', 'true');
+    document.body.appendChild(extLink);
+
+    let stopImmediateCalled = false;
+    const clickEvt = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    const originalStopImmediate = clickEvt.stopImmediatePropagation;
+    clickEvt.stopImmediatePropagation = function() {
+        stopImmediateCalled = true;
+        originalStopImmediate.call(this);
+    };
+
+    extLink.dispatchEvent(clickEvt);
+
+    assert(stopImmediateCalled, 'bindProxyClick deve chamar stopImmediatePropagation no clique esquerdo em link externo/proxy');
+    assert(extLink.getAttribute('href') === 'https://final-dest.com', 'bindProxyClick deve reescrever href para o destino real');
+    assert(extLink.target === '_blank', 'bindProxyClick deve garantir target="_blank"');
+    assert(extLink.rel.includes('noopener'), 'bindProxyClick deve garantir rel com noopener');
+    assert(!extLink.hasAttribute('data-proxy-href'), 'bindProxyClick deve desarmar data-proxy-href');
+    assert(!extLink.hasAttribute('data-blank-handler'), 'bindProxyClick deve desarmar data-blank-handler');
+    extLink.remove();
+
+    // 4. Teste unlazyImageLinks ignorando blocos protegidos
+    const unfurlBlock = document.createElement('div');
+    unfurlBlock.className = 'bbCodeBlock bbCodeBlock--unfurl';
+    const unfurlTitleLink = document.createElement('a');
+    unfurlTitleLink.className = 'link link--external';
+    unfurlTitleLink.href = 'https://twitter.com/someuser/status/123';
+    unfurlTitleLink.textContent = 'Post title on X';
+    unfurlBlock.appendChild(unfurlTitleLink);
+    document.body.appendChild(unfurlBlock);
+
+    if (typeof window.__processAll === 'function') {
+        window.__processAll([unfurlBlock]);
+    }
+    assert(unfurlTitleLink.textContent === 'Post title on X', 'unlazyImageLinks NÃO deve apagar ou corromper o texto de link em .bbCodeBlock--unfurl');
+    unfurlBlock.remove();
+
+    // 5. Teste buildTwitterCardDom: referrerpolicy="no-referrer" em vídeo, imagem e avatar
+    assert(typeof window.buildTwitterCardDom === 'function', 'buildTwitterCardDom deve estar exposto em __TEST_MODE__');
+    const mockVideoTweet = {
+        text: 'Tweet with video',
+        author: {
+            name: 'Test User',
+            screen_name: 'testuser',
+            avatar_url: 'https://pbs.twimg.com/profile_images/123/avatar.jpg'
+        },
+        media: {
+            videos: [{
+                url: 'https://video.twimg.com/vid.mp4',
+                thumbnail_url: 'https://pbs.twimg.com/thumb.jpg'
+            }],
+            photos: []
+        }
+    };
+    const cardVideo = window.buildTwitterCardDom(mockVideoTweet, 'https://x.com/testuser/status/123');
+    const avImg = cardVideo.querySelector('.smg-tw-avatar img');
+    assert(avImg && (avImg.getAttribute('referrerpolicy') === 'no-referrer' || avImg.referrerPolicy === 'no-referrer'), 'Avatar do card Twitter deve conter referrerpolicy="no-referrer"');
+    const videoEl = cardVideo.querySelector('video');
+    assert(videoEl && (videoEl.getAttribute('referrerpolicy') === 'no-referrer' || videoEl.referrerPolicy === 'no-referrer'), 'Video do card Twitter deve conter referrerpolicy="no-referrer"');
+    const playOverlay = cardVideo.querySelector('.smg-tw-play-overlay');
+    assert(playOverlay, 'Card de vídeo do Twitter deve conter overlay de play (.smg-tw-play-overlay)');
+
+    const mockPhotoTweet = {
+        text: 'Tweet with photo',
+        author: {
+            name: 'Test User',
+            screen_name: 'testuser',
+            avatar_url: 'https://pbs.twimg.com/profile_images/123/avatar.jpg'
+        },
+        media: {
+            videos: [],
+            photos: [{ url: 'https://pbs.twimg.com/photo.jpg' }]
+        }
+    };
+    const cardPhoto = window.buildTwitterCardDom(mockPhotoTweet, 'https://x.com/testuser/status/456');
+    const imgEl = cardPhoto.querySelector('.smg-tw-media img');
+    assert(imgEl && (imgEl.getAttribute('referrerpolicy') === 'no-referrer' || imgEl.referrerPolicy === 'no-referrer'), 'Imagem do card Twitter deve conter referrerpolicy="no-referrer"');
+
+    const mockMultiPhotoTweet = {
+        text: 'Tweet with multiple photos',
+        author: {
+            name: 'Test User',
+            screen_name: 'testuser',
+            avatar_url: 'https://pbs.twimg.com/profile_images/123/avatar.jpg'
+        },
+        media: {
+            videos: [],
+            photos: [
+                { url: 'https://pbs.twimg.com/photo1.jpg' },
+                { url: 'https://pbs.twimg.com/photo2.jpg' }
+            ]
+        }
+    };
+    const cardMulti = window.buildTwitterCardDom(mockMultiPhotoTweet, 'https://x.com/testuser/status/789');
+    const gridImgs = cardMulti.querySelectorAll('.smg-tw-media-grid img');
+    assert(gridImgs.length === 2 && Array.from(gridImgs).every(i => i.getAttribute('referrerpolicy') === 'no-referrer' || i.referrerPolicy === 'no-referrer'), 'Imagens da grade do Twitter devem conter referrerpolicy="no-referrer"');
+
+    // =========================================================================
+    // TESTE 21: Filtragem Estrita de Posts vs Comentários (isThreadPostElement & riverParsePost)
+    // =========================================================================
+    console.log('--- TESTE 21: isThreadPostElement & riverParsePost ---');
+    const isThreadPostElement = window.isThreadPostElement || (window.__feedExports && window.__feedExports.isThreadPostElement);
+    const riverParsePost = window.__feedExports && window.__feedExports.riverParsePost;
+
+    assert(typeof isThreadPostElement === 'function', 'isThreadPostElement deve ser uma função exportada');
+    assert(typeof riverParsePost === 'function', 'riverParsePost deve ser uma função exportada');
+
+    // 1. Elementos de comentário retornam false em isThreadPostElement
+    const commentEl1 = document.createElement('div');
+    commentEl1.className = 'comment smg-cc';
+    assert(isThreadPostElement(commentEl1) === false, '.comment deve retornar false em isThreadPostElement');
+
+    const commentRow = document.createElement('div');
+    commentRow.className = 'message-responseRow';
+    const commentInner = document.createElement('div');
+    commentRow.appendChild(commentInner);
+    assert(isThreadPostElement(commentInner) === false, 'Elemento dentro de .message-responseRow deve retornar false em isThreadPostElement');
+
+    const quickEditComment = document.createElement('div');
+    quickEditComment.className = 'js-quickEditTargetComment js-post lbContainer js-lbContainer';
+    assert(isThreadPostElement(quickEditComment) === false, '.js-quickEditTargetComment.js-post deve retornar false em isThreadPostElement');
+
+    const commentByAttr = document.createElement('div');
+    commentByAttr.className = 'message--post';
+    commentByAttr.setAttribute('data-content', 'comment-1234');
+    assert(isThreadPostElement(commentByAttr) === false, 'Elemento com data-content="comment-1234" deve retornar false em isThreadPostElement');
+
+    const commentById = document.createElement('div');
+    commentById.className = 'message--post';
+    commentById.id = 'comment-5678';
+    assert(isThreadPostElement(commentById) === false, 'Elemento com id="comment-5678" deve retornar false em isThreadPostElement');
+
+    // 2. Posts reais retornam true em isThreadPostElement
+    const realPost1 = document.createElement('article');
+    realPost1.className = 'message message--post js-post';
+    realPost1.id = 'js-post-123';
+    realPost1.setAttribute('data-content', 'post-123');
+    assert(isThreadPostElement(realPost1) === true, 'Post real com article.message--post deve retornar true em isThreadPostElement');
+
+    const realPost2 = document.createElement('div');
+    realPost2.className = 'message message--post';
+    realPost2.id = 'post-456';
+    realPost2.setAttribute('data-content', 'post-456');
+    assert(isThreadPostElement(realPost2) === true, 'Post real com .message--post deve retornar true em isThreadPostElement');
+
+    // 3. riverParsePost retorna null para nós de comentários
+    const commentPostDom = document.createElement('div');
+    commentPostDom.className = 'message-responseRow';
+    commentPostDom.innerHTML = `
+        <div class="comment smg-cc">
+            <div class="js-quickEditTargetComment js-post lbContainer js-lbContainer">
+                <article class="comment-body js-selectToQuote">
+                    <div class="bbWrapper">here are some links</div>
+                </article>
+            </div>
+        </div>`;
+    const quickEditTarget = commentPostDom.querySelector('.js-quickEditTargetComment');
+    const metaDummy = { title: 'Test Thread', prefixesHtml: '', thumb: '' };
+    assert(riverParsePost(quickEditTarget, metaDummy, 'https://example.com/threads/test.123/') === null, 'riverParsePost deve retornar null para nós de comentário (.js-quickEditTargetComment)');
+    assert(riverParsePost(commentPostDom, metaDummy, 'https://example.com/threads/test.123/') === null, 'riverParsePost deve retornar null para container de comentário (.message-responseRow)');
+
+    // 4. riverParsePost em um post com links internos para /post-99999 dentro de sua .bbWrapper extrai o ID correto do post e NÃO o ID do link contido no texto
+    const postWithInternalLink = document.createElement('article');
+    postWithInternalLink.className = 'message message--post js-post';
+    postWithInternalLink.id = 'js-post-77777';
+    postWithInternalLink.setAttribute('data-content', 'post-77777');
+    postWithInternalLink.innerHTML = `
+        <div class="message-inner">
+            <div class="message-cell message-cell--main">
+                <header class="message-attribution">
+                    <a href="/threads/test.123/post-77777">#1</a>
+                    <time datetime="2026-09-01T12:00:00Z" data-timestamp="1788264000">Sep 1, 2026</time>
+                </header>
+                <div class="message-userContent">
+                    <div class="bbWrapper">
+                        Check this other post: <a href="https://forums.socialmediagirls.com/threads/minhas-edit.226638/post-99999" class="link link--internal">https://forums.socialmediagirls.com/threads/minhas-edit.226638/post-99999</a>
+                        <div class="message-responses">
+                            <div class="message-responseRow">
+                                <div class="comment smg-cc">nested comment text</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    const parsedPost = riverParsePost(postWithInternalLink, metaDummy, 'https://forums.socialmediagirls.com/threads/test.123/');
+    assert(parsedPost !== null, 'riverParsePost deve parsear post legítimo');
+    assert(parsedPost.postId === '77777', `riverParsePost deve extrair o postId real do post (esperado: "77777", obtido: "${parsedPost ? parsedPost.postId : ''}") e NÃO o link interno (/post-99999)`);
+    assert(!parsedPost.contentHtml.includes('nested comment text'), 'riverParsePost deve remover nós de comentários residuais do contentHtml');
+
+    // =========================================================================
+    // TESTE 22: Controle de Visualização/Notificação (last_seen_at) e Sincronização Unificada
+    // =========================================================================
+    console.log('--- TESTE 22: last_seen_at, dbFollowedMarkSeen, dbFollowedGetUnreadCount e ordenação ---');
+    const { dbFollowedMarkSeen, dbFollowedGetUnreadCount } = window.__feedDbExports;
+    assert(typeof dbFollowedMarkSeen === 'function', 'dbFollowedMarkSeen deve ser uma função exportada');
+    assert(typeof dbFollowedGetUnreadCount === 'function', 'dbFollowedGetUnreadCount deve ser uma função exportada');
+
+    // 1. dbFollowedMarkSeen(path) grava last_seen_at e limpa unread
+    mockStorage.followed.set('/threads/test-seen.100/', {
+        path: '/threads/test-seen.100/',
+        thread_name: 'Test Seen Thread',
+        updated_at: 5000,
+        last_seen_at: 4000,
+        unread: true
+    });
+    let seenEventDetail = null;
+    const onSeenEvent = (e) => { seenEventDetail = e.detail; };
+    window.addEventListener('smg-followed-seen', onSeenEvent);
+
+    await dbFollowedMarkSeen('/threads/test-seen.100/', 6000);
+    const markedItem = mockStorage.followed.get('/threads/test-seen.100/');
+    assert(markedItem.last_seen_at === 6000, `dbFollowedMarkSeen deve gravar last_seen_at = 6000 (obtido: ${markedItem.last_seen_at})`);
+    assert(markedItem.unread === false, 'dbFollowedMarkSeen deve limpar unread para false');
+    assert(seenEventDetail !== null && seenEventDetail.path === '/threads/test-seen.100/' && seenEventDetail.last_seen_at === 6000, 'Evento smg-followed-seen deve ser disparado com detalhes corretos');
+    window.removeEventListener('smg-followed-seen', onSeenEvent);
+
+    // 2. dbFollowedGetUnreadCount() retorna a contagem correta apenas quando last_seen_at < updated_at e updated_at > 0
+    mockStorage.followed.clear();
+    mockStorage.followed.set('/threads/unread-1/', { path: '/threads/unread-1/', updated_at: 5000, last_seen_at: 3000 }); // unread
+    mockStorage.followed.set('/threads/unread-2/', { path: '/threads/unread-2/', updated_at: 6000, last_seen_at: 0 }); // unread
+    mockStorage.followed.set('/threads/read-1/', { path: '/threads/read-1/', updated_at: 5000, last_seen_at: 5000 }); // read
+    mockStorage.followed.set('/threads/read-2/', { path: '/threads/read-2/', updated_at: 4000, last_seen_at: 6000 }); // read
+    mockStorage.followed.set('/threads/zero-updated/', { path: '/threads/zero-updated/', updated_at: 0, last_seen_at: 0 }); // no posts yet
+
+    const unreadTotal = await dbFollowedGetUnreadCount();
+    assert(unreadTotal === 2, `dbFollowedGetUnreadCount deve contar apenas tópicos com updated_at > 0 e last_seen_at < updated_at (esperado: 2, obtido: ${unreadTotal})`);
+
+    // 3. Ordenação da sidebar de seguidos:
+    // - Tópicos não lidos no topo: ordenar por last_seen_at DESC (fallback updated_at DESC)
+    // - Tópicos lidos abaixo: ordenar por updated_at DESC (fallback last_seen_at DESC)
+    mockStorage.followed.clear();
+    const mockDockItems = [
+        { path: '/threads/read-older/', thread_name: 'Read Older', updated_at: 1000, last_seen_at: 5000 },
+        { path: '/threads/unread-seen-newer/', thread_name: 'Unread Seen Newer', updated_at: 8000, last_seen_at: 3000 },
+        { path: '/threads/unread-seen-older/', thread_name: 'Unread Seen Older', updated_at: 9000, last_seen_at: 1000 },
+        { path: '/threads/unread-tie/', thread_name: 'Unread Tie', updated_at: 4000, last_seen_at: 1000 },
+        { path: '/threads/read-updated-newer/', thread_name: 'Read Updated Newer', updated_at: 3000, last_seen_at: 3000 },
+        { path: '/threads/read-tie/', thread_name: 'Read Tie', updated_at: 1000, last_seen_at: 2000 }
+    ];
+    mockDockItems.forEach(it => mockStorage.followed.set(it.path, it));
+
+    const { renderFollowedRow, railRefresh } = window.__aldockExports;
+    assert(typeof renderFollowedRow === 'function', 'renderFollowedRow deve estar exposto');
+
+    // Testar renderFollowedRow adicionando .is-unread e .smg-rail-wt-dot condicionalmente
+    const rowUnread = renderFollowedRow(mockDockItems[1]);
+    assert(rowUnread.classList.contains('smg-rail-wt'), 'renderFollowedRow deve ter classe smg-rail-wt');
+    assert(rowUnread.classList.contains('is-unread'), 'renderFollowedRow para tópico não visto deve ter classe is-unread');
+    assert(rowUnread.querySelector('.smg-rail-wt-dot') !== null, 'renderFollowedRow para tópico não visto deve conter .smg-rail-wt-dot');
+
+    const rowRead = renderFollowedRow(mockDockItems[0]);
+    assert(!rowRead.classList.contains('is-unread'), 'renderFollowedRow para tópico já visto NÃO deve ter classe is-unread');
+    assert(rowRead.querySelector('.smg-rail-wt-dot') === null, 'renderFollowedRow para tópico já visto NÃO deve conter .smg-rail-wt-dot');
+
+    // Testar badges coloridas em renderFollowedRow
+    const rowWithTags = renderFollowedRow({
+        path: '/threads/tags-test/',
+        thread_name: 'Tags Test',
+        tags: ['OnlyFans', 'Fansly']
+    });
+    const tagChips = Array.from(rowWithTags.querySelectorAll('.smg-al-chip'));
+    assert(tagChips.length === 2, `renderFollowedRow deve renderizar 2 chips (obtido: ${tagChips.length})`);
+    assert(tagChips[0].classList.contains('label--onlyfans'), '1º chip deve conter a classe label--onlyfans');
+    assert(tagChips[1].classList.contains('label--fansly'), '2º chip deve conter a classe label--fansly');
+
+    // Testar ordenação via railRefresh('watched')
+    const aldockEl = window.__aldockExports.getAldock();
+    const markReadBtn = aldockEl.querySelector('.smg-aldock-markread');
+    assert(markReadBtn !== null, 'Botão .smg-aldock-markread deve existir no alerts dock');
+    assert(markReadBtn.innerHTML.includes('<svg') || markReadBtn.innerHTML.includes('<path'), 'Botão .smg-aldock-markread deve conter o ícone checkAll');
+
+    const listEl = aldockEl.querySelector('.smg-aldock-body[data-tab="watched"] .smg-aldock-list');
+    await railRefresh('watched', true);
+
+    const renderedRows = Array.from(listEl.querySelectorAll('.smg-rail-wt'));
+    assert(renderedRows.length === 6, `railRefresh deve renderizar os 6 tópicos (obtido: ${renderedRows.length})`);
+
+    const renderedKeys = renderedRows.map(r => r.dataset.smgAlKey);
+    // Esperado:
+    // 1. /threads/unread-seen-newer/ (last_seen_at 3000 > 1000)
+    // 2. /threads/unread-seen-older/ (last_seen_at 1000, updated_at 9000 > 4000)
+    // 3. /threads/unread-tie/ (last_seen_at 1000, updated_at 4000)
+    // 4. /threads/read-updated-newer/ (updated_at 3000 > 1000)
+    // 5. /threads/read-older/ (updated_at 1000, last_seen_at 5000 > 2000)
+    // 6. /threads/read-tie/ (updated_at 1000, last_seen_at 2000)
+    assert(renderedKeys[0] === 'wt:/threads/unread-seen-newer', `1º tópico deve ser unread-seen-newer (obtido: ${renderedKeys[0]})`);
+    assert(renderedKeys[1] === 'wt:/threads/unread-seen-older', `2º tópico deve ser unread-seen-older (obtido: ${renderedKeys[1]})`);
+    assert(renderedKeys[2] === 'wt:/threads/unread-tie', `3º tópico deve ser unread-tie (obtido: ${renderedKeys[2]})`);
+    assert(renderedKeys[3] === 'wt:/threads/read-updated-newer', `4º tópico deve ser read-updated-newer (obtido: ${renderedKeys[3]})`);
+    assert(renderedKeys[4] === 'wt:/threads/read-older', `5º tópico deve ser read-older (obtido: ${renderedKeys[4]})`);
+    assert(renderedKeys[5] === 'wt:/threads/read-tie', `6º tópico deve ser read-tie (obtido: ${renderedKeys[5]})`);
+
+    // 4. Posts adicionados via syncThreadPage alimentam a timeline E atualizam updated_at para o timestamp do post
+    const testSyncThread = {
+        path: '/threads/sync-test.999/',
+        thread_name: 'Sync Test',
+        updated_at: 1000,
+        last_seen_at: 2000,
+        saved_pages: []
+    };
+    mockStorage.followed.set(testSyncThread.path, testSyncThread);
+
+    const prevFetchSyncTest = window.fetch;
+    window.fetch = async (url, opts) => {
+        const urlStr = typeof url === 'string' ? url : (url && url.url) || '';
+        if (urlStr.includes('/threads/sync-test.999/')) {
+            return {
+                ok: true,
+                status: 200,
+                text: async () => `<html><body>
+                    <h1 class="p-title-value">Sync Test</h1>
+                    <article class="message message--post" id="js-post-99901" data-content="post-99901">
+                        <span class="u-anchorTarget" id="post-99901"></span>
+                        <div class="message-inner">
+                            <div class="message-cell message-cell--user"><a class="username">Tester</a></div>
+                            <div class="message-cell message-cell--main"><div class="message-userContent">Content 999</div></div>
+                            <div class="message-attribution"><time data-timestamp="9500">Agora</time></div>
+                        </div>
+                    </article>
+                </body></html>`,
+                json: async () => ({}),
+                url: urlStr
+            };
+        }
+        return prevFetchSyncTest(url, opts);
+    };
+
+    const origTimelineCount = mockStorage.timeline.size;
+    const syncResult = await window.__feedSyncExports.syncThreadPage(testSyncThread, 1);
+    window.fetch = prevFetchSyncTest;
+    assert(syncResult > 0, `syncThreadPage deve adicionar posts (obtido: ${syncResult})`);
+    assert(mockStorage.timeline.size > origTimelineCount, 'Timeline deve receber novos posts após syncThreadPage');
+
+    const syncedThreadFromDb = mockStorage.followed.get(testSyncThread.path);
+    assert(syncedThreadFromDb.updated_at === 9500, `updated_at do tópico seguido deve ser atualizado para 9500 pelo post real (obtido: ${syncedThreadFromDb.updated_at})`);
+    assert(syncedThreadFromDb.unread === true, 'Tópico sincronizado com post novo (> last_seen_at) deve ficar unread = true');
+
+    // 5. dbFollowedMarkAllSeen() atualiza todos os tópicos e limpa unread
+    const { dbFollowedMarkAllSeen } = window.__feedDbExports;
+    assert(typeof dbFollowedMarkAllSeen === 'function', 'dbFollowedMarkAllSeen deve estar exportada');
+    mockStorage.followed.set('/threads/unread-batch-1/', {
+        path: '/threads/unread-batch-1/',
+        updated_at: 4000,
+        last_seen_at: 1000,
+        unread: true
+    });
+    mockStorage.followed.set('/threads/unread-batch-2/', {
+        path: '/threads/unread-batch-2/',
+        updated_at: 6000,
+        last_seen_at: 2000,
+        unread: true
+    });
+    await dbFollowedMarkAllSeen();
+    const batch1 = mockStorage.followed.get('/threads/unread-batch-1/');
+    const batch2 = mockStorage.followed.get('/threads/unread-batch-2/');
+    assert(batch1.last_seen_at >= 4000 && batch1.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-1 como visto e unread = false');
+    assert(batch2.last_seen_at >= 6000 && batch2.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-2 como visto e unread = false');
+
+    // =========================================================================
+    // TESTE 23: Regras de largura 100% da Timeline e last_seen_at no primeiro processamento
+    // =========================================================================
+    console.log('--- TESTE 23: Largura 100% da timeline e last_seen_at na primeira ingestão ---');
+
+    // 1. Verificar regras CSS de largura total para html.smg-watched-feed e html:not(.smg-home)
+    assert(scriptContent.includes('html.smg-watched-feed .p-body-main--withSidebar'), 'script.js deve conter regra de largura total para .p-body-main--withSidebar na timeline');
+    assert(scriptContent.includes('html.smg-watched-feed .p-body-content'), 'script.js deve conter regra de largura total para .p-body-content na timeline');
+    assert(scriptContent.includes('html:not(.smg-home) .p-body-sidebar'), 'script.js deve esconder a sidebar em qualquer página fora da home (html:not(.smg-home))');
+
+    // 2. Testar ingestão pela primeira vez de um tópico (!prev) via ingestWatchedPageToFollowed
+    const firstIngestHtml = `<html><body>
+        <div class="structItem structItem--thread">
+            <div class="structItem-title">
+                <a href="/threads/brand-new-thread.7777/">Brand New Thread</a>
+            </div>
+            <div class="structItem-cell--latest">
+                <time data-timestamp="8888">Hoje às 20:00</time>
+            </div>
+        </div>
+    </body></html>`;
+    const firstIngestDoc = new JSDOM(firstIngestHtml).window.document;
+    await window.__filterbarExports.ingestWatchedPageToFollowed(firstIngestDoc);
+    const brandNew = mockStorage.followed.get('/threads/brand-new-thread.7777/');
+    assert(brandNew !== undefined, 'Tópico novo deve ter sido salvo no banco');
+    assert(brandNew.updated_at === 8888, `updated_at deve ser 8888 (obtido: ${brandNew.updated_at})`);
+    assert(brandNew.last_seen_at === 8888, `Na primeira ingestão (!prev), last_seen_at deve ser igual a updated_at (8888) (obtido: ${brandNew.last_seen_at})`);
+    assert(brandNew.unread === false, `Na primeira ingestão (!prev), unread deve ser false (obtido: ${brandNew.unread})`);
+
+    // 3. Testar syncThreadPage em tópico sem last_seen_at prévio
+    const threadWithoutSeen = {
+        path: '/threads/no-seen.888/',
+        thread_name: 'No Seen Thread',
+        updated_at: 0,
+        last_seen_at: 0,
+        saved_pages: []
+    };
+    mockStorage.followed.set(threadWithoutSeen.path, threadWithoutSeen);
+    const prevFetchNoSeen = window.fetch;
+    window.fetch = async (url, opts) => {
+        const urlStr = typeof url === 'string' ? url : (url && url.url) || '';
+        if (urlStr.includes('/threads/no-seen.888/')) {
+            return {
+                ok: true,
+                status: 200,
+                text: async () => `<html><body>
+                    <h1 class="p-title-value">No Seen Thread</h1>
+                    <article class="message message--post" id="js-post-88801" data-content="post-88801">
+                        <span class="u-anchorTarget" id="post-88801"></span>
+                        <div class="message-inner">
+                            <div class="message-cell message-cell--user"><a class="username">Tester</a></div>
+                            <div class="message-cell message-cell--main"><div class="message-userContent">Content 888</div></div>
+                            <div class="message-attribution"><time data-timestamp="7700">Agora</time></div>
+                        </div>
+                    </article>
+                </body></html>`,
+                json: async () => ({}),
+                url: urlStr
+            };
+        }
+        return prevFetchNoSeen(url, opts);
+    };
+    await window.__feedSyncExports.syncThreadPage(threadWithoutSeen, 1);
+    window.fetch = prevFetchNoSeen;
+    const syncedNoSeen = mockStorage.followed.get(threadWithoutSeen.path);
+    assert(syncedNoSeen.updated_at === 7700, `updated_at deve ser 7700 (obtido: ${syncedNoSeen.updated_at})`);
+    assert(syncedNoSeen.last_seen_at === 7700, `last_seen_at deve ser inicializado com updated_at (7700) (obtido: ${syncedNoSeen.last_seen_at})`);
+    assert(syncedNoSeen.unread === false, 'Tópico sem last_seen_at inicial sincronizado pela primeira vez não deve ficar unread');
 
     // =========================================================================
     // RESUMO FINAL

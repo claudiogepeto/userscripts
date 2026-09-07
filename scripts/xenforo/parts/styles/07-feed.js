@@ -3,9 +3,38 @@
             /* modo feed: o JS marca .smg-river-hide nos irmãos do river (lista nativa + filtro + paginação) → robusto, independe da classe do bloco do tema */
             .smg-river-hide { display: none !important; }
             html.smg-watched-feed .structItemContainer { display: none !important; }   /* flash-kill: a lista some já no document-start, antes do JS rodar (no-op na home) */
-            html.smg-watched-feed .p-body-sidebar { display: none !important; }   /* feed limpo (sem sidebar de stats/online) */
+            html.smg-watched-feed .p-body-sidebar,
+            html.smg-watched-feed .p-body-sidebarCol {
+                display: none !important;
+                width: 0 !important;
+            }
+            html.smg-watched-feed .p-body-main--withSidebar,
+            html.smg-watched-feed .p-body-main {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                grid-template-columns: none !important;
+                gap: 0 !important;
+            }
+            html.smg-watched-feed .p-body-content,
+            html.smg-watched-feed .p-body-contentCol,
+            html.smg-watched-feed .p-body-pageContent {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                float: none !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
             #smg-river { display: none; }
-            html.smg-watched-feed #smg-river { display: block; }
+            html.smg-watched-feed #smg-river {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
             /* header do feed: título grande "Feed" + slot de ações (ícone de notices) à direita. Substitui a antiga tabbar. */
             .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.10)); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
             @media (max-width: 600px) { .smg-river-head { margin-top: 16px; } }

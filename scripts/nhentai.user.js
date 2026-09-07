@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NHentai 2.0
 // @namespace    nhentai-dark-gallery
-// @version      1.1.1
+// @version      1.1.6
 // @author       claudiogepeto
 // @description  Modern dark AMOLED theme, unified topbar command search, responsive gallery grid, multi-mode reader, non-English filter, and infinite scroll for NHentai
 // @match        https://nhentai.net/*
@@ -116,6 +116,14 @@
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
 
+    const escapeHtml = (text) =>
+        (text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
     // SVG Icons
     const svg = (inner) =>
         `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
@@ -184,6 +192,8 @@
         };
     })();
 
+    const harvestedTags = new Set();
+
     function getTagColor(rawTag) {
         const clean = rawTag.replace(/^[-+]/, "").toLowerCase();
         const colon = clean.indexOf(":");
@@ -238,6 +248,12 @@
                     method: "GET",
                     url: url.startsWith("http") ? url : location.origin + url,
                     onload: (res) => {
+                        if (res.status >= 400) {
+                            const err = new Error("HTTP " + res.status);
+                            err.status = res.status;
+                            reject(err);
+                            return;
+                        }
                         try {
                             resolve(JSON.parse(res.responseText));
                         } catch (e) {
@@ -249,7 +265,11 @@
             } else {
                 fetch(url, { credentials: "same-origin" })
                     .then((r) => {
-                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        if (!r.ok) {
+                            const err = new Error("HTTP " + r.status);
+                            err.status = r.status;
+                            throw err;
+                        }
                         return r.json();
                     })
                     .then(resolve)
@@ -291,7 +311,11 @@
     async function fetchMirrorGalleryMeta(galleryId) {
         const url = new URL(`/g/${encodeURIComponent(galleryId)}/`, location.origin);
         const response = await fetch(url.href, { credentials: "same-origin" });
-        if (!response.ok) throw new Error(`Gallery metadata HTTP ${response.status}`);
+        if (!response.ok) {
+            const err = new Error(`Gallery metadata HTTP ${response.status}`);
+            err.status = response.status;
+            throw err;
+        }
         const html = await response.text();
         const doc = new DOMParser().parseFromString(html, "text/html");
         return {
@@ -332,9 +356,16 @@
                     try {
                         data = await apiGet(`/api/v2/galleries/${galleryId}`);
                     } catch (e1) {
+                        if (e1?.status === 429 || String(e1?.message).includes("429")) {
+                            throw e1;
+                        }
                         try {
                             data = await apiGet(`/api/gallery/${galleryId}`);
-                        } catch (e2) {}
+                        } catch (e2) {
+                            if (e2?.status === 429 || String(e2?.message).includes("429")) {
+                                throw e2;
+                            }
+                        }
                     }
                 } else if (isNhentaiXxxHost() || isNhentaiToHost()) {
                     data = await fetchMirrorGalleryMeta(galleryId);
@@ -344,7 +375,14 @@
                     setCachedGalleryMeta(galleryId, data);
                     onComplete(data);
                 }
-            } catch (err) {}
+            } catch (err) {
+                if (err?.status === 429 || String(err?.message).includes("429")) {
+                    console.warn("[NHentai] Rate limit (HTTP 429) hit. Pausing API queue for 30s and clearing queue.");
+                    apiQueue.length = 0;
+                    await new Promise((r) => setTimeout(r, 30000));
+                    break;
+                }
+            }
 
             await new Promise((r) => setTimeout(r, 160));
         }
@@ -1051,29 +1089,42 @@
         badge.title = `${pageCount} pages`;
     }
 
-    const cardPageCountObserver = new IntersectionObserver(
-        (entries) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
+    function observeCardPageCount(card) {
+        if (!card || card.dataset.nhPageCountObserved === "true") return;
+        if (!getGalleryCardCover(card)) return;
 
-                const card = entry.target;
-                cardPageCountObserver.unobserve(card);
-                const galleryId = getGalleryIdFromCard(card);
-                if (!galleryId) return;
+        const galleryId = getGalleryIdFromCard(card);
+        if (!galleryId) return;
 
+        card.dataset.nhPageCountObserved = "true";
+
+        const cached = getCachedGalleryMeta(galleryId);
+        if (cached) {
+            syncCardPageCount(card, cached);
+            return;
+        }
+
+        let hoverTimer = null;
+        card.addEventListener("mouseenter", () => {
+            if (card.querySelector(".nh-card-pages")) return;
+            const currentCached = getCachedGalleryMeta(galleryId);
+            if (currentCached) {
+                syncCardPageCount(card, currentCached);
+                return;
+            }
+            hoverTimer = setTimeout(() => {
                 queueGalleryFetch(galleryId, (data) => {
                     syncCardPageCount(card, data);
                 });
-            });
-        },
-        { rootMargin: "500px 0px 500px 0px" }
-    );
+            }, 350);
+        });
 
-    function observeCardPageCount(card) {
-        if (card.dataset.nhPageCountObserved === "true") return;
-        if (!getGalleryCardCover(card)) return;
-        card.dataset.nhPageCountObserved = "true";
-        cardPageCountObserver.observe(card);
+        card.addEventListener("mouseleave", () => {
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+        });
     }
 
     const cardTagsObserver = new IntersectionObserver(
@@ -1171,6 +1222,9 @@
         // Learn all tags dynamically
         data.tags.forEach((t) => {
             tagStore.add(`${t.type}:${t.name}`);
+            if (t.type === "tag" && t.name) {
+                harvestedTags.add(t.name.toLowerCase());
+            }
         });
 
         // Rebuild dynamic tag chips cleanly
@@ -1232,7 +1286,133 @@
 
     }
 
+    function enhanceSortBar() {
+        const sort = document.querySelector(".sort");
+        if (!sort || sort.dataset.nhEnhanced) return;
+        if (document.querySelector("#tag-container")) return;
+
+        const links = Array.from(sort.querySelectorAll("a"));
+        if (!links.length) return;
+
+        const recentLink = sort.querySelector('a[href*="sort=date"]') || links[0];
+        const todayLink = sort.querySelector('a[href*="sort=popular-today"]');
+        const weekLink = sort.querySelector('a[href*="sort=popular-week"]');
+        const allTimeLink = links.find((a) => a.href.includes("sort=popular") && !a.href.includes("popular-today") && !a.href.includes("popular-week"));
+
+        if (!todayLink && !weekLink && !allTimeLink && !sort.querySelector('a[href*="sort="]')) return;
+
+        const currentUrl = new URL(location.href);
+        const currentSort = currentUrl.searchParams.get("sort") || "";
+
+        const buildHref = (link, sortVal) => {
+            if (link && link.getAttribute("href")) return link.getAttribute("href");
+            const u = new URL(location.href);
+            if (sortVal) u.searchParams.set("sort", sortVal);
+            else u.searchParams.delete("sort");
+            u.searchParams.delete("page");
+            return u.pathname + u.search;
+        };
+
+        const recentHref = buildHref(recentLink, "date");
+        const todayHref = buildHref(todayLink, "popular-today");
+        const weekHref = buildHref(weekLink, "popular-week");
+        const allTimeHref = buildHref(allTimeLink, "popular");
+
+        const isTodayActive = currentSort === "popular-today" || !!todayLink?.classList.contains("current");
+        const isWeekActive = currentSort === "popular-week" || !!weekLink?.classList.contains("current");
+        const isAllTimeActive = currentSort === "popular" || !!allTimeLink?.classList.contains("current");
+        const isPopularActive = isTodayActive || isWeekActive || isAllTimeActive;
+        const isRecentActive = currentSort === "date" || (!isPopularActive && (!!recentLink?.classList.contains("current") || !currentSort));
+
+        let currentDateMode = "Week";
+        if (isTodayActive) currentDateMode = "Today";
+        else if (isAllTimeActive) currentDateMode = "All Time";
+        else if (isWeekActive) currentDateMode = "Week";
+
+        let popularHref = weekHref;
+        if (isTodayActive) popularHref = todayHref;
+        else if (isAllTimeActive) popularHref = allTimeHref;
+        else popularHref = weekHref;
+
+        const currentSortMode = isPopularActive ? "Popular" : "Recent";
+
+        sort.dataset.nhEnhanced = "true";
+        sort.innerHTML = `
+            <div class="nh-sort-inner">
+                <div class="nh-sort-group">
+                    <div class="nh-sort-dropdown nh-sort-dropdown-mode">
+                        <button type="button" class="nh-sort-item nh-sort-drop-toggle current">
+                            <span>Sort: ${currentSortMode}</span>
+                            ${ICON.arrowDown}
+                        </button>
+                        <div class="nh-sort-menu">
+                            <a href="${recentHref}" class="nh-sort-menu-item ${isRecentActive ? 'current' : ''}">Recent</a>
+                            <a href="${popularHref}" class="nh-sort-menu-item ${isPopularActive ? 'current' : ''}">Popular</a>
+                        </div>
+                    </div>
+                    <div class="nh-sort-dropdown nh-sort-dropdown-date ${isRecentActive ? 'nh-sort-inactive-date' : ''}">
+                        <button type="button" class="nh-sort-item nh-sort-drop-toggle ${isPopularActive ? 'current' : ''}">
+                            <span>Date: ${currentDateMode}</span>
+                            ${ICON.arrowDown}
+                        </button>
+                        <div class="nh-sort-menu">
+                            <a href="${todayHref}" class="nh-sort-menu-item ${isTodayActive ? 'current' : ''}">Today</a>
+                            <a href="${weekHref}" class="nh-sort-menu-item ${isWeekActive ? 'current' : ''}">Week</a>
+                            <a href="${allTimeHref}" class="nh-sort-menu-item ${isAllTimeActive ? 'current' : ''}">All Time</a>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="nh-sort-filter-btn" title="Filtros de pesquisa">
+                    ${ICON.filter}
+                    <span>Filtros</span>
+                </button>
+            </div>
+        `;
+
+        const dropdowns = sort.querySelectorAll(".nh-sort-dropdown");
+        dropdowns.forEach((dropdown) => {
+            const toggleBtn = dropdown.querySelector(".nh-sort-drop-toggle");
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const wasOpen = dropdown.classList.contains("open");
+                    dropdowns.forEach((d) => d.classList.remove("open"));
+                    if (!wasOpen) {
+                        dropdown.classList.add("open");
+                    }
+                });
+            }
+        });
+        sort.querySelectorAll(".nh-sort-menu").forEach((menu) => {
+            menu.addEventListener("click", (e) => e.stopPropagation());
+        });
+
+        if (!window.__nhSortDocClickBound) {
+            window.__nhSortDocClickBound = true;
+            document.addEventListener("click", (e) => {
+                document.querySelectorAll(".nh-sort-dropdown.open").forEach((d) => {
+                    if (!d.contains(e.target)) {
+                        d.classList.remove("open");
+                    }
+                });
+            });
+        }
+
+        const filterBtn = sort.querySelector(".nh-sort-filter-btn");
+        if (filterBtn) {
+            filterBtn.addEventListener("click", () => {
+                const u = new URL(location.href);
+                const q = u.searchParams.get(isNhentaiXxxHost() ? "key" : "q") || "";
+                const s = u.searchParams.get("sort") || "";
+                if (window.__nhOpenSearch) {
+                    window.__nhOpenSearch(q, s);
+                }
+            });
+        }
+    }
+
     function syncAllGalleryCards() {
+        enhanceSortBar();
         getGalleryCards().forEach((card) => {
             applyLangFilterToCard(card);
             observeCardPageCount(card);
@@ -1589,25 +1769,35 @@
         const source = getImageSource(image);
         if (!source || /^data:/i.test(source)) return;
 
-        // Keep the image in a dedicated frame so the same cover can provide a
-        // contained foreground and a blurred, full-bleed background without
-        // touching the site's links, badges, or caption markup.
-        let frame = image.parentElement?.classList.contains("nh-cover-media")
-            ? image.parentElement
-            : null;
-        if (!frame && image.parentNode === cover) {
+        // Clean up any stale, empty, or duplicate cover frames in this cover
+        const existingFrames = Array.from(cover.querySelectorAll(".nh-cover-media"));
+        let frame = existingFrames.find((f) => f.contains(image)) || null;
+
+        if (!frame && existingFrames.length > 0) {
+            frame = existingFrames[0];
+            frame.appendChild(image);
+        } else if (!frame) {
             frame = el("span", { className: "nh-cover-media" });
-            cover.insertBefore(frame, image);
+            const parent = image.parentElement || cover;
+            parent.insertBefore(frame, image);
             frame.appendChild(image);
         }
+
+        // Remove any duplicate or orphaned frames that do not contain the active image
+        existingFrames.forEach((f) => {
+            if (f !== frame) f.remove();
+        });
 
         const escaped = source.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
         const background = `url("${escaped}")`;
         cover.classList.add("nh-cover-backdrop");
         cover.style.setProperty("--nh-cover-image", background);
-        if (frame) {
-            frame.classList.add("nh-cover-media--backdrop");
-            frame.style.setProperty("--nh-cover-image", background);
+        frame.classList.add("nh-cover-media--backdrop");
+        frame.style.setProperty("--nh-cover-image", background);
+
+        if (!image.complete && !image.dataset.nhBackdropBound) {
+            image.dataset.nhBackdropBound = "true";
+            image.addEventListener("load", () => setCoverBackdrop(cover, image), { once: true });
         }
     }
 
@@ -2502,6 +2692,10 @@
 
                 <!-- Body (Autocomplete Suggestions & Recent Searches) -->
                 <div class="nh-sb-body">
+                    <div class="nh-sb-harvested" hidden>
+                        <div class="nh-harvested-title">Tags nos resultados:</div>
+                        <div class="nh-harvested-list"></div>
+                    </div>
                     <div class="nh-sb-suggestions" hidden></div>
                     <div class="nh-sb-recents"></div>
                 </div>
@@ -2525,18 +2719,88 @@
         const chipsContainer = modal.querySelector(".nh-sb-chips");
         const suggestionsBox = modal.querySelector(".nh-sb-suggestions");
         const recentsBox = modal.querySelector(".nh-sb-recents");
+        const harvestedBox = modal.querySelector(".nh-sb-harvested");
+        const harvestedList = modal.querySelector(".nh-harvested-list");
         const goBtn = modal.querySelector(".nh-sb-go");
 
         let activeTokens = new Set();
         let selectedSort = "";
         let focusedIndex = -1;
 
-        window.__nhOpenSearch = () => {
+        function updateHarvestedTagsUI() {
+            if (!harvestedTags.size) {
+                if (harvestedBox) harvestedBox.hidden = true;
+                return;
+            }
+            if (harvestedBox) harvestedBox.hidden = !suggestionsBox.hidden;
+            if (!harvestedList) return;
+            harvestedList.innerHTML = "";
+
+            const topTags = Array.from(harvestedTags).slice(0, 30);
+            topTags.forEach((name) => {
+                const incToken = `tag:"${name}"`;
+                const excToken = `-tag:"${name}"`;
+                const isInc = activeTokens.has(incToken) || activeTokens.has(`tag:${name}`) || activeTokens.has(name) || activeTokens.has(`"${name}"`);
+                const isExc = activeTokens.has(excToken) || activeTokens.has(`-tag:${name}`) || activeTokens.has(`-${name}`) || activeTokens.has(`-"${name}"`);
+
+                const chip = el("button", {
+                    type: "button",
+                    className: `nh-harvested-chip ${isInc ? "is-included" : ""} ${isExc ? "is-excluded" : ""}`.trim()
+                });
+                chip.innerHTML = `${isExc ? "−" : (isInc ? "+" : "")}<span>${escapeHtml(name)}</span>`;
+                chip.addEventListener("click", () => {
+                    if (!isInc && !isExc) {
+                        activeTokens.add(incToken);
+                    } else if (isInc) {
+                        activeTokens.delete(incToken);
+                        activeTokens.delete(`tag:${name}`);
+                        activeTokens.delete(name);
+                        activeTokens.delete(`"${name}"`);
+                        activeTokens.add(excToken);
+                    } else {
+                        activeTokens.delete(excToken);
+                        activeTokens.delete(`-tag:${name}`);
+                        activeTokens.delete(`-${name}`);
+                        activeTokens.delete(`-"${name}"`);
+                    }
+                    renderChips();
+                    updateHarvestedTagsUI();
+                    modal.querySelectorAll(".nh-quick-chip[data-token]").forEach((btn) => {
+                        btn.classList.toggle("active", activeTokens.has(btn.dataset.token));
+                    });
+                    input.focus();
+                });
+                harvestedList.appendChild(chip);
+            });
+        }
+
+        window.__nhOpenSearch = (initialQuery = null, initialSort = null) => {
             modal.hidden = false;
             document.documentElement.style.overflow = "hidden";
             input.value = "";
+
+            if (initialQuery !== null) {
+                activeTokens.clear();
+                if (initialQuery.trim()) {
+                    const tokens = initialQuery.match(/(-?[\w]+:"[^"]*"|-?"[^"]*"|[^\s"]+)/g) || initialQuery.trim().split(/\s+/);
+                    tokens.forEach((t) => activeTokens.add(t));
+                }
+            }
+
+            if (initialSort !== null) {
+                selectedSort = initialSort;
+                modal.querySelectorAll(".nh-quick-chip[data-sort]").forEach((b) => {
+                    b.classList.toggle("active", b.dataset.sort === selectedSort);
+                });
+            }
+
+            modal.querySelectorAll(".nh-quick-chip[data-token]").forEach((btn) => {
+                btn.classList.toggle("active", activeTokens.has(btn.dataset.token));
+            });
+
             renderRecents();
             renderChips();
+            updateHarvestedTagsUI();
             renderSuggestions("");
             setTimeout(() => input.focus(), 50);
         };
@@ -2634,6 +2898,7 @@
                 chip.querySelector(".nh-chip-del").addEventListener("click", () => {
                     activeTokens.delete(token);
                     renderChips();
+                    updateHarvestedTagsUI();
                     modal.querySelectorAll(`.nh-quick-chip[data-token="${token}"]`).forEach((b) => b.classList.remove("active"));
                 });
 
@@ -2648,11 +2913,13 @@
             if (!query) {
                 suggestionsBox.hidden = true;
                 recentsBox.hidden = false;
+                updateHarvestedTagsUI();
                 return;
             }
 
             suggestionsBox.hidden = false;
             recentsBox.hidden = true;
+            if (harvestedBox) harvestedBox.hidden = true;
             suggestionsBox.innerHTML = "";
 
             const allTags = tagStore.all();
@@ -2809,8 +3076,28 @@
                     const clean = m.replace(/^[\[\(]|[\]\)]$/g, "").trim();
                     if (clean && clean.length > 2 && clean.length < 30) {
                         tagStore.add(clean);
+                        harvestedTags.add(clean.toLowerCase());
                     }
                 });
+            }
+            card.querySelectorAll(".nh-tag-chip, .nh-tag-general, a[href*='/tag/']").forEach((t) => {
+                const txt = t.textContent.trim().replace(/^Tag:\s*/i, "").replace(/^[#\s]+/, "");
+                if (txt && txt.length > 2 && txt.length < 30) {
+                    tagStore.add(`tag:${txt}`);
+                    harvestedTags.add(txt.toLowerCase());
+                }
+            });
+            const link = getGalleryCardLink(card);
+            const m = link?.getAttribute("href")?.match(/\/g\/(\d+)/);
+            if (m) {
+                const cached = getCachedGalleryMeta(m[1]);
+                if (cached && Array.isArray(cached.tags)) {
+                    cached.tags.forEach((t) => {
+                        if (t.type === "tag" && t.name) {
+                            harvestedTags.add(t.name.toLowerCase());
+                        }
+                    });
+                }
             }
         });
     }
@@ -2967,6 +3254,206 @@
             font-weight: 800 !important;
             letter-spacing: -0.02em !important;
             text-align: left !important;
+        }
+
+        /* Enhanced Single-Row Sort Bar */
+        .sort,
+        .sort:not(:has(#tag-container)) {
+            position: relative !important;
+            z-index: 100 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: 1200px !important;
+            margin: 12px auto 16px !important;
+            padding: 0 16px !important;
+            background: transparent !important;
+            box-sizing: border-box !important;
+        }
+
+        .nh-sort-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+            padding: 6px 8px;
+            background: rgba(18, 18, 24, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--nh-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            box-sizing: border-box;
+        }
+
+        .nh-sort-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nh-sort-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 34px;
+            padding: 0 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--nh-border);
+            border-radius: 8px;
+            color: var(--nh-text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .nh-sort-item:hover {
+            background: var(--nh-surface-elevated);
+            color: #fff;
+            border-color: var(--nh-border-light);
+        }
+
+        .nh-sort-item.current {
+            background: var(--nh-grad) !important;
+            color: #fff !important;
+            border-color: transparent !important;
+            box-shadow: 0 2px 10px rgba(237, 37, 83, 0.35);
+        }
+
+        .nh-sort-dropdown {
+            position: relative !important;
+        }
+
+        .nh-sort-dropdown.open {
+            z-index: 1000 !important;
+        }
+
+        .nh-sort-dropdown.nh-sort-inactive-date .nh-sort-drop-toggle {
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--nh-border);
+            color: var(--nh-text-secondary);
+        }
+
+        .nh-sort-dropdown.nh-sort-inactive-date:hover .nh-sort-drop-toggle,
+        .nh-sort-dropdown.nh-sort-inactive-date.open .nh-sort-drop-toggle {
+            opacity: 1;
+            border-color: var(--nh-border-light);
+            color: #fff;
+        }
+
+        .nh-sort-drop-toggle {
+            appearance: none;
+            -webkit-appearance: none;
+            font-family: inherit;
+        }
+
+        .nh-sort-drop-toggle svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .nh-sort-dropdown.open .nh-sort-drop-toggle svg,
+        .nh-sort-dropdown:hover .nh-sort-drop-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        .nh-sort-menu {
+            position: absolute !important;
+            top: calc(100% + 4px) !important;
+            left: 0;
+            min-width: 150px;
+            padding: 6px;
+            background: #14141c;
+            border: 1px solid var(--nh-border-light);
+            border-radius: 10px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            z-index: 99999 !important;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-6px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .nh-sort-menu::before {
+            content: "" !important;
+            position: absolute !important;
+            top: -8px !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 8px !important;
+        }
+
+        .nh-sort-dropdown.open .nh-sort-menu,
+        .nh-sort-dropdown:hover .nh-sort-menu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .nh-sort-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--nh-text-secondary);
+            font-size: 12.5px;
+            font-weight: 550;
+            text-decoration: none;
+            transition: all 0.12s ease;
+        }
+
+        .nh-sort-menu-item:hover {
+            background: var(--nh-surface-elevated);
+            color: #fff;
+        }
+
+        .nh-sort-menu-item.current {
+            background: rgba(237, 37, 83, 0.18);
+            color: var(--nh-accent);
+            font-weight: 650;
+        }
+
+        .nh-sort-filter-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 34px;
+            padding: 0 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--nh-border);
+            border-radius: 8px;
+            color: var(--nh-text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .nh-sort-filter-btn:hover {
+            background: var(--nh-surface-elevated);
+            border-color: var(--nh-accent);
+            color: var(--nh-accent);
+            box-shadow: 0 2px 12px rgba(237, 37, 83, 0.2);
+        }
+
+        .nh-sort-filter-btn svg {
+            width: 15px;
+            height: 15px;
         }
 
         #content:has(#tag-container) > .sort {
@@ -3914,9 +4401,13 @@
 
         .gallery .cover {
             position: relative !important;
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
             width: 100% !important;
+            min-height: 0 !important;
+            height: auto !important;
             overflow: hidden !important;
+            isolation: isolate !important;
             padding: 0 !important;
             background: #08080a !important;
             text-decoration: none !important;
@@ -3963,9 +4454,14 @@
             position: relative !important;
             z-index: 1 !important;
             display: block !important;
+            flex: 0 0 auto !important;
             width: 100% !important;
             aspect-ratio: 1 / 1.41 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: 100% !important;
             overflow: hidden !important;
+            isolation: isolate !important;
             background: #08080a !important;
         }
 
@@ -5346,6 +5842,67 @@
             padding: 8px 12px;
         }
 
+        .nh-sb-harvested {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--nh-border);
+            background: #0d0d12;
+            border-radius: var(--nh-radius-sm);
+            margin-bottom: 8px;
+        }
+
+        .nh-harvested-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--nh-text-muted);
+            margin-bottom: 8px;
+        }
+
+        .nh-harvested-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .nh-harvested-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 550;
+            color: var(--nh-text-secondary);
+            background: var(--nh-surface);
+            border: 1px solid var(--nh-border);
+            cursor: pointer;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+
+        .nh-harvested-chip:hover {
+            border-color: var(--nh-border-light);
+            color: #fff;
+            background: var(--nh-surface-elevated);
+        }
+
+        .nh-harvested-chip.is-included {
+            background: rgba(34, 197, 94, 0.18) !important;
+            border-color: rgba(34, 197, 94, 0.5) !important;
+            color: #4ade80 !important;
+            font-weight: 650;
+        }
+
+        .nh-harvested-chip.is-excluded {
+            background: rgba(239, 68, 68, 0.18) !important;
+            border-color: rgba(239, 68, 68, 0.5) !important;
+            color: #f87171 !important;
+            font-weight: 650;
+        }
+
         .nh-tag-row {
             display: flex;
             align-items: center;
@@ -5486,6 +6043,26 @@
         /* The mobile palette is a bottom sheet: it is wider, taller and keeps
            the primary action close to the user's thumb. */
         @media (max-width: 768px) {
+            .sort:not(:has(#tag-container)) {
+                margin: 8px auto 12px !important;
+                padding: 0 10px !important;
+            }
+            .nh-sort-inner {
+                gap: 8px;
+                padding: 5px 6px;
+            }
+            .nh-sort-item {
+                height: 30px;
+                padding: 0 10px;
+                font-size: 12px;
+            }
+            .nh-sort-filter-btn {
+                height: 30px;
+                padding: 0 10px;
+                font-size: 12px;
+                gap: 5px;
+            }
+
             .nh-search-overlay {
                 align-items: flex-end !important;
                 justify-content: stretch !important;
@@ -5689,6 +6266,34 @@
                 min-width: 0 !important;
             }
 
+            .gallery .cover,
+            html.nh-mirror-xxx .gallery_item > a {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                aspect-ratio: auto !important;
+                padding: 0 !important;
+            }
+
+            .gallery .nh-cover-media,
+            html.nh-mirror-xxx .gallery_item > a .nh-cover-media {
+                flex: 0 0 auto !important;
+                width: 100% !important;
+                aspect-ratio: 1 / 1.41 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: 100% !important;
+                overflow: hidden !important;
+                isolation: isolate !important;
+            }
+            .gallery .cover .nh-cover-media.nh-cover-media--backdrop::before,
+            .gallery .cover.nh-cover-backdrop::before,
+            html.nh-mirror-xxx .gallery_item > a .nh-cover-media.nh-cover-media--backdrop::before {
+                max-height: 120% !important;
+            }
+
             .gallery .caption {
                 font-size: 11px !important;
                 -webkit-line-clamp: 5 !important;
@@ -5751,22 +6356,17 @@
         }
 
         /* ===== Related Galleries (More Like This) Grid ===== */
-        #related-container {
+        #related-container,
+        #related-container > .container,
+        #related-container > .index-container {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+            gap: 14px !important;
             width: 95vw !important;
             max-width: 1600px !important;
             margin: 0 auto 48px auto !important;
             box-sizing: border-box !important;
-        }
-
-        #related-container > .container,
-        #related-container > div {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
-            gap: 14px !important;
             padding: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
@@ -5782,9 +6382,16 @@
             border-bottom: 1px solid var(--nh-border) !important;
         }
 
+        #related-container .gallery {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+        }
+
         @media (max-width: 768px) {
+            #related-container,
             #related-container > .container,
-            #related-container > div {
+            #related-container > .index-container {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 10px !important;
             }
@@ -5999,6 +6606,10 @@
         const oldReader = document.querySelector("#nh-reader");
         if (oldReader) oldReader.remove();
 
+        harvestedTags.clear();
+        const oldSort = document.querySelector(".sort");
+        if (oldSort) delete oldSort.dataset.nhEnhanced;
+
         // Re-inject bottom nav to update active state
         const oldBottomNav = document.querySelector("#nh-bottom-nav");
         if (oldBottomNav) oldBottomNav.remove();
@@ -6054,6 +6665,7 @@
                 if (needsTopbarRepair) {
                     setupModernTopbar();
                 }
+                enhanceSortBar();
                 if (!document.querySelector("#nh-mobile-topbar")) injectMobileTopbar();
                 const cardsWithoutLanguage = getGalleryCards().find((card) => !card.dataset.nhLangProcessed);
                 if (cardsWithoutLanguage) {
@@ -6129,6 +6741,7 @@
         injectBottomNav();
 
         if (isListing) {
+            enhanceSortBar();
             // Apply language flags and filters to every gallery card.
             syncAllGalleryCards();
             // Setup infinite scroll

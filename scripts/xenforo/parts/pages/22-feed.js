@@ -23,11 +23,11 @@
     const RIVER_RETENTION_DAYS = (parseInt(gmGet('smg-feed-retention-days', ''), 10) || 30);
     // SELF-HEAL do cache: BUMP isto sempre que o formato do post serializado (riverParsePost) ou a lógica de sync mudar.
     // Na próxima abertura, dataVersion != FEED_DATA_VERSION → o IDB é descartado e reconstruído sozinho (o usuário NÃO precisa limpar cache na mão).
-    const FEED_DATA_VERSION = 11;
+    const FEED_DATA_VERSION = 12;
     // versão da LÓGICA DE SYNC: bumpar aqui re-varre tudo (zera os marcadores de "thread coberta") SEM apagar
     // os posts já guardados. Use este quando mudar como/até onde buscamos; o DATA_VERSION só quando o FORMATO
     // do post serializado mudar (aí não tem jeito, o cache velho é ilegível).
-    const FEED_SYNC_VERSION = 6;
+    const FEED_SYNC_VERSION = 7;
 
     // fila throttled p/ as buscas (não estoura o flood control do fórum) — usada pelo sync
     const RIVER_CONCURRENCY = 2;
@@ -142,6 +142,7 @@
     }
     // extrai um post → objeto SERIALIZÁVEL (vai pro IndexedDB): nada de nós do DOM, só strings/números
     function riverParsePost(post, meta, threadUrl) {
+        if (!post || !isThreadPostElement(post)) return null;
         const body = post.querySelector('.message-userContent .bbWrapper')
             || post.querySelector('.message-userContent')
             || post.querySelector('.message-body')
@@ -150,12 +151,12 @@
             || post.querySelector('.articlePreview-text');
         if (!body) return null;
         riverUnlazy(body);   // resolve as imagens lazy ANTES de serializar (senão somem no feed do SMG)
+        body.querySelectorAll('.comment, .message-responseRow, .message-responses, .js-messageResponses, .smg-cc, .js-quickEditTargetComment').forEach(c => c.remove());
         const dc = post.getAttribute('data-content') || post.getAttribute('data-lb-id') || '';
-        const m = dc.match(/post-(\d+)/)
-            || (post.id || '').match(/post-(\d+)/)
-            || (post.id || '').match(/(\d+)/)
-            || (post.querySelector('[id^="post-"]')?.id || '').match(/post-(\d+)/)
-            || (post.querySelector('a[href*="/post-"]')?.getAttribute('href') || '').match(/post-(\d+)/);
+        const m = dc.match(/^post-(\d+)$/i)
+            || (post.id || '').match(/^(?:js-)?post-(\d+)$/i)
+            || (post.getAttribute('data-lb-id') || '').match(/^post-(\d+)$/i)
+            || (post.querySelector('.message-attribution a[href*="/post-"], a.message-attribution-gadget[href*="/post-"], .message-attribution a[href*="posts/"], a.message-attribution-gadget[href*="posts/"]')?.getAttribute('href') || '').match(/(?:posts\/|post-)(\d+)/i);
         const postId = m ? m[1] : '';
         if (!postId) return null;
         let ts = 0;
@@ -200,7 +201,9 @@
     }
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
     function riverCard(p, wm) {
+        if (!p) return null;
         const postId = p.post_id || p.postId || '';
+        if (!postId || (!p.content_html && !p.contentHtml)) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').trim();
@@ -364,7 +367,7 @@
             posts.forEach(p => {
                 const pid = p.post_id || p.postId;
                 riverSeen.add(pid);
-                try { const card = riverCard(p, riverOldWm); cards.push(card); frag.appendChild(card); } catch (e) {}
+                try { const card = riverCard(p, riverOldWm); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
             });
             if (riverMoreEl && riverMoreEl.parentNode === riverList) riverList.insertBefore(frag, riverMoreEl); else riverList.appendChild(frag);
             markRiverSortDirty();
@@ -396,6 +399,7 @@
             if (riverList.querySelector('[data-post-id="' + pid + '"]')) return;
             if (riverSeen) riverSeen.add(pid);
             let card; try { card = riverCard(p, riverOldWm); } catch (e) { return; }
+            if (!card) return;
             card.classList.add('smg-fp-enter');   // entrada animada (só os recém-chegados; some após a animação)
             setTimeout(() => card.classList.remove('smg-fp-enter'), 1300);
             let ref = null;
@@ -454,6 +458,7 @@
                 '<div class="smg-fp-setup-sub">' + i18n('Reading the threads you follow…') + '</div>' +
                 '<div class="smg-fp-setup-bar"><span class="smg-fp-setup-barfill"></span></div>' +
             '</div>';
+        markRiverPaintReady();
     }
     // atualiza o aviso de setup ao vivo: "{done}/{total} tópicos · {added} posts" + barra de progresso. No-op após a 1ª pintura.
     function setupProgress(p) {
@@ -491,7 +496,23 @@
             kickSync(null, true);
         });
         const actions = fhead.querySelector('.smg-river-head-actions');
-        if (actions) actions.appendChild(refBtn);
+        if (actions) {
+            const markAllBtn = document.createElement('button');
+            markAllBtn.type = 'button';
+            markAllBtn.className = 'smg-river-markread smg-btn smg-btn--ghost';
+            markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
+            markAllBtn.setAttribute('aria-label', markAllBtn.title);
+            markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
+            markAllBtn.addEventListener('click', () => {
+                saveNewestWatermark();
+                if (riverList) riverList.querySelectorAll('.smg-fp-card.is-unread').forEach(c => c.classList.remove('is-unread'));
+                if (typeof dbFollowedMarkAllSeen === 'function') {
+                    dbFollowedMarkAllSeen();
+                }
+            });
+            actions.appendChild(markAllBtn);
+            actions.appendChild(refBtn);
+        }
         wrap.appendChild(fhead);
         riverList = document.createElement('div'); riverList.className = 'smg-fp-list';
         wrap.appendChild(riverList);
@@ -640,10 +661,24 @@
                 });
         };
 
-        if (typeof fetchAndIngestFollowed === 'function') {
-            fetchAndIngestFollowed().catch(() => 0).finally(doSync);
+        if (cold) {
+            if (typeof fetchAndIngestFollowed === 'function') {
+                fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+            } else {
+                doSync();
+            }
         } else {
-            doSync();
+            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            getFollowed.then(items => {
+                if (!items || !items.length) {
+                    if (typeof fetchAndIngestFollowed === 'function') {
+                        return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+                    }
+                }
+                doSync();
+            }).catch(() => {
+                doSync();
+            });
         }
     }
     // POLLING: enquanto o feed está visível, re-sincroniza
@@ -723,13 +758,6 @@
     document.addEventListener('visibilitychange', handleTimelineFocusOrVisibility);
     window.addEventListener('focus', handleTimelineFocusOrVisibility);
 
-    window.addEventListener('smg-followed-updated', () => {
-        if (typeof isCronRunning !== 'undefined' && isCronRunning) return;
-        if (feedSyncRunning || timelineSyncRunning) return;
-        if (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) {
-            kickSync();
-        }
-    });
 
     window.addEventListener('smg-timeline-sync-done', () => {
         if (!riverList) return;
@@ -755,6 +783,8 @@
             set feedSyncRunning(v) { feedSyncRunning = v; },
             mountSentinel,
             firstPaint,
+            showSetupState,
+            markRiverPaintReady,
             ensureRiverSorted,
             insertFreshPosts,
             fetchFreshPosts,
@@ -793,6 +823,8 @@
             handleTimelineFocusOrVisibility,
             riverCard,
             riverThreadMeta,
+            riverParsePost,
+            isThreadPostElement,
             buildRiver
         };
     }

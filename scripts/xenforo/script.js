@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.10.1
+// @version      3.12.3
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -327,6 +327,7 @@
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
         'Account': 'Conta', 'Feed mode': 'Modo feed', 'Gallery mode': 'Modo Galeria', 'Standard mode': 'Modo Padrão', 'View mode': 'Modo de visualização',
+        'Mark all as read': 'Marcar tudo como lido',
         'Page navigation': 'Navegação de página',
         'Settings': 'Configurações', 'Options': 'Opções',
         'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock', 'Reload to apply': 'Recarregar para aplicar',
@@ -1041,8 +1042,8 @@
                 display: flex !important;
                 flex-direction: column !important;
                 width: 100% !important;
-                max-width: 560px !important;
-                margin: 14px auto !important;
+                max-width: 100% !important;
+                margin: 14px 0 !important;
                 padding: 16px 18px !important;
                 background: var(--smg-s1, #16171b) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
@@ -1118,13 +1119,62 @@
                 color: var(--smg-tx, #e7e7ea) !important;
             }
             .smg-tw-media {
+                position: relative !important;
                 margin: 4px 0 12px !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
+                background: #000 !important;
+            }
+            .smg-tw-play-overlay {
+                position: absolute !important;
+                inset: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: rgba(0, 0, 0, 0.25) !important;
+                cursor: pointer !important;
+                z-index: 2 !important;
+                transition: background 0.2s ease !important;
+            }
+            .smg-tw-play-overlay:hover {
+                background: rgba(0, 0, 0, 0.45) !important;
+            }
+            .smg-tw-play-icon {
+                width: 58px !important;
+                height: 58px !important;
+                border-radius: 50% !important;
+                background: rgba(29, 155, 240, 0.95) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+                transition: transform 0.15s ease, background 0.15s ease !important;
+            }
+            .smg-tw-play-icon svg {
+                margin-left: 3px !important;
+            }
+            .smg-tw-play-overlay:hover .smg-tw-play-icon {
+                transform: scale(1.08) !important;
+                background: #1d9bf0 !important;
+            }
+            .smg-tw-play-overlay.loading .smg-tw-play-icon {
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            .smg-tw-spinner {
+                width: 38px !important;
+                height: 38px !important;
+                border: 3px solid rgba(255, 255, 255, 0.3) !important;
+                border-top-color: #1d9bf0 !important;
+                border-radius: 50% !important;
+                animation: smg-tw-spin 0.75s linear infinite !important;
+            }
+            @keyframes smg-tw-spin {
+                to { transform: rotate(360deg); }
             }
             .smg-tw-media img {
                 width: 100% !important;
-                max-height: 520px !important;
+                max-height: 640px !important;
                 object-fit: contain !important;
                 display: block !important;
                 border-radius: 12px !important;
@@ -1132,7 +1182,8 @@
             }
             .smg-tw-media video {
                 width: 100% !important;
-                max-height: 540px !important;
+                max-height: 640px !important;
+                object-fit: contain !important;
                 display: block !important;
                 border-radius: 12px !important;
                 background: #000 !important;
@@ -1143,7 +1194,7 @@
                 gap: 6px !important;
             }
             .smg-tw-media-grid img {
-                height: 220px !important;
+                height: 320px !important;
                 object-fit: cover !important;
             }
             .smg-tw-foot {
@@ -1618,16 +1669,16 @@
                .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
                EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
                ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
-            html:not(.smg-home-page) .p-body-sidebar,
-            html:not(.smg-home-page) .p-body-sidebarCol { display: none !important; }
+            html:not(.smg-home) .p-body-sidebar,
+            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
             /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
                o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
                mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main--withSidebar {
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
                 display: block !important; grid-template-columns: none !important; gap: 0 !important;
             }
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main .p-body-content,
-            html:not(.smg-home-page):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
                 width: 100% !important; max-width: 100% !important; min-width: 0 !important;
                 flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
             }
@@ -7153,9 +7204,38 @@
             /* modo feed: o JS marca .smg-river-hide nos irmãos do river (lista nativa + filtro + paginação) → robusto, independe da classe do bloco do tema */
             .smg-river-hide { display: none !important; }
             html.smg-watched-feed .structItemContainer { display: none !important; }   /* flash-kill: a lista some já no document-start, antes do JS rodar (no-op na home) */
-            html.smg-watched-feed .p-body-sidebar { display: none !important; }   /* feed limpo (sem sidebar de stats/online) */
+            html.smg-watched-feed .p-body-sidebar,
+            html.smg-watched-feed .p-body-sidebarCol {
+                display: none !important;
+                width: 0 !important;
+            }
+            html.smg-watched-feed .p-body-main--withSidebar,
+            html.smg-watched-feed .p-body-main {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                grid-template-columns: none !important;
+                gap: 0 !important;
+            }
+            html.smg-watched-feed .p-body-content,
+            html.smg-watched-feed .p-body-contentCol,
+            html.smg-watched-feed .p-body-pageContent {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                float: none !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
             #smg-river { display: none; }
-            html.smg-watched-feed #smg-river { display: block; }
+            html.smg-watched-feed #smg-river {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
             /* header do feed: título grande "Feed" + slot de ações (ícone de notices) à direita. Substitui a antiga tabbar. */
             .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.10)); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
             @media (max-width: 600px) { .smg-river-head { margin-top: 16px; } }
@@ -7724,15 +7804,31 @@
             .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
             .smg-rail-wt:last-child { border-bottom: 0; }
             .smg-rail-wt:hover { background: rgba(255,255,255,0.055); }
-            .smg-rail-wt.is-unread { background: transparent; }
-            .smg-rail-wt.is-unread::before {
-                content: ""; position: absolute; right: 14px; top: 50%; left: auto; bottom: auto; width: 8px; height: 8px;
-                border-radius: 50%; background: #54d66a; box-shadow: 0 0 0 3px rgba(84,214,106,0.14);
-                transform: translateY(-50%); pointer-events: none; z-index: 2;
+            .smg-rail-wt.is-unread { background: transparent; opacity: 1; }
+            .smg-rail-wt:not(.is-unread) {
+                opacity: 0.55;
+                transition: opacity .15s ease, background .14s ease;
             }
-            .smg-rail-wt:not(.is-unread) { opacity: 1; }
+            .smg-rail-wt:not(.is-unread):hover {
+                opacity: 1;
+            }
+            .smg-rail-wt-dot {
+                display: inline-block !important;
+                width: 8px !important;
+                height: 8px !important;
+                min-width: 8px !important;
+                min-height: 8px !important;
+                border-radius: 50% !important;
+                background: #54d66a !important;
+                box-shadow: 0 0 0 2.5px rgba(84, 214, 106, 0.22) !important;
+                margin-right: 7px !important;
+                vertical-align: 1px !important;
+                flex-shrink: 0 !important;
+            }
+            .smg-rail-wt:not(.is-unread) .smg-rail-wt-dot {
+                display: none !important;
+            }
             .smg-rail-wt-link { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; text-decoration: none !important; }
-            .smg-rail-wt.is-unread .smg-rail-wt-link { padding-right: 30px; }
             .smg-rail-wt-thumb {
                 flex: 0 0 auto; width: 72px; height: 72px; min-width: 72px; border-radius: 12px; aspect-ratio: 1 / 1; overflow: hidden;
                 display: flex; align-items: center; justify-content: center;
@@ -7786,8 +7882,6 @@
             .smg-aldock-body.is-grid .smg-rail-wt-title { font-size: 12.5px; }
             .smg-aldock-body.is-grid .smg-rail-wt-meta { font-size: 10.5px; }
             .smg-aldock-body.is-grid .smg-al-tags { display: flex; }   /* badges permanecem visíveis nos cards */
-            /* não lida na grade: o ponto continua na direita do card */
-            .smg-aldock-body.is-grid .smg-rail-wt.is-unread .smg-rail-wt-link { padding-right: 0; }
             .smg-aldock-btn[hidden] { display: none !important; }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
@@ -8038,6 +8132,70 @@
     // =========================================================
     // HELPERS: text / url
     // =========================================================
+
+    function absUrl(u) {
+        if (!u || !String(u).trim()) return '';
+        try { return new URL(u, location.href).href; } catch (e) { return u; }
+    }
+
+    function b64decode(s) {
+        if (!s) return null;
+        let str = String(s).trim().replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        for (const t of [str, s]) {
+            try {
+                const r = atob(t);
+                if (r) return r;
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    function rawParam(href, key) {
+        if (!href) return null;
+        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&#]+)'));
+        if (m) {
+            try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+        }
+        try {
+            const u = new URL(href, location.href);
+            return u.searchParams.get(key);
+        } catch (e) {}
+        return null;
+    }
+
+    function decodeProxyHref(href) {
+        if (!href || typeof href !== 'string') return null;
+        let target = null;
+        if (/\/goto\/link-confirmation/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'to');
+        } else if (/\/redirect\/?/i.test(href)) {
+            target = rawParam(href, 'to') || rawParam(href, 'url') || rawParam(href, 'link');
+        } else if (/\/proxy\.php/i.test(href)) {
+            target = rawParam(href, 'link') || rawParam(href, 'url');
+        } else if (/\/link-proxy\/?/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'link') || rawParam(href, 'to');
+        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'to') || rawParam(href, 'link');
+        }
+        if (!target) return null;
+        target = target.trim();
+        if (/^https?:\/\//i.test(target)) return target;
+        const decoded = b64decode(target);
+        if (decoded && /^https?:\/\//i.test(decoded.trim())) return decoded.trim();
+        return decoded || target;
+    }
+
+    function resolveProxyHref(href) {
+        if (!href || typeof href !== 'string') return '';
+        const trimmed = href.trim();
+        if (!trimmed) return '';
+        const decoded = decodeProxyHref(trimmed);
+        if (decoded && /^https?:/i.test(decoded)) return decoded;
+        if (/^https?:/i.test(trimmed)) return trimmed;
+        if (decoded) return decoded;
+        return trimmed;
+    }
 
     function getBigUrl(url) {
         // imgbox NÃO segue a convenção .md/.th: thumb = thumbs2.imgbox.com/.../HASH_t.jpg,
@@ -9139,29 +9297,97 @@
         });
     }
 
+    function isThreadPostElement(el) {
+        if (!el || el.nodeType !== 1) return false;
+
+        // 1. Rejeitar se for comentário ou estiver dentro de container de comentários
+        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment')) {
+            return false;
+        }
+        if (el.classList) {
+            if (el.classList.contains('comment') ||
+                el.classList.contains('message-responseRow') ||
+                el.classList.contains('smg-cc') ||
+                el.classList.contains('js-quickEditTargetComment') ||
+                el.classList.contains('message-responses') ||
+                el.classList.contains('comment-body')) {
+                return false;
+            }
+        }
+
+        // 2. Rejeitar se o ID ou data-content indicar comentário
+        const dc = el.getAttribute ? (el.getAttribute('data-content') || '') : '';
+        if (/comment/i.test(dc)) return false;
+        const id = el.id || '';
+        if (/comment/i.test(id)) return false;
+
+        // 3. Rejeitar se estiver dentro de assinatura ou citação
+        if (el.closest && el.closest('.message-signature, .bbCodeBlock--quote, .bbCodeQuote')) {
+            return false;
+        }
+
+        // 4. Deve ser um post legítimo do XenForo
+        const hasPostClass = el.classList && (el.classList.contains('message--post') || el.classList.contains('js-post'));
+        const isArticleMessage = el.tagName === 'ARTICLE' && el.classList && el.classList.contains('message');
+        const hasPostContent = /^post-\d+$/i.test(dc);
+
+        // Se tiver js-post, precisa ser um container de mensagem de post real, não um wrapper genérico
+        if (el.classList && el.classList.contains('js-post') && !el.classList.contains('message--post') && !isArticleMessage && !hasPostContent) {
+            return false;
+        }
+
+        return !!(hasPostClass || isArticleMessage || hasPostContent);
+    }
+
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
         window.__fetchDoc = fetchDoc;
+        window.__b64decode = b64decode;
+        window.__rawParam = rawParam;
+        window.__decodeProxyHref = decodeProxyHref;
+        window.__resolveProxyHref = resolveProxyHref;
+        window.__absUrl = absUrl;
+        window.isThreadPostElement = isThreadPostElement;
     }
 
-    // =========================================================
+// =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:
-    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name
+    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name, last_seen_at
     //   - timeline: keyPath 'post_id' (PK), indices: thread_path, created_at
     //   - meta: keyPath 'key'
     //   - bookmarks: keyPath 'postId'
     // =========================================================
     const FDB_NAME = 'smg-feed';
-    const FDB_VERSION = 6;
+    const FDB_VERSION = 7;
     let fdbPromise = null;
 
     function fdbOpen() {
         if (fdbPromise) return fdbPromise;
         fdbPromise = new Promise((resolve, reject) => {
-            if (typeof indexedDB === 'undefined') { reject(new Error('no-indexeddb')); return; }
+            if (typeof indexedDB === 'undefined') {
+                fdbPromise = null;
+                reject(new Error('no-indexeddb'));
+                return;
+            }
+            let settled = false;
+            const timer = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                fdbPromise = null;
+                reject(new Error('fdb-open-timeout'));
+            }, 3500);
+
+            const cleanup = () => {
+                clearTimeout(timer);
+                settled = true;
+            };
+
             const req = indexedDB.open(FDB_NAME, FDB_VERSION);
+            req.onblocked = () => {
+                console.warn('[smg-feed] IndexedDB open blocked por conexão anterior');
+            };
             req.onupgradeneeded = (e) => {
                 const db = req.result;
                 ['threads', 'posts'].forEach(oldStore => {
@@ -9170,12 +9396,27 @@
                     }
                 });
                 // Store followed
-                if (!db.objectStoreNames.contains('followed')) {
+                if (db.objectStoreNames.contains('followed')) {
+                    const tx = req.transaction || (e && (e.transaction || (e.target && e.target.transaction)));
+                    if (tx && typeof tx.objectStore === 'function') {
+                        const s = tx.objectStore('followed');
+                        if (s) {
+                            if (s.indexNames && typeof s.indexNames.contains === 'function') {
+                                if (!s.indexNames.contains('last_seen_at')) {
+                                    s.createIndex('last_seen_at', 'last_seen_at');
+                                }
+                            } else {
+                                try { s.createIndex('last_seen_at', 'last_seen_at'); } catch (err) {}
+                            }
+                        }
+                    }
+                } else {
                     const s = db.createObjectStore('followed', { keyPath: 'path' });
                     s.createIndex('updated_at', 'updated_at');
                     s.createIndex('created_at', 'created_at');
                     s.createIndex('author', 'author');
                     s.createIndex('thread_name', 'thread_name');
+                    s.createIndex('last_seen_at', 'last_seen_at');
                 }
                 // Store timeline
                 if (!db.objectStoreNames.contains('timeline')) {
@@ -9192,13 +9433,28 @@
                     db.createObjectStore('bookmarks', { keyPath: 'postId' });
                 }
             };
-            req.onsuccess = () => resolve(req.result);
+            req.onsuccess = () => {
+                if (settled) return;
+                cleanup();
+                const db = req.result;
+                db.onversionchange = () => {
+                    try { db.close(); } catch (e) {}
+                    fdbPromise = null;
+                };
+                resolve(db);
+            };
             req.onerror = () => {
+                if (settled) return;
+                cleanup();
+                fdbPromise = null;
                 if (req.error && req.error.name === 'VersionError') {
                     try { indexedDB.deleteDatabase(FDB_NAME); } catch (e) {}
                 }
                 reject(req.error);
             };
+        }).catch(err => {
+            fdbPromise = null;
+            throw err;
         });
         return fdbPromise;
     }
@@ -9260,6 +9516,61 @@
             tx.oncomplete = () => resolve();
             tx.onerror = () => resolve();
         })).catch(() => {});
+    }
+
+    function dbFollowedMarkSeen(path, seenTs) {
+        if (!path) return Promise.resolve();
+        const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
+        const now = seenTs || Math.floor(Date.now() / 1000);
+        return dbFollowedGet(normPath).then(item => {
+            if (!item) return;
+            item.last_seen_at = Math.max(item.last_seen_at || 0, now);
+            item.unread = false;
+            return dbFollowedUpsert(item).then(() => {
+                try {
+                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath, last_seen_at: item.last_seen_at } }));
+                } catch (e) {}
+            });
+        });
+    }
+
+    function dbFollowedMarkAllSeen() {
+        return fdbOpen().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction('followed', 'readwrite');
+            const st = tx.objectStore('followed');
+            const cur = st.openCursor();
+            const now = Math.floor(Date.now() / 1000);
+            cur.onsuccess = () => {
+                const c = cur.result;
+                if (!c) return;
+                const rec = c.value;
+                if (rec) {
+                    rec.last_seen_at = Math.max(rec.last_seen_at || 0, rec.updated_at || 0, now);
+                    rec.unread = false;
+                    c.update(rec);
+                }
+                c.continue();
+            };
+            tx.oncomplete = () => {
+                try {
+                    gmSet('smg-watched-unread-count', '0');
+                    if (typeof updateWatchedUnreadBadge === 'function') {
+                        updateWatchedUnreadBadge(0);
+                    }
+                    window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
+                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
+                } catch (e) {}
+                resolve();
+            };
+            tx.onerror = () => reject(tx.error);
+        })).catch(() => {});
+    }
+
+    function dbFollowedGetUnreadCount() {
+        return dbFollowedGetAll().then(items => {
+            if (!Array.isArray(items)) return 0;
+            return items.filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+        }).catch(() => 0);
     }
 
     // =========================================================
@@ -9462,6 +9773,9 @@
             dbFollowedGetAll,
             dbFollowedUpsert,
             dbFollowedBulkUpsert,
+            dbFollowedMarkSeen,
+            dbFollowedMarkAllSeen,
+            dbFollowedGetUnreadCount,
             dbTimelinePutPosts,
             dbTimelineGetRecent,
             dbTimelineCount,
@@ -9795,8 +10109,7 @@
             }
         });
     }
-    // se o href é um proxy do fórum (/goto/link-confirmation?url=.. ou /redirect/?to=..) → devolve o DESTINO real decodificado; senão devolve igual. decodeProxyHref vem do 21 (escopo compartilhado).
-    function resolveProxyHref(h) { const r = decodeProxyHref(h || ''); return (r && /^https?:/i.test(r)) ? r : (h || ''); }
+    // resolveProxyHref centralizado em 06-helpers.js
     // imagem que NÃO renderiza (host fora / hotlink / 404) → caixa de mídia morta NO LUGAR dela (buildDeadBox).
     // Era um chip com a URL crua em texto: num post de 40 imagens mortas virava uma parede de URLs iguais, e não
     // dava pra saber se o arquivo foi apagado ou se o host bloqueou o hotlink. A caixa mantém o lugar/proporção
@@ -10031,7 +10344,7 @@
     function unlazyImageLinks(roots) {
         eachIn(roots, 'a.link--external[href]:not([data-smg-imglink])', a => {
             a.dataset.smgImglink = '1';
-            if (a.closest('.generic2wide-iframe-div, .smg-rg')) return;   // virou player (turbo/saint/imagepond) → não mexe
+            if (a.closest('.generic2wide-iframe-div, .smg-rg, .bbCodeBlock--unfurl, .smg-fhcard, .smg-tw-card, .smg-post-links, .bbCodeBlock, .bbCodeQuote, .message-signature')) return;   // virou player, card ou bloco protegido → não mexe
             // pula SÓ se já existe uma img REAL (fora de <noscript>). ⚠️ o querySelector('img') cru casava com a img INERTE
             // do <noscript> (no XF via AJAX o noscript vira DOM) e abortava → o <a> ficava vazio e a masonry o removia.
             if ([].some.call(a.querySelectorAll('img'), im => !im.closest('noscript'))) return;
@@ -14627,7 +14940,7 @@
     // FEATURE: clicar na imagem abre o modo feed naquela imagem
     // =========================================================
 
-    const absUrl = u => { try { return new URL(u, location.href).href; } catch { return u; } };
+    // absUrl está definido centralmente em 06-helpers.js
 
     // URL da imagem em resolução cheia: href do <a> (se for imagem) senão o src
     function imageUrlOf(img) {
@@ -17224,7 +17537,7 @@
                 jumps, row.classList.contains('is-unread') || row.classList.contains('structItem--unread') ? '1' : '0'].join(':');
         }).join('|');
     }
-    function ingestWatchedPageToFollowed(doc) {
+    function ingestWatchedPageToFollowed(doc, syncPages = false) {
         if (!doc) return Promise.resolve(0);
         const rows = doc.querySelectorAll('.structItem--thread');
         const signature = watchedPageSignature(doc, rows);
@@ -17241,7 +17554,7 @@
         }
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
-        if (watchedPageStates.get(doc) === signature) return Promise.resolve(0);
+        if (watchedPageStates.get(doc) === signature && !syncPages) return Promise.resolve(0);
         if (!rows.length) {
             watchedPageStates.set(doc, signature);
             return Promise.resolve(0);
@@ -17253,6 +17566,7 @@
 
             const itemsToUpsert = [];
             const seenPaths = new Set();
+            const syncCandidates = [];
 
             rows.forEach(it => {
                 const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
@@ -17273,14 +17587,14 @@
                 if (!thumb && typeof feedThumbUrl === 'function') thumb = feedThumbUrl(it);
                 if (!thumb && typeof thumbCacheGet === 'function') thumb = thumbCacheGet(path, title) || '';
 
-                const isUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
+                const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
                 // tags / badges
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(it) : [];
-                const tags = badges.map(b => b.name);
+                const tags = badges.map(b => ({ name: b.name, className: b.className }));
 
-                // updated_at
-                const updated_at = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
+                // forum_activity_ts
+                const forum_activity_ts = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
 
                 // created_at
                 const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
@@ -17307,13 +17621,21 @@
                 }
 
                 const prev = existingMap.get(path);
+                const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
+                const effectiveLastSeen = (prev && prev.last_seen_at !== undefined && prev.last_seen_at !== null)
+                    ? prev.last_seen_at
+                    : (effectiveUpdatedAt || now);
+                const isUnread = Boolean(prev && effectiveUpdatedAt > 0 && effectiveLastSeen < effectiveUpdatedAt);
+
                 const item = {
                     path: path,
                     thread_name: title || (prev && prev.thread_name) || '',
                     thumbnail_url: thumb || (prev && prev.thumbnail_url) || '',
                     tags: (tags && tags.length) ? tags : ((prev && prev.tags) || []),
                     followed_at: (prev && prev.followed_at) || now,
-                    updated_at: Math.max((prev && prev.updated_at) || 0, updated_at),
+                    forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
+                    updated_at: effectiveUpdatedAt,
+                    last_seen_at: effectiveLastSeen,
                     created_at: created_at || (prev && prev.created_at) || 0,
                     author: author || (prev && prev.author) || '',
                     last_page: Math.max((prev && prev.last_page) || 1, last_page),
@@ -17328,7 +17650,9 @@
                     || prev.thumbnail_url !== item.thumbnail_url
                     || JSON.stringify(prev.tags || []) !== JSON.stringify(item.tags || [])
                     || prev.followed_at !== item.followed_at
+                    || prev.forum_activity_ts !== item.forum_activity_ts
                     || prev.updated_at !== item.updated_at
+                    || prev.last_seen_at !== item.last_seen_at
                     || prev.created_at !== item.created_at
                     || prev.author !== item.author
                     || prev.last_page !== item.last_page
@@ -17339,14 +17663,34 @@
                 if (typeof followedSet !== 'undefined' && followedSet) {
                     followedSet.add(path);
                 }
+
+                if (syncPages) {
+                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || isUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
+                        syncCandidates.push({ thread: item, page: last_page });
+                    }
+                }
             });
 
-            if (!itemsToUpsert.length) return Promise.resolve(0);
-            return dbFollowedBulkUpsert(itemsToUpsert).then(() => {
+            // Atualiza o badge com a contagem de seguidos não lidos baseada em last_seen_at < updated_at
+            const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
+                .filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+            gmSet('smg-watched-unread-count', String(unreadCount));
+            if (typeof updateWatchedUnreadBadge === 'function') {
+                updateWatchedUnreadBadge(unreadCount);
+            }
+
+            const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}
                 return itemsToUpsert.length;
+            }) : Promise.resolve(0);
+
+            return upsertPromise.then(count => {
+                if (syncPages && syncCandidates.length && typeof syncThreadPage === 'function') {
+                    return Promise.all(syncCandidates.map(c => syncThreadPage(c.thread, c.page).catch(() => 0))).then(() => count);
+                }
+                return count;
             });
         }).catch(err => {
             console.error('[SMG] Erro em ingestWatchedPageToFollowed:', err);
@@ -17383,23 +17727,38 @@
             .catch(() => fetchDoc(url, { credentials: 'same-origin' }).catch(() => null));
     }
 
-    function fetchAndIngestFollowed() {
+    let lastFollowedFetchTs = 0;
+    let followedFetchInFlight = null;
+    const FOLLOWED_FETCH_MIN_INTERVAL_MS = 2 * 60 * 1000; // Mínimo de 2 minutos entre buscas automáticas de /watched/threads
+
+    function fetchAndIngestFollowed(syncPages = false, force = false) {
+        const now = Date.now();
+        if (!force && !(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
+            return Promise.resolve(0);
+        }
+        if (followedFetchInFlight) {
+            return followedFetchInFlight;
+        }
+        lastFollowedFetchTs = now;
         console.log('[SMG Timeline] Buscando tópicos seguidos em segundo plano...');
-        return fetchWatchedDoc()
+        followedFetchInFlight = fetchWatchedDoc()
             .then(doc => {
                 if (doc && typeof ingestWatchedPageToFollowed === 'function') {
-                    return ingestWatchedPageToFollowed(doc).then(count => {
+                    return ingestWatchedPageToFollowed(doc, syncPages).then(count => {
                         console.log('[SMG Timeline] Ingestão concluída: ' + count + ' tópicos processados na tabela followed.');
                         return count;
                     });
                 }
-                console.warn('[SMG Timeline] Nenhum documento válido retornado ao buscar seguidos.');
                 return 0;
             })
             .catch(err => {
                 console.warn('[SMG Timeline] Erro ao buscar seguidos em background:', err);
                 return 0;
+            })
+            .finally(() => {
+                followedFetchInFlight = null;
             });
+        return followedFetchInFlight;
     }
 
     let isStreamingWatched = false;
@@ -18217,7 +18576,7 @@
         if (!titleA) return null;
         const href = titleA.getAttribute('href') || '';
         if (!href) return null;
-        const base = href.replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '');
+        const base = href.replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
         const unread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
         const li = document.createElement('li');
@@ -18255,13 +18614,109 @@
         }
         const t = document.createElement('span');
         t.className = 'smg-rail-wt-title';
-        t.textContent = (titleA.textContent || '').trim();
+        if (unread) {
+            const dot = document.createElement('span');
+            dot.className = 'smg-rail-wt-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            t.appendChild(dot);
+        }
+        t.appendChild(document.createTextNode((titleA.textContent || '').trim()));
         body.appendChild(t);
 
         const meta = document.createElement('span');
         meta.className = 'smg-rail-wt-meta';
         const time = it.querySelector('.structItem-latestDate') || it.querySelector('.structItem-cell--latest time');
         if (time) { const c = time.cloneNode(true); c.className = 'smg-al-time'; meta.appendChild(c); }
+        if (meta.childNodes.length) body.appendChild(meta);
+
+        a.appendChild(body);
+        li.appendChild(a);
+        li.dataset.smgAlKey = 'wt:' + base;
+        return li;
+    }
+
+    function renderFollowedRow(item) {
+        if (!item || !item.path) return null;
+        const isUnread = Boolean(item.updated_at > 0 && (item.last_seen_at || 0) < item.updated_at);
+        const li = document.createElement('li');
+        li.className = 'smg-rail-wt' + (isUnread ? ' is-unread' : '');
+        const a = document.createElement('a');
+        a.className = 'smg-rail-wt-link';
+        const base = (item.path || '').replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
+        a.href = safeHref(base + '/latest');
+        a.addEventListener('click', () => {
+            if (typeof dbFollowedMarkSeen === 'function') {
+                dbFollowedMarkSeen(item.path);
+            }
+        });
+
+        const thumbUrl = item.thumbnail_url || (typeof thumbCacheGet === 'function' ? thumbCacheGet(item.path, item.thread_name) : '');
+        const th = document.createElement('span');
+        th.className = 'smg-rail-wt-thumb';
+        if (thumbUrl) {
+            const im = document.createElement('img');
+            im.src = thumbUrl;
+            im.alt = '';
+            im.loading = 'lazy';
+            im.decoding = 'async';
+            im.addEventListener('error', () => {
+                th.classList.add('smg-rail-wt-thumb--ph');
+                im.remove();
+                th.innerHTML = railPhMark();
+            }, { once: true });
+            th.appendChild(im);
+        } else {
+            th.classList.add('smg-rail-wt-thumb--ph');
+            th.innerHTML = railPhMark();
+        }
+        a.appendChild(th);
+
+        const body = document.createElement('span');
+        body.className = 'smg-rail-wt-body';
+
+        if (Array.isArray(item.tags) && item.tags.length) {
+            const tags = document.createElement('span');
+            tags.className = 'smg-al-tags';
+            item.tags.forEach(t => {
+                const name = typeof t === 'string' ? t : (t && t.name ? t.name : '');
+                if (!name) return;
+                const chip = document.createElement('span');
+                const k = name.toLowerCase().trim();
+                let cls = (typeof t === 'object' && t.className)
+                    || (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[k])
+                    || ('label label--' + k.replace(/[^a-z0-9]+/g, '-'));
+                if (!cls.includes('label')) cls = 'label ' + cls;
+                chip.className = 'smg-al-chip ' + cls;
+                if (typeof t === 'object' && t.style) {
+                    chip.setAttribute('style', t.style);
+                }
+                chip.textContent = name;
+                tags.appendChild(chip);
+            });
+            body.appendChild(tags);
+        }
+
+        const t = document.createElement('span');
+        t.className = 'smg-rail-wt-title';
+        if (isUnread) {
+            const dot = document.createElement('span');
+            dot.className = 'smg-rail-wt-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            t.appendChild(dot);
+        }
+        t.appendChild(document.createTextNode((item.thread_name || '').trim()));
+        body.appendChild(t);
+
+        const meta = document.createElement('span');
+        meta.className = 'smg-rail-wt-meta';
+        const ts = item.updated_at || item.forum_activity_ts || 0;
+        if (ts) {
+            const time = document.createElement('time');
+            time.className = 'smg-al-time';
+            time.setAttribute('data-timestamp', String(ts));
+            time.textContent = (typeof smgRelTime === 'function') ? smgRelTime(ts) : '';
+            meta.appendChild(time);
+        }
         if (meta.childNodes.length) body.appendChild(meta);
 
         a.appendChild(body);
@@ -18399,6 +18854,63 @@
             if (list) list.querySelectorAll('.smg-aldock-skel-row').forEach(row => row.remove());
         };
         if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
+
+        if (tab === 'watched') {
+            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            return getFollowed.then(items => {
+                clearSkeleton();
+                const list = railList('watched');
+                if (!list) return;
+
+                const valid = Array.isArray(items) ? items.filter(it => it && it.path) : [];
+                const unread = valid.filter(t => (t.last_seen_at || 0) < (t.updated_at || 0) && (t.updated_at || 0) > 0)
+                    .sort((a, b) => {
+                        const diffSeen = (b.last_seen_at || 0) - (a.last_seen_at || 0);
+                        if (diffSeen !== 0) return diffSeen;
+                        return (b.updated_at || 0) - (a.updated_at || 0);
+                    });
+                const read = valid.filter(t => (t.last_seen_at || 0) >= (t.updated_at || 0))
+                    .sort((a, b) => {
+                        const diffUpdated = (b.updated_at || 0) - (a.updated_at || 0);
+                        if (diffUpdated !== 0) return diffUpdated;
+                        return (b.last_seen_at || 0) - (a.last_seen_at || 0);
+                    });
+
+                const sorted = [...unread, ...read];
+                list.innerHTML = '';
+                st.keys.clear();
+                sorted.forEach(item => {
+                    const row = renderFollowedRow(item);
+                    if (row) {
+                        const key = row.dataset.smgAlKey || ('wt:' + item.path);
+                        st.keys.add(key);
+                        list.appendChild(row);
+                        i18nDom(row);
+                    }
+                });
+
+                st.loaded = true;
+                st.next = null;
+
+                gmSet('smg-watched-unread-count', String(unread.length));
+                updateWatchedUnreadBadge(unread.length);
+                aldockSyncCount();
+                aldockStatus('watched', '');
+
+                if (!valid.length && first) {
+                    if (typeof fetchAndIngestFollowed === 'function') {
+                        fetchAndIngestFollowed(false, false).catch(() => {});
+                    }
+                }
+            }).catch(() => {
+                clearSkeleton();
+                aldockStatus('watched', 'error');
+            }).finally(() => {
+                st.busy = false;
+                aldock.classList.remove('smg-aldock--refreshing');
+            });
+        }
+
         return railFetch(tab, railBaseUrl(tab))
             .then(({ rows, next }) => {
                 clearSkeleton();
@@ -18551,6 +19063,7 @@
             '<div class="smg-aldock-head">' +
                 '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Following') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
+                    '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-view" hidden></button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-refresh" title="' + i18n('Refresh') + '" aria-label="' + i18n('Refresh') + '">' + ICONS.refresh + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
@@ -18563,8 +19076,32 @@
         document.body.appendChild(el);
         aldock = el;
 
+        const markReadBtn = el.querySelector('.smg-aldock-markread');
+        if (markReadBtn) {
+            markReadBtn.addEventListener('click', () => {
+                if (typeof dbFollowedMarkAllSeen === 'function') {
+                    markReadBtn.dataset.busy = '1';
+                    dbFollowedMarkAllSeen().then(() => {
+                        delete markReadBtn.dataset.busy;
+                        el.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
+                        const badge = el.querySelector('.smg-aldock-n');
+                        if (badge) { badge.hidden = true; badge.textContent = ''; }
+                        updateWatchedUnreadBadge(0);
+                        aldockSyncCount();
+                    }).catch(() => {
+                        delete markReadBtn.dataset.busy;
+                    });
+                }
+            });
+        }
+
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
-        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => railRefresh(railTab, true));
+        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
+            if (railTab === 'watched' && typeof fetchAndIngestFollowed === 'function') {
+                fetchAndIngestFollowed(false, true).catch(() => {});
+            }
+            railRefresh(railTab, true);
+        });
         el.querySelector('.smg-aldock-view').addEventListener('click', () => {
             gmSet(ALDOCK_VIEW_KEY(railTab), railView(railTab) === 'grid' ? 'list' : 'grid');
             railApplyView(railTab);
@@ -18676,10 +19213,43 @@
         setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh(railTab); }, ALDOCK_POLL_MS);
         document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh(railTab); });
 
+        window.addEventListener('smg-followed-updated', () => {
+            if (aldock && aldockOpen() && railTab === 'watched') {
+                railRefresh('watched', false);
+            } else if (typeof dbFollowedGetUnreadCount === 'function') {
+                dbFollowedGetUnreadCount().then(c => {
+                    gmSet('smg-watched-unread-count', String(c));
+                    updateWatchedUnreadBadge(c);
+                });
+            }
+        });
+        window.addEventListener('smg-followed-seen', e => {
+            const path = e && e.detail && e.detail.path;
+            if (path && aldock) {
+                const base = path.replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '');
+                const row = aldock.querySelector(`.smg-rail-wt[data-smg-al-key="wt:${base}"]`);
+                if (row && row.classList.contains('is-unread')) {
+                    row.classList.remove('is-unread');
+                    aldockSyncCount();
+                }
+            }
+        });
+        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
+
         if (aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(null, false);
     }
 
+    function onFollowedAllSeen() {
+        if (aldock) {
+            aldock.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
+            const badge = aldock.querySelector('.smg-aldock-n');
+            if (badge) { badge.hidden = true; badge.textContent = ''; }
+            aldockSyncCount();
+        }
+    }
+
     if (typeof window !== 'undefined') {
+        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
         window.updateWatchedUnreadBadge = updateWatchedUnreadBadge;
         window.getWatchedUnreadCount = getWatchedUnreadCount;
         if (window.__TEST_MODE__) {
@@ -18690,6 +19260,7 @@
                 toggleAlertsDock,
                 railShowTab,
                 watchedRow,
+                renderFollowedRow,
                 aldockSyncCount,
                 updateWatchedUnreadBadge,
                 getWatchedUnreadCount,
@@ -18697,6 +19268,7 @@
                 aldockState,
                 RAIL_SRC,
                 railFetch,
+                railRefresh,
                 getRailTab: () => railTab,
                 getAldock: () => aldock
             };
@@ -19649,105 +20221,97 @@
     }
 
     // =========================================================
+    // =========================================================
     // FEATURE: pular o aviso de link externo (URL real direto)
     // SMG: /goto/link-confirmation?url=<base64> · Simp: /redirect/?to=<base64url>&m=b64
+    // Centralizado em 06-helpers.js: b64decode, rawParam, decodeProxyHref, resolveProxyHref
     // =========================================================
-    // base64 std OU url-safe → string (tolerante); e leitura de query SEM o +→espaço do URLSearchParams
-    function b64decode(s) {
-        if (!s) return null;
-        for (const t of [s, s.replace(/-/g, '+').replace(/_/g, '/')]) { try { const r = atob(t); if (r) return r; } catch (e) {} }
-        return null;
-    }
-    function rawParam(href, key) {
-        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&]+)'));
-        if (!m) return null;
-        try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
-    }
-    function decodeProxyHref(href) {
-        if (/\/goto\/link-confirmation/.test(href)) return b64decode(rawParam(href, 'url'));
-        let to = rawParam(href, 'to');
-        if (to && /[?&]m=b64/.test(href)) to = b64decode(to);
-        return to;
-    }
     // VISUAL: no TEXTO mostrado (título de unfurl / link cru), troca a URL-proxy (/goto/link-confirmation?url=.. ou
     // /redirect/?to=..) pelo DESTINO real. O unwrap só reescrevia o href; o texto continuava com o /goto/...&s=hash feio.
-    // Decodifica CADA ocorrência (decodeProxyHref) → vários links no mesmo nó OK; o que não decodifica fica intacto.
+    // Decodifica CADA ocorrência (resolveProxyHref) → vários links no mesmo nó OK; o que não decodifica fica intacto.
     function unproxyText(root) {
         if (!root || root.nodeType !== 1) return;
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         const hits = [];
         for (let n = walker.nextNode(); n; n = walker.nextNode()) {
             const v = n.nodeValue || '';
-            if (v.indexOf('/goto/link-confirmation?url=') >= 0 || v.indexOf('/redirect/?to=') >= 0) hits.push(n);
+            if (v.indexOf('/goto/link-confirmation') >= 0 || v.indexOf('/redirect/?to=') >= 0 || v.indexOf('/link-proxy/') >= 0 || v.indexOf('/proxy.php?link=') >= 0) hits.push(n);
         }
         if (!hits.length) return;
-        const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=)[^\s"'<>]+/g;
-        hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = decodeProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
+        const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=|link-proxy\/\?url=|proxy\.php\?link=)[^\s"'<>]+/g;
+        hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = resolveProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
     }
-    // clique em CAPTURE phase: roda ANTES do handler do XF (link proxy) e força a navegação com
-    // stopImmediatePropagation → o handler do XF que matava o clique nunca dispara. Não depende de
-    // remover attrs/listener (frágil); o reescrever do href abaixo é só pro hover/"copiar link".
-    // desarma o link-proxy do XF num <a>: se o destino real só existe no data-proxy-href, ele passa a ser
-    // o href; depois o atributo sai (é o gatilho do handler nativo que abre/fecha a guia).
+    // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
     function unproxyAttr(a) {
-        const p = a.getAttribute('data-proxy-href') || '';
-        const cur = a.getAttribute('href') || '';
-        if (!/^https?:/i.test(cur)) {                       // href não é o destino → tenta o do atributo
-            const real = /^https?:/i.test(p) ? p : decodeProxyHref(p);
-            if (real && /^https?:/i.test(real)) a.setAttribute('href', real);
+        if (!a) return;
+        const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '') || a.href;
+        if (real && /^https?:/i.test(real) && a.getAttribute('href') !== real) {
+            a.setAttribute('href', real);
         }
         a.removeAttribute('data-proxy-href');
+        a.removeAttribute('data-blank-handler');
     }
     let proxyClickBound = false;
     function bindProxyClick() {
         if (proxyClickBound) return;
         proxyClickBound = true;
         // no WINDOW em capture: roda ANTES de qualquer listener de document (o XF tem um handler de
-        // capture no document que dá preventDefault e matava o clique). NÃO checamos e.defaultPrevented
-        // de propósito — navegamos mesmo que o XF já tenha dado preventDefault.
+        // capture no document que dá preventDefault e matava o clique).
         window.addEventListener('click', e => {
-            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;  // deixa ctrl/⌘/middle-clique abrir aba nativamente
-            const a = e.target.closest && e.target.closest('a[data-smg-unwrap], a[data-proxy-href], a[href*="/goto/link-confirmation?url="], a[href*="/redirect/?to="]');
+            const a = e.target.closest && e.target.closest('a');
             if (!a) return;
-            // data-proxy-href: é POR ELE que a JS de link-proxy do XF sequestra o clique e abre o destino
-            // noutra guia. Quando vem VAZIO (visto no SMG), ela abre uma guia em branco — que fecha sozinha
-            // logo depois. Tirar o atributo devolve o clique pro href real e mata o sintoma na origem.
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
-            const real = a.dataset.smgUnwrap ? a.href : decodeProxyHref(a.getAttribute('href') || '');  // já reescrito → href é o real
-            if (!real || !/^https?:/i.test(real)) return;
-            // garante o href real e MATA o handler do XF — mas NÃO damos preventDefault: a navegação NATIVA
-            // do link segue (abre target=_blank sem popup-block, que era o que travava no SMG).
-            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
-            a.dataset.smgUnwrap = '1';
-            e.stopImmediatePropagation();
-            if (e.defaultPrevented) {   // se algo já barrou o default antes de nós, aí sim navega na mão
-                if (a.target === '_blank') window.open(real, '_blank', 'noopener'); else location.assign(real);
+
+            const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
+            const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
+
+            if (!isProxy && !isExternal) return;
+
+            const real = resolveProxyHref(a.getAttribute('href') || '') || a.href;
+            if (real && /^https?:/i.test(real)) {
+                if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+                a.dataset.smgUnwrap = '1';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.removeAttribute('data-proxy-href');
+                a.removeAttribute('data-blank-handler');
+
+                if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                    e.stopImmediatePropagation();
+                    if (e.defaultPrevented) {
+                        window.open(real, '_blank', 'noopener');
+                    }
+                }
             }
         }, true);
     }
     function unwrapRedirectLinks(roots) {
         bindProxyClick();
-        // PERF: `a[href*=...]` é seletor de substring de atributo (NÃO indexado) → varrer o doc inteiro todo frame
-        // percorre TODOS os <a>. Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
+        // PERF: Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
-        eachIn(roots, 'a[href*="/goto/link-confirmation?url="]:not([data-smg-unwrap]), a[href*="/redirect/?to="]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
+        eachIn(roots, 'a[href*="/goto/link-confirmation"]:not([data-smg-unwrap]), a[href*="/redirect/"]:not([data-smg-unwrap]), a[href*="/proxy.php?link="]:not([data-smg-unwrap]), a[href*="/link-proxy/"]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
             a.dataset.smgUnwrap = '1';
-            const real = decodeProxyHref(a.getAttribute('href') || '');
-            if (real && /^https?:/i.test(real)) a.href = real;   // hover/"copiar link" mostram a URL real; o clique é garantido pelo capture
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);   // desarma o link-proxy do XF (guia em branco que abre e fecha)
-            unproxyText(a);   // VISUAL: título do unfurl / texto = /goto/...&s=hash → mostra a URL real decodificada
+            const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
+            if (real && /^https?:/i.test(real)) a.href = real;
+            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
+            a.removeAttribute('data-blank-handler');
+            unproxyText(a);
         });
     }
     // se o usuário CAIR direto na página de aviso, pula pro destino na hora
     function handleRedirectPage() {
         try {
-            if (/\/redirect\//.test(location.pathname)) {
-                const t = document.querySelector('.simpLinkProxy-targetLink');
-                if (t && t.href) { location.replace(t.href); return; }
+            if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
+
+            const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
+            if (realParam && /^https?:/i.test(realParam) && realParam !== location.href) {
+                location.replace(realParam);
+                return;
             }
-            if (/\/goto\/link-confirmation/.test(location.pathname)) {
-                const real = b64decode(rawParam(location.search, 'url'));
-                if (real && /^https?:/i.test(real)) location.replace(real);
+
+            const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname)) {
+                location.replace(domTarget.href);
+                return;
             }
         } catch (e) {}
     }
@@ -19953,7 +20517,7 @@
         const addImg = u => { u = getBigUrl(absUrl(u)); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.images.push(u); } };
         const addVid = u => { u = absUrl(u); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.videos.push(u); } };
         const addLink = raw => {
-            const u = absUrl(decodeProxyHref(raw) || raw);   // DECODIFICA o proxy do fórum (/goto, /redirect) → URL real
+            const u = absUrl(resolveProxyHref(raw) || raw);   // DECODIFICA o proxy do fórum (/goto, /redirect) → URL real
             if (!/^https?:/i.test(u)) return;
             let host; try { host = new URL(u).hostname.toLowerCase(); } catch (e) { return; }
             if (host && (host === fh || host.endsWith('.' + fh) || fh.endsWith('.' + host))) return;   // link interno do fórum
@@ -20378,10 +20942,11 @@
     // card RICO: [mosaico de thumbs (até 4) c/ badge de contagem + "+N" no último | logo do host] + host + sub | [copiar] [abrir↗].
     // o = { label, href, sub, thumbs:[], logo:[], count:0 }
     function fhCard(o) {
-        const href = o.href, logoChain = o.logo || [];
+        const href = resolveProxyHref(o.href), logoChain = o.logo || [];
         const thumbs = (o.thumbs || []).filter(Boolean).slice(0, 4);
         const count = o.count || 0;
         const card = document.createElement('div'); card.className = 'smg-fhcard'; card.dataset.fhDone = '1';
+        if (o.key) card.dataset.key = o.key;
         const main = document.createElement('a'); main.className = 'smg-fhcard-main'; main.href = href; main.target = '_blank'; main.rel = 'noopener noreferrer'; main.dataset.fhDone = '1';
         const th = document.createElement('div');
         th.className = 'smg-fhcard-thumb smg-fhcard-thumb--loading' + (thumbs.length > 1 ? ' smg-fhcard-thumb--multi' : '');
@@ -20526,6 +21091,22 @@
         }
     }
 
+    const twBlobs = [];
+    function twRegisterBlob(video, blobUrl) {
+        twBlobs.push({ video, url: blobUrl });
+        while (twBlobs.length > 8) {
+            const idx = twBlobs.findIndex(e => e.video !== video && (!e.video || e.video.paused));
+            if (idx < 0) break;
+            const old = twBlobs.splice(idx, 1)[0];
+            try { URL.revokeObjectURL(old.url); } catch (x) {}
+            if (old.video) {
+                old.video.removeAttribute('src');
+                try { old.video.load(); } catch (x) {}
+                delete old.video._twBlobLoaded;
+            }
+        }
+    }
+
     function buildTwitterCardDom(tweet, tweetUrl) {
         const card = document.createElement('div');
         card.className = 'smg-tw-card';
@@ -20540,6 +21121,8 @@
         avatar.className = 'smg-tw-avatar';
         if (tweet.author && tweet.author.avatar_url) {
             const avImg = document.createElement('img');
+            avImg.referrerPolicy = 'no-referrer';
+            avImg.setAttribute('referrerpolicy', 'no-referrer');
             avImg.src = tweet.author.avatar_url;
             avImg.loading = 'lazy';
             avImg.alt = '';
@@ -20597,18 +21180,110 @@
         if (videos.length) {
             const mwrap = document.createElement('div');
             mwrap.className = 'smg-tw-media';
+
+            let videoUrl = videos[0].url;
+            if (Array.isArray(videos[0].formats)) {
+                const mp4s = videos[0].formats.filter(f => f && f.url && f.container === 'mp4' && !/\.m3u8/i.test(f.url));
+                if (mp4s.length) {
+                    const pref = mp4s.find(f => /1280x720|720/i.test(f.url) || (f.bitrate >= 1500000 && f.bitrate <= 3500000)) || mp4s[mp4s.length - 1];
+                    if (pref && pref.url) videoUrl = pref.url;
+                }
+            } else if (Array.isArray(videos[0].variants)) {
+                const mp4s = videos[0].variants.filter(f => f && f.url && (f.content_type === 'video/mp4' || /\.mp4(\?|$)/i.test(f.url)));
+                if (mp4s.length) {
+                    const pref = mp4s.find(f => /1280x720|720/i.test(f.url) || (f.bitrate >= 1500000 && f.bitrate <= 3500000)) || mp4s[mp4s.length - 1];
+                    if (pref && pref.url) videoUrl = pref.url;
+                }
+            }
+
             const vid = document.createElement('video');
             vid.controls = true;
             vid.playsInline = true;
             vid.preload = 'metadata';
-            if (videos[0].thumbnail_url) vid.poster = videos[0].thumbnail_url;
-            vid.src = videos[0].url;
+            vid.referrerPolicy = 'no-referrer';
+            vid.setAttribute('referrerpolicy', 'no-referrer');
+            if (videos[0].thumbnail_url) {
+                vid.poster = videos[0].thumbnail_url;
+            }
+            vid._twVideoUrl = videoUrl;
+
+            const playOverlay = document.createElement('div');
+            playOverlay.className = 'smg-tw-play-overlay';
+            playOverlay.innerHTML = '<div class="smg-tw-play-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="white"><path d="M8 5v14l11-7z"/></svg></div>';
+
+            const loadAndPlay = (autoPlay) => {
+                if (vid._twBlobLoaded) {
+                    if (autoPlay) vid.play().catch(() => {});
+                    if (playOverlay.parentNode) playOverlay.remove();
+                    return;
+                }
+                if (autoPlay) vid._wantPlay = true;
+                if (vid._twLoading) {
+                    playOverlay.classList.add('loading');
+                    playOverlay.innerHTML = '<div class="smg-tw-spinner"></div>';
+                    return;
+                }
+                vid._twLoading = true;
+                if (autoPlay) {
+                    playOverlay.classList.add('loading');
+                    playOverlay.innerHTML = '<div class="smg-tw-spinner"></div>';
+                }
+
+                const applySrc = (srcUrl, isBlob) => {
+                    vid._twBlobLoaded = true;
+                    vid._twLoading = false;
+                    vid.src = srcUrl;
+                    if (isBlob) twRegisterBlob(vid, srcUrl);
+                    if (playOverlay.parentNode) playOverlay.remove();
+                    if (vid._wantPlay) {
+                        vid.play().catch(() => {});
+                    }
+                };
+
+                if (typeof rgBlob === 'function') {
+                    rgBlob(videoUrl, 'https://x.com/').then(blob => {
+                        if (!vid.isConnected) return;
+                        const blobUrl = URL.createObjectURL(blob);
+                        applySrc(blobUrl, true);
+                    }).catch(err => {
+                        console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
+                        if (!vid.isConnected) return;
+                        applySrc(videoUrl, false);
+                    });
+                } else {
+                    applySrc(videoUrl, false);
+                }
+            };
+
+            playOverlay.addEventListener('click', e => {
+                e.stopPropagation();
+                loadAndPlay(true);
+            });
+
+            vid.addEventListener('play', () => {
+                if (typeof rgSolo === 'function') rgSolo(vid);
+                if (playOverlay.parentNode) playOverlay.remove();
+            });
+
+            // Pré-carregamento lazy ao aproximar 200% da viewport
+            if (typeof makeLazyIO === 'function' && !(typeof window !== 'undefined' && window.__TEST_MODE__)) {
+                const lazyObs = makeLazyIO(() => {
+                    loadAndPlay(false);
+                }, { rootMargin: '200% 0px' });
+                if (lazyObs) lazyObs.observe(mwrap);
+            } else if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+                vid.src = videoUrl;
+            }
+
             mwrap.appendChild(vid);
+            mwrap.appendChild(playOverlay);
             card.appendChild(mwrap);
         } else if (photos.length === 1) {
             const mwrap = document.createElement('div');
             mwrap.className = 'smg-tw-media';
             const img = document.createElement('img');
+            img.referrerPolicy = 'no-referrer';
+            img.setAttribute('referrerpolicy', 'no-referrer');
             img.src = photos[0].url;
             img.loading = 'lazy';
             mwrap.appendChild(img);
@@ -20618,6 +21293,8 @@
             mwrap.className = 'smg-tw-media smg-tw-media-grid';
             photos.slice(0, 4).forEach(p => {
                 const img = document.createElement('img');
+                img.referrerPolicy = 'no-referrer';
+                img.setAttribute('referrerpolicy', 'no-referrer');
                 img.src = p.url;
                 img.loading = 'lazy';
                 mwrap.appendChild(img);
@@ -20658,17 +21335,17 @@
         return card;
     }
 
-    function renderTwitterOfficialEmbed(container, tweetId, fallbackUrl, rawLabel) {
+    function renderTwitterOfficialEmbed(container, tweetId, fallbackUrl, rawLabel, user) {
         if (!container || container.dataset.twEmbedDone || container.closest('.smg-twitter-embed, .smg-tw-card')) return;
         container.dataset.twEmbedDone = '1';
         container.dataset.twDone = '1';
         container.dataset.fhDone = '1';
         container.innerHTML = '';
         container.className = 'smg-twitter-embed';
-        container.style.cssText = 'min-height: 80px; display: flex; justify-content: center; margin: 14px auto; max-width: 560px; width: 100%;';
+        container.style.cssText = 'min-height: 80px; display: flex; justify-content: center; margin: 14px 0; max-width: 100%; width: 100%;';
 
         const tweetUrl = fallbackUrl || ('https://x.com/i/status/' + tweetId);
-        const skel = makeTwitterCard(tweetUrl, tweetId, '', rawLabel);
+        const skel = makeTwitterCard(tweetUrl, tweetId, user || '', rawLabel);
         skel.dataset.fhDone = '1';
         skel.dataset.twDone = '1';
         container.appendChild(skel);
@@ -20710,28 +21387,30 @@
         if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
-            const rawHref = absUrl(decodeProxyHref(node.getAttribute('href') || node.getAttribute('data-url') || '') || node.href || '');
+            const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
             let id = '';
             const im = rawHref.match(/instagram\.com\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/i);
             if (im) id = im[1];
-            const card = makeInstagramCard(rawHref, id, node.textContent);
+            const labelText = unfurlEl ? (unfurlEl.querySelector('.js-unfurl-title, .contentRow-header')?.textContent?.trim() || '') : (node.tagName === 'A' ? node.textContent.trim() : '');
+            const card = makeInstagramCard(rawHref, id, labelText || node.textContent);
             pdPlace(node, card);
             return;
         }
         if (prov.key === 'x' || prov.key === 'twitter') {
-            const rawHref = absUrl(decodeProxyHref(node.getAttribute('href') || node.getAttribute('data-url') || '') || node.href || '');
+            const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
             let id = '', user = '';
             const sm = rawHref.match(/(?:twitter|x)\.com\/(?:([A-Za-z0-9_]+)\/status|i\/status)\/([0-9]+)/i);
             if (sm) { user = sm[1] || ''; id = sm[2]; }
             const target = node.closest('.bbCodeBlock--unfurl') || node;
             target.dataset.fhDone = '1';
             target.dataset.twDone = '1';
+            const labelText = unfurlEl ? (unfurlEl.querySelector('.js-unfurl-title, .contentRow-header')?.textContent?.trim() || '') : (node.tagName === 'A' ? node.textContent.trim() : '');
             if (id) {
                 const container = document.createElement('div');
                 pdPlace(node, container);
-                renderTwitterOfficialEmbed(container, id, rawHref, node.textContent);
+                renderTwitterOfficialEmbed(container, id, rawHref, labelText, user);
             } else {
-                const card = makeTwitterCard(rawHref, id, user, node.textContent);
+                const card = makeTwitterCard(rawHref, id, user, labelText || node.textContent);
                 pdPlace(node, card);
             }
             return;
@@ -20795,7 +21474,7 @@
         eachIn(roots, '.bbCodeBlock--unfurl[data-url]:not([data-fh-done])', card => {
             card.dataset.fhDone = '1';   // marca ANTES de qualquer return (REGRA DE OURO)
             if (card.closest('.bbCodeQuote, .message-signature')) return;
-            const url = card.getAttribute('data-url') || '';
+            const url = resolveProxyHref(card.getAttribute('data-url') || '');
             const prov = fhProvider(url, card.getAttribute('data-host'));
             if (prov) fhBuildCard(card, url, prov, card);
         });
@@ -20804,7 +21483,7 @@
             a.dataset.fhDone = '1';
             if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-ig-embed-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
             if (a.querySelector('img.bbImage')) return;   // link de imagem (lightbox)
-            const url = absUrl(decodeProxyHref(a.getAttribute('href') || '') || a.href);
+            const url = absUrl(resolveProxyHref(a.getAttribute('href') || '') || a.href);
             const prov = fhProvider(url);
             if (prov && prov.skip && prov.skip.test(url)) return;   // esse padrão de URL é tratado por outro pass (ex.: cyberdrop /e/ → player)
             if (prov) fhBuildCard(a, url, prov, null);
@@ -20858,6 +21537,11 @@
             });
             if (bar.children.length >= 2) bb.appendChild(bar);
         });
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.buildTwitterCardDom = buildTwitterCardDom;
+        window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
     }
 
     // =========================================================
@@ -21175,7 +21859,7 @@
     }
 
     function currentThreadDomSignature(path, page) {
-        const posts = document.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message');
+        const posts = Array.from(document.querySelectorAll('article.message--post, .message--post')).filter(isThreadPostElement);
         const title = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
         const parts = ['title:' + (title ? (title.textContent || '').replace(/\s+/g, ' ').trim() : '')];
         posts.forEach(post => {
@@ -21201,6 +21885,10 @@
         let rawHref = (canon && canon.getAttribute('href')) || location.href;
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
+
+        if (typeof dbFollowedMarkSeen === 'function') {
+            dbFollowedMarkSeen(path).catch(() => {});
+        }
 
         // Check date order: skip if user is sorting by reactions
         const isDateOrder = !/[?&]order=reaction/i.test(location.search);
@@ -21265,8 +21953,8 @@
 
             const meta = { title: threadTitle, prefixesHtml: prefixesHtml, thumb: thumb, lastTs: Math.floor(Date.now() / 1000) };
 
-            const postEls = Array.from(document.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message'))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            const postEls = Array.from(document.querySelectorAll('article.message--post, .message--post'))
+                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, location.href)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -21310,14 +21998,17 @@
                 path: path,
                 thread_name: threadTitle || (stored && stored.thread_name) || '',
                 thumbnail_url: thumb || (stored && stored.thumbnail_url) || '',
-                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => b.name) : []),
+                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
                 followed_at: (stored && stored.followed_at) || now,
-                updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs, now),
+                forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
+                last_seen_at: Math.max((stored && stored.last_seen_at) || 0, maxPostTs, now),
+                updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
                 created_at: (stored && stored.created_at) || 0,
                 author: (stored && stored.author) || '',
                 last_page: nextLastPage,
                 saved_pages: nextSavedPages,
-                last_sync_at: now
+                last_sync_at: now,
+                unread: false
             };
 
             return dbTimelinePutPosts(timelinePosts)
@@ -21339,8 +22030,8 @@
         return fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
-            const postEls = Array.from(doc.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message'))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            const postEls = Array.from(doc.querySelectorAll('article.message--post, .message--post'))
+                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, url)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -21389,9 +22080,14 @@
 
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
-            thread.last_sync_at = Math.max(maxPostTs, thread.updated_at || 0);
+            thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            thread.unread = false;
+            if (!thread.last_seen_at) {
+                thread.last_seen_at = thread.updated_at;
+                thread.unread = false;
+            } else {
+                thread.unread = Boolean(thread.updated_at > thread.last_seen_at);
+            }
 
             return dbTimelinePutPosts(timelinePosts)
                 .then(() => dbFollowedUpsert(thread))
@@ -21404,9 +22100,9 @@
         const saved = Array.isArray(thread.saved_pages) ? thread.saved_pages : [];
         const maxSaved = saved.length ? Math.max(...saved) : 0;
         const lastPage = thread.last_page || 1;
-        const lastActivity = thread.updated_at || 0;
+        const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
-        const isUnread = Boolean(thread.unread);
+        const isUnread = Boolean(thread.unread || (thread.last_seen_at !== undefined && (thread.updated_at || 0) > 0 && (thread.last_seen_at || 0) < (thread.updated_at || 0)));
 
         const isNew = maxSaved === 0;
         const hasNewPage = lastPage > maxSaved;
@@ -21534,8 +22230,8 @@
                     return 0;
                 }
 
-                // Ordena por updated_at decrescente
-                allFollowed.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+                // Ordena por atividade recente decrescente
+                allFollowed.sort((a, b) => ((b.forum_activity_ts || b.updated_at || 0) - (a.forum_activity_ts || a.updated_at || 0)));
 
                 // Filtra segundo as Regras A, B, C e D
                 const threadsToFetch = [];
@@ -21658,11 +22354,11 @@
     const RIVER_RETENTION_DAYS = (parseInt(gmGet('smg-feed-retention-days', ''), 10) || 30);
     // SELF-HEAL do cache: BUMP isto sempre que o formato do post serializado (riverParsePost) ou a lógica de sync mudar.
     // Na próxima abertura, dataVersion != FEED_DATA_VERSION → o IDB é descartado e reconstruído sozinho (o usuário NÃO precisa limpar cache na mão).
-    const FEED_DATA_VERSION = 11;
+    const FEED_DATA_VERSION = 12;
     // versão da LÓGICA DE SYNC: bumpar aqui re-varre tudo (zera os marcadores de "thread coberta") SEM apagar
     // os posts já guardados. Use este quando mudar como/até onde buscamos; o DATA_VERSION só quando o FORMATO
     // do post serializado mudar (aí não tem jeito, o cache velho é ilegível).
-    const FEED_SYNC_VERSION = 6;
+    const FEED_SYNC_VERSION = 7;
 
     // fila throttled p/ as buscas (não estoura o flood control do fórum) — usada pelo sync
     const RIVER_CONCURRENCY = 2;
@@ -21777,6 +22473,7 @@
     }
     // extrai um post → objeto SERIALIZÁVEL (vai pro IndexedDB): nada de nós do DOM, só strings/números
     function riverParsePost(post, meta, threadUrl) {
+        if (!post || !isThreadPostElement(post)) return null;
         const body = post.querySelector('.message-userContent .bbWrapper')
             || post.querySelector('.message-userContent')
             || post.querySelector('.message-body')
@@ -21785,12 +22482,12 @@
             || post.querySelector('.articlePreview-text');
         if (!body) return null;
         riverUnlazy(body);   // resolve as imagens lazy ANTES de serializar (senão somem no feed do SMG)
+        body.querySelectorAll('.comment, .message-responseRow, .message-responses, .js-messageResponses, .smg-cc, .js-quickEditTargetComment').forEach(c => c.remove());
         const dc = post.getAttribute('data-content') || post.getAttribute('data-lb-id') || '';
-        const m = dc.match(/post-(\d+)/)
-            || (post.id || '').match(/post-(\d+)/)
-            || (post.id || '').match(/(\d+)/)
-            || (post.querySelector('[id^="post-"]')?.id || '').match(/post-(\d+)/)
-            || (post.querySelector('a[href*="/post-"]')?.getAttribute('href') || '').match(/post-(\d+)/);
+        const m = dc.match(/^post-(\d+)$/i)
+            || (post.id || '').match(/^(?:js-)?post-(\d+)$/i)
+            || (post.getAttribute('data-lb-id') || '').match(/^post-(\d+)$/i)
+            || (post.querySelector('.message-attribution a[href*="/post-"], a.message-attribution-gadget[href*="/post-"], .message-attribution a[href*="posts/"], a.message-attribution-gadget[href*="posts/"]')?.getAttribute('href') || '').match(/(?:posts\/|post-)(\d+)/i);
         const postId = m ? m[1] : '';
         if (!postId) return null;
         let ts = 0;
@@ -21835,7 +22532,9 @@
     }
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
     function riverCard(p, wm) {
+        if (!p) return null;
         const postId = p.post_id || p.postId || '';
+        if (!postId || (!p.content_html && !p.contentHtml)) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').trim();
@@ -21999,7 +22698,7 @@
             posts.forEach(p => {
                 const pid = p.post_id || p.postId;
                 riverSeen.add(pid);
-                try { const card = riverCard(p, riverOldWm); cards.push(card); frag.appendChild(card); } catch (e) {}
+                try { const card = riverCard(p, riverOldWm); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
             });
             if (riverMoreEl && riverMoreEl.parentNode === riverList) riverList.insertBefore(frag, riverMoreEl); else riverList.appendChild(frag);
             markRiverSortDirty();
@@ -22031,6 +22730,7 @@
             if (riverList.querySelector('[data-post-id="' + pid + '"]')) return;
             if (riverSeen) riverSeen.add(pid);
             let card; try { card = riverCard(p, riverOldWm); } catch (e) { return; }
+            if (!card) return;
             card.classList.add('smg-fp-enter');   // entrada animada (só os recém-chegados; some após a animação)
             setTimeout(() => card.classList.remove('smg-fp-enter'), 1300);
             let ref = null;
@@ -22089,6 +22789,7 @@
                 '<div class="smg-fp-setup-sub">' + i18n('Reading the threads you follow…') + '</div>' +
                 '<div class="smg-fp-setup-bar"><span class="smg-fp-setup-barfill"></span></div>' +
             '</div>';
+        markRiverPaintReady();
     }
     // atualiza o aviso de setup ao vivo: "{done}/{total} tópicos · {added} posts" + barra de progresso. No-op após a 1ª pintura.
     function setupProgress(p) {
@@ -22126,7 +22827,23 @@
             kickSync(null, true);
         });
         const actions = fhead.querySelector('.smg-river-head-actions');
-        if (actions) actions.appendChild(refBtn);
+        if (actions) {
+            const markAllBtn = document.createElement('button');
+            markAllBtn.type = 'button';
+            markAllBtn.className = 'smg-river-markread smg-btn smg-btn--ghost';
+            markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
+            markAllBtn.setAttribute('aria-label', markAllBtn.title);
+            markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
+            markAllBtn.addEventListener('click', () => {
+                saveNewestWatermark();
+                if (riverList) riverList.querySelectorAll('.smg-fp-card.is-unread').forEach(c => c.classList.remove('is-unread'));
+                if (typeof dbFollowedMarkAllSeen === 'function') {
+                    dbFollowedMarkAllSeen();
+                }
+            });
+            actions.appendChild(markAllBtn);
+            actions.appendChild(refBtn);
+        }
         wrap.appendChild(fhead);
         riverList = document.createElement('div'); riverList.className = 'smg-fp-list';
         wrap.appendChild(riverList);
@@ -22275,10 +22992,24 @@
                 });
         };
 
-        if (typeof fetchAndIngestFollowed === 'function') {
-            fetchAndIngestFollowed().catch(() => 0).finally(doSync);
+        if (cold) {
+            if (typeof fetchAndIngestFollowed === 'function') {
+                fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+            } else {
+                doSync();
+            }
         } else {
-            doSync();
+            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            getFollowed.then(items => {
+                if (!items || !items.length) {
+                    if (typeof fetchAndIngestFollowed === 'function') {
+                        return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+                    }
+                }
+                doSync();
+            }).catch(() => {
+                doSync();
+            });
         }
     }
     // POLLING: enquanto o feed está visível, re-sincroniza
@@ -22358,13 +23089,6 @@
     document.addEventListener('visibilitychange', handleTimelineFocusOrVisibility);
     window.addEventListener('focus', handleTimelineFocusOrVisibility);
 
-    window.addEventListener('smg-followed-updated', () => {
-        if (typeof isCronRunning !== 'undefined' && isCronRunning) return;
-        if (feedSyncRunning || timelineSyncRunning) return;
-        if (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) {
-            kickSync();
-        }
-    });
 
     window.addEventListener('smg-timeline-sync-done', () => {
         if (!riverList) return;
@@ -22390,6 +23114,8 @@
             set feedSyncRunning(v) { feedSyncRunning = v; },
             mountSentinel,
             firstPaint,
+            showSetupState,
+            markRiverPaintReady,
             ensureRiverSorted,
             insertFreshPosts,
             fetchFreshPosts,
@@ -22428,6 +23154,8 @@
             handleTimelineFocusOrVisibility,
             riverCard,
             riverThreadMeta,
+            riverParsePost,
+            isThreadPostElement,
             buildRiver
         };
     }
@@ -22712,11 +23440,11 @@
         if (paintHasFatalError()) return true;
         if (context.kind === PAINT_PAGE_KINDS.TIMELINE) {
             const river = document.getElementById('smg-river');
-            return !!river && river.dataset.smgPaintReady === '1';
+            return !!river;
         }
         if (context.kind === PAINT_PAGE_KINDS.BOOKMARKS) {
             const feed = document.getElementById('smg-bm-feed');
-            return !!feed && feed.dataset.smgPaintReady === '1';
+            return !!feed;
         }
         return document.readyState === 'complete' && paintHasExplicitEmptyState();
     }
@@ -22826,7 +23554,7 @@
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady };
+        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS };
     }
 
     function rootTouches(roots, selector, alreadyNormalized) {

@@ -759,7 +759,7 @@
                 jumps, row.classList.contains('is-unread') || row.classList.contains('structItem--unread') ? '1' : '0'].join(':');
         }).join('|');
     }
-    function ingestWatchedPageToFollowed(doc) {
+    function ingestWatchedPageToFollowed(doc, syncPages = false) {
         if (!doc) return Promise.resolve(0);
         const rows = doc.querySelectorAll('.structItem--thread');
         const signature = watchedPageSignature(doc, rows);
@@ -776,7 +776,7 @@
         }
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
-        if (watchedPageStates.get(doc) === signature) return Promise.resolve(0);
+        if (watchedPageStates.get(doc) === signature && !syncPages) return Promise.resolve(0);
         if (!rows.length) {
             watchedPageStates.set(doc, signature);
             return Promise.resolve(0);
@@ -788,6 +788,7 @@
 
             const itemsToUpsert = [];
             const seenPaths = new Set();
+            const syncCandidates = [];
 
             rows.forEach(it => {
                 const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
@@ -808,14 +809,14 @@
                 if (!thumb && typeof feedThumbUrl === 'function') thumb = feedThumbUrl(it);
                 if (!thumb && typeof thumbCacheGet === 'function') thumb = thumbCacheGet(path, title) || '';
 
-                const isUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
+                const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
                 // tags / badges
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(it) : [];
-                const tags = badges.map(b => b.name);
+                const tags = badges.map(b => ({ name: b.name, className: b.className }));
 
-                // updated_at
-                const updated_at = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
+                // forum_activity_ts
+                const forum_activity_ts = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
 
                 // created_at
                 const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
@@ -842,13 +843,21 @@
                 }
 
                 const prev = existingMap.get(path);
+                const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
+                const effectiveLastSeen = (prev && prev.last_seen_at !== undefined && prev.last_seen_at !== null)
+                    ? prev.last_seen_at
+                    : (effectiveUpdatedAt || now);
+                const isUnread = Boolean(prev && effectiveUpdatedAt > 0 && effectiveLastSeen < effectiveUpdatedAt);
+
                 const item = {
                     path: path,
                     thread_name: title || (prev && prev.thread_name) || '',
                     thumbnail_url: thumb || (prev && prev.thumbnail_url) || '',
                     tags: (tags && tags.length) ? tags : ((prev && prev.tags) || []),
                     followed_at: (prev && prev.followed_at) || now,
-                    updated_at: Math.max((prev && prev.updated_at) || 0, updated_at),
+                    forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
+                    updated_at: effectiveUpdatedAt,
+                    last_seen_at: effectiveLastSeen,
                     created_at: created_at || (prev && prev.created_at) || 0,
                     author: author || (prev && prev.author) || '',
                     last_page: Math.max((prev && prev.last_page) || 1, last_page),
@@ -863,7 +872,9 @@
                     || prev.thumbnail_url !== item.thumbnail_url
                     || JSON.stringify(prev.tags || []) !== JSON.stringify(item.tags || [])
                     || prev.followed_at !== item.followed_at
+                    || prev.forum_activity_ts !== item.forum_activity_ts
                     || prev.updated_at !== item.updated_at
+                    || prev.last_seen_at !== item.last_seen_at
                     || prev.created_at !== item.created_at
                     || prev.author !== item.author
                     || prev.last_page !== item.last_page
@@ -874,14 +885,34 @@
                 if (typeof followedSet !== 'undefined' && followedSet) {
                     followedSet.add(path);
                 }
+
+                if (syncPages) {
+                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || isUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
+                        syncCandidates.push({ thread: item, page: last_page });
+                    }
+                }
             });
 
-            if (!itemsToUpsert.length) return Promise.resolve(0);
-            return dbFollowedBulkUpsert(itemsToUpsert).then(() => {
+            // Atualiza o badge com a contagem de seguidos não lidos baseada em last_seen_at < updated_at
+            const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
+                .filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+            gmSet('smg-watched-unread-count', String(unreadCount));
+            if (typeof updateWatchedUnreadBadge === 'function') {
+                updateWatchedUnreadBadge(unreadCount);
+            }
+
+            const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}
                 return itemsToUpsert.length;
+            }) : Promise.resolve(0);
+
+            return upsertPromise.then(count => {
+                if (syncPages && syncCandidates.length && typeof syncThreadPage === 'function') {
+                    return Promise.all(syncCandidates.map(c => syncThreadPage(c.thread, c.page).catch(() => 0))).then(() => count);
+                }
+                return count;
             });
         }).catch(err => {
             console.error('[SMG] Erro em ingestWatchedPageToFollowed:', err);
@@ -918,23 +949,38 @@
             .catch(() => fetchDoc(url, { credentials: 'same-origin' }).catch(() => null));
     }
 
-    function fetchAndIngestFollowed() {
+    let lastFollowedFetchTs = 0;
+    let followedFetchInFlight = null;
+    const FOLLOWED_FETCH_MIN_INTERVAL_MS = 2 * 60 * 1000; // Mínimo de 2 minutos entre buscas automáticas de /watched/threads
+
+    function fetchAndIngestFollowed(syncPages = false, force = false) {
+        const now = Date.now();
+        if (!force && !(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
+            return Promise.resolve(0);
+        }
+        if (followedFetchInFlight) {
+            return followedFetchInFlight;
+        }
+        lastFollowedFetchTs = now;
         console.log('[SMG Timeline] Buscando tópicos seguidos em segundo plano...');
-        return fetchWatchedDoc()
+        followedFetchInFlight = fetchWatchedDoc()
             .then(doc => {
                 if (doc && typeof ingestWatchedPageToFollowed === 'function') {
-                    return ingestWatchedPageToFollowed(doc).then(count => {
+                    return ingestWatchedPageToFollowed(doc, syncPages).then(count => {
                         console.log('[SMG Timeline] Ingestão concluída: ' + count + ' tópicos processados na tabela followed.');
                         return count;
                     });
                 }
-                console.warn('[SMG Timeline] Nenhum documento válido retornado ao buscar seguidos.');
                 return 0;
             })
             .catch(err => {
                 console.warn('[SMG Timeline] Erro ao buscar seguidos em background:', err);
                 return 0;
+            })
+            .finally(() => {
+                followedFetchInFlight = null;
             });
+        return followedFetchInFlight;
     }
 
     let isStreamingWatched = false;

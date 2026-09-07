@@ -1,20 +1,40 @@
-    // =========================================================
+// =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:
-    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name
+    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name, last_seen_at
     //   - timeline: keyPath 'post_id' (PK), indices: thread_path, created_at
     //   - meta: keyPath 'key'
     //   - bookmarks: keyPath 'postId'
     // =========================================================
     const FDB_NAME = 'smg-feed';
-    const FDB_VERSION = 6;
+    const FDB_VERSION = 7;
     let fdbPromise = null;
 
     function fdbOpen() {
         if (fdbPromise) return fdbPromise;
         fdbPromise = new Promise((resolve, reject) => {
-            if (typeof indexedDB === 'undefined') { reject(new Error('no-indexeddb')); return; }
+            if (typeof indexedDB === 'undefined') {
+                fdbPromise = null;
+                reject(new Error('no-indexeddb'));
+                return;
+            }
+            let settled = false;
+            const timer = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                fdbPromise = null;
+                reject(new Error('fdb-open-timeout'));
+            }, 3500);
+
+            const cleanup = () => {
+                clearTimeout(timer);
+                settled = true;
+            };
+
             const req = indexedDB.open(FDB_NAME, FDB_VERSION);
+            req.onblocked = () => {
+                console.warn('[smg-feed] IndexedDB open blocked por conexão anterior');
+            };
             req.onupgradeneeded = (e) => {
                 const db = req.result;
                 ['threads', 'posts'].forEach(oldStore => {
@@ -23,12 +43,27 @@
                     }
                 });
                 // Store followed
-                if (!db.objectStoreNames.contains('followed')) {
+                if (db.objectStoreNames.contains('followed')) {
+                    const tx = req.transaction || (e && (e.transaction || (e.target && e.target.transaction)));
+                    if (tx && typeof tx.objectStore === 'function') {
+                        const s = tx.objectStore('followed');
+                        if (s) {
+                            if (s.indexNames && typeof s.indexNames.contains === 'function') {
+                                if (!s.indexNames.contains('last_seen_at')) {
+                                    s.createIndex('last_seen_at', 'last_seen_at');
+                                }
+                            } else {
+                                try { s.createIndex('last_seen_at', 'last_seen_at'); } catch (err) {}
+                            }
+                        }
+                    }
+                } else {
                     const s = db.createObjectStore('followed', { keyPath: 'path' });
                     s.createIndex('updated_at', 'updated_at');
                     s.createIndex('created_at', 'created_at');
                     s.createIndex('author', 'author');
                     s.createIndex('thread_name', 'thread_name');
+                    s.createIndex('last_seen_at', 'last_seen_at');
                 }
                 // Store timeline
                 if (!db.objectStoreNames.contains('timeline')) {
@@ -45,13 +80,28 @@
                     db.createObjectStore('bookmarks', { keyPath: 'postId' });
                 }
             };
-            req.onsuccess = () => resolve(req.result);
+            req.onsuccess = () => {
+                if (settled) return;
+                cleanup();
+                const db = req.result;
+                db.onversionchange = () => {
+                    try { db.close(); } catch (e) {}
+                    fdbPromise = null;
+                };
+                resolve(db);
+            };
             req.onerror = () => {
+                if (settled) return;
+                cleanup();
+                fdbPromise = null;
                 if (req.error && req.error.name === 'VersionError') {
                     try { indexedDB.deleteDatabase(FDB_NAME); } catch (e) {}
                 }
                 reject(req.error);
             };
+        }).catch(err => {
+            fdbPromise = null;
+            throw err;
         });
         return fdbPromise;
     }
@@ -113,6 +163,61 @@
             tx.oncomplete = () => resolve();
             tx.onerror = () => resolve();
         })).catch(() => {});
+    }
+
+    function dbFollowedMarkSeen(path, seenTs) {
+        if (!path) return Promise.resolve();
+        const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
+        const now = seenTs || Math.floor(Date.now() / 1000);
+        return dbFollowedGet(normPath).then(item => {
+            if (!item) return;
+            item.last_seen_at = Math.max(item.last_seen_at || 0, now);
+            item.unread = false;
+            return dbFollowedUpsert(item).then(() => {
+                try {
+                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath, last_seen_at: item.last_seen_at } }));
+                } catch (e) {}
+            });
+        });
+    }
+
+    function dbFollowedMarkAllSeen() {
+        return fdbOpen().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction('followed', 'readwrite');
+            const st = tx.objectStore('followed');
+            const cur = st.openCursor();
+            const now = Math.floor(Date.now() / 1000);
+            cur.onsuccess = () => {
+                const c = cur.result;
+                if (!c) return;
+                const rec = c.value;
+                if (rec) {
+                    rec.last_seen_at = Math.max(rec.last_seen_at || 0, rec.updated_at || 0, now);
+                    rec.unread = false;
+                    c.update(rec);
+                }
+                c.continue();
+            };
+            tx.oncomplete = () => {
+                try {
+                    gmSet('smg-watched-unread-count', '0');
+                    if (typeof updateWatchedUnreadBadge === 'function') {
+                        updateWatchedUnreadBadge(0);
+                    }
+                    window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
+                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
+                } catch (e) {}
+                resolve();
+            };
+            tx.onerror = () => reject(tx.error);
+        })).catch(() => {});
+    }
+
+    function dbFollowedGetUnreadCount() {
+        return dbFollowedGetAll().then(items => {
+            if (!Array.isArray(items)) return 0;
+            return items.filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+        }).catch(() => 0);
     }
 
     // =========================================================
@@ -315,6 +420,9 @@
             dbFollowedGetAll,
             dbFollowedUpsert,
             dbFollowedBulkUpsert,
+            dbFollowedMarkSeen,
+            dbFollowedMarkAllSeen,
+            dbFollowedGetUnreadCount,
             dbTimelinePutPosts,
             dbTimelineGetRecent,
             dbTimelineCount,

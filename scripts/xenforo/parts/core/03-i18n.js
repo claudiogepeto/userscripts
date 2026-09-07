@@ -57,6 +57,7 @@
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
         'Account': 'Conta', 'Feed mode': 'Modo feed', 'Gallery mode': 'Modo Galeria', 'Standard mode': 'Modo Padrão', 'View mode': 'Modo de visualização',
+        'Mark all as read': 'Marcar tudo como lido',
         'Page navigation': 'Navegação de página',
         'Settings': 'Configurações', 'Options': 'Opções',
         'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock', 'Reload to apply': 'Recarregar para aplicar',

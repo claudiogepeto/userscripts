@@ -2,6 +2,70 @@
     // HELPERS: text / url
     // =========================================================
 
+    function absUrl(u) {
+        if (!u || !String(u).trim()) return '';
+        try { return new URL(u, location.href).href; } catch (e) { return u; }
+    }
+
+    function b64decode(s) {
+        if (!s) return null;
+        let str = String(s).trim().replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        for (const t of [str, s]) {
+            try {
+                const r = atob(t);
+                if (r) return r;
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    function rawParam(href, key) {
+        if (!href) return null;
+        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&#]+)'));
+        if (m) {
+            try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+        }
+        try {
+            const u = new URL(href, location.href);
+            return u.searchParams.get(key);
+        } catch (e) {}
+        return null;
+    }
+
+    function decodeProxyHref(href) {
+        if (!href || typeof href !== 'string') return null;
+        let target = null;
+        if (/\/goto\/link-confirmation/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'to');
+        } else if (/\/redirect\/?/i.test(href)) {
+            target = rawParam(href, 'to') || rawParam(href, 'url') || rawParam(href, 'link');
+        } else if (/\/proxy\.php/i.test(href)) {
+            target = rawParam(href, 'link') || rawParam(href, 'url');
+        } else if (/\/link-proxy\/?/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'link') || rawParam(href, 'to');
+        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(href)) {
+            target = rawParam(href, 'url') || rawParam(href, 'to') || rawParam(href, 'link');
+        }
+        if (!target) return null;
+        target = target.trim();
+        if (/^https?:\/\//i.test(target)) return target;
+        const decoded = b64decode(target);
+        if (decoded && /^https?:\/\//i.test(decoded.trim())) return decoded.trim();
+        return decoded || target;
+    }
+
+    function resolveProxyHref(href) {
+        if (!href || typeof href !== 'string') return '';
+        const trimmed = href.trim();
+        if (!trimmed) return '';
+        const decoded = decodeProxyHref(trimmed);
+        if (decoded && /^https?:/i.test(decoded)) return decoded;
+        if (/^https?:/i.test(trimmed)) return trimmed;
+        if (decoded) return decoded;
+        return trimmed;
+    }
+
     function getBigUrl(url) {
         // imgbox NÃO segue a convenção .md/.th: thumb = thumbs2.imgbox.com/.../HASH_t.jpg,
         // original = images2.imgbox.com/.../HASH_o.jpg (o `_b` é um CROP quadrado, não serve). Sobe pro original.
@@ -1102,8 +1166,56 @@
         });
     }
 
+    function isThreadPostElement(el) {
+        if (!el || el.nodeType !== 1) return false;
+
+        // 1. Rejeitar se for comentário ou estiver dentro de container de comentários
+        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment')) {
+            return false;
+        }
+        if (el.classList) {
+            if (el.classList.contains('comment') ||
+                el.classList.contains('message-responseRow') ||
+                el.classList.contains('smg-cc') ||
+                el.classList.contains('js-quickEditTargetComment') ||
+                el.classList.contains('message-responses') ||
+                el.classList.contains('comment-body')) {
+                return false;
+            }
+        }
+
+        // 2. Rejeitar se o ID ou data-content indicar comentário
+        const dc = el.getAttribute ? (el.getAttribute('data-content') || '') : '';
+        if (/comment/i.test(dc)) return false;
+        const id = el.id || '';
+        if (/comment/i.test(id)) return false;
+
+        // 3. Rejeitar se estiver dentro de assinatura ou citação
+        if (el.closest && el.closest('.message-signature, .bbCodeBlock--quote, .bbCodeQuote')) {
+            return false;
+        }
+
+        // 4. Deve ser um post legítimo do XenForo
+        const hasPostClass = el.classList && (el.classList.contains('message--post') || el.classList.contains('js-post'));
+        const isArticleMessage = el.tagName === 'ARTICLE' && el.classList && el.classList.contains('message');
+        const hasPostContent = /^post-\d+$/i.test(dc);
+
+        // Se tiver js-post, precisa ser um container de mensagem de post real, não um wrapper genérico
+        if (el.classList && el.classList.contains('js-post') && !el.classList.contains('message--post') && !isArticleMessage && !hasPostContent) {
+            return false;
+        }
+
+        return !!(hasPostClass || isArticleMessage || hasPostContent);
+    }
+
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
         window.__fetchDoc = fetchDoc;
+        window.__b64decode = b64decode;
+        window.__rawParam = rawParam;
+        window.__decodeProxyHref = decodeProxyHref;
+        window.__resolveProxyHref = resolveProxyHref;
+        window.__absUrl = absUrl;
+        window.isThreadPostElement = isThreadPostElement;
     }

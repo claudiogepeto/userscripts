@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HentaiEra 2.0
 // @namespace    hentaiera-dark-gallery
-// @version      1.1.0
+// @version      1.2.6
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/hentaiera.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/hentaiera.user.js
 // @author       claudiogepeto
@@ -12,7 +12,7 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 (function () {
-    "use strict";ß
+    "use strict";
 
     const ACCENT = "#33b2ef";
     const ACCENT_HOVER = "#5cc8f5";
@@ -70,6 +70,7 @@
 
     const ICON = {
         home: svg('<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/>'),
+        popular: svg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'),
         menu: svg('<path d="M4 6h16M4 12h16M4 18h16"/>'),
         search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
         close: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
@@ -87,6 +88,7 @@
         horizontal: svg('<path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/>'),
         manhwa: svg('<rect x="4" y="3" width="16" height="4" rx="1"/><rect x="4" y="10" width="16" height="4" rx="1"/><rect x="4" y="17" width="16" height="4" rx="1"/>'),
         refresh: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>'),
+        filter: svg('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'),
         more: svg('<circle cx="5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.3" fill="currentColor" stroke="none"/>'),
     };
 
@@ -134,13 +136,31 @@
         return FULLSCREEN_ZOOM_PRESETS.includes(value) ? value : "1";
     }
 
+    function checkRouteRedirect() {
+        const match = location.pathname.match(/^\/view\/(\d+)(?:\/\d+)?\/?$/i);
+        if (match) {
+            location.replace(`/gallery/${match[1]}/`);
+            return true;
+        }
+        const legacySortMatch = location.pathname.match(/^\/(popular|latest|downloaded|toprated)\/?$/i);
+        if (legacySortMatch) {
+            const map = { popular: "pp", latest: "lt", downloaded: "dl", toprated: "tr" };
+            const flag = map[legacySortMatch[1].toLowerCase()] || "pp";
+            const currentParams = new URLSearchParams(location.search);
+            currentParams.set(flag, "1");
+            location.replace(`/search/?${currentParams.toString()}`);
+            return true;
+        }
+        return false;
+    }
+
     function isGalleryRoute(pathname = location.pathname) {
         return /^\/gallery\/\d+(?:\/\d+)?\/?$/.test(pathname);
     }
 
     function isListingRoute(pathname = location.pathname) {
         if (isGalleryRoute(pathname)) return false;
-        return pathname === "/" || /^\/(?:search|tags?|tag|artists?|artist|characters?|character|groups?|group|parodies?|parody|languages?|language|categories?|category)(?:\/|$)/.test(pathname);
+        return pathname === "/" || /^\/(?:search|popular|downloaded|toprated|latest|tags?|tag|artists?|artist|characters?|character|groups?|group|parodies?|parody|languages?|language|categories?|category)(?:\/|$)/.test(pathname);
     }
 
     function normalizeSiteUrl(href, base = location.href) {
@@ -196,11 +216,21 @@
 
         const logo = nativeLogo();
         const logoHtml = logo ? logo.outerHTML : "<span>HentaiEra</span>";
+        const currentParams = new URLSearchParams(location.search);
+        const isPopular = location.pathname.startsWith("/search") && (currentParams.get("pp") === "1" || currentParams.get("sort") === "pp");
         const primary = [
             { href: "/", label: "Home", icon: ICON.home },
+            { href: "/search/?pp=1", label: "Popular", icon: ICON.popular },
             { href: "/random/", label: "Random", icon: ICON.random },
             { href: "/tags/", label: "Tags", icon: ICON.tags },
         ];
+        const isItemActive = (item) => {
+            if (item.href === "/search/?pp=1" || item.href === "/search/?sort=pp") return isPopular;
+            if (item.href === "/") return location.pathname === "/" && !location.search;
+            const targetPath = pathFromHref(item.href).replace(/\/+$/, "") || "/";
+            const currentPath = location.pathname.replace(/\/+$/, "") || "/";
+            return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+        };
         const primaryHrefs = new Set(primary.map((item) => item.href));
         const extras = links.filter((item) => !primaryHrefs.has(pathFromHref(item.href)) && !/^(login|register)$/i.test(item.label));
         const login = links.find((item) => /login/i.test(item.label)) || { href: "/login/", label: "Login" };
@@ -212,7 +242,7 @@
                     <button type="button" id="he-menu-toggle" class="he-icon-button he-mobile-only" aria-label="Open menu" aria-controls="he-nav-drawer" aria-expanded="false">${ICON.menu}</button>
                     <a class="he-logo" href="/" aria-label="HentaiEra">${logoHtml}</a>
                     <nav class="he-primary-links" aria-label="Primary navigation">
-                        ${primary.map((item) => `<a href="${item.href}" class="he-top-link">${item.icon}<span>${item.label}</span></a>`).join("")}
+                        ${primary.map((item) => `<a href="${item.href}" class="he-top-link${isItemActive(item) ? " active" : ""}">${item.icon}<span>${item.label}</span></a>`).join("")}
                         <div class="he-link-dropdown">
                             <button type="button" class="he-top-link he-dropdown-toggle" aria-expanded="false">${ICON.arrowDown}<span>Mais</span></button>
                             <div class="he-dropdown-menu">${extras.map((item) => `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join("")}</div>
@@ -238,7 +268,7 @@
             <div class="he-drawer-panel" role="dialog" aria-modal="true" aria-label="Site menu">
                 <div class="he-drawer-head"><strong>HentaiEra</strong><button type="button" class="he-icon-button he-drawer-close" aria-label="Close menu">${ICON.close}</button></div>
                 <div class="he-drawer-links">
-                    ${primary.map((item) => `<a href="${item.href}">${item.icon}<span>${item.label}</span></a>`).join("")}
+                    ${primary.map((item) => `<a href="${item.href}" class="${isItemActive(item) ? "active" : ""}">${item.icon}<span>${item.label}</span></a>`).join("")}
                     ${extras.map((item) => `<a href="${escapeHtml(item.href)}">${ICON.tags}<span>${escapeHtml(item.label)}</span></a>`).join("")}
                     <a href="${escapeHtml(login.href)}">${ICON.heart}<span>${escapeHtml(login.label)}</span></a>
                     <a href="${escapeHtml(register.href)}">${ICON.home}<span>${escapeHtml(register.label)}</span></a>
@@ -276,9 +306,14 @@
     function injectBottomNav() {
         if (document.querySelector("#he-bottom-nav")) return;
         const nav = el("nav", { id: "he-bottom-nav", "aria-label": "Mobile navigation" });
+        const currentParams = new URLSearchParams(location.search);
+        const isPopular = location.pathname.startsWith("/search") && (currentParams.get("pp") === "1" || currentParams.get("sort") === "pp");
         const items = [
-            ["/", "Home", ICON.home], ["/random/", "Random", ICON.random],
-            ["search", "Search", ICON.search], ["/tags/", "Tags", ICON.tags],
+            ["/", "Home", ICON.home],
+            ["/search/?pp=1", "Popular", ICON.popular],
+            ["/random/", "Random", ICON.random],
+            ["search", "Search", ICON.search],
+            ["/tags/", "Tags", ICON.tags],
             ["/login/", "Account", ICON.heart],
         ];
         items.forEach(([href, label, icon]) => {
@@ -288,9 +323,16 @@
                 nav.appendChild(button);
                 return;
             }
-            const targetPath = pathFromHref(href).replace(/\/+$/, "") || "/";
-            const currentPath = location.pathname.replace(/\/+$/, "") || "/";
-            const active = targetPath === "/" ? currentPath === "/" : currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+            let active = false;
+            if (href === "/search/?pp=1" || href === "/search/?sort=pp") {
+                active = isPopular;
+            } else if (href === "/") {
+                active = location.pathname === "/" && !location.search;
+            } else {
+                const targetPath = pathFromHref(href).replace(/\/+$/, "") || "/";
+                const currentPath = location.pathname.replace(/\/+$/, "") || "/";
+                active = currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+            }
             nav.appendChild(el("a", { href, className: `he-bottom-item${active ? " active" : ""}` }, `${icon}<span>${label}</span>`));
         });
         document.body.appendChild(nav);
@@ -322,12 +364,25 @@
         ["en", "English", "us"], ["jp", "日本語", "jp"], ["es", "Español", "es"], ["fr", "Français", "fr"],
         ["kr", "한국어", "kr"], ["de", "Deutsch", "de"], ["ru", "Русский", "ru"], ["cn", "中文", "cn"],
     ];
-    const FILTER_SORTS = [["lt", "Latest"], ["dl", "Downloaded"], ["pp", "Popular"], ["tr", "Top rated"]];
+    const FILTER_SORTS = [["lt", "Latest"], ["pp", "Popular"], ["dl", "Downloaded"], ["tr", "Top rated"]];
     const FILTER_TAGS = ["big breasts", "anal", "blowjob", "ahegao", "milf", "schoolgirl uniform", "glasses", "nakadashi", "yuri", "yaoi"];
 
     function nativeFilterForm() {
-        const filter = document.querySelector("#filter_form");
-        return filter?.closest("form") || document.querySelector("#filter_form_mb") || null;
+        const filter = document.querySelector(".index_search, .cs_mb, #filter_form, #filter_form_mb, .bblocktop");
+        return filter?.closest("form") || filter || null;
+    }
+
+    function hideNativeFilters() {
+        document.querySelectorAll(".index_search, .cs_mb, #filter_form, #filter_form_mb, .bblocktop").forEach((node) => {
+            if (node.closest("#he-search-modal")) return;
+            node.classList.add("he-native-filter-hidden");
+            node.style.setProperty("display", "none", "important");
+            const form = node.closest("form");
+            if (form && !form.closest("#he-search-modal")) {
+                form.classList.add("he-native-filter-hidden");
+                form.style.setProperty("display", "none", "important");
+            }
+        });
     }
 
     function filterInitialValue(name, source) {
@@ -362,21 +417,30 @@
         try { localStorage.removeItem(KEY_FILTER_LANGUAGES); } catch (e) {}
     }
 
-    function filterFlagUrl(name, fallbackCode, source) {
-        const nativeFlag = source?.querySelector(`[data-toggle-field="${name}"] img.g_flag, .${name} img.g_flag`);
-        return nativeFlag?.getAttribute("src") || `/img/flags/${fallbackCode}.svg`;
-    }
-
     function setupFilterBar() {
+        hideNativeFilters();
         if (document.querySelector("#he-filter-bar")) return;
         const searchBox = document.querySelector("#he-search-modal .he-search-box");
         if (!searchBox) return;
         const source = nativeFilterForm();
+        const params = new URLSearchParams(location.search);
+        let initialSort = "lt";
+        if (params.get("pp") === "1" || params.get("sort") === "pp") initialSort = "pp";
+        else if (params.get("dl") === "1" || params.get("sort") === "dl") initialSort = "dl";
+        else if (params.get("tr") === "1" || params.get("sort") === "tr") initialSort = "tr";
+        else if (params.get("lt") === "1" || params.get("sort") === "lt") initialSort = "lt";
 
         const bar = el("div", { id: "he-filter-bar", className: "he-filter-bar" });
         bar.innerHTML = `
             <div class="he-filter-line he-filter-line-secondary">
-                <label class="he-filter-sort">Sort <select name="sort" aria-label="Sort galleries">${FILTER_SORTS.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label>
+                <div class="he-filter-group he-filter-sort-group" aria-label="Sort order">
+                    <span class="he-filter-label">Sort</span>
+                    <input type="hidden" name="lt" value="${initialSort === 'lt' ? '1' : '0'}">
+                    <input type="hidden" name="pp" value="${initialSort === 'pp' ? '1' : '0'}">
+                    <input type="hidden" name="dl" value="${initialSort === 'dl' ? '1' : '0'}">
+                    <input type="hidden" name="tr" value="${initialSort === 'tr' ? '1' : '0'}">
+                    ${FILTER_SORTS.map(([value, label]) => `<button type="button" class="he-filter-chip he-filter-sort-chip${value === initialSort ? " active is-active" : ""}" data-he-sort-value="${value}" aria-pressed="${value === initialSort}">${label}</button>`).join("")}
+                </div>
                 <button type="button" class="he-filter-clear">Clear</button>
             </div>
             <div class="he-filter-line he-filter-line-options">
@@ -386,7 +450,7 @@
                 </div>
                 <div class="he-filter-group" aria-label="Languages">
                     <span class="he-filter-label">Language</span>
-                    ${FILTER_LANGUAGES.map(([name, label, flag]) => `<button type="button" class="he-filter-chip" data-he-filter-field="${name}" aria-pressed="true"><img class="he-filter-flag" src="${escapeHtml(filterFlagUrl(name, flag, source))}" alt="">${label}</button><input type="hidden" name="${name}" value="1">`).join("")}
+                    ${FILTER_LANGUAGES.map(([name, label, flag]) => `<button type="button" class="he-filter-chip" data-he-filter-field="${name}" aria-pressed="true"><span class="g_flag flag-${flag} he-filter-flag" aria-hidden="true"></span>${label}</button><input type="hidden" name="${name}" value="1">`).join("")}
                 </div>
             </div>
             <div class="he-filter-line he-filter-line-tags" aria-label="Popular tags">
@@ -396,6 +460,22 @@
                 </div>
             </div>
         `;
+
+        bar.querySelectorAll(".he-filter-sort-chip").forEach((button) => {
+            button.addEventListener("click", () => {
+                const sortValue = button.dataset.heSortValue;
+                ["lt", "dl", "pp", "tr"].forEach((s) => {
+                    const inp = bar.querySelector(`input[name="${s}"]`);
+                    if (inp) inp.value = s === sortValue ? "1" : "0";
+                });
+                bar.querySelectorAll(".he-filter-sort-chip").forEach((btn) => {
+                    const active = btn === button;
+                    btn.classList.toggle("active", active);
+                    btn.classList.toggle("is-active", active);
+                    btn.setAttribute("aria-pressed", String(active));
+                });
+            });
+        });
 
         [...FILTER_CATEGORIES, ...FILTER_LANGUAGES].forEach(([name]) => {
             const value = filterInitialValue(name, source);
@@ -412,8 +492,6 @@
                 if (FILTER_LANGUAGES.some(([language]) => language === name)) saveLanguagePreferences(bar);
             });
         });
-        const selectedSort = new URLSearchParams(location.search).get("sort") || "lt";
-        bar.querySelector("select[name='sort']").value = FILTER_SORTS.some(([value]) => value === selectedSort) ? selectedSort : "lt";
         bar.querySelectorAll("[data-he-search-tag]").forEach((button) => {
             button.addEventListener("click", () => {
                 const input = document.querySelector("#he-search-modal input[name='key']");
@@ -431,10 +509,7 @@
             location.assign("/");
         });
 
-        document.querySelectorAll("#filter_form, #filter_form_mb").forEach((node) => {
-            node.classList.add("he-native-filter-hidden");
-            node.closest("form")?.classList.add("he-native-filter-hidden");
-        });
+        hideNativeFilters();
         searchBox.querySelector(".he-search-filters")?.appendChild(bar);
     }
 
@@ -445,7 +520,7 @@
     }
 
     function hydrateCardImage(card, { eager = false } = {}) {
-        const cover = card?.querySelector("a.inner_thumb");
+        const cover = card?.querySelector("a.inner_thumb, .inner_thumb");
         const image = cover?.querySelector("img");
         if (!image) return;
         const lazySource = image.getAttribute("data-src") || image.getAttribute("data-lazy-src") || image.getAttribute("data-original");
@@ -462,6 +537,7 @@
             image.addEventListener("load", () => {
                 image.classList.add("loaded");
                 cover.classList.add("loaded");
+                syncCardCoverBackdrop(card);
             });
             image.addEventListener("error", () => {
                 const fallbackUrl = fallback && normalizeSiteUrl(fallback);
@@ -471,6 +547,7 @@
                 }
                 image.classList.add("loaded");
                 cover.classList.add("loaded");
+                syncCardCoverBackdrop(card);
             });
         }
 
@@ -486,6 +563,52 @@
         if (image.complete && image.naturalWidth > 0) {
             image.classList.add("loaded");
             cover.classList.add("loaded");
+        }
+    }
+
+    function syncCardCoverBackdrop(card) {
+        const cover = card?.querySelector("a.inner_thumb, .inner_thumb");
+        const image = card?.querySelector(".inner_thumb img, a.inner_thumb img");
+        if (!cover || !image) return;
+
+        const apply = () => {
+            const rawSource = image.getAttribute("data-src") || image.getAttribute("data-lazy-src") || image.getAttribute("data-original") || image.getAttribute("src") || image.currentSrc || "";
+            if (!rawSource || /^data:/i.test(rawSource)) return;
+            const source = normalizeSiteUrl(rawSource);
+
+            // Clean up any stale, empty, or duplicate cover frames in this cover
+            const existingFrames = Array.from(cover.querySelectorAll(".he-card-cover-media"));
+            let frame = existingFrames.find((f) => f.contains(image)) || null;
+
+            if (!frame && existingFrames.length > 0) {
+                frame = existingFrames[0];
+                frame.appendChild(image);
+            } else if (!frame) {
+                frame = el("span", { className: "he-card-cover-media" });
+                const parent = image.parentElement || cover;
+                parent.insertBefore(frame, image);
+                frame.appendChild(image);
+            }
+
+            // Remove any duplicate or orphaned frames that do not contain the active image
+            existingFrames.forEach((f) => {
+                if (f !== frame) f.remove();
+            });
+
+            const escaped = source.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+            const background = `url("${escaped}")`;
+            cover.classList.add("he-cover-backdrop");
+            cover.style.setProperty("--he-cover-image", background);
+            if (frame) {
+                frame.classList.add("he-cover-media--backdrop");
+                frame.style.setProperty("--he-cover-image", background);
+            }
+        };
+
+        apply();
+        if (!image.complete && !image.dataset.heBackdropBound) {
+            image.dataset.heBackdropBound = "true";
+            image.addEventListener("load", apply, { once: true });
         }
     }
 
@@ -505,10 +628,11 @@
         applyLanguageFilter(card);
         if (card.dataset.heCardProcessed === "true") {
             updateCardPages(card);
+            syncCardCoverBackdrop(card);
             return;
         }
 
-        const cover = card.querySelector("a.inner_thumb");
+        const cover = card.querySelector("a.inner_thumb, .inner_thumb");
         if (!cover) return;
         hydrateCardImage(card, options);
 
@@ -522,6 +646,7 @@
 
         card.dataset.heCardProcessed = "true";
         updateCardPages(card);
+        syncCardCoverBackdrop(card);
     }
 
     function updateCardPages(card) {
@@ -580,6 +705,14 @@
             // current origin so the request remains same-origin.
             next.protocol = current.protocol;
             next.host = current.host;
+            const legacySortMatch = next.pathname.match(/^\/(popular|downloaded|toprated|latest)\/?$/i);
+            if (legacySortMatch) {
+                const map = { popular: "pp", latest: "lt", downloaded: "dl", toprated: "tr" };
+                const flag = map[legacySortMatch[1].toLowerCase()] || "pp";
+                next.pathname = "/search/";
+                ["lt", "pp", "dl", "tr"].forEach((k) => next.searchParams.delete(k));
+                next.searchParams.set(flag, "1");
+            }
             // Pagination links on some HentaiEra responses omit filters that
             // were added by the search form. Carry them forward so client-side
             // language choices (including cn=0) stay effective on every page.
@@ -729,6 +862,122 @@
         continueListingIfNeeded(generation);
     }
 
+    function setupListingSortBar() {
+        if (!isListingRoute()) return;
+        const container = findListingContainer();
+        if (!container) return;
+        if (document.querySelector("#he-listing-sort")) return;
+
+        const currentParams = new URLSearchParams(location.search);
+        let activeSort = "lt";
+        if (currentParams.get("pp") === "1" || currentParams.get("sort") === "pp") activeSort = "pp";
+        else if (currentParams.get("dl") === "1" || currentParams.get("sort") === "dl") activeSort = "dl";
+        else if (currentParams.get("tr") === "1" || currentParams.get("sort") === "tr") activeSort = "tr";
+        else if (currentParams.get("lt") === "1" || currentParams.get("sort") === "lt") activeSort = "lt";
+        const key = currentParams.get("key");
+
+        const buildSortHref = (sortVal) => {
+            const params = new URLSearchParams();
+            if (key) {
+                params.set("key", key);
+            }
+            FILTER_LANGUAGES.forEach(([lang]) => {
+                const val = currentParams.get(lang);
+                if (val !== null) params.set(lang, val);
+            });
+            FILTER_CATEGORIES.forEach(([cat]) => {
+                const val = currentParams.get(cat);
+                if (val !== null) params.set(cat, val);
+            });
+
+            // Remove todas as chaves de ordenação anteriores
+            params.delete("lt");
+            params.delete("pp");
+            params.delete("dl");
+            params.delete("tr");
+            params.delete("sort");
+
+            // Define a flag correta para o backend do HentaiEra
+            params.set(sortVal, "1");
+            return `/search/?${params.toString()}`;
+        };
+
+        const recentHref = buildSortHref("lt");
+        const popHref = buildSortHref("pp");
+        const dlHref = buildSortHref("dl");
+        const trHref = buildSortHref("tr");
+
+        let currentSortLabel = "Recentes";
+        if (activeSort === "pp") currentSortLabel = "Populares";
+        else if (activeSort === "dl") currentSortLabel = "Mais Baixados";
+        else if (activeSort === "tr") currentSortLabel = "Mais Votados";
+        else if (activeSort === "lt") currentSortLabel = "Recentes";
+
+        const bar = el("div", { id: "he-listing-sort", className: "he-sort-bar", role: "navigation", "aria-label": "Ordenar galerias" });
+        bar.innerHTML = `
+            <div class="he-sort-inner">
+                <div class="he-sort-group">
+                    <div class="he-sort-dropdown">
+                        <button type="button" class="he-sort-item he-sort-drop-toggle current">
+                            <span>Ordenar: ${escapeHtml(currentSortLabel)}</span>
+                            ${ICON.arrowDown}
+                        </button>
+                        <div class="he-sort-menu">
+                            <a href="${escapeHtml(recentHref)}" class="he-sort-menu-item ${activeSort === 'lt' ? 'current' : ''}">Recentes</a>
+                            <a href="${escapeHtml(popHref)}" class="he-sort-menu-item ${activeSort === 'pp' ? 'current' : ''}">Populares</a>
+                            <a href="${escapeHtml(dlHref)}" class="he-sort-menu-item ${activeSort === 'dl' ? 'current' : ''}">Mais Baixados</a>
+                            <a href="${escapeHtml(trHref)}" class="he-sort-menu-item ${activeSort === 'tr' ? 'current' : ''}">Mais Votados</a>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="he-sort-filter-btn" data-he-open-search="true" title="Filtros de pesquisa">
+                    ${ICON.filter}
+                    <span>Filtros</span>
+                </button>
+            </div>
+        `;
+
+        const heading = container.querySelector(":scope > h1, :scope > h2, h1, h2");
+        if (heading && heading.parentElement === container) {
+            heading.after(bar);
+        } else {
+            container.insertBefore(bar, container.firstChild);
+        }
+
+        const dropdown = bar.querySelector(".he-sort-dropdown");
+        const toggleBtn = bar.querySelector(".he-sort-drop-toggle");
+        if (dropdown && toggleBtn) {
+            toggleBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle("open");
+            });
+        }
+
+        if (!window.__heSortDocClickBound) {
+            window.__heSortDocClickBound = true;
+            document.addEventListener("click", (e) => {
+                document.querySelectorAll(".he-sort-dropdown.open").forEach((d) => {
+                    if (!d.contains(e.target)) {
+                        d.classList.remove("open");
+                    }
+                });
+            });
+        }
+        bar.querySelectorAll(".he-sort-menu").forEach((menu) => {
+            menu.addEventListener("click", (e) => e.stopPropagation());
+        });
+        bar.querySelectorAll(".he-sort-menu a").forEach((link) => {
+            link.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown?.classList.remove("open");
+            });
+        });
+
+        bar.querySelector(".he-sort-filter-btn")?.addEventListener("click", () => {
+            window.__heOpenSearch?.();
+        });
+    }
+
     // =====================================================================
     // Search palette
     // =====================================================================
@@ -769,6 +1018,10 @@
         const open = () => {
             modal.hidden = false;
             document.body.classList.add("he-search-open");
+            const currentKey = new URLSearchParams(location.search).get("key");
+            if (currentKey && !input.value) {
+                input.value = currentKey;
+            }
             renderRecents();
             setTimeout(() => input.focus(), 0);
         };
@@ -786,10 +1039,16 @@
             if (filterBar) saveLanguagePreferences(filterBar);
             const params = new URLSearchParams();
             if (query) params.set("key", query);
-            filterBar?.querySelectorAll("input[type='hidden'][value='0']").forEach((field) => params.set(field.name, "0"));
-            const sort = filterBar?.querySelector("select[name='sort']")?.value || "lt";
-            if (sort !== "lt") params.set("sort", sort);
-            const url = new URL(query ? "/search/" : "/", location.origin);
+            filterBar?.querySelectorAll("input[type='hidden'][value='0']").forEach((field) => {
+                if (!["lt", "pp", "dl", "tr"].includes(field.name)) {
+                    params.set(field.name, "0");
+                }
+            });
+            ["lt", "pp", "dl", "tr"].forEach((s) => {
+                const inp = filterBar?.querySelector(`input[name="${s}"]`);
+                if (inp?.value === "1") params.set(s, "1");
+            });
+            const url = new URL("/search/", location.origin);
             url.search = params.toString();
             if (query) {
                 const historyItems = readRecentSearches().filter((item) => item.q !== query);
@@ -825,13 +1084,16 @@
         if (!value) return null;
         try {
             const url = new URL(value, location.href);
-            const match = url.pathname.match(/\/galleries\/(\d+)\/(?:(\d+)(t)?|(cover|thumb))\.([a-z0-9]+)$/i);
+            const match = url.pathname.match(/(?:^|\/)(?:(\d+)(t)?|(cover|thumb))\.([a-z0-9]+)$/i);
             if (!match) return null;
             const slash = url.pathname.lastIndexOf("/");
+            const segments = url.pathname.split("/").filter(Boolean);
+            const mediaId = segments.length >= 2 ? segments[segments.length - 2] : null;
             return {
-                galleryMediaId: match[1],
-                pageNumber: match[2] ? Number(match[2]) : null,
-                extension: match[5].toLowerCase(),
+                galleryMediaId: mediaId,
+                pageNumber: match[1] ? Number(match[1]) : null,
+                isThumb: Boolean(match[2]),
+                extension: match[4].toLowerCase(),
                 base: `${url.origin}${url.pathname.slice(0, slash + 1)}`,
             };
         } catch (e) {
@@ -839,9 +1101,33 @@
         }
     }
 
+    function extractGTh() {
+        try {
+            if (typeof unsafeWindow !== "undefined" && unsafeWindow.g_th) {
+                return typeof unsafeWindow.g_th === "string" ? JSON.parse(unsafeWindow.g_th) : unsafeWindow.g_th;
+            }
+        } catch (e) {}
+        try {
+            if (typeof window !== "undefined" && window.g_th) {
+                return typeof window.g_th === "string" ? JSON.parse(window.g_th) : window.g_th;
+            }
+        } catch (e) {}
+        for (const s of document.querySelectorAll("script:not([src])")) {
+            const text = s.textContent || "";
+            if (text.includes("g_th")) {
+                const m = text.match(/g_th\s*=\s*(?:\$\.parseJSON\(|JSON\.parse\()?'(\{.+?\})'\)?/s)
+                    || text.match(/g_th\s*=\s*(\{.+?\});/s);
+                if (m) {
+                    try { return JSON.parse(m[1]); } catch (e) {}
+                }
+            }
+        }
+        return null;
+    }
+
     function extractGalleryMedia() {
         const readerNode = document.querySelector("#reader");
-        const thumbs = [...document.querySelectorAll("#append_thumbs img, #thumbs_gallery_div .gthumb img")];
+        const thumbs = [...document.querySelectorAll("#append_thumbs img, #thumbs_gallery_div .gthumb img, .left_cover img")];
         let structuredGallery = null;
         try {
             structuredGallery = [...document.querySelectorAll("script[type='application/ld+json']")]
@@ -850,15 +1136,39 @@
         } catch (e) {}
         const sources = [
             document.querySelector("#reader_img")?.getAttribute("src"),
+            document.querySelector(".left_cover img")?.getAttribute("data-src"),
+            document.querySelector(".left_cover img")?.getAttribute("src"),
             document.querySelector("meta[property='og:image']")?.getAttribute("content"),
+            document.querySelector("meta[itemprop='image']")?.getAttribute("content"),
             structuredGallery?.image,
             ...thumbs.flatMap((thumb) => [thumb.getAttribute("data-src"), thumb.getAttribute("src")]),
         ];
         const source = sources.map(parseGalleryImageUrl).find(Boolean);
-        if (!source) return null;
 
-        const totalFromDom = readerNode?.dataset.total || document.querySelector("#append_thumbs")?.dataset.total || document.querySelector(".total_pages")?.textContent || structuredGallery?.numberOfItems;
+        let base = source?.base;
+        let defaultExtension = source?.extension || "webp";
+
+        if (!base) {
+            const server = document.querySelector("#load_server")?.value?.trim();
+            const dir = document.querySelector("#load_dir")?.value?.trim();
+            const loadId = document.querySelector("#load_id")?.value?.trim();
+            if (server && dir && loadId) {
+                const host = server.includes(".") ? server : (server.startsWith("m") ? `${server}.hentaiera.com` : `m${server}.hentaiera.com`);
+                base = `https://${host}/${dir}/${loadId}/`;
+            }
+        }
+        if (!base) return null;
+
+        const gTh = extractGTh();
+        const gThKeys = gTh ? Object.keys(gTh) : [];
+        const loadPagesVal = document.querySelector("#load_pages")?.value?.trim();
+        const totalFromDom = readerNode?.dataset.total
+            || loadPagesVal
+            || document.querySelector("#append_thumbs")?.dataset.total
+            || document.querySelector(".total_pages")?.textContent
+            || structuredGallery?.numberOfItems;
         let total = Number.parseInt(totalFromDom || "", 10);
+        if (!total && gThKeys.length) total = gThKeys.length;
         if (!total) {
             try {
                 const ld = [...document.querySelectorAll("script[type='application/ld+json']")]
@@ -869,16 +1179,26 @@
         }
         if (!total) total = thumbs.length || 1;
 
-        const extension = source.extension;
-        const base = source.base;
         const pageExtensions = new Map();
+        const EXT_MAP = { w: "webp", j: "jpg", p: "png" };
+        if (gTh) {
+            for (const [pageNumStr, val] of Object.entries(gTh)) {
+                const pageNum = Number(pageNumStr);
+                const code = String(val || "").split(",")[0].trim().toLowerCase();
+                const ext = EXT_MAP[code] || (code.length > 1 ? code : "webp");
+                pageExtensions.set(pageNum, ext);
+                if (pageNum === 1) defaultExtension = ext;
+            }
+        }
         thumbs.forEach((thumb, index) => {
             const thumbSrc = thumb.getAttribute("data-src") || thumb.getAttribute("src") || "";
             const parsed = parseGalleryImageUrl(thumbSrc);
-            if (parsed?.pageNumber) pageExtensions.set(parsed.pageNumber, parsed.extension);
-            else pageExtensions.set(index + 1, extension);
+            const pageNum = parsed?.pageNumber || index + 1;
+            if (!pageExtensions.has(pageNum) && parsed?.extension) {
+                pageExtensions.set(pageNum, parsed.extension);
+            }
         });
-        return { base, total, extension, pageExtensions };
+        return { base, total, extension: defaultExtension, pageExtensions };
     }
 
     function pageCandidates(media, pageNumber) {
@@ -1089,13 +1409,13 @@
             controls = el("div", { id: "he-fullscreen-controls", hidden: true });
             controls.innerHTML = `
                 <div class="he-fullscreen-menu" hidden>
-                    <div class="he-control-group"><span>Direction</span><div class="he-segmented"><button type="button" class="he-seg" data-he-orientation="vertical">${ICON.vertical}<span>Vertical</span></button><button type="button" class="he-seg" data-he-orientation="horizontal">${ICON.horizontal}<span>Horizontal</span></button></div></div>
-                    <div class="he-control-group"><span>Default zoom</span><div class="he-segmented">${FULLSCREEN_ZOOM_PRESETS.map((zoom) => `<button type="button" class="he-seg" data-he-fs-zoom="${zoom}">${Number(zoom) * 100}%</button>`).join("")}</div></div>
-                    <div class="he-control-group"><span>Pages</span><div class="he-segmented"><button type="button" class="he-seg" data-he-fs-layout="single">Single</button><button type="button" class="he-seg" data-he-fs-layout="double">Double</button></div></div>
+                    <div class="he-control-group"><span>Direção</span><div class="he-segmented"><button type="button" class="he-seg" data-he-orientation="vertical">${ICON.vertical}<span>Vertical</span></button><button type="button" class="he-seg" data-he-orientation="horizontal">${ICON.horizontal}<span>Horizontal</span></button></div></div>
+                    <div class="he-control-group"><span>Zoom padrão</span><div class="he-segmented">${FULLSCREEN_ZOOM_PRESETS.map((zoom) => `<button type="button" class="he-seg" data-he-fs-zoom="${zoom}">${Number(zoom) * 100}%</button>`).join("")}</div></div>
+                    <div class="he-control-group"><span>Páginas</span><div class="he-segmented"><button type="button" class="he-seg" data-he-fs-layout="single">Única</button><button type="button" class="he-seg" data-he-fs-layout="double">Dupla</button></div></div>
                     <button type="button" class="he-seg he-menu-action" data-he-fs-manhwa="true">${ICON.manhwa}<span>Manhwa</span></button>
-                    <button type="button" class="he-seg he-menu-action" data-he-fs-reversed="true">${ICON.refresh}<span>Reversed</span></button>
-                    <button type="button" class="he-seg he-menu-action" data-he-fs-top="true">${ICON.arrowUp}<span>Back to top</span></button>
-                    <button type="button" class="he-seg he-menu-action" data-he-fs-exit="true">${ICON.close}<span>Exit fullscreen</span></button>
+                    <button type="button" class="he-seg he-menu-action" data-he-fs-reversed="true">${ICON.refresh}<span>Invertido</span></button>
+                    <button type="button" class="he-seg he-menu-action" data-he-fs-top="true">${ICON.arrowUp}<span>Voltar ao topo</span></button>
+                    <button type="button" class="he-seg he-menu-action" data-he-fs-exit="true">${ICON.close}<span>Sair da tela cheia</span></button>
                 </div>
                 <button type="button" class="he-reader-settings" aria-label="Reader settings" aria-expanded="false">${ICON.settings}</button>
             `;
@@ -1198,15 +1518,84 @@
         if (reader?.dataset.mode === "continuous") applyReaderWidth(reader, value);
     }
 
-    function reactionCount(buttonId) {
-        const value = document.querySelector(`#${buttonId} span[id$='_count']`)?.textContent || "0";
-        const number = Number.parseInt(value.replace(/[^0-9-]/g, ""), 10);
+    function reactionCount(btn) {
+        if (!btn) return 0;
+        const span = btn.querySelector("span");
+        const val = (span ? span.textContent : btn.textContent) || "0";
+        const number = Number.parseInt(val.replace(/[^0-9-]/g, ""), 10);
         return Number.isFinite(number) ? number : 0;
     }
 
-    function updateGalleryReactionScore(row, score) {
-        if (!row || !score) return;
-        score.textContent = String(reactionCount("like_btn") - reactionCount("dlike_btn"));
+    function updateGalleryReactionScore(score, like, dislike) {
+        if (!score) return;
+        score.textContent = String(reactionCount(like) - reactionCount(dislike));
+    }
+
+    function organizeGalleryHero() {
+        const galleryFirst = document.querySelector(".gallery_first");
+        if (!galleryFirst) return;
+        const h1 = galleryFirst.querySelector(":scope > h1");
+        const rightDetails = galleryFirst.querySelector(".right_details");
+        if (h1 && rightDetails) {
+            const subtitle = rightDetails.querySelector(".subtitle, h2");
+            if (subtitle) {
+                rightDetails.insertBefore(h1, subtitle);
+            } else {
+                rightDetails.prepend(h1);
+            }
+        }
+    }
+
+    function syncHeroCoverBackdrop() {
+        const cover = document.querySelector(".gallery_first .left_cover, #cover");
+        const image = cover?.querySelector("img");
+        if (!cover || !image) return;
+
+        const apply = () => {
+            const source = image.getAttribute("data-src") || image.getAttribute("src") || image.currentSrc || "";
+            if (!source || /^data:/i.test(source)) return;
+
+            let frame = image.parentElement?.classList.contains("he-cover-media") ? image.parentElement : null;
+            if (!frame && (image.parentNode === cover || image.parentNode?.matches("a"))) {
+                frame = el("span", { className: "he-cover-media" });
+                image.parentNode.insertBefore(frame, image);
+                frame.appendChild(image);
+            }
+
+            const escaped = source.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+            const background = `url("${escaped}")`;
+            cover.classList.add("he-cover-backdrop");
+            cover.style.setProperty("--he-cover-image", background);
+            if (frame) {
+                frame.classList.add("he-cover-media--backdrop");
+                frame.style.setProperty("--he-cover-image", background);
+            }
+        };
+
+        apply();
+        if (!image.complete) {
+            image.addEventListener("load", apply, { once: true });
+        }
+    }
+
+    function bindCoverClick() {
+        const coverLink = document.querySelector(".gallery_first .left_cover a");
+        if (!coverLink || coverLink.dataset.heBound === "true") return;
+        coverLink.dataset.heBound = "true";
+        coverLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            const mode = getPreferredMediaMode();
+            if (mode === "fullscreen") {
+                setMediaMode("fullscreen");
+            } else {
+                const reader = document.querySelector("#he-reader");
+                const toolbar = document.querySelector("#he-media-toolbar");
+                const target = toolbar || reader;
+                if (target) {
+                    target.scrollIntoView({ behavior: "smooth" });
+                }
+            }
+        });
     }
 
     function closeGalleryActionMenus() {
@@ -1229,70 +1618,106 @@
     }
 
     function setupGalleryActions() {
-        const row = document.querySelector("#react_row");
+        const row = document.querySelector(".g_buttons, #react_row");
         if (!row) return;
         const pagesButton = document.querySelector("#pages_btn");
         pagesButton?.closest("li")?.remove();
         pagesButton?.remove();
 
-        const like = row.querySelector("#like_btn");
-        const dislike = row.querySelector("#dlike_btn");
-        const favorite = row.querySelector("#add_fav_btn");
-        const fapped = row.querySelector("#fap_btn");
-        const download = row.querySelector("#download_btn");
-        const report = row.querySelector("#report_btn");
-        if (!like || !dislike || !favorite || !fapped || !download || !report) return;
+        const like = row.querySelector("#like_btn, .btn-like, [id*='like_btn']")
+            || row.querySelector(".likes button:first-child, .likes a:first-child");
+        const dislike = row.querySelector("#dlike_btn, .btn-dlike, [id*='dlike']")
+            || row.querySelector(".likes button:nth-child(2), .likes a:nth-child(2)");
+        const favorite = row.querySelector("#add_fav_btn, [id*='fav'], .btn_fav");
+        const download = row.querySelector("#dl_new, [name='dl_new'], #download_btn, .btn_download");
+        const fapped = row.querySelector("#fap_btn, [id*='fap']");
+        const report = row.querySelector("#report_btn, [id*='report']");
+        const progress = row.querySelector("#dl_progress, .dl_progress");
+        if (!like && !dislike && !favorite && !download) return;
 
         bindGalleryActionMenu();
         if (row.dataset.heActionsReady === "true") {
-            updateGalleryReactionScore(row, row.querySelector(".he-reaction-score"));
+            updateGalleryReactionScore(row.querySelector(".he-reaction-score"), like, dislike);
             return;
         }
 
-        const progress = row.querySelector("#dl_progress");
         const score = el("span", { className: "he-reaction-score", title: "Like score" }, "0");
         score.setAttribute("aria-label", "Like score");
 
-        [like, dislike, favorite, fapped].forEach((button) => button.classList.add("he-gallery-action"));
-        like.setAttribute("aria-label", "Like");
-        dislike.setAttribute("aria-label", "Dislike");
-        favorite.setAttribute("aria-label", "Add to favourites");
-        fapped.setAttribute("aria-label", "Fapped");
+        if (like) {
+            like.classList.add("he-gallery-action", "he-action-like");
+            like.setAttribute("aria-label", "Like");
+            if (!like.querySelector("svg, .ico")) {
+                like.insertAdjacentHTML("afterbegin", ICON.arrowUp);
+            }
+        }
+        if (dislike) {
+            dislike.classList.add("he-gallery-action", "he-action-dislike");
+            dislike.setAttribute("aria-label", "Dislike");
+            if (!dislike.querySelector("svg, .ico")) {
+                dislike.insertAdjacentHTML("afterbegin", ICON.arrowDown);
+            }
+        }
+        if (favorite) {
+            favorite.classList.add("he-gallery-action", "he-action-fav");
+            favorite.setAttribute("aria-label", "Add to favourites");
+            if (!favorite.querySelector("svg, .ico")) {
+                favorite.insertAdjacentHTML("afterbegin", ICON.heart);
+            }
+        }
+        if (fapped) {
+            fapped.classList.add("he-gallery-action");
+            fapped.setAttribute("aria-label", "Fapped");
+        }
 
         const reactions = el("div", { className: "he-action-group he-action-reactions" });
-        reactions.append(like, score, dislike);
-
-        const more = el("div", { className: "he-action-more" });
-        const moreToggle = el("button", { type: "button", className: "he-gallery-more-toggle" }, ICON.more);
-        moreToggle.setAttribute("aria-label", "More actions");
-        moreToggle.setAttribute("aria-haspopup", "menu");
-        moreToggle.setAttribute("aria-expanded", "false");
-        const menu = el("div", { className: "he-gallery-actions-menu", hidden: true, role: "menu" });
-        download.classList.add("he-gallery-menu-action");
-        report.classList.add("he-gallery-menu-action");
-        menu.append(download, report);
-        if (progress) menu.append(progress);
-        more.append(moreToggle, menu);
-        moreToggle.addEventListener("click", (event) => {
-            event.stopPropagation();
-            const open = !more.classList.contains("is-open");
-            closeGalleryActionMenus();
-            more.classList.toggle("is-open", open);
-            moreToggle.setAttribute("aria-expanded", String(open));
-            menu.hidden = !open;
-        });
+        if (like) reactions.appendChild(like);
+        if (like || dislike) reactions.appendChild(score);
+        if (dislike) reactions.appendChild(dislike);
 
         const secondary = el("div", { className: "he-action-group he-action-secondary" });
-        secondary.append(favorite, fapped, more);
+        if (favorite) secondary.appendChild(favorite);
+        if (fapped) secondary.appendChild(fapped);
+
+        if (download || report) {
+            const more = el("div", { className: "he-action-more" });
+            const moreToggle = el("button", { type: "button", className: "he-gallery-more-toggle" }, ICON.more);
+            moreToggle.setAttribute("aria-label", "More actions");
+            moreToggle.setAttribute("aria-haspopup", "menu");
+            moreToggle.setAttribute("aria-expanded", "false");
+            const menu = el("div", { className: "he-gallery-actions-menu", hidden: true, role: "menu" });
+            if (download) {
+                download.classList.add("he-gallery-menu-action");
+                if (!download.querySelector("svg, .ico")) {
+                    download.insertAdjacentHTML("afterbegin", svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'));
+                }
+                menu.appendChild(download);
+            }
+            if (report) {
+                report.classList.add("he-gallery-menu-action");
+                menu.appendChild(report);
+            }
+            if (progress) menu.appendChild(progress);
+            more.append(moreToggle, menu);
+            moreToggle.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const open = !more.classList.contains("is-open");
+                closeGalleryActionMenus();
+                more.classList.toggle("is-open", open);
+                moreToggle.setAttribute("aria-expanded", String(open));
+                menu.hidden = !open;
+            });
+            secondary.appendChild(more);
+        }
+
         row.classList.add("he-gallery-actions");
         row.replaceChildren(reactions, secondary);
         row.dataset.heActionsReady = "true";
-        updateGalleryReactionScore(row, score);
+        updateGalleryReactionScore(score, like, dislike);
         galleryActionsObserver?.disconnect();
-        galleryActionsObserver = new MutationObserver(() => updateGalleryReactionScore(row, score));
-        ["#like_count", "#dislike_count"].forEach((selector) => {
-            const count = row.querySelector(selector);
-            if (count) galleryActionsObserver.observe(count, { childList: true, characterData: true, subtree: true });
+        galleryActionsObserver = new MutationObserver(() => updateGalleryReactionScore(score, like, dislike));
+        [like, dislike].forEach((btn) => {
+            if (btn) galleryActionsObserver.observe(btn, { childList: true, characterData: true, subtree: true });
         });
     }
 
@@ -1306,12 +1731,16 @@
 
     function setupGalleryReader() {
         if (!isGalleryRoute()) return;
+        organizeGalleryHero();
+        syncHeroCoverBackdrop();
+        bindCoverClick();
         setupGalleryActions();
         const media = extractGalleryMedia();
         if (!media) {
             scheduleGalleryReaderSetup();
             return;
         }
+        document.body.classList.add("he-has-reader");
         let toolbar = document.querySelector("#he-media-toolbar");
         let reader = document.querySelector("#he-reader");
         if (!reader) reader = createReaderElement(media);
@@ -1326,8 +1755,8 @@
         if (!toolbar) {
             toolbar = el("div", { id: "he-media-toolbar", className: "he-media-toolbar" });
             toolbar.innerHTML = `
-                <div class="he-toolbar-main"><div class="he-segmented"><button type="button" class="he-seg" data-he-media-mode="continuous">${ICON.book}<span>Continuous</span></button><button type="button" class="he-seg" data-he-media-mode="fullscreen">${ICON.fullscreen}<span>Fullscreen</span></button></div><span class="he-page-stat">${ICON.book}<b>${media.total}</b> pages</span></div>
-                <div class="he-toolbar-options"><div class="he-toolbar-control"><span>Width:</span><div class="he-segmented">${["60%", "75%", "90%", "100%", "viewport-height"].map((value) => `<button type="button" class="he-seg" data-he-width="${value}">${value === "viewport-height" ? "Height" : value}</button>`).join("")}</div></div><button type="button" class="he-seg he-manhwa-button" data-he-manhwa="true" aria-pressed="false">${ICON.manhwa}<span>Manhwa</span></button></div>
+                <div class="he-toolbar-main"><div class="he-segmented"><button type="button" class="he-seg" data-he-media-mode="continuous">${ICON.book}<span>Contínuo</span></button><button type="button" class="he-seg" data-he-media-mode="fullscreen">${ICON.fullscreen}<span>Tela cheia</span></button></div><span class="he-page-stat">${ICON.book}<b>${media.total}</b> páginas</span></div>
+                <div class="he-toolbar-options"><div class="he-toolbar-control"><span>Largura:</span><div class="he-segmented">${READER_WIDTH_PRESETS.map((value) => `<button type="button" class="he-seg" data-he-width="${value}">${value === "viewport-height" ? "Altura" : value}</button>`).join("")}</div></div><button type="button" class="he-seg he-manhwa-button" data-he-manhwa="true" aria-pressed="false">${ICON.manhwa}<span>Manhwa</span></button></div>
             `;
             if (insertParent) {
                 if (insertBefore) insertParent.insertBefore(toolbar, insertBefore);
@@ -1409,7 +1838,7 @@
             .he-logo img { display: block; width: auto; height: 42px; max-width: 120px; object-fit: contain; }
             .he-primary-links { display: flex; align-items: center; gap: 2px; min-width: 0; flex: 0 1 auto; }
             .he-top-link { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 7px 7px; border-radius: 8px; color: var(--he-secondary); font-size: 12px; font-weight: 650; text-decoration: none; white-space: nowrap; }
-            .he-top-link:hover, .he-primary-links a[href="${escapeHtml(location.pathname)}"] { color: #fff; background: var(--he-elevated); }
+            .he-top-link:hover, .he-top-link.active, .he-primary-links a.active { color: #fff; background: var(--he-elevated); }
             .he-dropdown-toggle, .he-dropdown-toggle:hover, .he-dropdown-toggle:focus, .he-dropdown-toggle:active, .he-link-dropdown.is-open .he-dropdown-toggle { color: var(--he-secondary) !important; background: var(--he-surface) !important; border: 0 !important; box-shadow: none !important; }
             .he-dropdown-toggle:hover, .he-dropdown-toggle:focus-visible { color: var(--he-accent) !important; background: var(--he-elevated) !important; }
             .he-top-link svg { width: 16px; height: 16px; }
@@ -1434,11 +1863,11 @@
             .he-drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; color: var(--he-accent); }
             .he-drawer-links { display: grid; gap: 5px; }
             .he-drawer-links a { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 9px; color: var(--he-secondary); text-decoration: none; }
-            .he-drawer-links a:hover { color: #fff; background: var(--he-elevated); }
+            .he-drawer-links a:hover, .he-drawer-links a.active { color: #fff; background: var(--he-elevated); }
             .he-drawer-links svg { width: 19px; height: 19px; }
             .container, .tags_section { width: var(--he-content-width) !important; max-width: var(--he-content-width) !important; margin-left: auto !important; margin-right: auto !important; }
             .container > .row, .container .row:not(.galleries) { width: 100% !important; max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }
-            .ablocktop, .ad-wrapper, [id^="ts_ad"], iframe[src*="ad"], .commercial { display: none !important; }
+            .ablocktop, .bblocktop, .ad-wrapper, [id^="ts_ad"], iframe[src*="ad"], .commercial { display: none !important; }
             .row.galleries { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; width: 100%; max-width: 100%; margin: 0 !important; padding: 18px 0 32px; }
             .row.galleries::before, .row.galleries::after { display: none !important; content: none !important; }
             .row.galleries > .thumbs_container { display: contents !important; }
@@ -1448,17 +1877,186 @@
             .row.galleries .thumbnail:hover { transform: translateY(-4px); border-color: var(--he-accent); box-shadow: 0 12px 28px rgba(0,0,0,.62); }
             .row.galleries .cat_text, .row.galleries .lang_pages { display: none !important; }
             .row.galleries > h1, .row.galleries > h2 { grid-column: 1 / -1; width: 100%; margin: 0 0 4px !important; padding: 0 0 10px !important; color: var(--he-text) !important; text-align: left !important; }
-            .row.galleries a.inner_thumb { position: relative; display: block; width: 100%; overflow: hidden; padding: 0 !important; background: #08080a; }
-            .row.galleries a.inner_thumb img { display: block; width: 100%; height: auto; min-height: 0; aspect-ratio: 1 / 1.41; object-fit: cover; transition: transform .28s ease; }
-            .row.galleries .thumbnail:hover a.inner_thumb img { transform: scale(1.035); }
-            .he-card-lang { position: absolute !important; top: 8px; left: 8px; z-index: 2; display: inline-flex !important; align-items: center; justify-content: center; width: 25px; height: 19px; padding: 2px !important; border: 1px solid rgba(255,255,255,.28); border-radius: 5px; background: rgba(5,5,8,.8); }
+            .row.galleries a.inner_thumb,
+            .row.galleries .inner_thumb {
+                position: relative !important;
+                display: block !important;
+                width: 100% !important;
+                aspect-ratio: 1 / 1.41 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+                isolation: isolate !important;
+                background: #08080a !important;
+                flex: 0 0 auto !important;
+            }
+            .row.galleries a.inner_thumb.he-cover-backdrop::before,
+            .row.galleries .inner_thumb.he-cover-backdrop::before,
+            .he-card-cover-media.he-cover-media--backdrop::before {
+                position: absolute !important;
+                inset: -10% !important;
+                width: 120% !important;
+                height: 120% !important;
+                z-index: 0 !important;
+                content: "" !important;
+                background-image: var(--he-cover-image) !important;
+                background-position: center !important;
+                background-size: cover !important;
+                filter: blur(20px) saturate(1.1) !important;
+                opacity: 0.72 !important;
+                transform: scale(1.08) !important;
+                pointer-events: none !important;
+            }
+            .he-card-cover-media {
+                position: relative !important;
+                z-index: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                max-height: 100% !important;
+                aspect-ratio: 1 / 1.41 !important;
+                overflow: hidden !important;
+                isolation: isolate !important;
+                background: #08080a !important;
+            }
+            .row.galleries a.inner_thumb img,
+            .row.galleries .inner_thumb img,
+            .he-card-cover-media img {
+                position: relative !important;
+                z-index: 1 !important;
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+                max-height: 100% !important;
+                aspect-ratio: auto !important;
+                object-fit: contain !important;
+                background: rgba(8, 8, 10, 0.18) !important;
+                transition: transform 0.25s ease !important;
+            }
+            .row.galleries .thumbnail:hover a.inner_thumb img,
+            .row.galleries .thumbnail:hover .inner_thumb img,
+            .row.galleries .thumbnail:hover .he-card-cover-media img {
+                transform: scale(1.04) !important;
+            }
+            .he-card-lang { position: absolute !important; top: 8px; left: 8px; z-index: 2 !important; display: inline-flex !important; align-items: center; justify-content: center; width: 25px; height: 19px; padding: 2px !important; border: 1px solid rgba(255,255,255,.28); border-radius: 5px; background: rgba(5,5,8,.8); }
             .he-card-lang img { width: 21px !important; height: 15px !important; min-height: 0 !important; aspect-ratio: auto !important; object-fit: contain !important; }
-            .he-card-pages { position: absolute; top: 8px; right: 8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-width: 29px; height: 20px; padding: 0 6px; border: 1px solid rgba(255,255,255,.25); border-radius: 5px; color: #fff; background: rgba(5,5,8,.8); box-shadow: 0 2px 8px rgba(0,0,0,.45); font-size: 11px; font-weight: 750; line-height: 1; }
+            .he-card-lang .g_flag { display: inline-block !important; width: 16px !important; height: 11px !important; vertical-align: middle !important; }
+            .he-card-pages { position: absolute !important; top: 8px; right: 8px; z-index: 2 !important; display: inline-flex; align-items: center; justify-content: center; min-width: 29px; height: 20px; padding: 0 6px; border: 1px solid rgba(255,255,255,.25); border-radius: 5px; color: #fff; background: rgba(5,5,8,.8); box-shadow: 0 2px 8px rgba(0,0,0,.45); font-size: 11px; font-weight: 750; line-height: 1; }
             .row.galleries .g_text { display: block !important; flex: 1 1 auto; min-width: 0; height: auto !important; max-height: none !important; margin: 0 !important; padding: 0 !important; opacity: 1 !important; visibility: visible !important; }
             .row.galleries .gallery_title { display: block !important; height: auto !important; min-height: 0 !important; max-height: none !important; margin: 0 !important; padding: 8px 9px 10px !important; color: var(--he-text) !important; background: var(--he-card) !important; font-size: 13px !important; line-height: 1.35 !important; font-weight: 650 !important; text-align: left; }
             .row.galleries .gallery_title a, .row.galleries .thumbnail .g_text a, .row.galleries .thumbnail:hover .g_text a { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 5; height: auto !important; min-height: 0 !important; max-height: 6.75em !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; color: inherit !important; }
-            .gallery_first, .gallery_first .right_details, .gallery_first .left_cover { background: transparent !important; }
-            .gallery_first { width: var(--he-content-width) !important; max-width: var(--he-content-width) !important; margin: 18px auto 0 !important; }
+            /* Hero Gallery Card (.gallery_first) */
+            .gallery_first {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: flex-start !important;
+                gap: 32px !important;
+                width: var(--he-content-width) !important;
+                max-width: var(--he-content-width) !important;
+                margin: 20px auto 24px auto !important;
+                padding: 28px !important;
+                border: 1px solid var(--he-border) !important;
+                border-radius: 16px !important;
+                background: var(--he-surface) !important;
+                box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45) !important;
+                box-sizing: border-box !important;
+            }
+            .gallery_first .left_cover {
+                flex: 0 0 320px !important;
+                max-width: 320px !important;
+                width: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                position: relative !important;
+                aspect-ratio: 1 / 1.41 !important;
+                overflow: hidden !important;
+                isolation: isolate !important;
+                background: #08080a !important;
+                border-radius: 12px !important;
+            }
+            .gallery_first .left_cover.he-cover-backdrop::before {
+                position: absolute !important;
+                inset: -10% !important;
+                z-index: 0 !important;
+                content: "" !important;
+                background-image: var(--he-cover-image) !important;
+                background-position: center !important;
+                background-size: cover !important;
+                filter: blur(26px) saturate(1.08) !important;
+                opacity: 0.76 !important;
+                transform: scale(1.08) !important;
+            }
+            .gallery_first .left_cover a {
+                position: relative !important;
+                z-index: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+                height: 100% !important;
+                border-radius: 12px !important;
+                overflow: hidden !important;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+                border: 1px solid var(--he-border) !important;
+                transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+            }
+            .gallery_first .left_cover a:hover {
+                transform: translateY(-3px) !important;
+                box-shadow: 0 14px 32px rgba(0, 0, 0, 0.75) !important;
+                border-color: var(--he-accent) !important;
+            }
+            .gallery_first .left_cover .he-cover-media,
+            .gallery_first .left_cover .he-cover-media--backdrop {
+                position: relative !important;
+                z-index: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            .gallery_first .left_cover img {
+                position: relative !important;
+                z-index: 1 !important;
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+            }
+            .gallery_first .right_details {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                background: transparent !important;
+            }
+            .gallery_first .right_details h1 {
+                margin: 0 0 4px 0 !important;
+                padding: 0 !important;
+                color: var(--he-text) !important;
+                font-size: 22px !important;
+                font-weight: 800 !important;
+                line-height: 1.3 !important;
+                text-align: left !important;
+            }
+            .gallery_first .right_details .subtitle,
+            .gallery_first .right_details h2 {
+                margin: 0 0 10px 0 !important;
+                padding: 0 !important;
+                color: var(--he-secondary) !important;
+                font-size: 15px !important;
+                font-weight: 500 !important;
+                line-height: 1.35 !important;
+                text-align: left !important;
+            }
             .gallery_first .galleries_info { margin-bottom: 10px !important; }
             .gallery_first .galleries_info > li { margin-bottom: 5px !important; }
             .gallery_first .tags_text { font-size: 11px !important; }
@@ -1466,31 +2064,40 @@
             .gallery_first .info_tags .tag { min-height: 23px !important; height: 23px !important; margin: 1px 2px 1px 0 !important; padding: 2px 7px !important; border-radius: 5px !important; font-size: 10px !important; line-height: 18px !important; }
             .gallery_first .info_tags .tag .g_flag { width: 18px !important; height: 13px !important; }
             .tags_sorting a .ico { display: block; width: 15px !important; height: 15px !important; flex: 0 0 15px; margin-right: 6px; fill: currentColor; }
-            .he-gallery-actions { display: flex !important; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 10px; width: 100%; margin: 12px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid var(--he-border); background: transparent !important; font-size: 1rem !important; }
+            .he-gallery-actions { display: flex !important; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 10px; width: 100%; margin: 14px 0 0 !important; padding: 12px 0 0 !important; border-top: 1px solid var(--he-border); background: transparent !important; font-size: 1rem !important; }
             .he-action-group { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
             .he-action-reactions { gap: 2px; }
             .he-action-secondary { margin-left: 0; gap: 5px; }
-            .he-gallery-actions .he-gallery-action { display: inline-flex !important; align-items: center; justify-content: center; gap: 5px; min-width: 34px; height: 32px !important; margin: 0 !important; padding: 0 7px !important; border: 1px solid var(--he-border) !important; border-radius: 7px !important; color: var(--he-secondary) !important; background: var(--he-surface) !important; font-size: 0 !important; line-height: 1 !important; }
+            .he-gallery-actions .he-gallery-action { display: inline-flex !important; align-items: center; justify-content: center; gap: 5px; min-width: 36px; height: 34px !important; margin: 0 !important; padding: 0 10px !important; border: 1px solid var(--he-border) !important; border-radius: 8px !important; color: var(--he-secondary) !important; background: var(--he-surface) !important; font-size: 0 !important; line-height: 1 !important; cursor: pointer; transition: all .18s ease; }
             .he-gallery-actions .he-gallery-action:hover { color: #fff !important; border-color: var(--he-accent) !important; background: var(--he-elevated) !important; }
-            .he-gallery-actions .he-gallery-action .ico { display: block; width: 16px !important; height: 16px !important; margin: 0 !important; fill: currentColor; }
-            .he-gallery-actions .he-gallery-action [id$="_count"] { display: inline-block; color: inherit; font-size: 11px !important; font-weight: 750; }
+            .he-gallery-actions .he-gallery-action svg, .he-gallery-actions .he-gallery-action .ico { display: block; width: 16px !important; height: 16px !important; margin: 0 !important; fill: currentColor; }
+            .he-gallery-actions .he-gallery-action span { display: inline-block; color: inherit; font-size: 11px !important; font-weight: 750; }
             .he-gallery-actions #fav_label, .he-gallery-actions #download_label { display: none !important; }
             .he-reaction-score { min-width: 30px; color: var(--he-text); font-size: 12px; font-weight: 800; text-align: center; }
             .he-action-more { position: relative; }
-            .he-gallery-more-toggle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--he-border) !important; border-radius: 7px; color: var(--he-secondary); background: var(--he-surface); cursor: pointer; }
+            .he-gallery-more-toggle { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--he-border) !important; border-radius: 8px; color: var(--he-secondary); background: var(--he-surface); cursor: pointer; transition: all .18s ease; }
             .he-gallery-more-toggle:hover, .he-action-more.is-open .he-gallery-more-toggle { color: #fff; border-color: var(--he-accent) !important; background: var(--he-elevated); }
             .he-gallery-more-toggle svg { width: 17px; height: 17px; }
             .he-gallery-actions-menu { position: absolute; right: 0; bottom: calc(100% + 7px); z-index: 20; display: grid; gap: 4px; min-width: 150px; padding: 6px; border: 1px solid var(--he-border-light); border-radius: 9px; background: rgba(18,18,24,.98); box-shadow: 0 12px 28px rgba(0,0,0,.65); }
             .he-gallery-actions-menu[hidden] { display: none !important; }
             .he-gallery-actions-menu .he-gallery-menu-action { display: inline-flex !important; align-items: center; justify-content: flex-start; gap: 7px; width: 100%; height: 32px !important; margin: 0 !important; padding: 0 8px !important; border: 0 !important; border-radius: 6px !important; color: var(--he-secondary) !important; background: transparent !important; font-size: 11px !important; line-height: 1 !important; }
             .he-gallery-actions-menu .he-gallery-menu-action:hover { color: #fff !important; background: var(--he-elevated) !important; }
-            .he-gallery-actions-menu .he-gallery-menu-action .ico { display: block; width: 14px !important; height: 14px !important; }
+            .he-gallery-actions-menu .he-gallery-menu-action svg, .he-gallery-actions-menu .he-gallery-menu-action .ico { display: block; width: 14px !important; height: 14px !important; }
             .he-gallery-actions-menu #dl_progress { width: 100%; margin: 4px 0 0; }
-            @media (min-width: 992px) {
-                .gallery_first .left_cover { flex: 0 0 29% !important; max-width: 29% !important; }
-                .gallery_first .right_details { flex: 0 0 71% !important; max-width: 71% !important; }
+            body.he-has-reader #thumbs_gallery_div, body.he-has-reader #show_more_row, body.he-has-reader .gallery_view { display: none !important; }
+            .index_search,
+            .cs_mb,
+            .bblocktop,
+            .desktop_shown:not(#he-topbar *),
+            .mobile_shown:not(#he-topbar *),
+            #filter_form,
+            #filter_form_mb,
+            form:has(.index_search),
+            form:has(.cs_mb),
+            form:has(.bblocktop),
+            .he-native-filter-hidden {
+                display: none !important;
             }
-            .he-native-filter-hidden { display: none !important; }
             #he-filter-bar { width: 100%; max-width: 100%; margin: 0; display: grid; gap: 10px; padding: 12px 0 2px; border-top: 1px solid var(--he-border); background: transparent; }
             .he-filter-line { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
             .he-filter-line-primary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
@@ -1505,9 +2112,24 @@
             .he-filter-label, .he-filter-sort { color: var(--he-muted); font-size: 11px; font-weight: 750; }
             .he-filter-chip, .he-filter-sort select, .he-filter-clear { height: 30px; padding: 0 8px; border: 1px solid var(--he-border); border-radius: 6px; color: var(--he-secondary); background: var(--he-elevated); font-size: 10px; font-weight: 700; cursor: pointer; }
             .he-filter-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-            .he-filter-flag { display: block; width: 18px; height: 13px; flex: 0 0 auto; object-fit: contain; }
-            .he-filter-chip:hover, .he-filter-chip[aria-pressed="true"] { color: #fff; border-color: var(--he-accent); }
-            .he-filter-chip[aria-pressed="true"] { background: rgba(51,178,239,.16); }
+            .he-filter-chip .g_flag {
+                display: inline-block !important;
+                width: 16px !important;
+                height: 11px !important;
+                margin-right: 5px !important;
+                vertical-align: middle !important;
+                flex: 0 0 16px !important;
+            }
+            .he-filter-flag {
+                display: inline-block !important;
+                width: 16px !important;
+                height: 11px !important;
+                margin-right: 5px !important;
+                vertical-align: middle !important;
+                flex: 0 0 16px !important;
+            }
+            .he-filter-chip:hover, .he-filter-chip[aria-pressed="true"], .he-filter-chip.active, .he-filter-chip.is-active { color: #fff; border-color: var(--he-accent); }
+            .he-filter-chip[aria-pressed="true"], .he-filter-chip.active, .he-filter-chip.is-active { background: rgba(51,178,239,.16); }
             .he-filter-chip.is-off { opacity: .48; }
             .he-filter-sort { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
             .he-filter-sort select { outline: 0; }
@@ -1529,6 +2151,189 @@
             .row.galleries > .tags_sorting { grid-column: 1 / -1 !important; display: flex !important; align-items: center; flex-wrap: wrap; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px 0 10px !important; }
             .row.galleries > .tags_sorting > [class*="col-"] { flex: 0 0 auto !important; width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; float: none !important; }
             .tags_sorting a, .tags_sorting .btn, .tags_section .btn_az { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 6px 10px; border: 1px solid var(--he-border); border-radius: 7px; color: var(--he-secondary); background: var(--he-surface); text-decoration: none; }
+            #he-listing-sort,
+            #he-listing-sort.he-sort-bar,
+            .he-sort-bar {
+                position: relative !important;
+                z-index: 100 !important;
+                grid-column: 1 / -1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                margin: 4px auto 18px;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            .he-sort-inner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                width: 100%;
+                max-width: 600px;
+                padding: 6px 8px;
+                background: rgba(16, 18, 22, 0.75);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid var(--he-border);
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+                box-sizing: border-box;
+            }
+
+            .he-sort-group {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .he-sort-item {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                height: 34px;
+                padding: 0 14px;
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                color: var(--he-secondary);
+                font-size: 13px;
+                font-weight: 600;
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                white-space: nowrap;
+                user-select: none;
+            }
+
+            .he-sort-item:hover {
+                background: var(--he-elevated);
+                color: #fff;
+                border-color: var(--he-border-light);
+            }
+
+            .he-sort-item.current {
+                background: var(--he-grad) !important;
+                color: #fff !important;
+                border-color: transparent !important;
+                box-shadow: 0 2px 10px rgba(51, 178, 239, 0.35);
+            }
+
+            .he-sort-dropdown {
+                position: relative !important;
+            }
+
+            .he-sort-dropdown.open {
+                z-index: 1000 !important;
+            }
+
+            .he-sort-drop-toggle {
+                appearance: none;
+                -webkit-appearance: none;
+                font-family: inherit;
+            }
+
+            .he-sort-drop-toggle svg {
+                width: 14px;
+                height: 14px;
+                transition: transform 0.2s ease;
+            }
+
+            .he-sort-dropdown.open .he-sort-drop-toggle svg,
+            .he-sort-dropdown:hover .he-sort-drop-toggle svg {
+                transform: rotate(180deg);
+            }
+
+            .he-sort-menu {
+                position: absolute !important;
+                top: calc(100% + 4px) !important;
+                left: 0;
+                min-width: 150px;
+                padding: 6px;
+                background: #12151b;
+                border: 1px solid var(--he-border-light);
+                border-radius: 10px;
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                z-index: 99999 !important;
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(-6px);
+                transition: opacity 0.15s ease, transform 0.15s ease;
+            }
+
+            .he-sort-menu::before {
+                content: "" !important;
+                position: absolute !important;
+                top: -8px !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 8px !important;
+            }
+
+            .he-sort-dropdown.open .he-sort-menu,
+            .he-sort-dropdown:hover .he-sort-menu {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+
+            .he-sort-menu-item {
+                display: flex;
+                align-items: center;
+                padding: 8px 12px;
+                border-radius: 6px;
+                color: var(--he-secondary);
+                font-size: 12.5px;
+                font-weight: 550;
+                text-decoration: none;
+                transition: all 0.12s ease;
+            }
+
+            .he-sort-menu-item:hover {
+                background: var(--he-elevated);
+                color: #fff;
+            }
+
+            .he-sort-menu-item.current {
+                background: rgba(51, 178, 239, 0.18);
+                color: var(--he-accent);
+                font-weight: 650;
+            }
+
+            .he-sort-filter-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                height: 34px;
+                padding: 0 14px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--he-border);
+                border-radius: 8px;
+                color: var(--he-primary);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                white-space: nowrap;
+            }
+
+            .he-sort-filter-btn:hover {
+                background: var(--he-elevated);
+                border-color: var(--he-accent);
+                color: var(--he-accent);
+                box-shadow: 0 2px 12px rgba(51, 178, 239, 0.2);
+            }
+
+            .he-sort-filter-btn svg {
+                width: 15px;
+                height: 15px;
+            }
             .tags_sorting a:hover, .tags_section .btn_az:hover { color: #fff; border-color: var(--he-accent); background: var(--he-elevated); }
             .tags_section .latest_cat_g, .tags_section .latest_pop_g { display: none !important; }
             .pagination { display: flex !important; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 24px auto 40px !important; }
@@ -1687,9 +2492,27 @@
                 .he-search-filters { padding: 0 12px 4px; }
                 #he-filter-bar { padding-top: 10px; }
                 .he-filter-line-options { grid-template-columns: 1fr; gap: 8px; }
-                .he-filter-group { flex-wrap: wrap; }
-                .he-filter-line-secondary { justify-content: space-between; }
-                .gallery_first { width: 100% !important; max-width: 100% !important; margin-top: 10px !important; }
+                #he-listing-sort.he-sort-bar {
+                    margin: 4px auto 12px;
+                    padding: 0 8px;
+                }
+                .he-sort-inner {
+                    gap: 8px;
+                    padding: 5px 6px;
+                }
+                .he-sort-item {
+                    height: 30px;
+                    padding: 0 10px;
+                    font-size: 12px;
+                }
+                .he-sort-filter-btn {
+                    height: 30px;
+                    padding: 0 10px;
+                    font-size: 12px;
+                    gap: 5px;
+                }
+                .gallery_first { flex-direction: column !important; align-items: center !important; width: 100% !important; max-width: 100% !important; margin-top: 10px !important; padding: 16px !important; gap: 18px !important; }
+                .gallery_first .left_cover { flex: 0 0 auto !important; max-width: min(300px, 86vw) !important; width: 100% !important; }
                 .he-gallery-actions { gap: 7px; padding-left: 2px !important; padding-right: 2px !important; }
                 .he-gallery-actions .he-gallery-action { min-width: 32px; padding-left: 6px !important; padding-right: 6px !important; }
                 .he-gallery-actions .he-action-secondary { gap: 3px; }
@@ -1766,27 +2589,33 @@
         infiniteScrollSentinel = null;
         document.querySelector("#he-scroll-status")?.remove();
         document.querySelector("#he-filter-bar")?.remove();
+        document.querySelector("#he-listing-sort")?.remove();
         document.querySelectorAll(".he-native-filter-hidden").forEach((node) => node.classList.remove("he-native-filter-hidden"));
         document.querySelector("#he-media-toolbar")?.remove();
         document.querySelector("#he-reader")?.remove();
         document.querySelector("#he-fullscreen-controls")?.remove();
         document.querySelector("#he-fullscreen-navigation")?.remove();
         document.querySelectorAll("#thumbs_gallery_div, #show_more_row").forEach((node) => node.classList.remove("he-reader-source-hidden"));
-        document.querySelector(".gallery_view")?.classList.remove("he-reader-native-hidden");
+        document.body.classList.remove("he-has-reader");
+        document.querySelectorAll(".gallery_first .left_cover a").forEach((link) => delete link.dataset.heBound);
         document.body.classList.remove("he-reader-fullscreen-active");
         document.body.classList.remove("he-scroll-down");
         readerImageObserver?.disconnect();
         readerImageObserver = null;
         galleryActionsObserver?.disconnect();
         galleryActionsObserver = null;
+        if (isListingRoute()) setupListingSortBar();
     }
 
     function runEnhancements() {
+        if (checkRouteRedirect()) return;
         setupNavigation();
         injectBottomNav();
         buildSearchPalette();
         setupFilterBar();
+        hideNativeFilters();
         if (isListingRoute()) {
+            setupListingSortBar();
             syncAllCards();
             initInfiniteScroll();
         }
@@ -1794,6 +2623,7 @@
     }
 
     function handleRouteChange() {
+        if (checkRouteRedirect()) return;
         if (location.href === lastUrl) return;
         lastUrl = location.href;
         resetRouteEnhancements();
@@ -1814,20 +2644,31 @@
         window.addEventListener("popstate", () => window.dispatchEvent(new Event("he-route-change")));
         window.addEventListener("he-route-change", debounce(handleRouteChange, 80));
         const observer = new MutationObserver(debounce(() => {
+            if (checkRouteRedirect()) return;
             if (location.href !== lastUrl) handleRouteChange();
             else {
                 if (!document.querySelector("#he-topbar")) setupNavigation();
                 setupFilterBar();
+                hideNativeFilters();
                 if (isListingRoute()) {
+                    setupListingSortBar();
                     syncAllCards();
                 }
-                if (isGalleryRoute() && (!document.querySelector("#he-media-toolbar") || !document.querySelector("#react_row.he-gallery-actions"))) setupGalleryReader();
+                if (isGalleryRoute()) {
+                    organizeGalleryHero();
+                    syncHeroCoverBackdrop();
+                    bindCoverClick();
+                    if (!document.querySelector("#he-media-toolbar") || !document.querySelector(".g_buttons.he-gallery-actions, #react_row.he-gallery-actions")) {
+                        setupGalleryReader();
+                    }
+                }
             }
         }, 180));
         observer.observe(document.documentElement, { childList: true, subtree: true });
     }
 
     function init() {
+        if (checkRouteRedirect()) return;
         injectStyles();
         bindReaderKeyboard();
         const start = () => { bindScrollChrome(); bindHistory(); runEnhancements(); };

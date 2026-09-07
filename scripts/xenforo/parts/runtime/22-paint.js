@@ -278,11 +278,11 @@
         if (paintHasFatalError()) return true;
         if (context.kind === PAINT_PAGE_KINDS.TIMELINE) {
             const river = document.getElementById('smg-river');
-            return !!river && river.dataset.smgPaintReady === '1';
+            return !!river;
         }
         if (context.kind === PAINT_PAGE_KINDS.BOOKMARKS) {
             const feed = document.getElementById('smg-bm-feed');
-            return !!feed && feed.dataset.smgPaintReady === '1';
+            return !!feed;
         }
         return document.readyState === 'complete' && paintHasExplicitEmptyState();
     }
@@ -392,5 +392,5 @@
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady };
+        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS };
     }

@@ -18,7 +18,7 @@
     }
 
     function currentThreadDomSignature(path, page) {
-        const posts = document.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message');
+        const posts = Array.from(document.querySelectorAll('article.message--post, .message--post')).filter(isThreadPostElement);
         const title = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
         const parts = ['title:' + (title ? (title.textContent || '').replace(/\s+/g, ' ').trim() : '')];
         posts.forEach(post => {
@@ -44,6 +44,10 @@
         let rawHref = (canon && canon.getAttribute('href')) || location.href;
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
+
+        if (typeof dbFollowedMarkSeen === 'function') {
+            dbFollowedMarkSeen(path).catch(() => {});
+        }
 
         // Check date order: skip if user is sorting by reactions
         const isDateOrder = !/[?&]order=reaction/i.test(location.search);
@@ -108,8 +112,8 @@
 
             const meta = { title: threadTitle, prefixesHtml: prefixesHtml, thumb: thumb, lastTs: Math.floor(Date.now() / 1000) };
 
-            const postEls = Array.from(document.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message'))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            const postEls = Array.from(document.querySelectorAll('article.message--post, .message--post'))
+                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, location.href)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -153,14 +157,17 @@
                 path: path,
                 thread_name: threadTitle || (stored && stored.thread_name) || '',
                 thumbnail_url: thumb || (stored && stored.thumbnail_url) || '',
-                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => b.name) : []),
+                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
                 followed_at: (stored && stored.followed_at) || now,
-                updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs, now),
+                forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
+                last_seen_at: Math.max((stored && stored.last_seen_at) || 0, maxPostTs, now),
+                updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
                 created_at: (stored && stored.created_at) || 0,
                 author: (stored && stored.author) || '',
                 last_page: nextLastPage,
                 saved_pages: nextSavedPages,
-                last_sync_at: now
+                last_sync_at: now,
+                unread: false
             };
 
             return dbTimelinePutPosts(timelinePosts)
@@ -182,8 +189,8 @@
         return fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
-            const postEls = Array.from(doc.querySelectorAll('article.message--post, .message--post, article.message, .message[data-content], .js-post, .message'))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            const postEls = Array.from(doc.querySelectorAll('article.message--post, .message--post'))
+                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, url)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -232,9 +239,14 @@
 
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
-            thread.last_sync_at = Math.max(maxPostTs, thread.updated_at || 0);
+            thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            thread.unread = false;
+            if (!thread.last_seen_at) {
+                thread.last_seen_at = thread.updated_at;
+                thread.unread = false;
+            } else {
+                thread.unread = Boolean(thread.updated_at > thread.last_seen_at);
+            }
 
             return dbTimelinePutPosts(timelinePosts)
                 .then(() => dbFollowedUpsert(thread))
@@ -247,9 +259,9 @@
         const saved = Array.isArray(thread.saved_pages) ? thread.saved_pages : [];
         const maxSaved = saved.length ? Math.max(...saved) : 0;
         const lastPage = thread.last_page || 1;
-        const lastActivity = thread.updated_at || 0;
+        const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
-        const isUnread = Boolean(thread.unread);
+        const isUnread = Boolean(thread.unread || (thread.last_seen_at !== undefined && (thread.updated_at || 0) > 0 && (thread.last_seen_at || 0) < (thread.updated_at || 0)));
 
         const isNew = maxSaved === 0;
         const hasNewPage = lastPage > maxSaved;
@@ -377,8 +389,8 @@
                     return 0;
                 }
 
-                // Ordena por updated_at decrescente
-                allFollowed.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+                // Ordena por atividade recente decrescente
+                allFollowed.sort((a, b) => ((b.forum_activity_ts || b.updated_at || 0) - (a.forum_activity_ts || a.updated_at || 0)));
 
                 // Filtra segundo as Regras A, B, C e D
                 const threadsToFetch = [];

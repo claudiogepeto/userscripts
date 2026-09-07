@@ -257,7 +257,7 @@
     // FEATURE: clicar na imagem abre o modo feed naquela imagem
     // =========================================================
 
-    const absUrl = u => { try { return new URL(u, location.href).href; } catch { return u; } };
+    // absUrl está definido centralmente em 06-helpers.js
 
     // URL da imagem em resolução cheia: href do <a> (se for imagem) senão o src
     function imageUrlOf(img) {

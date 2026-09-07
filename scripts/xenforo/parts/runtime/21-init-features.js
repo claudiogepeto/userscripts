@@ -22,105 +22,97 @@
     }
 
     // =========================================================
+    // =========================================================
     // FEATURE: pular o aviso de link externo (URL real direto)
     // SMG: /goto/link-confirmation?url=<base64> · Simp: /redirect/?to=<base64url>&m=b64
+    // Centralizado em 06-helpers.js: b64decode, rawParam, decodeProxyHref, resolveProxyHref
     // =========================================================
-    // base64 std OU url-safe → string (tolerante); e leitura de query SEM o +→espaço do URLSearchParams
-    function b64decode(s) {
-        if (!s) return null;
-        for (const t of [s, s.replace(/-/g, '+').replace(/_/g, '/')]) { try { const r = atob(t); if (r) return r; } catch (e) {} }
-        return null;
-    }
-    function rawParam(href, key) {
-        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&]+)'));
-        if (!m) return null;
-        try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
-    }
-    function decodeProxyHref(href) {
-        if (/\/goto\/link-confirmation/.test(href)) return b64decode(rawParam(href, 'url'));
-        let to = rawParam(href, 'to');
-        if (to && /[?&]m=b64/.test(href)) to = b64decode(to);
-        return to;
-    }
     // VISUAL: no TEXTO mostrado (título de unfurl / link cru), troca a URL-proxy (/goto/link-confirmation?url=.. ou
     // /redirect/?to=..) pelo DESTINO real. O unwrap só reescrevia o href; o texto continuava com o /goto/...&s=hash feio.
-    // Decodifica CADA ocorrência (decodeProxyHref) → vários links no mesmo nó OK; o que não decodifica fica intacto.
+    // Decodifica CADA ocorrência (resolveProxyHref) → vários links no mesmo nó OK; o que não decodifica fica intacto.
     function unproxyText(root) {
         if (!root || root.nodeType !== 1) return;
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
         const hits = [];
         for (let n = walker.nextNode(); n; n = walker.nextNode()) {
             const v = n.nodeValue || '';
-            if (v.indexOf('/goto/link-confirmation?url=') >= 0 || v.indexOf('/redirect/?to=') >= 0) hits.push(n);
+            if (v.indexOf('/goto/link-confirmation') >= 0 || v.indexOf('/redirect/?to=') >= 0 || v.indexOf('/link-proxy/') >= 0 || v.indexOf('/proxy.php?link=') >= 0) hits.push(n);
         }
         if (!hits.length) return;
-        const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=)[^\s"'<>]+/g;
-        hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = decodeProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
+        const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=|link-proxy\/\?url=|proxy\.php\?link=)[^\s"'<>]+/g;
+        hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = resolveProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
     }
-    // clique em CAPTURE phase: roda ANTES do handler do XF (link proxy) e força a navegação com
-    // stopImmediatePropagation → o handler do XF que matava o clique nunca dispara. Não depende de
-    // remover attrs/listener (frágil); o reescrever do href abaixo é só pro hover/"copiar link".
-    // desarma o link-proxy do XF num <a>: se o destino real só existe no data-proxy-href, ele passa a ser
-    // o href; depois o atributo sai (é o gatilho do handler nativo que abre/fecha a guia).
+    // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
     function unproxyAttr(a) {
-        const p = a.getAttribute('data-proxy-href') || '';
-        const cur = a.getAttribute('href') || '';
-        if (!/^https?:/i.test(cur)) {                       // href não é o destino → tenta o do atributo
-            const real = /^https?:/i.test(p) ? p : decodeProxyHref(p);
-            if (real && /^https?:/i.test(real)) a.setAttribute('href', real);
+        if (!a) return;
+        const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '') || a.href;
+        if (real && /^https?:/i.test(real) && a.getAttribute('href') !== real) {
+            a.setAttribute('href', real);
         }
         a.removeAttribute('data-proxy-href');
+        a.removeAttribute('data-blank-handler');
     }
     let proxyClickBound = false;
     function bindProxyClick() {
         if (proxyClickBound) return;
         proxyClickBound = true;
         // no WINDOW em capture: roda ANTES de qualquer listener de document (o XF tem um handler de
-        // capture no document que dá preventDefault e matava o clique). NÃO checamos e.defaultPrevented
-        // de propósito — navegamos mesmo que o XF já tenha dado preventDefault.
+        // capture no document que dá preventDefault e matava o clique).
         window.addEventListener('click', e => {
-            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;  // deixa ctrl/⌘/middle-clique abrir aba nativamente
-            const a = e.target.closest && e.target.closest('a[data-smg-unwrap], a[data-proxy-href], a[href*="/goto/link-confirmation?url="], a[href*="/redirect/?to="]');
+            const a = e.target.closest && e.target.closest('a');
             if (!a) return;
-            // data-proxy-href: é POR ELE que a JS de link-proxy do XF sequestra o clique e abre o destino
-            // noutra guia. Quando vem VAZIO (visto no SMG), ela abre uma guia em branco — que fecha sozinha
-            // logo depois. Tirar o atributo devolve o clique pro href real e mata o sintoma na origem.
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
-            const real = a.dataset.smgUnwrap ? a.href : decodeProxyHref(a.getAttribute('href') || '');  // já reescrito → href é o real
-            if (!real || !/^https?:/i.test(real)) return;
-            // garante o href real e MATA o handler do XF — mas NÃO damos preventDefault: a navegação NATIVA
-            // do link segue (abre target=_blank sem popup-block, que era o que travava no SMG).
-            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
-            a.dataset.smgUnwrap = '1';
-            e.stopImmediatePropagation();
-            if (e.defaultPrevented) {   // se algo já barrou o default antes de nós, aí sim navega na mão
-                if (a.target === '_blank') window.open(real, '_blank', 'noopener'); else location.assign(real);
+
+            const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
+            const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
+
+            if (!isProxy && !isExternal) return;
+
+            const real = resolveProxyHref(a.getAttribute('href') || '') || a.href;
+            if (real && /^https?:/i.test(real)) {
+                if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+                a.dataset.smgUnwrap = '1';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.removeAttribute('data-proxy-href');
+                a.removeAttribute('data-blank-handler');
+
+                if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                    e.stopImmediatePropagation();
+                    if (e.defaultPrevented) {
+                        window.open(real, '_blank', 'noopener');
+                    }
+                }
             }
         }, true);
     }
     function unwrapRedirectLinks(roots) {
         bindProxyClick();
-        // PERF: `a[href*=...]` é seletor de substring de atributo (NÃO indexado) → varrer o doc inteiro todo frame
-        // percorre TODOS os <a>. Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
+        // PERF: Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
-        eachIn(roots, 'a[href*="/goto/link-confirmation?url="]:not([data-smg-unwrap]), a[href*="/redirect/?to="]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
+        eachIn(roots, 'a[href*="/goto/link-confirmation"]:not([data-smg-unwrap]), a[href*="/redirect/"]:not([data-smg-unwrap]), a[href*="/proxy.php?link="]:not([data-smg-unwrap]), a[href*="/link-proxy/"]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
             a.dataset.smgUnwrap = '1';
-            const real = decodeProxyHref(a.getAttribute('href') || '');
-            if (real && /^https?:/i.test(real)) a.href = real;   // hover/"copiar link" mostram a URL real; o clique é garantido pelo capture
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);   // desarma o link-proxy do XF (guia em branco que abre e fecha)
-            unproxyText(a);   // VISUAL: título do unfurl / texto = /goto/...&s=hash → mostra a URL real decodificada
+            const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
+            if (real && /^https?:/i.test(real)) a.href = real;
+            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
+            a.removeAttribute('data-blank-handler');
+            unproxyText(a);
         });
     }
     // se o usuário CAIR direto na página de aviso, pula pro destino na hora
     function handleRedirectPage() {
         try {
-            if (/\/redirect\//.test(location.pathname)) {
-                const t = document.querySelector('.simpLinkProxy-targetLink');
-                if (t && t.href) { location.replace(t.href); return; }
+            if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
+
+            const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
+            if (realParam && /^https?:/i.test(realParam) && realParam !== location.href) {
+                location.replace(realParam);
+                return;
             }
-            if (/\/goto\/link-confirmation/.test(location.pathname)) {
-                const real = b64decode(rawParam(location.search, 'url'));
-                if (real && /^https?:/i.test(real)) location.replace(real);
+
+            const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname)) {
+                location.replace(domTarget.href);
+                return;
             }
         } catch (e) {}
     }
@@ -326,7 +318,7 @@
         const addImg = u => { u = getBigUrl(absUrl(u)); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.images.push(u); } };
         const addVid = u => { u = absUrl(u); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.videos.push(u); } };
         const addLink = raw => {
-            const u = absUrl(decodeProxyHref(raw) || raw);   // DECODIFICA o proxy do fórum (/goto, /redirect) → URL real
+            const u = absUrl(resolveProxyHref(raw) || raw);   // DECODIFICA o proxy do fórum (/goto, /redirect) → URL real
             if (!/^https?:/i.test(u)) return;
             let host; try { host = new URL(u).hostname.toLowerCase(); } catch (e) { return; }
             if (host && (host === fh || host.endsWith('.' + fh) || fh.endsWith('.' + host))) return;   // link interno do fórum
@@ -751,10 +743,11 @@
     // card RICO: [mosaico de thumbs (até 4) c/ badge de contagem + "+N" no último | logo do host] + host + sub | [copiar] [abrir↗].
     // o = { label, href, sub, thumbs:[], logo:[], count:0 }
     function fhCard(o) {
-        const href = o.href, logoChain = o.logo || [];
+        const href = resolveProxyHref(o.href), logoChain = o.logo || [];
         const thumbs = (o.thumbs || []).filter(Boolean).slice(0, 4);
         const count = o.count || 0;
         const card = document.createElement('div'); card.className = 'smg-fhcard'; card.dataset.fhDone = '1';
+        if (o.key) card.dataset.key = o.key;
         const main = document.createElement('a'); main.className = 'smg-fhcard-main'; main.href = href; main.target = '_blank'; main.rel = 'noopener noreferrer'; main.dataset.fhDone = '1';
         const th = document.createElement('div');
         th.className = 'smg-fhcard-thumb smg-fhcard-thumb--loading' + (thumbs.length > 1 ? ' smg-fhcard-thumb--multi' : '');
@@ -899,6 +892,22 @@
         }
     }
 
+    const twBlobs = [];
+    function twRegisterBlob(video, blobUrl) {
+        twBlobs.push({ video, url: blobUrl });
+        while (twBlobs.length > 8) {
+            const idx = twBlobs.findIndex(e => e.video !== video && (!e.video || e.video.paused));
+            if (idx < 0) break;
+            const old = twBlobs.splice(idx, 1)[0];
+            try { URL.revokeObjectURL(old.url); } catch (x) {}
+            if (old.video) {
+                old.video.removeAttribute('src');
+                try { old.video.load(); } catch (x) {}
+                delete old.video._twBlobLoaded;
+            }
+        }
+    }
+
     function buildTwitterCardDom(tweet, tweetUrl) {
         const card = document.createElement('div');
         card.className = 'smg-tw-card';
@@ -913,6 +922,8 @@
         avatar.className = 'smg-tw-avatar';
         if (tweet.author && tweet.author.avatar_url) {
             const avImg = document.createElement('img');
+            avImg.referrerPolicy = 'no-referrer';
+            avImg.setAttribute('referrerpolicy', 'no-referrer');
             avImg.src = tweet.author.avatar_url;
             avImg.loading = 'lazy';
             avImg.alt = '';
@@ -970,18 +981,110 @@
         if (videos.length) {
             const mwrap = document.createElement('div');
             mwrap.className = 'smg-tw-media';
+
+            let videoUrl = videos[0].url;
+            if (Array.isArray(videos[0].formats)) {
+                const mp4s = videos[0].formats.filter(f => f && f.url && f.container === 'mp4' && !/\.m3u8/i.test(f.url));
+                if (mp4s.length) {
+                    const pref = mp4s.find(f => /1280x720|720/i.test(f.url) || (f.bitrate >= 1500000 && f.bitrate <= 3500000)) || mp4s[mp4s.length - 1];
+                    if (pref && pref.url) videoUrl = pref.url;
+                }
+            } else if (Array.isArray(videos[0].variants)) {
+                const mp4s = videos[0].variants.filter(f => f && f.url && (f.content_type === 'video/mp4' || /\.mp4(\?|$)/i.test(f.url)));
+                if (mp4s.length) {
+                    const pref = mp4s.find(f => /1280x720|720/i.test(f.url) || (f.bitrate >= 1500000 && f.bitrate <= 3500000)) || mp4s[mp4s.length - 1];
+                    if (pref && pref.url) videoUrl = pref.url;
+                }
+            }
+
             const vid = document.createElement('video');
             vid.controls = true;
             vid.playsInline = true;
             vid.preload = 'metadata';
-            if (videos[0].thumbnail_url) vid.poster = videos[0].thumbnail_url;
-            vid.src = videos[0].url;
+            vid.referrerPolicy = 'no-referrer';
+            vid.setAttribute('referrerpolicy', 'no-referrer');
+            if (videos[0].thumbnail_url) {
+                vid.poster = videos[0].thumbnail_url;
+            }
+            vid._twVideoUrl = videoUrl;
+
+            const playOverlay = document.createElement('div');
+            playOverlay.className = 'smg-tw-play-overlay';
+            playOverlay.innerHTML = '<div class="smg-tw-play-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="white"><path d="M8 5v14l11-7z"/></svg></div>';
+
+            const loadAndPlay = (autoPlay) => {
+                if (vid._twBlobLoaded) {
+                    if (autoPlay) vid.play().catch(() => {});
+                    if (playOverlay.parentNode) playOverlay.remove();
+                    return;
+                }
+                if (autoPlay) vid._wantPlay = true;
+                if (vid._twLoading) {
+                    playOverlay.classList.add('loading');
+                    playOverlay.innerHTML = '<div class="smg-tw-spinner"></div>';
+                    return;
+                }
+                vid._twLoading = true;
+                if (autoPlay) {
+                    playOverlay.classList.add('loading');
+                    playOverlay.innerHTML = '<div class="smg-tw-spinner"></div>';
+                }
+
+                const applySrc = (srcUrl, isBlob) => {
+                    vid._twBlobLoaded = true;
+                    vid._twLoading = false;
+                    vid.src = srcUrl;
+                    if (isBlob) twRegisterBlob(vid, srcUrl);
+                    if (playOverlay.parentNode) playOverlay.remove();
+                    if (vid._wantPlay) {
+                        vid.play().catch(() => {});
+                    }
+                };
+
+                if (typeof rgBlob === 'function') {
+                    rgBlob(videoUrl, 'https://x.com/').then(blob => {
+                        if (!vid.isConnected) return;
+                        const blobUrl = URL.createObjectURL(blob);
+                        applySrc(blobUrl, true);
+                    }).catch(err => {
+                        console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
+                        if (!vid.isConnected) return;
+                        applySrc(videoUrl, false);
+                    });
+                } else {
+                    applySrc(videoUrl, false);
+                }
+            };
+
+            playOverlay.addEventListener('click', e => {
+                e.stopPropagation();
+                loadAndPlay(true);
+            });
+
+            vid.addEventListener('play', () => {
+                if (typeof rgSolo === 'function') rgSolo(vid);
+                if (playOverlay.parentNode) playOverlay.remove();
+            });
+
+            // Pré-carregamento lazy ao aproximar 200% da viewport
+            if (typeof makeLazyIO === 'function' && !(typeof window !== 'undefined' && window.__TEST_MODE__)) {
+                const lazyObs = makeLazyIO(() => {
+                    loadAndPlay(false);
+                }, { rootMargin: '200% 0px' });
+                if (lazyObs) lazyObs.observe(mwrap);
+            } else if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+                vid.src = videoUrl;
+            }
+
             mwrap.appendChild(vid);
+            mwrap.appendChild(playOverlay);
             card.appendChild(mwrap);
         } else if (photos.length === 1) {
             const mwrap = document.createElement('div');
             mwrap.className = 'smg-tw-media';
             const img = document.createElement('img');
+            img.referrerPolicy = 'no-referrer';
+            img.setAttribute('referrerpolicy', 'no-referrer');
             img.src = photos[0].url;
             img.loading = 'lazy';
             mwrap.appendChild(img);
@@ -991,6 +1094,8 @@
             mwrap.className = 'smg-tw-media smg-tw-media-grid';
             photos.slice(0, 4).forEach(p => {
                 const img = document.createElement('img');
+                img.referrerPolicy = 'no-referrer';
+                img.setAttribute('referrerpolicy', 'no-referrer');
                 img.src = p.url;
                 img.loading = 'lazy';
                 mwrap.appendChild(img);
@@ -1031,17 +1136,17 @@
         return card;
     }
 
-    function renderTwitterOfficialEmbed(container, tweetId, fallbackUrl, rawLabel) {
+    function renderTwitterOfficialEmbed(container, tweetId, fallbackUrl, rawLabel, user) {
         if (!container || container.dataset.twEmbedDone || container.closest('.smg-twitter-embed, .smg-tw-card')) return;
         container.dataset.twEmbedDone = '1';
         container.dataset.twDone = '1';
         container.dataset.fhDone = '1';
         container.innerHTML = '';
         container.className = 'smg-twitter-embed';
-        container.style.cssText = 'min-height: 80px; display: flex; justify-content: center; margin: 14px auto; max-width: 560px; width: 100%;';
+        container.style.cssText = 'min-height: 80px; display: flex; justify-content: center; margin: 14px 0; max-width: 100%; width: 100%;';
 
         const tweetUrl = fallbackUrl || ('https://x.com/i/status/' + tweetId);
-        const skel = makeTwitterCard(tweetUrl, tweetId, '', rawLabel);
+        const skel = makeTwitterCard(tweetUrl, tweetId, user || '', rawLabel);
         skel.dataset.fhDone = '1';
         skel.dataset.twDone = '1';
         container.appendChild(skel);
@@ -1083,28 +1188,30 @@
         if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
-            const rawHref = absUrl(decodeProxyHref(node.getAttribute('href') || node.getAttribute('data-url') || '') || node.href || '');
+            const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
             let id = '';
             const im = rawHref.match(/instagram\.com\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/i);
             if (im) id = im[1];
-            const card = makeInstagramCard(rawHref, id, node.textContent);
+            const labelText = unfurlEl ? (unfurlEl.querySelector('.js-unfurl-title, .contentRow-header')?.textContent?.trim() || '') : (node.tagName === 'A' ? node.textContent.trim() : '');
+            const card = makeInstagramCard(rawHref, id, labelText || node.textContent);
             pdPlace(node, card);
             return;
         }
         if (prov.key === 'x' || prov.key === 'twitter') {
-            const rawHref = absUrl(decodeProxyHref(node.getAttribute('href') || node.getAttribute('data-url') || '') || node.href || '');
+            const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
             let id = '', user = '';
             const sm = rawHref.match(/(?:twitter|x)\.com\/(?:([A-Za-z0-9_]+)\/status|i\/status)\/([0-9]+)/i);
             if (sm) { user = sm[1] || ''; id = sm[2]; }
             const target = node.closest('.bbCodeBlock--unfurl') || node;
             target.dataset.fhDone = '1';
             target.dataset.twDone = '1';
+            const labelText = unfurlEl ? (unfurlEl.querySelector('.js-unfurl-title, .contentRow-header')?.textContent?.trim() || '') : (node.tagName === 'A' ? node.textContent.trim() : '');
             if (id) {
                 const container = document.createElement('div');
                 pdPlace(node, container);
-                renderTwitterOfficialEmbed(container, id, rawHref, node.textContent);
+                renderTwitterOfficialEmbed(container, id, rawHref, labelText, user);
             } else {
-                const card = makeTwitterCard(rawHref, id, user, node.textContent);
+                const card = makeTwitterCard(rawHref, id, user, labelText || node.textContent);
                 pdPlace(node, card);
             }
             return;
@@ -1168,7 +1275,7 @@
         eachIn(roots, '.bbCodeBlock--unfurl[data-url]:not([data-fh-done])', card => {
             card.dataset.fhDone = '1';   // marca ANTES de qualquer return (REGRA DE OURO)
             if (card.closest('.bbCodeQuote, .message-signature')) return;
-            const url = card.getAttribute('data-url') || '';
+            const url = resolveProxyHref(card.getAttribute('data-url') || '');
             const prov = fhProvider(url, card.getAttribute('data-host'));
             if (prov) fhBuildCard(card, url, prov, card);
         });
@@ -1177,7 +1284,7 @@
             a.dataset.fhDone = '1';
             if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-ig-embed-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
             if (a.querySelector('img.bbImage')) return;   // link de imagem (lightbox)
-            const url = absUrl(decodeProxyHref(a.getAttribute('href') || '') || a.href);
+            const url = absUrl(resolveProxyHref(a.getAttribute('href') || '') || a.href);
             const prov = fhProvider(url);
             if (prov && prov.skip && prov.skip.test(url)) return;   // esse padrão de URL é tratado por outro pass (ex.: cyberdrop /e/ → player)
             if (prov) fhBuildCard(a, url, prov, null);
@@ -1231,4 +1338,9 @@
             });
             if (bar.children.length >= 2) bb.appendChild(bar);
         });
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.buildTwitterCardDom = buildTwitterCardDom;
+        window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
     }

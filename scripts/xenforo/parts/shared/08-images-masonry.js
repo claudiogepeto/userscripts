@@ -37,8 +37,7 @@
             }
         });
     }
-    // se o href é um proxy do fórum (/goto/link-confirmation?url=.. ou /redirect/?to=..) → devolve o DESTINO real decodificado; senão devolve igual. decodeProxyHref vem do 21 (escopo compartilhado).
-    function resolveProxyHref(h) { const r = decodeProxyHref(h || ''); return (r && /^https?:/i.test(r)) ? r : (h || ''); }
+    // resolveProxyHref centralizado em 06-helpers.js
     // imagem que NÃO renderiza (host fora / hotlink / 404) → caixa de mídia morta NO LUGAR dela (buildDeadBox).
     // Era um chip com a URL crua em texto: num post de 40 imagens mortas virava uma parede de URLs iguais, e não
     // dava pra saber se o arquivo foi apagado ou se o host bloqueou o hotlink. A caixa mantém o lugar/proporção
@@ -273,7 +272,7 @@
     function unlazyImageLinks(roots) {
         eachIn(roots, 'a.link--external[href]:not([data-smg-imglink])', a => {
             a.dataset.smgImglink = '1';
-            if (a.closest('.generic2wide-iframe-div, .smg-rg')) return;   // virou player (turbo/saint/imagepond) → não mexe
+            if (a.closest('.generic2wide-iframe-div, .smg-rg, .bbCodeBlock--unfurl, .smg-fhcard, .smg-tw-card, .smg-post-links, .bbCodeBlock, .bbCodeQuote, .message-signature')) return;   // virou player, card ou bloco protegido → não mexe
             // pula SÓ se já existe uma img REAL (fora de <noscript>). ⚠️ o querySelector('img') cru casava com a img INERTE
             // do <noscript> (no XF via AJAX o noscript vira DOM) e abortava → o <a> ficava vazio e a masonry o removia.
             if ([].some.call(a.querySelectorAll('img'), im => !im.closest('noscript'))) return;

@@ -117,7 +117,7 @@
         if (!titleA) return null;
         const href = titleA.getAttribute('href') || '';
         if (!href) return null;
-        const base = href.replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '');
+        const base = href.replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
         const unread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
         const li = document.createElement('li');
@@ -155,13 +155,109 @@
         }
         const t = document.createElement('span');
         t.className = 'smg-rail-wt-title';
-        t.textContent = (titleA.textContent || '').trim();
+        if (unread) {
+            const dot = document.createElement('span');
+            dot.className = 'smg-rail-wt-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            t.appendChild(dot);
+        }
+        t.appendChild(document.createTextNode((titleA.textContent || '').trim()));
         body.appendChild(t);
 
         const meta = document.createElement('span');
         meta.className = 'smg-rail-wt-meta';
         const time = it.querySelector('.structItem-latestDate') || it.querySelector('.structItem-cell--latest time');
         if (time) { const c = time.cloneNode(true); c.className = 'smg-al-time'; meta.appendChild(c); }
+        if (meta.childNodes.length) body.appendChild(meta);
+
+        a.appendChild(body);
+        li.appendChild(a);
+        li.dataset.smgAlKey = 'wt:' + base;
+        return li;
+    }
+
+    function renderFollowedRow(item) {
+        if (!item || !item.path) return null;
+        const isUnread = Boolean(item.updated_at > 0 && (item.last_seen_at || 0) < item.updated_at);
+        const li = document.createElement('li');
+        li.className = 'smg-rail-wt' + (isUnread ? ' is-unread' : '');
+        const a = document.createElement('a');
+        a.className = 'smg-rail-wt-link';
+        const base = (item.path || '').replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
+        a.href = safeHref(base + '/latest');
+        a.addEventListener('click', () => {
+            if (typeof dbFollowedMarkSeen === 'function') {
+                dbFollowedMarkSeen(item.path);
+            }
+        });
+
+        const thumbUrl = item.thumbnail_url || (typeof thumbCacheGet === 'function' ? thumbCacheGet(item.path, item.thread_name) : '');
+        const th = document.createElement('span');
+        th.className = 'smg-rail-wt-thumb';
+        if (thumbUrl) {
+            const im = document.createElement('img');
+            im.src = thumbUrl;
+            im.alt = '';
+            im.loading = 'lazy';
+            im.decoding = 'async';
+            im.addEventListener('error', () => {
+                th.classList.add('smg-rail-wt-thumb--ph');
+                im.remove();
+                th.innerHTML = railPhMark();
+            }, { once: true });
+            th.appendChild(im);
+        } else {
+            th.classList.add('smg-rail-wt-thumb--ph');
+            th.innerHTML = railPhMark();
+        }
+        a.appendChild(th);
+
+        const body = document.createElement('span');
+        body.className = 'smg-rail-wt-body';
+
+        if (Array.isArray(item.tags) && item.tags.length) {
+            const tags = document.createElement('span');
+            tags.className = 'smg-al-tags';
+            item.tags.forEach(t => {
+                const name = typeof t === 'string' ? t : (t && t.name ? t.name : '');
+                if (!name) return;
+                const chip = document.createElement('span');
+                const k = name.toLowerCase().trim();
+                let cls = (typeof t === 'object' && t.className)
+                    || (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[k])
+                    || ('label label--' + k.replace(/[^a-z0-9]+/g, '-'));
+                if (!cls.includes('label')) cls = 'label ' + cls;
+                chip.className = 'smg-al-chip ' + cls;
+                if (typeof t === 'object' && t.style) {
+                    chip.setAttribute('style', t.style);
+                }
+                chip.textContent = name;
+                tags.appendChild(chip);
+            });
+            body.appendChild(tags);
+        }
+
+        const t = document.createElement('span');
+        t.className = 'smg-rail-wt-title';
+        if (isUnread) {
+            const dot = document.createElement('span');
+            dot.className = 'smg-rail-wt-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            t.appendChild(dot);
+        }
+        t.appendChild(document.createTextNode((item.thread_name || '').trim()));
+        body.appendChild(t);
+
+        const meta = document.createElement('span');
+        meta.className = 'smg-rail-wt-meta';
+        const ts = item.updated_at || item.forum_activity_ts || 0;
+        if (ts) {
+            const time = document.createElement('time');
+            time.className = 'smg-al-time';
+            time.setAttribute('data-timestamp', String(ts));
+            time.textContent = (typeof smgRelTime === 'function') ? smgRelTime(ts) : '';
+            meta.appendChild(time);
+        }
         if (meta.childNodes.length) body.appendChild(meta);
 
         a.appendChild(body);
@@ -299,6 +395,63 @@
             if (list) list.querySelectorAll('.smg-aldock-skel-row').forEach(row => row.remove());
         };
         if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
+
+        if (tab === 'watched') {
+            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            return getFollowed.then(items => {
+                clearSkeleton();
+                const list = railList('watched');
+                if (!list) return;
+
+                const valid = Array.isArray(items) ? items.filter(it => it && it.path) : [];
+                const unread = valid.filter(t => (t.last_seen_at || 0) < (t.updated_at || 0) && (t.updated_at || 0) > 0)
+                    .sort((a, b) => {
+                        const diffSeen = (b.last_seen_at || 0) - (a.last_seen_at || 0);
+                        if (diffSeen !== 0) return diffSeen;
+                        return (b.updated_at || 0) - (a.updated_at || 0);
+                    });
+                const read = valid.filter(t => (t.last_seen_at || 0) >= (t.updated_at || 0))
+                    .sort((a, b) => {
+                        const diffUpdated = (b.updated_at || 0) - (a.updated_at || 0);
+                        if (diffUpdated !== 0) return diffUpdated;
+                        return (b.last_seen_at || 0) - (a.last_seen_at || 0);
+                    });
+
+                const sorted = [...unread, ...read];
+                list.innerHTML = '';
+                st.keys.clear();
+                sorted.forEach(item => {
+                    const row = renderFollowedRow(item);
+                    if (row) {
+                        const key = row.dataset.smgAlKey || ('wt:' + item.path);
+                        st.keys.add(key);
+                        list.appendChild(row);
+                        i18nDom(row);
+                    }
+                });
+
+                st.loaded = true;
+                st.next = null;
+
+                gmSet('smg-watched-unread-count', String(unread.length));
+                updateWatchedUnreadBadge(unread.length);
+                aldockSyncCount();
+                aldockStatus('watched', '');
+
+                if (!valid.length && first) {
+                    if (typeof fetchAndIngestFollowed === 'function') {
+                        fetchAndIngestFollowed(false, false).catch(() => {});
+                    }
+                }
+            }).catch(() => {
+                clearSkeleton();
+                aldockStatus('watched', 'error');
+            }).finally(() => {
+                st.busy = false;
+                aldock.classList.remove('smg-aldock--refreshing');
+            });
+        }
+
         return railFetch(tab, railBaseUrl(tab))
             .then(({ rows, next }) => {
                 clearSkeleton();
@@ -451,6 +604,7 @@
             '<div class="smg-aldock-head">' +
                 '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Following') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
+                    '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-view" hidden></button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-refresh" title="' + i18n('Refresh') + '" aria-label="' + i18n('Refresh') + '">' + ICONS.refresh + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
@@ -463,8 +617,32 @@
         document.body.appendChild(el);
         aldock = el;
 
+        const markReadBtn = el.querySelector('.smg-aldock-markread');
+        if (markReadBtn) {
+            markReadBtn.addEventListener('click', () => {
+                if (typeof dbFollowedMarkAllSeen === 'function') {
+                    markReadBtn.dataset.busy = '1';
+                    dbFollowedMarkAllSeen().then(() => {
+                        delete markReadBtn.dataset.busy;
+                        el.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
+                        const badge = el.querySelector('.smg-aldock-n');
+                        if (badge) { badge.hidden = true; badge.textContent = ''; }
+                        updateWatchedUnreadBadge(0);
+                        aldockSyncCount();
+                    }).catch(() => {
+                        delete markReadBtn.dataset.busy;
+                    });
+                }
+            });
+        }
+
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
-        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => railRefresh(railTab, true));
+        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
+            if (railTab === 'watched' && typeof fetchAndIngestFollowed === 'function') {
+                fetchAndIngestFollowed(false, true).catch(() => {});
+            }
+            railRefresh(railTab, true);
+        });
         el.querySelector('.smg-aldock-view').addEventListener('click', () => {
             gmSet(ALDOCK_VIEW_KEY(railTab), railView(railTab) === 'grid' ? 'list' : 'grid');
             railApplyView(railTab);
@@ -576,10 +754,43 @@
         setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh(railTab); }, ALDOCK_POLL_MS);
         document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh(railTab); });
 
+        window.addEventListener('smg-followed-updated', () => {
+            if (aldock && aldockOpen() && railTab === 'watched') {
+                railRefresh('watched', false);
+            } else if (typeof dbFollowedGetUnreadCount === 'function') {
+                dbFollowedGetUnreadCount().then(c => {
+                    gmSet('smg-watched-unread-count', String(c));
+                    updateWatchedUnreadBadge(c);
+                });
+            }
+        });
+        window.addEventListener('smg-followed-seen', e => {
+            const path = e && e.detail && e.detail.path;
+            if (path && aldock) {
+                const base = path.replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '');
+                const row = aldock.querySelector(`.smg-rail-wt[data-smg-al-key="wt:${base}"]`);
+                if (row && row.classList.contains('is-unread')) {
+                    row.classList.remove('is-unread');
+                    aldockSyncCount();
+                }
+            }
+        });
+        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
+
         if (aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(null, false);
     }
 
+    function onFollowedAllSeen() {
+        if (aldock) {
+            aldock.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
+            const badge = aldock.querySelector('.smg-aldock-n');
+            if (badge) { badge.hidden = true; badge.textContent = ''; }
+            aldockSyncCount();
+        }
+    }
+
     if (typeof window !== 'undefined') {
+        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
         window.updateWatchedUnreadBadge = updateWatchedUnreadBadge;
         window.getWatchedUnreadCount = getWatchedUnreadCount;
         if (window.__TEST_MODE__) {
@@ -590,6 +801,7 @@
                 toggleAlertsDock,
                 railShowTab,
                 watchedRow,
+                renderFollowedRow,
                 aldockSyncCount,
                 updateWatchedUnreadBadge,
                 getWatchedUnreadCount,
@@ -597,6 +809,7 @@
                 aldockState,
                 RAIL_SRC,
                 railFetch,
+                railRefresh,
                 getRailTab: () => railTab,
                 getAldock: () => aldock
             };
