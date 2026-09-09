@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NHentai 2.0
 // @namespace    nhentai-dark-gallery
-// @version      1.1.6
+// @version      1.1.11
 // @author       claudiogepeto
 // @description  Modern dark AMOLED theme, unified topbar command search, responsive gallery grid, multi-mode reader, non-English filter, and infinite scroll for NHentai
 // @match        https://nhentai.net/*
@@ -429,9 +429,11 @@
 
     function getGalleryCards(root = document) {
         if (isNhentaiXxxHost()) {
-            return Array.from(root.querySelectorAll(".gallery_item"));
+            return Array.from(root.querySelectorAll(".gallery_item:not(.nh-skeleton-card)"));
         }
-        return Array.from(root.querySelectorAll(".index-container .gallery, .gallery-grid .gallery"));
+        const cards = Array.from(root.querySelectorAll(".gallery:not(.nh-skeleton-card)"));
+        if (cards.length) return cards;
+        return Array.from(root.querySelectorAll(".index-container .gallery:not(.nh-skeleton-card), .gallery-grid .gallery:not(.nh-skeleton-card), .gallery_item:not(.nh-skeleton-card)"));
     }
 
     function getGalleryCardCover(card) {
@@ -1069,6 +1071,15 @@
         return idMatch ? idMatch[1] : null;
     }
 
+    function getCardGalleryKey(card) {
+        if (!card || card.classList.contains("nh-skeleton-card")) return "";
+        const id = getGalleryIdFromCard(card);
+        if (id) return id;
+        const href = card.querySelector("a[href*='/g/']")?.getAttribute("href") || "";
+        const m = href.match(/\/g\/(\d+)(?:\/|$)/);
+        return m ? m[1] : href;
+    }
+
     function syncCardPageCount(card, data) {
         const cover = getGalleryCardCover(card);
         if (!cover) return;
@@ -1430,6 +1441,41 @@
         return /^\/g\/\d+\/?$/.test(pathname);
     }
 
+    function createSkeletonCard(isXxx = false) {
+        const card = el("div", {
+            className: isXxx ? "gallery_item nh-skeleton-card" : "gallery nh-skeleton-card",
+            "aria-hidden": "true"
+        });
+        card.innerHTML = `
+            <div class="cover nh-skeleton-cover">
+                <div class="nh-skeleton-media"></div>
+            </div>
+            <div class="caption nh-skeleton-caption">
+                <div class="nh-skeleton-line nh-skeleton-line-title"></div>
+                <div class="nh-skeleton-line nh-skeleton-line-sub"></div>
+            </div>
+        `;
+        return card;
+    }
+
+    function showSkeletonCards(count = 8) {
+        const container = findGalleryContainer();
+        if (!container) return;
+        hideSkeletonCards();
+        const isXxx = isNhentaiXxxHost();
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+            fragment.appendChild(createSkeletonCard(isXxx));
+        }
+        container.appendChild(fragment);
+    }
+
+    function hideSkeletonCards() {
+        const container = findGalleryContainer();
+        if (!container) return;
+        container.querySelectorAll(".nh-skeleton-card").forEach((card) => card.remove());
+    }
+
     function findGalleryContainer(root = document) {
         const selector = ".gallery-grid, .index-container";
         const classicContainers = Array.from(root.querySelectorAll(selector)).filter((container) => {
@@ -1468,10 +1514,15 @@
     // ===================================================================== //
     let infiniteScrollActive = false;
     let infiniteScrollObserver = null;
+    let infiniteScrollSentinel = null;
     let nextPageUrl = null;
     let isFetchingPage = false;
     let currentPageNum = 1;
     let listingGeneration = 0;
+    let lastPageFetchTime = 0;
+    const MIN_PAGE_COOLDOWN_MS = 1200; // minimum 1.2s between page requests
+    const MIN_SKELETON_DWELL_MS = 450;
+    let rateLimitBackoffUntil = 0;
 
     function detectNextPageUrl(root = document, baseHref = location.href) {
         const baseUrl = new URL(baseHref, location.origin);
@@ -1481,8 +1532,10 @@
         const nextLink = paginationLinks.find((link) => {
             const label = (link.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
             const parentDisabled = link.closest(".disabled, [aria-disabled='true']");
+            const ariaLabel = (link.getAttribute("aria-label") || "").toLowerCase();
             return !parentDisabled && (
                 link.matches("[rel='next'], .next") ||
+                ariaLabel.includes("next") ||
                 /^(next|›|»|→)$/.test(label)
             );
         });
@@ -1500,7 +1553,7 @@
         const currentUrl = baseUrl;
         const pageParam = currentPageNum;
 
-        const lastLink = root.querySelector(".pagination a.last, section.pagination a.last");
+        const lastLink = root.querySelector(".pagination a.last, section.pagination a.last, .pagination a[aria-label*='Last' i], section.pagination a[aria-label*='Last' i]");
         let maxPage = pageParam;
         if (lastLink && lastLink.href) {
             const m = (lastLink.getAttribute("href") || lastLink.href).match(/[?&]page=(\d+)/);
@@ -1515,17 +1568,12 @@
     }
 
     function initInfiniteScroll() {
-        if (infiniteScrollActive) return;
-
         const container = findGalleryContainer();
         if (!container) return;
 
         nextPageUrl = detectNextPageUrl();
         if (!nextPageUrl) return;
 
-        // Mark the listing as initialized before touching the DOM. The
-        // MutationObserver sees the injected status and must not start a
-        // second observer while the first page is being fetched.
         infiniteScrollActive = true;
 
         // Hide native pagination
@@ -1533,7 +1581,15 @@
             p.style.setProperty("display", "none", "important");
         });
 
-        // Create or get status element
+        // Setup Sentinel
+        if (!infiniteScrollSentinel) {
+            infiniteScrollSentinel = el("div", { id: "nh-scroll-sentinel", "aria-hidden": "true" });
+        }
+        if (!infiniteScrollSentinel.isConnected || infiniteScrollSentinel.previousElementSibling !== container) {
+            container.after(infiniteScrollSentinel);
+        }
+
+        // Setup Status
         let status = document.querySelector("#nh-scroll-status");
         if (!status) {
             status = el("div", {
@@ -1542,50 +1598,115 @@
             });
             status.innerHTML = `
                 <div class="nh-spinner"></div>
-                <span class="nh-scroll-txt">Scroll for more galleries...</span>
+                <span class="nh-scroll-txt"></span>
                 <button class="nh-btn nh-btn-retry" style="display:none;">Retry</button>
             `;
-            container.parentNode.insertBefore(status, container.nextSibling);
+            infiniteScrollSentinel.after(status);
 
-            status.querySelector(".nh-btn-retry").addEventListener("click", () => {
+            status.addEventListener("click", () => {
+                rateLimitBackoffUntil = 0;
                 if (nextPageUrl && !isFetchingPage) loadNextPage();
             });
+        } else if (!status.isConnected) {
+            infiniteScrollSentinel.after(status);
         }
 
-        // Setup IntersectionObserver
+        // Status is hidden by default when idle
+        status.style.display = "none";
+
+        // Setup IntersectionObserver on the sentinel
         if (infiniteScrollObserver) infiniteScrollObserver.disconnect();
 
         infiniteScrollObserver = new IntersectionObserver(
             (entries) => {
                 const entry = entries[0];
                 if (entry && entry.isIntersecting && nextPageUrl && !isFetchingPage) {
+                    if (Date.now() < rateLimitBackoffUntil) return;
+                    if (Date.now() - lastPageFetchTime < MIN_PAGE_COOLDOWN_MS) {
+                        setTimeout(() => {
+                            if (nextPageUrl && !isFetchingPage && Date.now() >= rateLimitBackoffUntil) loadNextPage();
+                        }, MIN_PAGE_COOLDOWN_MS);
+                        return;
+                    }
                     loadNextPage();
                 }
             },
-            { rootMargin: "600px 0px 600px 0px" }
+            { rootMargin: "80px 0px" }
         );
 
-        infiniteScrollObserver.observe(status);
+        infiniteScrollObserver.observe(infiniteScrollSentinel);
+
+        // Add continuous check & viewport scroll fallback
+        if (!window.__nhScrollFallbackBound) {
+            window.__nhScrollFallbackBound = true;
+            let scrollCheckFrame = 0;
+            const checkAndLoad = () => {
+                if (scrollCheckFrame) return;
+                scrollCheckFrame = requestAnimationFrame(() => {
+                    scrollCheckFrame = 0;
+                    if (!nextPageUrl || isFetchingPage || !infiniteScrollActive) return;
+                    if (Date.now() < rateLimitBackoffUntil) return;
+                    if (Date.now() - lastPageFetchTime < MIN_PAGE_COOLDOWN_MS) return;
+                    const sentinel = document.querySelector("#nh-scroll-sentinel");
+                    if (!sentinel?.isConnected) return;
+                    const rect = sentinel.getBoundingClientRect();
+                    const vh = window.innerHeight || document.documentElement.clientHeight;
+                    if (rect.top <= vh + 80) {
+                        loadNextPage();
+                    }
+                });
+            };
+            window.addEventListener("scroll", checkAndLoad, { passive: true });
+            window.addEventListener("resize", checkAndLoad, { passive: true });
+        }
+    }
+
+    async function fetchPageHtml(url) {
+        try {
+            const res = await fetch(url, { credentials: "same-origin" });
+            if (res.ok) return await res.text();
+            throw new Error("HTTP " + res.status);
+        } catch (fetchErr) {
+            if (typeof GM_xmlhttpRequest === "function") {
+                return new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: url.startsWith("http") ? url : location.origin + url,
+                        onload: (r) => {
+                            if (r.status >= 400) reject(new Error("HTTP " + r.status));
+                            else resolve(r.responseText);
+                        },
+                        onerror: () => reject(fetchErr)
+                    });
+                });
+            }
+            throw fetchErr;
+        }
     }
 
     async function loadNextPage() {
         if (!nextPageUrl || isFetchingPage) return;
+        if (Date.now() < rateLimitBackoffUntil) return;
+        if (Date.now() - lastPageFetchTime < MIN_PAGE_COOLDOWN_MS) return;
         isFetchingPage = true;
+        showSkeletonCards(8);
+        lastPageFetchTime = Date.now();
         const requestGeneration = listingGeneration;
         const requestedPageUrl = nextPageUrl;
 
         const status = document.querySelector("#nh-scroll-status");
         if (status) {
-            status.classList.add("is-loading");
-            status.classList.remove("is-error", "is-done");
-            status.querySelector(".nh-scroll-txt").textContent = "Loading next galleries...";
+            status.style.display = "flex";
+            status.className = "nh-scroll-status is-loading";
+            status.querySelector(".nh-scroll-txt").textContent = "Loading more galleries...";
             status.querySelector(".nh-btn-retry").style.display = "none";
         }
 
         try {
-            const res = await fetch(requestedPageUrl, { credentials: "same-origin" });
-            if (!res.ok) throw new Error("HTTP " + res.status);
-            const html = await res.text();
+            const [html] = await Promise.all([
+                fetchPageHtml(requestedPageUrl),
+                new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_DWELL_MS))
+            ]);
 
             // A fast navigation can finish while this request is in flight.
             // Never append cards belonging to the previous route.
@@ -1597,35 +1718,56 @@
             const mainContainer = findGalleryContainer();
             if (!mainContainer) throw new Error("Gallery container disappeared");
 
+            const existingKeys = new Set(
+                getGalleryCards(mainContainer).map(getCardGalleryKey).filter(Boolean)
+            );
+
             // Extract new galleries
             const targetContainer = findGalleryContainer(doc);
             if (!targetContainer) throw new Error("Next page has no gallery container");
-            const newCards = getGalleryCards(targetContainer);
+            const rawCards = getGalleryCards(targetContainer);
+
+            // Filter out any duplicate cards
+            const newCards = [];
+            rawCards.forEach((card) => {
+                const key = getCardGalleryKey(card);
+                if (key && existingKeys.has(key)) return; // Skip duplicate!
+                if (key) existingKeys.add(key);
+                newCards.push(card);
+            });
 
             if (newCards.length === 0) {
+                hideSkeletonCards();
                 nextPageUrl = null;
                 if (status) {
-                    status.classList.remove("is-loading");
-                    status.classList.add("is-done");
+                    status.className = "nh-scroll-status is-done";
+                    status.style.display = "flex";
                     status.querySelector(".nh-scroll-txt").textContent = "All galleries loaded";
                 }
                 return;
             }
 
             // Append cards
+            hideSkeletonCards();
+            const fragment = document.createDocumentFragment();
             newCards.forEach((card) => {
                 const img = card.querySelector("img");
                 if (img) {
                     const dataSrc = img.getAttribute("data-src");
                     if (dataSrc) img.src = dataSrc;
                     img.loading = "lazy";
+                    img.classList.remove("lazyload");
+                    img.classList.add("loaded");
                 }
                 applyLangFilterToCard(card);
                 observeCardPageCount(card);
-                mainContainer.appendChild(card);
+                card.classList.add("nh-card-in");
+                fragment.appendChild(card);
             });
+            mainContainer.appendChild(fragment);
 
             // Update page number reference without mutating URL history
+            const prevPageNum = currentPageNum;
             const loadedUrl = new URL(requestedPageUrl);
             const loadedPage = parseInt(loadedUrl.searchParams.get("page") || "1", 10);
             currentPageNum = loadedPage;
@@ -1633,38 +1775,54 @@
             // Harvest new tags
             harvestTags(newCards);
 
-            // Detect next page link from fetched doc
-            nextPageUrl = detectNextPageUrl(doc, requestedPageUrl);
+            const detectedNext = detectNextPageUrl(doc, requestedPageUrl);
+            if (detectedNext) {
+                const nextNum = parseInt(new URL(detectedNext).searchParams.get("page") || "0", 10);
+                if (nextNum > currentPageNum) {
+                    nextPageUrl = detectedNext;
+                } else {
+                    nextPageUrl = null;
+                }
+            } else {
+                nextPageUrl = null;
+            }
+
             if (nextPageUrl) {
                 if (status) {
-                    status.classList.remove("is-loading");
-                    status.querySelector(".nh-scroll-txt").textContent = "Scroll for more galleries...";
+                    status.className = "nh-scroll-status";
+                    status.style.display = "none";
                 }
-                // Check if status is still in view to keep loading smoothly
-                if (status && infiniteScrollObserver) {
-                    const rect = status.getBoundingClientRect();
-                    if (rect.top <= window.innerHeight + 600) {
-                        const followUpGeneration = requestGeneration;
-                        setTimeout(() => {
-                            if (followUpGeneration === listingGeneration && nextPageUrl && !isFetchingPage) loadNextPage();
-                        }, 150);
-                    }
+                const mainContainer = findGalleryContainer();
+                const sentinel = document.querySelector("#nh-scroll-sentinel");
+                if (mainContainer && sentinel) {
+                    mainContainer.after(sentinel);
+                    if (status) sentinel.after(status);
                 }
             } else {
                 nextPageUrl = null;
                 if (status) {
-                    status.classList.remove("is-loading");
-                    status.classList.add("is-done");
+                    status.className = "nh-scroll-status is-done";
+                    status.style.display = "flex";
                     status.querySelector(".nh-scroll-txt").textContent = "All galleries loaded";
                 }
             }
         } catch (err) {
+            hideSkeletonCards();
             if (requestGeneration !== listingGeneration) return;
             console.error("Infinite scroll error:", err);
-            if (status) {
-                status.classList.remove("is-loading");
-                status.classList.add("is-error");
-                status.querySelector(".nh-scroll-txt").textContent = "Failed to load more galleries";
+            const is429 = err?.status === 429 || String(err?.message || "").includes("429");
+            if (is429) {
+                rateLimitBackoffUntil = Date.now() + 15000; // 15s backoff
+                if (status) {
+                    status.className = "nh-scroll-status is-error";
+                    status.style.display = "flex";
+                    status.querySelector(".nh-scroll-txt").textContent = "Rate limit (429). Waiting 15s... Click to retry.";
+                    status.querySelector(".nh-btn-retry").style.display = "inline-flex";
+                }
+            } else if (status) {
+                status.className = "nh-scroll-status is-error";
+                status.style.display = "flex";
+                status.querySelector(".nh-scroll-txt").textContent = "Could not load more galleries. Click to retry.";
                 status.querySelector(".nh-btn-retry").style.display = "inline-flex";
             }
         } finally {
@@ -5638,20 +5796,132 @@
             color: #fff;
         }
 
-        /* Infinite Scroll Status */
+        /* Infinite Scroll Sentinel & Status */
+        #nh-scroll-sentinel {
+            display: block !important;
+            width: 100% !important;
+            height: 24px !important;
+            min-height: 24px !important;
+            margin: 12px 0 !important;
+            clear: both !important;
+        }
+
+        /* Skeleton Loading Placeholders */
+        .nh-skeleton-card {
+            pointer-events: none !important;
+            cursor: default !important;
+            user-select: none !important;
+            border-color: rgba(255, 255, 255, 0.06) !important;
+            background: var(--nh-card, #111116) !important;
+            animation: nhSkelPulse 1.8s ease-in-out infinite !important;
+        }
+
+        .nh-skeleton-cover {
+            position: relative !important;
+            width: 100% !important;
+            aspect-ratio: 1 / 1.41 !important;
+            background: rgba(255, 255, 255, 0.04) !important;
+            overflow: hidden !important;
+        }
+
+        .nh-skeleton-media {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .nh-skeleton-media::after,
+        .nh-skeleton-line::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: 0 !important;
+            transform: translateX(-100%) !important;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.075), transparent) !important;
+            animation: nhSkelShimmer 1.4s ease-in-out infinite !important;
+        }
+
+        .nh-skeleton-caption {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            padding: 12px 10px 14px 10px !important;
+            min-height: 52px !important;
+        }
+
+        .nh-skeleton-line {
+            position: relative !important;
+            overflow: hidden !important;
+            border-radius: 4px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            height: 12px !important;
+        }
+
+        .nh-skeleton-line-title {
+            width: 85% !important;
+        }
+
+        .nh-skeleton-line-sub {
+            width: 55% !important;
+            height: 10px !important;
+            opacity: 0.7 !important;
+        }
+
+        @keyframes nhSkelShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes nhSkelPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.72; }
+        }
+
+        .nh-card-in {
+            animation: nhCardFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        @keyframes nhCardFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Polished Scroll Status Pill */
         .nh-scroll-status {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            padding: 28px 0;
-            margin: 20px 0;
-            color: var(--nh-text-secondary);
-            font-size: 14px;
+            padding: 14px 24px;
+            margin: 20px auto;
+            max-width: 360px;
+            border-radius: 9999px;
+            background: rgba(20, 20, 25, 0.85);
+            border: 1px solid var(--nh-border, rgba(255, 255, 255, 0.08));
+            color: var(--nh-text-secondary, #a0a0a5);
+            font-size: 13.5px;
             font-weight: 500;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .nh-scroll-status:hover {
+            transform: translateY(-2px);
+            border-color: var(--nh-accent, #ed2553);
+        }
+
+        .nh-scroll-status.is-loading,
+        .nh-scroll-status.is-error,
+        .nh-scroll-status.is-done {
+            display: flex;
         }
 
         .nh-spinner {
+            display: none;
             width: 20px;
             height: 20px;
             border: 2.5px solid var(--nh-border);
@@ -5660,12 +5930,16 @@
             animation: nhSpin 0.7s linear infinite;
         }
 
-        @keyframes nhSpin {
-            to { transform: rotate(360deg); }
+        .nh-scroll-status.is-loading .nh-spinner {
+            display: inline-block;
         }
 
-        .nh-scroll-status.is-done .nh-spinner {
-            display: none;
+        .nh-scroll-status.is-error {
+            color: var(--nh-accent);
+        }
+
+        @keyframes nhSpin {
+            to { transform: rotate(360deg); }
         }
 
         /* ===== Command Palette (Search Modal) ===== */
@@ -6598,6 +6872,9 @@
         isFetchingPage = false;
         if (infiniteScrollObserver) infiniteScrollObserver.disconnect();
         infiniteScrollObserver = null;
+        infiniteScrollSentinel?.remove();
+        infiniteScrollSentinel = null;
+        hideSkeletonCards();
         const oldStatus = document.querySelector("#nh-scroll-status");
         if (oldStatus) oldStatus.remove();
 
@@ -6671,7 +6948,9 @@
                 if (cardsWithoutLanguage) {
                     syncAllGalleryCards();
                 }
-                if (isGalleryListingRoute() && findGalleryContainer() && !infiniteScrollActive) {
+                const sentinelEl = document.querySelector("#nh-scroll-sentinel");
+                if (isGalleryListingRoute() && findGalleryContainer() && (!infiniteScrollActive || !sentinelEl?.isConnected)) {
+                    infiniteScrollActive = false;
                     initInfiniteScroll();
                 }
                 if (infiniteScrollActive) {

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HentaiEra 2.0
 // @namespace    hentaiera-dark-gallery
-// @version      1.2.6
+// @version      1.2.10
 // @author       claudiogepeto
 // @description  Modern dark AMOLED theme, responsive gallery grid, infinite scroll, unified navigation, and multi-mode reader for HentaiEra
 // @match        https://hentaiera.com/*
@@ -351,7 +351,7 @@
     function getListingCards(root = document) {
         const container = findListingContainer(root);
         if (!container) return [];
-        return [...container.querySelectorAll(".thumb")].filter((card) => !card.closest(".gallery_fourth, .related_section"));
+        return [...container.querySelectorAll(".thumb:not(.he-skeleton-card)")].filter((card) => !card.closest(".gallery_fourth, .related_section"));
     }
 
     const FILTER_CATEGORIES = [
@@ -512,7 +512,8 @@
     }
 
     function getGalleryIdFromCard(card) {
-        const href = card?.querySelector("a.inner_thumb")?.getAttribute("href") || "";
+        if (!card || card.classList.contains("he-skeleton-card")) return null;
+        const href = card?.querySelector(".inner_thumb a, a.inner_thumb, a[href*='/gallery/']")?.getAttribute("href") || "";
         const match = href.match(/\/gallery\/(\d+)(?:\/|$)/i);
         return match ? match[1] : null;
     }
@@ -648,7 +649,7 @@
     }
 
     function updateCardPages(card) {
-        const cover = card.querySelector("a.inner_thumb");
+        const cover = card.querySelector(".inner_thumb, a.inner_thumb");
         if (!cover) return;
         // Taxonomy cards (for example /tags/) also expose `.g_pages`, but
         // that value is the number of galleries for the tag, not page count.
@@ -684,6 +685,10 @@
     let listingContinuationFrame = 0;
     let listingViewportCheckFrame = 0;
     let listingRetryRequired = false;
+    let lastListingFetchTime = 0;
+    const LISTING_FETCH_COOLDOWN_MS = 1200;
+    const MIN_SKELETON_DWELL_MS = 450;
+    let listingRateLimitUntil = 0;
 
     function listingPageNumber(href, fallback = 1) {
         try {
@@ -703,6 +708,7 @@
             // current origin so the request remains same-origin.
             next.protocol = current.protocol;
             next.host = current.host;
+            if (!next.pathname || next.pathname === "") next.pathname = "/";
             const legacySortMatch = next.pathname.match(/^\/(popular|downloaded|toprated|latest)\/?$/i);
             if (legacySortMatch) {
                 const map = { popular: "pp", latest: "lt", downloaded: "dl", toprated: "tr" };
@@ -763,23 +769,68 @@
 
     function continueListingIfNeeded(generation = listingGeneration) {
         if (generation !== listingGeneration || !nextListingUrl || listingFetching || listingRetryRequired || !infiniteScrollSentinel?.isConnected) return;
+        if (Date.now() < listingRateLimitUntil) return;
+        if (Date.now() - lastListingFetchTime < LISTING_FETCH_COOLDOWN_MS) return;
         const rect = infiniteScrollSentinel.getBoundingClientRect();
         const viewportBottom = window.innerHeight || document.documentElement.clientHeight;
-        if (rect.top > viewportBottom + 1000 || listingContinuationFrame) return;
+        if (rect.top > viewportBottom + 80 || listingContinuationFrame) return;
         listingContinuationFrame = requestAnimationFrame(() => {
             listingContinuationFrame = 0;
             if (generation === listingGeneration && nextListingUrl && !listingFetching) fetchNextListingPage();
         });
     }
 
+    function createSkeletonCard() {
+        const card = el("div", {
+            className: "thumb he-skeleton-card",
+            "aria-hidden": "true"
+        });
+        card.innerHTML = `
+            <div class="thumbnail">
+                <div class="inner_thumb he-skeleton-cover">
+                    <div class="he-skeleton-media"></div>
+                </div>
+                <div class="caption he-skeleton-caption">
+                    <div class="he-skeleton-line he-skeleton-line-title"></div>
+                    <div class="he-skeleton-line he-skeleton-line-sub"></div>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    function showSkeletonCards(count = 8) {
+        const container = findListingContainer();
+        if (!container) return;
+        hideSkeletonCards();
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+            fragment.appendChild(createSkeletonCard());
+        }
+        container.appendChild(fragment);
+    }
+
+    function hideSkeletonCards() {
+        const container = findListingContainer();
+        if (!container) return;
+        container.querySelectorAll(".he-skeleton-card").forEach((card) => card.remove());
+    }
+
     async function fetchNextListingPage() {
         if (listingFetching || !nextListingUrl) return;
+        if (Date.now() < listingRateLimitUntil) return;
+        if (Date.now() - lastListingFetchTime < LISTING_FETCH_COOLDOWN_MS) return;
         listingFetching = true;
+        showSkeletonCards(8);
+        lastListingFetchTime = Date.now();
         listingRetryRequired = false;
         const generation = listingGeneration;
         setListingStatus("Loading more galleries…", "loading");
         try {
-            const response = await fetch(nextListingUrl, { credentials: "same-origin" });
+            const [response] = await Promise.all([
+                fetch(nextListingUrl, { credentials: "same-origin" }),
+                new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_DWELL_MS))
+            ]);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const html = await response.text();
             if (generation !== listingGeneration) return;
@@ -787,19 +838,24 @@
             const target = findListingContainer();
             const sourceCards = getListingCards(parsed);
             if (!target || !sourceCards.length) {
+                hideSkeletonCards();
                 nextListingUrl = null;
                 setListingStatus("No more galleries", "done");
                 return;
             }
 
-            const existing = new Set(getListingCards().map((card) => card.querySelector("a.inner_thumb")?.getAttribute("href")));
+            hideSkeletonCards();
+            const existing = new Set(getListingCards().map((card) => card.querySelector(".inner_thumb a, a.inner_thumb, a[href*='/gallery/']")?.getAttribute("href")).filter(Boolean));
+            const fragment = document.createDocumentFragment();
             sourceCards.forEach((card) => {
-                const key = card.querySelector("a.inner_thumb")?.getAttribute("href");
+                const key = card.querySelector(".inner_thumb a, a.inner_thumb, a[href*='/gallery/']")?.getAttribute("href");
                 if (key && existing.has(key)) return;
-                target.appendChild(card);
+                card.classList.add("he-card-in");
+                fragment.appendChild(card);
                 if (key) existing.add(key);
                 syncCard(card, { eager: true });
             });
+            target.appendChild(fragment);
             nextListingUrl = detectNextListingUrl(parsed, nextListingUrl);
             if (!nextListingUrl) {
                 setListingStatus("End of results", "done");
@@ -808,10 +864,20 @@
                 setListingStatus("", "done");
             }
         } catch (error) {
+            hideSkeletonCards();
             listingRetryRequired = true;
-            setListingStatus("Could not load more galleries. Tap to retry.", "error");
+            const is429 = error?.status === 429 || String(error?.message || "").includes("429");
+            if (is429) {
+                listingRateLimitUntil = Date.now() + 15000;
+                setListingStatus("Rate limit (429). Waiting 15s... Tap to retry.", "error");
+            } else {
+                setListingStatus("Could not load more galleries. Tap to retry.", "error");
+            }
             const status = document.querySelector("#he-scroll-status");
-            status?.addEventListener("click", fetchNextListingPage, { once: true });
+            status?.addEventListener("click", () => {
+                listingRateLimitUntil = 0;
+                fetchNextListingPage();
+            }, { once: true });
         } finally {
             listingFetching = false;
             continueListingIfNeeded(generation);
@@ -820,6 +886,7 @@
 
     function initInfiniteScroll() {
         if (!isListingRoute() || !findListingContainer()) return;
+        hideSkeletonCards();
         const generation = listingGeneration;
         nextListingUrl = detectNextListingUrl();
         // Keep the browse-all-tags pager available. It is useful as a direct
@@ -832,13 +899,16 @@
 
         if (!infiniteScrollSentinel) {
             infiniteScrollSentinel = el("div", { id: "he-scroll-sentinel", "aria-hidden": "true" });
-            findListingContainer()?.after(infiniteScrollSentinel);
+        }
+        const container = findListingContainer();
+        if (container && (!infiniteScrollSentinel.isConnected || infiniteScrollSentinel.previousElementSibling !== container)) {
+            container.after(infiniteScrollSentinel);
         }
         infiniteScrollObserver?.disconnect();
         infiniteScrollObserver = new IntersectionObserver((entries) => {
             if (generation !== listingGeneration) return;
             if (entries.some((entry) => entry.isIntersecting)) fetchNextListingPage();
-        }, { rootMargin: "900px 0px" });
+        }, { rootMargin: "80px 0px" });
         infiniteScrollObserver.observe(infiniteScrollSentinel);
 
         // IntersectionObserver can miss a transition when hidden language
@@ -2338,10 +2408,157 @@
             .pagination.he-pagination-native { display: none !important; }
             .pagination a, .pagination span { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; padding: 5px 9px; border: 1px solid var(--he-border); border-radius: 7px; color: var(--he-secondary); background: var(--he-surface); text-decoration: none; }
             .pagination a:hover, .pagination .active span { color: #fff; border-color: var(--he-accent); background: var(--he-grad); }
-            #he-scroll-sentinel { height: 2px; }
-            .he-scroll-status { width: var(--he-content-width); margin: 8px auto 26px; padding: 12px; color: var(--he-muted); font-size: 13px; text-align: center; }
-            .he-scroll-status.error { color: var(--he-accent); cursor: pointer; }
-            .he-scroll-status.done { opacity: .7; }
+            #he-scroll-sentinel {
+                display: block !important;
+                width: 100% !important;
+                height: 24px !important;
+                min-height: 24px !important;
+                margin: 12px 0 !important;
+                clear: both !important;
+            }
+            /* Skeleton Loading Placeholders */
+            .thumb.he-skeleton-card {
+                pointer-events: none !important;
+                cursor: default !important;
+                user-select: none !important;
+                animation: heSkelPulse 1.8s ease-in-out infinite !important;
+            }
+
+            .thumb.he-skeleton-card .thumbnail {
+                border-color: rgba(255, 255, 255, 0.06) !important;
+                background: var(--he-card, #131418) !important;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+                transform: none !important;
+            }
+
+            .he-skeleton-cover {
+                position: relative !important;
+                width: 100% !important;
+                aspect-ratio: 1 / 1.41 !important;
+                background: rgba(255, 255, 255, 0.04) !important;
+                overflow: hidden !important;
+            }
+
+            .he-skeleton-media {
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+
+            .he-skeleton-media::after,
+            .he-skeleton-line::after {
+                content: "" !important;
+                position: absolute !important;
+                inset: 0 !important;
+                transform: translateX(-100%) !important;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent) !important;
+                animation: heSkelShimmer 1.4s ease-in-out infinite !important;
+            }
+
+            .he-skeleton-caption {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                padding: 12px 10px 14px 10px !important;
+                min-height: 52px !important;
+            }
+
+            .he-skeleton-line {
+                position: relative !important;
+                overflow: hidden !important;
+                border-radius: 4px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                height: 12px !important;
+            }
+
+            .he-skeleton-line-title {
+                width: 85% !important;
+            }
+
+            .he-skeleton-line-sub {
+                width: 55% !important;
+                height: 10px !important;
+                opacity: 0.7 !important;
+            }
+
+            @keyframes heSkelShimmer {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+
+            @keyframes heSkelPulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.72; }
+            }
+
+            .he-card-in {
+                animation: heCardFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+
+            @keyframes heCardFadeIn {
+                from { opacity: 0; transform: translateY(8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            @keyframes heSpin {
+                to { transform: rotate(360deg); }
+            }
+
+            /* Polished Status Pill */
+            .he-scroll-status {
+                width: fit-content !important;
+                min-width: 240px !important;
+                max-width: 360px !important;
+                margin: 20px auto 28px !important;
+                padding: 12px 24px !important;
+                border-radius: 9999px !important;
+                background: rgba(19, 20, 24, 0.85) !important;
+                border: 1px solid var(--he-border, rgba(255, 255, 255, 0.08)) !important;
+                color: var(--he-muted, #949ba4) !important;
+                font-size: 13.5px !important;
+                font-weight: 500 !important;
+                text-align: center !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                cursor: pointer !important;
+                transition: transform 0.2s ease, border-color 0.2s ease !important;
+            }
+
+            .he-scroll-status:hover {
+                transform: translateY(-2px);
+                border-color: var(--he-accent, #33b2ef) !important;
+            }
+
+            .he-scroll-status.loading {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 10px !important;
+                color: var(--he-text, #fff) !important;
+                border-color: rgba(51, 178, 239, 0.3) !important;
+            }
+
+            .he-scroll-status.loading::before {
+                content: "" !important;
+                display: inline-block !important;
+                width: 14px !important;
+                height: 14px !important;
+                border: 2px solid rgba(51, 178, 239, 0.25) !important;
+                border-top-color: var(--he-accent, #33b2ef) !important;
+                border-radius: 50% !important;
+                animation: heSpin 0.7s linear infinite !important;
+            }
+
+            .he-scroll-status.error {
+                color: var(--he-accent) !important;
+                cursor: pointer !important;
+            }
+
+            .he-scroll-status.done {
+                opacity: .7 !important;
+            }
             #he-bottom-nav { display: none; }
             .he-search-overlay { position: fixed; inset: 0; z-index: 10020; display: flex; align-items: flex-start; justify-content: center; padding-top: 13vh; background: rgba(0,0,0,.72); }
             .he-search-box { width: min(620px, 92vw); max-height: min(88dvh, 760px); overflow-y: auto; overflow-x: hidden; border: 1px solid var(--he-border-light); border-radius: 16px; background: #15151c; box-shadow: 0 22px 70px rgba(0,0,0,.8); }
@@ -2585,6 +2802,7 @@
         }
         infiniteScrollSentinel?.remove();
         infiniteScrollSentinel = null;
+        hideSkeletonCards();
         document.querySelector("#he-scroll-status")?.remove();
         document.querySelector("#he-filter-bar")?.remove();
         document.querySelector("#he-listing-sort")?.remove();
@@ -2651,6 +2869,9 @@
                 if (isListingRoute()) {
                     setupListingSortBar();
                     syncAllCards();
+                    if (!infiniteScrollObserver || !infiniteScrollSentinel?.isConnected) {
+                        initInfiniteScroll();
+                    }
                 }
                 if (isGalleryRoute()) {
                     organizeGalleryHero();
