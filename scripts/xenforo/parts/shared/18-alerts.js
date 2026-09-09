@@ -25,6 +25,9 @@
                 if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');   // falhou no servidor → NÃO marca local
                 if (li && li.classList) { li.classList.remove('is-unread'); li.classList.add('smg-al-old'); }   // some o dot + esmaece na hora (virou lida)
                 btn.remove();
+                const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+                if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
+                if (typeof aldockSyncCount === 'function') aldockSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -45,19 +48,17 @@
     function syncAlertBadgeFrom(root) {
         if (!root || !root.querySelectorAll) return;
         const rows = root.querySelectorAll('li.alert');
-        if (!rows.length) return;                          // lista vazia/inesperada → não mexe no contador
+        if (!rows.length) return;
         const unread = root.querySelectorAll('li.alert.is-unread').length;
         const nav = document.querySelector('.p-navgroup-link--alerts');
-        if (!nav) return;
-        const cur = parseInt(nav.getAttribute('data-badge') || '0', 10) || 0;
-        // a popup traz só as N mais recentes: se TODAS voltaram não-lidas, pode haver mais fora da
-        // janela → nesse caso só deixa SUBIR (nunca reduz com base numa contagem truncada).
-        const n = (unread === rows.length && cur > unread) ? cur : unread;
-        // guarda o número: em tema que não conta (UI.X/SMG) é a ÚNICA fonte na próxima carga da página —
-        // sem isso o sino nascia mudo e só ganhava número depois de abrir o painel de novo.
+        const cur = nav ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0) : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+        const hasMore = st ? Boolean(st.next) : false;
+        const n = hasMore ? Math.max(cur, unread) : unread;
         gmSet('smg-alerts-count', String(n));
-        if (n === cur) return;
-        if (n > 0) nav.setAttribute('data-badge', String(n)); else nav.removeAttribute('data-badge');
+        if (nav) {
+            if (n > 0) nav.setAttribute('data-badge', String(n)); else nav.removeAttribute('data-badge');
+        }
     }
     // nome da thread contido no link do alerta, sem os chips de prefixo que moram dentro dele.
     // Clona pra não mexer no nó vivo (o resto do cleanAlertRow ainda vai usá-lo).
@@ -92,7 +93,7 @@
     function repaintAlertThumbs(root) {
         if (!root) return 0;
         let n = 0;
-        root.querySelectorAll('.smg-al-icon[data-smg-thread]:not([data-smg-thumbed])').forEach(ico => { if (paintAlertThumb(ico)) n++; });
+        root.querySelectorAll('.smg-al-icon:not([data-smg-thumbed])').forEach(ico => { if (paintAlertThumb(ico)) n++; });
         return n;
     }
 
@@ -115,8 +116,8 @@
             // referência da thread p/ a foto. O alerta do XF linka pro POST (/posts/N) e não cita a
             // thread em lugar nenhum — quando não há link de /threads/, o TÍTULO é o único elo com a
             // listagem (thumbCacheGet casa por ele). Guardado ANTES da limpeza mexer no texto.
-            const tLink = row.querySelector('a[href*="/threads/"]') || title;
-            ico.dataset.smgThread = tLink.getAttribute('href') || '';   // alvo do repaint quando o cache esquentar
+            const tLink = row.querySelector('a[href*="/threads/"]') || main.querySelector('a[href*="/threads/"]') || title;
+            ico.dataset.smgThread = tLink ? (tLink.getAttribute('href') || '') : '';   // alvo do repaint quando o cache esquentar
             // SEM os chips: no alerta os prefixos vivem DENTRO do link do título (separados por &nbsp;),
             // então o texto cru sairia "Request OnlyFans daryna_cutie" e nunca casaria com o
             // "daryna_cutie" da listagem, onde os chips são irmãos do link.
@@ -220,4 +221,19 @@
         setTimeout(() => {
             if (typeof openAlertsDock === 'function') openAlertsDock('alerts', false);
         }, 50);
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.cleanAlertRow = cleanAlertRow;
+        window.paintAlertThumb = paintAlertThumb;
+        window.repaintAlertThumbs = repaintAlertThumbs;
+        window.syncAlertBadgeFrom = syncAlertBadgeFrom;
+        window.markAlertRead = markAlertRead;
+        window.__alertsExports = {
+            cleanAlertRow,
+            paintAlertThumb,
+            repaintAlertThumbs,
+            syncAlertBadgeFrom,
+            markAlertRead
+        };
     }

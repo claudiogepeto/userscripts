@@ -312,7 +312,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.3'), 'Userscript deve estar na versão 3.12.3');
+    assert(scriptContent.includes('// @version      3.12.6'), 'Userscript deve estar na versão 3.12.6');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -1457,6 +1457,7 @@ async function runTests() {
         railShowTab,
         watchedRow,
         aldockSyncCount,
+        updateAlertsUnreadBadge,
         aldockState,
         RAIL_SRC,
         aldockWidth,
@@ -1471,7 +1472,7 @@ async function runTests() {
     assert(btnAlertsEl === null, 'Botão #smg-nav-alerts NÃO deve existir na barra/dock principal');
 
     // 9.2 Verificar que o painel lateral é exclusivo para Seguidos (Following)
-    assert(getRailTab() === 'watched', 'Aba padrão do rail deve ser "watched"');
+    assert(getRailTab() === 'alerts', 'Aba padrão do rail deve ser "alerts"');
     assert(RAIL_SRC.watched.filter === false, 'RAIL_SRC.watched não deve expor filtro Todas/Não lidas');
     assert(RAIL_SRC.watched.count === true, 'RAIL_SRC.watched deve ter count: true');
 
@@ -1491,7 +1492,7 @@ async function runTests() {
     assert(dockEl.querySelector('.smg-aldock-markall') === null, 'Botão .smg-aldock-markall deve ser removido');
 
     const titleText = dockEl.querySelector('.smg-aldock-titletext')?.textContent || '';
-    assert(titleText === 'Following' || titleText === 'Seguindo', `Título do cabeçalho deve ser Following/Seguindo (obtido: ${titleText})`);
+    assert(titleText === 'Alerts' || titleText === 'Alertas', `Título do cabeçalho deve ser Alerts/Alertas (obtido: ${titleText})`);
 
     // Botões de ação mantidos
     assert(dockEl.querySelector('.smg-aldock-view') !== null, 'Botão .smg-aldock-view deve existir');
@@ -1506,7 +1507,7 @@ async function runTests() {
     // Rodapé
     const seeAllLink = dockEl.querySelector('.smg-aldock-seeall');
     assert(seeAllLink !== null, 'Link do rodapé .smg-aldock-seeall deve existir');
-    assert(seeAllLink.getAttribute('href').includes('/watched/threads'), `Link do rodapé deve apontar para /watched/threads (obtido: ${seeAllLink.getAttribute('href')})`);
+    assert(seeAllLink.getAttribute('href').includes('/account/alerts'), `Link do rodapé deve apontar para /account/alerts (obtido: ${seeAllLink.getAttribute('href')})`);
 
     // 9.4 Testar watchedRow (estrutura do card do modo lista idêntica ao design limpo do alerta)
     const threadMockHtml = `
@@ -1554,30 +1555,39 @@ async function runTests() {
     assert(rowLi.querySelector('.smg-rail-wt-meta')?.children.length === 1, 'Meta da row deve conter somente a data de atualização');
 
     // 9.5 Testar aldockSyncCount e filtro de unread
-    const listOl = dockEl.querySelector('.smg-rail-wtlist');
-    listOl.appendChild(rowLi);
+    {
+        const alertList = dockEl.querySelector('.smg-alert-clean');
+        assert(alertList !== null, 'Lista de alertas .smg-alert-clean deve existir no dock');
+        const alertRow = document.createElement('li');
+        alertRow.className = 'alert is-unread';
+        alertRow.innerHTML = '<span class="contentRow-main">Alerta novo</span><button class="smg-al-read">Read</button>';
+        alertList.appendChild(alertRow);
 
-    aldockSyncCount();
-    const countBadge = dockEl.querySelector('.smg-aldock-n');
-    assert(countBadge !== null, 'Badge .smg-aldock-n deve existir');
-    assert(!countBadge.hidden, 'Badge deve estar visível com 1 item não lido');
-    assert(countBadge.textContent === '1', `Badge deve exibir "1" (obtido: ${countBadge.textContent})`);
+        aldockSyncCount();
+        const countBadge = dockEl.querySelector('.smg-aldock-n');
+        assert(countBadge !== null, 'Badge .smg-aldock-n deve existir');
+        assert(!countBadge.hidden, 'Badge deve estar visível com 1 item não lido');
+        assert(countBadge.textContent === '1', `Badge deve exibir "1" (obtido: ${countBadge.textContent})`);
 
-    assert(!dockEl.classList.contains('smg-aldock--unread'), 'Dock não deve ativar estado visual de filtro não lido');
+        const markReadBtn = dockEl.querySelector('.smg-aldock-markread');
+        assert(markReadBtn !== null, 'Botão markread deve existir');
+        markReadBtn.click();
 
-    const watchedPane = dockEl.querySelector('.smg-aldock-body[data-tab="watched"]');
-    const viewBtn = dockEl.querySelector('.smg-aldock-view');
-    viewBtn.click();
-    assert(watchedPane.classList.contains('is-grid'), 'Botão de visualização deve ativar o modo grade');
+        assert(!alertRow.classList.contains('is-unread'), 'markReadBtn deve remover is-unread do alerta');
+        assert(alertRow.classList.contains('smg-al-old'), 'markReadBtn deve adicionar smg-al-old ao alerta');
+        assert(alertRow.querySelector('.smg-al-read') === null, 'markReadBtn deve remover botões .smg-al-read');
+        assert(countBadge.hidden || countBadge.textContent === '', 'Badge deve estar oculto ou vazio após mark all read');
+        assert(window.GM_getValue('smg-alerts-count') === '0', 'GM storage smg-alerts-count deve ser 0');
+    }
 
-    // 9.6 Testar toggleAlertsDock('watched')
+    // 9.6 Testar toggleAlertsDock('alerts')
     window.innerWidth = 1280;
     closeAlertsDock(false);
     assert(!document.documentElement.classList.contains('smg-aldock-on'), 'Dock deve iniciar fechado');
-    toggleAlertsDock('watched');
-    assert(document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("watched") deve abrir o painel');
-    toggleAlertsDock('watched');
-    assert(!document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("watched") com painel aberto deve fechar o painel');
+    toggleAlertsDock('alerts');
+    assert(document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("alerts") deve abrir o painel');
+    toggleAlertsDock('alerts');
+    assert(!document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("alerts") com painel aberto deve fechar o painel');
 
     // 9.7 Validar CSS injetado para o novo card de Seguidos
     const injectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
@@ -1595,8 +1605,8 @@ async function runTests() {
     // 9.8 Testar railBtn da topbar (classes e contador de seguidos)
     const railBtnEl = document.querySelector('.smg-tb-railbtn');
     assert(railBtnEl !== null, 'Botão .smg-tb-railbtn deve existir na topbar');
-    assert(railBtnEl.classList.contains('smg-rt-watched'), 'railBtn deve possuir classe .smg-rt-watched');
-    assert(!railBtnEl.classList.contains('smg-rt-alerts'), 'railBtn NÃO deve possuir classe .smg-rt-alerts');
+    assert(railBtnEl.classList.contains('smg-rt-alerts'), 'railBtn deve possuir classe .smg-rt-alerts');
+    assert(!railBtnEl.classList.contains('smg-rt-watched'), 'railBtn NÃO deve possuir classe .smg-rt-watched');
 
     // 9.9 Testar updateWatchedUnreadBadge e sincronização de não lidos de seguidos
     const { updateWatchedUnreadBadge, getWatchedUnreadCount } = window.__aldockExports;
@@ -1612,6 +1622,12 @@ async function runTests() {
     updateWatchedUnreadBadge(0);
     assert(railBtnEl.querySelector('.smg-tb-badge') === null, 'updateWatchedUnreadBadge(0) deve remover badge do railBtn');
     assert(btnWatchedEl.querySelector('.smg-nav-badge') === null, 'updateWatchedUnreadBadge(0) deve remover badge de #smg-nav-watched');
+
+    updateAlertsUnreadBadge(5);
+    const railAlertsBadge = railBtnEl.querySelector('.smg-tb-badge');
+    assert(railAlertsBadge !== null && railAlertsBadge.textContent === '5', `updateAlertsUnreadBadge(5) deve exibir "5" no railBtn (obtido: ${railAlertsBadge?.textContent})`);
+    updateAlertsUnreadBadge(0);
+    assert(railBtnEl.querySelector('.smg-tb-badge') === null, 'updateAlertsUnreadBadge(0) deve remover badge do railBtn');
 
     // Testar ingestWatchedPageToFollowed atualizando contagem de não lidos
     const docMock = document.createElement('div');
@@ -1753,7 +1769,7 @@ async function runTests() {
 
     const prevFetch10 = window.fetch;
     const watchedPanelHtml = `<html><body>
-        <div class="structItem structItem--thread is-unread">
+        <div class="structItem structItem--thread">
             <div class="structItem-title">
                 <a href="/threads/kira-pregiato.4444/">Kira Pregiato</a>
             </div>
@@ -1764,7 +1780,7 @@ async function runTests() {
                 <time data-timestamp="9996">Há 4 minutos</time>
             </div>
         </div>
-        <div class="structItem structItem--thread is-unread">
+        <div class="structItem structItem--thread">
             <div class="structItem-title">
                 <a href="/threads/cubeu.5555/">Cubeu</a>
             </div>
@@ -1810,7 +1826,6 @@ async function runTests() {
     assert(kira.thread_name === 'Kira Pregiato', 'Kira Pregiato deve ter thread_name correto');
     assert(kira.forum_activity_ts === 9996, `Kira Pregiato deve ter forum_activity_ts 9996 (obtido: ${kira.forum_activity_ts})`);
     assert(kira.updated_at === 9996, `Kira Pregiato deve ter updated_at 9996 (obtido: ${kira.updated_at})`);
-    assert(kira.last_seen_at === 9996, `Kira Pregiato deve ter last_seen_at 9996 na primeira ingestão (obtido: ${kira.last_seen_at})`);
     assert(kira.unread === false, 'Kira Pregiato deve ter unread false na primeira ingestão');
     assert(kira.last_page === 3, `Kira Pregiato deve ter last_page 3 (obtido: ${kira.last_page})`);
 
@@ -1819,7 +1834,6 @@ async function runTests() {
     assert(cubeu.thread_name === 'Cubeu', 'Cubeu deve ter thread_name correto');
     assert(cubeu.forum_activity_ts === 9991, `Cubeu deve ter forum_activity_ts 9991 (obtido: ${cubeu.forum_activity_ts})`);
     assert(cubeu.updated_at === 9991, `Cubeu deve ter updated_at 9991 (obtido: ${cubeu.updated_at})`);
-    assert(cubeu.last_seen_at === 9991, `Cubeu deve ter last_seen_at 9991 na primeira ingestão (obtido: ${cubeu.last_seen_at})`);
     assert(cubeu.unread === false, 'Cubeu deve ter unread false na primeira ingestão');
     assert(cubeu.last_page === 2, `Cubeu deve ter last_page 2 (obtido: ${cubeu.last_page})`);
 
@@ -2045,7 +2059,6 @@ async function runTests() {
     assert(autoModel.thread_name === 'Auto Model', 'Auto Model deve ter thread_name correto');
     assert(autoModel.forum_activity_ts === 10500, 'Auto Model deve ter forum_activity_ts 10500');
     assert(autoModel.updated_at === 10500, 'Auto Model deve ter updated_at 10500 inicializado com forum_activity_ts');
-    assert(autoModel.last_seen_at === 10500, 'Auto Model deve ter last_seen_at 10500 inicializado com updated_at');
     assert(autoModel.unread === false, 'Auto Model deve ter unread false na primeira ingestão');
 
     window.removeEventListener('smg-followed-updated', onFollowedEvent);
@@ -2998,47 +3011,45 @@ async function runTests() {
     assert(typeof dbFollowedMarkSeen === 'function', 'dbFollowedMarkSeen deve ser uma função exportada');
     assert(typeof dbFollowedGetUnreadCount === 'function', 'dbFollowedGetUnreadCount deve ser uma função exportada');
 
-    // 1. dbFollowedMarkSeen(path) grava last_seen_at e limpa unread
+    // 1. dbFollowedMarkSeen(path) limpa unread
     mockStorage.followed.set('/threads/test-seen.100/', {
         path: '/threads/test-seen.100/',
         thread_name: 'Test Seen Thread',
         updated_at: 5000,
-        last_seen_at: 4000,
         unread: true
     });
     let seenEventDetail = null;
     const onSeenEvent = (e) => { seenEventDetail = e.detail; };
     window.addEventListener('smg-followed-seen', onSeenEvent);
 
-    await dbFollowedMarkSeen('/threads/test-seen.100/', 6000);
+    await dbFollowedMarkSeen('/threads/test-seen.100/');
     const markedItem = mockStorage.followed.get('/threads/test-seen.100/');
-    assert(markedItem.last_seen_at === 6000, `dbFollowedMarkSeen deve gravar last_seen_at = 6000 (obtido: ${markedItem.last_seen_at})`);
     assert(markedItem.unread === false, 'dbFollowedMarkSeen deve limpar unread para false');
-    assert(seenEventDetail !== null && seenEventDetail.path === '/threads/test-seen.100/' && seenEventDetail.last_seen_at === 6000, 'Evento smg-followed-seen deve ser disparado com detalhes corretos');
+    assert(seenEventDetail !== null && seenEventDetail.path === '/threads/test-seen.100/', 'Evento smg-followed-seen deve ser disparado com detalhes corretos');
     window.removeEventListener('smg-followed-seen', onSeenEvent);
 
-    // 2. dbFollowedGetUnreadCount() retorna a contagem correta apenas quando last_seen_at < updated_at e updated_at > 0
+    // 2. dbFollowedGetUnreadCount() retorna a contagem correta apenas quando unread = true
     mockStorage.followed.clear();
-    mockStorage.followed.set('/threads/unread-1/', { path: '/threads/unread-1/', updated_at: 5000, last_seen_at: 3000 }); // unread
-    mockStorage.followed.set('/threads/unread-2/', { path: '/threads/unread-2/', updated_at: 6000, last_seen_at: 0 }); // unread
-    mockStorage.followed.set('/threads/read-1/', { path: '/threads/read-1/', updated_at: 5000, last_seen_at: 5000 }); // read
-    mockStorage.followed.set('/threads/read-2/', { path: '/threads/read-2/', updated_at: 4000, last_seen_at: 6000 }); // read
-    mockStorage.followed.set('/threads/zero-updated/', { path: '/threads/zero-updated/', updated_at: 0, last_seen_at: 0 }); // no posts yet
+    mockStorage.followed.set('/threads/unread-1/', { path: '/threads/unread-1/', updated_at: 5000, unread: true });
+    mockStorage.followed.set('/threads/unread-2/', { path: '/threads/unread-2/', updated_at: 6000, unread: true });
+    mockStorage.followed.set('/threads/read-1/', { path: '/threads/read-1/', updated_at: 5000, unread: false });
+    mockStorage.followed.set('/threads/read-2/', { path: '/threads/read-2/', updated_at: 4000, unread: false });
+    mockStorage.followed.set('/threads/zero-updated/', { path: '/threads/zero-updated/', updated_at: 0, unread: false });
 
     const unreadTotal = await dbFollowedGetUnreadCount();
-    assert(unreadTotal === 2, `dbFollowedGetUnreadCount deve contar apenas tópicos com updated_at > 0 e last_seen_at < updated_at (esperado: 2, obtido: ${unreadTotal})`);
+    assert(unreadTotal === 2, `dbFollowedGetUnreadCount deve contar apenas tópicos com unread = true (esperado: 2, obtido: ${unreadTotal})`);
 
     // 3. Ordenação da sidebar de seguidos:
-    // - Tópicos não lidos no topo: ordenar por last_seen_at DESC (fallback updated_at DESC)
-    // - Tópicos lidos abaixo: ordenar por updated_at DESC (fallback last_seen_at DESC)
+    // - Tópicos não lidos no topo ordenados por updated_at DESC
+    // - Tópicos lidos abaixo ordenados por updated_at DESC
     mockStorage.followed.clear();
     const mockDockItems = [
-        { path: '/threads/read-older/', thread_name: 'Read Older', updated_at: 1000, last_seen_at: 5000 },
-        { path: '/threads/unread-seen-newer/', thread_name: 'Unread Seen Newer', updated_at: 8000, last_seen_at: 3000 },
-        { path: '/threads/unread-seen-older/', thread_name: 'Unread Seen Older', updated_at: 9000, last_seen_at: 1000 },
-        { path: '/threads/unread-tie/', thread_name: 'Unread Tie', updated_at: 4000, last_seen_at: 1000 },
-        { path: '/threads/read-updated-newer/', thread_name: 'Read Updated Newer', updated_at: 3000, last_seen_at: 3000 },
-        { path: '/threads/read-tie/', thread_name: 'Read Tie', updated_at: 1000, last_seen_at: 2000 }
+        { path: '/threads/read-older/', thread_name: 'Read Older', updated_at: 1000, unread: false },
+        { path: '/threads/unread-seen-newer/', thread_name: 'Unread Seen Newer', updated_at: 9000, unread: true },
+        { path: '/threads/unread-seen-older/', thread_name: 'Unread Seen Older', updated_at: 8000, unread: true },
+        { path: '/threads/unread-tie/', thread_name: 'Unread Tie', updated_at: 4000, unread: true },
+        { path: '/threads/read-updated-newer/', thread_name: 'Read Updated Newer', updated_at: 3000, unread: false },
+        { path: '/threads/read-tie/', thread_name: 'Read Tie', updated_at: 2000, unread: false }
     ];
     mockDockItems.forEach(it => mockStorage.followed.set(it.path, it));
 
@@ -3090,15 +3101,14 @@ async function runTests() {
     assert(renderedKeys[1] === 'wt:/threads/unread-seen-older', `2º tópico deve ser unread-seen-older (obtido: ${renderedKeys[1]})`);
     assert(renderedKeys[2] === 'wt:/threads/unread-tie', `3º tópico deve ser unread-tie (obtido: ${renderedKeys[2]})`);
     assert(renderedKeys[3] === 'wt:/threads/read-updated-newer', `4º tópico deve ser read-updated-newer (obtido: ${renderedKeys[3]})`);
-    assert(renderedKeys[4] === 'wt:/threads/read-older', `5º tópico deve ser read-older (obtido: ${renderedKeys[4]})`);
-    assert(renderedKeys[5] === 'wt:/threads/read-tie', `6º tópico deve ser read-tie (obtido: ${renderedKeys[5]})`);
+    assert(renderedKeys[4] === 'wt:/threads/read-tie', `5º tópico deve ser read-tie (obtido: ${renderedKeys[4]})`);
+    assert(renderedKeys[5] === 'wt:/threads/read-older', `6º tópico deve ser read-older (obtido: ${renderedKeys[5]})`);
 
     // 4. Posts adicionados via syncThreadPage alimentam a timeline E atualizam updated_at para o timestamp do post
     const testSyncThread = {
         path: '/threads/sync-test.999/',
         thread_name: 'Sync Test',
         updated_at: 1000,
-        last_seen_at: 2000,
         saved_pages: []
     };
     mockStorage.followed.set(testSyncThread.path, testSyncThread);
@@ -3136,7 +3146,7 @@ async function runTests() {
 
     const syncedThreadFromDb = mockStorage.followed.get(testSyncThread.path);
     assert(syncedThreadFromDb.updated_at === 9500, `updated_at do tópico seguido deve ser atualizado para 9500 pelo post real (obtido: ${syncedThreadFromDb.updated_at})`);
-    assert(syncedThreadFromDb.unread === true, 'Tópico sincronizado com post novo (> last_seen_at) deve ficar unread = true');
+    assert(syncedThreadFromDb.unread === true, 'Tópico sincronizado com post novo deve ficar unread = true');
 
     // 5. dbFollowedMarkAllSeen() atualiza todos os tópicos e limpa unread
     const { dbFollowedMarkAllSeen } = window.__feedDbExports;
@@ -3144,20 +3154,18 @@ async function runTests() {
     mockStorage.followed.set('/threads/unread-batch-1/', {
         path: '/threads/unread-batch-1/',
         updated_at: 4000,
-        last_seen_at: 1000,
         unread: true
     });
     mockStorage.followed.set('/threads/unread-batch-2/', {
         path: '/threads/unread-batch-2/',
         updated_at: 6000,
-        last_seen_at: 2000,
         unread: true
     });
     await dbFollowedMarkAllSeen();
     const batch1 = mockStorage.followed.get('/threads/unread-batch-1/');
     const batch2 = mockStorage.followed.get('/threads/unread-batch-2/');
-    assert(batch1.last_seen_at >= 4000 && batch1.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-1 como visto e unread = false');
-    assert(batch2.last_seen_at >= 6000 && batch2.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-2 como visto e unread = false');
+    assert(batch1.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-1 como unread = false');
+    assert(batch2.unread === false, 'dbFollowedMarkAllSeen deve marcar batch-2 como unread = false');
 
     // =========================================================================
     // TESTE 23: Regras de largura 100% da Timeline e last_seen_at no primeiro processamento
@@ -3168,6 +3176,7 @@ async function runTests() {
     assert(scriptContent.includes('html.smg-watched-feed .p-body-main--withSidebar'), 'script.js deve conter regra de largura total para .p-body-main--withSidebar na timeline');
     assert(scriptContent.includes('html.smg-watched-feed .p-body-content'), 'script.js deve conter regra de largura total para .p-body-content na timeline');
     assert(scriptContent.includes('html:not(.smg-home) .p-body-sidebar'), 'script.js deve esconder a sidebar em qualquer página fora da home (html:not(.smg-home))');
+    assert(scriptContent.includes('html.smg-watched-feed .block--category'), 'script.js deve conter regra escondendo .block--category na timeline');
 
     // 2. Testar ingestão pela primeira vez de um tópico (!prev) via ingestWatchedPageToFollowed
     const firstIngestHtml = `<html><body>
@@ -3185,7 +3194,6 @@ async function runTests() {
     const brandNew = mockStorage.followed.get('/threads/brand-new-thread.7777/');
     assert(brandNew !== undefined, 'Tópico novo deve ter sido salvo no banco');
     assert(brandNew.updated_at === 8888, `updated_at deve ser 8888 (obtido: ${brandNew.updated_at})`);
-    assert(brandNew.last_seen_at === 8888, `Na primeira ingestão (!prev), last_seen_at deve ser igual a updated_at (8888) (obtido: ${brandNew.last_seen_at})`);
     assert(brandNew.unread === false, `Na primeira ingestão (!prev), unread deve ser false (obtido: ${brandNew.unread})`);
 
     // 3. Testar syncThreadPage em tópico sem last_seen_at prévio
@@ -3193,7 +3201,6 @@ async function runTests() {
         path: '/threads/no-seen.888/',
         thread_name: 'No Seen Thread',
         updated_at: 0,
-        last_seen_at: 0,
         saved_pages: []
     };
     mockStorage.followed.set(threadWithoutSeen.path, threadWithoutSeen);
@@ -3225,8 +3232,215 @@ async function runTests() {
     window.fetch = prevFetchNoSeen;
     const syncedNoSeen = mockStorage.followed.get(threadWithoutSeen.path);
     assert(syncedNoSeen.updated_at === 7700, `updated_at deve ser 7700 (obtido: ${syncedNoSeen.updated_at})`);
-    assert(syncedNoSeen.last_seen_at === 7700, `last_seen_at deve ser inicializado com updated_at (7700) (obtido: ${syncedNoSeen.last_seen_at})`);
     assert(syncedNoSeen.unread === false, 'Tópico sem last_seen_at inicial sincronizado pela primeira vez não deve ficar unread');
+
+    // =========================================================================
+    // TESTE 24: Followed Thumbs indexing, thumbCacheGet, alert thumbnail painting & alert unread count accuracy
+    // =========================================================================
+    console.log('--- TESTE 24: Followed Thumbs, Alert Painting & Alert Count Accuracy ---');
+    {
+        const helpers = window.__helpersExports || {};
+    const aldockExports = window.__aldockExports || {};
+    const alertsExports = window.__alertsExports || {};
+
+    const {
+        indexFollowedThumbs,
+        followedThumbsMap,
+        thumbCacheGet
+    } = helpers;
+
+    // Test 1: indexFollowedThumbs indexes items by ID, slug, titleKey, and canonical path in followedThumbsMap
+    assert(typeof indexFollowedThumbs === 'function', 'indexFollowedThumbs deve ser uma função exposta');
+    assert(followedThumbsMap instanceof window.Map, 'followedThumbsMap deve ser uma instância de Map');
+
+    const sampleFollowedItems = [
+        {
+            path: '/threads/amanda-alves.54321/',
+            thread_name: 'Amanda Alves',
+            thumbnail_url: 'https://example.com/amanda.jpg'
+        },
+        {
+            path: '/threads/beatriz-silva.67890/page-3',
+            thread_name: 'Beatriz Silva | OnlyFans / Fansly',
+            thumbnail_url: 'https://example.com/beatriz.jpg'
+        }
+    ];
+
+    indexFollowedThumbs(sampleFollowedItems);
+
+    // Verificações do item 1
+    assert(followedThumbsMap.get('54321') === 'https://example.com/amanda.jpg', 'indexFollowedThumbs deve indexar por ID');
+    assert(followedThumbsMap.get('s:amanda-alves') === 'https://example.com/amanda.jpg', 'indexFollowedThumbs deve indexar por slug');
+    assert(followedThumbsMap.get('/threads/amanda-alves.54321/') === 'https://example.com/amanda.jpg', 'indexFollowedThumbs deve indexar por caminho canônico');
+    assert(followedThumbsMap.get('t:amanda alves') === 'https://example.com/amanda.jpg', 'indexFollowedThumbs deve indexar por titleKey');
+
+    // Verificações do item 2
+    assert(followedThumbsMap.get('67890') === 'https://example.com/beatriz.jpg', 'indexFollowedThumbs deve indexar por ID mesmo com /page-3');
+    assert(followedThumbsMap.get('s:beatriz-silva') === 'https://example.com/beatriz.jpg', 'indexFollowedThumbs deve indexar por slug do segundo item');
+    assert(followedThumbsMap.get('/threads/beatriz-silva.67890/') === 'https://example.com/beatriz.jpg', 'indexFollowedThumbs deve indexar por caminho canônico normalizado');
+    assert(followedThumbsMap.get('t:beatriz silva, onlyfans, fansly') === 'https://example.com/beatriz.jpg', 'indexFollowedThumbs deve indexar por titleKey normalizado com vírgulas');
+
+    // Test 2: thumbCacheGet finds followed thread thumbnail even without visiting the thread
+    assert(typeof thumbCacheGet === 'function', 'thumbCacheGet deve ser uma função exposta');
+    assert(thumbCacheGet('/threads/amanda-alves.54321/', 'Amanda Alves') === 'https://example.com/amanda.jpg', 'thumbCacheGet deve retornar thumb da memória por ID e título');
+    assert(thumbCacheGet('/threads/another-slug.54321/', '') === 'https://example.com/amanda.jpg', 'thumbCacheGet deve retornar thumb da memória apenas por ID');
+    assert(thumbCacheGet('', 'Amanda Alves') === 'https://example.com/amanda.jpg', 'thumbCacheGet deve retornar thumb da memória apenas por título');
+    assert(thumbCacheGet('/posts/12345678/', 'Beatriz Silva | OnlyFans / Fansly') === 'https://example.com/beatriz.jpg', 'thumbCacheGet deve resolver thumb de post de alerta usando titleKey');
+    assert(thumbCacheGet('/threads/beatriz-silva.67890/latest', '') === 'https://example.com/beatriz.jpg', 'thumbCacheGet deve resolver thumb usando canon/ID');
+
+    // Test 3: Alerts dock doesn't truncate unread count when st.next exists (aldockSyncCount with st.next and serverCount/domUnread)
+    const {
+        buildAlertsDock,
+        aldockSyncCount,
+        aldockState,
+        getAldock
+    } = aldockExports;
+
+    let dockDom = getAldock() || buildAlertsDock();
+    const alertListEl = dockDom.querySelector('.smg-aldock-body[data-tab="alerts"] .smg-aldock-list');
+    alertListEl.innerHTML = ''; // Limpar para teste controlado
+
+    // Adiciona 3 alertas não lidos no DOM
+    for (let i = 1; i <= 3; i++) {
+        const row = document.createElement('li');
+        row.className = 'alert is-unread';
+        row.innerHTML = `<div class="contentRow"><div class="contentRow-main"><a href="/threads/test.${i}/">Test ${i}</a></div></div>`;
+        alertListEl.appendChild(row);
+    }
+
+    const badgeEl = dockDom.querySelector('.smg-aldock-n');
+
+    // Caso A: st.next existe (tem mais páginas no servidor) e servidor reporta 15 não lidos
+    aldockState.alerts.next = '/account/alerts?page=2';
+    delete aldockState.alerts.serverUnread;
+    window.GM_setValue('smg-alerts-count', '15');
+
+    aldockSyncCount();
+    assert(badgeEl.textContent === '15', `aldockSyncCount com hasMore não deve truncar para o DOM (esperado: "15", obtido: "${badgeEl.textContent}")`);
+    assert(window.GM_getValue('smg-alerts-count') === '15', 'smg-alerts-count deve manter 15 quando há próxima página');
+
+    // Caso B: st.next é null (fim da lista alcançado no DOM) → DOM reflete tudo
+    aldockState.alerts.next = null;
+    aldockSyncCount();
+    assert(badgeEl.textContent === '3', `aldockSyncCount sem hasMore deve usar contagem real do DOM (esperado: "3", obtido: "${badgeEl.textContent}")`);
+    assert(window.GM_getValue('smg-alerts-count') === '3', 'smg-alerts-count deve ser atualizado para 3');
+
+    // Caso C: st.serverUnread definido explicitamente
+    aldockState.alerts.serverUnread = 25;
+    aldockSyncCount();
+    assert(badgeEl.textContent === '25', `aldockSyncCount com serverUnread deve respeitar serverUnread (esperado: "25", obtido: "${badgeEl.textContent}")`);
+
+    // Caso D: marcar todos como lidos zera serverUnread
+    const markReadBtn = dockDom.querySelector('.smg-aldock-markread');
+    markReadBtn.click();
+    assert(aldockState.alerts.serverUnread === 0, 'applyMarkAllReadSuccess deve zerar aldockState.alerts.serverUnread');
+    assert(badgeEl.hidden || badgeEl.textContent === '', 'Badge deve estar oculto após marcar tudo como lido');
+
+    // Test 4: Parsing visitor.alerts_unread from JSON response in railFetch sets st.serverUnread during railRefresh
+    const { railRefresh, railFetch } = aldockExports;
+    const origFetch = window.fetch;
+
+    window.fetch = async (url, opts) => {
+        const urlStr = typeof url === 'string' ? url : (url && url.url) || '';
+        if (urlStr.includes('/account/alerts')) {
+            return {
+                ok: true,
+                status: 200,
+                text: async () => JSON.stringify({
+                    html: {
+                        content: `
+                            <ol class="listPlain">
+                                <li class="alert is-unread" data-alert-id="901">
+                                    <div class="contentRow">
+                                        <div class="contentRow-main">
+                                            <a href="/threads/camila.11111/">Camila</a>
+                                            <span class="contentRow-minor"><time>Agora</time></span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ol>
+                        `
+                    },
+                    visitor: {
+                        alerts_unread: 42
+                    }
+                })
+            };
+        }
+        return origFetch(url, opts);
+    };
+
+    // Testar railFetch isoladamente primeiro
+    const fetchRes = await railFetch('alerts', '/account/alerts');
+    assert(fetchRes.visitorAlerts === 42, `railFetch deve extrair visitorAlerts = 42 (obtido: ${fetchRes.visitorAlerts})`);
+
+    // Testar railRefresh preenchendo st.serverUnread e sincronizando badges
+    aldockState.alerts.busy = false;
+    aldockState.alerts.lastFetch = 0;
+    await railRefresh('alerts', true);
+
+    assert(aldockState.alerts.serverUnread === 42, `railRefresh deve setar st.serverUnread para 42 (obtido: ${aldockState.alerts.serverUnread})`);
+    assert(window.GM_getValue('smg-alerts-count') === '42', 'railRefresh deve salvar smg-alerts-count = 42');
+    assert(badgeEl.textContent === '42', `Badge do aldock deve exibir 42 (obtido: ${badgeEl.textContent})`);
+
+    window.fetch = origFetch;
+
+    // Test 5: Alert rows are painted with thread thumbnail when thread is in followed store
+    const { cleanAlertRow, repaintAlertThumbs } = alertsExports;
+    assert(typeof cleanAlertRow === 'function', 'cleanAlertRow deve ser uma função exposta');
+
+    indexFollowedThumbs([{
+        path: '/threads/carolina-novaes.22222/',
+        thread_name: 'Carolina Novaes',
+        thumbnail_url: 'https://example.com/carolina.jpg'
+    }]);
+
+    const testAlertLi = document.createElement('li');
+    testAlertLi.className = 'alert is-unread';
+    testAlertLi.innerHTML = `
+        <div class="contentRow">
+            <div class="contentRow-main">
+                <a href="/threads/carolina-novaes.22222/">Carolina Novaes</a>
+                <span class="contentRow-minor"><time>Hoje às 15:00</time></span>
+            </div>
+        </div>
+    `;
+    const mainEl = testAlertLi.querySelector('.contentRow-main');
+    cleanAlertRow(mainEl);
+
+    const iconEl = testAlertLi.querySelector('.smg-al-icon');
+    assert(iconEl !== null, 'cleanAlertRow deve criar o ícone .smg-al-icon');
+    assert(iconEl.classList.contains('smg-al-icon--thumb'), 'Ícone do alerta deve conter a classe smg-al-icon--thumb');
+    const thumbImg = iconEl.querySelector('img');
+    assert(thumbImg !== null, 'Ícone do alerta deve conter elemento img');
+    assert(thumbImg.src === 'https://example.com/carolina.jpg', `Imagem do alerta deve apontar para https://example.com/carolina.jpg (obtido: ${thumbImg?.src})`);
+
+    // Alerta que inicialmente não tinha thumb no cache ganha com repaintAlertThumbs
+    const unindexedAlertLi = document.createElement('li');
+    unindexedAlertLi.className = 'alert is-unread';
+    unindexedAlertLi.innerHTML = `
+        <div class="contentRow">
+            <div class="contentRow-main">
+                <a href="/threads/daniela-souza.33333/">Daniela Souza</a>
+                <span class="contentRow-minor"><time>Hoje às 16:00</time></span>
+            </div>
+        </div>
+    `;
+    cleanAlertRow(unindexedAlertLi.querySelector('.contentRow-main'));
+    const unindexedIcon = unindexedAlertLi.querySelector('.smg-al-icon');
+    assert(!unindexedIcon.classList.contains('smg-al-icon--thumb'), 'Alerta não indexado não deve ter smg-al-icon--thumb inicialmente');
+
+    // Indexa agora
+    indexFollowedThumbs([{
+        path: '/threads/daniela-souza.33333/',
+        thread_name: 'Daniela Souza',
+        thumbnail_url: 'https://example.com/daniela.jpg'
+    }]);
+        const repaintedCount = repaintAlertThumbs(unindexedAlertLi);
+        assert(repaintedCount === 1, 'repaintAlertThumbs deve repintar 1 ícone');
+        assert(unindexedIcon.classList.contains('smg-al-icon--thumb'), 'Ícone deve virar thumb após repaint');
+        assert(unindexedIcon.querySelector('img')?.src === 'https://example.com/daniela.jpg', 'Imagem deve ter a URL correta');
+    }
 
     // =========================================================================
     // RESUMO FINAL

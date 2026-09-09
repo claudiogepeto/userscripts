@@ -1,7 +1,7 @@
 // =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:
-    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name, last_seen_at
+    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name
     //   - timeline: keyPath 'post_id' (PK), indices: thread_path, created_at
     //   - meta: keyPath 'key'
     //   - bookmarks: keyPath 'postId'
@@ -43,27 +43,12 @@
                     }
                 });
                 // Store followed
-                if (db.objectStoreNames.contains('followed')) {
-                    const tx = req.transaction || (e && (e.transaction || (e.target && e.target.transaction)));
-                    if (tx && typeof tx.objectStore === 'function') {
-                        const s = tx.objectStore('followed');
-                        if (s) {
-                            if (s.indexNames && typeof s.indexNames.contains === 'function') {
-                                if (!s.indexNames.contains('last_seen_at')) {
-                                    s.createIndex('last_seen_at', 'last_seen_at');
-                                }
-                            } else {
-                                try { s.createIndex('last_seen_at', 'last_seen_at'); } catch (err) {}
-                            }
-                        }
-                    }
-                } else {
+                if (!db.objectStoreNames.contains('followed')) {
                     const s = db.createObjectStore('followed', { keyPath: 'path' });
                     s.createIndex('updated_at', 'updated_at');
                     s.createIndex('created_at', 'created_at');
                     s.createIndex('author', 'author');
                     s.createIndex('thread_name', 'thread_name');
-                    s.createIndex('last_seen_at', 'last_seen_at');
                 }
                 // Store timeline
                 if (!db.objectStoreNames.contains('timeline')) {
@@ -165,17 +150,15 @@
         })).catch(() => {});
     }
 
-    function dbFollowedMarkSeen(path, seenTs) {
+    function dbFollowedMarkSeen(path) {
         if (!path) return Promise.resolve();
         const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
-        const now = seenTs || Math.floor(Date.now() / 1000);
         return dbFollowedGet(normPath).then(item => {
             if (!item) return;
-            item.last_seen_at = Math.max(item.last_seen_at || 0, now);
             item.unread = false;
             return dbFollowedUpsert(item).then(() => {
                 try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath, last_seen_at: item.last_seen_at } }));
+                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath } }));
                 } catch (e) {}
             });
         });
@@ -186,13 +169,11 @@
             const tx = db.transaction('followed', 'readwrite');
             const st = tx.objectStore('followed');
             const cur = st.openCursor();
-            const now = Math.floor(Date.now() / 1000);
             cur.onsuccess = () => {
                 const c = cur.result;
                 if (!c) return;
                 const rec = c.value;
                 if (rec) {
-                    rec.last_seen_at = Math.max(rec.last_seen_at || 0, rec.updated_at || 0, now);
                     rec.unread = false;
                     c.update(rec);
                 }
@@ -216,7 +197,7 @@
     function dbFollowedGetUnreadCount() {
         return dbFollowedGetAll().then(items => {
             if (!Array.isArray(items)) return 0;
-            return items.filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+            return items.filter(it => Boolean(it && it.unread)).length;
         }).catch(() => 0);
     }
 

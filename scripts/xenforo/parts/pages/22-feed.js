@@ -281,14 +281,23 @@
         return card;
     }
 
-    // container onde o river mora = o PAI do bloco da lista (ancorado no .structItem--thread → robusto). Cacheado.
     let riverHost = null;
     function riverContainer() {
         if (riverHost && riverHost.isConnected) return riverHost;
+        const pageContent = document.querySelector('.p-body-pageContent');
+        if (pageContent) {
+            riverHost = pageContent;
+            return riverHost;
+        }
+        const content = document.querySelector('.p-body-content');
+        if (content) {
+            riverHost = content;
+            return riverHost;
+        }
         const item = document.querySelector('.structItem--thread');
         const block = item && item.closest('.block');
         riverHost = (block && block.parentElement)
-            || document.querySelector('.p-body-main') || document.querySelector('.p-body-content')
+            || document.querySelector('.p-body-main')
             || document.querySelector('.p-body-inner') || document.querySelector('.p-body') || document.body;
         return riverHost;
     }
@@ -732,10 +741,26 @@
         const feed = mode === 'feed';
         document.documentElement.classList.toggle('smg-watched-feed', feed);
         const host = riverContainer();
-        Array.prototype.forEach.call(host.children, ch => {
-            if (ch.id === 'smg-river') return;
-            ch.classList.toggle('smg-river-hide', feed);
-        });
+        if (host && host.children) {
+            Array.prototype.forEach.call(host.children, ch => {
+                if (ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
+        const content = document.querySelector('.p-body-content');
+        if (content && content !== host) {
+            Array.prototype.forEach.call(content.children, ch => {
+                if (ch.contains(host) || ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
+        const pageContent = document.querySelector('.p-body-pageContent');
+        if (pageContent && pageContent !== host) {
+            Array.prototype.forEach.call(pageContent.children, ch => {
+                if (ch.contains(host) || ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
         if (feed) { buildRiver(); feedStartPoll(); } else feedStopPoll();
     }
     let riverSetupDone = false;

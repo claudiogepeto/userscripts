@@ -160,7 +160,6 @@
                 tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
                 followed_at: (stored && stored.followed_at) || now,
                 forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
-                last_seen_at: Math.max((stored && stored.last_seen_at) || 0, maxPostTs, now),
                 updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
                 created_at: (stored && stored.created_at) || 0,
                 author: (stored && stored.author) || '',
@@ -237,15 +236,15 @@
             const nextSavedPages = Array.from(new Set([...(thread.saved_pages || []), pageNum])).sort((a, b) => a - b);
             const nextLastPage = Math.max(thread.last_page || 1, pageNum, docMaxPage);
 
+            const prevUpdatedAt = thread.updated_at || 0;
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
             thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            if (!thread.last_seen_at) {
-                thread.last_seen_at = thread.updated_at;
+            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) {
+                thread.unread = true;
+            } else if (!prevUpdatedAt) {
                 thread.unread = false;
-            } else {
-                thread.unread = Boolean(thread.updated_at > thread.last_seen_at);
             }
 
             return dbTimelinePutPosts(timelinePosts)
@@ -261,7 +260,7 @@
         const lastPage = thread.last_page || 1;
         const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
-        const isUnread = Boolean(thread.unread || (thread.last_seen_at !== undefined && (thread.updated_at || 0) > 0 && (thread.last_seen_at || 0) < (thread.updated_at || 0)));
+        const isUnread = Boolean(thread.unread);
 
         const isNew = maxSaved === 0;
         const hasNewPage = lastPage > maxSaved;

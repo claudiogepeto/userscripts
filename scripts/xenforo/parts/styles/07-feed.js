@@ -29,8 +29,37 @@
                 margin-left: 0 !important;
                 margin-right: 0 !important;
             }
+            /* Timeline view: hide old homepage / native categories, notices, headers, and sibling blocks */
+            html.smg-watched-feed .block--category,
+            html.smg-watched-feed .uix_nodeList,
+            html.smg-watched-feed .node-list,
+            html.smg-watched-feed .smg-home-feed,
+            html.smg-watched-feed #smg-home-root,
+            html.smg-watched-feed .p-body-header,
+            html.smg-watched-feed .p-breadcrumbs,
+            html.smg-watched-feed .notices--block,
+            html.smg-watched-feed .block:not(#smg-river),
+            html.smg-page-timeline .block--category,
+            html.smg-page-timeline .uix_nodeList,
+            html.smg-page-timeline .node-list,
+            html.smg-page-timeline .smg-home-feed,
+            html.smg-page-timeline #smg-home-root,
+            html.smg-page-timeline .p-body-header,
+            html.smg-page-timeline .p-breadcrumbs,
+            html.smg-page-timeline .notices--block,
+            html.smg-page-timeline .block:not(#smg-river) {
+                display: none !important;
+            }
+
+            html.smg-watched-feed .p-body-pageContent > *:not(#smg-river),
+            html.smg-watched-feed .p-body-content > *:not(.p-body-pageContent):not(#smg-river),
+            html.smg-page-timeline .p-body-pageContent > *:not(#smg-river):not(.smg-page-skeleton),
+            html.smg-page-timeline .p-body-content > *:not(.p-body-pageContent):not(#smg-river):not(.smg-page-skeleton) {
+                display: none !important;
+            }
             #smg-river { display: none; }
-            html.smg-watched-feed #smg-river {
+            html.smg-watched-feed #smg-river,
+            html.smg-page-timeline #smg-river {
                 display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;

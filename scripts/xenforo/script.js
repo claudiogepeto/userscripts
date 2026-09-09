@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.3
+// @version      3.12.6
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -7230,8 +7230,37 @@
                 margin-left: 0 !important;
                 margin-right: 0 !important;
             }
+            /* Timeline view: hide old homepage / native categories, notices, headers, and sibling blocks */
+            html.smg-watched-feed .block--category,
+            html.smg-watched-feed .uix_nodeList,
+            html.smg-watched-feed .node-list,
+            html.smg-watched-feed .smg-home-feed,
+            html.smg-watched-feed #smg-home-root,
+            html.smg-watched-feed .p-body-header,
+            html.smg-watched-feed .p-breadcrumbs,
+            html.smg-watched-feed .notices--block,
+            html.smg-watched-feed .block:not(#smg-river),
+            html.smg-page-timeline .block--category,
+            html.smg-page-timeline .uix_nodeList,
+            html.smg-page-timeline .node-list,
+            html.smg-page-timeline .smg-home-feed,
+            html.smg-page-timeline #smg-home-root,
+            html.smg-page-timeline .p-body-header,
+            html.smg-page-timeline .p-breadcrumbs,
+            html.smg-page-timeline .notices--block,
+            html.smg-page-timeline .block:not(#smg-river) {
+                display: none !important;
+            }
+
+            html.smg-watched-feed .p-body-pageContent > *:not(#smg-river),
+            html.smg-watched-feed .p-body-content > *:not(.p-body-pageContent):not(#smg-river),
+            html.smg-page-timeline .p-body-pageContent > *:not(#smg-river):not(.smg-page-skeleton),
+            html.smg-page-timeline .p-body-content > *:not(.p-body-pageContent):not(#smg-river):not(.smg-page-skeleton) {
+                display: none !important;
+            }
             #smg-river { display: none; }
-            html.smg-watched-feed #smg-river {
+            html.smg-watched-feed #smg-river,
+            html.smg-page-timeline #smg-river {
                 display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
@@ -8782,6 +8811,7 @@
     const THUMBTPL_KEY = 'smg-thumb-tpl-' + THUMBC_SITE;
     const THUMBC_MAX = 1400, THUMBC_KEEP = 1000;   // ~2 chaves por thread (id + título) → teto em ~700 threads
     let thumbCache = null, thumbCacheT = 0, thumbCacheBound = false;
+    const followedThumbsMap = new Map();
 
     // URL da thumb da THREAD (não do avatar do autor): simpcity põe no background-image de um <img>
     // 1x1 (.dcThumbnail), SMG usa <img src> real (.dtt-thread-thumbnail). Só esses dois holders contam
@@ -8827,9 +8857,22 @@
     }
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
+        const id = (typeof threadIdOf === 'function') ? threadIdOf(href) : '';
+        const slug = (typeof threadSlugOf === 'function') ? (!id && threadSlugOf(href)) : '';
+        const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
+        const canon = (typeof canonicalThreadPath === 'function' && href) ? canonicalThreadPath(href) : '';
+
+        // 1. In-memory followed thumbs (IndexedDB)
+        if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
+            if (id && followedThumbsMap.has(id)) return followedThumbsMap.get(id);
+            if (canon && followedThumbsMap.has(canon)) return followedThumbsMap.get(canon);
+            if (slug && followedThumbsMap.has(slug)) return followedThumbsMap.get(slug);
+            if (titleK && followedThumbsMap.has(titleK)) return followedThumbsMap.get(titleK);
+        }
+
+        // 2. Persistent thumbCache (localStorage)
         const all = thumbCacheAll();
-        const id = threadIdOf(href);
-        const keys = [id, !id && threadSlugOf(href), threadTitleKey(title)].filter(Boolean);
+        const keys = [id, slug, titleK].filter(Boolean);
         for (const k of keys) { const rec = all[k]; if (rec && rec.u) return rec.u; }
         return id ? thumbTplApply(id) : '';
     }
@@ -8891,6 +8934,31 @@
             keys.sort((a, b) => (all[b].t || 0) - (all[a].t || 0)).slice(THUMBC_KEEP).forEach(k => { delete all[k]; });
         }
         gmSet(THUMBC_KEY, JSON.stringify(all));
+    }
+
+    function indexFollowedThumbs(items) {
+        if (!Array.isArray(items)) return;
+        let fresh = 0;
+        items.forEach(it => {
+            if (!it || !it.thumbnail_url) return;
+            const thumb = it.thumbnail_url;
+            const path = it.path || '';
+            const title = it.thread_name || '';
+            const id = (typeof threadIdOf === 'function') ? threadIdOf(path) : '';
+            const slug = (typeof threadSlugOf === 'function') ? threadSlugOf(path) : '';
+            const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
+            const canon = (typeof canonicalThreadPath === 'function' && path) ? canonicalThreadPath(path) : path;
+
+            if (id) followedThumbsMap.set(id, thumb);
+            if (slug) followedThumbsMap.set(slug, thumb);
+            if (canon) followedThumbsMap.set(canon, thumb);
+            if (titleK) followedThumbsMap.set(titleK, thumb);
+            if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
+        });
+        if (fresh) {
+            [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
+                .forEach(r => { if (r && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(r); });
+        }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
     function harvestThreadThumbs(roots) {
@@ -9349,12 +9417,20 @@
         window.__resolveProxyHref = resolveProxyHref;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
+        window.indexFollowedThumbs = indexFollowedThumbs;
+        window.followedThumbsMap = followedThumbsMap;
+        window.thumbCacheGet = thumbCacheGet;
+        window.__helpersExports = Object.assign(window.__helpersExports || {}, {
+            indexFollowedThumbs,
+            followedThumbsMap,
+            thumbCacheGet
+        });
     }
 
 // =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:
-    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name, last_seen_at
+    //   - followed: keyPath 'path' (PK), indices: updated_at, created_at, author, thread_name
     //   - timeline: keyPath 'post_id' (PK), indices: thread_path, created_at
     //   - meta: keyPath 'key'
     //   - bookmarks: keyPath 'postId'
@@ -9396,27 +9472,12 @@
                     }
                 });
                 // Store followed
-                if (db.objectStoreNames.contains('followed')) {
-                    const tx = req.transaction || (e && (e.transaction || (e.target && e.target.transaction)));
-                    if (tx && typeof tx.objectStore === 'function') {
-                        const s = tx.objectStore('followed');
-                        if (s) {
-                            if (s.indexNames && typeof s.indexNames.contains === 'function') {
-                                if (!s.indexNames.contains('last_seen_at')) {
-                                    s.createIndex('last_seen_at', 'last_seen_at');
-                                }
-                            } else {
-                                try { s.createIndex('last_seen_at', 'last_seen_at'); } catch (err) {}
-                            }
-                        }
-                    }
-                } else {
+                if (!db.objectStoreNames.contains('followed')) {
                     const s = db.createObjectStore('followed', { keyPath: 'path' });
                     s.createIndex('updated_at', 'updated_at');
                     s.createIndex('created_at', 'created_at');
                     s.createIndex('author', 'author');
                     s.createIndex('thread_name', 'thread_name');
-                    s.createIndex('last_seen_at', 'last_seen_at');
                 }
                 // Store timeline
                 if (!db.objectStoreNames.contains('timeline')) {
@@ -9518,17 +9579,15 @@
         })).catch(() => {});
     }
 
-    function dbFollowedMarkSeen(path, seenTs) {
+    function dbFollowedMarkSeen(path) {
         if (!path) return Promise.resolve();
         const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
-        const now = seenTs || Math.floor(Date.now() / 1000);
         return dbFollowedGet(normPath).then(item => {
             if (!item) return;
-            item.last_seen_at = Math.max(item.last_seen_at || 0, now);
             item.unread = false;
             return dbFollowedUpsert(item).then(() => {
                 try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath, last_seen_at: item.last_seen_at } }));
+                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath } }));
                 } catch (e) {}
             });
         });
@@ -9539,13 +9598,11 @@
             const tx = db.transaction('followed', 'readwrite');
             const st = tx.objectStore('followed');
             const cur = st.openCursor();
-            const now = Math.floor(Date.now() / 1000);
             cur.onsuccess = () => {
                 const c = cur.result;
                 if (!c) return;
                 const rec = c.value;
                 if (rec) {
-                    rec.last_seen_at = Math.max(rec.last_seen_at || 0, rec.updated_at || 0, now);
                     rec.unread = false;
                     c.update(rec);
                 }
@@ -9569,7 +9626,7 @@
     function dbFollowedGetUnreadCount() {
         return dbFollowedGetAll().then(items => {
             if (!Array.isArray(items)) return 0;
-            return items.filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+            return items.filter(it => Boolean(it && it.unread)).length;
         }).catch(() => 0);
     }
 
@@ -17622,11 +17679,6 @@
 
                 const prev = existingMap.get(path);
                 const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
-                const effectiveLastSeen = (prev && prev.last_seen_at !== undefined && prev.last_seen_at !== null)
-                    ? prev.last_seen_at
-                    : (effectiveUpdatedAt || now);
-                const isUnread = Boolean(prev && effectiveUpdatedAt > 0 && effectiveLastSeen < effectiveUpdatedAt);
-
                 const item = {
                     path: path,
                     thread_name: title || (prev && prev.thread_name) || '',
@@ -17635,13 +17687,12 @@
                     followed_at: (prev && prev.followed_at) || now,
                     forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
                     updated_at: effectiveUpdatedAt,
-                    last_seen_at: effectiveLastSeen,
                     created_at: created_at || (prev && prev.created_at) || 0,
                     author: author || (prev && prev.author) || '',
                     last_page: Math.max((prev && prev.last_page) || 1, last_page),
                     saved_pages: (prev && prev.saved_pages) || [],
                     last_sync_at: (prev && prev.last_sync_at) || 0,
-                    unread: isUnread
+                    unread: domUnread
                 };
 
                 existingMap.set(path, item);
@@ -17652,7 +17703,6 @@
                     || prev.followed_at !== item.followed_at
                     || prev.forum_activity_ts !== item.forum_activity_ts
                     || prev.updated_at !== item.updated_at
-                    || prev.last_seen_at !== item.last_seen_at
                     || prev.created_at !== item.created_at
                     || prev.author !== item.author
                     || prev.last_page !== item.last_page
@@ -17665,21 +17715,24 @@
                 }
 
                 if (syncPages) {
-                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || isUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
+                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
                         syncCandidates.push({ thread: item, page: last_page });
                     }
                 }
             });
 
-            // Atualiza o badge com a contagem de seguidos não lidos baseada em last_seen_at < updated_at
+            // Atualiza o badge com a contagem de seguidos não lidos baseada em unread
             const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
-                .filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+                .filter(it => it && Boolean(it.unread)).length;
             gmSet('smg-watched-unread-count', String(unreadCount));
             if (typeof updateWatchedUnreadBadge === 'function') {
                 updateWatchedUnreadBadge(unreadCount);
             }
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
+                if (typeof indexFollowedThumbs === 'function') {
+                    indexFollowedThumbs(itemsToUpsert);
+                }
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}
@@ -18260,6 +18313,9 @@
                 if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');   // falhou no servidor → NÃO marca local
                 if (li && li.classList) { li.classList.remove('is-unread'); li.classList.add('smg-al-old'); }   // some o dot + esmaece na hora (virou lida)
                 btn.remove();
+                const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+                if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
+                if (typeof aldockSyncCount === 'function') aldockSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -18280,19 +18336,17 @@
     function syncAlertBadgeFrom(root) {
         if (!root || !root.querySelectorAll) return;
         const rows = root.querySelectorAll('li.alert');
-        if (!rows.length) return;                          // lista vazia/inesperada → não mexe no contador
+        if (!rows.length) return;
         const unread = root.querySelectorAll('li.alert.is-unread').length;
         const nav = document.querySelector('.p-navgroup-link--alerts');
-        if (!nav) return;
-        const cur = parseInt(nav.getAttribute('data-badge') || '0', 10) || 0;
-        // a popup traz só as N mais recentes: se TODAS voltaram não-lidas, pode haver mais fora da
-        // janela → nesse caso só deixa SUBIR (nunca reduz com base numa contagem truncada).
-        const n = (unread === rows.length && cur > unread) ? cur : unread;
-        // guarda o número: em tema que não conta (UI.X/SMG) é a ÚNICA fonte na próxima carga da página —
-        // sem isso o sino nascia mudo e só ganhava número depois de abrir o painel de novo.
+        const cur = nav ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0) : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+        const hasMore = st ? Boolean(st.next) : false;
+        const n = hasMore ? Math.max(cur, unread) : unread;
         gmSet('smg-alerts-count', String(n));
-        if (n === cur) return;
-        if (n > 0) nav.setAttribute('data-badge', String(n)); else nav.removeAttribute('data-badge');
+        if (nav) {
+            if (n > 0) nav.setAttribute('data-badge', String(n)); else nav.removeAttribute('data-badge');
+        }
     }
     // nome da thread contido no link do alerta, sem os chips de prefixo que moram dentro dele.
     // Clona pra não mexer no nó vivo (o resto do cleanAlertRow ainda vai usá-lo).
@@ -18327,7 +18381,7 @@
     function repaintAlertThumbs(root) {
         if (!root) return 0;
         let n = 0;
-        root.querySelectorAll('.smg-al-icon[data-smg-thread]:not([data-smg-thumbed])').forEach(ico => { if (paintAlertThumb(ico)) n++; });
+        root.querySelectorAll('.smg-al-icon:not([data-smg-thumbed])').forEach(ico => { if (paintAlertThumb(ico)) n++; });
         return n;
     }
 
@@ -18350,8 +18404,8 @@
             // referência da thread p/ a foto. O alerta do XF linka pro POST (/posts/N) e não cita a
             // thread em lugar nenhum — quando não há link de /threads/, o TÍTULO é o único elo com a
             // listagem (thumbCacheGet casa por ele). Guardado ANTES da limpeza mexer no texto.
-            const tLink = row.querySelector('a[href*="/threads/"]') || title;
-            ico.dataset.smgThread = tLink.getAttribute('href') || '';   // alvo do repaint quando o cache esquentar
+            const tLink = row.querySelector('a[href*="/threads/"]') || main.querySelector('a[href*="/threads/"]') || title;
+            ico.dataset.smgThread = tLink ? (tLink.getAttribute('href') || '') : '';   // alvo do repaint quando o cache esquentar
             // SEM os chips: no alerta os prefixos vivem DENTRO do link do título (separados por &nbsp;),
             // então o texto cru sairia "Request OnlyFans daryna_cutie" e nunca casaria com o
             // "daryna_cutie" da listagem, onde os chips são irmãos do link.
@@ -18457,6 +18511,21 @@
         }, 50);
     }
 
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.cleanAlertRow = cleanAlertRow;
+        window.paintAlertThumb = paintAlertThumb;
+        window.repaintAlertThumbs = repaintAlertThumbs;
+        window.syncAlertBadgeFrom = syncAlertBadgeFrom;
+        window.markAlertRead = markAlertRead;
+        window.__alertsExports = {
+            cleanAlertRow,
+            paintAlertThumb,
+            repaintAlertThumbs,
+            syncAlertBadgeFrom,
+            markAlertRead
+        };
+    }
+
     // =========================================================
     // FEATURE: painel lateral DOCKED (rail fixo à direita) — abas ALERTAS e SEGUINDO
     // O popover do sino serve pra espiar; ele fecha no primeiro clique e só traz as ~N mais
@@ -18499,7 +18568,7 @@
     // desde a última ação do usuário (teto pra aba "Não lidas" não varrer o histórico inteiro)
     const mkState = () => ({ url: null, next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0, filter: 'all' });
     const aldockState = { alerts: mkState(), watched: mkState() };
-    let railTab = 'watched';
+    let railTab = 'alerts';
 
     const aldockViewportMax = () => Math.max(
         ALDOCK_RESP_MIN_W,
@@ -18518,7 +18587,7 @@
     const aldockFits = () => window.innerWidth >= ALDOCK_MIN_VW || aldockPhone();
     const aldockWanted = () => gmGet(ALDOCK_KEY, '0') === '1';
     const aldockOpen = () => document.documentElement.classList.contains('smg-aldock-on');
-    const railWantedTab = () => 'watched';
+    const railWantedTab = () => 'alerts';
     const railBaseUrl = tab => tab === 'watched'
         ? (navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads')
         : '/account/alerts';
@@ -18535,7 +18604,14 @@
             .then(r => r.text())
             .then(t => {
                 let html = t;
-                try { const j = JSON.parse(t); html = (j.html && (j.html.content || j.html)) || j.content || t; } catch (e) {}
+                let visitorAlerts = null;
+                try {
+                    const j = JSON.parse(t);
+                    html = (j.html && (j.html.content || j.html)) || j.content || t;
+                    if (j && j.visitor && typeof j.visitor.alerts_unread !== 'undefined') {
+                        visitorAlerts = parseInt(j.visitor.alerts_unread, 10);
+                    }
+                } catch (e) {}
                 const tmp = document.createElement('div');
                 tmp.innerHTML = html;
                 let rows;
@@ -18549,13 +18625,13 @@
                             try {
                                 window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                             } catch (e) {}
-                            return { rows, next: nextHref };
+                            return { rows, next: nextHref, visitorAlerts };
                         });
                     }
                     try {
                         window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                     } catch (e) {}
-                    return { rows, next: nextHref };
+                    return { rows, next: nextHref, visitorAlerts };
                 } else {
                     // a PÁGINA usa <li class="block-row js-alert">, a POPUP usa <li class="alert"> — todo o
                     // resto (limpeza, CSS, marcar-lido) casa em li.alert, então promovemos a classe aqui.
@@ -18564,7 +18640,7 @@
                     rows.forEach(li => { li.classList.add('alert'); li.classList.remove('block-row', 'block-row--separated'); });
                 }
                 const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
-                return { rows, next: nx ? nx.getAttribute('href') : null };
+                return { rows, next: nx ? nx.getAttribute('href') : null, visitorAlerts };
             });
     }
 
@@ -18637,7 +18713,7 @@
 
     function renderFollowedRow(item) {
         if (!item || !item.path) return null;
-        const isUnread = Boolean(item.updated_at > 0 && (item.last_seen_at || 0) < item.updated_at);
+        const isUnread = Boolean(item.unread);
         const li = document.createElement('li');
         li.className = 'smg-rail-wt' + (isUnread ? ' is-unread' : '');
         const a = document.createElement('a');
@@ -18826,18 +18902,73 @@
         }
     }
 
-    // contador do cabeçalho — atualiza o badge com a contagem de tópicos não lidos (.smg-rail-wt.is-unread)
+    function updateAlertsUnreadBadge(count) {
+        const n = Math.max(0, parseInt(count, 10) || 0);
+        document.querySelectorAll('.smg-tb-railbtn, #smg-topbar .smg-rt-alerts').forEach(btn => {
+            if (typeof setReactiveBadge === 'function') {
+                setReactiveBadge(btn, n, 'smg-tb-badge');
+            } else {
+                let b = btn.querySelector(':scope > .smg-tb-badge');
+                if (n > 0) {
+                    const t = n > 99 ? '99+' : String(n);
+                    if (!b) { b = document.createElement('span'); b.className = 'smg-tb-badge'; btn.appendChild(b); }
+                    if (b.textContent !== t) b.textContent = t;
+                } else if (b) {
+                    b.remove();
+                }
+            }
+        });
+        const navAlerts = document.querySelector('#smg-nav-alerts');
+        if (navAlerts) {
+            const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
+            if (typeof setReactiveBadge === 'function') {
+                setReactiveBadge(host, n, 'smg-nav-badge');
+            } else {
+                let b = host.querySelector(':scope > .smg-nav-badge');
+                if (n > 0) {
+                    const t = n > 99 ? '99+' : String(n);
+                    if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
+                    if (b.textContent !== t) b.textContent = t;
+                } else if (b) {
+                    b.remove();
+                }
+            }
+        }
+    }
+
+    // contador do cabeçalho — atualiza o badge com a contagem de alertas não lidos
     function aldockSyncCount() {
         if (!aldock) return;
-        const list = railList('watched');
-        const n = list ? list.querySelectorAll('.smg-rail-wt.is-unread').length : 0;
+        const list = railList('alerts');
+        const domUnread = (list && list.querySelector('li.alert'))
+            ? list.querySelectorAll('li.alert.is-unread').length
+            : null;
+        const serverCount = (typeof alertsBadgeCount === 'function')
+            ? alertsBadgeCount()
+            : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const st = aldockState && aldockState.alerts;
+        const hasMore = Boolean(st && st.next);
+
+        let n;
+        if (st && typeof st.serverUnread === 'number' && st.serverUnread >= 0) {
+            n = (st.serverUnread === 0 && domUnread === 0) ? 0 : Math.max(st.serverUnread, domUnread || 0);
+        } else if (domUnread === null) {
+            n = serverCount;
+        } else if (hasMore) {
+            // Still has subsequent pages on the server: DOM has only partial count.
+            n = Math.max(serverCount, domUnread);
+        } else {
+            // Reached end of list: DOM has all alerts.
+            n = domUnread;
+        }
+        n = Math.max(0, parseInt(n, 10) || 0);
         const el = aldock.querySelector('.smg-aldock-n');
         if (el) {
             el.textContent = n > 99 ? '99+' : String(n);
             el.hidden = !n;
         }
-        gmSet('smg-watched-unread-count', String(n));
-        updateWatchedUnreadBadge(n);
+        gmSet('smg-alerts-count', String(n));
+        updateAlertsUnreadBadge(n);
     }
 
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
@@ -18863,18 +18994,10 @@
                 if (!list) return;
 
                 const valid = Array.isArray(items) ? items.filter(it => it && it.path) : [];
-                const unread = valid.filter(t => (t.last_seen_at || 0) < (t.updated_at || 0) && (t.updated_at || 0) > 0)
-                    .sort((a, b) => {
-                        const diffSeen = (b.last_seen_at || 0) - (a.last_seen_at || 0);
-                        if (diffSeen !== 0) return diffSeen;
-                        return (b.updated_at || 0) - (a.updated_at || 0);
-                    });
-                const read = valid.filter(t => (t.last_seen_at || 0) >= (t.updated_at || 0))
-                    .sort((a, b) => {
-                        const diffUpdated = (b.updated_at || 0) - (a.updated_at || 0);
-                        if (diffUpdated !== 0) return diffUpdated;
-                        return (b.last_seen_at || 0) - (a.last_seen_at || 0);
-                    });
+                const unread = valid.filter(t => Boolean(t.unread))
+                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+                const read = valid.filter(t => !t.unread)
+                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
 
                 const sorted = [...unread, ...read];
                 list.innerHTML = '';
@@ -18912,12 +19035,23 @@
         }
 
         return railFetch(tab, railBaseUrl(tab))
-            .then(({ rows, next }) => {
+            .then(({ rows, next, visitorAlerts }) => {
                 clearSkeleton();
+                if (tab === 'alerts' && typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
+                    st.serverUnread = visitorAlerts;
+                    gmSet('smg-alerts-count', String(visitorAlerts));
+                    updateAlertsUnreadBadge(visitorAlerts);
+                }
                 const added = aldockInsertRows(tab, rows, true);
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar (só alertas têm contador)
                 if (added && tab === 'alerts') syncAlertBadgeFrom(railList('alerts'));
+                if (tab === 'alerts' && typeof dbFollowedGetAll === 'function') {
+                    dbFollowedGetAll().then(items => {
+                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                        repaintAlertThumbs(railList('alerts'));
+                    }).catch(() => {});
+                }
                 // toda carga pode ter esquentado o cache (a de seguidas põe foto; a de alertas pode
                 // chegar depois de o cache já ter enchido) → repinta sempre, e só então decide o warm
                 repaintAlertThumbs(railList('alerts'));
@@ -19024,7 +19158,7 @@
     // troca a aba visível: cabeçalho, ações, filtro e o "Ver todos os tópicos seguidos"
     function railShowTab(tab, persist) {
         if (!aldock) return;
-        tab = 'watched';
+        tab = RAIL_SRC[tab] ? tab : 'alerts';
         railTab = tab;
         if (persist !== false) gmSet(ALDOCK_TAB_KEY, tab);
         const src = RAIL_SRC[tab], st = aldockState[tab];
@@ -19036,9 +19170,8 @@
         const seeAll = aldock.querySelector('.smg-aldock-seeall');
         if (seeAll) {
             seeAll.href = safeHref(src.seeAll);
-            seeAll.textContent = i18n('See all watched threads');
+            seeAll.textContent = i18n(src.title === 'Alerts' ? 'See all' : 'See all watched threads');
         }
-        // A sidebar de Seguindo não possui filtro Todas/Não lidas.
         st.filter = 'all';
         aldock.classList.remove('smg-aldock--unread');
         railApplyView(tab);
@@ -19051,17 +19184,17 @@
         if (aldock) return aldock;
         const el = document.createElement('aside');
         el.id = 'smg-aldock';
-        el.setAttribute('aria-label', i18n('Following'));
-        const watchedSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
+        el.setAttribute('aria-label', i18n('Alerts'));
+        const alertsSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
         const pane = tab =>
-            '<div class="smg-aldock-body smg-tb-listbody" data-tab="' + tab + '">' +
-                '<ol class="smg-aldock-list smg-rail-wtlist">' + (tab === 'watched' ? watchedSkeleton : '') + '</ol>' +
+            '<div class="smg-aldock-body smg-tb-listbody" data-tab="' + tab + '"' + (tab === 'alerts' ? '' : ' hidden') + '>' +
+                '<ol class="smg-aldock-list ' + (tab === 'alerts' ? 'smg-alert-clean' : 'smg-rail-wtlist') + '">' + alertsSkeleton + '</ol>' +
                 '<div class="smg-aldock-status" hidden></div>' +
             '</div>';
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
             '<div class="smg-aldock-head">' +
-                '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Following') + '</span><span class="smg-aldock-n" hidden></span></span>' +
+                '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-view" hidden></button>' +
@@ -19069,29 +19202,66 @@
                     '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
                 '</div>' +
             '</div>' +
-            pane('watched') +
+            pane('alerts') + pane('watched') +
             '<div class="smg-aldock-foot">' +
-                '<a class="smg-aldock-seeall" href="' + safeHref(navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads') + '">' + i18n('See all watched threads') + '</a>' +
+                '<a class="smg-aldock-seeall" href="/account/alerts">' + i18n('See all') + '</a>' +
             '</div>';
         document.body.appendChild(el);
         aldock = el;
 
+        const applyMarkAllReadSuccess = () => {
+            el.querySelectorAll('li.alert.is-unread').forEach(row => {
+                row.classList.remove('is-unread');
+                row.classList.add('smg-al-old');
+                row.querySelectorAll('.smg-al-read').forEach(b => b.remove());
+            });
+            const badge = el.querySelector('.smg-aldock-n');
+            if (badge) {
+                badge.hidden = true;
+                badge.textContent = '';
+            }
+            const st = aldockState && aldockState.alerts;
+            if (st && typeof st.serverUnread === 'number') st.serverUnread = 0;
+            gmSet('smg-alerts-count', '0');
+            const nav = document.querySelector('.p-navgroup-link--alerts');
+            if (nav) nav.removeAttribute('data-badge');
+            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            aldockSyncCount();
+        };
+
         const markReadBtn = el.querySelector('.smg-aldock-markread');
         if (markReadBtn) {
             markReadBtn.addEventListener('click', () => {
-                if (typeof dbFollowedMarkAllSeen === 'function') {
-                    markReadBtn.dataset.busy = '1';
-                    dbFollowedMarkAllSeen().then(() => {
-                        delete markReadBtn.dataset.busy;
-                        el.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
-                        const badge = el.querySelector('.smg-aldock-n');
-                        if (badge) { badge.hidden = true; badge.textContent = ''; }
-                        updateWatchedUnreadBadge(0);
-                        aldockSyncCount();
-                    }).catch(() => {
+                if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+                    applyMarkAllReadSuccess();
+                    return;
+                }
+                if (markReadBtn.dataset.busy) return;
+                markReadBtn.dataset.busy = '1';
+                const csrf = document.documentElement.getAttribute('data-csrf')
+                    || (document.querySelector('input[name="_xfToken"]') || {}).value
+                    || (window.XF && window.XF.config && window.XF.config.csrf) || '';
+                fetch('/account/alerts/mark-read', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-CSRF-Token': csrf,
+                        '_xfToken': csrf
+                    },
+                    body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
+                })
+                    .then(r => r.text().then(txt => ({ ok: r.ok, txt })))
+                    .then(({ ok, txt }) => {
+                        let j = null; try { j = JSON.parse(txt); } catch (e) {}
+                        if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');
+                        applyMarkAllReadSuccess();
+                    })
+                    .catch(() => {})
+                    .finally(() => {
                         delete markReadBtn.dataset.busy;
                     });
-                }
             });
         }
 
@@ -19195,6 +19365,13 @@
         }   // deslogado / tema sem sino → não há o que dockar
         aldockBound = true;
 
+        if (typeof dbFollowedGetAll === 'function') {
+            dbFollowedGetAll().then(items => {
+                if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                repaintAlertThumbs(railList('alerts'));
+            }).catch(() => {});
+        }
+
         // (o sino da topbar não existe mais — o botão do painel é o único controle e tem o próprio handler)
 
         // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
@@ -19251,6 +19428,7 @@
     if (typeof window !== 'undefined') {
         window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
         window.updateWatchedUnreadBadge = updateWatchedUnreadBadge;
+        window.updateAlertsUnreadBadge = updateAlertsUnreadBadge;
         window.getWatchedUnreadCount = getWatchedUnreadCount;
         if (window.__TEST_MODE__) {
             window.__aldockExports = {
@@ -19263,6 +19441,7 @@
                 renderFollowedRow,
                 aldockSyncCount,
                 updateWatchedUnreadBadge,
+                updateAlertsUnreadBadge,
                 getWatchedUnreadCount,
                 aldockWidth,
                 aldockState,
@@ -19698,9 +19877,9 @@
             // Leva o BADGE de seguidos não lidos: .smg-rt-watched é o alvo do sync reativo,
             // e o valor inicial vem de getWatchedUnreadCount() pra não nascer mudo.
             if (FEATURES.alertsDock) {
-                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, getWatchedUnreadCount());
-                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-watched');
-                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('watched'); });
+                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, alertsBadgeCount());
+                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-alerts');
+                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
                 actions.appendChild(railBtn);
             }
         } else {
@@ -22001,7 +22180,6 @@
                 tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
                 followed_at: (stored && stored.followed_at) || now,
                 forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
-                last_seen_at: Math.max((stored && stored.last_seen_at) || 0, maxPostTs, now),
                 updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
                 created_at: (stored && stored.created_at) || 0,
                 author: (stored && stored.author) || '',
@@ -22078,15 +22256,15 @@
             const nextSavedPages = Array.from(new Set([...(thread.saved_pages || []), pageNum])).sort((a, b) => a - b);
             const nextLastPage = Math.max(thread.last_page || 1, pageNum, docMaxPage);
 
+            const prevUpdatedAt = thread.updated_at || 0;
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
             thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            if (!thread.last_seen_at) {
-                thread.last_seen_at = thread.updated_at;
+            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) {
+                thread.unread = true;
+            } else if (!prevUpdatedAt) {
                 thread.unread = false;
-            } else {
-                thread.unread = Boolean(thread.updated_at > thread.last_seen_at);
             }
 
             return dbTimelinePutPosts(timelinePosts)
@@ -22102,7 +22280,7 @@
         const lastPage = thread.last_page || 1;
         const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
-        const isUnread = Boolean(thread.unread || (thread.last_seen_at !== undefined && (thread.updated_at || 0) > 0 && (thread.last_seen_at || 0) < (thread.updated_at || 0)));
+        const isUnread = Boolean(thread.unread);
 
         const isNew = maxSaved === 0;
         const hasNewPage = lastPage > maxSaved;
@@ -22612,14 +22790,23 @@
         return card;
     }
 
-    // container onde o river mora = o PAI do bloco da lista (ancorado no .structItem--thread → robusto). Cacheado.
     let riverHost = null;
     function riverContainer() {
         if (riverHost && riverHost.isConnected) return riverHost;
+        const pageContent = document.querySelector('.p-body-pageContent');
+        if (pageContent) {
+            riverHost = pageContent;
+            return riverHost;
+        }
+        const content = document.querySelector('.p-body-content');
+        if (content) {
+            riverHost = content;
+            return riverHost;
+        }
         const item = document.querySelector('.structItem--thread');
         const block = item && item.closest('.block');
         riverHost = (block && block.parentElement)
-            || document.querySelector('.p-body-main') || document.querySelector('.p-body-content')
+            || document.querySelector('.p-body-main')
             || document.querySelector('.p-body-inner') || document.querySelector('.p-body') || document.body;
         return riverHost;
     }
@@ -23063,10 +23250,26 @@
         const feed = mode === 'feed';
         document.documentElement.classList.toggle('smg-watched-feed', feed);
         const host = riverContainer();
-        Array.prototype.forEach.call(host.children, ch => {
-            if (ch.id === 'smg-river') return;
-            ch.classList.toggle('smg-river-hide', feed);
-        });
+        if (host && host.children) {
+            Array.prototype.forEach.call(host.children, ch => {
+                if (ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
+        const content = document.querySelector('.p-body-content');
+        if (content && content !== host) {
+            Array.prototype.forEach.call(content.children, ch => {
+                if (ch.contains(host) || ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
+        const pageContent = document.querySelector('.p-body-pageContent');
+        if (pageContent && pageContent !== host) {
+            Array.prototype.forEach.call(pageContent.children, ch => {
+                if (ch.contains(host) || ch.id === 'smg-river') return;
+                ch.classList.toggle('smg-river-hide', feed);
+            });
+        }
         if (feed) { buildRiver(); feedStartPoll(); } else feedStopPoll();
     }
     let riverSetupDone = false;

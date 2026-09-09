@@ -40,7 +40,7 @@
     // desde a última ação do usuário (teto pra aba "Não lidas" não varrer o histórico inteiro)
     const mkState = () => ({ url: null, next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0, filter: 'all' });
     const aldockState = { alerts: mkState(), watched: mkState() };
-    let railTab = 'watched';
+    let railTab = 'alerts';
 
     const aldockViewportMax = () => Math.max(
         ALDOCK_RESP_MIN_W,
@@ -59,7 +59,7 @@
     const aldockFits = () => window.innerWidth >= ALDOCK_MIN_VW || aldockPhone();
     const aldockWanted = () => gmGet(ALDOCK_KEY, '0') === '1';
     const aldockOpen = () => document.documentElement.classList.contains('smg-aldock-on');
-    const railWantedTab = () => 'watched';
+    const railWantedTab = () => 'alerts';
     const railBaseUrl = tab => tab === 'watched'
         ? (navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads')
         : '/account/alerts';
@@ -76,7 +76,14 @@
             .then(r => r.text())
             .then(t => {
                 let html = t;
-                try { const j = JSON.parse(t); html = (j.html && (j.html.content || j.html)) || j.content || t; } catch (e) {}
+                let visitorAlerts = null;
+                try {
+                    const j = JSON.parse(t);
+                    html = (j.html && (j.html.content || j.html)) || j.content || t;
+                    if (j && j.visitor && typeof j.visitor.alerts_unread !== 'undefined') {
+                        visitorAlerts = parseInt(j.visitor.alerts_unread, 10);
+                    }
+                } catch (e) {}
                 const tmp = document.createElement('div');
                 tmp.innerHTML = html;
                 let rows;
@@ -90,13 +97,13 @@
                             try {
                                 window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                             } catch (e) {}
-                            return { rows, next: nextHref };
+                            return { rows, next: nextHref, visitorAlerts };
                         });
                     }
                     try {
                         window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                     } catch (e) {}
-                    return { rows, next: nextHref };
+                    return { rows, next: nextHref, visitorAlerts };
                 } else {
                     // a PÁGINA usa <li class="block-row js-alert">, a POPUP usa <li class="alert"> — todo o
                     // resto (limpeza, CSS, marcar-lido) casa em li.alert, então promovemos a classe aqui.
@@ -105,7 +112,7 @@
                     rows.forEach(li => { li.classList.add('alert'); li.classList.remove('block-row', 'block-row--separated'); });
                 }
                 const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
-                return { rows, next: nx ? nx.getAttribute('href') : null };
+                return { rows, next: nx ? nx.getAttribute('href') : null, visitorAlerts };
             });
     }
 
@@ -178,7 +185,7 @@
 
     function renderFollowedRow(item) {
         if (!item || !item.path) return null;
-        const isUnread = Boolean(item.updated_at > 0 && (item.last_seen_at || 0) < item.updated_at);
+        const isUnread = Boolean(item.unread);
         const li = document.createElement('li');
         li.className = 'smg-rail-wt' + (isUnread ? ' is-unread' : '');
         const a = document.createElement('a');
@@ -367,18 +374,73 @@
         }
     }
 
-    // contador do cabeçalho — atualiza o badge com a contagem de tópicos não lidos (.smg-rail-wt.is-unread)
+    function updateAlertsUnreadBadge(count) {
+        const n = Math.max(0, parseInt(count, 10) || 0);
+        document.querySelectorAll('.smg-tb-railbtn, #smg-topbar .smg-rt-alerts').forEach(btn => {
+            if (typeof setReactiveBadge === 'function') {
+                setReactiveBadge(btn, n, 'smg-tb-badge');
+            } else {
+                let b = btn.querySelector(':scope > .smg-tb-badge');
+                if (n > 0) {
+                    const t = n > 99 ? '99+' : String(n);
+                    if (!b) { b = document.createElement('span'); b.className = 'smg-tb-badge'; btn.appendChild(b); }
+                    if (b.textContent !== t) b.textContent = t;
+                } else if (b) {
+                    b.remove();
+                }
+            }
+        });
+        const navAlerts = document.querySelector('#smg-nav-alerts');
+        if (navAlerts) {
+            const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
+            if (typeof setReactiveBadge === 'function') {
+                setReactiveBadge(host, n, 'smg-nav-badge');
+            } else {
+                let b = host.querySelector(':scope > .smg-nav-badge');
+                if (n > 0) {
+                    const t = n > 99 ? '99+' : String(n);
+                    if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
+                    if (b.textContent !== t) b.textContent = t;
+                } else if (b) {
+                    b.remove();
+                }
+            }
+        }
+    }
+
+    // contador do cabeçalho — atualiza o badge com a contagem de alertas não lidos
     function aldockSyncCount() {
         if (!aldock) return;
-        const list = railList('watched');
-        const n = list ? list.querySelectorAll('.smg-rail-wt.is-unread').length : 0;
+        const list = railList('alerts');
+        const domUnread = (list && list.querySelector('li.alert'))
+            ? list.querySelectorAll('li.alert.is-unread').length
+            : null;
+        const serverCount = (typeof alertsBadgeCount === 'function')
+            ? alertsBadgeCount()
+            : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const st = aldockState && aldockState.alerts;
+        const hasMore = Boolean(st && st.next);
+
+        let n;
+        if (st && typeof st.serverUnread === 'number' && st.serverUnread >= 0) {
+            n = (st.serverUnread === 0 && domUnread === 0) ? 0 : Math.max(st.serverUnread, domUnread || 0);
+        } else if (domUnread === null) {
+            n = serverCount;
+        } else if (hasMore) {
+            // Still has subsequent pages on the server: DOM has only partial count.
+            n = Math.max(serverCount, domUnread);
+        } else {
+            // Reached end of list: DOM has all alerts.
+            n = domUnread;
+        }
+        n = Math.max(0, parseInt(n, 10) || 0);
         const el = aldock.querySelector('.smg-aldock-n');
         if (el) {
             el.textContent = n > 99 ? '99+' : String(n);
             el.hidden = !n;
         }
-        gmSet('smg-watched-unread-count', String(n));
-        updateWatchedUnreadBadge(n);
+        gmSet('smg-alerts-count', String(n));
+        updateAlertsUnreadBadge(n);
     }
 
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
@@ -404,18 +466,10 @@
                 if (!list) return;
 
                 const valid = Array.isArray(items) ? items.filter(it => it && it.path) : [];
-                const unread = valid.filter(t => (t.last_seen_at || 0) < (t.updated_at || 0) && (t.updated_at || 0) > 0)
-                    .sort((a, b) => {
-                        const diffSeen = (b.last_seen_at || 0) - (a.last_seen_at || 0);
-                        if (diffSeen !== 0) return diffSeen;
-                        return (b.updated_at || 0) - (a.updated_at || 0);
-                    });
-                const read = valid.filter(t => (t.last_seen_at || 0) >= (t.updated_at || 0))
-                    .sort((a, b) => {
-                        const diffUpdated = (b.updated_at || 0) - (a.updated_at || 0);
-                        if (diffUpdated !== 0) return diffUpdated;
-                        return (b.last_seen_at || 0) - (a.last_seen_at || 0);
-                    });
+                const unread = valid.filter(t => Boolean(t.unread))
+                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+                const read = valid.filter(t => !t.unread)
+                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
 
                 const sorted = [...unread, ...read];
                 list.innerHTML = '';
@@ -453,12 +507,23 @@
         }
 
         return railFetch(tab, railBaseUrl(tab))
-            .then(({ rows, next }) => {
+            .then(({ rows, next, visitorAlerts }) => {
                 clearSkeleton();
+                if (tab === 'alerts' && typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
+                    st.serverUnread = visitorAlerts;
+                    gmSet('smg-alerts-count', String(visitorAlerts));
+                    updateAlertsUnreadBadge(visitorAlerts);
+                }
                 const added = aldockInsertRows(tab, rows, true);
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar (só alertas têm contador)
                 if (added && tab === 'alerts') syncAlertBadgeFrom(railList('alerts'));
+                if (tab === 'alerts' && typeof dbFollowedGetAll === 'function') {
+                    dbFollowedGetAll().then(items => {
+                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                        repaintAlertThumbs(railList('alerts'));
+                    }).catch(() => {});
+                }
                 // toda carga pode ter esquentado o cache (a de seguidas põe foto; a de alertas pode
                 // chegar depois de o cache já ter enchido) → repinta sempre, e só então decide o warm
                 repaintAlertThumbs(railList('alerts'));
@@ -565,7 +630,7 @@
     // troca a aba visível: cabeçalho, ações, filtro e o "Ver todos os tópicos seguidos"
     function railShowTab(tab, persist) {
         if (!aldock) return;
-        tab = 'watched';
+        tab = RAIL_SRC[tab] ? tab : 'alerts';
         railTab = tab;
         if (persist !== false) gmSet(ALDOCK_TAB_KEY, tab);
         const src = RAIL_SRC[tab], st = aldockState[tab];
@@ -577,9 +642,8 @@
         const seeAll = aldock.querySelector('.smg-aldock-seeall');
         if (seeAll) {
             seeAll.href = safeHref(src.seeAll);
-            seeAll.textContent = i18n('See all watched threads');
+            seeAll.textContent = i18n(src.title === 'Alerts' ? 'See all' : 'See all watched threads');
         }
-        // A sidebar de Seguindo não possui filtro Todas/Não lidas.
         st.filter = 'all';
         aldock.classList.remove('smg-aldock--unread');
         railApplyView(tab);
@@ -592,17 +656,17 @@
         if (aldock) return aldock;
         const el = document.createElement('aside');
         el.id = 'smg-aldock';
-        el.setAttribute('aria-label', i18n('Following'));
-        const watchedSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
+        el.setAttribute('aria-label', i18n('Alerts'));
+        const alertsSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
         const pane = tab =>
-            '<div class="smg-aldock-body smg-tb-listbody" data-tab="' + tab + '">' +
-                '<ol class="smg-aldock-list smg-rail-wtlist">' + (tab === 'watched' ? watchedSkeleton : '') + '</ol>' +
+            '<div class="smg-aldock-body smg-tb-listbody" data-tab="' + tab + '"' + (tab === 'alerts' ? '' : ' hidden') + '>' +
+                '<ol class="smg-aldock-list ' + (tab === 'alerts' ? 'smg-alert-clean' : 'smg-rail-wtlist') + '">' + alertsSkeleton + '</ol>' +
                 '<div class="smg-aldock-status" hidden></div>' +
             '</div>';
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
             '<div class="smg-aldock-head">' +
-                '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Following') + '</span><span class="smg-aldock-n" hidden></span></span>' +
+                '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-view" hidden></button>' +
@@ -610,29 +674,66 @@
                     '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
                 '</div>' +
             '</div>' +
-            pane('watched') +
+            pane('alerts') + pane('watched') +
             '<div class="smg-aldock-foot">' +
-                '<a class="smg-aldock-seeall" href="' + safeHref(navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads') + '">' + i18n('See all watched threads') + '</a>' +
+                '<a class="smg-aldock-seeall" href="/account/alerts">' + i18n('See all') + '</a>' +
             '</div>';
         document.body.appendChild(el);
         aldock = el;
 
+        const applyMarkAllReadSuccess = () => {
+            el.querySelectorAll('li.alert.is-unread').forEach(row => {
+                row.classList.remove('is-unread');
+                row.classList.add('smg-al-old');
+                row.querySelectorAll('.smg-al-read').forEach(b => b.remove());
+            });
+            const badge = el.querySelector('.smg-aldock-n');
+            if (badge) {
+                badge.hidden = true;
+                badge.textContent = '';
+            }
+            const st = aldockState && aldockState.alerts;
+            if (st && typeof st.serverUnread === 'number') st.serverUnread = 0;
+            gmSet('smg-alerts-count', '0');
+            const nav = document.querySelector('.p-navgroup-link--alerts');
+            if (nav) nav.removeAttribute('data-badge');
+            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            aldockSyncCount();
+        };
+
         const markReadBtn = el.querySelector('.smg-aldock-markread');
         if (markReadBtn) {
             markReadBtn.addEventListener('click', () => {
-                if (typeof dbFollowedMarkAllSeen === 'function') {
-                    markReadBtn.dataset.busy = '1';
-                    dbFollowedMarkAllSeen().then(() => {
-                        delete markReadBtn.dataset.busy;
-                        el.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
-                        const badge = el.querySelector('.smg-aldock-n');
-                        if (badge) { badge.hidden = true; badge.textContent = ''; }
-                        updateWatchedUnreadBadge(0);
-                        aldockSyncCount();
-                    }).catch(() => {
+                if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+                    applyMarkAllReadSuccess();
+                    return;
+                }
+                if (markReadBtn.dataset.busy) return;
+                markReadBtn.dataset.busy = '1';
+                const csrf = document.documentElement.getAttribute('data-csrf')
+                    || (document.querySelector('input[name="_xfToken"]') || {}).value
+                    || (window.XF && window.XF.config && window.XF.config.csrf) || '';
+                fetch('/account/alerts/mark-read', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-CSRF-Token': csrf,
+                        '_xfToken': csrf
+                    },
+                    body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
+                })
+                    .then(r => r.text().then(txt => ({ ok: r.ok, txt })))
+                    .then(({ ok, txt }) => {
+                        let j = null; try { j = JSON.parse(txt); } catch (e) {}
+                        if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');
+                        applyMarkAllReadSuccess();
+                    })
+                    .catch(() => {})
+                    .finally(() => {
                         delete markReadBtn.dataset.busy;
                     });
-                }
             });
         }
 
@@ -736,6 +837,13 @@
         }   // deslogado / tema sem sino → não há o que dockar
         aldockBound = true;
 
+        if (typeof dbFollowedGetAll === 'function') {
+            dbFollowedGetAll().then(items => {
+                if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                repaintAlertThumbs(railList('alerts'));
+            }).catch(() => {});
+        }
+
         // (o sino da topbar não existe mais — o botão do painel é o único controle e tem o próprio handler)
 
         // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
@@ -792,6 +900,7 @@
     if (typeof window !== 'undefined') {
         window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
         window.updateWatchedUnreadBadge = updateWatchedUnreadBadge;
+        window.updateAlertsUnreadBadge = updateAlertsUnreadBadge;
         window.getWatchedUnreadCount = getWatchedUnreadCount;
         if (window.__TEST_MODE__) {
             window.__aldockExports = {
@@ -804,6 +913,7 @@
                 renderFollowedRow,
                 aldockSyncCount,
                 updateWatchedUnreadBadge,
+                updateAlertsUnreadBadge,
                 getWatchedUnreadCount,
                 aldockWidth,
                 aldockState,

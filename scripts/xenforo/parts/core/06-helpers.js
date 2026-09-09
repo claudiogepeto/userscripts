@@ -651,6 +651,7 @@
     const THUMBTPL_KEY = 'smg-thumb-tpl-' + THUMBC_SITE;
     const THUMBC_MAX = 1400, THUMBC_KEEP = 1000;   // ~2 chaves por thread (id + título) → teto em ~700 threads
     let thumbCache = null, thumbCacheT = 0, thumbCacheBound = false;
+    const followedThumbsMap = new Map();
 
     // URL da thumb da THREAD (não do avatar do autor): simpcity põe no background-image de um <img>
     // 1x1 (.dcThumbnail), SMG usa <img src> real (.dtt-thread-thumbnail). Só esses dois holders contam
@@ -696,9 +697,22 @@
     }
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
+        const id = (typeof threadIdOf === 'function') ? threadIdOf(href) : '';
+        const slug = (typeof threadSlugOf === 'function') ? (!id && threadSlugOf(href)) : '';
+        const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
+        const canon = (typeof canonicalThreadPath === 'function' && href) ? canonicalThreadPath(href) : '';
+
+        // 1. In-memory followed thumbs (IndexedDB)
+        if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
+            if (id && followedThumbsMap.has(id)) return followedThumbsMap.get(id);
+            if (canon && followedThumbsMap.has(canon)) return followedThumbsMap.get(canon);
+            if (slug && followedThumbsMap.has(slug)) return followedThumbsMap.get(slug);
+            if (titleK && followedThumbsMap.has(titleK)) return followedThumbsMap.get(titleK);
+        }
+
+        // 2. Persistent thumbCache (localStorage)
         const all = thumbCacheAll();
-        const id = threadIdOf(href);
-        const keys = [id, !id && threadSlugOf(href), threadTitleKey(title)].filter(Boolean);
+        const keys = [id, slug, titleK].filter(Boolean);
         for (const k of keys) { const rec = all[k]; if (rec && rec.u) return rec.u; }
         return id ? thumbTplApply(id) : '';
     }
@@ -760,6 +774,31 @@
             keys.sort((a, b) => (all[b].t || 0) - (all[a].t || 0)).slice(THUMBC_KEEP).forEach(k => { delete all[k]; });
         }
         gmSet(THUMBC_KEY, JSON.stringify(all));
+    }
+
+    function indexFollowedThumbs(items) {
+        if (!Array.isArray(items)) return;
+        let fresh = 0;
+        items.forEach(it => {
+            if (!it || !it.thumbnail_url) return;
+            const thumb = it.thumbnail_url;
+            const path = it.path || '';
+            const title = it.thread_name || '';
+            const id = (typeof threadIdOf === 'function') ? threadIdOf(path) : '';
+            const slug = (typeof threadSlugOf === 'function') ? threadSlugOf(path) : '';
+            const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
+            const canon = (typeof canonicalThreadPath === 'function' && path) ? canonicalThreadPath(path) : path;
+
+            if (id) followedThumbsMap.set(id, thumb);
+            if (slug) followedThumbsMap.set(slug, thumb);
+            if (canon) followedThumbsMap.set(canon, thumb);
+            if (titleK) followedThumbsMap.set(titleK, thumb);
+            if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
+        });
+        if (fresh) {
+            [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
+                .forEach(r => { if (r && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(r); });
+        }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
     function harvestThreadThumbs(roots) {
@@ -1218,4 +1257,12 @@
         window.__resolveProxyHref = resolveProxyHref;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
+        window.indexFollowedThumbs = indexFollowedThumbs;
+        window.followedThumbsMap = followedThumbsMap;
+        window.thumbCacheGet = thumbCacheGet;
+        window.__helpersExports = Object.assign(window.__helpersExports || {}, {
+            indexFollowedThumbs,
+            followedThumbsMap,
+            thumbCacheGet
+        });
     }

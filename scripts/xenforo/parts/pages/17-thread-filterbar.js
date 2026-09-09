@@ -844,11 +844,6 @@
 
                 const prev = existingMap.get(path);
                 const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
-                const effectiveLastSeen = (prev && prev.last_seen_at !== undefined && prev.last_seen_at !== null)
-                    ? prev.last_seen_at
-                    : (effectiveUpdatedAt || now);
-                const isUnread = Boolean(prev && effectiveUpdatedAt > 0 && effectiveLastSeen < effectiveUpdatedAt);
-
                 const item = {
                     path: path,
                     thread_name: title || (prev && prev.thread_name) || '',
@@ -857,13 +852,12 @@
                     followed_at: (prev && prev.followed_at) || now,
                     forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
                     updated_at: effectiveUpdatedAt,
-                    last_seen_at: effectiveLastSeen,
                     created_at: created_at || (prev && prev.created_at) || 0,
                     author: author || (prev && prev.author) || '',
                     last_page: Math.max((prev && prev.last_page) || 1, last_page),
                     saved_pages: (prev && prev.saved_pages) || [],
                     last_sync_at: (prev && prev.last_sync_at) || 0,
-                    unread: isUnread
+                    unread: domUnread
                 };
 
                 existingMap.set(path, item);
@@ -874,7 +868,6 @@
                     || prev.followed_at !== item.followed_at
                     || prev.forum_activity_ts !== item.forum_activity_ts
                     || prev.updated_at !== item.updated_at
-                    || prev.last_seen_at !== item.last_seen_at
                     || prev.created_at !== item.created_at
                     || prev.author !== item.author
                     || prev.last_page !== item.last_page
@@ -887,21 +880,24 @@
                 }
 
                 if (syncPages) {
-                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || isUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
+                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
                         syncCandidates.push({ thread: item, page: last_page });
                     }
                 }
             });
 
-            // Atualiza o badge com a contagem de seguidos não lidos baseada em last_seen_at < updated_at
+            // Atualiza o badge com a contagem de seguidos não lidos baseada em unread
             const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
-                .filter(it => it && it.updated_at > 0 && (it.last_seen_at || 0) < it.updated_at).length;
+                .filter(it => it && Boolean(it.unread)).length;
             gmSet('smg-watched-unread-count', String(unreadCount));
             if (typeof updateWatchedUnreadBadge === 'function') {
                 updateWatchedUnreadBadge(unreadCount);
             }
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
+                if (typeof indexFollowedThumbs === 'function') {
+                    indexFollowedThumbs(itemsToUpsert);
+                }
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}

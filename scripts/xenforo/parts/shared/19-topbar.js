@@ -421,9 +421,9 @@
             // Leva o BADGE de seguidos não lidos: .smg-rt-watched é o alvo do sync reativo,
             // e o valor inicial vem de getWatchedUnreadCount() pra não nascer mudo.
             if (FEATURES.alertsDock) {
-                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, getWatchedUnreadCount());
-                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-watched');
-                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('watched'); });
+                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, alertsBadgeCount());
+                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-alerts');
+                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
                 actions.appendChild(railBtn);
             }
         } else {
