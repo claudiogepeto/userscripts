@@ -312,7 +312,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.6'), 'Userscript deve estar na versão 3.12.6');
+    assert(scriptContent.includes('// @version      3.12.7'), 'Userscript deve estar na versão 3.12.7');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -3441,6 +3441,98 @@ async function runTests() {
         assert(unindexedIcon.classList.contains('smg-al-icon--thumb'), 'Ícone deve virar thumb após repaint');
         assert(unindexedIcon.querySelector('img')?.src === 'https://example.com/daniela.jpg', 'Imagem deve ter a URL correta');
     }
+
+    // =========================================================================
+    // TESTE 25: Post card action bar: like com 0 reações, save e share com ícones
+    // =========================================================================
+    console.log('--- TESTE 25: Post card action bar: like com 0 reações, save e share com ícones ---');
+
+    document.documentElement.classList.add('smg-thread');
+
+    if (!document.execCommand) {
+        document.execCommand = () => true;
+    }
+    if (!window.navigator.clipboard) {
+        window.navigator.clipboard = {
+            writeText: async () => {}
+        };
+    }
+
+    const testPostArticle = document.createElement('article');
+    testPostArticle.className = 'message message--post';
+    testPostArticle.id = 'js-post-25001';
+    testPostArticle.setAttribute('data-content', 'post-25001');
+    testPostArticle.innerHTML = `
+        <div class="message-inner">
+            <div class="message-cell message-cell--user">
+                <div class="message-avatar"><a class="avatar" href="/members/testuser.99/"><img src="/data/avatars/s/0/99.jpg" /></a></div>
+                <div class="message-name"><a href="/members/testuser.99/">TestUser</a></div>
+            </div>
+            <div class="message-cell message-cell--main">
+                <div class="message-main">
+                    <header class="message-attribution">
+                        <ul class="message-attribution-main listInline">
+                            <li><time data-timestamp="1700000000">1 de Jan de 2024</time></li>
+                        </ul>
+                        <ul class="message-attribution-opposite listInline">
+                            <li><a href="/threads/test-thread.12345/post-25001">#1</a></li>
+                            <li><a class="bookmarkLink" href="/posts/25001/bookmark"><i class="fa fa-bookmark"></i></a></li>
+                            <li><a class="message-attribution-gadget" data-xf-init="share-tooltip" href="https://forums.socialmediagirls.com/threads/test-thread.12345/post-25001"><i class="fa fa-share-alt"></i></a></li>
+                        </ul>
+                    </header>
+                    <div class="message-content">
+                        <div class="message-userContent">Post body content</div>
+                    </div>
+                    <footer class="message-footer">
+                        <div class="message-actionBar actionBar">
+                            <div class="actionBar-set actionBar-set--external">
+                                <a class="actionBar-action actionBar-action--like reaction" data-xf-click="reaction" href="/posts/25001/react"><i class="fa fa-thumbs-up"></i></a>
+                                <a class="actionBar-action actionBar-action--reply" href="/posts/25001/reply"><i class="fa fa-reply"></i> Reply</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(testPostArticle);
+    window.__processAll([testPostArticle]);
+
+    const pcActions = testPostArticle.querySelector('.smg-pc-actions');
+    assert(pcActions !== null, 'A action bar .smg-pc-actions deve ser criada no post');
+
+    // 1. Botão de reação com 0 reações
+    const reactBtn = pcActions.querySelector('.smg-pc-act--react');
+    assert(reactBtn !== null, 'O botão de reação .smg-pc-act--react foi criado em .smg-pc-actions');
+
+    const reactIc = reactBtn.querySelector('.smg-pc-react-ic');
+    assert(reactIc !== null && reactIc.querySelector('svg') !== null, 'O botão de reação tem o ícone SVG .smg-pc-react-ic');
+
+    const reactN = reactBtn.querySelector('.smg-pc-react-n');
+    const hasZeroReactions = reactN !== null && (reactN.textContent.includes('0 reações') || reactN.textContent.includes('0 reactions'));
+    assert(hasZeroReactions, 'O texto da reação .smg-pc-react-n contém "0 reações"');
+
+    // 2. Botão Salvar
+    const saveBtn = pcActions.querySelector('.smg-pc-act--save');
+    assert(saveBtn !== null, 'O botão save deve ser adicionado em .smg-pc-actions');
+    const saveIc = saveBtn.querySelector('.smg-pc-act-ic');
+    assert(saveIc !== null && saveIc.querySelector('svg') !== null, 'O botão save tem .smg-pc-act-ic contendo SVG');
+
+    // 3. Botão Compartilhar
+    const shareBtn = pcActions.querySelector('.smg-pc-act--share');
+    assert(shareBtn !== null, 'O botão share deve ser adicionado em .smg-pc-actions');
+    const shareIc = shareBtn.querySelector('.smg-pc-act-ic');
+    assert(shareIc !== null && shareIc.querySelector('svg') !== null, 'O botão share tem .smg-pc-act-ic contendo SVG');
+
+    // 4. Clique em Compartilhar ativa --copied e ícone shareDone
+    shareBtn.click();
+    await new Promise(r => setTimeout(r, 50));
+    assert(shareBtn.classList.contains('smg-pc-act--copied'), 'Ao clicar no share com smgShareDirect, ativa --copied');
+    const shareCopiedIc = shareBtn.querySelector('.smg-pc-act-ic');
+    assert(shareCopiedIc !== null && shareCopiedIc.innerHTML.includes('M20 6 9 17l-5-5'), 'Ao clicar no share com smgShareDirect, ativa ícone shareDone');
+
+    // Limpeza após teste 25
+    testPostArticle.remove();
 
     // =========================================================================
     // RESUMO FINAL

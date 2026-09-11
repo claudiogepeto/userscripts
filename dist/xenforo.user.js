@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.6
+// @version      3.12.7
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -17998,8 +17998,13 @@
             const lbl = a.querySelector('.smg-pc-act-lbl');
             const ok = () => {
                 a.classList.add('smg-pc-act--copied');
+                smgSwapIcon(a, ICONS.shareDone);
                 if (lbl) lbl.textContent = i18n('Copied!');
-                setTimeout(() => { a.classList.remove('smg-pc-act--copied'); if (lbl) lbl.textContent = i18n('Share'); }, 1200);
+                setTimeout(() => {
+                    a.classList.remove('smg-pc-act--copied');
+                    smgSwapIcon(a, ICONS.share);
+                    if (lbl) lbl.textContent = i18n('Share');
+                }, 1200);
             };
             // clipboard API falha em contexto não-seguro/sem permissão → cai no textarea+execCommand
             if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, () => smgCopyFallback(url, ok));
@@ -18109,7 +18114,7 @@
 
         // ---------- ACTION BAR ----------
         const bar = document.createElement('div'); bar.className = 'smg-pc-actions';
-        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction');
+        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]');
         if (react) {
             react.classList.add('smg-pc-act', 'smg-pc-act--react');
             // CONTADOR: ícone limpo (thumbs-up) + "N reações". O visual nativo (sprite/<i>/emoji/"React" = a "asa" torta) fica escondido via CSS.
@@ -18130,6 +18135,7 @@
         const save = attribution && attribution.querySelector('a.bookmarkLink');
         if (save) {
             save.classList.add('smg-pc-act', 'smg-pc-act--save');
+            smgSwapIcon(save, ICONS.save);
             smgActLabel(save, 'Save');
             save.title = IS_PT ? 'Salvar post nos favoritos' : 'Bookmark this post';
             save.setAttribute('aria-label', save.title);
@@ -18140,6 +18146,7 @@
         const share = attribution && attribution.querySelector('a.message-attribution-gadget[data-xf-init="share-tooltip"]');   // Share = ÚLTIMO (depois do translate)
         if (share) {
             share.classList.add('smg-pc-act', 'smg-pc-act--share');
+            smgSwapIcon(share, ICONS.share);
             smgActLabel(share, 'Share');
             smgShareDirect(share);
             share.title = IS_PT ? 'Copiar link deste post' : 'Copy link to this post';
@@ -18206,7 +18213,7 @@
         cinner.insertBefore(head, cinner.firstChild);
 
         const bar = document.createElement('div'); bar.className = 'smg-cc-actions';
-        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction');
+        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]');
         if (react) {
             react.classList.add('smg-cc-act', 'smg-cc-act--react');
             let n = 0; comment.querySelectorAll('.comment-reactions .smgReactionPill-count').forEach(c => n += parseInt(c.textContent, 10) || 0);
