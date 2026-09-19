@@ -22,7 +22,7 @@
                 --smg-card: rgba(255,255,255,0.035); /* superfície sutil sobre o bg do site (cards) */
                 --smg-card-head: rgba(255,255,255,0.06);
                 --smg-scrim: rgba(0,0,0,0.66);      /* backdrop de overlays */
-                --smg-media-h: 75vh;                /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
+                --smg-media-h: min(70vh, 750px);    /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
             }
             html.smg-smg {
                 --smg-bg: #1a1a1a;                  /* cor da topbar do socialmediagirls */
@@ -85,7 +85,7 @@
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
-                width: 100% !important; max-width: none !important; margin: 0 !important; display: block;
+                width: 100% !important; max-width: none !important; margin: 0 auto !important; display: block;
             }
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div {
                 width: 100% !important;
@@ -124,7 +124,7 @@
                 max-height: none !important;
             }
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video { max-height: var(--smg-media-h) !important; width: 100% !important; object-fit: contain !important; }
-            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
+            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 auto !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
             /* Verticais: o teto reduz a largura proporcionalmente; nunca usa altura fixa em uma mídia de largura cheia. */
             html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
@@ -167,7 +167,7 @@
             html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
             /* PAR vertical/misto (2 itens, 2 colunas lado a lado): ocupam o máximo de espaço, mas com altura máx de 75vh. O par horizontal cai em 1 coluna (full width) pela lógica do JS. */
             html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-dm-wrap > .smg-dm-video,
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: 75vh !important; }
+            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: var(--smg-media-h) !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
             #smg-gallery { position: fixed; inset: 0; z-index: 2147483600; display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }
@@ -629,6 +629,10 @@
                 overflow: visible !important;
                 background: transparent !important;
                 border-radius: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
             }
             /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
             .generic2wide-iframe-div > iframe,
@@ -721,14 +725,23 @@
             html.smg-masonry-on .auto-image-grid img.bbImage,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,
             html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-wide,
-            html.smg-masonry-on .auto-image-grid .smg-vert {
+            html.smg-masonry-on .auto-image-grid .smg-wide {
                 width: 100% !important;
                 max-width: none !important;
                 height: auto !important;
                 max-height: none !important;
-                margin: 0 0 8px !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h) !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
             }
             .smg-dm-wrap img.bbImage { border-radius: 10px; }
             .smg-dm-video {
@@ -820,7 +833,7 @@
                    position:absolute+inset:0 (preenche a caixa SEM depender de %-height resolver). object-fit:contain = nunca corta. */
             }
             span[data-s9e-mediaembed] .smg-rg,
-            .generic2wide-iframe-div .smg-rg { margin: 0 !important; }   /* container já dá a margem → não dobra */
+            .generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }   /* container já dá a margem → não dobra */
             .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
                 display: flex; align-items: center; justify-content: center;
                 width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
@@ -1004,10 +1017,11 @@
                NÃO depende de :has, então sempre vale. */
             .smg-turbo-slot--filled {
                 aspect-ratio: auto !important; overflow: visible !important; background: transparent !important;
+                display: flex !important; justify-content: center !important; align-items: center !important;
             }
             /* (o fallback .smg-turbo-slot:has(.smg-rg) foi REMOVIDO: todo caminho que põe .smg-rg num slot chama
                fillSlot() → a classe acima sempre vale, e o :has custava re-validação upward a cada mutação) */
-            .smg-turbo-slot > .smg-rg { margin: 0 !important; }
+            .smg-turbo-slot > .smg-rg { margin: 0 auto !important; }
 
             /* ---- site a 80% da largura disponível (desktop), CENTRALIZADO ---- */
             @media (min-width: 800px) {

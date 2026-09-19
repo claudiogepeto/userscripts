@@ -261,12 +261,19 @@
 
     // URL da imagem em resolução cheia: href do <a> (se for imagem) senão o src
     function imageUrlOf(img) {
+        if (img.dataset && img.dataset.smgFull) return absUrl(img.dataset.smgFull);
         const a = img.closest('a');
-        const href = a ? (a.getAttribute('href') || '') : '';
+        const href = a ? (a.getAttribute('href') || a.href || '') : '';
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
+        const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
+        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+            const cached = gbxCache.get(gbx.id);
+            if (cached && cached.original) return absUrl(cached.original);
+        }
         // src pode ser um placeholder lazy (data:image/gif base64 1x1) → usa a URL real do data-*
         let src = img.getAttribute('src') || img.src || '';
-        if (/^data:/i.test(src)) src = img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('data-original') || src;
+        if (!src || /^data:/i.test(src)) src = img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('data-original') || src;
         return absUrl(getBigUrl(src));
     }
 
@@ -275,18 +282,45 @@
         if (imageClickBound) return;
         imageClickBound = true;
         // intercepta o clique nas imagens (capture, pra ganhar do lightbox nativo do XenForo)
-        document.addEventListener('click', e => {
+        window.addEventListener('click', e => {
             if (!e.target.closest) return;
-            let img = e.target.closest('img.bbImage');
+            let img = e.target.closest('img.bbImage, .bbImage');
             if (!img) {
                 // imagem ÚNICA (inline) fica dentro de <a href=imagem target=_blank>; o <a> é block e mais largo que a img
                 // (centralizada) → clicar na área do <a> ao lado da imagem abria o link. Pega o <a> que embrulha uma bbImage.
                 const a = e.target.closest('a');
-                if (a && !a.classList.contains('smg-imglink-fallback')) img = a.querySelector('img.bbImage');
+                if (a && !a.classList.contains('smg-imglink-fallback')) img = a.querySelector('img.bbImage, .bbImage');
                 if (!img) return;
             }
+            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
             e.stopPropagation();
-            openMediaFeed(imageUrlOf(img));
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            const targetUrl = imageUrlOf(img);
+            openMediaFeed(targetUrl);
+            const smgLink = (img.dataset && img.dataset.smgLink) || (img.closest('a') ? img.closest('a').getAttribute('href') : '') || '';
+            const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+            if (gbx && typeof goonboxResolve === 'function' && !img.dataset.smgFull) {
+                goonboxResolve(smgLink, res => {
+                    if (!res || !res.original) return;
+                    img.dataset.smgFull = res.original;
+                    const link = img.closest('a');
+                    if (link) link.href = res.original;
+                    if (img.src !== res.original) img.src = res.original;
+                    const feed = document.getElementById('smg-feed');
+                    if (feed && feed.classList.contains('open')) {
+                        feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
+                            if (fi.dataset.src === targetUrl || fi.dataset.src === res.medium || fi.src === targetUrl || fi.src === res.medium) {
+                                fi.dataset.src = res.original;
+                                fi.src = res.original;
+                            }
+                        });
+                    }
+                }, img);
+            }
         }, true);
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__imageClickExports = { setupImageClickFeed, imageUrlOf };
     }

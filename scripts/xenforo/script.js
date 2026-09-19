@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.7
+// @version      3.12.12
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -641,7 +641,7 @@
                 --smg-card: rgba(255,255,255,0.035); /* superfície sutil sobre o bg do site (cards) */
                 --smg-card-head: rgba(255,255,255,0.06);
                 --smg-scrim: rgba(0,0,0,0.66);      /* backdrop de overlays */
-                --smg-media-h: 75vh;                /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
+                --smg-media-h: min(70vh, 750px);    /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
             }
             html.smg-smg {
                 --smg-bg: #1a1a1a;                  /* cor da topbar do socialmediagirls */
@@ -704,7 +704,7 @@
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
-                width: 100% !important; max-width: none !important; margin: 0 !important; display: block;
+                width: 100% !important; max-width: none !important; margin: 0 auto !important; display: block;
             }
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div {
                 width: 100% !important;
@@ -743,7 +743,7 @@
                 max-height: none !important;
             }
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video { max-height: var(--smg-media-h) !important; width: 100% !important; object-fit: contain !important; }
-            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
+            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 auto !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
             /* Verticais: o teto reduz a largura proporcionalmente; nunca usa altura fixa em uma mídia de largura cheia. */
             html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
@@ -786,7 +786,7 @@
             html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
             /* PAR vertical/misto (2 itens, 2 colunas lado a lado): ocupam o máximo de espaço, mas com altura máx de 75vh. O par horizontal cai em 1 coluna (full width) pela lógica do JS. */
             html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-dm-wrap > .smg-dm-video,
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: 75vh !important; }
+            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: var(--smg-media-h) !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
             #smg-gallery { position: fixed; inset: 0; z-index: 2147483600; display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }
@@ -1248,6 +1248,10 @@
                 overflow: visible !important;
                 background: transparent !important;
                 border-radius: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
             }
             /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
             .generic2wide-iframe-div > iframe,
@@ -1340,14 +1344,23 @@
             html.smg-masonry-on .auto-image-grid img.bbImage,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,
             html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-wide,
-            html.smg-masonry-on .auto-image-grid .smg-vert {
+            html.smg-masonry-on .auto-image-grid .smg-wide {
                 width: 100% !important;
                 max-width: none !important;
                 height: auto !important;
                 max-height: none !important;
-                margin: 0 0 8px !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h) !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
             }
             .smg-dm-wrap img.bbImage { border-radius: 10px; }
             .smg-dm-video {
@@ -1439,7 +1452,7 @@
                    position:absolute+inset:0 (preenche a caixa SEM depender de %-height resolver). object-fit:contain = nunca corta. */
             }
             span[data-s9e-mediaembed] .smg-rg,
-            .generic2wide-iframe-div .smg-rg { margin: 0 !important; }   /* container já dá a margem → não dobra */
+            .generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }   /* container já dá a margem → não dobra */
             .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
                 display: flex; align-items: center; justify-content: center;
                 width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
@@ -1623,10 +1636,11 @@
                NÃO depende de :has, então sempre vale. */
             .smg-turbo-slot--filled {
                 aspect-ratio: auto !important; overflow: visible !important; background: transparent !important;
+                display: flex !important; justify-content: center !important; align-items: center !important;
             }
             /* (o fallback .smg-turbo-slot:has(.smg-rg) foi REMOVIDO: todo caminho que põe .smg-rg num slot chama
                fillSlot() → a classe acima sempre vale, e o :has custava re-validação upward a cada mutação) */
-            .smg-turbo-slot > .smg-rg { margin: 0 !important; }
+            .smg-turbo-slot > .smg-rg { margin: 0 auto !important; }
 
             /* ---- site a 80% da largura disponível (desktop), CENTRALIZADO ---- */
             @media (min-width: 800px) {
@@ -10207,9 +10221,118 @@
         }, IMG_DEAD_MS), { rootMargin: '300px 0px' });
         if (imgWatchIO) imgWatchIO.observe(img);
     }
+    function goonboxViewer(url) {
+        if (!url || typeof url !== 'string') return null;
+        let u; try { u = new URL(url, location.href); } catch (e) { return null; }
+        if (!/(?:^|\.)goonbox\.[a-z]{2,}$/i.test(u.hostname)) return null;
+        const m = u.pathname.match(/^\/img\/([a-zA-Z0-9]+)/i);
+        if (!m) return null;
+        return { host: u.hostname, id: m[1] };
+    }
+    const gbxCache = new Map();      // id → { original, medium, thumb, width, height } | null
+    const gbxInflight = new Map();   // id → [cbs]
+    const gbxTasks = makeTaskQueue(4);
+    function goonboxResolve(viewerUrl, cb, anchor) {
+        const info = goonboxViewer(viewerUrl);
+        if (!info) { if (cb) cb(null); return; }
+        const id = info.id;
+        if (gbxCache.has(id)) { if (cb) cb(gbxCache.get(id)); return; }
+        if (gbxInflight.has(id)) { if (cb) gbxInflight.get(id).push(cb); return; }
+        if (!GMX) { if (cb) cb(null); return; }
+        if (cb) gbxInflight.set(id, [cb]);
+        else gbxInflight.set(id, []);
+        const done = res => {
+            gbxCache.set(id, res || null);
+            const cbs = gbxInflight.get(id) || [];
+            gbxInflight.delete(id);
+            cbs.forEach(f => { try { f(res || null); } catch (e) {} });
+        };
+        const apiUrl = 'https://' + info.host + '/api/images/' + id;
+        gbxTasks.push(() => new Promise(release => {
+            GMX({
+                method: 'GET',
+                url: apiUrl,
+                timeout: 12000,
+                headers: { Accept: 'application/json, text/plain, */*' },
+                onload: r => {
+                    let data = null;
+                    try { data = JSON.parse(r.responseText || ''); } catch (e) {}
+                    const img = data && data.image;
+                    if (img && (img.original_url || img.medium_url)) {
+                        done({
+                            original: img.original_url || img.medium_url,
+                            medium: img.medium_url || img.original_url,
+                            thumb: img.thumb_url || img.medium_url || img.original_url,
+                            width: img.width,
+                            height: img.height
+                        });
+                    } else {
+                        done(null);
+                    }
+                    release();
+                },
+                onerror: () => { done(null); release(); },
+                ontimeout: () => { done(null); release(); }
+            });
+        }), anchor, () => done(null));
+    }
+    function goonboxEmbed(linkEl, href, gbx) {
+        let card; try { card = fhCard({ label: gbx.host, href: href, sub: i18n('Image'), logo: fhLogoChain({ key: 'goonbox' }, href, null) }); } catch (e) { return; }
+        linkEl.replaceWith(card);
+        goonboxResolve(href, res => {
+            if (!res || !res.original || !card.isConnected) return;
+            const full = res.original;
+            const img = document.createElement('img');
+            img.className = 'bbImage';
+            img.loading = 'lazy';
+            img.alt = '';
+            img.dataset.smgLink = href;
+            img.dataset.smgFull = full;
+            img.dataset.smgMed = res.medium || full;
+            if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
+            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+            const link = document.createElement('a');
+            link.href = full;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.appendChild(img);
+            card.replaceWith(link);
+            img.src = full;
+        }, card);
+    }
     function processOneImage(img) {
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
-        if (!img.dataset.smgLink) { const la = img.closest('a.link--external[href]'); if (la) img.dataset.smgLink = la.getAttribute('href') || ''; }
+        if (!img.dataset.smgLink) {
+            const la = img.closest('a.link--external[href]');
+            if (la) img.dataset.smgLink = resolveProxyHref(la.getAttribute('href') || la.href || '');
+        }
+        const gbx = goonboxViewer(img.dataset.smgLink);
+        if (gbx) {
+            goonboxResolve(img.dataset.smgLink, res => {
+                if (!res || !res.original || !img.isConnected) return;
+                img.dataset.smgFull = res.original;
+                img.dataset.smgMed = res.medium || res.original;
+                const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
+                if (link) link.href = res.original;
+                if (res.original && img.src !== res.original) {
+                    img.src = res.original;
+                }
+                if (img.dataset.url) img.dataset.url = res.original;
+                if (res.width && res.height && !img.style.aspectRatio) {
+                    img.style.aspectRatio = res.width + ' / ' + res.height;
+                }
+                // Se o feed lightbox estiver aberto com este slide, atualiza o slide para alta resolução
+                const feed = document.getElementById('smg-feed');
+                if (feed && feed.classList.contains('open')) {
+                    feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
+                        if (fi.dataset.src === res.medium || fi.src === res.medium) {
+                            fi.dataset.src = res.original;
+                            fi.src = res.original;
+                        }
+                    });
+                }
+            }, img);
+        }
         const src = img.currentSrc || img.src || '';
         if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
             // tira da varredura por-mutação (data-smg-lazy-wait) e re-processa SÓ esta imagem quando o
@@ -10458,6 +10581,8 @@
             if (!url || /^data:/.test(url)) {   // sem URL extraível
                 const chv = cheveretoViewer(href);   // jpg6.su & afins → resolve a imagem REAL (decode do cooked) e exibe inline; fallback = card
                 if (chv) { cheveretoEmbed(a, href, chv); return; }
+                const gbx = goonboxViewer(href);
+                if (gbx) { goonboxEmbed(a, href, gbx); return; }
                 showLink(); return;   // resto → link em texto
             }
             const img = document.createElement('img');
@@ -10523,14 +10648,15 @@
     //   · 5 ou mais → 3 colunas
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
     const TALL_RELH = 1.35;  // h/w > 1.35 = muito vertical (stories/prints 9:16, 2:3)
-    const SMG_MEDIA_MAX_VH = 75;
+    const SMG_MEDIA_MAX_VH = 70;
+    const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
         if (!vertical) { el.style.removeProperty('max-width'); return; }
         const ratio = w / h;
         const maxWidth = (el.closest && el.closest('.auto-image-grid'))
-            ? 'min(100%, ' + (SMG_MEDIA_MAX_VH * ratio).toFixed(4) + 'vh)'
-            : 'min(75%, 880px, ' + (SMG_MEDIA_MAX_VH * ratio).toFixed(4) + 'vh)';
+            ? 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))'
+            : 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
@@ -10753,7 +10879,9 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid };
+        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed };
+        window.processOneImage = processOneImage;
+        window.goonboxEmbed = goonboxEmbed;
     }
 
     // =========================================================
@@ -10767,8 +10895,8 @@
     //   player UI .... rgBuild · rgControls (controles próprios) · rgStart · buildNativeVideo
     //   aplica ....... applyRedgifsPlayer (loaders/iframes do fórum → nosso player) · rgHidePlaceholder
     // =========================================================
-    const GMX = (typeof GM_xmlhttpRequest === 'function') ? GM_xmlhttpRequest
-              : (typeof GM !== 'undefined' && GM.xmlHttpRequest ? GM.xmlHttpRequest.bind(GM) : null);
+    const GMX = (typeof GM_xmlhttpRequest === 'function') ? (...args) => GM_xmlhttpRequest(...args)
+              : (typeof GM !== 'undefined' && GM.xmlHttpRequest ? (...args) => GM.xmlHttpRequest(...args) : null);
 
     function rgIdFrom(s) {   // id do redgifs em qualquer url (/ifr/ /watch/ /gifs/ /i/)
         const m = (s || '').match(/redgifs\.com\/(?:ifr|watch|gifs|i)\/([A-Za-z0-9]+)/i);
@@ -10943,8 +11071,8 @@
         wrap.classList.toggle('smg-rg-wide', !isVertical);
         // Quando o teto de altura é atingido, reduz a largura do wrapper na mesma proporção.
         // Em masonry o !important da regra geral de coluna é sobrescrito apenas neste player real.
-        const maxWidth = 'min(1400px, ' + (SMG_MEDIA_MAX_VH * r).toFixed(4) + 'vh)';
-        if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, ' + (SMG_MEDIA_MAX_VH * r).toFixed(4) + 'vh)', 'important');
+        const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
+        if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
         else wrap.style.maxWidth = maxWidth;
         return true;
     }
@@ -11082,7 +11210,8 @@
         // ...desde que a carga anterior esteja viva: com erro (video.error) ou sem fonte (networkState 3)
         // não há nada pra aproveitar, e esperar o watchdog seria travar 8s à toa — reatribui e tenta.
         const already = !!video.currentSrc && rgSameFile(video.currentSrc, url) && !video.error && video.networkState !== 3;
-        if (already && video.readyState >= 1 && video.videoWidth > 0) {   // 0x0 = decodificou nada → segue o caminho normal (probe + blob)
+        if (already && video.readyState >= 1 && (video.videoWidth > 0 || video.duration > 0)) {   // 0x0 = decodificou nada → segue o caminho normal (probe + blob)
+            if (video._rgUserPlayed && video.preload !== 'auto') video.preload = 'auto';
             rgDirect[host] = true;
             if (wrap) wrap.classList.remove('smg-rg-loading', 'smg-rg-ready');   // sem novo loadeddata/canplay, o clearSkel não roda → tira o skeleton aqui
             rgPlayIfVisible(video, wrap);
@@ -11090,22 +11219,32 @@
         }
         return new Promise(resolve => {
             let settled = false;
-            const cleanup = () => { video.removeEventListener('loadedmetadata', onData); video.removeEventListener('error', onErr); clearTimeout(wd); };
+            const cleanup = () => {
+                video.removeEventListener('loadedmetadata', onData);
+                video.removeEventListener('loadeddata', onData);
+                video.removeEventListener('error', onErr);
+                clearTimeout(wd);
+            };
             const ok = () => { if (settled) return; settled = true; rgDirect[host] = true; cleanup(); rgPlayIfVisible(video, wrap); resolve(); };
             // hard = falha REAL (erro/0x0) → memoriza que o host precisa de blob (próximos vão direto pro blob, sem perder tempo no probe).
             // soft = só timeout de rede lenta → cai pro blob SÓ neste vídeo, sem condenar o host inteiro: 1 vídeo lento não vira sessão toda em full-download.
             const toBlob = hard => { if (settled) return; settled = true; if (hard) rgDirect[host] = false; cleanup(); try { video.removeAttribute('src'); video.load(); } catch (x) {} if (deferBlob(video, url, wrap)) { resolve(); return; } rgViaBlob(video, url, wrap).then(resolve); };
-            const onData = () => { if (video.videoWidth > 0) ok(); else toBlob(true); };
+            const onData = e => {
+                if (video.videoWidth > 0 || video.duration > 0) ok();
+                else if (e && e.type === 'loadedmetadata') return;   // aguarda loadeddata caso videoWidth ainda não tenha sido populado no loadedmetadata
+                else toBlob(true);
+            };
             const onErr = () => toBlob(true);
             video.addEventListener('loadedmetadata', onData, { once: true });   // metadata basta p/ confirmar acesso + pegar duração/proporção
+            video.addEventListener('loadeddata', onData, { once: true });       // primeiro frame confirmação caso videoWidth popule após metadata
             video.addEventListener('error', onErr, { once: true });
             // no fim do prazo, se já HÁ metadata (o loadedmetadata veio antes de a gente escutar), resolve como sucesso
             // em vez de ficar pendurado pra sempre — pendurado = spinner eterno, que é como o bug aparece.
-            const wd = setTimeout(() => { if (video.readyState >= 1) ok(); else toBlob(false); }, rgDirect[host] === true ? 15000 : 8000);   // tolerante: o 206 funciona; só cai pro blob (que é + lento) em lentidão EXTREMA. Erro real cai na hora pelo onErr.
-            if (already) { video.preload = 'metadata'; return; }   // MESMO arquivo já baixando (a thumb) → deixa terminar; reatribuir o src reiniciaria do zero
+            const wd = setTimeout(() => { if (video.readyState >= 1) ok(); else toBlob(false); }, 15000);   // tolerante: 15s p/ streaming; só cai pro blob em lentidão extrema
+            if (already) { video.preload = video._rgUserPlayed ? 'auto' : 'metadata'; return; }   // MESMO arquivo já baixando (a thumb) → deixa terminar; reatribuir o src reiniciaria do zero
             if (video._rgKeepRef) video.referrerPolicy = video._rgKeepRef;
             else if (video.dataset.rgid) video.referrerPolicy = 'no-referrer';   // host referer-locked (imagepond): preserva o referer da origem (senão 403); redgifs = no-referrer; outros (turbo/saint) = referer padrão do navegador
-            video.preload = 'metadata';   // só metadata (não baixa o vídeo inteiro à toa — economiza banda em vídeo longo); toca/bufferiza no play
+            video.preload = video._rgUserPlayed ? 'auto' : 'metadata';   // se o usuário já tocou, bufferiza à frente
             video.src = url;
         });
     }
@@ -11220,6 +11359,7 @@
         const toggle = () => {
             if (!video.paused) { video.pause(); return; }
             video._rgUserPlayed = true;
+            if (video.preload !== 'auto') video.preload = 'auto';
             if (video._rgDeferUrl) {   // o blob foi adiado (inline autoplay-off) → baixa AGORA + toca (rgViaBlob → rgPlayIfVisible; _rgUserPlayed já é true)
                 const u = video._rgDeferUrl; video._rgDeferUrl = null;
                 wrap.classList.remove('smg-rg-ready'); wrap.classList.add('smg-rg-loading');
@@ -11374,7 +11514,7 @@
         syncSrcHref(); src.addEventListener('pointerenter', syncSrcHref);
         src.addEventListener('click', e => { e.stopPropagation(); if (!video._rgExt) e.preventDefault(); });   // não dispara o play/pause do player; sem _rgExt → não navega
         // estado play/pause → classe (o CSS mostra/esconde o play central)
-        video.addEventListener('play', () => { wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause; if (!video.muted) rgSolo(video); });
+        video.addEventListener('play', () => { if (video.preload !== 'auto') video.preload = 'auto'; wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause; if (!video.muted) rgSolo(video); });
         video.addEventListener('pause', () => { wrap.classList.remove('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPlay; barPlay.innerHTML = ICONS.rgPlay; });
         video.addEventListener('volumechange', syncVol);
         // LOADING ao avançar/voltar: spinner por cima SÓ no SEEK do usuário (era o pedido). NÃO usa 'waiting':
@@ -11473,21 +11613,15 @@
         else video.addEventListener('loadedmetadata', onMeta, { once: true });
 
         if (poster) {
-            // Mostra a thumb nativa (#t=0.1) imediatamente enquanto confirma o poster
-            setNativeThumb();
+            video.poster = poster;
             const im = new Image();
             im.onload = () => {
                 if (!video.isConnected) return;
-                // Substitui a thumb nativa pelo poster real (melhor qualidade) quando carregado
-                video.poster = poster;
-                // Remove o src nativo para evitar conflito poster vs src
-                if (!video.dataset.rgLoaded && video.currentSrc) {
-                    video.removeAttribute('src');
-                    try { video.load(); } catch (e) {}
-                }
-                if (wrap) rgAspect(wrap, im.naturalWidth, im.naturalHeight);
+                if (wrap && im.naturalWidth && im.naturalHeight) rgAspect(wrap, im.naturalWidth, im.naturalHeight);
             };
-            im.onerror = () => { /* setNativeThumb já foi chamado, nada a fazer */ };
+            im.onerror = () => {
+                setNativeThumb();
+            };
             im.src = poster;
         } else {
             setNativeThumb();
@@ -11528,8 +11662,34 @@
     // → { mp4, img }: a página /videos/{id} do imagepond pode ser VÍDEO ou IMAGEM. O ARQUIVO de vídeo (media.imagepond.net/media/videos/…)
     // NÃO está no HTML estático da /videos/{id} (carrega por JS) — ele aparece na página /i/{slug} que a /videos/ LINKA. Então: tenta achar
     // a mídia direta nesta página; se não, segue UMA vez pro link /i/ e procura lá. `mp4` pode ser .mp4/.mov/.m4v/.webm (o player nativo toca todos).
+    const imagepondCache = new Map();
+    const imagepondInflight = new Map();
+
     function imagepondResolve(pageUrl, cb) {
         if (!GMX || !pageUrl) { cb(null); return; }
+        if (imagepondCache.has(pageUrl)) {
+            cb(imagepondCache.get(pageUrl));
+            return;
+        }
+        if (imagepondInflight.has(pageUrl)) {
+            imagepondInflight.get(pageUrl).push(cb);
+            return;
+        }
+        imagepondInflight.set(pageUrl, [cb]);
+
+        const finish = res => {
+            if (res) {
+                while (imagepondCache.size >= 128) {
+                    const firstKey = imagepondCache.keys().next().value;
+                    imagepondCache.delete(firstKey);
+                }
+                imagepondCache.set(pageUrl, res);
+            }
+            const cbs = imagepondInflight.get(pageUrl) || [];
+            imagepondInflight.delete(pageUrl);
+            cbs.forEach(fn => { try { fn(res); } catch (e) {} });
+        };
+
         const VEXT = '(?:mp4|mov|m4v|webm)';
         const grabVid = t => {
             let m = t.match(new RegExp('<source[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));   // <source> direto (não HLS .m3u8)
@@ -11547,17 +11707,23 @@
             onload: r => {
                 const t = r.responseText || '';
                 const vid = grabVid(t);
-                if (vid) { cb({ mp4: vid, img: null }); return; }
+                if (vid) { finish({ mp4: vid, img: null }); return; }
                 const img = grabImg(t);
-                if (img) { cb({ mp4: null, img }); return; }
+                if (img) { finish({ mp4: null, img }); return; }
                 // /videos/{id}: o arquivo mora na página /i/{slug} (linkada aqui). Segue UMA vez (não a partir de uma /i/, evita loop), pulando o /i/{id}/download.
                 if (!/\/i\//.test(pageUrl)) {
                     const re = /https?:\/\/[^"'\s)]*imagepond\.net\/i\/[^"'\s)]+/ig;
-                    for (let mm; (mm = re.exec(t));) { const u = mm[0].replace(/&amp;/g, '&'); if (!/\/download\b/i.test(u)) { imagepondResolve(u, cb); return; } }
+                    for (let mm; (mm = re.exec(t));) {
+                        const u = mm[0].replace(/&amp;/g, '&');
+                        if (!/\/download\b/i.test(u)) {
+                            imagepondResolve(u, subRes => finish(subRes));
+                            return;
+                        }
+                    }
                 }
-                cb(null);
+                finish(null);
             },
-            onerror: () => cb(null), ontimeout: () => cb(null) });
+            onerror: () => finish(null), ontimeout: () => finish(null) });
     }
     function processImagepondNativeEmbeds(roots) {
         if (!(FEATURES.imagepondEmbeds && GMX)) return;
@@ -11834,6 +12000,15 @@
         });
     }
 
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__imagepondCache = imagepondCache;
+        window.__imagepondInflight = imagepondInflight;
+        window.__imagepondResolve = imagepondResolve;
+        window.__rgPrepareUrl = rgPrepareUrl;
+        window.__rgViaDirect = rgViaDirect;
+        window.__rgControls = rgControls;
+    }
+
     // =========================================================
     // FEATURE: auto-load redgifs
     // =========================================================
@@ -11980,13 +12155,34 @@
         // ---- links da página (casados por CLASSE/HREF, não por texto → funcionam em PT, EN, etc.) ----
         const prevPageLink = document.querySelector('.pageNav-jump--prev, .pageNavSimple-el--prev');
         const nextPageLink = document.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
-        // sort tabs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
-        let sortDateLink = null, sortReactionLink = null;
-        document.querySelectorAll('.tabs--standalone .tabs-tab, .block-outer-opposite--postSortFilter .tabs-tab').forEach(t => {
-            const h = t.getAttribute('href') || '';
-            if (/order=reaction/i.test(h)) sortReactionLink = t;
-            else if (!/order=/i.test(h)) sortDateLink = t;
-        });
+        // sort tabs / URLs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
+        function getSortHref(wantDate) {
+            let dateHref = null, reactHref = null;
+            document.querySelectorAll('.tabs--standalone .tabs-tab, .block-outer-opposite--postSortFilter .tabs-tab, a.smg-bar-sorttoggle').forEach(t => {
+                const h = t.getAttribute('href') || t.href || '';
+                if (/order=reaction/i.test(h)) reactHref = h;
+                else if (h && !/order=/i.test(h) && /\/threads\//i.test(h)) dateHref = h;
+            });
+            if (wantDate && dateHref) return dateHref;
+            if (!wantDate && reactHref) return reactHref;
+
+            try {
+                const u = new URL(window.location.href);
+                u.pathname = u.pathname.replace(/\/page-\d+.*$/, '/'); // reseta paginação para o início da thread na nova ordenação (padrão XenForo)
+                if (wantDate) {
+                    u.searchParams.delete('order');
+                } else {
+                    u.searchParams.set('order', 'reaction_score');
+                }
+                u.hash = '';
+                return u.toString();
+            } catch (e) {
+                return null;
+            }
+        }
+        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+            window.__getSortHref = getSortHref;
+        }
 
         let sortIsDate = !/reaction/i.test(window.location.search || '');
 
@@ -14725,9 +14921,10 @@
         btnSort.addEventListener('click', () => {
             sortIsDate = !sortIsDate;
             updateSortIcon();
-
-            if (sortIsDate) sortDateLink?.click();
-            else sortReactionLink?.click();
+            const targetUrl = getSortHref(sortIsDate);
+            if (targetUrl) {
+                window.location.href = targetUrl;
+            }
         });
 
         updateSortIcon();
@@ -15001,12 +15198,19 @@
 
     // URL da imagem em resolução cheia: href do <a> (se for imagem) senão o src
     function imageUrlOf(img) {
+        if (img.dataset && img.dataset.smgFull) return absUrl(img.dataset.smgFull);
         const a = img.closest('a');
-        const href = a ? (a.getAttribute('href') || '') : '';
+        const href = a ? (a.getAttribute('href') || a.href || '') : '';
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
+        const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
+        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+            const cached = gbxCache.get(gbx.id);
+            if (cached && cached.original) return absUrl(cached.original);
+        }
         // src pode ser um placeholder lazy (data:image/gif base64 1x1) → usa a URL real do data-*
         let src = img.getAttribute('src') || img.src || '';
-        if (/^data:/i.test(src)) src = img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('data-original') || src;
+        if (!src || /^data:/i.test(src)) src = img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('data-original') || src;
         return absUrl(getBigUrl(src));
     }
 
@@ -15015,20 +15219,47 @@
         if (imageClickBound) return;
         imageClickBound = true;
         // intercepta o clique nas imagens (capture, pra ganhar do lightbox nativo do XenForo)
-        document.addEventListener('click', e => {
+        window.addEventListener('click', e => {
             if (!e.target.closest) return;
-            let img = e.target.closest('img.bbImage');
+            let img = e.target.closest('img.bbImage, .bbImage');
             if (!img) {
                 // imagem ÚNICA (inline) fica dentro de <a href=imagem target=_blank>; o <a> é block e mais largo que a img
                 // (centralizada) → clicar na área do <a> ao lado da imagem abria o link. Pega o <a> que embrulha uma bbImage.
                 const a = e.target.closest('a');
-                if (a && !a.classList.contains('smg-imglink-fallback')) img = a.querySelector('img.bbImage');
+                if (a && !a.classList.contains('smg-imglink-fallback')) img = a.querySelector('img.bbImage, .bbImage');
                 if (!img) return;
             }
+            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
             e.stopPropagation();
-            openMediaFeed(imageUrlOf(img));
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            const targetUrl = imageUrlOf(img);
+            openMediaFeed(targetUrl);
+            const smgLink = (img.dataset && img.dataset.smgLink) || (img.closest('a') ? img.closest('a').getAttribute('href') : '') || '';
+            const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+            if (gbx && typeof goonboxResolve === 'function' && !img.dataset.smgFull) {
+                goonboxResolve(smgLink, res => {
+                    if (!res || !res.original) return;
+                    img.dataset.smgFull = res.original;
+                    const link = img.closest('a');
+                    if (link) link.href = res.original;
+                    if (img.src !== res.original) img.src = res.original;
+                    const feed = document.getElementById('smg-feed');
+                    if (feed && feed.classList.contains('open')) {
+                        feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
+                            if (fi.dataset.src === targetUrl || fi.dataset.src === res.medium || fi.src === targetUrl || fi.src === res.medium) {
+                                fi.dataset.src = res.original;
+                                fi.src = res.original;
+                            }
+                        });
+                    }
+                }, img);
+            }
         }, true);
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__imageClickExports = { setupImageClickFeed, imageUrlOf };
     }
 
     // =========================================================
@@ -18059,13 +18290,16 @@
         }
     }
     function buildPostCard(post) {
-        post.dataset.smgCard = '1';   // marca ANTES do guard (REGRA DE OURO): post deletado/placeholder sem marca era re-varrido em todo full-scan
-        const inner = post.querySelector(':scope > .message-inner');
-        const main = inner && inner.querySelector(':scope > .message-cell--main');
+        const inner = post.querySelector(':scope > .message-inner, .message-inner');
+        const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
         if (!inner || !main) {
+            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
+            post.dataset.smgCard = '1';
             post.dataset.smgCardReady = 'skip';
             return;   // não é um post padrão (deletado/placeholder) → deixa nativo
         }
+        post.dataset.smgCard = '1';
+        delete post.dataset.smgCardReady;
         post.classList.add('smg-pc');
         const messageMain = main.querySelector('.message-main') || main;
         const userCell = inner.querySelector(':scope > .message-cell--user');
@@ -18171,19 +18405,33 @@
     }
     function buildPostCards(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (onde há posts)
-        eachIn(roots, 'article.message:not([data-smg-card])', buildPostCard);
+        eachIn(roots, 'article.message:not([data-smg-card]), article.message[data-smg-card-ready="skip"]', post => {
+            const inner = post.querySelector(':scope > .message-inner, .message-inner');
+            const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
+            if (inner && main) {
+                delete post.dataset.smgCard;
+                delete post.dataset.smgCardReady;
+                buildPostCard(post);
+            } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                post.dataset.smgCard = '1';
+                post.dataset.smgCardReady = 'skip';
+            }
+        });
     }
 
     // COMENTÁRIOS (uw_fcs, só no SMG): mesmo modelo do post — header compacto (avatar · user · tempo · #N),
     // body, action bar leve (react · responder · ⋯ citar/denunciar/traduzir/share). Indentação (thread-line) via CSS.
     // MOVE os nativos (preserva AJAX); reusa o popover ⋯ do post (smg-pc-more*). 1×/comentário via data-smg-cc.
     function buildCommentCard(comment) {
-        comment.dataset.smgCc = '1';   // marca ANTES do guard (REGRA DE OURO)
-        const cinner = comment.querySelector(':scope > .comment-inner');
+        const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
         if (!cinner) {
+            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
+            comment.dataset.smgCc = '1';
             comment.dataset.smgCcReady = 'skip';
             return;
         }
+        comment.dataset.smgCc = '1';
+        delete comment.dataset.smgCcReady;
         comment.classList.add('smg-cc');
         const cmain = cinner.querySelector(':scope > .comment-main');
         const cwrap = cmain && cmain.querySelector('.comment-contentWrapper');
@@ -18241,7 +18489,17 @@
     }
     function buildCommentCards(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;
-        eachIn(roots, '.message-responses .comment:not([data-smg-cc])', buildCommentCard);
+        eachIn(roots, '.message-responses .comment:not([data-smg-cc]), .message-responses .comment[data-smg-cc-ready="skip"]', comment => {
+            const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
+            if (cinner) {
+                delete comment.dataset.smgCc;
+                delete comment.dataset.smgCcReady;
+                buildCommentCard(comment);
+            } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                comment.dataset.smgCc = '1';
+                comment.dataset.smgCcReady = 'skip';
+            }
+        });
     }
     // header da seção de comentários (SMG/uw_fcs): label "Sort:" antes do chip + "Previous comments" → "Load more"
     function buildCommentBar(roots) {
@@ -18288,6 +18546,10 @@
             buildFilterBars,
             decorateThreadCard,
             decorateWatchedThreadRow,
+            buildPostCard,
+            buildPostCards,
+            buildCommentCard,
+            buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
             set isStreamingWatched(v) { isStreamingWatched = v; }
         };
@@ -20446,6 +20708,12 @@
         window.addEventListener('click', e => {
             const a = e.target.closest && e.target.closest('a');
             if (!a) return;
+
+            // Se o clique foi em uma imagem ou dentro de um <a> que embrulha uma imagem (ex.: goonbox, imgbox, smg-imglink, etc.):
+            // não sequestra o clique — deixa o visualizador/modal (setupImageClickFeed) abrir a imagem!
+            if (e.target.closest && (e.target.closest('img.bbImage, .bbImage') || (a && (a.classList.contains('smg-imglink') || a.querySelector('img.bbImage, .bbImage'))))) {
+                return;
+            }
 
             const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
@@ -23976,6 +24244,7 @@
     if (feedViewWanted()) cls.add('smg-watched-feed');   // feed ligado (home ?view=feed) → CSS esconde o conteúdo nativo JÁ, sem flash (smg-watched-feed = "feed on")
     if (FEATURES.autoFullImages) cls.add('smg-masonry-on');   // "Galeria" (full-res + masonry por post) — masonry atrelado à galeria
     if (FEATURES.unwrapLinks) { bindProxyClick(); handleRedirectPage(); }   // liga o intercept de clique JÁ no document-start (antes do XF) + pula página de aviso
+    if (FEATURES.imageLightbox) safe(setupImageClickFeed);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
     // Reserve the persisted desktop dock before the body and topbar are built.
     // The panel itself is mounted during boot, but this class prevents its

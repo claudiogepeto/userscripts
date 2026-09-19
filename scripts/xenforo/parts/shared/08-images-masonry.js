@@ -78,9 +78,118 @@
         }, IMG_DEAD_MS), { rootMargin: '300px 0px' });
         if (imgWatchIO) imgWatchIO.observe(img);
     }
+    function goonboxViewer(url) {
+        if (!url || typeof url !== 'string') return null;
+        let u; try { u = new URL(url, location.href); } catch (e) { return null; }
+        if (!/(?:^|\.)goonbox\.[a-z]{2,}$/i.test(u.hostname)) return null;
+        const m = u.pathname.match(/^\/img\/([a-zA-Z0-9]+)/i);
+        if (!m) return null;
+        return { host: u.hostname, id: m[1] };
+    }
+    const gbxCache = new Map();      // id → { original, medium, thumb, width, height } | null
+    const gbxInflight = new Map();   // id → [cbs]
+    const gbxTasks = makeTaskQueue(4);
+    function goonboxResolve(viewerUrl, cb, anchor) {
+        const info = goonboxViewer(viewerUrl);
+        if (!info) { if (cb) cb(null); return; }
+        const id = info.id;
+        if (gbxCache.has(id)) { if (cb) cb(gbxCache.get(id)); return; }
+        if (gbxInflight.has(id)) { if (cb) gbxInflight.get(id).push(cb); return; }
+        if (!GMX) { if (cb) cb(null); return; }
+        if (cb) gbxInflight.set(id, [cb]);
+        else gbxInflight.set(id, []);
+        const done = res => {
+            gbxCache.set(id, res || null);
+            const cbs = gbxInflight.get(id) || [];
+            gbxInflight.delete(id);
+            cbs.forEach(f => { try { f(res || null); } catch (e) {} });
+        };
+        const apiUrl = 'https://' + info.host + '/api/images/' + id;
+        gbxTasks.push(() => new Promise(release => {
+            GMX({
+                method: 'GET',
+                url: apiUrl,
+                timeout: 12000,
+                headers: { Accept: 'application/json, text/plain, */*' },
+                onload: r => {
+                    let data = null;
+                    try { data = JSON.parse(r.responseText || ''); } catch (e) {}
+                    const img = data && data.image;
+                    if (img && (img.original_url || img.medium_url)) {
+                        done({
+                            original: img.original_url || img.medium_url,
+                            medium: img.medium_url || img.original_url,
+                            thumb: img.thumb_url || img.medium_url || img.original_url,
+                            width: img.width,
+                            height: img.height
+                        });
+                    } else {
+                        done(null);
+                    }
+                    release();
+                },
+                onerror: () => { done(null); release(); },
+                ontimeout: () => { done(null); release(); }
+            });
+        }), anchor, () => done(null));
+    }
+    function goonboxEmbed(linkEl, href, gbx) {
+        let card; try { card = fhCard({ label: gbx.host, href: href, sub: i18n('Image'), logo: fhLogoChain({ key: 'goonbox' }, href, null) }); } catch (e) { return; }
+        linkEl.replaceWith(card);
+        goonboxResolve(href, res => {
+            if (!res || !res.original || !card.isConnected) return;
+            const full = res.original;
+            const img = document.createElement('img');
+            img.className = 'bbImage';
+            img.loading = 'lazy';
+            img.alt = '';
+            img.dataset.smgLink = href;
+            img.dataset.smgFull = full;
+            img.dataset.smgMed = res.medium || full;
+            if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
+            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+            const link = document.createElement('a');
+            link.href = full;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.appendChild(img);
+            card.replaceWith(link);
+            img.src = full;
+        }, card);
+    }
     function processOneImage(img) {
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
-        if (!img.dataset.smgLink) { const la = img.closest('a.link--external[href]'); if (la) img.dataset.smgLink = la.getAttribute('href') || ''; }
+        if (!img.dataset.smgLink) {
+            const la = img.closest('a.link--external[href]');
+            if (la) img.dataset.smgLink = resolveProxyHref(la.getAttribute('href') || la.href || '');
+        }
+        const gbx = goonboxViewer(img.dataset.smgLink);
+        if (gbx) {
+            goonboxResolve(img.dataset.smgLink, res => {
+                if (!res || !res.original || !img.isConnected) return;
+                img.dataset.smgFull = res.original;
+                img.dataset.smgMed = res.medium || res.original;
+                const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
+                if (link) link.href = res.original;
+                if (res.original && img.src !== res.original) {
+                    img.src = res.original;
+                }
+                if (img.dataset.url) img.dataset.url = res.original;
+                if (res.width && res.height && !img.style.aspectRatio) {
+                    img.style.aspectRatio = res.width + ' / ' + res.height;
+                }
+                // Se o feed lightbox estiver aberto com este slide, atualiza o slide para alta resolução
+                const feed = document.getElementById('smg-feed');
+                if (feed && feed.classList.contains('open')) {
+                    feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
+                        if (fi.dataset.src === res.medium || fi.src === res.medium) {
+                            fi.dataset.src = res.original;
+                            fi.src = res.original;
+                        }
+                    });
+                }
+            }, img);
+        }
         const src = img.currentSrc || img.src || '';
         if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
             // tira da varredura por-mutação (data-smg-lazy-wait) e re-processa SÓ esta imagem quando o
@@ -329,6 +438,8 @@
             if (!url || /^data:/.test(url)) {   // sem URL extraível
                 const chv = cheveretoViewer(href);   // jpg6.su & afins → resolve a imagem REAL (decode do cooked) e exibe inline; fallback = card
                 if (chv) { cheveretoEmbed(a, href, chv); return; }
+                const gbx = goonboxViewer(href);
+                if (gbx) { goonboxEmbed(a, href, gbx); return; }
                 showLink(); return;   // resto → link em texto
             }
             const img = document.createElement('img');
@@ -394,14 +505,15 @@
     //   · 5 ou mais → 3 colunas
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
     const TALL_RELH = 1.35;  // h/w > 1.35 = muito vertical (stories/prints 9:16, 2:3)
-    const SMG_MEDIA_MAX_VH = 75;
+    const SMG_MEDIA_MAX_VH = 70;
+    const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
         if (!vertical) { el.style.removeProperty('max-width'); return; }
         const ratio = w / h;
         const maxWidth = (el.closest && el.closest('.auto-image-grid'))
-            ? 'min(100%, ' + (SMG_MEDIA_MAX_VH * ratio).toFixed(4) + 'vh)'
-            : 'min(75%, 880px, ' + (SMG_MEDIA_MAX_VH * ratio).toFixed(4) + 'vh)';
+            ? 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))'
+            : 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
@@ -624,5 +736,7 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid };
+        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed };
+        window.processOneImage = processOneImage;
+        window.goonboxEmbed = goonboxEmbed;
     }

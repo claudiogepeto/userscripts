@@ -9,8 +9,8 @@
     //   player UI .... rgBuild · rgControls (controles próprios) · rgStart · buildNativeVideo
     //   aplica ....... applyRedgifsPlayer (loaders/iframes do fórum → nosso player) · rgHidePlaceholder
     // =========================================================
-    const GMX = (typeof GM_xmlhttpRequest === 'function') ? GM_xmlhttpRequest
-              : (typeof GM !== 'undefined' && GM.xmlHttpRequest ? GM.xmlHttpRequest.bind(GM) : null);
+    const GMX = (typeof GM_xmlhttpRequest === 'function') ? (...args) => GM_xmlhttpRequest(...args)
+              : (typeof GM !== 'undefined' && GM.xmlHttpRequest ? (...args) => GM.xmlHttpRequest(...args) : null);
 
     function rgIdFrom(s) {   // id do redgifs em qualquer url (/ifr/ /watch/ /gifs/ /i/)
         const m = (s || '').match(/redgifs\.com\/(?:ifr|watch|gifs|i)\/([A-Za-z0-9]+)/i);
@@ -185,8 +185,8 @@
         wrap.classList.toggle('smg-rg-wide', !isVertical);
         // Quando o teto de altura é atingido, reduz a largura do wrapper na mesma proporção.
         // Em masonry o !important da regra geral de coluna é sobrescrito apenas neste player real.
-        const maxWidth = 'min(1400px, ' + (SMG_MEDIA_MAX_VH * r).toFixed(4) + 'vh)';
-        if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, ' + (SMG_MEDIA_MAX_VH * r).toFixed(4) + 'vh)', 'important');
+        const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
+        if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
         else wrap.style.maxWidth = maxWidth;
         return true;
     }
@@ -324,7 +324,8 @@
         // ...desde que a carga anterior esteja viva: com erro (video.error) ou sem fonte (networkState 3)
         // não há nada pra aproveitar, e esperar o watchdog seria travar 8s à toa — reatribui e tenta.
         const already = !!video.currentSrc && rgSameFile(video.currentSrc, url) && !video.error && video.networkState !== 3;
-        if (already && video.readyState >= 1 && video.videoWidth > 0) {   // 0x0 = decodificou nada → segue o caminho normal (probe + blob)
+        if (already && video.readyState >= 1 && (video.videoWidth > 0 || video.duration > 0)) {   // 0x0 = decodificou nada → segue o caminho normal (probe + blob)
+            if (video._rgUserPlayed && video.preload !== 'auto') video.preload = 'auto';
             rgDirect[host] = true;
             if (wrap) wrap.classList.remove('smg-rg-loading', 'smg-rg-ready');   // sem novo loadeddata/canplay, o clearSkel não roda → tira o skeleton aqui
             rgPlayIfVisible(video, wrap);
@@ -332,22 +333,32 @@
         }
         return new Promise(resolve => {
             let settled = false;
-            const cleanup = () => { video.removeEventListener('loadedmetadata', onData); video.removeEventListener('error', onErr); clearTimeout(wd); };
+            const cleanup = () => {
+                video.removeEventListener('loadedmetadata', onData);
+                video.removeEventListener('loadeddata', onData);
+                video.removeEventListener('error', onErr);
+                clearTimeout(wd);
+            };
             const ok = () => { if (settled) return; settled = true; rgDirect[host] = true; cleanup(); rgPlayIfVisible(video, wrap); resolve(); };
             // hard = falha REAL (erro/0x0) → memoriza que o host precisa de blob (próximos vão direto pro blob, sem perder tempo no probe).
             // soft = só timeout de rede lenta → cai pro blob SÓ neste vídeo, sem condenar o host inteiro: 1 vídeo lento não vira sessão toda em full-download.
             const toBlob = hard => { if (settled) return; settled = true; if (hard) rgDirect[host] = false; cleanup(); try { video.removeAttribute('src'); video.load(); } catch (x) {} if (deferBlob(video, url, wrap)) { resolve(); return; } rgViaBlob(video, url, wrap).then(resolve); };
-            const onData = () => { if (video.videoWidth > 0) ok(); else toBlob(true); };
+            const onData = e => {
+                if (video.videoWidth > 0 || video.duration > 0) ok();
+                else if (e && e.type === 'loadedmetadata') return;   // aguarda loadeddata caso videoWidth ainda não tenha sido populado no loadedmetadata
+                else toBlob(true);
+            };
             const onErr = () => toBlob(true);
             video.addEventListener('loadedmetadata', onData, { once: true });   // metadata basta p/ confirmar acesso + pegar duração/proporção
+            video.addEventListener('loadeddata', onData, { once: true });       // primeiro frame confirmação caso videoWidth popule após metadata
             video.addEventListener('error', onErr, { once: true });
             // no fim do prazo, se já HÁ metadata (o loadedmetadata veio antes de a gente escutar), resolve como sucesso
             // em vez de ficar pendurado pra sempre — pendurado = spinner eterno, que é como o bug aparece.
-            const wd = setTimeout(() => { if (video.readyState >= 1) ok(); else toBlob(false); }, rgDirect[host] === true ? 15000 : 8000);   // tolerante: o 206 funciona; só cai pro blob (que é + lento) em lentidão EXTREMA. Erro real cai na hora pelo onErr.
-            if (already) { video.preload = 'metadata'; return; }   // MESMO arquivo já baixando (a thumb) → deixa terminar; reatribuir o src reiniciaria do zero
+            const wd = setTimeout(() => { if (video.readyState >= 1) ok(); else toBlob(false); }, 15000);   // tolerante: 15s p/ streaming; só cai pro blob em lentidão extrema
+            if (already) { video.preload = video._rgUserPlayed ? 'auto' : 'metadata'; return; }   // MESMO arquivo já baixando (a thumb) → deixa terminar; reatribuir o src reiniciaria do zero
             if (video._rgKeepRef) video.referrerPolicy = video._rgKeepRef;
             else if (video.dataset.rgid) video.referrerPolicy = 'no-referrer';   // host referer-locked (imagepond): preserva o referer da origem (senão 403); redgifs = no-referrer; outros (turbo/saint) = referer padrão do navegador
-            video.preload = 'metadata';   // só metadata (não baixa o vídeo inteiro à toa — economiza banda em vídeo longo); toca/bufferiza no play
+            video.preload = video._rgUserPlayed ? 'auto' : 'metadata';   // se o usuário já tocou, bufferiza à frente
             video.src = url;
         });
     }
@@ -462,6 +473,7 @@
         const toggle = () => {
             if (!video.paused) { video.pause(); return; }
             video._rgUserPlayed = true;
+            if (video.preload !== 'auto') video.preload = 'auto';
             if (video._rgDeferUrl) {   // o blob foi adiado (inline autoplay-off) → baixa AGORA + toca (rgViaBlob → rgPlayIfVisible; _rgUserPlayed já é true)
                 const u = video._rgDeferUrl; video._rgDeferUrl = null;
                 wrap.classList.remove('smg-rg-ready'); wrap.classList.add('smg-rg-loading');
@@ -616,7 +628,7 @@
         syncSrcHref(); src.addEventListener('pointerenter', syncSrcHref);
         src.addEventListener('click', e => { e.stopPropagation(); if (!video._rgExt) e.preventDefault(); });   // não dispara o play/pause do player; sem _rgExt → não navega
         // estado play/pause → classe (o CSS mostra/esconde o play central)
-        video.addEventListener('play', () => { wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause; if (!video.muted) rgSolo(video); });
+        video.addEventListener('play', () => { if (video.preload !== 'auto') video.preload = 'auto'; wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause; if (!video.muted) rgSolo(video); });
         video.addEventListener('pause', () => { wrap.classList.remove('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPlay; barPlay.innerHTML = ICONS.rgPlay; });
         video.addEventListener('volumechange', syncVol);
         // LOADING ao avançar/voltar: spinner por cima SÓ no SEEK do usuário (era o pedido). NÃO usa 'waiting':
@@ -715,21 +727,15 @@
         else video.addEventListener('loadedmetadata', onMeta, { once: true });
 
         if (poster) {
-            // Mostra a thumb nativa (#t=0.1) imediatamente enquanto confirma o poster
-            setNativeThumb();
+            video.poster = poster;
             const im = new Image();
             im.onload = () => {
                 if (!video.isConnected) return;
-                // Substitui a thumb nativa pelo poster real (melhor qualidade) quando carregado
-                video.poster = poster;
-                // Remove o src nativo para evitar conflito poster vs src
-                if (!video.dataset.rgLoaded && video.currentSrc) {
-                    video.removeAttribute('src');
-                    try { video.load(); } catch (e) {}
-                }
-                if (wrap) rgAspect(wrap, im.naturalWidth, im.naturalHeight);
+                if (wrap && im.naturalWidth && im.naturalHeight) rgAspect(wrap, im.naturalWidth, im.naturalHeight);
             };
-            im.onerror = () => { /* setNativeThumb já foi chamado, nada a fazer */ };
+            im.onerror = () => {
+                setNativeThumb();
+            };
             im.src = poster;
         } else {
             setNativeThumb();
@@ -770,8 +776,34 @@
     // → { mp4, img }: a página /videos/{id} do imagepond pode ser VÍDEO ou IMAGEM. O ARQUIVO de vídeo (media.imagepond.net/media/videos/…)
     // NÃO está no HTML estático da /videos/{id} (carrega por JS) — ele aparece na página /i/{slug} que a /videos/ LINKA. Então: tenta achar
     // a mídia direta nesta página; se não, segue UMA vez pro link /i/ e procura lá. `mp4` pode ser .mp4/.mov/.m4v/.webm (o player nativo toca todos).
+    const imagepondCache = new Map();
+    const imagepondInflight = new Map();
+
     function imagepondResolve(pageUrl, cb) {
         if (!GMX || !pageUrl) { cb(null); return; }
+        if (imagepondCache.has(pageUrl)) {
+            cb(imagepondCache.get(pageUrl));
+            return;
+        }
+        if (imagepondInflight.has(pageUrl)) {
+            imagepondInflight.get(pageUrl).push(cb);
+            return;
+        }
+        imagepondInflight.set(pageUrl, [cb]);
+
+        const finish = res => {
+            if (res) {
+                while (imagepondCache.size >= 128) {
+                    const firstKey = imagepondCache.keys().next().value;
+                    imagepondCache.delete(firstKey);
+                }
+                imagepondCache.set(pageUrl, res);
+            }
+            const cbs = imagepondInflight.get(pageUrl) || [];
+            imagepondInflight.delete(pageUrl);
+            cbs.forEach(fn => { try { fn(res); } catch (e) {} });
+        };
+
         const VEXT = '(?:mp4|mov|m4v|webm)';
         const grabVid = t => {
             let m = t.match(new RegExp('<source[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));   // <source> direto (não HLS .m3u8)
@@ -789,17 +821,23 @@
             onload: r => {
                 const t = r.responseText || '';
                 const vid = grabVid(t);
-                if (vid) { cb({ mp4: vid, img: null }); return; }
+                if (vid) { finish({ mp4: vid, img: null }); return; }
                 const img = grabImg(t);
-                if (img) { cb({ mp4: null, img }); return; }
+                if (img) { finish({ mp4: null, img }); return; }
                 // /videos/{id}: o arquivo mora na página /i/{slug} (linkada aqui). Segue UMA vez (não a partir de uma /i/, evita loop), pulando o /i/{id}/download.
                 if (!/\/i\//.test(pageUrl)) {
                     const re = /https?:\/\/[^"'\s)]*imagepond\.net\/i\/[^"'\s)]+/ig;
-                    for (let mm; (mm = re.exec(t));) { const u = mm[0].replace(/&amp;/g, '&'); if (!/\/download\b/i.test(u)) { imagepondResolve(u, cb); return; } }
+                    for (let mm; (mm = re.exec(t));) {
+                        const u = mm[0].replace(/&amp;/g, '&');
+                        if (!/\/download\b/i.test(u)) {
+                            imagepondResolve(u, subRes => finish(subRes));
+                            return;
+                        }
+                    }
                 }
-                cb(null);
+                finish(null);
             },
-            onerror: () => cb(null), ontimeout: () => cb(null) });
+            onerror: () => finish(null), ontimeout: () => finish(null) });
     }
     function processImagepondNativeEmbeds(roots) {
         if (!(FEATURES.imagepondEmbeds && GMX)) return;
@@ -1074,4 +1112,13 @@
                 if (!ph.querySelector('.smg-rg, .smg-rg-fail')) ph.style.setProperty('display', 'none', 'important');   // !important vence a CSS `display:block !important` do s9e
             });
         });
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__imagepondCache = imagepondCache;
+        window.__imagepondInflight = imagepondInflight;
+        window.__imagepondResolve = imagepondResolve;
+        window.__rgPrepareUrl = rgPrepareUrl;
+        window.__rgViaDirect = rgViaDirect;
+        window.__rgControls = rgControls;
     }

@@ -62,6 +62,12 @@
             const a = e.target.closest && e.target.closest('a');
             if (!a) return;
 
+            // Se o clique foi em uma imagem ou dentro de um <a> que embrulha uma imagem (ex.: goonbox, imgbox, smg-imglink, etc.):
+            // não sequestra o clique — deixa o visualizador/modal (setupImageClickFeed) abrir a imagem!
+            if (e.target.closest && (e.target.closest('img.bbImage, .bbImage') || (a && (a.classList.contains('smg-imglink') || a.querySelector('img.bbImage, .bbImage'))))) {
+                return;
+            }
+
             const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
 

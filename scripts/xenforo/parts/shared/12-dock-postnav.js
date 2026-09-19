@@ -90,13 +90,34 @@
         // ---- links da página (casados por CLASSE/HREF, não por texto → funcionam em PT, EN, etc.) ----
         const prevPageLink = document.querySelector('.pageNav-jump--prev, .pageNavSimple-el--prev');
         const nextPageLink = document.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
-        // sort tabs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
-        let sortDateLink = null, sortReactionLink = null;
-        document.querySelectorAll('.tabs--standalone .tabs-tab, .block-outer-opposite--postSortFilter .tabs-tab').forEach(t => {
-            const h = t.getAttribute('href') || '';
-            if (/order=reaction/i.test(h)) sortReactionLink = t;
-            else if (!/order=/i.test(h)) sortDateLink = t;
-        });
+        // sort tabs / URLs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
+        function getSortHref(wantDate) {
+            let dateHref = null, reactHref = null;
+            document.querySelectorAll('.tabs--standalone .tabs-tab, .block-outer-opposite--postSortFilter .tabs-tab, a.smg-bar-sorttoggle').forEach(t => {
+                const h = t.getAttribute('href') || t.href || '';
+                if (/order=reaction/i.test(h)) reactHref = h;
+                else if (h && !/order=/i.test(h) && /\/threads\//i.test(h)) dateHref = h;
+            });
+            if (wantDate && dateHref) return dateHref;
+            if (!wantDate && reactHref) return reactHref;
+
+            try {
+                const u = new URL(window.location.href);
+                u.pathname = u.pathname.replace(/\/page-\d+.*$/, '/'); // reseta paginação para o início da thread na nova ordenação (padrão XenForo)
+                if (wantDate) {
+                    u.searchParams.delete('order');
+                } else {
+                    u.searchParams.set('order', 'reaction_score');
+                }
+                u.hash = '';
+                return u.toString();
+            } catch (e) {
+                return null;
+            }
+        }
+        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+            window.__getSortHref = getSortHref;
+        }
 
         let sortIsDate = !/reaction/i.test(window.location.search || '');
 
@@ -2835,9 +2856,10 @@
         btnSort.addEventListener('click', () => {
             sortIsDate = !sortIsDate;
             updateSortIcon();
-
-            if (sortIsDate) sortDateLink?.click();
-            else sortReactionLink?.click();
+            const targetUrl = getSortHref(sortIsDate);
+            if (targetUrl) {
+                window.location.href = targetUrl;
+            }
         });
 
         updateSortIcon();

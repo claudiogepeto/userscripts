@@ -1224,13 +1224,16 @@
         }
     }
     function buildPostCard(post) {
-        post.dataset.smgCard = '1';   // marca ANTES do guard (REGRA DE OURO): post deletado/placeholder sem marca era re-varrido em todo full-scan
-        const inner = post.querySelector(':scope > .message-inner');
-        const main = inner && inner.querySelector(':scope > .message-cell--main');
+        const inner = post.querySelector(':scope > .message-inner, .message-inner');
+        const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
         if (!inner || !main) {
+            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
+            post.dataset.smgCard = '1';
             post.dataset.smgCardReady = 'skip';
             return;   // não é um post padrão (deletado/placeholder) → deixa nativo
         }
+        post.dataset.smgCard = '1';
+        delete post.dataset.smgCardReady;
         post.classList.add('smg-pc');
         const messageMain = main.querySelector('.message-main') || main;
         const userCell = inner.querySelector(':scope > .message-cell--user');
@@ -1336,19 +1339,33 @@
     }
     function buildPostCards(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (onde há posts)
-        eachIn(roots, 'article.message:not([data-smg-card])', buildPostCard);
+        eachIn(roots, 'article.message:not([data-smg-card]), article.message[data-smg-card-ready="skip"]', post => {
+            const inner = post.querySelector(':scope > .message-inner, .message-inner');
+            const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
+            if (inner && main) {
+                delete post.dataset.smgCard;
+                delete post.dataset.smgCardReady;
+                buildPostCard(post);
+            } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                post.dataset.smgCard = '1';
+                post.dataset.smgCardReady = 'skip';
+            }
+        });
     }
 
     // COMENTÁRIOS (uw_fcs, só no SMG): mesmo modelo do post — header compacto (avatar · user · tempo · #N),
     // body, action bar leve (react · responder · ⋯ citar/denunciar/traduzir/share). Indentação (thread-line) via CSS.
     // MOVE os nativos (preserva AJAX); reusa o popover ⋯ do post (smg-pc-more*). 1×/comentário via data-smg-cc.
     function buildCommentCard(comment) {
-        comment.dataset.smgCc = '1';   // marca ANTES do guard (REGRA DE OURO)
-        const cinner = comment.querySelector(':scope > .comment-inner');
+        const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
         if (!cinner) {
+            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
+            comment.dataset.smgCc = '1';
             comment.dataset.smgCcReady = 'skip';
             return;
         }
+        comment.dataset.smgCc = '1';
+        delete comment.dataset.smgCcReady;
         comment.classList.add('smg-cc');
         const cmain = cinner.querySelector(':scope > .comment-main');
         const cwrap = cmain && cmain.querySelector('.comment-contentWrapper');
@@ -1406,7 +1423,17 @@
     }
     function buildCommentCards(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;
-        eachIn(roots, '.message-responses .comment:not([data-smg-cc])', buildCommentCard);
+        eachIn(roots, '.message-responses .comment:not([data-smg-cc]), .message-responses .comment[data-smg-cc-ready="skip"]', comment => {
+            const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
+            if (cinner) {
+                delete comment.dataset.smgCc;
+                delete comment.dataset.smgCcReady;
+                buildCommentCard(comment);
+            } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                comment.dataset.smgCc = '1';
+                comment.dataset.smgCcReady = 'skip';
+            }
+        });
     }
     // header da seção de comentários (SMG/uw_fcs): label "Sort:" antes do chip + "Previous comments" → "Load more"
     function buildCommentBar(roots) {
@@ -1453,6 +1480,10 @@
             buildFilterBars,
             decorateThreadCard,
             decorateWatchedThreadRow,
+            buildPostCard,
+            buildPostCards,
+            buildCommentCard,
+            buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
             set isStreamingWatched(v) { isStreamingWatched = v; }
         };

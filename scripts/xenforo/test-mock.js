@@ -96,6 +96,9 @@ async function runTests() {
     window.requestAnimationFrame = (fn) => setTimeout(fn, 0);
     window.cancelAnimationFrame = (id) => clearTimeout(id);
 
+    // Mock scrollIntoView
+    window.Element.prototype.scrollIntoView = () => {};
+
     // Mock matchMedia
     window.matchMedia = (query) => ({
         matches: false,
@@ -112,7 +115,7 @@ async function runTests() {
     const gmStore = {};
     window.GM_getValue = (k, def) => (k in gmStore ? gmStore[k] : def);
     window.GM_setValue = (k, v) => { gmStore[k] = v; };
-    window.GM_xmlhttpRequest = () => {};
+    window.GM_xmlhttpRequest = (opts) => { if (opts && opts.onerror) setTimeout(opts.onerror, 0); };
     window.GM_download = () => {};
 
     // Mock fetch
@@ -312,7 +315,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.7'), 'Userscript deve estar na versão 3.12.7');
+    assert(scriptContent.includes('// @version      3.12.12'), 'Userscript deve estar na versão 3.12.12');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -2630,7 +2633,12 @@ async function runTests() {
     assert(gridColsFor([makeWideVideo(), makeWideVideo(), makeWideVideo()]) === 2, 'Três mídias horizontais devem manter duas colunas para não ficarem pequenas');
 
     const injectedStyles18 = Array.from(document.querySelectorAll('style')).map(style => style.textContent).join('\n');
-    assert(injectedStyles18.includes('--smg-media-h: 75vh;'), 'O teto de mídia deve ser 75vh');
+    assert(injectedStyles18.includes('--smg-media-h: min(70vh, 750px);'), 'O teto de mídia deve ser min(70vh, 750px)');
+    assert(injectedStyles18.includes('.generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }'), 'Embeds de vídeo devem possuir margin: 0 auto !important');
+    assert(injectedStyles18.includes('span[data-s9e-mediaembed] .smg-rg,'), 'Regra de embed data-s9e-mediaembed deve estar presente');
+    assert(injectedStyles18.includes('.smg-turbo-slot > .smg-rg { margin: 0 auto !important; }'), 'Slot turbo deve possuir margin: 0 auto !important');
+    assert(!injectedStyles18.includes('margin: 0 0 8px !important;'), 'Masonry não deve conter margin: 0 0 8px !important');
+    assert(injectedStyles18.includes('html.smg-masonry-on .auto-image-grid img.bbImage,\n            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,\n            html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,\n            html.smg-masonry-on .auto-image-grid .smg-wide {\n                width: 100% !important;\n                max-width: none !important;\n                height: auto !important;\n                max-height: none !important;\n                margin: 0 auto !important;\n            }'), 'Imagens no masonry devem ter margin: 0 auto !important');
     assert(injectedStyles18.includes('img.bbImage.smg-vert'), 'Masonry deve possuir regra específica para imagens verticais');
     assert(injectedStyles18.includes('.smg-rg.smg-rg-vert'), 'RedGifs vertical deve possuir regra específica de dimensionamento');
     assert(injectedStyles18.includes('width: auto !important;'), 'Mídia vertical deve poder reduzir a largura sem deformar a altura');
@@ -3533,6 +3541,539 @@ async function runTests() {
 
     // Limpeza após teste 25
     testPostArticle.remove();
+
+    // =========================================================================
+    // TESTE 26: getSortHref e ordenação de tópicos na dock
+    // =========================================================================
+    console.log('--- TESTE 26: getSortHref e ordenação na dock ---');
+    assert(typeof window.__getSortHref === 'function', '__getSortHref deve ser uma função exportada no __TEST_MODE__');
+
+    // 1. Sem tabs no DOM: fallback para a URL atual (removendo /page-N e setando/removendo order)
+    const prevLocHref = window.location.href;
+    try {
+        window.history.pushState({}, '', 'https://forums.socialmediagirls.com/threads/test-thread.12345/page-3?order=date#post-99');
+        const urlReactions = window.__getSortHref(false);
+        assert(urlReactions !== null, 'getSortHref(false) não deve retornar null');
+        assert(urlReactions.includes('order=reaction_score'), 'getSortHref(false) deve adicionar order=reaction_score');
+        assert(!urlReactions.includes('/page-3'), 'getSortHref deve resetar a paginação (/page-N) para a raiz da thread');
+        assert(!urlReactions.includes('#post-99'), 'getSortHref deve limpar o hash da URL');
+
+        const urlDate = window.__getSortHref(true);
+        assert(urlDate !== null, 'getSortHref(true) não deve retornar null');
+        assert(!urlDate.includes('order='), 'getSortHref(true) deve remover o parâmetro order');
+        assert(!urlDate.includes('/page-3'), 'getSortHref(true) deve resetar a paginação (/page-N) para a raiz da thread');
+
+        // 2. Com tabs no DOM: deve priorizar links existentes
+        const mockSortBox = document.createElement('div');
+        mockSortBox.className = 'tabs--standalone';
+        const mockSortTab = document.createElement('a');
+        mockSortTab.className = 'tabs-tab';
+        mockSortTab.setAttribute('href', '/threads/test-thread.12345/?order=reaction_score');
+        mockSortBox.appendChild(mockSortTab);
+        document.body.appendChild(mockSortBox);
+
+        const detectedReactHref = window.__getSortHref(false);
+        assert(detectedReactHref === '/threads/test-thread.12345/?order=reaction_score', 'getSortHref(false) deve retornar o href da tab encontrada no DOM');
+        mockSortBox.remove();
+    } finally {
+        window.history.pushState({}, '', prevLocHref);
+    }
+
+    // =========================================================================
+    // TESTE 27: Melhorias de performance no Player de Vídeo
+    // =========================================================================
+    console.log('--- TESTE 27: Melhorias de performance no Player de Vídeo ---');
+    assert(typeof window.__rgPrepareUrl === 'function', '__rgPrepareUrl deve ser uma função exportada');
+    assert(typeof window.__rgViaDirect === 'function', '__rgViaDirect deve ser uma função exportada');
+    assert(typeof window.__imagepondResolve === 'function', '__imagepondResolve deve ser uma função exportada');
+    assert(window.__imagepondCache instanceof window.Map, '__imagepondCache deve ser uma instância de Map');
+    assert(window.__imagepondInflight instanceof window.Map, '__imagepondInflight deve ser uma instância de Map');
+
+    // 1. rgPrepareUrl: quando poster existe, NÃO define video.src com #t=0.1
+    const testVideo = document.createElement('video');
+    const testWrap = document.createElement('div');
+    testWrap.className = 'smg-rg';
+    document.body.appendChild(testWrap);
+    testWrap.appendChild(testVideo);
+
+    window.__rgPrepareUrl(testVideo, 'https://example.com/video.mp4', testWrap, 'https://example.com/poster.jpg');
+    assert(testVideo.poster === 'https://example.com/poster.jpg', 'rgPrepareUrl deve definir video.poster imediatamente quando fornecido');
+    assert(!testVideo.src || !testVideo.src.includes('#t=0.1'), 'rgPrepareUrl NÃO deve disparar requisição #t=0.1 quando poster for fornecido');
+
+    // 2. rgPrepareUrl: quando poster NÃO existe, chama setNativeThumb definindo src com #t=0.1
+    const testVideoNoPoster = document.createElement('video');
+    const testWrapNoPoster = document.createElement('div');
+    testWrapNoPoster.className = 'smg-rg';
+    document.body.appendChild(testWrapNoPoster);
+    testWrapNoPoster.appendChild(testVideoNoPoster);
+
+    window.__rgPrepareUrl(testVideoNoPoster, 'https://example.com/video2.mp4', testWrapNoPoster, '');
+    assert(testVideoNoPoster.src.includes('#t=0.1'), 'rgPrepareUrl deve definir #t=0.1 somente quando NÃO houver poster');
+
+    // 3. Preload auto no play
+    testVideo._rgUserPlayed = true;
+    if (typeof window.__rgControls === 'function') {
+        window.__rgControls(testWrap, testVideo);
+        testVideo.dispatchEvent(new window.Event('play'));
+        assert(testVideo.preload === 'auto', 'Evento play deve alterar video.preload para auto');
+    }
+
+    // 4. imagepondResolve: cache e deduplicação em voo (inflight)
+    window.__imagepondCache.clear();
+    window.__imagepondInflight.clear();
+
+    let gmxCalls = 0;
+    const origGmx = window.GM_xmlhttpRequest;
+    window.GM_xmlhttpRequest = (opts) => {
+        gmxCalls++;
+        setTimeout(() => {
+            opts.onload({
+                responseText: '<source src="https://media.imagepond.net/media/videos/test1234.mp4" type="video/mp4">'
+            });
+        }, 10);
+    };
+
+    let ipRes1 = null, ipRes2 = null;
+    window.__imagepondResolve('https://imagepond.net/videos/embed1', (r) => { ipRes1 = r; });
+    window.__imagepondResolve('https://imagepond.net/videos/embed1', (r) => { ipRes2 = r; });
+
+    assert(window.__imagepondInflight.has('https://imagepond.net/videos/embed1'), 'Requisição deve constar em __imagepondInflight');
+    assert(window.__imagepondInflight.get('https://imagepond.net/videos/embed1').length === 2, 'Ambos os callbacks devem estar na fila inflight');
+
+    await new Promise(r => setTimeout(r, 40));
+
+    assert(gmxCalls === 1, `Apenas 1 chamada de rede deve ser feita para requisições concorrentes (obtido: ${gmxCalls})`);
+    assert(ipRes1 && ipRes1.mp4 === 'https://media.imagepond.net/media/videos/test1234.mp4', 'ipRes1 deve resolver com o vídeo correto');
+    assert(ipRes2 && ipRes2.mp4 === 'https://media.imagepond.net/media/videos/test1234.mp4', 'ipRes2 deve resolver com o vídeo correto');
+    assert(window.__imagepondCache.has('https://imagepond.net/videos/embed1'), 'Resultado deve estar salvo no __imagepondCache');
+
+    // Terceira chamada: deve responder instantaneamente do cache sem disparar rede
+    let ipRes3 = null;
+    window.__imagepondResolve('https://imagepond.net/videos/embed1', (r) => { ipRes3 = r; });
+    assert(gmxCalls === 1, 'Chamada subsequente deve utilizar o cache sem rede adicional');
+    assert(ipRes3 && ipRes3.mp4 === 'https://media.imagepond.net/media/videos/test1234.mp4', 'ipRes3 deve vir do cache');
+
+    // Limite de cache até 128 entradas
+    for (let i = 0; i < 130; i++) {
+        window.__imagepondCache.set(`https://imagepond.net/videos/dummy_${i}`, { mp4: `https://example.com/v_${i}.mp4` });
+    }
+    // Uma nova resolução que chama finish() deve manter size <= 128
+    window.GM_xmlhttpRequest = (opts) => {
+        opts.onload({ responseText: '<source src="https://media.imagepond.net/media/videos/new.mp4">' });
+    };
+    window.__imagepondResolve('https://imagepond.net/videos/limit_test', () => {});
+    await new Promise(r => setTimeout(r, 20));
+    assert(window.__imagepondCache.size <= 128, `Tamanho do cache deve respeitar limite de 128 (atual: ${window.__imagepondCache.size})`);
+
+    // Restaurar GM_xmlhttpRequest e limpar DOM de teste
+    window.GM_xmlhttpRequest = origGmx;
+    testWrap.remove();
+    testWrapNoPoster.remove();
+
+    // =========================================================================
+    // TESTE 28: Race condition no streaming de posts e comentários (HTML parser)
+    // =========================================================================
+    console.log('--- TESTE 28: Race condition no streaming de posts e comentários ---');
+
+    document.documentElement.classList.add('smg-thread');
+
+    // 1. Simular documento em carregamento (HTML parser ativo)
+    Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true, writable: true });
+
+    const streamingPost = document.createElement('article');
+    streamingPost.className = 'message message--post js-post js-inlineModContainer';
+    streamingPost.id = 'js-post-28001';
+    streamingPost.setAttribute('data-content', 'post-28001');
+    document.body.appendChild(streamingPost);
+
+    window.__processAll([streamingPost]);
+
+    assert(!streamingPost.dataset.smgCard, 'Post incompleto durante carregamento NÃO deve receber data-smg-card');
+    assert(!streamingPost.dataset.smgCardReady, 'Post incompleto durante carregamento NÃO deve receber data-smg-card-ready=skip');
+    assert(!streamingPost.classList.contains('smg-pc'), 'Post incompleto NÃO deve receber a classe .smg-pc');
+
+    // 2. Browser insere nós filhos (.message-inner e .message-cell--main)
+    streamingPost.innerHTML = `
+        <div class="message-inner">
+            <div class="message-cell message-cell--user">
+                <div class="message-avatar"><a class="avatar" href="/members/user28.28/"><img src="/data/avatars/s/0/28.jpg" /></a></div>
+                <div class="message-name"><a href="/members/user28.28/">User28</a></div>
+            </div>
+            <div class="message-cell message-cell--main">
+                <div class="message-main">
+                    <header class="message-attribution">
+                        <ul class="message-attribution-main listInline">
+                            <li><time data-timestamp="1700000000">1 de Jan de 2024</time></li>
+                        </ul>
+                        <ul class="message-attribution-opposite listInline">
+                            <li><a href="/threads/test-thread.12345/post-28001">#28</a></li>
+                        </ul>
+                    </header>
+                    <div class="message-content">
+                        <div class="message-userContent">Post 28 body content</div>
+                    </div>
+                    <footer class="message-footer">
+                        <div class="message-actionBar actionBar">
+                            <div class="actionBar-set actionBar-set--external">
+                                <a class="actionBar-action actionBar-action--like reaction" data-xf-click="reaction" href="/posts/28001/react"><i class="fa fa-thumbs-up"></i></a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    `;
+
+    window.__processAll([streamingPost]);
+
+    assert(streamingPost.dataset.smgCard === '1', 'Post agora preenchido deve receber data-smg-card="1"');
+    assert(streamingPost.dataset.smgCardReady === '1', 'Post agora preenchido deve receber data-smg-card-ready="1"');
+    assert(streamingPost.classList.contains('smg-pc'), 'Post agora preenchido deve receber a classe .smg-pc');
+    assert(streamingPost.querySelector('.smg-pc-head') !== null, 'Post agora preenchido deve conter .smg-pc-head');
+    assert(streamingPost.querySelector('.smg-pc-actions') !== null, 'Post agora preenchido deve conter .smg-pc-actions');
+
+    // 3. Post previamente marcado com data-smg-card-ready="skip" deve ser recuperado ao receber filhos
+    const skipPost = document.createElement('article');
+    skipPost.className = 'message message--post js-post js-inlineModContainer';
+    skipPost.id = 'js-post-28002';
+    skipPost.setAttribute('data-content', 'post-28002');
+    skipPost.dataset.smgCard = '1';
+    skipPost.dataset.smgCardReady = 'skip';
+    skipPost.innerHTML = `
+        <div class="message-inner">
+            <div class="message-cell message-cell--user">
+                <div class="message-avatar"><a class="avatar" href="/members/user28b.29/"><img src="/data/avatars/s/0/29.jpg" /></a></div>
+                <div class="message-name"><a href="/members/user28b.29/">User28b</a></div>
+            </div>
+            <div class="message-cell message-cell--main">
+                <div class="message-main">
+                    <header class="message-attribution">
+                        <ul class="message-attribution-main listInline">
+                            <li><time data-timestamp="1700000000">1 de Jan de 2024</time></li>
+                        </ul>
+                        <ul class="message-attribution-opposite listInline">
+                            <li><a href="/threads/test-thread.12345/post-28002">#29</a></li>
+                        </ul>
+                    </header>
+                    <div class="message-content">
+                        <div class="message-userContent">Post 28b body content</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(skipPost);
+
+    window.__processAll([skipPost]);
+
+    assert(skipPost.dataset.smgCard === '1', 'Post recuperado de skip deve ter data-smg-card="1"');
+    assert(skipPost.dataset.smgCardReady === '1', 'Post recuperado de skip deve ter data-smg-card-ready="1"');
+    assert(skipPost.classList.contains('smg-pc'), 'Post recuperado de skip deve ter a classe .smg-pc');
+    assert(skipPost.querySelector('.smg-pc-head') !== null, 'Post recuperado de skip deve conter .smg-pc-head');
+
+    // 4. Se document.readyState === 'complete', post verdadeiramente vazio/deletado recebe skip
+    Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true, writable: true });
+
+    const deletedPost = document.createElement('article');
+    deletedPost.className = 'message message--post js-post';
+    deletedPost.id = 'js-post-deleted';
+    document.body.appendChild(deletedPost);
+
+    window.__processAll([deletedPost]);
+
+    assert(deletedPost.dataset.smgCard === '1', 'Post sem conteúdo quando complete deve ter data-smg-card="1"');
+    assert(deletedPost.dataset.smgCardReady === 'skip', 'Post sem conteúdo quando complete deve ter data-smg-card-ready="skip"');
+    assert(!deletedPost.classList.contains('smg-pc'), 'Post sem conteúdo NÃO deve ter .smg-pc');
+
+    // 5. Testar o mesmo comportamento para comentários (uw_fcs)
+    Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true, writable: true });
+
+    const responsesWrap = document.createElement('div');
+    responsesWrap.className = 'message-responses';
+    const streamingComment = document.createElement('div');
+    streamingComment.className = 'comment';
+    responsesWrap.appendChild(streamingComment);
+    document.body.appendChild(responsesWrap);
+
+    window.__processAll([responsesWrap]);
+
+    assert(!streamingComment.dataset.smgCc, 'Comentário incompleto durante carregamento NÃO deve receber data-smg-cc');
+    assert(!streamingComment.dataset.smgCcReady, 'Comentário incompleto durante carregamento NÃO deve receber data-smg-cc-ready=skip');
+
+    // Inserir .comment-inner
+    streamingComment.innerHTML = `
+        <div class="comment-inner">
+            <div class="comment-avatar"><a class="avatar" href="/members/cuser.1/"><img src="/data/avatars/s/0/1.jpg" /></a></div>
+            <div class="comment-main">
+                <div class="comment-contentWrapper">
+                    <a class="comment-user" href="/members/cuser.1/">Commenter</a>
+                    <time data-timestamp="1700000000">1 de Jan de 2024</time>
+                    <div class="comment-body">Comment body</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    window.__processAll([responsesWrap]);
+
+    assert(streamingComment.dataset.smgCc === '1', 'Comentário preenchido deve receber data-smg-cc="1"');
+    assert(streamingComment.dataset.smgCcReady === '1', 'Comentário preenchido deve receber data-smg-cc-ready="1"');
+    assert(streamingComment.classList.contains('smg-cc'), 'Comentário preenchido deve receber a classe .smg-cc');
+
+    // Comentário com skip recupera quando recebe filhos
+    const skipComment = document.createElement('div');
+    skipComment.className = 'comment';
+    skipComment.dataset.smgCc = '1';
+    skipComment.dataset.smgCcReady = 'skip';
+    skipComment.innerHTML = `
+        <div class="comment-inner">
+            <div class="comment-main">
+                <div class="comment-contentWrapper">
+                    <a class="comment-user" href="/members/cuser2.2/">Commenter 2</a>
+                    <div class="comment-body">Comment body 2</div>
+                </div>
+            </div>
+        </div>
+    `;
+    responsesWrap.appendChild(skipComment);
+
+    window.__processAll([responsesWrap]);
+
+    assert(skipComment.dataset.smgCc === '1', 'Comentário recuperado de skip deve ter data-smg-cc="1"');
+    assert(skipComment.dataset.smgCcReady === '1', 'Comentário recuperado de skip deve ter data-smg-cc-ready="1"');
+    assert(skipComment.classList.contains('smg-cc'), 'Comentário recuperado de skip deve ter a classe .smg-cc');
+
+    // Limpeza
+    Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true, writable: true });
+    streamingPost.remove();
+    skipPost.remove();
+    deletedPost.remove();
+    responsesWrap.remove();
+
+    // =========================================================================
+    // TESTE 29: Interceptação de clique em imagens externas (Goonbox / Simp6 / etc.) e modal lightbox
+    // =========================================================================
+    console.log('--- TESTE 29: Interceptação de clique em imagens externas e modal lightbox ---');
+
+    assert(window.__imageClickExports && typeof window.__imageClickExports.imageUrlOf === 'function', 'imageUrlOf deve estar exposto no __TEST_MODE__');
+    assert(window.__imageClickExports && typeof window.__imageClickExports.setupImageClickFeed === 'function', 'setupImageClickFeed deve estar exposto no __TEST_MODE__');
+
+    // 1. Criar link externo de imagem estilo goonbox com img.bbImage interna
+    const goonboxLink = document.createElement('a');
+    goonboxLink.href = 'https://goonbox.cr/img/tQ3xTest29';
+    goonboxLink.className = 'link link--external smg-imglink';
+    goonboxLink.target = '_blank';
+    goonboxLink.setAttribute('rel', 'noopener noreferrer');
+    goonboxLink.setAttribute('data-smg-imglink', '1');
+    goonboxLink.setAttribute('data-smg-unwrap', '1');
+    goonboxLink.setAttribute('data-blank-handler', 'true');
+
+    const goonboxImg = document.createElement('img');
+    goonboxImg.src = 'https://simp6.cuckcapital.cr/images4/test.jpg';
+    goonboxImg.setAttribute('data-url', 'https://simp6.cuckcapital.cr/images4/test.jpg');
+    goonboxImg.className = 'bbImage smg-wide smg-img-ready';
+    goonboxLink.appendChild(goonboxImg);
+    document.body.appendChild(goonboxLink);
+
+    // Validar extração correta de URL em imageUrlOf
+    const extractedUrl = window.__imageClickExports.imageUrlOf(goonboxImg);
+    assert(extractedUrl === 'https://simp6.cuckcapital.cr/images4/test.jpg', 'imageUrlOf deve extrair a URL da imagem real em vez do link da página do goonbox');
+
+    // Testar se src vazio ou data:image cai em data-url
+    const lazyImg = document.createElement('img');
+    lazyImg.setAttribute('data-url', 'https://simp6.cuckcapital.cr/images4/lazy.jpg');
+    lazyImg.className = 'bbImage';
+    goonboxLink.appendChild(lazyImg);
+    assert(window.__imageClickExports.imageUrlOf(lazyImg) === 'https://simp6.cuckcapital.cr/images4/lazy.jpg', 'imageUrlOf deve usar data-url quando src não existir ou for vazio');
+    lazyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    assert(window.__imageClickExports.imageUrlOf(lazyImg) === 'https://simp6.cuckcapital.cr/images4/lazy.jpg', 'imageUrlOf deve usar data-url quando src for data: URI');
+    lazyImg.remove();
+
+    // 2. Simular clique na imagem e verificar que a modal lightbox abre
+    let feedEl = document.getElementById('smg-feed');
+    if (feedEl) feedEl.classList.remove('open');
+
+    // Spy no stopImmediatePropagation
+    let imgClickStopImmediate = false;
+    const imgClick = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    const origStopImm = imgClick.stopImmediatePropagation;
+    imgClick.stopImmediatePropagation = function() {
+        imgClickStopImmediate = true;
+        origStopImm.call(this);
+    };
+
+    goonboxImg.dispatchEvent(imgClick);
+
+    feedEl = document.getElementById('smg-feed');
+    assert(feedEl !== null && feedEl.classList.contains('open'), 'Clique na imagem goonbox deve abrir o lightbox (#smg-feed com classe .open)');
+    assert(imgClick.defaultPrevented, 'Clique na imagem goonbox deve ter defaultPrevented pelo setupImageClickFeed');
+
+    // Fechar feed para próximos testes
+    if (feedEl) feedEl.classList.remove('open');
+
+    // 3. Validar que o bindProxyClick NÃO sequestrou o clique do link que embrulha a imagem
+    // Se o bindProxyClick tivesse executado sua interceptação de link externo, ele teria tentado abrir window.open se defaultPrevented
+    let windowOpenCalls = [];
+    const origWindowOpen = window.open;
+    window.open = function(...args) {
+        windowOpenCalls.push(args);
+    };
+
+    const imgClick2 = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    goonboxImg.dispatchEvent(imgClick2);
+
+    assert(windowOpenCalls.length === 0, 'bindProxyClick NÃO deve ter chamado window.open para clique na imagem');
+
+    // Restaurar window.open
+    window.open = origWindowOpen;
+    if (feedEl) feedEl.classList.remove('open');
+    goonboxLink.remove();
+
+    // 4. Validar que um link externo de texto puro (sem imagem) continua sendo interceptado normalmente pelo bindProxyClick
+    const plainExtLink = document.createElement('a');
+    plainExtLink.className = 'link link--external';
+    plainExtLink.href = 'https://external-service.org/article';
+    document.body.appendChild(plainExtLink);
+
+    let plainLinkStopImmediate = false;
+    const plainClick = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    const origPlainStopImm = plainClick.stopImmediatePropagation;
+    plainClick.stopImmediatePropagation = function() {
+        plainLinkStopImmediate = true;
+        origPlainStopImm.call(this);
+    };
+
+    plainExtLink.dispatchEvent(plainClick);
+
+    assert(plainLinkStopImmediate, 'bindProxyClick DEVE chamar stopImmediatePropagation em link externo de texto puro sem imagem');
+    assert(plainExtLink.target === '_blank', 'bindProxyClick deve definir target="_blank" em link externo de texto puro');
+    assert(plainExtLink.rel.includes('noopener'), 'bindProxyClick deve definir rel noopener em link externo de texto puro');
+    plainExtLink.remove();
+
+    // =========================================================================
+    // TESTE 30: Resolução GoonBox para imagem em alta resolução (original_url)
+    // =========================================================================
+    console.log('--- TESTE 30: Resolução GoonBox para imagem em alta resolução (original_url) ---');
+
+    assert(window.__masonryExports && typeof window.__masonryExports.goonboxViewer === 'function', 'goonboxViewer deve estar exposto no __TEST_MODE__');
+    assert(window.__masonryExports && typeof window.__masonryExports.goonboxResolve === 'function', 'goonboxResolve deve estar exposto no __TEST_MODE__');
+    assert(window.__masonryExports && window.__masonryExports.gbxCache instanceof window.Map, 'gbxCache deve estar exposto no __TEST_MODE__');
+    assert(window.__masonryExports && typeof window.__masonryExports.processOneImage === 'function', 'processOneImage deve estar exposto no __TEST_MODE__');
+    assert(window.__masonryExports && typeof window.__masonryExports.goonboxEmbed === 'function', 'goonboxEmbed deve estar exposto no __TEST_MODE__');
+
+    const { goonboxViewer, goonboxResolve, gbxCache, gbxInflight, processOneImage, goonboxEmbed } = window.__masonryExports;
+    const { imageUrlOf } = window.__imageClickExports;
+
+    // 1. Validar goonboxViewer
+    const gbxParsed = goonboxViewer('https://goonbox.cr/img/tQ3xEcd');
+    assert(gbxParsed !== null, 'goonboxViewer deve reconhecer URL do goonbox.cr');
+    assert(gbxParsed.host === 'goonbox.cr' && gbxParsed.id === 'tQ3xEcd', 'goonboxViewer deve extrair host e id corretamente');
+
+    assert(goonboxViewer('https://otherdomain.com/img/tQ3xEcd') === null, 'goonboxViewer deve retornar null para domínio não-goonbox');
+    assert(goonboxViewer('https://goonbox.cr/other/tQ3xEcd') === null, 'goonboxViewer deve retornar null para rota diferente de /img/');
+    assert(goonboxViewer(null) === null, 'goonboxViewer deve retornar null para input nulo');
+
+    // 2. Mockar GM_xmlhttpRequest para simular a API pública do Goonbox
+    const origGmx30 = window.GM_xmlhttpRequest;
+    window.GM_xmlhttpRequest = (opts) => {
+        if (opts.url && opts.url.includes('/api/images/tQ3xEcd')) {
+            setTimeout(() => {
+                opts.onload({
+                    status: 200,
+                    responseText: JSON.stringify({
+                        image: {
+                            mime: "image/jpeg",
+                            size_bytes: 1095474,
+                            width: 5926,
+                            height: 3534,
+                            encoded_id: "tQ3xEcd",
+                            original_filename: "99643dea-7adc-4a92-a440-d2237586453d.jpg",
+                            original_url: "https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg",
+                            thumb_url: "https://simp6.cuckcapital.cr/images4/4e2a557d-8d49-4ede-b6e9-04cb957eab17.jpg",
+                            medium_url: "https://simp6.cuckcapital.cr/images4/d4240f3b-626b-4e42-922b-27b0d832f0f0.jpg"
+                        }
+                    })
+                });
+            }, 5);
+        } else {
+            console.log('GM_xmlhttpRequest unexpected url:', opts && opts.url);
+            if (opts.onerror) opts.onerror();
+        }
+    };
+
+    // 3. Testar goonboxResolve e cache
+    gbxCache.clear();
+    if (gbxInflight) gbxInflight.clear();
+    let res30 = null;
+    goonboxResolve('https://goonbox.cr/img/tQ3xEcd', res => {
+        res30 = res;
+    });
+
+    for (let i = 0; i < 25 && !res30; i++) {
+        await new Promise(r => setTimeout(r, 20));
+    }
+
+    assert(res30 !== null, 'goonboxResolve deve retornar resposta válida');
+    assert(res30.original === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'res.original deve ser a URL de alta resolução');
+    assert(res30.medium === 'https://simp6.cuckcapital.cr/images4/d4240f3b-626b-4e42-922b-27b0d832f0f0.jpg', 'res.medium deve ser a URL de resolução média');
+    assert(res30.width === 5926 && res30.height === 3534, 'res deve conter as dimensões da imagem');
+    assert(gbxCache.has('tQ3xEcd'), 'gbxCache deve conter a entrada resolvida tQ3xEcd');
+
+    // 4. Testar elemento DOM processOneImage com imagem goonbox
+    const testA30 = document.createElement('a');
+    testA30.href = 'https://goonbox.cr/img/tQ3xEcd';
+    testA30.className = 'link link--external smg-imglink';
+
+    const testImg30 = document.createElement('img');
+    testImg30.src = 'https://simp6.cuckcapital.cr/images4/d4240f3b-626b-4e42-922b-27b0d832f0f0.jpg';
+    testImg30.className = 'bbImage';
+    testA30.appendChild(testImg30);
+    document.body.appendChild(testA30);
+
+    processOneImage(testImg30);
+
+    assert(testImg30.dataset.smgFull === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'img.dataset.smgFull deve ser atualizado para original_url');
+    assert(testA30.href === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'link a.href deve ser atualizado para original_url');
+    assert(testImg30.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'img.src deve ser atualizado para original_url');
+    assert(imageUrlOf(testImg30) === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'imageUrlOf deve retornar versão em alta resolução');
+
+    // 5. Testar clique na imagem e abertura do feed lightbox
+    let feed30 = document.getElementById('smg-feed');
+    if (feed30) feed30.classList.remove('open');
+
+    const clickEv30 = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    testImg30.dispatchEvent(clickEv30);
+
+    feed30 = document.getElementById('smg-feed');
+    assert(feed30 && feed30.classList.contains('open'), 'Clique na imagem goonbox deve abrir o feed lightbox (#smg-feed.open)');
+    const feedImgs30 = feed30.querySelectorAll('img.smg-feed-media');
+    const hasHighRes30 = Array.from(feedImgs30).some(fi => fi.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg' || fi.dataset.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg');
+    assert(hasHighRes30, 'Feed lightbox deve conter o slide com a imagem de alta resolução');
+
+    if (feed30) feed30.classList.remove('open');
+    testA30.remove();
+
+    // 6. Testar naked link goonboxEmbed substituindo link pelado por bbImage com resolução original
+    const nakedLink30 = document.createElement('a');
+    nakedLink30.href = 'https://goonbox.cr/img/tQ3xEcd';
+    nakedLink30.className = 'link link--external';
+    nakedLink30.textContent = 'https://goonbox.cr/img/tQ3xEcd';
+    document.body.appendChild(nakedLink30);
+
+    const gbxViewerInfo30 = goonboxViewer(nakedLink30.href);
+    assert(gbxViewerInfo30 !== null, 'goonboxViewer deve reconhecer o link pelado');
+    goonboxEmbed(nakedLink30, nakedLink30.href, gbxViewerInfo30);
+
+    const embedLink30 = document.body.querySelector('a[href="https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg"]');
+    assert(embedLink30 !== null, 'goonboxEmbed deve criar link apontando para a resolução original');
+    const embedImg30 = embedLink30.querySelector('img.bbImage');
+    assert(embedImg30 !== null, 'goonboxEmbed deve conter elemento img.bbImage');
+    assert(embedImg30.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'img.src da embed deve ser original_url');
+    assert(embedImg30.dataset.smgFull === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'img.dataset.smgFull deve ser original_url');
+    embedLink30.remove();
+
+    // Restaurar GM_xmlhttpRequest
+    window.GM_xmlhttpRequest = origGmx30;
 
     // =========================================================================
     // RESUMO FINAL
