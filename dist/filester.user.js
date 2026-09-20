@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Filester — Theater Stage, Custom Player, Album Strip & Gallery
 // @namespace    filester-theater
-// @version      2.2.1
+// @version      2.2.2
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/filester.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/filester.user.js
 // @description  Theater stage, custom player, album strip, gallery grid, zoomable images, and AMOLED styling for Filester.
@@ -16,6 +16,8 @@
 // @match        *://*.filester.to/*
 // @match        *://filester.is/*
 // @match        *://*.filester.is/*
+// @match        *://filester.si/*
+// @match        *://*.filester.si/*
 // @noframes
 // @run-at       document-start
 // @grant        GM_addStyle
@@ -167,7 +169,7 @@
 
         /* ===================== GALERIA (/f/) ===================== */
         html.fl .container, html.fl .files-section { max-width: min(100% - 28px, 1800px) !important; width: 100% !important; }
-        html.fl .files-list.grid-view { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; gap: 14px !important; }
+        html.fl .files-list.grid-view { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(max(190px, calc((100% - 4 * 14px) / 5.01)), 1fr)) !important; gap: 14px !important; }
         @media (max-width: 700px) { html.fl .files-list.grid-view { grid-template-columns: repeat(auto-fill, minmax(46vw, 1fr)) !important; gap: 10px !important; } }
         html.fl .file-item { display: flex !important; flex-direction: column !important; border-radius: 14px !important; overflow: hidden !important; background: #111317 !important; border: 1px solid rgba(255,255,255,0.07) !important; cursor: pointer; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
         html.fl .file-item:hover { transform: translateY(-3px); border-color: ${ACCENT}88 !important; box-shadow: 0 10px 26px rgba(0,0,0,0.5) !important; }

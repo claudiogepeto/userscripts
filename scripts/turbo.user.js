@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Turbo — Native Player & Theater Stage (embed bypass)
 // @namespace    turbo-theater
-// @version      2.0.0
+// @version      2.0.1
 // @description  Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling.
 // @author       claudiogepeto
 // @match        *://turbo.cr/*
@@ -162,7 +162,7 @@
         html.tb-album .max-w-6xl { max-width: min(100% - 32px, 1800px) !important; }
         html.tb-album #searchInput, html.tb-album #sortSelect { background: #14161a !important; border-color: rgba(255,255,255,.12) !important; color: #fff !important; }
         html.tb-album #btnDownloadAlbum { background: var(--tb-accent, #ef4444) !important; border-color: var(--tb-accent, #ef4444) !important; color: #1a0606 !important; }
-        .tb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; padding: 18px; }
+        .tb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(230px, calc((100% - 4 * 16px) / 5.01)), 1fr)); gap: 16px; padding: 18px; }
         @media (max-width: 700px) { .tb-grid { grid-template-columns: repeat(auto-fill, minmax(46vw, 1fr)); gap: 12px; padding: 12px; } }
         .tb-card { position: relative; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; background: #111317; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
         .tb-card:hover { transform: translateY(-3px); border-color: rgba(239,68,68,0.55); box-shadow: 0 10px 26px rgba(0,0,0,0.5); }

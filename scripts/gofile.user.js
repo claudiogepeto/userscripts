@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.2.4
+// @version      3.2.5
 // @description  Card grid, search, custom player, theater stage, gallery strip, and AMOLED styling for GoFile.
 // @author       claudiogepeto
 // @run-at       document-start
@@ -44,8 +44,32 @@
         html.gf .gf-topsearch input:focus { border-color: ${ACCENT}; background-color: rgba(255,255,255,0.1); }
 
         /* ===================== GRADE DE CARDS AMOLED ===================== */
-        html.gf #fm-list > div, html.gf #filemanager_itemslist { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important; gap: 14px !important; padding: 14px 0 !important; background: transparent !important; border: 0 !important; align-items: start !important; }
-        @media (max-width: 700px) { html.gf #fm-list > div, html.gf #filemanager_itemslist { grid-template-columns: repeat(auto-fill, minmax(46vw, 1fr)) !important; gap: 10px !important; } }
+        html.gf #fm-list > div,
+        html.gf #fm-list [role="list"],
+        html.gf #filemanager_itemslist,
+        html.gf [role="list"][aria-label*="Folder" i] {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(max(210px, calc((100% - 4 * 14px) / 5.01)), 1fr)) !important;
+            gap: 14px !important;
+            padding: 14px 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            align-items: start !important;
+        }
+        html.gf #fm-list > div.divide-y > *,
+        html.gf [role="list"][aria-label*="Folder" i].divide-y > * {
+            border: 0 !important;
+        }
+        @media (max-width: 700px) {
+            html.gf #fm-list > div,
+            html.gf #fm-list [role="list"],
+            html.gf #filemanager_itemslist,
+            html.gf [role="list"][aria-label*="Folder" i] {
+                grid-template-columns: repeat(auto-fill, minmax(46vw, 1fr)) !important;
+                gap: 10px !important;
+            }
+        }
 
         html.gf .gf-card { position: relative !important; display: flex !important; flex-direction: column !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 14px !important; background: #12141a !important; overflow: hidden !important; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; cursor: pointer; }
         html.gf .gf-card.gf-filtered { display: none !important; }
@@ -70,9 +94,10 @@
         html.gf .gf-card-select svg { display: none; width: 14px; height: 14px; color: #fff; }
 
         /* Oculta os layouts nativos de linha quando transformados em card */
-        html.gf .fm-row > button[data-action="toggle-select"] { display: none !important; }
-        html.gf .fm-row > button[data-action="open-file"] { display: none !important; }
-        html.gf .fm-row > .flex.shrink-0 { display: none !important; }
+        html.gf .fm-row.gf-card > button[data-action="toggle-select"],
+        html.gf .fm-row.gf-card > button[data-action="open-file"],
+        html.gf .fm-row.gf-card > a[data-action="navigate"],
+        html.gf .fm-row.gf-card > .flex.shrink-0 { display: none !important; }
 
         /* ===================== BARRA DE MULTISELECT FLUTUANTE ===================== */
         .gf-bulk { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(20px); z-index: 2147482000; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 14px; background: #14161a; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 34px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; min-width: 320px; font-family: Inter, system-ui, sans-serif; }
@@ -715,12 +740,14 @@
 
     function processItem(it) {
         if (it.dataset.gfDone) return;
-        it.dataset.gfDone = "1";
-        it.classList.add("gf-card");
 
         // Extrai dados da linha
-        const nameEl = it.querySelector("p.truncate, a.item_open, .item-name, [data-action='open-file'] p");
+        const nameEl = it.querySelector("p.truncate, a.item_open, .item-name, [data-action='open-file'] p, [data-action='open-file']");
         const name = nameEl ? (nameEl.textContent || "").trim() : "";
+        if (!name) return; // Aguarda o nome ser renderizado no próximo tick do DOM sem marcar gfDone precocemente
+
+        it.dataset.gfDone = "1";
+        it.classList.add("gf-card");
         const sizeText = Array.from(it.querySelectorAll("span, p, div")).map(e => (e.textContent || "").trim()).find(t => SIZE_RE.test(t)) || "";
         const img = Array.from(it.querySelectorAll("img")).find(candidate => isMediaImage(candidate, name));
         const thumbSrc = img ? mediaImageSource(img) : "";
@@ -785,9 +812,39 @@
         body.addEventListener("click", onClick);
     }
 
+    let autoExpandedUrl = null;
+    let autoExpandTimer = null;
+
+    function checkAutoExpandSingleItem() {
+        if (autoExpandedUrl === location.href) return;
+        const allCards = Array.from(document.querySelectorAll(".gf-card")).filter(c => c._gf);
+        if (allCards.length > 1) {
+            autoExpandedUrl = location.href;
+            if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
+            return;
+        }
+        if (allCards.length === 1) {
+            const card = allCards[0];
+            if (card._gf && card._gf.playable) {
+                if (autoExpandTimer) clearTimeout(autoExpandTimer);
+                autoExpandTimer = setTimeout(() => {
+                    autoExpandTimer = null;
+                    const currentCards = Array.from(document.querySelectorAll(".gf-card")).filter(c => c._gf);
+                    if (currentCards.length === 1 && autoExpandedUrl !== location.href) {
+                        autoExpandedUrl = location.href;
+                        if (!stage || !stage.classList.contains("open")) {
+                            openStage(currentCards[0]);
+                        }
+                    }
+                }, 160);
+            }
+        }
+    }
+
     function scan() {
-        const rows = document.querySelectorAll(".fm-row:not([data-gf-done]), #filemanager_itemslist > [data-item-id]:not([data-gf-done]), [data-type='file']:not([data-gf-done])");
+        const rows = document.querySelectorAll(".fm-row:not([data-gf-done]), #filemanager_itemslist > [data-item-id]:not([data-gf-done]), [data-type='file']:not([data-gf-done]), [role='list'][aria-label*='Folder' i] > [data-id]:not([data-gf-done])");
         rows.forEach(processItem);
+        checkAutoExpandSingleItem();
     }
 
     /* ===================== MULTISELECT: BARRA FLUTUANTE ===================== */
@@ -866,13 +923,15 @@
 
     function observeRoot() {
         try {
+            const rootTarget = document.documentElement || document.body;
+            if (!rootTarget) return;
             new MutationObserver(recs => {
                 for (const r of recs) {
                     if (stage && stage.contains(r.target)) continue;
                     requestScan();
                     return;
                 }
-            }).observe(document.body, { childList: true, subtree: true });
+            }).observe(rootTarget, { childList: true, subtree: true });
         } catch (e) {}
     }
 
@@ -880,6 +939,8 @@
     function onRoute() {
         if (location.href === lastHref) return;
         lastHref = location.href;
+        autoExpandedUrl = null;
+        if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
         closeStage();
         requestScan();
     }
