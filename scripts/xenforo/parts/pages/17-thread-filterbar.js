@@ -527,22 +527,17 @@
          * Medir o próprio header realimenta: ao grudar ele encolhe (badges somem), a posição de
          * referência muda, o cálculo desmarca, ele volta a crescer, remarca… = as badges PISCANDO.
          * A sentinela não muda de tamanho nem de posição, então a referência é estável.
-         * Histerese de 6px por cima disso, para o limiar não vibrar em scroll fino. */
+         * Histerese ampla por cima disso para eliminar oscilação por scroll anchoring. */
         const sentinel = document.createElement('div');
         sentinel.className = 'smg-thead-sentinel';
         header.parentNode.insertBefore(sentinel, header);
-        let topOff = null, lastSync = 0, trailTimer = 0;
+        createStickySync(header, sentinel);
+    }
+
+    function createStickySync(header, sentinel) {
+        let topOff = null;
+        let ticking = false;
         const syncStuck = () => {
-            const now = Date.now();
-            if (now - lastSync < 60) {
-                // TRAILING: o throttle descartava o ÚLTIMO evento da rajada. Como o fim da rajada é
-                // justamente onde o scroll PARA (por exemplo, de volta no topo), o estado final ficava
-                // com o valor do penúltimo evento — daí as badges às vezes não voltarem no topo.
-                if (!trailTimer) trailTimer = setTimeout(() => { trailTimer = 0; lastSync = 0; syncStuck(); }, 70);
-                return;
-            }
-            if (trailTimer) { clearTimeout(trailTimer); trailTimer = 0; }
-            lastSync = now;
             if (!header.isConnected) return;
             // On mobile the fixed context is the global topbar. The thread header stays
             // in flow so it cannot create a second overlapping bar or compete for height.
@@ -551,19 +546,53 @@
                 topOff = null;
                 return;
             }
-            if (topOff == null) topOff = parseFloat(getComputedStyle(header).top) || 0;
+            if (topOff == null) topOff = parseFloat(getComputedStyle(header).top) || 50;
+            const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel.getBoundingClientRect().top;
-            const scrolled = (window.scrollY || document.documentElement.scrollTop || 0) > 0;
             const stuck = header.classList.contains('is-stuck');
-            // com a página NO TOPO nada está grudado — sem esta guarda, um layout em que o header nasce
-            // acima do offset do sticky (topbar ainda não montada, por exemplo) o deixaria compacto pra sempre
-            if (!stuck && scrolled && y <= topOff - 6) header.classList.add('is-stuck');
-            else if (stuck && (!scrolled || y >= topOff + 6)) header.classList.remove('is-stuck');
+
+            if (!stuck) {
+                // SÓ GRUDA QUANDO:
+                // 1) scrollY > 40: a topbar já está recolhida no estado .floating (height: 50px),
+                //    garantindo que o topo do header sticky (top: 50px) case perfeitamente com a topbar.
+                // 2) y <= topOff - 8: a sentinela passou com folga do limiar de fixação.
+                if (scrollY > 40 && y <= topOff - 8) {
+                    header.classList.add('is-stuck');
+                }
+            } else {
+                // SÓ DESMARCA QUANDO:
+                // 1) O usuário rolou de volta até o topo da thread (scrollY <= 20).
+                // 2) OU a sentinela desceu com margem ampla (y >= topOff + 45).
+                // Com 53px de histerese (42px vs 95px), o salto de ~41px do encolhimento do header
+                // NUNCA consegue cruzar o limiar de saída, ELIMINANDO 100% o loop de oscilação!
+                if (scrollY <= 20 || y >= topOff + 45) {
+                    header.classList.remove('is-stuck');
+                }
+            }
         };
-        window.addEventListener('scroll', syncStuck, { passive: true });
-        window.addEventListener('resize', () => { topOff = null; lastSync = 0; syncStuck(); }, { passive: true });
+
+        const onScroll = () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(() => {
+                    ticking = false;
+                    syncStuck();
+                });
+            }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', () => { topOff = null; syncStuck(); }, { passive: true });
         syncStuck();
-        setTimeout(() => { lastSync = 0; syncStuck(); }, 400);   // re-mede com o layout assentado (topbar/fontes)
+        setTimeout(() => { topOff = null; syncStuck(); }, 400);   // re-mede com o layout assentado (topbar/fontes)
+
+        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+            window.syncStuck = syncStuck;
+            window.theadSentinel = sentinel;
+            header._syncStuck = syncStuck;
+            header._sentinel = sentinel;
+        }
+        return syncStuck;
     }
 
     function decorateThreadCard(row) {
@@ -1478,6 +1507,8 @@
             fetchAndIngestFollowed,
             streamAllWatchedPages,
             buildFilterBars,
+            unifyThreadHeader,
+            createStickySync,
             decorateThreadCard,
             decorateWatchedThreadRow,
             buildPostCard,
@@ -1485,6 +1516,12 @@
             buildCommentCard,
             buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
-            set isStreamingWatched(v) { isStreamingWatched = v; }
+            set isStreamingWatched(v) { isStreamingWatched = v; },
+            get syncStuck() { return window.syncStuck; },
+            get sentinel() { return window.theadSentinel; }
         };
+        window.syncStuck = window.syncStuck || null;
+        window.theadSentinel = window.theadSentinel || null;
+        window.createStickySync = createStickySync;
+        window.unifyThreadHeader = unifyThreadHeader;
     }

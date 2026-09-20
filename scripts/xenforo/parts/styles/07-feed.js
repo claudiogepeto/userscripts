@@ -196,8 +196,7 @@
             }
             .smg-fp-content iframe,
             .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe {
+            html.smg-masonry-on .auto-image-grid > iframe {
                 width: 100% !important;
                 max-width: 100% !important;
                 aspect-ratio: 16 / 9 !important;

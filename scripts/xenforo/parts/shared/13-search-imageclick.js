@@ -306,7 +306,6 @@
                     img.dataset.smgFull = res.original;
                     const link = img.closest('a');
                     if (link) link.href = res.original;
-                    if (img.src !== res.original) img.src = res.original;
                     const feed = document.getElementById('smg-feed');
                     if (feed && feed.classList.contains('open')) {
                         feed.querySelectorAll('img.smg-feed-media').forEach(fi => {

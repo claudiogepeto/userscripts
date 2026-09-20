@@ -188,6 +188,23 @@
         const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
         if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
         else wrap.style.maxWidth = maxWidth;
+
+        // Atualiza o container pai (se for .generic2wide-iframe-div, .smg-dm-wrap ou span[data-s9e-mediaembed])
+        const parentBox = wrap.closest && wrap.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]');
+        if (parentBox) {
+            parentBox.classList.add('smg-player-loaded');
+            parentBox.style.setProperty('--smg-ratio', r.toFixed(4));
+            parentBox.style.setProperty('--smg-rg-ratio', r.toFixed(4));
+            parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
+            parentBox.style.setProperty('overflow', 'visible', 'important');
+            if (parentBox.closest && parentBox.closest('.auto-image-grid')) {
+                parentBox.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
+            }
+        }
+        const grid = wrap.closest && wrap.closest('.auto-image-grid');
+        if (grid && typeof scheduleRelayout === 'function') {
+            scheduleRelayout(grid);
+        }
         return true;
     }
     function rgSetPoster(video, url) {
@@ -452,11 +469,14 @@
         video._rgExt = 'https://www.redgifs.com/watch/' + rgid;   // botão "abrir em nova guia"
         video._rgFeed = 'https://www.redgifs.com/ifr/' + rgid;    // botão "abrir no visualizador" (bate com collectMediaFrom)
         wrap.appendChild(video);
+        video.addEventListener('loadedmetadata', () => {
+            if (video.videoWidth && video.videoHeight) rgAspect(wrap, video.videoWidth, video.videoHeight);
+        });
         rgControls(wrap, video);   // play/pause + flash · progresso seekável · volume flyout · tempo · externo · visualizador · auto-hide
         return { wrap, video };
     }
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose };
+        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose, rgAspect };
     }
     function rgFmt(t) {   // M:SS; ≥ 1h vira H:MM:SS (vídeo longo mostrava "160:19" em vez de "2:40:19")
         t = Math.max(0, t | 0);
@@ -1072,6 +1092,10 @@
             div.dataset.rgDone = '1';
             div.dataset.redgifsAutoloaded = 'true';   // autoLoadRedgifs não clica mais nele
             div.removeAttribute('onclick');            // mata o loadMedia nativo (clique no nosso player não injeta iframe duplicado)
+            div.classList.add('smg-player-loaded');
+            div.style.setProperty('aspect-ratio', 'auto', 'important');
+            div.style.setProperty('overflow', 'visible', 'important');
+            div.style.setProperty('max-width', '100%', 'important');
             const { wrap, video } = rgBuild(id);
             wrap._rgLoader = div;
             div.appendChild(wrap);
@@ -1088,6 +1112,12 @@
             if (box && box.querySelector('.smg-rg')) { ifr.remove(); return; }
             const id = rgIdFrom(ifr.getAttribute('src') || ifr.getAttribute('data-src') || '');
             if (!id) return;
+            if (box) {
+                box.classList.add('smg-player-loaded');
+                box.style.setProperty('aspect-ratio', 'auto', 'important');
+                box.style.setProperty('overflow', 'visible', 'important');
+                box.style.setProperty('max-width', '100%', 'important');
+            }
             const { wrap, video } = rgBuild(id);
             wrap._rgIframe = ifr;
             ifr.parentNode.insertBefore(wrap, ifr);   // wrap entra no lugar do iframe

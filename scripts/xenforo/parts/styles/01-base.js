@@ -41,18 +41,27 @@
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
             html.smg-sc, html.smg-smg { --smg-cw: 80%; }
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
+            @media (max-width: 1400px) and (min-width: 800px) {
+                html.smg-sc, html.smg-smg { --smg-cw: 92%; }
+            }
             /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
                20% de margem vazia em cima disso desperdiçaria duas vezes a mesma tela. Especificidade
                maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
             html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
             @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
+            @media (max-width: 1400px) and (min-width: 800px) {
+                html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
+            }
 
             /* ---- image grids ---- */
             .auto-image-grid {
-                display: block !important;
-                column-count: var(--smg-mcols, 3) !important;
+                display: grid !important;
+                grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
+                grid-auto-flow: row dense !important;
+                grid-auto-rows: auto !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
                 column-gap: 8px !important;
-                grid-template-columns: none !important; grid-auto-rows: auto !important;
                 margin: 12px auto !important;
                 max-width: 100%;
                 text-align: center !important;
@@ -64,51 +73,228 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 align-items: start !important;
             }
-            /* MASONRY por CSS Grid — linhas explícitas, ordem visual por linha e espaçamento único.
-               Cada item mantém sua altura natural; sem row-span calculado em JS, não há corte nem
-               sobreposição quando a proporção real chega. */
+            /* MASONRY UNIFICADO por CSS Grid — linhas explícitas, ordem visual por linha e espaçamento único de 8px */
             html.smg-masonry-on .auto-image-grid {
                 display: grid !important;
                 grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
-                grid-auto-flow: row !important;
+                grid-auto-flow: row dense !important;
                 grid-auto-rows: auto !important;
                 gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
                 align-items: start !important;
-                justify-items: center !important;
+                justify-items: stretch !important;
                 margin: 12px auto !important;
-                max-width: 100%;
+                max-width: 100% !important;
                 text-align: center !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-grid-orphan > :last-child { grid-column: 2; }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2-tall {
-                max-width: min(720px, 66.6%) !important;
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 {
+                grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-3 {
+                grid-column: span 3 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-2 {
+                grid-column: span 2 !important;
+            }
+            html.smg-masonry-on .auto-image-grid > .smg-span-all {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                justify-self: center !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid > .smg-item-centered {
+                grid-column: 1 / -1 !important;
+                justify-self: center !important;
+                width: auto !important;
+                max-width: min(calc((100% - 8px) / 2), calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 0.6))) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-orphan > :last-child {
+                grid-column: 2 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2-tall,
+            html.smg-masonry-on .auto-image-grid.smg-grid-pair-tall,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry.smg-grid-pair-tall {
+                max-width: min(760px, 70%) !important;
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
-                width: 100% !important; max-width: none !important; margin: 0 auto !important; display: block;
-            }
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div {
                 width: 100% !important;
-                max-width: none !important;
+                max-width: 100% !important;
                 margin: 0 !important;
                 display: block !important;
-                aspect-ratio: 16 / 9;
-                position: relative;
+                box-sizing: border-box !important;
+            }
+
+
+            /* ---- POST DE GALERIA PURA: TRUE MASONRY (Pinterest-style, colunas independentes contínuas) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                display: block !important;
+                column-count: var(--smg-mcols, 3) !important;
+                column-gap: 8px !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            @media (max-width: 1400px) {
+                html.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 2;
+                }
+                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 2) !important;
+                }
+            }
+            @media (max-width: 1760px) {
+                html.smg-aldock-on.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 2;
+                }
+                html.smg-aldock-on.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 2) !important;
+                }
+            }
+            @media (max-width: 599px) {
+                html.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 1;
+                }
+                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 1) !important;
+                }
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                display: block !important;
+                width: 100% !important;
+                margin: 0 0 8px 0 !important;
+                box-sizing: border-box !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-wide {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                display: block !important;
+                object-fit: contain !important;
+                margin: 0 0 8px 0 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * img.bbImage {
+                margin: 0 !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+            }
+            /* ---- POST COM TEXTO: LINHAS JUSTIFICADAS (OPÇÃO A) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
+                justify-content: center !important;
+                align-items: stretch !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid > * {
+                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h, 320px) * var(--smg-ratio, 1)) !important;
+                min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                max-width: 100% !important;
+                min-height: 160px !important;
+                height: auto !important;
+                width: auto !important;
+                margin: 0 auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                display: block !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .generic2wide-iframe-div {
+                width: 100% !important;
+                height: 100% !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+            }
+
+            /* ---- GRID DE EXATAMENTE 2 IMAGENS (REGRAS CLÁSSICAS DO MASONRY) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 {
+                display: grid !important;
+                grid-template-columns: repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;
+                grid-auto-flow: row dense !important;
+                grid-auto-rows: auto !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
+                align-items: start !important;
+                justify-items: stretch !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-tall {
+                max-width: min(760px, 70%) !important;
+                margin: 12px auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-asym {
+                grid-template-columns: var(--smg-col1-w, 1fr) var(--smg-col2-w, 1fr) !important;
+                max-width: 100% !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 > *,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-wide,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100% !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
+                display: block !important;
+            }
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                margin: 0 auto !important;
+                display: block !important;
+                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
+                position: relative !important;
                 border-radius: 0 !important;
                 background: #000;
-                overflow: hidden;
             }
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div.smg-player-loaded,
+            html.smg-masonry-on .auto-image-grid span[data-s9e-mediaembed].smg-player-loaded,
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-rg) {
                 aspect-ratio: auto !important;
                 min-height: 0 !important;
                 overflow: visible !important;
                 background: transparent !important;
+                max-width: 100% !important;
             }
             .smg-fp-content iframe,
             .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe {
+            html.smg-masonry-on .auto-image-grid > iframe {
                 width: 100% !important;
                 max-width: 100% !important;
                 aspect-ratio: 16 / 9 !important;
@@ -120,23 +306,51 @@
             html.smg-masonry-on .auto-image-grid img.bbImage,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage {
                 width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-            }
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video { max-height: var(--smg-media-h) !important; width: 100% !important; object-fit: contain !important; }
-            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 auto !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
-            /* Verticais: o teto reduz a largura proporcionalmente; nunca usa altura fixa em uma mídia de largura cheia. */
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
-                width: auto !important;
                 max-width: 100% !important;
                 height: auto !important;
-                max-height: var(--smg-media-h) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 object-fit: contain !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-rg,
+            html.smg-masonry-on .auto-image-grid .smg-rg {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                aspect-ratio: var(--smg-rg-ratio, 16 / 9) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video {
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                width: 100% !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+            /* Verticais no masonry: preenchem 100% da largura da coluna, garantindo gap de 8px exato */
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: cover !important;
+                margin: 0 !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: contain !important;
+                margin: 0 !important;
             }
             html.smg-masonry-on .auto-image-grid .smg-rg.smg-rg-vert {
                 width: 100% !important;
@@ -283,7 +497,7 @@
             /* PERF: pulso de OPACITY (composita na GPU) em vez do shimmer por background-position (que repintava
                a caixa INTEIRA a cada frame × dezenas de imgs carregando ao mesmo tempo no burst do scroll infinito).
                O keyframes smg-img-shimmer continua existindo pros consumidores pequenos (fhcard 72px). */
-            img.bbImage:not(.smg-img-ready) {
+            img.bbImage:not(.smg-img-ready):not([style*="aspect-ratio"]) {
                 width: 100% !important;
                 /* MESMA proporção provisória que o masonry usa pra reservar as linhas (blockRelH). Estavam
                    divergentes — o CSS pintava 16/10 (paisagem) e o grid reservava 1.3 (retrato), então TODO
@@ -367,6 +581,7 @@
                 height: 13px !important;
             }
             .smg-fhcard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
+            .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link, #ff77b2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
             .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx, #e7e7ea); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-fhcard-sub { font-size: 12px; color: var(--smg-tx2, rgba(255,255,255,0.55)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* DENTRO DE LISTA/TABELA: uma linha por item. O card cheio (tile de 96px) repetido em cada
@@ -383,6 +598,7 @@
             /* título e host na MESMA linha (o sub vira sufixo discreto): duas linhas por item dobravam a
                altura da lista sem acrescentar nada — o host já aparece no ícone. */
             .smg-fhcard--inline .smg-fhcard-body { flex-direction: row; align-items: baseline; gap: 7px; }
+            .smg-fhcard--inline .smg-fhcard-platform { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link, #ff77b2); flex: 0 0 auto; }
             .smg-fhcard--inline .smg-fhcard-host { font-size: 13px; font-weight: 600; flex: 0 1 auto; }
             .smg-fhcard--inline .smg-fhcard-sub { font-size: 10.5px; flex: 0 0 auto; opacity: 0.75; }
             .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: 7px; }
@@ -623,6 +839,8 @@
                 border-radius: 10px;
                 background: #000;
             }
+            .generic2wide-iframe-div.smg-player-loaded,
+            span[data-s9e-mediaembed].smg-player-loaded,
             .generic2wide-iframe-div:has(.smg-rg),
             .generic2wide-iframe-div:has(.smg-turbo-slot--filled) {
                 aspect-ratio: auto !important;
@@ -633,18 +851,38 @@
                 justify-content: center !important;
                 align-items: center !important;
                 text-align: center !important;
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                margin: 0 auto !important;
+                display: block !important;
+                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
+                position: relative !important;
+                border-radius: 0 !important;
+                background: #000;
             }
             /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
             .generic2wide-iframe-div > iframe,
-            .generic2wide-iframe-div iframe.saint-iframe {
+            .generic2wide-iframe-div iframe.saint-iframe,
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe {
                 position: absolute !important;
                 inset: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
                 max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: auto !important;
                 border: none !important;
-                border-radius: 10px !important;
+                border-radius: 0 !important;
                 background: #000 !important;
+                display: block !important;
             }
 
             /* ---- turbo: slot (loading), fallback link, error card ---- */
@@ -743,6 +981,7 @@
                 object-fit: contain !important;
                 margin: 0 auto !important;
             }
+
             .smg-dm-wrap img.bbImage { border-radius: 10px; }
             .smg-dm-video {
                 display: block; width: 100%;
@@ -808,8 +1047,8 @@
                alguns players (ex.: redgifs) injetam iframe/wrapper aninhado com
                largura fixa que escapava dos seletores acima e estourava a página
                no mobile (scroll horizontal). */
-            .generic2wide-iframe-div,
-            span[data-s9e-mediaembed] {
+            .generic2wide-iframe-div:not(.smg-player-loaded):not(:has(.smg-rg)):not(:has(.smg-turbo-slot--filled)),
+            span[data-s9e-mediaembed]:not(.smg-player-loaded):not(:has(.smg-rg)) {
                 overflow: hidden !important;
             }
             .generic2wide-iframe-div *,
@@ -822,8 +1061,8 @@
                 position: relative;
                 display: block;
                 width: 100%;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9));
-                max-height: var(--smg-media-h);   /* TETO: não estoura o viewport (vale no masonry) */
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778)));
+                max-height: var(--smg-media-h, min(70vh, 750px));   /* TETO: não estoura o viewport (vale no masonry) */
                 margin: 16px auto;
                 aspect-ratio: 16 / 9;             /* placeholder; o JS troca pelo aspect REAL (videoWidth/Height ou API do redgifs) e MANTÉM (não some no clearSkel) */
                 background: #000;

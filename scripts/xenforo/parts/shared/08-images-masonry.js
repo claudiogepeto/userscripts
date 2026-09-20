@@ -139,22 +139,26 @@
         goonboxResolve(href, res => {
             if (!res || !res.original || !card.isConnected) return;
             const full = res.original;
+            const med = res.medium || full;
             const img = document.createElement('img');
             img.className = 'bbImage';
             img.loading = 'lazy';
             img.alt = '';
             img.dataset.smgLink = href;
             img.dataset.smgFull = full;
-            img.dataset.smgMed = res.medium || full;
+            img.dataset.smgMed = med;
             if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
-            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+            img.addEventListener('load', () => {
+                const g = img.closest('.auto-image-grid');
+                if (g) scheduleRelayout(g);
+            }, { once: true });
             const link = document.createElement('a');
             link.href = full;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             link.appendChild(img);
             card.replaceWith(link);
-            img.src = full;
+            img.src = med;
         }, card);
     }
     function processOneImage(img) {
@@ -171,9 +175,6 @@
                 img.dataset.smgMed = res.medium || res.original;
                 const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
                 if (link) link.href = res.original;
-                if (res.original && img.src !== res.original) {
-                    img.src = res.original;
-                }
                 if (img.dataset.url) img.dataset.url = res.original;
                 if (res.width && res.height && !img.style.aspectRatio) {
                     img.style.aspectRatio = res.width + ' / ' + res.height;
@@ -190,18 +191,21 @@
                 }
             }, img);
         }
-        const src = img.currentSrc || img.src || '';
+        let src = img.currentSrc || img.getAttribute('src') || img.src || '';
         if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
-            // tira da varredura por-mutação (data-smg-lazy-wait) e re-processa SÓ esta imagem quando o
-            // lazy-loader setar o src (load/error). Antes ficava no loop, re-escaneada a cada mutação.
-            // SEM timeout especulativo: espera o load nativo (loading=lazy), igual ao site padrão.
-            if (!img.dataset.smgLazyWait) {
-                img.dataset.smgLazyWait = '1';
-                const reproc = () => { if (!img.dataset.smgLazyWait) return; delete img.dataset.smgLazyWait; processOneImage(img); };
-                img.addEventListener('load', reproc, { once: true });
-                img.addEventListener('error', reproc, { once: true });
+            const realSrc = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original');
+            if (realSrc && /^https?:/i.test(realSrc)) {
+                src = realSrc;
+                img.src = realSrc;
+            } else {
+                if (!img.dataset.smgLazyWait) {
+                    img.dataset.smgLazyWait = '1';
+                    const reproc = () => { if (!img.dataset.smgLazyWait) return; delete img.dataset.smgLazyWait; processOneImage(img); };
+                    img.addEventListener('load', reproc, { once: true });
+                    img.addEventListener('error', reproc, { once: true });
+                }
+                return;
             }
-            return;
         }
         delete img.dataset.smgLazyWait;
         img.dataset.fullProcessed = 'true';          // EXAMINADA → fora das próximas varreduras
@@ -213,11 +217,24 @@
         img.classList.remove('lazyload', 'lazyloading');   // o FÓRUM faz .lazyload/.lazyloading{opacity:0} até revelar; a img já tem src http → tira senão fica invisível esperando o reveal
         // NADA de timeout-de-link: a img carrega nativa igual ao site padrão (que carrega de boa). Link de fallback SÓ em erro real (onerror) ou complete sem dimensão (404/hotlink) — abaixo. O timeout de 7s trocava imagem offscreen (naturalWidth 0 pq ainda não rolou até ela) por chip de link → "imagem não aparece" no nosso mod.
 
+        if (!img.style.aspectRatio) {
+            const w = +(img.getAttribute('width') || (img.dataset && img.dataset.width) || 0);
+            const h = +(img.getAttribute('height') || (img.dataset && img.dataset.height) || 0);
+            if (w > 0 && h > 0) {
+                img.style.aspectRatio = w + ' / ' + h;
+                markWide(img, w, h);
+            }
+        }
+
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
-            if (img.naturalWidth && img.naturalHeight && !img.style.aspectRatio)
-                img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+            if (img.naturalWidth && img.naturalHeight) {
+                const currentRatio = img.style.aspectRatio;
+                if (!currentRatio || currentRatio === '100 / 100' || (currentRatio === '1 / 1' && img.naturalWidth !== img.naturalHeight)) {
+                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                }
+            }
             markWide(img, img.naturalWidth, img.naturalHeight);   // deitada → largura limitada fora do mosaico
             const grid = img.closest('.auto-image-grid');
             if (grid) scheduleRelayout(grid);
@@ -229,6 +246,8 @@
             img.addEventListener('error', () => imgFailLink(img), { once: true });   // não renderizou → caixa de mídia morta
             armImgWatchdog(img);   // nem load nem error (host pendurado) → a caixa entra por tempo, não por evento
         }
+
+        const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
 
         // ANTI-PULO: NÃO troca a thumb pela full na hora. Mantém a thumb (carrega rápido e fixa
         // o tamanho) e só troca pra full perto da viewport (IO). Como a full tem a MESMA proporção,
@@ -312,7 +331,10 @@
             if (!url || !card.isConnected) return;   // falhou → fica o card
             const full = getBigUrl(url);   // a viewer do chevereto serve a versão .md (MÉDIA) → sobe pro ORIGINAL (resolução cheia)
             const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = full;
-            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });   // tem dimensões → masonry re-grida
+            img.addEventListener('load', () => {
+                const g = img.closest('.auto-image-grid');
+                if (g) scheduleRelayout(g);
+            }, { once: true });   // tem dimensões → masonry re-grida
             img.addEventListener('error', () => {}, { once: true });   // CDN fora → deixa o que estiver (card já foi removido; vira img quebrada rara)
             const link = document.createElement('a'); link.href = full; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.appendChild(img);
             card.replaceWith(link);
@@ -352,7 +374,10 @@
             all.forEach(u => {
                 const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
                 const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = u;
-                img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+                img.addEventListener('load', () => {
+                    const g = img.closest('.auto-image-grid');
+                    if (g) scheduleRelayout(g);
+                }, { once: true });
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
             card.replaceWith(frag);
@@ -461,8 +486,10 @@
         const out = [];
         // imagens + TODOS os embeds: wrappers conhecidos (turbo/saint/redgifs/s9e/mídia direta) + iframe/video SOLTOS (imagepond, vídeo nativo, outros hosts)
         scope.querySelectorAll('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"]').forEach(el => {   // só tipos conhecidos + imagepond (bare video/iframe puxava vídeo nativo preto/thumb quebrada)
-            // NÃO excluir .bbCodeBlock geral: o turbo/saint do XF vive DENTRO de .bbCodeBlock--unfurl (card de link). Só pula citação/chips/assinatura.
-            if (el.closest('.bbCodeQuote, .bbCodeSpoiler, .bbCodeBlock--spoiler, .smg-post-links, .message-signature')) return;
+            if (el.closest('.bbCodeQuote, .smg-post-links, .message-signature')) return;
+            const sp = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content');
+            if (sp && sp !== scope && scope.contains(sp)) return;
+            if (!scope.classList.contains('bbCodeSpoiler-content') && !scope.classList.contains('bbCodeBlock-content') && sp) return;
             // img/iframe/video que JÁ está dentro de um wrapper coletado → representado por ele (evita duplicar)
             if (/^(IMG|IFRAME|VIDEO)$/.test(el.tagName) && el.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]')) return;
             // s9e dentro de um .generic2wide-iframe-div (redgifs do Simp) → o DIV pai é o bloco (senão conta 2x: o span + o div)
@@ -485,7 +512,7 @@
     function blockRelH(b) {   // altura relativa (h/w) p/ distribuir no masonry, SEM reflow (usa o aspect-ratio já conhecido)
         if (b.tagName === 'IMG') {
             const m = (b.style.aspectRatio || '').match(/([\d.]+)\D+([\d.]+)/);
-            if (m && +m[1]) return (+m[2]) / (+m[1]);
+            if (m && +m[1] && (+m[1] !== 100 || +m[2] !== 100 || !b.naturalWidth)) return (+m[2]) / (+m[1]);
             if (b.naturalWidth) return b.naturalHeight / b.naturalWidth;
             return IMG_PH_RELH;
         }
@@ -495,7 +522,21 @@
         if (am && +am[1]) return (+am[2]) / (+am[1]);
         return 0.5625;   // embeds/vídeo 16:9 (default até o player saber a proporção)
     }
-    function gridCols() { return window.innerWidth < 600 ? 1 : 3; }   // faixa (p/ detectar a troca mobile↔desktop no resize)
+    function getEffectiveWidth() {
+        let w = (typeof window !== 'undefined' && window.innerWidth) || 1200;
+        if (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('smg-aldock-on')) {
+            const dock = document.getElementById('smg-aldock');
+            const dockW = (dock && dock.offsetWidth) ? dock.offsetWidth : 360;
+            w -= dockW;
+        }
+        return w;
+    }
+    function gridCols() {
+        const w = getEffectiveWidth();
+        if (w < 600) return 1;
+        if (w <= 1400) return 2;
+        return 3;
+    }
     // nº de colunas pela quantidade E orientação:
     //   · mobile (< 600px) → 1
     //   · 1 item → 1 coluna
@@ -509,11 +550,15 @@
     const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
+        // No masonry (.auto-image-grid), a largura é rigorosamente 100% da coluna (gap de 8px).
+        // NUNCA aplica max-width inline em itens de grid, pois causaria encolhimento e vãos horizontais gigantes!
+        if (el.closest && el.closest('.auto-image-grid')) {
+            el.style.removeProperty('max-width');
+            return;
+        }
         if (!vertical) { el.style.removeProperty('max-width'); return; }
         const ratio = w / h;
-        const maxWidth = (el.closest && el.closest('.auto-image-grid'))
-            ? 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))'
-            : 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
+        const maxWidth = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
@@ -529,23 +574,50 @@
             setVerticalMaxWidth(wrap, w, h, !wide);
         }
     }
+    function isVideoBlock(b) {
+        if (!b) return false;
+        if (b.tagName === 'IMG') return false;
+        return true;
+    }
     function gridColsFor(blocks) {
-        if (window.innerWidth < 600) return 1;
-        if (blocks.length >= 5) return 3;   // muitas mídias → três colunas estáveis
-        if (blocks.length === 4) {
-            const verticalCount = blocks.filter(b => blockRelH(b) >= WIDE_RELH).length;
-            return verticalCount >= 3 ? 3 : 2;
-        }
-        if (blocks.length === 3) {
-            const verticalCount = blocks.filter(b => blockRelH(b) >= WIDE_RELH).length;
-            return verticalCount >= 2 ? 3 : 2;
-        }
+        const w = getEffectiveWidth();
+        if (w < 600) return 1;
+        if (blocks.length <= 1) return 1;
+
+        const isCompact = w <= 1400;
+        const videoCount = blocks.filter(isVideoBlock).length;
+        const photoCount = blocks.length - videoCount;
+
         if (blocks.length === 2) {
             const allWide = blocks.every(b => blockRelH(b) < WIDE_RELH);
             if (allWide) return 1;
             return 2;
         }
-        return 1;
+        if (blocks.length === 3) {
+            // Caso 1: 2 fotos + 1 vídeo -> 2 colunas (o vídeo span-all na linha inteira)
+            if (photoCount === 2 && videoCount === 1) return 2;
+            // Caso 2: 1 foto + 2 vídeos -> 2 colunas (a foto centrada na linha 2)
+            if (photoCount === 1 && videoCount === 2) return 2;
+            // Em telas compactas (<= 1400px), 3 fotos ficam mais confortáveis em 2 colunas
+            if (isCompact) return 2;
+            // Em telas > 1400px: 3 colunas estáveis (1 única linha com 3 fotos lado a lado)
+            return 3;
+        }
+        if (blocks.length === 4) {
+            // 4 itens: 2x2 equilibrado
+            return 2;
+        }
+        if (blocks.length === 5) {
+            // Caso 3: 2 fotos + 3 vídeos -> 6 trilhas (2x span 3 + 3x span 2) apenas em telas amplas
+            if (!isCompact && photoCount === 2 && videoCount === 3) return 6;
+            return isCompact ? 2 : 3;
+        }
+        if (blocks.length === 6) {
+            // Caso 4: 4 fotos + 2 vídeos -> 2 colunas (3 linhas perfeitas de 2 itens)
+            if (photoCount === 4 && videoCount === 2) return 2;
+            return isCompact ? 2 : 3;
+        }
+        return isCompact ? 2 : 3;
     }
     // ===== MASONRY por CSS Grid =====
     // The grid keeps uniform columns, row-major order, and one consistent gap. Each item keeps its
@@ -576,29 +648,128 @@
             fn();
         }
     }
+    function hasTextBetweenMedia(scope) {
+        if (!scope) return false;
+        const grids = scope.querySelectorAll('.auto-image-grid');
+        if (grids.length > 1) return true;   // múltiplas galerias separadas por conteúdo no mesmo post
+
+        const blocks = collectGalleryBlocks(scope);
+        if (blocks.length < 2) return false;
+
+        const first = (blocks[0].tagName === 'IMG') ? (blocks[0].closest('.bbImageWrapper, a') || blocks[0]) : blocks[0];
+        const last = (blocks[blocks.length - 1].tagName === 'IMG') ? (blocks[blocks.length - 1].closest('.bbImageWrapper, a') || blocks[blocks.length - 1]) : blocks[blocks.length - 1];
+        if (!first || !last || first === last) return false;
+        if (!first.parentNode || !last.parentNode) return false;
+
+        try {
+            const range = document.createRange();
+            range.setStartAfter(first);
+            range.setEndBefore(last);
+            const frag = range.cloneContents();
+            if (frag.querySelectorAll) {
+                frag.querySelectorAll('.bbCodeQuote, .bbCodeSpoiler, .message-signature, .smg-post-links, .smg-fhcard, .bbCodeBlock--unfurl, .auto-image-grid, a.link--external, a.smg-imglink, script, style, noscript').forEach(el => el.remove());
+            }
+            const between = (frag.textContent || '').replace(/\s+/g, ' ').trim();
+            return between.length >= 15;
+        } catch (e) {
+            return false;
+        }
+    }
+
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
     function relayoutGrid(grid) {
         const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
         if (!items.length) return;
-        const N = gridColsFor(items);
-        grid.style.setProperty('--smg-mcols', N);
-        grid.classList.toggle('smg-grid-orphan', N === 3 && items.length % N === 1);
+        const postBody = grid.closest && grid.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
+        const hasTextBetween = hasTextBetweenMedia(postBody);
 
-        const isTwoTall = items.length === 2 && N === 2
-            && blockRelH(items[0]) > TALL_RELH
-            && blockRelH(items[1]) > TALL_RELH;
-        grid.classList.toggle('smg-grid-2-tall', isTwoTall);
-        grid.classList.remove('smg-grid-2-mod', 'smg-grid-2-asym');
+        grid.classList.remove('smg-grid-2', 'smg-grid-2-tall', 'smg-grid-2-asym', 'smg-grid-pair-tall', 'smg-grid-6', 'smg-grid-orphan', 'smg-justified-grid', 'smg-true-masonry');
         grid.style.removeProperty('--smg-col1-w');
         grid.style.removeProperty('--smg-col2-w');
+
+        items.forEach(it => {
+            it.classList.remove('smg-span-all', 'smg-item-centered', 'smg-span-2', 'smg-span-3');
+            const rh = blockRelH(it);
+            const r = rh > 0 ? (1 / rh) : 1;
+            it.style.setProperty('--smg-ratio', r.toFixed(4));
+            if (it.style) {
+                if (it.style.maxWidth) it.style.removeProperty('max-width');
+                if (it.style.width) it.style.removeProperty('width');
+            }
+            const innerImg = it.tagName === 'IMG' ? it : (it.querySelector && it.querySelector('img.bbImage'));
+            if (innerImg && innerImg.style) {
+                if (innerImg.style.maxWidth) innerImg.style.removeProperty('max-width');
+                if (innerImg.style.width) innerImg.style.removeProperty('width');
+            }
+        });
+
+        const videoCount = items.filter(isVideoBlock).length;
+        const photoCount = items.length - videoCount;
+        const hasVideo = videoCount > 0;
+
+        const N = Math.min(6, Math.max(1, gridColsFor(items)));
+        grid.style.setProperty('--smg-mcols', N);
+        masonryBucket = gridCols();
+
+        if (items.length === 2) {
+            grid.classList.add('smg-grid-2');
+            const r0 = blockRelH(items[0]), r1 = blockRelH(items[1]);
+            // Se as duas fotos/mídias forem verticais ou quadradas (h/w >= 0.9):
+            // restringe o container (.smg-grid-2-tall) para não estourar em telas ultrawide
+            const isTwoTall = N === 2 && r0 >= 0.9 && r1 >= 0.9;
+            if (isTwoTall) {
+                grid.classList.add('smg-grid-2-tall');
+            } else if (r0 > 0 && r1 > 0 && Math.abs(r0 - r1) > 0.15) {
+                grid.classList.add('smg-grid-2-asym');
+                const w0 = r1 / (r0 + r1);
+                const w1 = r0 / (r0 + r1);
+                grid.style.setProperty('--smg-col1-w', 'calc((100% - 8px) * ' + w0.toFixed(4) + ')');
+                grid.style.setProperty('--smg-col2-w', 'calc((100% - 8px) * ' + w1.toFixed(4) + ')');
+            }
+        } else if (hasVideo) {
+            // Se houver vídeo (Casos 1, 2, 3, 4): utiliza o CSS Grid com spans estruturados
+            if (items.length === 3 && N === 2) {
+                const videoItem = items.find(isVideoBlock);
+                const photoItems = items.filter(it => !isVideoBlock(it));
+                if (videoItem && photoItems.length === 2) {
+                    videoItem.classList.add('smg-span-all');
+                } else {
+                    const photoItem = items.find(it => !isVideoBlock(it));
+                    if (photoItem) photoItem.classList.add('smg-item-centered');
+                }
+            } else if (items.length === 5 && N === 6) {
+                grid.classList.add('smg-grid-6');
+                items.forEach(it => {
+                    if (isVideoBlock(it)) it.classList.add('smg-span-2');
+                    else it.classList.add('smg-span-3');
+                });
+            }
+            grid.classList.toggle('smg-grid-orphan', N === 3 && items.length % N === 1);
+        } else if (items.length >= 3) {
+            // Toda galeria de fotos (seja o post inteiro ou cada bloco entre textos no modo row)
+            // é o seu próprio True Masonry local, sem cortes e sem vãos vazios!
+            grid.classList.add('smg-true-masonry');
+            if (items.length === 4 && N === 2) {
+                const allTallOrSquare = items.every(it => blockRelH(it) >= 0.9);
+                if (allTallOrSquare) grid.classList.add('smg-grid-pair-tall');
+            }
+        }
     }
     // move os novos blocos pra serem filhos DIRETOS do grid e deixa o CSS Grid recalcular as linhas.
     function fillGrid(grid, newBlocks) {
         grid.style.removeProperty('grid-template-columns');   // limpa eventual template inline do modo legado
+        let insertRef = grid.firstChild;
         newBlocks.forEach(b => {
             if (b.parentNode === grid) return;
             const unfurl = b.closest('.bbCodeBlock--unfurl');   // ANTES de mover: o card de link vira caixa vazia → esconde
-            grid.appendChild(b); b.dataset.smgGridded = '1';
+            const followingMask = (typeof Node !== 'undefined' && Node.DOCUMENT_POSITION_FOLLOWING) || 4;
+            if (b.compareDocumentPosition && (b.compareDocumentPosition(grid) & followingMask)) {
+                if (insertRef) grid.insertBefore(b, insertRef);
+                else grid.appendChild(b);
+            } else {
+                grid.appendChild(b);
+            }
+            b.dataset.smgGridded = '1';
             if (unfurl) unfurl.style.display = 'none';
             // CSS Grid updates row geometry when the item changes height; JS only handles classification.
             activateLazyEmbed(b);
@@ -619,10 +790,76 @@
         let p = grid.previousSibling;   // <br>/ws colado ANTES do grid (sobra dos breaks das imagens movidas) → senão empurra o grid pra baixo
         while (p && (p.nodeName === 'BR' || (p.nodeType === 3 && !p.textContent.trim()))) { const pv = p.previousSibling; p.remove(); p = pv; }
     }
+    function unwrapEmptyMediaFormatting(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const sel = 'b, strong, i, em, u, s, span:not([data-s9e-mediaembed]), font, center';
+        let changed = true;
+        let passes = 0;
+        while (changed && passes < 10) {
+            changed = false;
+            passes++;
+            const candidates = scope.querySelectorAll(sel);
+            for (let i = candidates.length - 1; i >= 0; i--) {
+                const el = candidates[i];
+                if (!el.parentNode) continue;
+                // Contém mídia ou grid?
+                const hasMedia = el.querySelector('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"], .auto-image-grid');
+                if (!hasMedia) continue;
+
+                // Verifica se há texto autoral real dentro de el (desconsiderando mídias, grids, breaks e tags técnicas)
+                const clone = el.cloneNode(true);
+                clone.querySelectorAll('img, iframe, video, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .auto-image-grid, br, noscript, script, style').forEach(n => n.remove());
+                const text = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+                if (text === '') {
+                    // É puramente um wrapper de formatação ao redor de mídias sem nenhum texto:
+                    // dissolve o wrapper no parent para que as mídias fiquem no mesmo nível das demais mídias
+                    el.replaceWith(...el.childNodes);
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    function mergeAdjacentGrids(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const grids = Array.from(scope.querySelectorAll('.auto-image-grid'));
+        for (let i = 0; i < grids.length; i++) {
+            const grid = grids[i];
+            if (!grid.parentNode) continue;
+            let next = grid.nextSibling;
+            // Pula nós de texto vazios/whitespace, comentários e quebras <br>
+            while (next && (
+                (next.nodeType === 3 && !next.textContent.trim()) ||
+                (next.nodeType === 8) ||
+                (next.nodeType === 1 && next.tagName === 'BR')
+            )) {
+                next = next.nextSibling;
+            }
+            if (next && next.nodeType === 1 && next.classList.contains('auto-image-grid')) {
+                // Encontrou grid adjacente sem texto entre eles: mescla os itens do segundo grid no primeiro!
+                while (next.firstChild) {
+                    grid.appendChild(next.firstChild);
+                }
+                const nextToRemove = next;
+                let between = grid.nextSibling;
+                while (between && between !== nextToRemove) {
+                    const nb = between.nextSibling;
+                    between.remove();
+                    between = nb;
+                }
+                nextToRemove.remove();
+                relayoutGrid(grid);
+                cleanupGhosts(grid);
+                i--; // Reavalia este mesmo grid caso haja outro grid em seguida
+            }
+        }
+    }
+
     // GALERIA EM CONTEXTO (era: UM grid no fim do post → quebrava o contexto quando havia texto entre as mídias). Agora agrupa
     // só RUNS de mídia CONTÍGUA (separadas apenas por <br>/espaço); texto OU card/elemento não-mídia entre mídias QUEBRA a run →
     // vira um grid à parte NO LUGAR de origem, então o texto fica junto da mídia a que se refere. Run de 1 mídia → fica inline.
     function buildPostGallery(scope) {
+        unwrapEmptyMediaFormatting(scope);
         // 1. Desaninhar grids acidentais prévios (auto-image-grid dentro de auto-image-grid)
         scope.querySelectorAll('.auto-image-grid .auto-image-grid').forEach(innerGrid => {
             const outer = innerGrid.parentElement;
@@ -673,13 +910,14 @@
             Array.from(parent.childNodes).forEach(node => {
                 if (node.nodeType === 3) { if (node.textContent.trim()) flush(); return; }   // texto real → quebra a run; whitespace → mantém
                 if (node.nodeType !== 1) return;
-                if (node.tagName === 'BR') return;   // separador → mantém a run
+                if (/^(BR|SCRIPT|STYLE|NOSCRIPT|META|LINK|TEMPLATE)$/i.test(node.tagName)) return;   // separador ou metadados sem impacto visual → mantém a run
                 if (node.classList && node.classList.contains('auto-image-grid')) { run.push({ grid: node }); return; }   // grid existente
                 if (flowMap.has(node)) { run.push({ flow: node, blocks: flowMap.get(node) }); return; }   // mídia ainda não gridada
                 flush();   // card/parágrafo/qualquer outro elemento → quebra a run (preserva o contexto texto↔mídia)
             });
             flush();
         });
+        mergeAdjacentGrids(scope);
     }
     // Resize/rotation changes fluid column widths automatically. Only crossing the mobile/desktop
     // breakpoint changes the column count, so existing grids need a new classification then.
@@ -698,6 +936,21 @@
                 document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);   // recalculate columns + orphan alignment
             }, 200);
         }, { passive: true });
+        if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.documentElement) {
+            let dockWasOn = document.documentElement.classList.contains('smg-aldock-on');
+            const mo = new MutationObserver(() => {
+                const dockIsOn = document.documentElement.classList.contains('smg-aldock-on');
+                if (dockIsOn !== dockWasOn) {
+                    dockWasOn = dockIsOn;
+                    const b = gridCols();
+                    if (b !== masonryBucket) {
+                        masonryBucket = b;
+                        document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);
+                    }
+                }
+            });
+            mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        }
     }
     function buildPostGalleries(roots) {
         if (!document.documentElement.classList.contains('smg-masonry-on')) return;   // só com a Galeria ligada
@@ -721,14 +974,24 @@
         // inteiro, NÃO só dentro do .bbWrapper: no SMG nosso embed às vezes entra como IRMÃO do .bbWrapper (fora dele) e ficava de fora.
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
         const types = ['img.bbImage', '.generic2wide-iframe-div', '.smg-dm-wrap', 'span[data-s9e-mediaembed]', 'iframe[src*="imagepond.net"]'];
+        const scopes = ['.bbCodeSpoiler-content', '.bbCodeBlock--spoiler .bbCodeBlock-content', '.message-userContent', '.comment-body'];
         const sel = [];
-        ['.message-userContent', '.comment-body'].forEach(root => types.forEach(t => sel.push(root + ' ' + t + ':not([data-smg-galseen])')));
+        scopes.forEach(root => types.forEach(t => sel.push(root + ' ' + t + ':not([data-smg-galseen])')));
         const bodies = new Set();
         eachIn(roots, sel.join(','), el => {
             el.dataset.smgGalseen = '1';
-            if (el.closest('.bbCodeQuote, .message-signature')) return;   // não agrupa citação/assinatura (unfurl com embed PODE entrar)
-            const b = el.closest('.message-userContent, .comment-body');
-            if (b) bodies.add(b);
+            if (el.closest('.bbCodeQuote, .message-signature')) return;
+            const b = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
+            if (b) {
+                const post = b.closest('article.message, .message--post') || b;
+                if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
+                    if (!post.querySelector('.js-selectToQuoteEnd, .message-footer, .message-actionBar, .message-cell--user')) {
+                        delete el.dataset.smgGalseen;
+                        return;
+                    }
+                }
+                bodies.add(b);
+            }
         });
         bodies.forEach(buildPostGallery);
     }
@@ -736,7 +999,7 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed };
+        window.__masonryExports = { blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
         window.processOneImage = processOneImage;
         window.goonboxEmbed = goonboxEmbed;
     }

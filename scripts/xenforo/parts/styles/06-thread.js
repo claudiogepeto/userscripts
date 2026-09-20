@@ -32,6 +32,7 @@
                 background: var(--smg-bg); margin: 0 0 12px !important; padding: 14px 0 0 !important;
                 min-height: 52px; display: flex; align-items: center;   /* conteúdo centralizado na faixa */
                 transition: min-height .16s ease, padding .16s ease;
+                overflow-anchor: none !important;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -83,7 +84,7 @@
                 vertical-align: middle;
             }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
-            .smg-thead-sentinel { height: 0; margin: 0; padding: 0; }
+            .smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }
             /* barra do header: mais apertada que a versão solta — cada px conta numa faixa fixa */
             html.smg-thread .smg-thead-unified .smg-bar { height: 36px; padding: 0; }
             html.smg-thread .smg-thead-unified .smg-bar-group { gap: 2px; padding: 2px 4px; }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.12
+// @version      3.12.30
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -660,18 +660,27 @@
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
             html.smg-sc, html.smg-smg { --smg-cw: 80%; }
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
+            @media (max-width: 1400px) and (min-width: 800px) {
+                html.smg-sc, html.smg-smg { --smg-cw: 92%; }
+            }
             /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
                20% de margem vazia em cima disso desperdiçaria duas vezes a mesma tela. Especificidade
                maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
             html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
             @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
+            @media (max-width: 1400px) and (min-width: 800px) {
+                html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
+            }
 
             /* ---- image grids ---- */
             .auto-image-grid {
-                display: block !important;
-                column-count: var(--smg-mcols, 3) !important;
+                display: grid !important;
+                grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
+                grid-auto-flow: row dense !important;
+                grid-auto-rows: auto !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
                 column-gap: 8px !important;
-                grid-template-columns: none !important; grid-auto-rows: auto !important;
                 margin: 12px auto !important;
                 max-width: 100%;
                 text-align: center !important;
@@ -683,51 +692,228 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 align-items: start !important;
             }
-            /* MASONRY por CSS Grid — linhas explícitas, ordem visual por linha e espaçamento único.
-               Cada item mantém sua altura natural; sem row-span calculado em JS, não há corte nem
-               sobreposição quando a proporção real chega. */
+            /* MASONRY UNIFICADO por CSS Grid — linhas explícitas, ordem visual por linha e espaçamento único de 8px */
             html.smg-masonry-on .auto-image-grid {
                 display: grid !important;
                 grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
-                grid-auto-flow: row !important;
+                grid-auto-flow: row dense !important;
                 grid-auto-rows: auto !important;
                 gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
                 align-items: start !important;
-                justify-items: center !important;
+                justify-items: stretch !important;
                 margin: 12px auto !important;
-                max-width: 100%;
+                max-width: 100% !important;
                 text-align: center !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-grid-orphan > :last-child { grid-column: 2; }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2-tall {
-                max-width: min(720px, 66.6%) !important;
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 {
+                grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-3 {
+                grid-column: span 3 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-2 {
+                grid-column: span 2 !important;
+            }
+            html.smg-masonry-on .auto-image-grid > .smg-span-all {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                justify-self: center !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid > .smg-item-centered {
+                grid-column: 1 / -1 !important;
+                justify-self: center !important;
+                width: auto !important;
+                max-width: min(calc((100% - 8px) / 2), calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 0.6))) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-orphan > :last-child {
+                grid-column: 2 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2-tall,
+            html.smg-masonry-on .auto-image-grid.smg-grid-pair-tall,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry.smg-grid-pair-tall {
+                max-width: min(760px, 70%) !important;
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
-                width: 100% !important; max-width: none !important; margin: 0 auto !important; display: block;
-            }
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div {
                 width: 100% !important;
-                max-width: none !important;
+                max-width: 100% !important;
                 margin: 0 !important;
                 display: block !important;
-                aspect-ratio: 16 / 9;
-                position: relative;
+                box-sizing: border-box !important;
+            }
+
+
+            /* ---- POST DE GALERIA PURA: TRUE MASONRY (Pinterest-style, colunas independentes contínuas) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                display: block !important;
+                column-count: var(--smg-mcols, 3) !important;
+                column-gap: 8px !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            @media (max-width: 1400px) {
+                html.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 2;
+                }
+                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 2) !important;
+                }
+            }
+            @media (max-width: 1760px) {
+                html.smg-aldock-on.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 2;
+                }
+                html.smg-aldock-on.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 2) !important;
+                }
+            }
+            @media (max-width: 599px) {
+                html.smg-masonry-on .auto-image-grid {
+                    --smg-mcols: 1;
+                }
+                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
+                    column-count: var(--smg-mcols, 1) !important;
+                }
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                display: block !important;
+                width: 100% !important;
+                margin: 0 0 8px 0 !important;
+                box-sizing: border-box !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-wide {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                display: block !important;
+                object-fit: contain !important;
+                margin: 0 0 8px 0 !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * img.bbImage {
+                margin: 0 !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+            }
+            /* ---- POST COM TEXTO: LINHAS JUSTIFICADAS (OPÇÃO A) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
+                justify-content: center !important;
+                align-items: stretch !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid > * {
+                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h, 320px) * var(--smg-ratio, 1)) !important;
+                min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                max-width: 100% !important;
+                min-height: 160px !important;
+                height: auto !important;
+                width: auto !important;
+                margin: 0 auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                display: block !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-justified-grid .generic2wide-iframe-div {
+                width: 100% !important;
+                height: 100% !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+            }
+
+            /* ---- GRID DE EXATAMENTE 2 IMAGENS (REGRAS CLÁSSICAS DO MASONRY) ---- */
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 {
+                display: grid !important;
+                grid-template-columns: repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;
+                grid-auto-flow: row dense !important;
+                grid-auto-rows: auto !important;
+                gap: 8px !important;
+                row-gap: 8px !important;
+                column-gap: 8px !important;
+                align-items: start !important;
+                justify-items: stretch !important;
+                margin: 12px auto !important;
+                max-width: 100% !important;
+                text-align: center !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-tall {
+                max-width: min(760px, 70%) !important;
+                margin: 12px auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-asym {
+                grid-template-columns: var(--smg-col1-w, 1fr) var(--smg-col2-w, 1fr) !important;
+                max-width: 100% !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 > *,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-wide,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100% !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
+                display: block !important;
+            }
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                margin: 0 auto !important;
+                display: block !important;
+                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
+                position: relative !important;
                 border-radius: 0 !important;
                 background: #000;
-                overflow: hidden;
             }
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div.smg-player-loaded,
+            html.smg-masonry-on .auto-image-grid span[data-s9e-mediaembed].smg-player-loaded,
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-rg) {
                 aspect-ratio: auto !important;
                 min-height: 0 !important;
                 overflow: visible !important;
                 background: transparent !important;
+                max-width: 100% !important;
             }
             .smg-fp-content iframe,
             .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe {
+            html.smg-masonry-on .auto-image-grid > iframe {
                 width: 100% !important;
                 max-width: 100% !important;
                 aspect-ratio: 16 / 9 !important;
@@ -739,23 +925,51 @@
             html.smg-masonry-on .auto-image-grid img.bbImage,
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage {
                 width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-            }
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video { max-height: var(--smg-media-h) !important; width: 100% !important; object-fit: contain !important; }
-            html.smg-masonry-on .auto-image-grid .smg-rg { width: 100% !important; max-width: none !important; max-height: var(--smg-media-h) !important; margin: 0 auto !important; }   /* player: preenche a coluna mas NÃO passa do teto (o .smg-rg-v já é contain) */
-            /* Verticais: o teto reduz a largura proporcionalmente; nunca usa altura fixa em uma mídia de largura cheia. */
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
-                width: auto !important;
                 max-width: 100% !important;
                 height: auto !important;
-                max-height: var(--smg-media-h) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 object-fit: contain !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-rg,
+            html.smg-masonry-on .auto-image-grid .smg-rg {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                aspect-ratio: var(--smg-rg-ratio, 16 / 9) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video {
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                width: 100% !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+            /* Verticais no masonry: preenchem 100% da largura da coluna, garantindo gap de 8px exato */
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: cover !important;
+                margin: 0 !important;
+            }
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                object-fit: contain !important;
+                margin: 0 !important;
             }
             html.smg-masonry-on .auto-image-grid .smg-rg.smg-rg-vert {
                 width: 100% !important;
@@ -902,7 +1116,7 @@
             /* PERF: pulso de OPACITY (composita na GPU) em vez do shimmer por background-position (que repintava
                a caixa INTEIRA a cada frame × dezenas de imgs carregando ao mesmo tempo no burst do scroll infinito).
                O keyframes smg-img-shimmer continua existindo pros consumidores pequenos (fhcard 72px). */
-            img.bbImage:not(.smg-img-ready) {
+            img.bbImage:not(.smg-img-ready):not([style*="aspect-ratio"]) {
                 width: 100% !important;
                 /* MESMA proporção provisória que o masonry usa pra reservar as linhas (blockRelH). Estavam
                    divergentes — o CSS pintava 16/10 (paisagem) e o grid reservava 1.3 (retrato), então TODO
@@ -986,6 +1200,7 @@
                 height: 13px !important;
             }
             .smg-fhcard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
+            .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link, #ff77b2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
             .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx, #e7e7ea); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-fhcard-sub { font-size: 12px; color: var(--smg-tx2, rgba(255,255,255,0.55)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* DENTRO DE LISTA/TABELA: uma linha por item. O card cheio (tile de 96px) repetido em cada
@@ -1002,6 +1217,7 @@
             /* título e host na MESMA linha (o sub vira sufixo discreto): duas linhas por item dobravam a
                altura da lista sem acrescentar nada — o host já aparece no ícone. */
             .smg-fhcard--inline .smg-fhcard-body { flex-direction: row; align-items: baseline; gap: 7px; }
+            .smg-fhcard--inline .smg-fhcard-platform { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link, #ff77b2); flex: 0 0 auto; }
             .smg-fhcard--inline .smg-fhcard-host { font-size: 13px; font-weight: 600; flex: 0 1 auto; }
             .smg-fhcard--inline .smg-fhcard-sub { font-size: 10.5px; flex: 0 0 auto; opacity: 0.75; }
             .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: 7px; }
@@ -1242,6 +1458,8 @@
                 border-radius: 10px;
                 background: #000;
             }
+            .generic2wide-iframe-div.smg-player-loaded,
+            span[data-s9e-mediaembed].smg-player-loaded,
             .generic2wide-iframe-div:has(.smg-rg),
             .generic2wide-iframe-div:has(.smg-turbo-slot--filled) {
                 aspect-ratio: auto !important;
@@ -1252,18 +1470,38 @@
                 justify-content: center !important;
                 align-items: center !important;
                 text-align: center !important;
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                margin: 0 auto !important;
+                display: block !important;
+                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
+                position: relative !important;
+                border-radius: 0 !important;
+                background: #000;
             }
             /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
             .generic2wide-iframe-div > iframe,
-            .generic2wide-iframe-div iframe.saint-iframe {
+            .generic2wide-iframe-div iframe.saint-iframe,
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe {
                 position: absolute !important;
                 inset: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
                 max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: auto !important;
                 border: none !important;
-                border-radius: 10px !important;
+                border-radius: 0 !important;
                 background: #000 !important;
+                display: block !important;
             }
 
             /* ---- turbo: slot (loading), fallback link, error card ---- */
@@ -1362,6 +1600,7 @@
                 object-fit: contain !important;
                 margin: 0 auto !important;
             }
+
             .smg-dm-wrap img.bbImage { border-radius: 10px; }
             .smg-dm-video {
                 display: block; width: 100%;
@@ -1427,8 +1666,8 @@
                alguns players (ex.: redgifs) injetam iframe/wrapper aninhado com
                largura fixa que escapava dos seletores acima e estourava a página
                no mobile (scroll horizontal). */
-            .generic2wide-iframe-div,
-            span[data-s9e-mediaembed] {
+            .generic2wide-iframe-div:not(.smg-player-loaded):not(:has(.smg-rg)):not(:has(.smg-turbo-slot--filled)),
+            span[data-s9e-mediaembed]:not(.smg-player-loaded):not(:has(.smg-rg)) {
                 overflow: hidden !important;
             }
             .generic2wide-iframe-div *,
@@ -1441,8 +1680,8 @@
                 position: relative;
                 display: block;
                 width: 100%;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9));
-                max-height: var(--smg-media-h);   /* TETO: não estoura o viewport (vale no masonry) */
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778)));
+                max-height: var(--smg-media-h, min(70vh, 750px));   /* TETO: não estoura o viewport (vale no masonry) */
                 margin: 16px auto;
                 aspect-ratio: 16 / 9;             /* placeholder; o JS troca pelo aspect REAL (videoWidth/Height ou API do redgifs) e MANTÉM (não some no clearSkel) */
                 background: #000;
@@ -5819,6 +6058,7 @@
                 background: var(--smg-bg); margin: 0 0 12px !important; padding: 14px 0 0 !important;
                 min-height: 52px; display: flex; align-items: center;   /* conteúdo centralizado na faixa */
                 transition: min-height .16s ease, padding .16s ease;
+                overflow-anchor: none !important;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -5870,7 +6110,7 @@
                 vertical-align: middle;
             }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
-            .smg-thead-sentinel { height: 0; margin: 0; padding: 0; }
+            .smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }
             /* barra do header: mais apertada que a versão solta — cada px conta numa faixa fixa */
             html.smg-thread .smg-thead-unified .smg-bar { height: 36px; padding: 0; }
             html.smg-thread .smg-thead-unified .smg-bar-group { gap: 2px; padding: 2px 4px; }
@@ -7411,8 +7651,7 @@
             }
             .smg-fp-content iframe,
             .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe {
+            html.smg-masonry-on .auto-image-grid > iframe {
                 width: 100% !important;
                 max-width: 100% !important;
                 aspect-ratio: 16 / 9 !important;
@@ -10282,22 +10521,26 @@
         goonboxResolve(href, res => {
             if (!res || !res.original || !card.isConnected) return;
             const full = res.original;
+            const med = res.medium || full;
             const img = document.createElement('img');
             img.className = 'bbImage';
             img.loading = 'lazy';
             img.alt = '';
             img.dataset.smgLink = href;
             img.dataset.smgFull = full;
-            img.dataset.smgMed = res.medium || full;
+            img.dataset.smgMed = med;
             if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
-            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+            img.addEventListener('load', () => {
+                const g = img.closest('.auto-image-grid');
+                if (g) scheduleRelayout(g);
+            }, { once: true });
             const link = document.createElement('a');
             link.href = full;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             link.appendChild(img);
             card.replaceWith(link);
-            img.src = full;
+            img.src = med;
         }, card);
     }
     function processOneImage(img) {
@@ -10314,9 +10557,6 @@
                 img.dataset.smgMed = res.medium || res.original;
                 const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
                 if (link) link.href = res.original;
-                if (res.original && img.src !== res.original) {
-                    img.src = res.original;
-                }
                 if (img.dataset.url) img.dataset.url = res.original;
                 if (res.width && res.height && !img.style.aspectRatio) {
                     img.style.aspectRatio = res.width + ' / ' + res.height;
@@ -10333,18 +10573,21 @@
                 }
             }, img);
         }
-        const src = img.currentSrc || img.src || '';
+        let src = img.currentSrc || img.getAttribute('src') || img.src || '';
         if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
-            // tira da varredura por-mutação (data-smg-lazy-wait) e re-processa SÓ esta imagem quando o
-            // lazy-loader setar o src (load/error). Antes ficava no loop, re-escaneada a cada mutação.
-            // SEM timeout especulativo: espera o load nativo (loading=lazy), igual ao site padrão.
-            if (!img.dataset.smgLazyWait) {
-                img.dataset.smgLazyWait = '1';
-                const reproc = () => { if (!img.dataset.smgLazyWait) return; delete img.dataset.smgLazyWait; processOneImage(img); };
-                img.addEventListener('load', reproc, { once: true });
-                img.addEventListener('error', reproc, { once: true });
+            const realSrc = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original');
+            if (realSrc && /^https?:/i.test(realSrc)) {
+                src = realSrc;
+                img.src = realSrc;
+            } else {
+                if (!img.dataset.smgLazyWait) {
+                    img.dataset.smgLazyWait = '1';
+                    const reproc = () => { if (!img.dataset.smgLazyWait) return; delete img.dataset.smgLazyWait; processOneImage(img); };
+                    img.addEventListener('load', reproc, { once: true });
+                    img.addEventListener('error', reproc, { once: true });
+                }
+                return;
             }
-            return;
         }
         delete img.dataset.smgLazyWait;
         img.dataset.fullProcessed = 'true';          // EXAMINADA → fora das próximas varreduras
@@ -10356,11 +10599,24 @@
         img.classList.remove('lazyload', 'lazyloading');   // o FÓRUM faz .lazyload/.lazyloading{opacity:0} até revelar; a img já tem src http → tira senão fica invisível esperando o reveal
         // NADA de timeout-de-link: a img carrega nativa igual ao site padrão (que carrega de boa). Link de fallback SÓ em erro real (onerror) ou complete sem dimensão (404/hotlink) — abaixo. O timeout de 7s trocava imagem offscreen (naturalWidth 0 pq ainda não rolou até ela) por chip de link → "imagem não aparece" no nosso mod.
 
+        if (!img.style.aspectRatio) {
+            const w = +(img.getAttribute('width') || (img.dataset && img.dataset.width) || 0);
+            const h = +(img.getAttribute('height') || (img.dataset && img.dataset.height) || 0);
+            if (w > 0 && h > 0) {
+                img.style.aspectRatio = w + ' / ' + h;
+                markWide(img, w, h);
+            }
+        }
+
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
-            if (img.naturalWidth && img.naturalHeight && !img.style.aspectRatio)
-                img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+            if (img.naturalWidth && img.naturalHeight) {
+                const currentRatio = img.style.aspectRatio;
+                if (!currentRatio || currentRatio === '100 / 100' || (currentRatio === '1 / 1' && img.naturalWidth !== img.naturalHeight)) {
+                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                }
+            }
             markWide(img, img.naturalWidth, img.naturalHeight);   // deitada → largura limitada fora do mosaico
             const grid = img.closest('.auto-image-grid');
             if (grid) scheduleRelayout(grid);
@@ -10372,6 +10628,8 @@
             img.addEventListener('error', () => imgFailLink(img), { once: true });   // não renderizou → caixa de mídia morta
             armImgWatchdog(img);   // nem load nem error (host pendurado) → a caixa entra por tempo, não por evento
         }
+
+        const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
 
         // ANTI-PULO: NÃO troca a thumb pela full na hora. Mantém a thumb (carrega rápido e fixa
         // o tamanho) e só troca pra full perto da viewport (IO). Como a full tem a MESMA proporção,
@@ -10455,7 +10713,10 @@
             if (!url || !card.isConnected) return;   // falhou → fica o card
             const full = getBigUrl(url);   // a viewer do chevereto serve a versão .md (MÉDIA) → sobe pro ORIGINAL (resolução cheia)
             const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = full;
-            img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });   // tem dimensões → masonry re-grida
+            img.addEventListener('load', () => {
+                const g = img.closest('.auto-image-grid');
+                if (g) scheduleRelayout(g);
+            }, { once: true });   // tem dimensões → masonry re-grida
             img.addEventListener('error', () => {}, { once: true });   // CDN fora → deixa o que estiver (card já foi removido; vira img quebrada rara)
             const link = document.createElement('a'); link.href = full; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.appendChild(img);
             card.replaceWith(link);
@@ -10495,7 +10756,10 @@
             all.forEach(u => {
                 const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
                 const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = u;
-                img.addEventListener('load', () => { if (typeof scheduleRun === 'function') scheduleRun(); }, { once: true });
+                img.addEventListener('load', () => {
+                    const g = img.closest('.auto-image-grid');
+                    if (g) scheduleRelayout(g);
+                }, { once: true });
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
             card.replaceWith(frag);
@@ -10604,8 +10868,10 @@
         const out = [];
         // imagens + TODOS os embeds: wrappers conhecidos (turbo/saint/redgifs/s9e/mídia direta) + iframe/video SOLTOS (imagepond, vídeo nativo, outros hosts)
         scope.querySelectorAll('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"]').forEach(el => {   // só tipos conhecidos + imagepond (bare video/iframe puxava vídeo nativo preto/thumb quebrada)
-            // NÃO excluir .bbCodeBlock geral: o turbo/saint do XF vive DENTRO de .bbCodeBlock--unfurl (card de link). Só pula citação/chips/assinatura.
-            if (el.closest('.bbCodeQuote, .bbCodeSpoiler, .bbCodeBlock--spoiler, .smg-post-links, .message-signature')) return;
+            if (el.closest('.bbCodeQuote, .smg-post-links, .message-signature')) return;
+            const sp = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content');
+            if (sp && sp !== scope && scope.contains(sp)) return;
+            if (!scope.classList.contains('bbCodeSpoiler-content') && !scope.classList.contains('bbCodeBlock-content') && sp) return;
             // img/iframe/video que JÁ está dentro de um wrapper coletado → representado por ele (evita duplicar)
             if (/^(IMG|IFRAME|VIDEO)$/.test(el.tagName) && el.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]')) return;
             // s9e dentro de um .generic2wide-iframe-div (redgifs do Simp) → o DIV pai é o bloco (senão conta 2x: o span + o div)
@@ -10628,7 +10894,7 @@
     function blockRelH(b) {   // altura relativa (h/w) p/ distribuir no masonry, SEM reflow (usa o aspect-ratio já conhecido)
         if (b.tagName === 'IMG') {
             const m = (b.style.aspectRatio || '').match(/([\d.]+)\D+([\d.]+)/);
-            if (m && +m[1]) return (+m[2]) / (+m[1]);
+            if (m && +m[1] && (+m[1] !== 100 || +m[2] !== 100 || !b.naturalWidth)) return (+m[2]) / (+m[1]);
             if (b.naturalWidth) return b.naturalHeight / b.naturalWidth;
             return IMG_PH_RELH;
         }
@@ -10638,7 +10904,21 @@
         if (am && +am[1]) return (+am[2]) / (+am[1]);
         return 0.5625;   // embeds/vídeo 16:9 (default até o player saber a proporção)
     }
-    function gridCols() { return window.innerWidth < 600 ? 1 : 3; }   // faixa (p/ detectar a troca mobile↔desktop no resize)
+    function getEffectiveWidth() {
+        let w = (typeof window !== 'undefined' && window.innerWidth) || 1200;
+        if (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('smg-aldock-on')) {
+            const dock = document.getElementById('smg-aldock');
+            const dockW = (dock && dock.offsetWidth) ? dock.offsetWidth : 360;
+            w -= dockW;
+        }
+        return w;
+    }
+    function gridCols() {
+        const w = getEffectiveWidth();
+        if (w < 600) return 1;
+        if (w <= 1400) return 2;
+        return 3;
+    }
     // nº de colunas pela quantidade E orientação:
     //   · mobile (< 600px) → 1
     //   · 1 item → 1 coluna
@@ -10652,11 +10932,15 @@
     const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
+        // No masonry (.auto-image-grid), a largura é rigorosamente 100% da coluna (gap de 8px).
+        // NUNCA aplica max-width inline em itens de grid, pois causaria encolhimento e vãos horizontais gigantes!
+        if (el.closest && el.closest('.auto-image-grid')) {
+            el.style.removeProperty('max-width');
+            return;
+        }
         if (!vertical) { el.style.removeProperty('max-width'); return; }
         const ratio = w / h;
-        const maxWidth = (el.closest && el.closest('.auto-image-grid'))
-            ? 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))'
-            : 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
+        const maxWidth = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
@@ -10672,23 +10956,50 @@
             setVerticalMaxWidth(wrap, w, h, !wide);
         }
     }
+    function isVideoBlock(b) {
+        if (!b) return false;
+        if (b.tagName === 'IMG') return false;
+        return true;
+    }
     function gridColsFor(blocks) {
-        if (window.innerWidth < 600) return 1;
-        if (blocks.length >= 5) return 3;   // muitas mídias → três colunas estáveis
-        if (blocks.length === 4) {
-            const verticalCount = blocks.filter(b => blockRelH(b) >= WIDE_RELH).length;
-            return verticalCount >= 3 ? 3 : 2;
-        }
-        if (blocks.length === 3) {
-            const verticalCount = blocks.filter(b => blockRelH(b) >= WIDE_RELH).length;
-            return verticalCount >= 2 ? 3 : 2;
-        }
+        const w = getEffectiveWidth();
+        if (w < 600) return 1;
+        if (blocks.length <= 1) return 1;
+
+        const isCompact = w <= 1400;
+        const videoCount = blocks.filter(isVideoBlock).length;
+        const photoCount = blocks.length - videoCount;
+
         if (blocks.length === 2) {
             const allWide = blocks.every(b => blockRelH(b) < WIDE_RELH);
             if (allWide) return 1;
             return 2;
         }
-        return 1;
+        if (blocks.length === 3) {
+            // Caso 1: 2 fotos + 1 vídeo -> 2 colunas (o vídeo span-all na linha inteira)
+            if (photoCount === 2 && videoCount === 1) return 2;
+            // Caso 2: 1 foto + 2 vídeos -> 2 colunas (a foto centrada na linha 2)
+            if (photoCount === 1 && videoCount === 2) return 2;
+            // Em telas compactas (<= 1400px), 3 fotos ficam mais confortáveis em 2 colunas
+            if (isCompact) return 2;
+            // Em telas > 1400px: 3 colunas estáveis (1 única linha com 3 fotos lado a lado)
+            return 3;
+        }
+        if (blocks.length === 4) {
+            // 4 itens: 2x2 equilibrado
+            return 2;
+        }
+        if (blocks.length === 5) {
+            // Caso 3: 2 fotos + 3 vídeos -> 6 trilhas (2x span 3 + 3x span 2) apenas em telas amplas
+            if (!isCompact && photoCount === 2 && videoCount === 3) return 6;
+            return isCompact ? 2 : 3;
+        }
+        if (blocks.length === 6) {
+            // Caso 4: 4 fotos + 2 vídeos -> 2 colunas (3 linhas perfeitas de 2 itens)
+            if (photoCount === 4 && videoCount === 2) return 2;
+            return isCompact ? 2 : 3;
+        }
+        return isCompact ? 2 : 3;
     }
     // ===== MASONRY por CSS Grid =====
     // The grid keeps uniform columns, row-major order, and one consistent gap. Each item keeps its
@@ -10719,29 +11030,128 @@
             fn();
         }
     }
+    function hasTextBetweenMedia(scope) {
+        if (!scope) return false;
+        const grids = scope.querySelectorAll('.auto-image-grid');
+        if (grids.length > 1) return true;   // múltiplas galerias separadas por conteúdo no mesmo post
+
+        const blocks = collectGalleryBlocks(scope);
+        if (blocks.length < 2) return false;
+
+        const first = (blocks[0].tagName === 'IMG') ? (blocks[0].closest('.bbImageWrapper, a') || blocks[0]) : blocks[0];
+        const last = (blocks[blocks.length - 1].tagName === 'IMG') ? (blocks[blocks.length - 1].closest('.bbImageWrapper, a') || blocks[blocks.length - 1]) : blocks[blocks.length - 1];
+        if (!first || !last || first === last) return false;
+        if (!first.parentNode || !last.parentNode) return false;
+
+        try {
+            const range = document.createRange();
+            range.setStartAfter(first);
+            range.setEndBefore(last);
+            const frag = range.cloneContents();
+            if (frag.querySelectorAll) {
+                frag.querySelectorAll('.bbCodeQuote, .bbCodeSpoiler, .message-signature, .smg-post-links, .smg-fhcard, .bbCodeBlock--unfurl, .auto-image-grid, a.link--external, a.smg-imglink, script, style, noscript').forEach(el => el.remove());
+            }
+            const between = (frag.textContent || '').replace(/\s+/g, ' ').trim();
+            return between.length >= 15;
+        } catch (e) {
+            return false;
+        }
+    }
+
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
     function relayoutGrid(grid) {
         const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
         if (!items.length) return;
-        const N = gridColsFor(items);
-        grid.style.setProperty('--smg-mcols', N);
-        grid.classList.toggle('smg-grid-orphan', N === 3 && items.length % N === 1);
+        const postBody = grid.closest && grid.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
+        const hasTextBetween = hasTextBetweenMedia(postBody);
 
-        const isTwoTall = items.length === 2 && N === 2
-            && blockRelH(items[0]) > TALL_RELH
-            && blockRelH(items[1]) > TALL_RELH;
-        grid.classList.toggle('smg-grid-2-tall', isTwoTall);
-        grid.classList.remove('smg-grid-2-mod', 'smg-grid-2-asym');
+        grid.classList.remove('smg-grid-2', 'smg-grid-2-tall', 'smg-grid-2-asym', 'smg-grid-pair-tall', 'smg-grid-6', 'smg-grid-orphan', 'smg-justified-grid', 'smg-true-masonry');
         grid.style.removeProperty('--smg-col1-w');
         grid.style.removeProperty('--smg-col2-w');
+
+        items.forEach(it => {
+            it.classList.remove('smg-span-all', 'smg-item-centered', 'smg-span-2', 'smg-span-3');
+            const rh = blockRelH(it);
+            const r = rh > 0 ? (1 / rh) : 1;
+            it.style.setProperty('--smg-ratio', r.toFixed(4));
+            if (it.style) {
+                if (it.style.maxWidth) it.style.removeProperty('max-width');
+                if (it.style.width) it.style.removeProperty('width');
+            }
+            const innerImg = it.tagName === 'IMG' ? it : (it.querySelector && it.querySelector('img.bbImage'));
+            if (innerImg && innerImg.style) {
+                if (innerImg.style.maxWidth) innerImg.style.removeProperty('max-width');
+                if (innerImg.style.width) innerImg.style.removeProperty('width');
+            }
+        });
+
+        const videoCount = items.filter(isVideoBlock).length;
+        const photoCount = items.length - videoCount;
+        const hasVideo = videoCount > 0;
+
+        const N = Math.min(6, Math.max(1, gridColsFor(items)));
+        grid.style.setProperty('--smg-mcols', N);
+        masonryBucket = gridCols();
+
+        if (items.length === 2) {
+            grid.classList.add('smg-grid-2');
+            const r0 = blockRelH(items[0]), r1 = blockRelH(items[1]);
+            // Se as duas fotos/mídias forem verticais ou quadradas (h/w >= 0.9):
+            // restringe o container (.smg-grid-2-tall) para não estourar em telas ultrawide
+            const isTwoTall = N === 2 && r0 >= 0.9 && r1 >= 0.9;
+            if (isTwoTall) {
+                grid.classList.add('smg-grid-2-tall');
+            } else if (r0 > 0 && r1 > 0 && Math.abs(r0 - r1) > 0.15) {
+                grid.classList.add('smg-grid-2-asym');
+                const w0 = r1 / (r0 + r1);
+                const w1 = r0 / (r0 + r1);
+                grid.style.setProperty('--smg-col1-w', 'calc((100% - 8px) * ' + w0.toFixed(4) + ')');
+                grid.style.setProperty('--smg-col2-w', 'calc((100% - 8px) * ' + w1.toFixed(4) + ')');
+            }
+        } else if (hasVideo) {
+            // Se houver vídeo (Casos 1, 2, 3, 4): utiliza o CSS Grid com spans estruturados
+            if (items.length === 3 && N === 2) {
+                const videoItem = items.find(isVideoBlock);
+                const photoItems = items.filter(it => !isVideoBlock(it));
+                if (videoItem && photoItems.length === 2) {
+                    videoItem.classList.add('smg-span-all');
+                } else {
+                    const photoItem = items.find(it => !isVideoBlock(it));
+                    if (photoItem) photoItem.classList.add('smg-item-centered');
+                }
+            } else if (items.length === 5 && N === 6) {
+                grid.classList.add('smg-grid-6');
+                items.forEach(it => {
+                    if (isVideoBlock(it)) it.classList.add('smg-span-2');
+                    else it.classList.add('smg-span-3');
+                });
+            }
+            grid.classList.toggle('smg-grid-orphan', N === 3 && items.length % N === 1);
+        } else if (items.length >= 3) {
+            // Toda galeria de fotos (seja o post inteiro ou cada bloco entre textos no modo row)
+            // é o seu próprio True Masonry local, sem cortes e sem vãos vazios!
+            grid.classList.add('smg-true-masonry');
+            if (items.length === 4 && N === 2) {
+                const allTallOrSquare = items.every(it => blockRelH(it) >= 0.9);
+                if (allTallOrSquare) grid.classList.add('smg-grid-pair-tall');
+            }
+        }
     }
     // move os novos blocos pra serem filhos DIRETOS do grid e deixa o CSS Grid recalcular as linhas.
     function fillGrid(grid, newBlocks) {
         grid.style.removeProperty('grid-template-columns');   // limpa eventual template inline do modo legado
+        let insertRef = grid.firstChild;
         newBlocks.forEach(b => {
             if (b.parentNode === grid) return;
             const unfurl = b.closest('.bbCodeBlock--unfurl');   // ANTES de mover: o card de link vira caixa vazia → esconde
-            grid.appendChild(b); b.dataset.smgGridded = '1';
+            const followingMask = (typeof Node !== 'undefined' && Node.DOCUMENT_POSITION_FOLLOWING) || 4;
+            if (b.compareDocumentPosition && (b.compareDocumentPosition(grid) & followingMask)) {
+                if (insertRef) grid.insertBefore(b, insertRef);
+                else grid.appendChild(b);
+            } else {
+                grid.appendChild(b);
+            }
+            b.dataset.smgGridded = '1';
             if (unfurl) unfurl.style.display = 'none';
             // CSS Grid updates row geometry when the item changes height; JS only handles classification.
             activateLazyEmbed(b);
@@ -10762,10 +11172,76 @@
         let p = grid.previousSibling;   // <br>/ws colado ANTES do grid (sobra dos breaks das imagens movidas) → senão empurra o grid pra baixo
         while (p && (p.nodeName === 'BR' || (p.nodeType === 3 && !p.textContent.trim()))) { const pv = p.previousSibling; p.remove(); p = pv; }
     }
+    function unwrapEmptyMediaFormatting(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const sel = 'b, strong, i, em, u, s, span:not([data-s9e-mediaembed]), font, center';
+        let changed = true;
+        let passes = 0;
+        while (changed && passes < 10) {
+            changed = false;
+            passes++;
+            const candidates = scope.querySelectorAll(sel);
+            for (let i = candidates.length - 1; i >= 0; i--) {
+                const el = candidates[i];
+                if (!el.parentNode) continue;
+                // Contém mídia ou grid?
+                const hasMedia = el.querySelector('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"], .auto-image-grid');
+                if (!hasMedia) continue;
+
+                // Verifica se há texto autoral real dentro de el (desconsiderando mídias, grids, breaks e tags técnicas)
+                const clone = el.cloneNode(true);
+                clone.querySelectorAll('img, iframe, video, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .auto-image-grid, br, noscript, script, style').forEach(n => n.remove());
+                const text = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+                if (text === '') {
+                    // É puramente um wrapper de formatação ao redor de mídias sem nenhum texto:
+                    // dissolve o wrapper no parent para que as mídias fiquem no mesmo nível das demais mídias
+                    el.replaceWith(...el.childNodes);
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    function mergeAdjacentGrids(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const grids = Array.from(scope.querySelectorAll('.auto-image-grid'));
+        for (let i = 0; i < grids.length; i++) {
+            const grid = grids[i];
+            if (!grid.parentNode) continue;
+            let next = grid.nextSibling;
+            // Pula nós de texto vazios/whitespace, comentários e quebras <br>
+            while (next && (
+                (next.nodeType === 3 && !next.textContent.trim()) ||
+                (next.nodeType === 8) ||
+                (next.nodeType === 1 && next.tagName === 'BR')
+            )) {
+                next = next.nextSibling;
+            }
+            if (next && next.nodeType === 1 && next.classList.contains('auto-image-grid')) {
+                // Encontrou grid adjacente sem texto entre eles: mescla os itens do segundo grid no primeiro!
+                while (next.firstChild) {
+                    grid.appendChild(next.firstChild);
+                }
+                const nextToRemove = next;
+                let between = grid.nextSibling;
+                while (between && between !== nextToRemove) {
+                    const nb = between.nextSibling;
+                    between.remove();
+                    between = nb;
+                }
+                nextToRemove.remove();
+                relayoutGrid(grid);
+                cleanupGhosts(grid);
+                i--; // Reavalia este mesmo grid caso haja outro grid em seguida
+            }
+        }
+    }
+
     // GALERIA EM CONTEXTO (era: UM grid no fim do post → quebrava o contexto quando havia texto entre as mídias). Agora agrupa
     // só RUNS de mídia CONTÍGUA (separadas apenas por <br>/espaço); texto OU card/elemento não-mídia entre mídias QUEBRA a run →
     // vira um grid à parte NO LUGAR de origem, então o texto fica junto da mídia a que se refere. Run de 1 mídia → fica inline.
     function buildPostGallery(scope) {
+        unwrapEmptyMediaFormatting(scope);
         // 1. Desaninhar grids acidentais prévios (auto-image-grid dentro de auto-image-grid)
         scope.querySelectorAll('.auto-image-grid .auto-image-grid').forEach(innerGrid => {
             const outer = innerGrid.parentElement;
@@ -10816,13 +11292,14 @@
             Array.from(parent.childNodes).forEach(node => {
                 if (node.nodeType === 3) { if (node.textContent.trim()) flush(); return; }   // texto real → quebra a run; whitespace → mantém
                 if (node.nodeType !== 1) return;
-                if (node.tagName === 'BR') return;   // separador → mantém a run
+                if (/^(BR|SCRIPT|STYLE|NOSCRIPT|META|LINK|TEMPLATE)$/i.test(node.tagName)) return;   // separador ou metadados sem impacto visual → mantém a run
                 if (node.classList && node.classList.contains('auto-image-grid')) { run.push({ grid: node }); return; }   // grid existente
                 if (flowMap.has(node)) { run.push({ flow: node, blocks: flowMap.get(node) }); return; }   // mídia ainda não gridada
                 flush();   // card/parágrafo/qualquer outro elemento → quebra a run (preserva o contexto texto↔mídia)
             });
             flush();
         });
+        mergeAdjacentGrids(scope);
     }
     // Resize/rotation changes fluid column widths automatically. Only crossing the mobile/desktop
     // breakpoint changes the column count, so existing grids need a new classification then.
@@ -10841,6 +11318,21 @@
                 document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);   // recalculate columns + orphan alignment
             }, 200);
         }, { passive: true });
+        if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.documentElement) {
+            let dockWasOn = document.documentElement.classList.contains('smg-aldock-on');
+            const mo = new MutationObserver(() => {
+                const dockIsOn = document.documentElement.classList.contains('smg-aldock-on');
+                if (dockIsOn !== dockWasOn) {
+                    dockWasOn = dockIsOn;
+                    const b = gridCols();
+                    if (b !== masonryBucket) {
+                        masonryBucket = b;
+                        document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);
+                    }
+                }
+            });
+            mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        }
     }
     function buildPostGalleries(roots) {
         if (!document.documentElement.classList.contains('smg-masonry-on')) return;   // só com a Galeria ligada
@@ -10864,14 +11356,24 @@
         // inteiro, NÃO só dentro do .bbWrapper: no SMG nosso embed às vezes entra como IRMÃO do .bbWrapper (fora dele) e ficava de fora.
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
         const types = ['img.bbImage', '.generic2wide-iframe-div', '.smg-dm-wrap', 'span[data-s9e-mediaembed]', 'iframe[src*="imagepond.net"]'];
+        const scopes = ['.bbCodeSpoiler-content', '.bbCodeBlock--spoiler .bbCodeBlock-content', '.message-userContent', '.comment-body'];
         const sel = [];
-        ['.message-userContent', '.comment-body'].forEach(root => types.forEach(t => sel.push(root + ' ' + t + ':not([data-smg-galseen])')));
+        scopes.forEach(root => types.forEach(t => sel.push(root + ' ' + t + ':not([data-smg-galseen])')));
         const bodies = new Set();
         eachIn(roots, sel.join(','), el => {
             el.dataset.smgGalseen = '1';
-            if (el.closest('.bbCodeQuote, .message-signature')) return;   // não agrupa citação/assinatura (unfurl com embed PODE entrar)
-            const b = el.closest('.message-userContent, .comment-body');
-            if (b) bodies.add(b);
+            if (el.closest('.bbCodeQuote, .message-signature')) return;
+            const b = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
+            if (b) {
+                const post = b.closest('article.message, .message--post') || b;
+                if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
+                    if (!post.querySelector('.js-selectToQuoteEnd, .message-footer, .message-actionBar, .message-cell--user')) {
+                        delete el.dataset.smgGalseen;
+                        return;
+                    }
+                }
+                bodies.add(b);
+            }
         });
         bodies.forEach(buildPostGallery);
     }
@@ -10879,7 +11381,7 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { blockRelH, gridColsFor, relayoutGrid, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed };
+        window.__masonryExports = { blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
         window.processOneImage = processOneImage;
         window.goonboxEmbed = goonboxEmbed;
     }
@@ -11074,6 +11576,23 @@
         const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
         if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
         else wrap.style.maxWidth = maxWidth;
+
+        // Atualiza o container pai (se for .generic2wide-iframe-div, .smg-dm-wrap ou span[data-s9e-mediaembed])
+        const parentBox = wrap.closest && wrap.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]');
+        if (parentBox) {
+            parentBox.classList.add('smg-player-loaded');
+            parentBox.style.setProperty('--smg-ratio', r.toFixed(4));
+            parentBox.style.setProperty('--smg-rg-ratio', r.toFixed(4));
+            parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
+            parentBox.style.setProperty('overflow', 'visible', 'important');
+            if (parentBox.closest && parentBox.closest('.auto-image-grid')) {
+                parentBox.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
+            }
+        }
+        const grid = wrap.closest && wrap.closest('.auto-image-grid');
+        if (grid && typeof scheduleRelayout === 'function') {
+            scheduleRelayout(grid);
+        }
         return true;
     }
     function rgSetPoster(video, url) {
@@ -11338,11 +11857,14 @@
         video._rgExt = 'https://www.redgifs.com/watch/' + rgid;   // botão "abrir em nova guia"
         video._rgFeed = 'https://www.redgifs.com/ifr/' + rgid;    // botão "abrir no visualizador" (bate com collectMediaFrom)
         wrap.appendChild(video);
+        video.addEventListener('loadedmetadata', () => {
+            if (video.videoWidth && video.videoHeight) rgAspect(wrap, video.videoWidth, video.videoHeight);
+        });
         rgControls(wrap, video);   // play/pause + flash · progresso seekável · volume flyout · tempo · externo · visualizador · auto-hide
         return { wrap, video };
     }
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose };
+        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose, rgAspect };
     }
     function rgFmt(t) {   // M:SS; ≥ 1h vira H:MM:SS (vídeo longo mostrava "160:19" em vez de "2:40:19")
         t = Math.max(0, t | 0);
@@ -11958,6 +12480,10 @@
             div.dataset.rgDone = '1';
             div.dataset.redgifsAutoloaded = 'true';   // autoLoadRedgifs não clica mais nele
             div.removeAttribute('onclick');            // mata o loadMedia nativo (clique no nosso player não injeta iframe duplicado)
+            div.classList.add('smg-player-loaded');
+            div.style.setProperty('aspect-ratio', 'auto', 'important');
+            div.style.setProperty('overflow', 'visible', 'important');
+            div.style.setProperty('max-width', '100%', 'important');
             const { wrap, video } = rgBuild(id);
             wrap._rgLoader = div;
             div.appendChild(wrap);
@@ -11974,6 +12500,12 @@
             if (box && box.querySelector('.smg-rg')) { ifr.remove(); return; }
             const id = rgIdFrom(ifr.getAttribute('src') || ifr.getAttribute('data-src') || '');
             if (!id) return;
+            if (box) {
+                box.classList.add('smg-player-loaded');
+                box.style.setProperty('aspect-ratio', 'auto', 'important');
+                box.style.setProperty('overflow', 'visible', 'important');
+                box.style.setProperty('max-width', '100%', 'important');
+            }
             const { wrap, video } = rgBuild(id);
             wrap._rgIframe = ifr;
             ifr.parentNode.insertBefore(wrap, ifr);   // wrap entra no lugar do iframe
@@ -12033,6 +12565,16 @@
             arrow.className = 'smg-spoiler-arrow';
             arrow.innerHTML = ICONS.chevDown || `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
             btn.appendChild(arrow);
+            btn.addEventListener('click', () => {
+                const sp = btn.closest('.bbCodeSpoiler, .bbCodeBlock--spoiler');
+                if (sp) {
+                    setTimeout(() => {
+                        sp.querySelectorAll('.auto-image-grid').forEach(g => {
+                            if (typeof relayoutGrid === 'function') relayoutGrid(g);
+                        });
+                    }, 50);
+                }
+            });
         });
 
         // 2. Se a flag de auto-expand estiver desativada, não clica
@@ -15243,7 +15785,6 @@
                     img.dataset.smgFull = res.original;
                     const link = img.closest('a');
                     if (link) link.href = res.original;
-                    if (img.src !== res.original) img.src = res.original;
                     const feed = document.getElementById('smg-feed');
                     if (feed && feed.classList.contains('open')) {
                         feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
@@ -17593,22 +18134,17 @@
          * Medir o próprio header realimenta: ao grudar ele encolhe (badges somem), a posição de
          * referência muda, o cálculo desmarca, ele volta a crescer, remarca… = as badges PISCANDO.
          * A sentinela não muda de tamanho nem de posição, então a referência é estável.
-         * Histerese de 6px por cima disso, para o limiar não vibrar em scroll fino. */
+         * Histerese ampla por cima disso para eliminar oscilação por scroll anchoring. */
         const sentinel = document.createElement('div');
         sentinel.className = 'smg-thead-sentinel';
         header.parentNode.insertBefore(sentinel, header);
-        let topOff = null, lastSync = 0, trailTimer = 0;
+        createStickySync(header, sentinel);
+    }
+
+    function createStickySync(header, sentinel) {
+        let topOff = null;
+        let ticking = false;
         const syncStuck = () => {
-            const now = Date.now();
-            if (now - lastSync < 60) {
-                // TRAILING: o throttle descartava o ÚLTIMO evento da rajada. Como o fim da rajada é
-                // justamente onde o scroll PARA (por exemplo, de volta no topo), o estado final ficava
-                // com o valor do penúltimo evento — daí as badges às vezes não voltarem no topo.
-                if (!trailTimer) trailTimer = setTimeout(() => { trailTimer = 0; lastSync = 0; syncStuck(); }, 70);
-                return;
-            }
-            if (trailTimer) { clearTimeout(trailTimer); trailTimer = 0; }
-            lastSync = now;
             if (!header.isConnected) return;
             // On mobile the fixed context is the global topbar. The thread header stays
             // in flow so it cannot create a second overlapping bar or compete for height.
@@ -17617,19 +18153,53 @@
                 topOff = null;
                 return;
             }
-            if (topOff == null) topOff = parseFloat(getComputedStyle(header).top) || 0;
+            if (topOff == null) topOff = parseFloat(getComputedStyle(header).top) || 50;
+            const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel.getBoundingClientRect().top;
-            const scrolled = (window.scrollY || document.documentElement.scrollTop || 0) > 0;
             const stuck = header.classList.contains('is-stuck');
-            // com a página NO TOPO nada está grudado — sem esta guarda, um layout em que o header nasce
-            // acima do offset do sticky (topbar ainda não montada, por exemplo) o deixaria compacto pra sempre
-            if (!stuck && scrolled && y <= topOff - 6) header.classList.add('is-stuck');
-            else if (stuck && (!scrolled || y >= topOff + 6)) header.classList.remove('is-stuck');
+
+            if (!stuck) {
+                // SÓ GRUDA QUANDO:
+                // 1) scrollY > 40: a topbar já está recolhida no estado .floating (height: 50px),
+                //    garantindo que o topo do header sticky (top: 50px) case perfeitamente com a topbar.
+                // 2) y <= topOff - 8: a sentinela passou com folga do limiar de fixação.
+                if (scrollY > 40 && y <= topOff - 8) {
+                    header.classList.add('is-stuck');
+                }
+            } else {
+                // SÓ DESMARCA QUANDO:
+                // 1) O usuário rolou de volta até o topo da thread (scrollY <= 20).
+                // 2) OU a sentinela desceu com margem ampla (y >= topOff + 45).
+                // Com 53px de histerese (42px vs 95px), o salto de ~41px do encolhimento do header
+                // NUNCA consegue cruzar o limiar de saída, ELIMINANDO 100% o loop de oscilação!
+                if (scrollY <= 20 || y >= topOff + 45) {
+                    header.classList.remove('is-stuck');
+                }
+            }
         };
-        window.addEventListener('scroll', syncStuck, { passive: true });
-        window.addEventListener('resize', () => { topOff = null; lastSync = 0; syncStuck(); }, { passive: true });
+
+        const onScroll = () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(() => {
+                    ticking = false;
+                    syncStuck();
+                });
+            }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', () => { topOff = null; syncStuck(); }, { passive: true });
         syncStuck();
-        setTimeout(() => { lastSync = 0; syncStuck(); }, 400);   // re-mede com o layout assentado (topbar/fontes)
+        setTimeout(() => { topOff = null; syncStuck(); }, 400);   // re-mede com o layout assentado (topbar/fontes)
+
+        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+            window.syncStuck = syncStuck;
+            window.theadSentinel = sentinel;
+            header._syncStuck = syncStuck;
+            header._sentinel = sentinel;
+        }
+        return syncStuck;
     }
 
     function decorateThreadCard(row) {
@@ -18544,6 +19114,8 @@
             fetchAndIngestFollowed,
             streamAllWatchedPages,
             buildFilterBars,
+            unifyThreadHeader,
+            createStickySync,
             decorateThreadCard,
             decorateWatchedThreadRow,
             buildPostCard,
@@ -18551,8 +19123,14 @@
             buildCommentCard,
             buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
-            set isStreamingWatched(v) { isStreamingWatched = v; }
+            set isStreamingWatched(v) { isStreamingWatched = v; },
+            get syncStuck() { return window.syncStuck; },
+            get sentinel() { return window.theadSentinel; }
         };
+        window.syncStuck = window.syncStuck || null;
+        window.theadSentinel = window.theadSentinel || null;
+        window.createStickySync = createStickySync;
+        window.unifyThreadHeader = unifyThreadHeader;
     }
 
     // =========================================================
@@ -21140,7 +21718,7 @@
     function processDirectMedia(roots) {
         eachIn(roots, 'a[href*="susercontent.com"]:not([data-dm-processed]), a[href$=".mp4"]:not([data-dm-processed]), a[href$=".webm"]:not([data-dm-processed]), a[href$=".mov"]:not([data-dm-processed])', link => {
             link.dataset.dmProcessed = '1';   // marca ANTES de qualquer return (senão re-scaneia o link todo frame)
-            if (link.closest('.bbCodeQuote, .bbCodeSpoiler, .bbCodeBlock--spoiler, .bbCodeBlock--unfurl, .message-signature, .smg-fhcard, .smg-tw-card')) return;   // não embeda mídia citada / de assinatura (igual o groupPostLinks faz)
+            if (link.closest('.bbCodeQuote, .bbCodeBlock--unfurl, .message-signature, .smg-fhcard, .smg-tw-card')) return;   // não embeda mídia citada / de assinatura (igual o groupPostLinks faz)
             // NÃO embedar links que são PARTE de um embed nosso: o "↗ Open on …" (.smg-turbo-fallback) tem
             // href do arquivo e caía aqui, gerando um segundo player logo abaixo do primeiro. Mesma coisa
             // pro que já está dentro de um wrapper/card montado por outro pass.
@@ -21242,6 +21820,13 @@
     //   Pixeldrain: API → galeria (contagem + cluster de thumbs) / arquivo (thumbnail). Bunkr: foto do figure do unfurl.
     //   Demais: logo do host (favicon do unfurl, senão {origin}/favicon.ico) + tipo pelo padrão da URL.
     // =========================================================
+    const LINK_HOST_LABEL = {
+        gofile: 'GoFile', bunkr: 'Bunkr', pixeldrain: 'Pixeldrain', cyberdrop: 'Cyberdrop',
+        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
+        k2s: 'K2S', keep2share: 'K2S', fikper: 'Fikper', rapidgator: 'Rapidgator',
+        saint: 'Saint', 'turbo.cr': 'Turbo', imagebam: 'ImageBam', imgbox: 'imgbox',
+        pixhost: 'PixHost', jpg: 'jpg.su', redgifs: 'RedGIFs',
+    };
     const FH_PROVIDERS = [
         { key: 'pixeldrain', label: 'Pixeldrain', sub: 'pixeldrain.com', re: /pixeldrain\.com/i, logo: 'https://pixeldrain.com/res/img/pixeldrain_128.png', gallery: /\/(?:l|api\/list)\//i },
         { key: 'bunkr', label: 'Bunkr', sub: 'bunkr', re: /bunkr/i, gallery: /\/a\//i, home: 'bunkr.cr' },   // dezenas de espelhos: o ícone vem do canônico quando o espelho não serve
@@ -21297,7 +21882,13 @@
             const txt = (node.textContent || '').replace(/\s+/g, ' ').trim();
             const h = card.querySelector('.smg-fhcard-host'), s = card.querySelector('.smg-fhcard-sub');
             if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt)) {
-                s.textContent = h.textContent + ' · ' + s.textContent;
+                let plat = card.querySelector('.smg-fhcard-platform');
+                if (!plat && h.textContent && h.textContent.toLowerCase() !== txt.toLowerCase()) {
+                    plat = document.createElement('span');
+                    plat.className = 'smg-fhcard-platform';
+                    plat.textContent = h.textContent;
+                    h.parentNode.insertBefore(plat, h);
+                }
                 h.textContent = txt;
             }
         }
@@ -21385,13 +21976,45 @@
     }
     // contagem → texto "Galeria · N itens" / "Arquivo"
     function fhSub(kind, count) { return count > 1 ? (i18n('Gallery') + ' · ' + count + ' ' + i18n(count === 1 ? 'item' : 'items')) : kind; }
-    function fhExtractUnfurlThumb(unfurlEl) {
-        if (!unfurlEl) return [];
+    function fhExtractUnfurlMeta(unfurlEl) {
+        if (!unfurlEl) return { title: '', snippet: '', thumb: '' };
+        const titleEl = unfurlEl.querySelector('.js-unfurl-title, .contentRow-header a, .contentRow-header, .bbCodeBlockUnfurl-title');
+        let title = titleEl ? (titleEl.textContent || '').replace(/\s+/g, ' ').trim() : '';
+        const snipEl = unfurlEl.querySelector('.contentRow-snippet, .contentRow-minor');
+        let snippet = snipEl ? (snipEl.textContent || '').replace(/\s+/g, ' ').trim() : '';
         const img = unfurlEl.querySelector('.js-unfurl-figure img, .contentRow-figure img, .bbCodeBlockUnfurl-image, .contentRow-figure--fixedSmall img');
-        if (!img) return [];
-        let src = img.getAttribute('data-url') || img.getAttribute('src') || img.src || '';
-        if (!src || /^data:|\/favicon\.ico|\/fav\.ico/i.test(src)) return [];
-        return [src];
+        let thumb = '';
+        if (img) {
+            let src = img.getAttribute('data-url') || img.getAttribute('src') || img.src || '';
+            if (src && !/^data:|\/favicon\.ico|\/fav\.ico/i.test(src)) thumb = src;
+        }
+        return { title, snippet, thumb };
+    }
+    function fhExtractUnfurlThumb(unfurlEl) {
+        const m = fhExtractUnfurlMeta(unfurlEl);
+        return m.thumb ? [m.thumb] : [];
+    }
+    function fhUpdateCardThumbs(card, thumbs, count, logoChain, label, key) {
+        const th = card.querySelector('.smg-fhcard-thumb');
+        if (!th) return;
+        th.innerHTML = '';
+        th.className = 'smg-fhcard-thumb' + (thumbs.length > 1 ? ' smg-fhcard-thumb--multi' : '');
+        thumbs.forEach((u, i) => {
+            const cell = document.createElement('span'); cell.className = 'smg-fhcard-cell';
+            const im = document.createElement('img'); im.loading = 'lazy'; im.src = u; im.alt = ''; im.referrerPolicy = 'no-referrer';
+            cell.appendChild(im);
+            if (i === thumbs.length - 1 && count > thumbs.length) {
+                const more = document.createElement('span'); more.className = 'smg-fhcard-more';
+                more.textContent = '+' + (count - thumbs.length);
+                cell.appendChild(more);
+            }
+            th.appendChild(cell);
+        });
+        if (count > 1) {
+            const b = document.createElement('span'); b.className = 'smg-fhcard-count';
+            b.innerHTML = ICONS.layers + '<b>' + count + '</b>';
+            th.appendChild(b);
+        }
     }
     // card RICO: [mosaico de thumbs (até 4) c/ badge de contagem + "+N" no último | logo do host] + host + sub | [copiar] [abrir↗].
     // o = { label, href, sub, thumbs:[], logo:[], count:0 }
@@ -21399,6 +22022,8 @@
         const href = resolveProxyHref(o.href), logoChain = o.logo || [];
         const thumbs = (o.thumbs || []).filter(Boolean).slice(0, 4);
         const count = o.count || 0;
+        const platformName = o.platform || (o.key && (LINK_HOST_LABEL[o.key] || o.key.charAt(0).toUpperCase() + o.key.slice(1))) || '';
+        const isCustomTitle = Boolean(platformName && o.label && o.label.toLowerCase() !== platformName.toLowerCase());
         const card = document.createElement('div'); card.className = 'smg-fhcard'; card.dataset.fhDone = '1';
         if (o.key) card.dataset.key = o.key;
         const main = document.createElement('a'); main.className = 'smg-fhcard-main'; main.href = href; main.target = '_blank'; main.rel = 'noopener noreferrer'; main.dataset.fhDone = '1';
@@ -21419,8 +22044,19 @@
         if (count > 1) { const b = document.createElement('span'); b.className = 'smg-fhcard-count'; b.innerHTML = ICONS.layers + '<b>' + count + '</b>'; th.appendChild(b); }
         main.appendChild(th);
         const body = document.createElement('div'); body.className = 'smg-fhcard-body';
+        if (isCustomTitle) {
+            const p = document.createElement('span');
+            p.className = 'smg-fhcard-platform';
+            p.textContent = platformName;
+            body.appendChild(p);
+        }
+        let subText = o.sub || '';
+        if (isCustomTitle && subText && platformName) {
+            const escPlat = platformName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            subText = subText.replace(new RegExp('^' + escPlat + '\\s*·\\s*', 'i'), '');
+        }
         const t = document.createElement('span'); t.className = 'smg-fhcard-host'; t.textContent = o.label;
-        const s = document.createElement('span'); s.className = 'smg-fhcard-sub'; s.textContent = o.sub;
+        const s = document.createElement('span'); s.className = 'smg-fhcard-sub'; s.textContent = subText;
         body.append(t, s);
         main.appendChild(body);
         const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'smg-fhcard-btn smg-fhcard-copy'; copy.title = i18n('Copy link'); copy.setAttribute('aria-label', i18n('Copy link')); copy.innerHTML = ICONS.share;
@@ -21429,39 +22065,95 @@
         card.append(main, copy, open);
         return card;
     }
-    function fhPixeldrain(node, url) {   // API: galeria (contagem + cluster) / arquivo (thumbnail)
-        const logo = ['https://pixeldrain.com/res/img/pixeldrain_128.png'];   // sem DDG (devolve genérico que trava); falha → tile "P"
+    const pdCache = new Map();
+    const pdInflight = new Map();
+    function fhPixeldrain(node, url, unfurlEl) {
+        const logo = ['https://pixeldrain.com/res/img/pixeldrain_128.png'];
         const lid = url.match(/pixeldrain\.com\/(?:l|api\/list)\/([a-z0-9]+)/i);
-        if (lid) {
-            if (!GMX) { pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('Gallery'), logo: logo })); return; }
-            gmGetJSON('https://pixeldrain.com/api/list/' + lid[1]).then(j => {
-                const files = (j && j.files) || [];
-                pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: fhSub(i18n('Gallery'), files.length), count: files.length, logo: logo, thumbs: files.slice(0, 4).map(f => 'https://pixeldrain.com/api/file/' + f.id + '/thumbnail') }));
-            }, () => pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('Gallery'), logo: logo })));
-            return;
-        }
         const fid = url.match(/pixeldrain\.com\/(?:u|d|file|api\/file)\/([a-z0-9]+)/i) || url.match(/pixeldrain\.com\/([a-z0-9]{6,})(?:[/?#]|$)/i);
-        pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('File'), logo: logo, thumbs: fid ? ['https://pixeldrain.com/api/file/' + fid[1] + '/thumbnail'] : [] }));
+
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        const initialThumb = meta.thumb ? [meta.thumb] : (fid ? ['https://pixeldrain.com/api/file/' + fid[1] + '/thumbnail'] : []);
+        const initialLabel = meta.title && !/pixeldrain/i.test(meta.title) ? meta.title : 'Pixeldrain';
+        const initialSub = meta.snippet ? ('Pixeldrain · ' + meta.snippet) : (lid ? i18n('Gallery') : i18n('File'));
+
+        const card = fhCard({ key: 'pixeldrain', platform: 'Pixeldrain', label: initialLabel, href: url, sub: initialSub, logo: logo, thumbs: initialThumb });
+        pdPlace(node, card);
+
+        if (!lid || !GMX) return;
+        const listId = lid[1];
+        const updateCard = files => {
+            if (!files || !files.length || !card.isConnected) return;
+            const subEl = card.querySelector('.smg-fhcard-sub');
+            if (subEl) subEl.textContent = fhSub(i18n('Gallery'), files.length);
+            const thumbs = files.slice(0, 4).map(f => 'https://pixeldrain.com/api/file/' + f.id + '/thumbnail');
+            fhUpdateCardThumbs(card, thumbs, files.length, logo, initialLabel, 'pixeldrain');
+        };
+
+        if (pdCache.has(listId)) { updateCard(pdCache.get(listId)); return; }
+        if (pdInflight.has(listId)) { pdInflight.get(listId).push(updateCard); return; }
+        pdInflight.set(listId, [updateCard]);
+
+        gmGetJSON('https://pixeldrain.com/api/list/' + listId).then(j => {
+            const files = (j && j.files) || [];
+            pdCache.set(listId, files);
+            const cbs = pdInflight.get(listId) || [];
+            pdInflight.delete(listId);
+            cbs.forEach(cb => { try { cb(files); } catch (e) {} });
+        }, () => {
+            pdCache.set(listId, []);
+            pdInflight.delete(listId);
+        });
     }
     // GOFILE: NÃO fazemos NENHUM request (a API/token/wt do gofile dá rate-limit e bloqueio temporário).
     // Cai no card genérico do fhBuildCard (label + logo + "Gallery"), zero chamadas → impossível tomar rate limit.
     // BUNKR: álbum (/a/) → raspa a página por thumbs + contagem. Arquivo único → foto do figure do unfurl.
+    const bunkrCache = new Map();
+    const bunkrInflight = new Map();
     function fhBunkr(node, url, unfurlEl) {
         const logo = fhLogoChain({ key: 'bunkr', home: 'bunkr.cr' }, url, unfurlEl);
-        const fallback = () => pdPlace(node, fhCard({ key: 'bunkr', label: 'Bunkr', href: url, sub: /\/a\//i.test(url) ? i18n('Gallery') : i18n('File'), logo: logo, thumbs: fhExtractUnfurlThumb(unfurlEl) }));
-        if (!GMX || !/\/a\//i.test(url)) { fallback(); return; }
-        // GMX (não fetchDoc): a página do bunkr é cross-origin → o fetch normal bate no CORS; GM_xmlhttpRequest fura.
-        GMX({ method: 'GET', url: url, timeout: 12000, onload: r => {
-            let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { fallback(); return; }
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        const isAlbum = /\/a\//i.test(url);
+        const initialThumb = meta.thumb ? [meta.thumb] : [];
+        const initialLabel = meta.title && !/bunkr/i.test(meta.title) ? meta.title : 'Bunkr';
+        const initialSub = meta.snippet ? ('Bunkr · ' + meta.snippet) : (isAlbum ? i18n('Gallery') : i18n('File'));
+
+        const card = fhCard({ key: 'bunkr', platform: 'Bunkr', label: initialLabel, href: url, sub: initialSub, logo: logo, thumbs: initialThumb });
+        pdPlace(node, card);
+
+        if (!isAlbum || !GMX) return;
+        const albumKey = url;
+        const updateCard = data => {
+            if (!data || !card.isConnected) return;
+            if (data.count) {
+                const subEl = card.querySelector('.smg-fhcard-sub');
+                if (subEl) subEl.textContent = fhSub(i18n('Gallery'), data.count);
+            }
+            if (data.thumbs && data.thumbs.length) {
+                fhUpdateCardThumbs(card, data.thumbs.slice(0, 4), data.count, logo, initialLabel, 'bunkr');
+            }
+        };
+
+        if (bunkrCache.has(albumKey)) { updateCard(bunkrCache.get(albumKey)); return; }
+        if (bunkrInflight.has(albumKey)) { bunkrInflight.get(albumKey).push(updateCard); return; }
+        bunkrInflight.set(albumKey, [updateCard]);
+
+        GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+            let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { return; }
             const seen = new Set(), thumbs = [];
             doc.querySelectorAll('img[src*="thumb"], img[data-src*="thumb"], [class*="grid"] img').forEach(im => {
-                let s = im.getAttribute('data-src') || im.getAttribute('src') || ''; if (!s || /^data:|\.svg|sprite|logo|fav/i.test(s)) return;
-                try { s = new URL(s, url).href; } catch (e) { return; } if (!seen.has(s)) { seen.add(s); thumbs.push(s); }
+                let s = im.getAttribute('data-src') || im.getAttribute('src') || '';
+                if (!s || /^data:|\.svg|sprite|logo|fav/i.test(s)) return;
+                try { s = new URL(s, url).href; } catch (e) { return; }
+                if (!seen.has(s)) { seen.add(s); thumbs.push(s); }
             });
             const count = doc.querySelectorAll('[class*="grid"] a[href*="/f/"], a[href*="/f/"], a[href*="/i/"], a[href*="/v/"]').length || thumbs.length;
-            if (!thumbs.length) { fallback(); return; }
-            pdPlace(node, fhCard({ key: 'bunkr', label: 'Bunkr', href: url, sub: fhSub(i18n('Gallery'), count), count: count, logo: logo, thumbs: thumbs.slice(0, 4) }));
-        }, onerror: fallback, ontimeout: fallback });
+            const res = { count, thumbs };
+            bunkrCache.set(albumKey, res);
+            const cbs = bunkrInflight.get(albumKey) || [];
+            bunkrInflight.delete(albumKey);
+            cbs.forEach(cb => { try { cb(res); } catch (e) {} });
+        }, onerror: () => bunkrInflight.delete(albumKey), ontimeout: () => bunkrInflight.delete(albumKey) });
     }
     // FILESTER: arquivo único (/d/{slug}). A página HTML toma Cloudflare 403, MAS a API pública JSON responde —
     // POST /api/public/view {file_slug} → view_url; mp4 = https://cn1.filester.me{view_url} (mesma engine do site).
@@ -21470,7 +22162,7 @@
         const logo = fhLogoChain(prov, url, unfurlEl);
         const isFile = /\/d\//i.test(url);
         const thumbs = fhExtractUnfurlThumb(unfurlEl);
-        pdPlace(node, fhCard({ key: 'filester', label: 'Filester', href: url, sub: isFile ? i18n('File') : i18n('Gallery'), logo: logo, thumbs: thumbs }));
+        pdPlace(node, fhCard({ key: 'filester', platform: 'Filester', label: 'Filester', href: url, sub: isFile ? i18n('File') : i18n('Gallery'), logo: logo, thumbs: thumbs }));
     }
     function makeInstagramCard(url, id, rawLabel) {
         const href = url || (id ? ('https://www.instagram.com/p/' + id + '/') : 'https://www.instagram.com/');
@@ -21489,6 +22181,7 @@
         }
         const card = fhCard({
             key: 'instagram',
+            platform: 'Instagram',
             label: label,
             href: href,
             sub: sub,
@@ -21513,6 +22206,7 @@
         }
         const card = fhCard({
             key: 'x',
+            platform: 'X (Twitter)',
             label: label,
             href: href,
             sub: sub,
@@ -21829,7 +22523,6 @@
     }
 
     function fhBuildCard(node, url, prov, unfurlEl) {
-        if (fhNeedsNet(prov, url)) { fhLater(node, () => fhBuildCardNow(node, url, prov, unfurlEl)); return; }
         fhBuildCardNow(node, url, prov, unfurlEl);
     }
     function fhBuildCardNow(node, url, prov, unfurlEl) {
@@ -21837,7 +22530,7 @@
         if (!unfurlEl && node.closest) {
             unfurlEl = node.closest('.bbCodeBlock--unfurl');
         }
-        if (prov.key === 'pixeldrain') { fhPixeldrain(node, url); return; }
+        if (prov.key === 'pixeldrain') { fhPixeldrain(node, url, unfurlEl); return; }
         if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
@@ -21869,11 +22562,15 @@
             }
             return;
         }
-        // link que aponta pra um vídeo → diz "Vídeo" (sem player, o card é a única pista do que tem ali)
-        const sub = (prov.gallery && prov.gallery.test(url)) ? i18n('Gallery')
-            : (/\.(mp4|webm|m4v|mov|mkv)(\?|#|$)/i.test(url) ? i18n('Video') : i18n('File'));
-        const thumbs = fhExtractUnfurlThumb(unfurlEl);
-        pdPlace(node, fhCard({ key: prov.key, label: prov.label, href: url, sub: sub, logo: fhLogoChain(prov, url, unfurlEl), thumbs: thumbs }));
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        let label = prov.label;
+        if (meta.title && !new RegExp(prov.key, 'i').test(meta.title) && meta.title.length > 2) {
+            label = meta.title;
+        }
+        const sub = meta.snippet ? (prov.label + ' · ' + meta.snippet)
+            : ((prov.gallery && prov.gallery.test(url)) ? i18n('Gallery') : (/\.(mp4|webm|m4v|mov|mkv)(\?|#|$)/i.test(url) ? i18n('Video') : i18n('File')));
+        const thumbs = meta.thumb ? [meta.thumb] : [];
+        pdPlace(node, fhCard({ key: prov.key, platform: prov.label, label: label, href: url, sub: sub, logo: fhLogoChain(prov, url, unfurlEl), thumbs: thumbs }));
     }
     function processInstagramEmbeds(roots) {
         eachIn(roots, 'iframe[data-s9e-mediaembed="instagram"], iframe[src*="instagram.min.html"], span[data-s9e-mediaembed="instagram"], span[data-s9e-mediaembed*="instagram"], .smg-ig-embed-wrap, blockquote.instagram-media', el => {
@@ -21948,13 +22645,6 @@
     // FEATURE: agrupa os links NÃO-embedados (file hosts: GoFile/Bunkr/Pixeldrain/…) numa barra de chips
     // no fim do post, SEM tirar nada do texto. Pula internos (menção/thread/quote), imagens e embeds.
     // =========================================================
-    const LINK_HOST_LABEL = {
-        gofile: 'GoFile', bunkr: 'Bunkr', pixeldrain: 'Pixeldrain', cyberdrop: 'Cyberdrop',
-        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
-        k2s: 'K2S', keep2share: 'K2S', fikper: 'Fikper', rapidgator: 'Rapidgator',
-        saint: 'Saint', 'turbo.cr': 'Turbo', imagebam: 'ImageBam', imgbox: 'imgbox',
-        pixhost: 'PixHost', jpg: 'jpg.su', redgifs: 'RedGIFs',
-    };
     function linkLabel(a) {
         const txt = (a.textContent || '').trim();   // texto descritivo do link ("Filester - Part 1") é melhor que o host
         if (txt && txt.length <= 30 && !/^https?:\/\//i.test(txt) && !/^[a-z0-9.-]+\.[a-z]{2,}\/?$/i.test(txt)) return txt;
@@ -21996,6 +22686,19 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildTwitterCardDom = buildTwitterCardDom;
         window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
+        window.fhExtractUnfurlMeta = fhExtractUnfurlMeta;
+        window.fhExtractUnfurlThumb = fhExtractUnfurlThumb;
+        window.fhUpdateCardThumbs = fhUpdateCardThumbs;
+        window.fhPixeldrain = fhPixeldrain;
+        window.fhBunkr = fhBunkr;
+        window.pdCache = pdCache;
+        window.pdInflight = pdInflight;
+        window.bunkrCache = bunkrCache;
+        window.bunkrInflight = bunkrInflight;
+        window.processFileHostCards = processFileHostCards;
+        window.processDirectMedia = processDirectMedia;
+        window.fhCard = fhCard;
+        window.pdPlace = pdPlace;
     }
 
     // =========================================================

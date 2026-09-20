@@ -493,7 +493,7 @@
     function processDirectMedia(roots) {
         eachIn(roots, 'a[href*="susercontent.com"]:not([data-dm-processed]), a[href$=".mp4"]:not([data-dm-processed]), a[href$=".webm"]:not([data-dm-processed]), a[href$=".mov"]:not([data-dm-processed])', link => {
             link.dataset.dmProcessed = '1';   // marca ANTES de qualquer return (senão re-scaneia o link todo frame)
-            if (link.closest('.bbCodeQuote, .bbCodeSpoiler, .bbCodeBlock--spoiler, .bbCodeBlock--unfurl, .message-signature, .smg-fhcard, .smg-tw-card')) return;   // não embeda mídia citada / de assinatura (igual o groupPostLinks faz)
+            if (link.closest('.bbCodeQuote, .bbCodeBlock--unfurl, .message-signature, .smg-fhcard, .smg-tw-card')) return;   // não embeda mídia citada / de assinatura (igual o groupPostLinks faz)
             // NÃO embedar links que são PARTE de um embed nosso: o "↗ Open on …" (.smg-turbo-fallback) tem
             // href do arquivo e caía aqui, gerando um segundo player logo abaixo do primeiro. Mesma coisa
             // pro que já está dentro de um wrapper/card montado por outro pass.
@@ -595,6 +595,13 @@
     //   Pixeldrain: API → galeria (contagem + cluster de thumbs) / arquivo (thumbnail). Bunkr: foto do figure do unfurl.
     //   Demais: logo do host (favicon do unfurl, senão {origin}/favicon.ico) + tipo pelo padrão da URL.
     // =========================================================
+    const LINK_HOST_LABEL = {
+        gofile: 'GoFile', bunkr: 'Bunkr', pixeldrain: 'Pixeldrain', cyberdrop: 'Cyberdrop',
+        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
+        k2s: 'K2S', keep2share: 'K2S', fikper: 'Fikper', rapidgator: 'Rapidgator',
+        saint: 'Saint', 'turbo.cr': 'Turbo', imagebam: 'ImageBam', imgbox: 'imgbox',
+        pixhost: 'PixHost', jpg: 'jpg.su', redgifs: 'RedGIFs',
+    };
     const FH_PROVIDERS = [
         { key: 'pixeldrain', label: 'Pixeldrain', sub: 'pixeldrain.com', re: /pixeldrain\.com/i, logo: 'https://pixeldrain.com/res/img/pixeldrain_128.png', gallery: /\/(?:l|api\/list)\//i },
         { key: 'bunkr', label: 'Bunkr', sub: 'bunkr', re: /bunkr/i, gallery: /\/a\//i, home: 'bunkr.cr' },   // dezenas de espelhos: o ícone vem do canônico quando o espelho não serve
@@ -650,7 +657,13 @@
             const txt = (node.textContent || '').replace(/\s+/g, ' ').trim();
             const h = card.querySelector('.smg-fhcard-host'), s = card.querySelector('.smg-fhcard-sub');
             if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt)) {
-                s.textContent = h.textContent + ' · ' + s.textContent;
+                let plat = card.querySelector('.smg-fhcard-platform');
+                if (!plat && h.textContent && h.textContent.toLowerCase() !== txt.toLowerCase()) {
+                    plat = document.createElement('span');
+                    plat.className = 'smg-fhcard-platform';
+                    plat.textContent = h.textContent;
+                    h.parentNode.insertBefore(plat, h);
+                }
                 h.textContent = txt;
             }
         }
@@ -738,13 +751,45 @@
     }
     // contagem → texto "Galeria · N itens" / "Arquivo"
     function fhSub(kind, count) { return count > 1 ? (i18n('Gallery') + ' · ' + count + ' ' + i18n(count === 1 ? 'item' : 'items')) : kind; }
-    function fhExtractUnfurlThumb(unfurlEl) {
-        if (!unfurlEl) return [];
+    function fhExtractUnfurlMeta(unfurlEl) {
+        if (!unfurlEl) return { title: '', snippet: '', thumb: '' };
+        const titleEl = unfurlEl.querySelector('.js-unfurl-title, .contentRow-header a, .contentRow-header, .bbCodeBlockUnfurl-title');
+        let title = titleEl ? (titleEl.textContent || '').replace(/\s+/g, ' ').trim() : '';
+        const snipEl = unfurlEl.querySelector('.contentRow-snippet, .contentRow-minor');
+        let snippet = snipEl ? (snipEl.textContent || '').replace(/\s+/g, ' ').trim() : '';
         const img = unfurlEl.querySelector('.js-unfurl-figure img, .contentRow-figure img, .bbCodeBlockUnfurl-image, .contentRow-figure--fixedSmall img');
-        if (!img) return [];
-        let src = img.getAttribute('data-url') || img.getAttribute('src') || img.src || '';
-        if (!src || /^data:|\/favicon\.ico|\/fav\.ico/i.test(src)) return [];
-        return [src];
+        let thumb = '';
+        if (img) {
+            let src = img.getAttribute('data-url') || img.getAttribute('src') || img.src || '';
+            if (src && !/^data:|\/favicon\.ico|\/fav\.ico/i.test(src)) thumb = src;
+        }
+        return { title, snippet, thumb };
+    }
+    function fhExtractUnfurlThumb(unfurlEl) {
+        const m = fhExtractUnfurlMeta(unfurlEl);
+        return m.thumb ? [m.thumb] : [];
+    }
+    function fhUpdateCardThumbs(card, thumbs, count, logoChain, label, key) {
+        const th = card.querySelector('.smg-fhcard-thumb');
+        if (!th) return;
+        th.innerHTML = '';
+        th.className = 'smg-fhcard-thumb' + (thumbs.length > 1 ? ' smg-fhcard-thumb--multi' : '');
+        thumbs.forEach((u, i) => {
+            const cell = document.createElement('span'); cell.className = 'smg-fhcard-cell';
+            const im = document.createElement('img'); im.loading = 'lazy'; im.src = u; im.alt = ''; im.referrerPolicy = 'no-referrer';
+            cell.appendChild(im);
+            if (i === thumbs.length - 1 && count > thumbs.length) {
+                const more = document.createElement('span'); more.className = 'smg-fhcard-more';
+                more.textContent = '+' + (count - thumbs.length);
+                cell.appendChild(more);
+            }
+            th.appendChild(cell);
+        });
+        if (count > 1) {
+            const b = document.createElement('span'); b.className = 'smg-fhcard-count';
+            b.innerHTML = ICONS.layers + '<b>' + count + '</b>';
+            th.appendChild(b);
+        }
     }
     // card RICO: [mosaico de thumbs (até 4) c/ badge de contagem + "+N" no último | logo do host] + host + sub | [copiar] [abrir↗].
     // o = { label, href, sub, thumbs:[], logo:[], count:0 }
@@ -752,6 +797,8 @@
         const href = resolveProxyHref(o.href), logoChain = o.logo || [];
         const thumbs = (o.thumbs || []).filter(Boolean).slice(0, 4);
         const count = o.count || 0;
+        const platformName = o.platform || (o.key && (LINK_HOST_LABEL[o.key] || o.key.charAt(0).toUpperCase() + o.key.slice(1))) || '';
+        const isCustomTitle = Boolean(platformName && o.label && o.label.toLowerCase() !== platformName.toLowerCase());
         const card = document.createElement('div'); card.className = 'smg-fhcard'; card.dataset.fhDone = '1';
         if (o.key) card.dataset.key = o.key;
         const main = document.createElement('a'); main.className = 'smg-fhcard-main'; main.href = href; main.target = '_blank'; main.rel = 'noopener noreferrer'; main.dataset.fhDone = '1';
@@ -772,8 +819,19 @@
         if (count > 1) { const b = document.createElement('span'); b.className = 'smg-fhcard-count'; b.innerHTML = ICONS.layers + '<b>' + count + '</b>'; th.appendChild(b); }
         main.appendChild(th);
         const body = document.createElement('div'); body.className = 'smg-fhcard-body';
+        if (isCustomTitle) {
+            const p = document.createElement('span');
+            p.className = 'smg-fhcard-platform';
+            p.textContent = platformName;
+            body.appendChild(p);
+        }
+        let subText = o.sub || '';
+        if (isCustomTitle && subText && platformName) {
+            const escPlat = platformName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            subText = subText.replace(new RegExp('^' + escPlat + '\\s*·\\s*', 'i'), '');
+        }
         const t = document.createElement('span'); t.className = 'smg-fhcard-host'; t.textContent = o.label;
-        const s = document.createElement('span'); s.className = 'smg-fhcard-sub'; s.textContent = o.sub;
+        const s = document.createElement('span'); s.className = 'smg-fhcard-sub'; s.textContent = subText;
         body.append(t, s);
         main.appendChild(body);
         const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'smg-fhcard-btn smg-fhcard-copy'; copy.title = i18n('Copy link'); copy.setAttribute('aria-label', i18n('Copy link')); copy.innerHTML = ICONS.share;
@@ -782,39 +840,95 @@
         card.append(main, copy, open);
         return card;
     }
-    function fhPixeldrain(node, url) {   // API: galeria (contagem + cluster) / arquivo (thumbnail)
-        const logo = ['https://pixeldrain.com/res/img/pixeldrain_128.png'];   // sem DDG (devolve genérico que trava); falha → tile "P"
+    const pdCache = new Map();
+    const pdInflight = new Map();
+    function fhPixeldrain(node, url, unfurlEl) {
+        const logo = ['https://pixeldrain.com/res/img/pixeldrain_128.png'];
         const lid = url.match(/pixeldrain\.com\/(?:l|api\/list)\/([a-z0-9]+)/i);
-        if (lid) {
-            if (!GMX) { pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('Gallery'), logo: logo })); return; }
-            gmGetJSON('https://pixeldrain.com/api/list/' + lid[1]).then(j => {
-                const files = (j && j.files) || [];
-                pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: fhSub(i18n('Gallery'), files.length), count: files.length, logo: logo, thumbs: files.slice(0, 4).map(f => 'https://pixeldrain.com/api/file/' + f.id + '/thumbnail') }));
-            }, () => pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('Gallery'), logo: logo })));
-            return;
-        }
         const fid = url.match(/pixeldrain\.com\/(?:u|d|file|api\/file)\/([a-z0-9]+)/i) || url.match(/pixeldrain\.com\/([a-z0-9]{6,})(?:[/?#]|$)/i);
-        pdPlace(node, fhCard({ key: 'pixeldrain', label: 'Pixeldrain', href: url, sub: i18n('File'), logo: logo, thumbs: fid ? ['https://pixeldrain.com/api/file/' + fid[1] + '/thumbnail'] : [] }));
+
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        const initialThumb = meta.thumb ? [meta.thumb] : (fid ? ['https://pixeldrain.com/api/file/' + fid[1] + '/thumbnail'] : []);
+        const initialLabel = meta.title && !/pixeldrain/i.test(meta.title) ? meta.title : 'Pixeldrain';
+        const initialSub = meta.snippet ? ('Pixeldrain · ' + meta.snippet) : (lid ? i18n('Gallery') : i18n('File'));
+
+        const card = fhCard({ key: 'pixeldrain', platform: 'Pixeldrain', label: initialLabel, href: url, sub: initialSub, logo: logo, thumbs: initialThumb });
+        pdPlace(node, card);
+
+        if (!lid || !GMX) return;
+        const listId = lid[1];
+        const updateCard = files => {
+            if (!files || !files.length || !card.isConnected) return;
+            const subEl = card.querySelector('.smg-fhcard-sub');
+            if (subEl) subEl.textContent = fhSub(i18n('Gallery'), files.length);
+            const thumbs = files.slice(0, 4).map(f => 'https://pixeldrain.com/api/file/' + f.id + '/thumbnail');
+            fhUpdateCardThumbs(card, thumbs, files.length, logo, initialLabel, 'pixeldrain');
+        };
+
+        if (pdCache.has(listId)) { updateCard(pdCache.get(listId)); return; }
+        if (pdInflight.has(listId)) { pdInflight.get(listId).push(updateCard); return; }
+        pdInflight.set(listId, [updateCard]);
+
+        gmGetJSON('https://pixeldrain.com/api/list/' + listId).then(j => {
+            const files = (j && j.files) || [];
+            pdCache.set(listId, files);
+            const cbs = pdInflight.get(listId) || [];
+            pdInflight.delete(listId);
+            cbs.forEach(cb => { try { cb(files); } catch (e) {} });
+        }, () => {
+            pdCache.set(listId, []);
+            pdInflight.delete(listId);
+        });
     }
     // GOFILE: NÃO fazemos NENHUM request (a API/token/wt do gofile dá rate-limit e bloqueio temporário).
     // Cai no card genérico do fhBuildCard (label + logo + "Gallery"), zero chamadas → impossível tomar rate limit.
     // BUNKR: álbum (/a/) → raspa a página por thumbs + contagem. Arquivo único → foto do figure do unfurl.
+    const bunkrCache = new Map();
+    const bunkrInflight = new Map();
     function fhBunkr(node, url, unfurlEl) {
         const logo = fhLogoChain({ key: 'bunkr', home: 'bunkr.cr' }, url, unfurlEl);
-        const fallback = () => pdPlace(node, fhCard({ key: 'bunkr', label: 'Bunkr', href: url, sub: /\/a\//i.test(url) ? i18n('Gallery') : i18n('File'), logo: logo, thumbs: fhExtractUnfurlThumb(unfurlEl) }));
-        if (!GMX || !/\/a\//i.test(url)) { fallback(); return; }
-        // GMX (não fetchDoc): a página do bunkr é cross-origin → o fetch normal bate no CORS; GM_xmlhttpRequest fura.
-        GMX({ method: 'GET', url: url, timeout: 12000, onload: r => {
-            let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { fallback(); return; }
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        const isAlbum = /\/a\//i.test(url);
+        const initialThumb = meta.thumb ? [meta.thumb] : [];
+        const initialLabel = meta.title && !/bunkr/i.test(meta.title) ? meta.title : 'Bunkr';
+        const initialSub = meta.snippet ? ('Bunkr · ' + meta.snippet) : (isAlbum ? i18n('Gallery') : i18n('File'));
+
+        const card = fhCard({ key: 'bunkr', platform: 'Bunkr', label: initialLabel, href: url, sub: initialSub, logo: logo, thumbs: initialThumb });
+        pdPlace(node, card);
+
+        if (!isAlbum || !GMX) return;
+        const albumKey = url;
+        const updateCard = data => {
+            if (!data || !card.isConnected) return;
+            if (data.count) {
+                const subEl = card.querySelector('.smg-fhcard-sub');
+                if (subEl) subEl.textContent = fhSub(i18n('Gallery'), data.count);
+            }
+            if (data.thumbs && data.thumbs.length) {
+                fhUpdateCardThumbs(card, data.thumbs.slice(0, 4), data.count, logo, initialLabel, 'bunkr');
+            }
+        };
+
+        if (bunkrCache.has(albumKey)) { updateCard(bunkrCache.get(albumKey)); return; }
+        if (bunkrInflight.has(albumKey)) { bunkrInflight.get(albumKey).push(updateCard); return; }
+        bunkrInflight.set(albumKey, [updateCard]);
+
+        GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+            let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { return; }
             const seen = new Set(), thumbs = [];
             doc.querySelectorAll('img[src*="thumb"], img[data-src*="thumb"], [class*="grid"] img').forEach(im => {
-                let s = im.getAttribute('data-src') || im.getAttribute('src') || ''; if (!s || /^data:|\.svg|sprite|logo|fav/i.test(s)) return;
-                try { s = new URL(s, url).href; } catch (e) { return; } if (!seen.has(s)) { seen.add(s); thumbs.push(s); }
+                let s = im.getAttribute('data-src') || im.getAttribute('src') || '';
+                if (!s || /^data:|\.svg|sprite|logo|fav/i.test(s)) return;
+                try { s = new URL(s, url).href; } catch (e) { return; }
+                if (!seen.has(s)) { seen.add(s); thumbs.push(s); }
             });
             const count = doc.querySelectorAll('[class*="grid"] a[href*="/f/"], a[href*="/f/"], a[href*="/i/"], a[href*="/v/"]').length || thumbs.length;
-            if (!thumbs.length) { fallback(); return; }
-            pdPlace(node, fhCard({ key: 'bunkr', label: 'Bunkr', href: url, sub: fhSub(i18n('Gallery'), count), count: count, logo: logo, thumbs: thumbs.slice(0, 4) }));
-        }, onerror: fallback, ontimeout: fallback });
+            const res = { count, thumbs };
+            bunkrCache.set(albumKey, res);
+            const cbs = bunkrInflight.get(albumKey) || [];
+            bunkrInflight.delete(albumKey);
+            cbs.forEach(cb => { try { cb(res); } catch (e) {} });
+        }, onerror: () => bunkrInflight.delete(albumKey), ontimeout: () => bunkrInflight.delete(albumKey) });
     }
     // FILESTER: arquivo único (/d/{slug}). A página HTML toma Cloudflare 403, MAS a API pública JSON responde —
     // POST /api/public/view {file_slug} → view_url; mp4 = https://cn1.filester.me{view_url} (mesma engine do site).
@@ -823,7 +937,7 @@
         const logo = fhLogoChain(prov, url, unfurlEl);
         const isFile = /\/d\//i.test(url);
         const thumbs = fhExtractUnfurlThumb(unfurlEl);
-        pdPlace(node, fhCard({ key: 'filester', label: 'Filester', href: url, sub: isFile ? i18n('File') : i18n('Gallery'), logo: logo, thumbs: thumbs }));
+        pdPlace(node, fhCard({ key: 'filester', platform: 'Filester', label: 'Filester', href: url, sub: isFile ? i18n('File') : i18n('Gallery'), logo: logo, thumbs: thumbs }));
     }
     function makeInstagramCard(url, id, rawLabel) {
         const href = url || (id ? ('https://www.instagram.com/p/' + id + '/') : 'https://www.instagram.com/');
@@ -842,6 +956,7 @@
         }
         const card = fhCard({
             key: 'instagram',
+            platform: 'Instagram',
             label: label,
             href: href,
             sub: sub,
@@ -866,6 +981,7 @@
         }
         const card = fhCard({
             key: 'x',
+            platform: 'X (Twitter)',
             label: label,
             href: href,
             sub: sub,
@@ -1182,7 +1298,6 @@
     }
 
     function fhBuildCard(node, url, prov, unfurlEl) {
-        if (fhNeedsNet(prov, url)) { fhLater(node, () => fhBuildCardNow(node, url, prov, unfurlEl)); return; }
         fhBuildCardNow(node, url, prov, unfurlEl);
     }
     function fhBuildCardNow(node, url, prov, unfurlEl) {
@@ -1190,7 +1305,7 @@
         if (!unfurlEl && node.closest) {
             unfurlEl = node.closest('.bbCodeBlock--unfurl');
         }
-        if (prov.key === 'pixeldrain') { fhPixeldrain(node, url); return; }
+        if (prov.key === 'pixeldrain') { fhPixeldrain(node, url, unfurlEl); return; }
         if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
@@ -1222,11 +1337,15 @@
             }
             return;
         }
-        // link que aponta pra um vídeo → diz "Vídeo" (sem player, o card é a única pista do que tem ali)
-        const sub = (prov.gallery && prov.gallery.test(url)) ? i18n('Gallery')
-            : (/\.(mp4|webm|m4v|mov|mkv)(\?|#|$)/i.test(url) ? i18n('Video') : i18n('File'));
-        const thumbs = fhExtractUnfurlThumb(unfurlEl);
-        pdPlace(node, fhCard({ key: prov.key, label: prov.label, href: url, sub: sub, logo: fhLogoChain(prov, url, unfurlEl), thumbs: thumbs }));
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        let label = prov.label;
+        if (meta.title && !new RegExp(prov.key, 'i').test(meta.title) && meta.title.length > 2) {
+            label = meta.title;
+        }
+        const sub = meta.snippet ? (prov.label + ' · ' + meta.snippet)
+            : ((prov.gallery && prov.gallery.test(url)) ? i18n('Gallery') : (/\.(mp4|webm|m4v|mov|mkv)(\?|#|$)/i.test(url) ? i18n('Video') : i18n('File')));
+        const thumbs = meta.thumb ? [meta.thumb] : [];
+        pdPlace(node, fhCard({ key: prov.key, platform: prov.label, label: label, href: url, sub: sub, logo: fhLogoChain(prov, url, unfurlEl), thumbs: thumbs }));
     }
     function processInstagramEmbeds(roots) {
         eachIn(roots, 'iframe[data-s9e-mediaembed="instagram"], iframe[src*="instagram.min.html"], span[data-s9e-mediaembed="instagram"], span[data-s9e-mediaembed*="instagram"], .smg-ig-embed-wrap, blockquote.instagram-media', el => {
@@ -1301,13 +1420,6 @@
     // FEATURE: agrupa os links NÃO-embedados (file hosts: GoFile/Bunkr/Pixeldrain/…) numa barra de chips
     // no fim do post, SEM tirar nada do texto. Pula internos (menção/thread/quote), imagens e embeds.
     // =========================================================
-    const LINK_HOST_LABEL = {
-        gofile: 'GoFile', bunkr: 'Bunkr', pixeldrain: 'Pixeldrain', cyberdrop: 'Cyberdrop',
-        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
-        k2s: 'K2S', keep2share: 'K2S', fikper: 'Fikper', rapidgator: 'Rapidgator',
-        saint: 'Saint', 'turbo.cr': 'Turbo', imagebam: 'ImageBam', imgbox: 'imgbox',
-        pixhost: 'PixHost', jpg: 'jpg.su', redgifs: 'RedGIFs',
-    };
     function linkLabel(a) {
         const txt = (a.textContent || '').trim();   // texto descritivo do link ("Filester - Part 1") é melhor que o host
         if (txt && txt.length <= 30 && !/^https?:\/\//i.test(txt) && !/^[a-z0-9.-]+\.[a-z]{2,}\/?$/i.test(txt)) return txt;
@@ -1349,4 +1461,17 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildTwitterCardDom = buildTwitterCardDom;
         window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
+        window.fhExtractUnfurlMeta = fhExtractUnfurlMeta;
+        window.fhExtractUnfurlThumb = fhExtractUnfurlThumb;
+        window.fhUpdateCardThumbs = fhUpdateCardThumbs;
+        window.fhPixeldrain = fhPixeldrain;
+        window.fhBunkr = fhBunkr;
+        window.pdCache = pdCache;
+        window.pdInflight = pdInflight;
+        window.bunkrCache = bunkrCache;
+        window.bunkrInflight = bunkrInflight;
+        window.processFileHostCards = processFileHostCards;
+        window.processDirectMedia = processDirectMedia;
+        window.fhCard = fhCard;
+        window.pdPlace = pdPlace;
     }
