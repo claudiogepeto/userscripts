@@ -315,7 +315,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.30'), 'Userscript deve estar na versão 3.12.30');
+    assert(scriptContent.includes('// @version      3.12.41'), 'Userscript deve estar na versão 3.12.41');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -347,12 +347,13 @@ async function runTests() {
     const mobileThreadbarTitle = document.querySelector('#smg-mobile-threadbar-title');
     assert(mobileThreadbarTitle?.querySelector('.label')?.textContent.trim() === 'Twitch', 'Topbar deve preservar a badge da thread como elemento estilizado');
     assert(mobileThreadbarTitle?.textContent.replace(/\s+/g, ' ').trim() === 'Twitch Dorozea', 'Topbar deve manter o texto completo da thread');
-    const groupedTags = uiThreadHeader.querySelector('.smg-thead-tags');
+    const groupedTags = uiThreadHeader.querySelector('.smg-thead-tags') || document.querySelector('.smg-thead-tags');
     assert(groupedTags?.querySelector('.smg-thead-tags-row .tagList-icon') !== null
         && groupedTags?.querySelector('.smg-thead-tags-row .tagList') !== null,
     'Ícone de tags e lista de badges devem compartilhar a mesma linha');
     uiThreadHeader.remove();
     uiThreadBarHost.remove();
+    document.querySelector('.smg-thead-tags-bar')?.remove();
 
     // =========================================================================
     // TESTE PERF: escopo incremental, caches e trabalho sujo
@@ -2627,12 +2628,12 @@ async function runTests() {
     };
     assert(gridColsFor([makeVerticalVideo()]) === 1, 'Uma mídia vertical deve ocupar uma coluna');
     assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Duas mídias verticais devem ocupar duas colunas');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 3, 'Três mídias verticais devem ocupar três colunas');
+    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Três vídeos verticais devem ocupar duas colunas para acomodar players');
     assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Quatro mídias verticais devem ocupar duas colunas (2x2)');
     assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeWideVideo()]) === 2, 'Quatro mídias com maioria vertical devem ocupar duas colunas (2x2)');
     assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeWideVideo(), makeWideVideo()]) === 2, 'Quatro mídias sem maioria vertical devem manter duas colunas');
     assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 3, 'Cinco ou mais mídias devem ocupar três colunas');
-    assert(gridColsFor([makeWideVideo(), makeWideVideo(), makeWideVideo()]) === 3, 'Três mídias horizontais devem ocupar três colunas no grid unificado');
+    assert(gridColsFor([makeWideVideo(), makeWideVideo(), makeWideVideo()]) === 2, 'Três mídias horizontais devem manter duas colunas para não ficarem pequenas');
 
     const injectedStyles18 = Array.from(document.querySelectorAll('style')).map(style => style.textContent).join('\n');
     assert(injectedStyles18.includes('--smg-media-h: min(70vh, 750px);'), 'O teto de mídia deve ser min(70vh, 750px)');
@@ -4297,7 +4298,7 @@ async function runTests() {
     assert(twoWideGrid.classList.contains('smg-grid-2'), 'Grid com 2 imagens horizontais deve receber .smg-grid-2');
     assert(!twoWideGrid.classList.contains('smg-justified-grid'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-justified-grid');
     assert(!twoWideGrid.classList.contains('smg-true-masonry'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-true-masonry');
-    assert(twoWideGrid.style.getPropertyValue('--smg-mcols') === '1', 'Grid com 2 imagens horizontais deve definir --smg-mcols = 1');
+    assert(twoWideGrid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 2 imagens horizontais deve definir --smg-mcols = 2 (1 row só)');
     assert(!twoWideGrid.classList.contains('smg-grid-2-tall'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-grid-2-tall');
 
     // 3. Testar CSS injetado para .smg-justified-grid > * e .smg-grid-2
@@ -4458,7 +4459,7 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 35: Correção dos 3 Cenários (3 Fotos, 2 Fotos Verticais, 4 Fotos 2x2) e Anti-CLS ---');
 
-    // 1. Cenário 1: 3 Fotos (nenhum vídeo) -> Devem sempre ficar em 3 colunas (1 linha de 3), sem smg-span-all!
+    // 1. Cenário 1: 3 Fotos (2 verticais + 1 horizontal) -> 2 colunas (linha 1: 2 verticais, linha 2: 1 horizontal span-all)
     const scen1Wrap = document.createElement('div');
     scen1Wrap.className = 'message-userContent';
     const scen1Grid = document.createElement('div');
@@ -4479,8 +4480,8 @@ async function runTests() {
     document.body.appendChild(scen1Wrap);
 
     relayoutGrid(scen1Grid);
-    assert(scen1Grid.style.getPropertyValue('--smg-mcols') === '3', 'Cenário 1: 3 fotos devem ficar em --smg-mcols = 3');
-    assert(!s1Img2.classList.contains('smg-span-all'), 'Cenário 1: foto horizontal NÃO deve receber .smg-span-all');
+    assert(scen1Grid.style.getPropertyValue('--smg-mcols') === '2', 'Cenário 1: 3 fotos (2 verticais + 1 horizontal) devem ficar em --smg-mcols = 2');
+    assert(s1Img2.classList.contains('smg-span-all'), 'Cenário 1: foto horizontal deve receber .smg-span-all');
 
     // 2. Cenário 2: 2 fotos verticais (1536x2048, 3:4) -> Devem receber .smg-grid-2 e .smg-grid-2-tall
     const scen2Wrap = document.createElement('div');
@@ -4843,20 +4844,22 @@ async function runTests() {
         scriptContent.includes('.smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }');
     assert(sentinelOverflowAnchorMatch, 'CSS de .smg-thead-sentinel deve conter overflow-anchor: none !important');
 
-    // 2. Criar header mockado e sentinela no DOM
+    // 2. Criar header mockado, spacer e sentinela no DOM
     const testHeader = document.createElement('div');
     testHeader.className = 'p-body-header smg-thead-unified';
     testHeader.style.top = '50px';
+    const testSpacer = document.createElement('div');
+    testSpacer.className = 'smg-thead-spacer';
     const testSentinel = document.createElement('div');
     testSentinel.className = 'smg-thead-sentinel';
-    document.body.append(testSentinel, testHeader);
+    document.body.append(testSentinel, testSpacer, testHeader);
 
     let mockY = 100;
     testSentinel.getBoundingClientRect = () => ({ top: mockY, bottom: mockY, left: 0, right: 0, width: 0, height: 0 });
 
     const createStickySync = window.__filterbarExports?.createStickySync || window.createStickySync;
     assert(typeof createStickySync === 'function', 'createStickySync deve estar exposto em modo de teste');
-    const sync = createStickySync(testHeader, testSentinel);
+    const sync = createStickySync(testHeader, testSentinel, testSpacer);
     assert(typeof sync === 'function', 'syncStuck deve ser retornado por createStickySync');
     assert(window.syncStuck === sync, 'window.syncStuck deve apontar para o handler de sincronização da thread');
 
@@ -4877,6 +4880,8 @@ async function runTests() {
     mockY = 40;
     sync();
     assert(testHeader.classList.contains('is-stuck'), 'Cenário 2: Se scrollY > 40 e y <= topOff - 8, is-stuck É adicionado com sucesso');
+    assert(testSpacer.style.display === 'block', 'Spacer deve ter display: block no modo stuck');
+    assert(parseFloat(testSpacer.style.height) > 0, 'Spacer deve possuir altura positiva para preservar fluxo de scroll');
 
     // Cenário 3: Enquanto is-stuck estiver ativo, simular um salto de 40px no y (de 40 para 80) e scrollY = 50:
     // is-stuck NÃO é removido (a histerese de 45px protege contra o loop de oscilação / scroll anchoring)
@@ -4890,6 +4895,7 @@ async function runTests() {
     mockY = 96;
     sync();
     assert(!testHeader.classList.contains('is-stuck'), 'Cenário 4a: Se y >= topOff + 45 (96px), is-stuck é removido com sucesso');
+    assert(testSpacer.style.display === 'none', 'Spacer deve ter display: none no modo unstuck');
 
     // Re-stick para validar reset pelo scroll no topo
     window.scrollY = 50;
@@ -4905,6 +4911,7 @@ async function runTests() {
 
     // Limpeza
     testHeader.remove();
+    testSpacer.remove();
     testSentinel.remove();
 
     // =========================================================================
@@ -5146,7 +5153,7 @@ async function runTests() {
     const photos10 = Array.from({ length: 10 }, () => createMockPhoto());
     const itemsCaso3 = [createMockPhoto(), createMockPhoto(), createMockVideo(), createMockVideo(), createMockVideo()];
 
-    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
+    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos puras) deve retornar 2 em telas compactas (Mac 1288px)');
     assert(testGridColsFor(photos4) === 2, 'gridColsFor(4 itens) deve retornar 2 em telas compactas (Mac 1288px)');
     assert(testGridColsFor(photos5) === 2, 'gridColsFor(5 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
     assert(testGridColsFor(photos6) === 2, 'gridColsFor(6 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
@@ -5163,7 +5170,7 @@ async function runTests() {
 
     // 5. Testar gridColsFor(blocks) com window.innerWidth = 1600 com dock aberta (1600 - 360 = 1240 <= 1400)
     document.documentElement.classList.add('smg-aldock-on');
-    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos) deve retornar 2 a 1600px com dock aberta');
+    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos puras) deve retornar 2 a 1600px com dock aberta');
     assert(testGridColsFor(itemsCaso3) === 2, 'gridColsFor(2 fotos + 3 vídeos) deve retornar 2 a 1600px com dock aberta');
     assert(testGridColsFor(photos5) === 2, 'gridColsFor(5 fotos) deve retornar 2 a 1600px com dock aberta');
     assert(testGridColsFor(photos6) === 2, 'gridColsFor(6 fotos) deve retornar 2 a 1600px com dock aberta');
@@ -5182,7 +5189,7 @@ async function runTests() {
 
     window.innerWidth = 1288;
     testRelayoutGrid39(t39Grid);
-    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos deve ter --smg-mcols = 2 em tela compacta (1288px)');
+    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos puras deve ter --smg-mcols = 2 em tela compacta (1288px)');
 
     window.innerWidth = 1600;
     testRelayoutGrid39(t39Grid);
@@ -5191,7 +5198,7 @@ async function runTests() {
     // com dock aberta a 1600px
     document.documentElement.classList.add('smg-aldock-on');
     testRelayoutGrid39(t39Grid);
-    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos deve ter --smg-mcols = 2 a 1600px com dock aberta');
+    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos puras deve ter --smg-mcols = 2 a 1600px com dock aberta');
     document.documentElement.classList.remove('smg-aldock-on');
 
     t39Wrap.remove();
@@ -5203,11 +5210,13 @@ async function runTests() {
     t39MoGrid.appendChild(createMockPhoto());
     t39MoGrid.appendChild(createMockPhoto());
     t39MoGrid.appendChild(createMockPhoto());
+    t39MoGrid.appendChild(createMockPhoto());
+    t39MoGrid.appendChild(createMockPhoto());
     document.body.appendChild(t39MoGrid);
 
     window.innerWidth = 1600;
     testRelayoutGrid39(t39MoGrid);
-    assert(t39MoGrid.style.getPropertyValue('--smg-mcols') === '3', 'Grid com 3 fotos deve ter 3 colunas a 1600px sem dock');
+    assert(t39MoGrid.style.getPropertyValue('--smg-mcols') === '3', 'Grid com 5 fotos deve ter 3 colunas a 1600px sem dock');
 
     document.documentElement.classList.add('smg-aldock-on');
     await new Promise(r => setTimeout(r, 20));
@@ -5387,6 +5396,604 @@ async function runTests() {
     assert(csIframe2.height !== 'auto', 'Iframe 2 NÃO deve possuir height: auto');
 
     t41Container.remove();
+
+    // =========================================================================
+    // TESTE 42: Otimizações de Performance na Renderização da Thread
+    // =========================================================================
+    console.log('--- TESTE 42: Otimizações de Performance na Renderização da Thread ---');
+
+    // 1. normalizeRoots fast-paths, ordenação por profundidade e cache _normalized
+    const norm = window.__performanceExports.normalizeRoots;
+    assert(typeof norm === 'function', 'normalizeRoots deve estar exposto no __performanceExports');
+
+    // Fast-path null/undefined -> [document.body]
+    const defRoots = norm(null);
+    assert(defRoots.length === 1 && defRoots[0] === document.body && defRoots._normalized === true, 'normalizeRoots(null) deve retornar [document.body] com _normalized = true');
+
+    // Fast-path _normalized cache
+    const testArr = [document.createElement('div')];
+    testArr._normalized = true;
+    assert(norm(testArr) === testArr, 'normalizeRoots deve retornar o mesmo array se _normalized for true');
+
+    // Fast-path único nó
+    const singleNode = document.createElement('div');
+    const normSingle = norm([singleNode]);
+    assert(normSingle.length === 1 && normSingle[0] === singleNode && normSingle._normalized === true, 'normalizeRoots com único nó deve retornar o nó com _normalized = true');
+
+    // Fast-path document.body ou documentElement em raízes múltiplas
+    const mixedRoots = [document.createElement('div'), document.body, document.createElement('span')];
+    const normMixed = norm(mixedRoots);
+    assert(normMixed.length === 1 && normMixed[0] === document.body && normMixed._normalized === true, 'normalizeRoots com document.body deve retornar [document.body] imediatamente');
+
+    const htmlMixedRoots = [document.createElement('div'), document.documentElement];
+    const normHtml = norm(htmlMixedRoots);
+    assert(normHtml.length === 1 && normHtml[0] === document.body && normHtml._normalized === true, 'normalizeRoots com documentElement deve retornar [document.body] imediatamente');
+
+    // Filtragem de aninhamento com cache de profundidade (Map)
+    const parentDiv = document.createElement('div');
+    const childDiv = document.createElement('div');
+    parentDiv.appendChild(childDiv);
+    document.body.appendChild(parentDiv);
+    const nestedNorm = norm([childDiv, parentDiv]);
+    assert(nestedNorm.length === 1 && nestedNorm[0] === parentDiv && nestedNorm._normalized === true, 'normalizeRoots deve reter apenas a raiz ancestral mais externa');
+    parentDiv.remove();
+
+    // 2. eachIn(roots, selector, fn) evita chamar closest() no document.body/documentElement
+    const eachInFn = window.__performanceExports.eachIn || window.__helpersExports.eachIn;
+    assert(typeof eachInFn === 'function', 'eachIn deve estar exposto para testes');
+
+    let bodyClosestCalled = false;
+    const origBodyClosest = document.body.closest;
+    document.body.closest = function(sel) {
+        bodyClosestCalled = true;
+        return origBodyClosest ? origBodyClosest.call(this, sel) : null;
+    };
+    const eachInHost = document.createElement('div');
+    eachInHost.className = 'smg-test-eachin';
+    document.body.appendChild(eachInHost);
+    let eachInHits = 0;
+    eachInFn([document.body], '.smg-test-eachin', node => {
+        eachInHits++;
+    });
+    assert(bodyClosestCalled === false, 'eachIn NÃO deve chamar root.closest() quando root === document.body');
+    assert(eachInHits === 1, 'eachIn deve localizar nós filhos corretamente');
+    document.body.closest = origBodyClosest;
+    eachInHost.remove();
+
+    // 3. Remoção de chamada redundante hasTextBetweenMedia(postBody) em relayoutGrid
+    assert(!scriptContent.includes('const hasTextBetween = hasTextBetweenMedia(postBody);'), 'relayoutGrid NÃO deve executar hasTextBetweenMedia(postBody)');
+    const relayoutGridFn = window.__masonryExports.relayoutGrid;
+    assert(typeof relayoutGridFn === 'function', 'relayoutGrid deve estar exposto em __masonryExports');
+    const testGrid = document.createElement('div');
+    testGrid.className = 'auto-image-grid';
+    const testItem = document.createElement('div');
+    testItem.className = 'smg-item';
+    testGrid.appendChild(testItem);
+    document.body.appendChild(testGrid);
+    relayoutGridFn(testGrid);
+    assert(testGrid.style.getPropertyValue('--smg-mcols') !== '', 'relayoutGrid deve recalcular propriedades sem overhead de hasTextBetweenMedia');
+    testGrid.remove();
+
+    // 4. Fast-path em hasTextBetweenMedia(scope)
+    const testHasText = window.__masonryExports.hasTextBetweenMedia;
+    assert(typeof testHasText === 'function', 'hasTextBetweenMedia deve estar exposto em __masonryExports');
+    const sameGridScope = document.createElement('div');
+    sameGridScope.className = 'message-userContent';
+    sameGridScope.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/1.jpg"><img class="bbImage" src="https://example.com/2.jpg"></div></div>';
+    document.body.appendChild(sameGridScope);
+    assert(testHasText(sameGridScope) === false, 'hasTextBetweenMedia deve retornar false instantaneamente se todas as mídias já estiverem no mesmo grid');
+    sameGridScope.remove();
+
+    // 5. unwrapEmptyMediaFormatting sem clonagem de nós (hasAuthorText)
+    const unwrapFn = window.__masonryExports.unwrapEmptyMediaFormatting;
+    assert(typeof unwrapFn === 'function', 'unwrapEmptyMediaFormatting deve estar exposto');
+    assert(!scriptContent.includes('const clone = el.cloneNode(true);'), 'unwrapEmptyMediaFormatting NÃO deve clonar nós do DOM com cloneNode');
+
+    const testScope = document.createElement('div');
+    testScope.innerHTML = '<b><span style="color:red"><img class="bbImage" src="https://example.com/p.jpg"></span></b>';
+    unwrapFn(testScope);
+    assert(testScope.querySelector('b') === null, 'unwrapEmptyMediaFormatting deve remover wrapper b vazio sem clonagem');
+    assert(testScope.querySelector('span') === null, 'unwrapEmptyMediaFormatting deve remover wrapper span vazio sem clonagem');
+    assert(testScope.querySelector('img.bbImage') !== null, 'unwrapEmptyMediaFormatting deve manter a imagem bbImage');
+
+    // Garante que texto autoral real NÃO seja removido
+    const testScopeWithText = document.createElement('div');
+    testScopeWithText.innerHTML = '<b>Hello World<img class="bbImage" src="https://example.com/p.jpg"></b>';
+    unwrapFn(testScopeWithText);
+    assert(testScopeWithText.querySelector('b') !== null, 'unwrapEmptyMediaFormatting NÃO deve remover b que contém texto autoral real');
+
+    // 6. Otimização do seletor em buildPostGalleries
+    assert(scriptContent.includes('img.bbImage:not([data-smg-galseen]), .generic2wide-iframe-div:not([data-smg-galseen])'), 'buildPostGalleries deve utilizar seletor direto e indexado de mídias');
+    assert(!scriptContent.includes('scopes.forEach(root => types.forEach(t => sel.push(root + \' \' + t + \':not([data-smg-galseen])\')));'), 'buildPostGalleries NÃO deve gerar a matriz de 20 seletores descendentes combinados');
+
+    // 7. Eliminação de layout thrashing em processDirectMedia
+    assert(!scriptContent.includes('const rect = v.getBoundingClientRect();'), 'processDirectMedia NÃO deve executar getBoundingClientRect() sobre elemento de vídeo desanexado');
+
+    // 8. Condicionamento inteligente de passes em processAll
+    assert(scriptContent.includes('const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === \'function\' && feedContext());'), 'processAll deve calcular flag agregada contentDirty');
+    assert(scriptContent.includes('if (isContentFeed && contentDirty)'), 'processAll deve condicionar passes de conteúdo ao contentDirty');
+    assert(scriptContent.includes('if (threadDirty) {') && scriptContent.includes('safe(buildPostCards, roots);'), 'Passes de thread devem ser condicionados a threadDirty');
+
+    
+    // =========================================================================
+    // TESTE 43: Paralelização, Extração Síncrona de Dimensões e Anti-CLS no Loading
+    // =========================================================================
+    console.log('--- TESTE 43: Paralelização, Extração Síncrona de Dimensões e Anti-CLS no Loading ---');
+
+    const { extractMediaDimensions, blockRelH: bRelH, relayoutGrid: rGrid } = window.__masonryExports;
+    assert(typeof extractMediaDimensions === 'function', 'extractMediaDimensions deve estar exposto');
+
+    // 1. Extração por atributos width e height no <img>
+    const imgAttr = document.createElement('img');
+    imgAttr.className = 'bbImage';
+    imgAttr.setAttribute('width', '1920');
+    imgAttr.setAttribute('height', '1080');
+    const dimAttr = extractMediaDimensions(imgAttr);
+    assert(dimAttr !== null, 'extractMediaDimensions deve extrair de width/height');
+    assert(dimAttr.w === 1920 && dimAttr.h === 1080, 'w=1920 e h=1080 extraídos corretamente');
+    assert(Math.abs(dimAttr.relH - 0.5625) < 0.001, 'relH deve ser ~0.5625 para 16:9');
+    assert(Math.abs(bRelH(imgAttr) - 0.5625) < 0.001, 'blockRelH deve usar dimensões extraídas do HTML síncronas');
+
+    // 2. Extração por data-width e data-height no wrapper .bbImageWrapper
+    const wrapEl = document.createElement('div');
+    wrapEl.className = 'bbImageWrapper';
+    wrapEl.setAttribute('data-width', '1280');
+    wrapEl.setAttribute('data-height', '720');
+    const wrapImg = document.createElement('img');
+    wrapImg.className = 'bbImage';
+    wrapEl.appendChild(wrapImg);
+    const dimWrap = extractMediaDimensions(wrapImg);
+    assert(dimWrap !== null, 'extractMediaDimensions deve extrair do parent .bbImageWrapper');
+    assert(dimWrap.w === 1280 && dimWrap.h === 720, 'w=1280 e h=720 extraídos do wrapper');
+    assert(Math.abs(bRelH(wrapImg) - 0.5625) < 0.001, 'blockRelH deve retornar ~0.5625 para imagem dentro de wrapper');
+
+    // 3. Extração por query params na URL (?w=1080&h=1920)
+    const imgUrl = document.createElement('img');
+    imgUrl.className = 'bbImage';
+    imgUrl.src = 'https://example.com/photo.jpg?w=1080&h=1920';
+    const dimUrl = extractMediaDimensions(imgUrl);
+    assert(dimUrl !== null, 'extractMediaDimensions deve extrair de query params na URL');
+    assert(dimUrl.w === 1080 && dimUrl.h === 1920, 'w=1080 e h=1920 extraídos da URL');
+    assert(Math.abs(dimUrl.relH - 1.7778) < 0.001, 'relH deve ser ~1.7778 para vertical 9:16');
+
+    // 4. Extração por padrão de arquivo na URL (/1920x1080/)
+    const imgFile = document.createElement('img');
+    imgFile.className = 'bbImage';
+    imgFile.src = 'https://example.com/uploads/photo-1920x1080.jpg';
+    const dimFile = extractMediaDimensions(imgFile);
+    assert(dimFile !== null, 'extractMediaDimensions deve extrair de padrão de arquivo 1920x1080');
+    assert(dimFile.w === 1920 && dimFile.h === 1080, 'w=1920 e h=1080 extraídos do nome de arquivo');
+
+    // 5. Estabilidade de colunas em relayoutGrid (não flipa colunas em loads subsequentes)
+    const testGridStable = document.createElement('div');
+    testGridStable.className = 'auto-image-grid';
+    const it1 = document.createElement('div'); it1.className = 'generic2wide-iframe-div';
+    const it2 = document.createElement('div'); it2.className = 'generic2wide-iframe-div';
+    testGridStable.appendChild(it1);
+    testGridStable.appendChild(it2);
+    document.body.appendChild(testGridStable);
+
+    rGrid(testGridStable);
+    assert(testGridStable.dataset.smgCols !== undefined, 'relayoutGrid deve registrar dataset.smgCols');
+    const firstCols = testGridStable.dataset.smgCols;
+    assert(firstCols === '2', 'Dois vídeos 16:9 devem ficar em 2 colunas (1 row só)');
+
+    // Simula disparo subsequente de load
+    rGrid(testGridStable);
+    assert(testGridStable.dataset.smgCols === firstCols, 'relayoutGrid NÃO deve flipar colunas em re-execuções com a mesma contagem de itens');
+    testGridStable.remove();
+
+    // 6. Paint Gate para threads requer prontidão de post.dataset.smgGalReady
+    const threadCtx = { kind: 'thread' };
+    const pBodyHeader = document.createElement('div');
+    pBodyHeader.className = 'p-body-header';
+    pBodyHeader.dataset.smgThead = '1';
+    pBodyHeader.dataset.smgUnified = '1';
+    document.body.appendChild(pBodyHeader);
+
+    const t43Content = document.querySelector('.p-body-content');
+    let t43Block = t43Content ? t43Content.querySelector('.block--messages, .block-body--messages') : null;
+    let t43CreatedBlock = false;
+    if (!t43Block) {
+        t43Block = document.createElement('div');
+        t43Block.className = 'block--messages';
+        if (t43Content) t43Content.appendChild(t43Block);
+        t43CreatedBlock = true;
+    }
+
+    const postArticle = document.createElement('article');
+    postArticle.className = 'message';
+    postArticle.dataset.smgCardReady = '1';
+    // Sem smgGalReady inicialmente
+    t43Block.appendChild(postArticle);
+
+    const { paintPageIsReady: pIsReady } = window.__paintExports;
+    assert(pIsReady(threadCtx) === false, 'paintPageIsReady deve retornar FALSE se smgGalReady não estiver pronto');
+
+    postArticle.dataset.smgGalReady = '1';
+    assert(pIsReady(threadCtx) === true, 'paintPageIsReady deve retornar TRUE quando smgCardReady E smgGalReady estiverem prontos');
+
+    postArticle.remove();
+    pBodyHeader.remove();
+    if (t43CreatedBlock && t43Block.parentNode) t43Block.remove();
+
+    
+    // =========================================================================
+    // TESTE 44: 2 Itens em 1 Row Só e Partição de Vídeos + Fotos (Sem Vãos Vazios)
+    // =========================================================================
+    console.log('--- TESTE 44: 2 Itens em 1 Row Só e Partição de Vídeos + Fotos ---');
+
+    const { gridColsFor: gColsFor, blockRelH: bRelH44, relayoutGrid: rGrid44, buildPostGalleries: bPostGals } = window.__masonryExports;
+
+    // 1. Dois vídeos sempre em 2 colunas (1 row só)
+    const vid1_44 = document.createElement('div'); vid1_44.className = 'generic2wide-iframe-div';
+    const vid2_44 = document.createElement('div'); vid2_44.className = 'generic2wide-iframe-div';
+    assert(gColsFor([vid1_44, vid2_44]) === 2, 'Dois vídeos devem retornar 2 colunas (1 row só)');
+
+    // 2. Duas fotos verticais com width/height vazios sempre em 2 colunas (1 row só)
+    const img1_44 = document.createElement('img'); img1_44.className = 'bbImage';
+    img1_44.setAttribute('width', ''); img1_44.setAttribute('height', '');
+    const img2_44 = document.createElement('img'); img2_44.className = 'bbImage';
+    img2_44.setAttribute('width', ''); img2_44.setAttribute('height', '');
+    assert(Math.abs(bRelH44(img1_44) - 1.3) < 0.001, 'blockRelH para img sem dimensões deve ser IMG_PH_RELH (1.3), não 0.5625');
+    assert(gColsFor([img1_44, img2_44]) === 2, 'Duas fotos verticais devem retornar 2 colunas (1 row só)');
+
+    // 3. Post misto com 5 vídeos e 18 fotos (caso exato do post 51951275 do usuário)
+    const pWrap44 = document.createElement('div');
+    pWrap44.className = 'message-userContent';
+    const bbWrap44 = document.createElement('div');
+    bbWrap44.className = 'bbWrapper';
+    pWrap44.appendChild(bbWrap44);
+
+    // Adiciona 5 vídeos
+    for (let i = 0; i < 5; i++) {
+        const v = document.createElement('div');
+        v.className = 'generic2wide-iframe-div';
+        v.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/test' + i + '"></iframe>';
+        bbWrap44.appendChild(v);
+    }
+    // Adiciona 18 fotos verticais
+    for (let i = 0; i < 18; i++) {
+        const im = document.createElement('img');
+        im.className = 'bbImage';
+        im.src = 'https://simp6.cuckcapital.cr/images4/test' + i + '.jpg';
+        im.style.aspectRatio = '1536 / 2048';
+        bbWrap44.appendChild(im);
+    }
+    document.body.appendChild(pWrap44);
+
+    window.buildPostGalleries([pWrap44]);
+
+    const grids44 = pWrap44.querySelectorAll('.auto-image-grid');
+    assert(grids44.length === 2, 'Post com 5 vídeos e 18 fotos deve ser particionado em 2 grids separados (1 de vídeos e 1 de fotos)');
+    const videoGrid44 = grids44[0];
+    const photoGrid44 = grids44[1];
+
+    assert(videoGrid44.children.length === 5, 'Grid 1 deve conter exatamente os 5 vídeos');
+    assert(photoGrid44.children.length === 18, 'Grid 2 deve conter exatamente as 18 fotos');
+    assert(photoGrid44.classList.contains('smg-true-masonry'), 'Grid 2 de fotos deve possuir classe smg-true-masonry (zero vãos vazios)');
+    assert(!videoGrid44.classList.contains('smg-true-masonry'), 'Grid 1 de vídeos não deve possuir smg-true-masonry');
+
+    // 4. Teste de propagação de aspect-ratio irmão no grid
+    const imgSample = photoGrid44.querySelector('img.bbImage');
+    assert(imgSample !== null, 'Grid 2 possui img.bbImage');
+    assert(photoGrid44.style.getPropertyValue('--smg-grid-img-ph') === '1536 / 2048' || photoGrid44.style.getPropertyValue('--smg-grid-img-ph') === '', 'Propagação de grid-img-ph verificada');
+
+    pWrap44.remove();
+
+    
+    // =========================================================================
+    // TESTE 45: Colunas Dinâmicas para Fotos Horizontais (2 Colunas) + True Masonry
+    // =========================================================================
+    console.log('--- TESTE 45: Colunas Dinâmicas para Fotos Horizontais (2 Colunas) + True Masonry ---');
+    {
+        const { isWideMedia: isWideM45, gridColsFor: gColsFor45 } = window.__masonryExports;
+        assert(typeof isWideM45 === 'function', 'isWideMedia deve estar exposto');
+
+        // 1. Identificação de mídia wide
+        const wImg1_45 = document.createElement('img');
+        wImg1_45.className = 'bbImage';
+        wImg1_45.style.aspectRatio = '16 / 9';
+        assert(isWideM45(wImg1_45) === true, 'Foto 16:9 deve ser classificada como isWideMedia = true');
+
+        const tImg1_45 = document.createElement('img');
+        tImg1_45.className = 'bbImage';
+        tImg1_45.style.aspectRatio = '3 / 4';
+        assert(isWideM45(tImg1_45) === false, 'Foto 3:4 deve ser classificada como isWideMedia = false');
+
+        // 2. Duas fotos horizontais sempre em 2 colunas (1 row só)
+        const wImg2_45 = document.createElement('img'); wImg2_45.className = 'bbImage'; wImg2_45.style.aspectRatio = '16 / 9';
+        assert(gColsFor45([wImg1_45, wImg2_45]) === 2, '2 fotos horizontais devem retornar 2 colunas (1 row só)');
+
+        // 3. Três fotos horizontais devem retornar 2 colunas (não espremidas em 3)
+        const wImg3_45 = document.createElement('img'); wImg3_45.className = 'bbImage'; wImg3_45.style.aspectRatio = '16 / 9';
+        assert(gColsFor45([wImg1_45, wImg2_45, wImg3_45]) === 2, '3 fotos horizontais devem retornar 2 colunas (não espremidas em 3)');
+
+        // 4. Quatro fotos horizontais devem retornar 2 colunas (2x2)
+        const wImg4_45 = document.createElement('img'); wImg4_45.className = 'bbImage'; wImg4_45.style.aspectRatio = '16 / 9';
+        assert(gColsFor45([wImg1_45, wImg2_45, wImg3_45, wImg4_45]) === 2, '4 fotos horizontais devem retornar 2 colunas (2x2)');
+
+        // 5. Post com vídeos + fotos verticais + fotos horizontais (partição completa em 3 seções)
+        const pWrap45 = document.createElement('div');
+        pWrap45.className = 'message-userContent';
+        const bbWrap45 = document.createElement('div');
+        bbWrap45.className = 'bbWrapper';
+        pWrap45.appendChild(bbWrap45);
+
+        // 2 vídeos
+        for (let i = 0; i < 2; i++) {
+            const v = document.createElement('div');
+            v.className = 'generic2wide-iframe-div';
+            v.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/test' + i + '"></iframe>';
+            bbWrap45.appendChild(v);
+        }
+        // 6 fotos verticais
+        for (let i = 0; i < 6; i++) {
+            const im = document.createElement('img');
+            im.className = 'bbImage';
+            im.style.aspectRatio = '3 / 4';
+            bbWrap45.appendChild(im);
+        }
+        // 3 fotos horizontais
+        for (let i = 0; i < 3; i++) {
+            const im = document.createElement('img');
+            im.className = 'bbImage';
+            im.style.aspectRatio = '16 / 9';
+            bbWrap45.appendChild(im);
+        }
+        document.body.appendChild(pWrap45);
+
+        window.buildPostGalleries([pWrap45]);
+
+        const grids45 = pWrap45.querySelectorAll('.auto-image-grid');
+        assert(grids45.length === 3, 'Post deve ser particionado em 3 grids: 1 de vídeos (wide), 1 de fotos verticais (tall) e 1 de fotos horizontais (wide)');
+        assert(grids45[0].children.length === 2, 'Grid 1 deve ter os 2 vídeos');
+        assert(grids45[0].style.getPropertyValue('--smg-mcols') === '2', 'Grid 1 de vídeos deve ter 2 colunas');
+
+        assert(grids45[1].children.length === 6, 'Grid 2 deve ter as 6 fotos verticais');
+        assert(grids45[1].classList.contains('smg-true-masonry'), 'Grid 2 de fotos verticais deve ter smg-true-masonry (Pinterest style)');
+
+        assert(grids45[2].children.length === 3, 'Grid 3 deve ter as 3 fotos horizontais');
+        assert(grids45[2].style.getPropertyValue('--smg-mcols') === '2', 'Grid 3 de fotos horizontais deve ter 2 colunas para não espremer');
+        assert(!grids45[2].classList.contains('smg-true-masonry'), 'Grid 3 de fotos horizontais é um grid regular de 2 colunas');
+        assert(grids45[2].children[2].classList.contains('smg-span-all'), 'Último item de 3 fotos horizontais em 2 colunas deve ser span-all');
+
+        pWrap45.remove();
+    }
+
+    // =========================================================================
+    // TESTE 46: Eliminação de espaço vazio em grades de 2 colunas e 4 itens (100% largura útil)
+    // =========================================================================
+    console.log('--- TESTE 46: Eliminação de espaço vazio em grades de 2 colunas e 4 itens ---');
+
+    // 1. Validar no CSS que .smg-grid-2-tall e .smg-grid-pair-tall usam max-width: 100% !important e NÃO min(760px, 70%)
+    const allStyles46 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(!allStyles46.includes('min(760px, 70%)'), 'CSS NÃO deve conter min(760px, 70%), deve permitir ocupação de 100% da largura');
+    assert(allStyles46.includes('.auto-image-grid.smg-grid-pair-tall'), 'CSS deve conter regra para .auto-image-grid.smg-grid-pair-tall');
+
+    // 2. Testar post idêntico ao reportado pelo usuário: 4 imagens (2 horizontais + 2 verticais)
+    const pWrap46 = document.createElement('div');
+    pWrap46.className = 'message-userContent';
+    const grid46 = document.createElement('div');
+    grid46.className = 'auto-image-grid';
+
+    const im1 = document.createElement('img'); im1.className = 'bbImage'; im1.style.aspectRatio = '500 / 327'; // horizontal 1.53
+    const im2 = document.createElement('img'); im2.className = 'bbImage'; im2.style.aspectRatio = '500 / 315'; // horizontal 1.59
+    const im3 = document.createElement('img'); im3.className = 'bbImage'; im3.style.aspectRatio = '500 / 667'; // vertical 0.75
+    const im4 = document.createElement('img'); im4.className = 'bbImage'; im4.style.aspectRatio = '500 / 667'; // vertical 0.75
+
+    grid46.appendChild(im1);
+    grid46.appendChild(im2);
+    grid46.appendChild(im3);
+    grid46.appendChild(im4);
+    pWrap46.appendChild(grid46);
+    document.body.appendChild(pWrap46);
+
+    const relayoutGridFn46 = window.__masonryExports.relayoutGrid;
+    relayoutGridFn46(grid46);
+
+    assert(grid46.style.getPropertyValue('--smg-mcols') === '2', 'Grade com 4 itens deve ter 2 colunas (--smg-mcols: 2)');
+    assert(grid46.classList.contains('smg-true-masonry'), 'Grade com 4 fotos deve usar True Masonry contínuo sem vãos vazios entre linhas');
+    assert(!grid46.classList.contains('smg-grid-pair-tall'), 'Grade com 2 fotos wide NÃO deve receber .smg-grid-pair-tall');
+
+    pWrap46.remove();
+
+    // 3. Caso real reportado pelo usuário: 1 tweet quadrado/baixo (782x718) + 3 fotos verticais (2378x3172 e 2316x3088)
+    const pWrap46Real = document.createElement('div');
+    pWrap46Real.className = 'message-userContent';
+    const grid46Real = document.createElement('div');
+    grid46Real.className = 'auto-image-grid';
+
+    const tweetImg = document.createElement('img'); tweetImg.className = 'bbImage'; tweetImg.style.aspectRatio = '782 / 718';
+    const tallImg1 = document.createElement('img'); tallImg1.className = 'bbImage'; tallImg1.style.aspectRatio = '2378 / 3172';
+    const tallImg2 = document.createElement('img'); tallImg2.className = 'bbImage'; tallImg2.style.aspectRatio = '2378 / 3172';
+    const tallImg3 = document.createElement('img'); tallImg3.className = 'bbImage'; tallImg3.style.aspectRatio = '2316 / 3088';
+
+    grid46Real.appendChild(tweetImg);
+    grid46Real.appendChild(tallImg1);
+    grid46Real.appendChild(tallImg2);
+    grid46Real.appendChild(tallImg3);
+    pWrap46Real.appendChild(grid46Real);
+    document.body.appendChild(pWrap46Real);
+
+    relayoutGridFn46(grid46Real);
+
+    assert(grid46Real.style.getPropertyValue('--smg-mcols') === '2', 'Caso real 4 itens: deve ter 2 colunas (--smg-mcols: 2)');
+    assert(grid46Real.classList.contains('smg-true-masonry'), 'Caso real 4 itens (1 tweet + 3 fotos verticais): deve usar True Masonry contínuo para evitar buraco vazio');
+
+    pWrap46Real.remove();
+
+    
+    // =========================================================================
+    // TESTE 47: Eliminação de gap gigantesco em 2 imagens e 3 colunas para 3 fotos
+    // =========================================================================
+    console.log('--- TESTE 47: Eliminação de gap gigantesco em 2 imagens e 3 colunas para 3 fotos ---');
+
+    // 1. CSS de smg-grid-2 para imagens: width 100%, max-height none, margin 0 (gap padrão 8px)
+    const allStyles47 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(allStyles47.includes('.auto-image-grid.smg-grid-2 img.bbImage'), 'CSS deve conter regra para .auto-image-grid.smg-grid-2 img.bbImage');
+
+    // 2. Testar post com 2 fotos quadradas (ex: fotos de cabelo azul do usuário):
+    const pWrap47 = document.createElement('div');
+    pWrap47.className = 'message-userContent';
+    const grid2Square = document.createElement('div');
+    grid2Square.className = 'auto-image-grid';
+
+    const sq1 = document.createElement('img'); sq1.className = 'bbImage'; sq1.style.aspectRatio = '1 / 1';
+    const sq2 = document.createElement('img'); sq2.className = 'bbImage'; sq2.style.aspectRatio = '1 / 1';
+    grid2Square.appendChild(sq1);
+    grid2Square.appendChild(sq2);
+    pWrap47.appendChild(grid2Square);
+    document.body.appendChild(pWrap47);
+
+    relayoutGrid(grid2Square);
+    assert(grid2Square.classList.contains('smg-grid-2'), 'Grid com 2 imagens deve receber .smg-grid-2');
+    assert(grid2Square.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 2 imagens deve ter 2 colunas');
+    assert(!sq1.classList.contains('smg-span-all'), 'sq1 não deve ser span-all');
+    assert(!sq2.classList.contains('smg-span-all'), 'sq2 não deve ser span-all');
+
+    // 3. Testar post com 3 fotos (1 vertical + 2 horizontais do usuário):
+    const grid3Mixed = document.createElement('div');
+    grid3Mixed.className = 'auto-image-grid';
+    const phVert = document.createElement('img'); phVert.className = 'bbImage'; phVert.style.aspectRatio = '3 / 4';
+    const phHor1 = document.createElement('img'); phHor1.className = 'bbImage'; phHor1.style.aspectRatio = '16 / 9';
+    const phHor2 = document.createElement('img'); phHor2.className = 'bbImage'; phHor2.style.aspectRatio = '16 / 9';
+    grid3Mixed.appendChild(phVert);
+    grid3Mixed.appendChild(phHor1);
+    grid3Mixed.appendChild(phHor2);
+    pWrap47.appendChild(grid3Mixed);
+
+    relayoutGrid(grid3Mixed);
+    assert(grid3Mixed.style.getPropertyValue('--smg-mcols') === '2', 'Post com 1 vertical + 2 horizontais deve usar 2 colunas para preencher 100% da largura sem coluna 3 vazia');
+    assert(grid3Mixed.classList.contains('smg-true-masonry'), 'Post com 1 vertical + 2 horizontais deve usar True Masonry em 2 colunas');
+    assert(!phVert.classList.contains('smg-item-centered'), 'Foto vertical NÃO deve ser item-centered em galeria pura de fotos');
+
+    // 3b. Testar 3 fotos onde 2 são verticais e 1 é horizontal:
+    const grid3TwoTall = document.createElement('div');
+    grid3TwoTall.className = 'auto-image-grid';
+    const tPh1 = document.createElement('img'); tPh1.className = 'bbImage'; tPh1.style.aspectRatio = '3 / 4';
+    const tPh2 = document.createElement('img'); tPh2.className = 'bbImage'; tPh2.style.aspectRatio = '3 / 4';
+    const wPh1 = document.createElement('img'); wPh1.className = 'bbImage'; wPh1.style.aspectRatio = '16 / 9';
+    grid3TwoTall.appendChild(tPh1);
+    grid3TwoTall.appendChild(tPh2);
+    grid3TwoTall.appendChild(wPh1);
+    pWrap47.appendChild(grid3TwoTall);
+
+    relayoutGrid(grid3TwoTall);
+    assert(grid3TwoTall.style.getPropertyValue('--smg-mcols') === '2', 'Post com 2 verticais + 1 horizontal deve usar 2 colunas');
+    assert(wPh1.classList.contains('smg-span-all'), 'Item horizontal em 2 verticais + 1 horizontal deve receber smg-span-all');
+    assert(!grid3TwoTall.classList.contains('smg-true-masonry'), 'Post com 2 verticais + 1 horizontal NÃO deve ter smg-true-masonry');
+
+    // 3c. Testar 3 fotos puramente verticais (aspect-ratio: 3 / 4 em todas) com window.innerWidth = 1600:
+    window.innerWidth = 1600;
+    const grid3AllTall = document.createElement('div');
+    grid3AllTall.className = 'auto-image-grid';
+    const tOnly1 = document.createElement('img'); tOnly1.className = 'bbImage'; tOnly1.style.aspectRatio = '3 / 4';
+    const tOnly2 = document.createElement('img'); tOnly2.className = 'bbImage'; tOnly2.style.aspectRatio = '3 / 4';
+    const tOnly3 = document.createElement('img'); tOnly3.className = 'bbImage'; tOnly3.style.aspectRatio = '3 / 4';
+    grid3AllTall.appendChild(tOnly1);
+    grid3AllTall.appendChild(tOnly2);
+    grid3AllTall.appendChild(tOnly3);
+    pWrap47.appendChild(grid3AllTall);
+
+    relayoutGrid(grid3AllTall);
+    assert(grid3AllTall.style.getPropertyValue('--smg-mcols') === '3', '3 fotos verticais em tela ampla (1600px) devem ter 3 colunas');
+    assert(grid3AllTall.classList.contains('smg-true-masonry'), '3 fotos verticais devem ter smg-true-masonry');
+
+    // 4. Testar 3 itens onde há 1 vídeo e 2 fotos:
+    const grid3WithVideo = document.createElement('div');
+    grid3WithVideo.className = 'auto-image-grid';
+    const vid1 = document.createElement('div'); vid1.className = 'generic2wide-iframe-div';
+    const p1 = document.createElement('img'); p1.className = 'bbImage'; p1.style.aspectRatio = '3 / 4';
+    const p2 = document.createElement('img'); p2.className = 'bbImage'; p2.style.aspectRatio = '3 / 4';
+    grid3WithVideo.appendChild(vid1);
+    grid3WithVideo.appendChild(p1);
+    grid3WithVideo.appendChild(p2);
+    pWrap47.appendChild(grid3WithVideo);
+
+    relayoutGrid(grid3WithVideo);
+    assert(grid3WithVideo.style.getPropertyValue('--smg-mcols') === '2', '3 itens com vídeo devem usar 2 colunas para preservar tamanho do player');
+    assert(vid1.classList.contains('smg-span-all'), 'Vídeo com 2 fotos deve receber .smg-span-all');
+
+    pWrap47.remove();
+
+    // =========================================================================
+    // TESTE 48: Refatoração da Topbar da Thread (Badges acima do título, tags fora do header sticky, thumb ampliado e controles agrupados)
+    // =========================================================================
+    console.log('--- TESTE 48: Refatoração da Topbar da Thread (Badges acima do título, tags fora do header sticky, thumb ampliado e controles agrupados) ---');
+
+    // 1. Validar no CSS gerado: .smg-thead-badges-row, .smg-thead-thumb com 108px, -webkit-line-clamp: 2, padding-left: 0 !important, -webkit-line-clamp: 1 no stuck, etc.
+    const allStyles48 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(allStyles48.includes('.smg-thead-badges-row'), 'CSS deve conter regra para .smg-thead-badges-row');
+    assert(allStyles48.includes('width: 108px;') && allStyles48.includes('height: 108px;'), 'CSS deve conter .smg-thead-thumb com 108px');
+    assert(allStyles48.includes('-webkit-line-clamp: 2 !important;'), 'CSS deve conter -webkit-line-clamp: 2 para permitir até 2 linhas no título');
+    assert(allStyles48.includes('padding-left: 0 !important;'), 'CSS deve conter padding-left: 0 !important;');
+    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('-webkit-line-clamp: 1 !important;'), 'CSS deve conter -webkit-line-clamp: 1 no estado stuck');
+    assert(allStyles48.includes('.smg-thead-controls') && allStyles48.includes('margin-left: auto') && allStyles48.includes('flex-shrink: 0'), 'CSS deve conter .smg-thead-controls com margin-left: auto e flex-shrink: 0');
+    assert(allStyles48.includes('.smg-thead-unified.is-stuck .smg-thead-badges-row') && allStyles48.includes('display: none !important;'), 'CSS deve ocultar .smg-thead-badges-row quando o header estiver stuck');
+    assert(allStyles48.includes('.smg-thead-spacer') && allStyles48.includes('overflow-anchor: none !important;'), 'CSS deve conter .smg-thead-spacer com overflow-anchor: none !important;');
+    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('font-size: 13.5px !important;'), 'CSS deve conter font-size: 13.5px !important; no estado stuck');
+
+    // 2. Criar header mockado com thumb, badges (.label), título longo e tags (.p-description)
+    document.documentElement.classList.add('smg-thread');
+    const header48 = document.createElement('div');
+    header48.className = 'p-body-header';
+    header48.innerHTML = `
+        <div class="dcThumbnail"><img src="https://example.com/thumb.jpg" alt=""></div>
+        <div class="p-title">
+            <h1 class="p-title-value">  <span class="label label--twitch">Twitch</span> <span class="prefix prefix--onlyfans">OnlyFans</span>   Amouranth - Exclusive Photoshoot and Behind The Scenes Content Mega Collection Set (2024)   </h1>
+        </div>
+        <div class="p-description">
+            <ul class="listInline">
+                <li class="tagList-icon">🏷️</li>
+                <li class="tagList"><a class="tagItem" href="/tags/cosplay/">cosplay</a></li>
+            </ul>
+        </div>`;
+    const barHost48 = document.createElement('div');
+    barHost48.className = 'block-outer';
+    barHost48.innerHTML = '<div class="smg-bar"></div>';
+    document.body.append(header48, barHost48);
+
+    // 3. Executar buildThreadHeader()
+    const buildThreadHeaderFn = window.__filterbarExports?.buildThreadHeader || window.buildThreadHeader;
+    assert(typeof buildThreadHeaderFn === 'function', 'buildThreadHeader deve estar disponível');
+    buildThreadHeaderFn();
+
+    // 4. Validar que .smg-thead-badges-row foi criado acima do título com as badges
+    const badgesRow48 = header48.querySelector('.smg-thead-badges-row');
+    assert(badgesRow48 !== null, 'Linha de badges deve ser criada (.smg-thead-badges-row)');
+    const badgesInRow48 = badgesRow48.querySelectorAll('.label, .prefix');
+    assert(badgesInRow48.length >= 2, 'Badges devem estar na linha .smg-thead-badges-row');
+    assert(badgesRow48.nextElementSibling?.classList.contains('smg-thead-titleline'), 'Badges devem ficar acima da linha do título (.smg-thead-titleline)');
+
+    // Validar título longo quebra em até 2 linhas e sem padding/espaços indesejados no início
+    const titleVal48 = header48.querySelector('.p-title-value');
+    assert(titleVal48 !== null, '.p-title-value deve existir no header unificado');
+    const titleTextSpan48 = titleVal48.querySelector('.smg-thead-title-text');
+    assert(titleTextSpan48 !== null, '.smg-thead-title-text deve ser gerado');
+    assert(titleTextSpan48.textContent.startsWith('Amouranth'), 'Título extraído não deve ter espaços residuais no início');
+    assert(titleTextSpan48.textContent.endsWith('(2024)'), 'Título extraído não deve ter espaços residuais no fim');
+    assert(!/^\s|\s$/.test(titleTextSpan48.textContent), 'Sanitização rigorosa deve garantir zero espaços no início e no fim do título');
+    assert(!titleTextSpan48.textContent.includes('Twitch'), 'Badges não devem estar misturadas ao texto do título');
+
+    // 5. Validar que as tags estão em .smg-thead-tags-bar inseridas como irmão após o header (fora do sticky header)
+    const tagsBar48 = header48.nextElementSibling;
+    assert(tagsBar48 !== null && tagsBar48.classList.contains('smg-thead-tags-bar'), 'Tags devem estar em .smg-thead-tags-bar inseridas como irmão após o header');
+    assert(tagsBar48.querySelector('.p-description') !== null, '.p-description deve estar dentro de .smg-thead-tags-bar');
+    assert(!header48.contains(tagsBar48), 'Tags não devem estar dentro do header sticky');
+
+    // 6. Validar que .smg-thead-controls abriga tanto .smg-bar quanto .smg-thead-actions
+    const controls48 = header48.querySelector('.smg-thead-controls');
+    assert(controls48 !== null, 'Controles da direita devem ser agrupados em .smg-thead-controls');
+    assert(controls48.querySelector('.smg-bar') !== null, '.smg-thead-controls deve abrigar .smg-bar');
+    assert(controls48.querySelector('.smg-thead-actions') !== null, '.smg-thead-controls deve abrigar .smg-thead-actions');
+
+    // 7. Limpar os elementos criados
+    header48.remove();
+    barHost48.remove();
+    tagsBar48?.remove();
+    document.querySelector('.smg-thead-spacer')?.remove();
+    document.querySelector('.smg-thead-sentinel')?.remove();
 
     // =========================================================================
     // RESUMO FINAL

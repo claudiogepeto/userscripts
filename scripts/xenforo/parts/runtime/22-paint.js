@@ -303,7 +303,10 @@
             if (!content || !header || !messages || header.dataset.smgThead !== '1' || header.dataset.smgUnified !== '1') return false;
             const posts = Array.from(content.querySelectorAll('article.message'));
             if (!posts.length) return false;
-            const postsReady = posts.every(post => post.dataset.smgCardReady === '1' || post.dataset.smgCardReady === 'skip');
+            // Garante que TODOS os posts estejam com o card estilizado E suas galerias montadas
+            // antes de liberar a pintura inicial, impedindo que a página 'dance' na frente do usuário.
+            const postsReady = posts.every(post => (post.dataset.smgCardReady === '1' || post.dataset.smgCardReady === 'skip')
+                && (post.dataset.smgGalReady === '1' || post.dataset.smgGalReady === 'skip' || !FEATURES.autoFullImages));
             const commentsReady = Array.from(content.querySelectorAll('.message-responses .comment')).every(comment =>
                 comment.dataset.smgCcReady === '1' || comment.dataset.smgCcReady === 'skip'
             );

@@ -418,15 +418,54 @@
     // mesma leva; manter todos faz a mesma subárvore ser percorrida repetidamente. A raiz mais externa
     // cobre os descendentes e, portanto, torna o custo previsível mesmo quando o XF injeta lotes aninhados.
     function normalizeRoots(roots) {
-        const raw = roots == null ? [document.body] : (roots.nodeType ? [roots] : Array.from(roots));
+        if (!roots) {
+            const res = [document.body];
+            res._normalized = true;
+            return res;
+        }
+        if (roots._normalized) return roots;
+        const raw = roots.nodeType ? [roots] : Array.from(roots);
+        if (!raw.length) {
+            const res = [];
+            res._normalized = true;
+            return res;
+        }
+        if (raw.length === 1) {
+            const r = raw[0];
+            if (r && r.nodeType === 1) {
+                const res = [r];
+                res._normalized = true;
+                return res;
+            }
+            const res = [];
+            res._normalized = true;
+            return res;
+        }
+        for (let i = 0; i < raw.length; i++) {
+            const r = raw[i];
+            if (r === document.body || r === document.documentElement) {
+                const res = [document.body];
+                res._normalized = true;
+                return res;
+            }
+        }
         const valid = raw.filter(root => root && root.nodeType === 1);
-        const depthOf = node => { let depth = 0; for (let p = node.parentElement; p; p = p.parentElement) depth++; return depth; };
+        const depthMap = new Map();
+        const depthOf = node => {
+            let d = depthMap.get(node);
+            if (d !== undefined) return d;
+            d = 0;
+            for (let p = node.parentElement; p; p = p.parentElement) d++;
+            depthMap.set(node, d);
+            return d;
+        };
         valid.sort((a, b) => depthOf(a) - depthOf(b));
         const result = [];
         valid.forEach(root => {
             if (result.some(parent => parent === root || parent.contains(root))) return;
             result.push(root);
         });
+        result._normalized = true;
         return result;
     }
 
@@ -437,9 +476,11 @@
     function eachIn(roots, selector, fn) {
         const seen = new Set();
         normalizeRoots(roots).forEach(root => {
-            const ancestor = root.closest && root.closest(selector);
-            if (ancestor && !seen.has(ancestor)) { seen.add(ancestor); fn(ancestor); }
-            if (root.matches(selector) && !seen.has(root)) { seen.add(root); fn(root); }
+            if (root !== document.body && root !== document.documentElement) {
+                const ancestor = root.closest && root.closest(selector);
+                if (ancestor && !seen.has(ancestor)) { seen.add(ancestor); fn(ancestor); }
+            }
+            if (root.matches && root.matches(selector) && !seen.has(root)) { seen.add(root); fn(root); }
             root.querySelectorAll(selector).forEach(node => {
                 if (seen.has(node)) return;
                 seen.add(node);
@@ -1257,12 +1298,16 @@
         window.__resolveProxyHref = resolveProxyHref;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
+        window.normalizeRoots = normalizeRoots;
+        window.eachIn = eachIn;
         window.indexFollowedThumbs = indexFollowedThumbs;
         window.followedThumbsMap = followedThumbsMap;
         window.thumbCacheGet = thumbCacheGet;
         window.__helpersExports = Object.assign(window.__helpersExports || {}, {
             indexFollowedThumbs,
             followedThumbsMap,
-            thumbCacheGet
+            thumbCacheGet,
+            normalizeRoots,
+            eachIn
         });
     }

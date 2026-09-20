@@ -53,6 +53,19 @@
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
 
+            
+            /* Anti-CLS para posts e galerias da thread */
+            article.message.smg-pc {
+                overflow-anchor: auto !important;
+            }
+            .auto-image-grid {
+                overflow-anchor: auto !important;
+            }
+            img.bbImage[style*="aspect-ratio"] {
+                width: 100% !important;
+                height: auto !important;
+            }
+
             /* ---- image grids ---- */
             .auto-image-grid {
                 display: grid !important;
@@ -117,7 +130,7 @@
             html.smg-masonry-on .auto-image-grid.smg-grid-2-tall,
             html.smg-masonry-on .auto-image-grid.smg-grid-pair-tall,
             html.smg-masonry-on .auto-image-grid.smg-true-masonry.smg-grid-pair-tall {
-                max-width: min(760px, 70%) !important;
+                max-width: 100% !important;
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
@@ -128,6 +141,17 @@
                 box-sizing: border-box !important;
             }
 
+
+                        html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) > img.bbImage,
+            html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) > a > img.bbImage,
+            html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) .bbImageWrapper > img.bbImage {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                margin: 0 !important;
+                display: block !important;
+            }
 
             /* ---- POST DE GALERIA PURA: TRUE MASONRY (Pinterest-style, colunas independentes contínuas) ---- */
             html.smg-masonry-on .auto-image-grid.smg-true-masonry {
@@ -248,7 +272,7 @@
                 text-align: center !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-tall {
-                max-width: min(760px, 70%) !important;
+                max-width: 100% !important;
                 margin: 12px auto !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-asym {
@@ -265,9 +289,9 @@
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                max-height: none !important;
                 object-fit: contain !important;
-                margin: 0 auto !important;
+                margin: 0 !important;
                 display: block !important;
             }
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
@@ -499,11 +523,8 @@
                O keyframes smg-img-shimmer continua existindo pros consumidores pequenos (fhcard 72px). */
             img.bbImage:not(.smg-img-ready):not([style*="aspect-ratio"]) {
                 width: 100% !important;
-                /* MESMA proporção provisória que o masonry usa pra reservar as linhas (blockRelH). Estavam
-                   divergentes — o CSS pintava 16/10 (paisagem) e o grid reservava 1.3 (retrato), então TODO
-                   item nascia com o espaço errado e a página se reorganizava quando a imagem chegava.
-                   O JS escreve --smg-img-ph a partir da constante única (IMG_PH_RELH). */
-                aspect-ratio: var(--smg-img-ph, 10 / 13);
+                /* Herda a proporção de grade --smg-grid-img-ph assim que o 1º item resolve, ou fallback --smg-img-ph */
+                aspect-ratio: var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13));
                 object-fit: cover;
                 background-color: var(--smg-s2, rgba(255,255,255,0.05));
                 border-radius: 8px;

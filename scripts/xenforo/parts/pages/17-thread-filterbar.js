@@ -444,22 +444,33 @@
         const firstBar = document.querySelector('.block-outer .smg-bar');
         if (!firstBar) return;   // ainda não montou (buildFilterBars roda depois) → tenta no próximo scan
         header.dataset.smgUnified = '1';
-        // UMA linha: título/badges à esquerda; pager · ordenar · ações à direita, tudo no .p-title.
-        // (a versão anterior punha o pager numa segunda linha — ficava um header de duas faixas)
+
         const title = header.querySelector('.p-title');
         if (title) {
             const tv = title.querySelector('.p-title-value');
+            let badges = [];
             if (tv) {
-                Array.from(tv.childNodes).forEach(n => {
-                    if (n.nodeType === 3 && !n.textContent.trim()) {
-                        n.remove();
-                    } else if (n.nodeType === 3 && n.textContent.trim()) {
-                        const sp = document.createElement('span');
-                        sp.className = 'smg-thead-title-text';
-                        sp.textContent = n.textContent.trim();
-                        n.replaceWith(sp);
-                    }
-                });
+                // Coleta badges/labels/prefixes para mover para uma linha própria acima do título
+                const badgeNodes = Array.from(tv.children).filter(child =>
+                    child.matches('.label, .prefix, [class*="label--"], a[class*="prefix"]') ||
+                    child.querySelector('.label, .prefix, [class*="label--"]')
+                );
+                badges = badgeNodes;
+
+                // Extrai o texto do título limpando todo e qualquer espaço ou nós residuais
+                const clone = tv.cloneNode(true);
+                clone.querySelectorAll('.label, .prefix, [class*="label--"], [class*="prefix--"], a[class*="prefix"], .smg-notices, .p-title-pageAction').forEach(n => n.remove());
+                const cleanTitle = (clone.textContent || '')
+                    .replace(/[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/g, ' ')
+                    .trim();
+
+                tv.replaceChildren();
+                if (cleanTitle) {
+                    const sp = document.createElement('span');
+                    sp.className = 'smg-thead-title-text';
+                    sp.textContent = cleanTitle;
+                    tv.appendChild(sp);
+                }
             }
             const pageTitleText = (tv ? tv.textContent : '').replace(/\s+/g, ' ').trim();
             const thumbUrl = (() => {
@@ -501,72 +512,122 @@
             const info = document.createElement('div');
             info.className = 'smg-thead-info';
 
+            if (badges.length > 0) {
+                const badgesRow = document.createElement('div');
+                badgesRow.className = 'smg-thead-badges-row';
+                badges.forEach(b => badgesRow.appendChild(b));
+                info.appendChild(badgesRow);
+            }
+
             const line = document.createElement('div');
             line.className = 'smg-thead-titleline';
             if (tv) line.appendChild(tv);
             info.appendChild(line);
 
-            const desc = header.querySelector('.p-description');
-            if (desc) {
-                const row = document.createElement('div');
-                row.className = 'smg-thead-tags';
-                row.appendChild(desc);
-                info.appendChild(row);
-            }
-
             hero.appendChild(info);
             title.insertBefore(hero, title.firstChild);
+
+            // Tags da thread: movidas para uma linha própria ABAIXO do header (fora do sticky header)
+            const desc = header.querySelector('.p-description');
+            if (desc) {
+                const tagsBar = document.createElement('div');
+                tagsBar.className = 'smg-thead-tags-bar smg-thead-tags';
+                tagsBar.appendChild(desc);
+                header.parentNode.insertBefore(tagsBar, header.nextSibling);
+            }
         }
+
+        // Agrupa o paginador (.smg-bar) e as ações (.smg-thead-actions) em .smg-thead-controls
+        // à direita, com flex-shrink: 0 para NUNCA quebrarem de linha
         const actions = header.querySelector('.smg-thead-actions');
-        if (title) {
-            if (actions) title.insertBefore(firstBar, actions);   // pager ANTES das ações (ações no canto)
-            else title.appendChild(firstBar);
-        } else header.appendChild(firstBar);
+        let controls = header.querySelector('.smg-thead-controls');
+        if (!controls) {
+            controls = document.createElement('div');
+            controls.className = 'smg-thead-controls';
+        }
+        if (firstBar) controls.appendChild(firstBar);
+        if (actions) controls.appendChild(actions);
+        if (title) title.appendChild(controls);
+        else header.appendChild(controls);
+
         header.classList.add('smg-thead-unified');
-        /* "grudou?" medido por uma SENTINELA de altura zero logo acima do header.
-         * Medir o próprio header realimenta: ao grudar ele encolhe (badges somem), a posição de
-         * referência muda, o cálculo desmarca, ele volta a crescer, remarca… = as badges PISCANDO.
-         * A sentinela não muda de tamanho nem de posição, então a referência é estável.
-         * Histerese ampla por cima disso para eliminar oscilação por scroll anchoring. */
-        const sentinel = document.createElement('div');
-        sentinel.className = 'smg-thead-sentinel';
-        header.parentNode.insertBefore(sentinel, header);
-        createStickySync(header, sentinel);
+
+        let spacer = header.previousElementSibling;
+        if (!spacer || !spacer.classList.contains('smg-thead-spacer')) {
+            spacer = document.createElement('div');
+            spacer.className = 'smg-thead-spacer';
+            header.parentNode.insertBefore(spacer, header);
+        }
+
+        let sentinel = spacer.previousElementSibling;
+        if (!sentinel || !sentinel.classList.contains('smg-thead-sentinel')) {
+            sentinel = document.createElement('div');
+            sentinel.className = 'smg-thead-sentinel';
+            spacer.parentNode.insertBefore(sentinel, spacer);
+        }
+
+        createStickySync(header, sentinel, spacer);
     }
 
-    function createStickySync(header, sentinel) {
+    function createStickySync(header, sentinel, spacer) {
         let topOff = null;
+        let naturalHeight = 0;
+        const stuckHeight = 48;
         let ticking = false;
+
+        const measure = () => {
+            if (!header.isConnected) return;
+            const wasStuck = header.classList.contains('is-stuck');
+            if (wasStuck) {
+                header.classList.remove('is-stuck');
+                if (spacer) spacer.style.display = 'none';
+            }
+            naturalHeight = header.offsetHeight || 126;
+            topOff = parseFloat(getComputedStyle(header).top) || 50;
+            if (wasStuck) {
+                header.classList.add('is-stuck');
+                if (spacer) {
+                    const diff = Math.max(0, naturalHeight - stuckHeight);
+                    spacer.style.height = diff + 'px';
+                    spacer.style.display = diff > 0 ? 'block' : 'none';
+                }
+            }
+        };
+
         const syncStuck = () => {
             if (!header.isConnected) return;
-            // On mobile the fixed context is the global topbar. The thread header stays
-            // in flow so it cannot create a second overlapping bar or compete for height.
             if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) {
-                header.classList.remove('is-stuck');
+                if (header.classList.contains('is-stuck')) {
+                    header.classList.remove('is-stuck');
+                    if (spacer) spacer.style.display = 'none';
+                }
                 topOff = null;
                 return;
             }
-            if (topOff == null) topOff = parseFloat(getComputedStyle(header).top) || 50;
+            if (topOff == null || naturalHeight === 0) measure();
+
             const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-            const y = sentinel.getBoundingClientRect().top;
+            const y = sentinel ? sentinel.getBoundingClientRect().top : 100;
             const stuck = header.classList.contains('is-stuck');
 
             if (!stuck) {
-                // SÓ GRUDA QUANDO:
-                // 1) scrollY > 40: a topbar já está recolhida no estado .floating (height: 50px),
-                //    garantindo que o topo do header sticky (top: 50px) case perfeitamente com a topbar.
-                // 2) y <= topOff - 8: a sentinela passou com folga do limiar de fixação.
+                // SÓ GRUDA QUANDO: scrollY > 40 E sentinela passou do topo
                 if (scrollY > 40 && y <= topOff - 8) {
                     header.classList.add('is-stuck');
+                    if (spacer) {
+                        const diff = Math.max(0, naturalHeight - stuckHeight);
+                        spacer.style.height = diff + 'px';
+                        spacer.style.display = diff > 0 ? 'block' : 'none';
+                    }
                 }
             } else {
-                // SÓ DESMARCA QUANDO:
-                // 1) O usuário rolou de volta até o topo da thread (scrollY <= 20).
-                // 2) OU a sentinela desceu com margem ampla (y >= topOff + 45).
-                // Com 53px de histerese (42px vs 95px), o salto de ~41px do encolhimento do header
-                // NUNCA consegue cruzar o limiar de saída, ELIMINANDO 100% o loop de oscilação!
+                // SÓ DESMARCA QUANDO: voltou ao topo ou sentinela desceu com folga
                 if (scrollY <= 20 || y >= topOff + 45) {
                     header.classList.remove('is-stuck');
+                    if (spacer) {
+                        spacer.style.display = 'none';
+                        spacer.style.height = '0px';
+                    }
                 }
             }
         };
@@ -582,15 +643,18 @@
         };
 
         window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', () => { topOff = null; syncStuck(); }, { passive: true });
+        window.addEventListener('resize', () => { topOff = null; naturalHeight = 0; measure(); syncStuck(); }, { passive: true });
         syncStuck();
-        setTimeout(() => { topOff = null; syncStuck(); }, 400);   // re-mede com o layout assentado (topbar/fontes)
+        setTimeout(() => { measure(); syncStuck(); }, 150);
+        setTimeout(() => { measure(); syncStuck(); }, 400);
 
         if (typeof window !== 'undefined' && window.__TEST_MODE__) {
             window.syncStuck = syncStuck;
             window.theadSentinel = sentinel;
+            window.theadSpacer = spacer;
             header._syncStuck = syncStuck;
             header._sentinel = sentinel;
+            header._spacer = spacer;
         }
         return syncStuck;
     }
@@ -1507,6 +1571,7 @@
             fetchAndIngestFollowed,
             streamAllWatchedPages,
             buildFilterBars,
+            buildThreadHeader,
             unifyThreadHeader,
             createStickySync,
             decorateThreadCard,
@@ -1524,4 +1589,5 @@
         window.theadSentinel = window.theadSentinel || null;
         window.createStickySync = createStickySync;
         window.unifyThreadHeader = unifyThreadHeader;
+        window.buildThreadHeader = buildThreadHeader;
     }

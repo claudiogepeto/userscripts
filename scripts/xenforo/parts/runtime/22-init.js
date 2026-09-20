@@ -10,7 +10,7 @@
         if (smgDisabled) return;
         roots = normalizeRoots(roots);
         const fullScan = roots.some(root => root === document.body);
-        const threadDirty = fullScan || rootTouches(roots, '.message--post, .message, .js-post, .p-body-header, .block-outer', true);
+        const threadDirty = fullScan || rootTouches(roots, '.message--post, .message, .js-post, .p-body-header, .block-outer, .message-userContent, .bbWrapper, .comment, .comment-body, .generic2wide-iframe-div, .auto-image-grid, .smg-dm-wrap, img.bbImage, .bbCodeSpoiler, .bbCodeBlock--unfurl, .message-responses', true);
         const listDirty = fullScan || rootTouches(roots, '.structItem--thread, .structItemContainer, .block-outer, .message--articlePreview', true);
         const chromeDirty = fullScan || rootTouches(roots, '.p-body-header, .p-nav, .block-outer', true);
         const paintContext = classifyPaintPage();
@@ -26,8 +26,9 @@
         const isBookmarks = isBookmarksPage();
         const isSearch = /\/search\//i.test(path);
         const isContentFeed = isThread || isBookmarks || (typeof feedContext === 'function' && feedContext());
+        const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === 'function' && feedContext());
 
-        if (isContentFeed) {
+        if (isContentFeed && contentDirty) {
             if (FEATURES.autoFullImages) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
             if (FEATURES.autoFullImages) safe(processImages, roots);
@@ -47,17 +48,19 @@
         // 1. Passes específicos de THREADS (posts, mídia, comentários, galerias)
         if (isThread) {
             if (threadDirty) safe(ingestCurrentThreadPageIfFollowed, roots);
-            if (FEATURES.groupLinks) safe(groupPostLinks, roots);
-            if (FEATURES.revealLikedPosts) safe(revealLikedPosts, roots);
+            if (threadDirty && FEATURES.groupLinks) safe(groupPostLinks, roots);
+            if (threadDirty && FEATURES.revealLikedPosts) safe(revealLikedPosts, roots);
 
             if (listDirty) safe(buildFilterBars, roots);
             if (chromeDirty) {
                 safe(buildThreadHeader, roots);
                 safe(syncMobileThreadbar, roots);
             }
-            safe(buildPostCards, roots);
-            safe(buildCommentCards, roots);
-            safe(buildCommentBar, roots);
+            if (threadDirty) {
+                safe(buildPostCards, roots);
+                safe(buildCommentCards, roots);
+                safe(buildCommentBar, roots);
+            }
             if (authorFilter) safe(applyAuthorFilter);
         }
 
@@ -272,7 +275,7 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__processAll = processAll;
-        window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, makeTaskQueue, rootTouches });
+        window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, eachIn, makeTaskQueue, rootTouches });
         window.__processImagepondNativeEmbeds = processImagepondNativeEmbeds;
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;

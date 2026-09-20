@@ -12,8 +12,33 @@
                 font-size: 11.5px !important; padding: 2px 8px !important; line-height: 1.35 !important;
                 border-radius: 7px !important;
             }
-            /* título da thread: menor e mais leve — ele divide a linha com badges, pager e ações */
-            html.smg-thread .p-body-header .p-title-value { font-size: 20px !important; font-weight: 650 !important; }
+            /* título da thread */
+            html.smg-thread .p-body-header .p-title-value,
+            html.smg-thread .smg-thead-unified .p-title-value {
+                font-size: 24px !important;
+                font-weight: 700 !important;
+                color: #fff !important;
+                line-height: 1.25 !important;
+                letter-spacing: -0.01em;
+                margin: 0 !important;
+                padding: 0 !important;
+                padding-left: 0 !important;
+                margin-left: 0 !important;
+                text-indent: 0 !important;
+                min-width: 0;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: normal !important;
+                word-break: break-word !important;
+            }
+            html.smg-thread .smg-thead-unified .p-title-value::before,
+            html.smg-thread .smg-thead-unified .p-title-value::after {
+                display: none !important;
+                content: none !important;
+            }
             /* prefixos (ASMR/Patreon/Twitch): pílulas pequenas, não retângulos grandes */
             html.smg-thread .p-title-value .label {
                 font-size: 9.5px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important;
@@ -21,7 +46,16 @@
             }
             /* AÇÕES (feed · galeria · download) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
                Segmented control: UM bloco coeso (borda/fundo únicos) com divisores entre os ícones — junta os 3 num só. */
-            html.smg-thread .p-body-header .p-title { display: flex !important; align-items: center !important; gap: 14px !important; flex-wrap: wrap !important; }
+            html.smg-thread .p-body-header .p-title,
+            html.smg-thread .smg-thead-unified .p-title {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 16px !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
             /* ===== THREAD HEADER: one block, sticky on desktop and in-flow on mobile =====
                Antes eram três pedaços soltos (título+ações, tags, e a barra de paginação que ficava no
                .block-outer acima dos posts). Agora é um header único e sticky: numa thread de 300 páginas
@@ -31,7 +65,6 @@
                 position: sticky; top: 50px; z-index: 30;
                 background: var(--smg-bg); margin: 0 0 12px !important; padding: 14px 0 0 !important;
                 min-height: 52px; display: flex; align-items: center;   /* conteúdo centralizado na faixa */
-                transition: min-height .16s ease, padding .16s ease;
                 overflow-anchor: none !important;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
@@ -59,22 +92,35 @@
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08), 0 3px 6px rgba(0,0,0,0.35);
             }
             @media (max-width: 800px) { html.smg-thread .p-body-header.smg-thead-unified { top: 48px; } }
-            /* LINHA ÚNICA: título/badges à esquerda; pager · ordenar · ações coladas à direita.
-               O .p-title do XF é a própria linha — só viramos flex e deixamos o conteúdo quebrar em
-               telas estreitas. As tags ficam numa faixa abaixo, que é o primeiro a sumir ao grudar. */
-            html.smg-thread .smg-thead-unified .p-title {
-                display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 !important;
+            /* LINHA ÚNICA: hero (thumb + badges/título) à esquerda; controles (.smg-thead-controls) à direita */
+            html.smg-thread .smg-thead-controls {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                margin-left: auto !important;
+                flex: 0 0 auto !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
             }
-            html.smg-thread .smg-thead-unified .p-title-value { min-width: 0; margin: 0; }
-            html.smg-thread .smg-thead-unified .p-title > .smg-bar { flex: 0 0 auto; margin-left: auto; }
-            html.smg-thread .smg-thead-unified .p-title > .smg-thead-actions { flex: 0 0 auto; margin-left: 0; }
             html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 32px; padding: 0; }
             /* COMPACTO (header grudado): a faixa de tags some, título e botões encolhem — a barra fica
                fina o bastante pra não comer a leitura, mantendo pager e ações sempre à mão. */
-            .smg-thead-unified.is-stuck { min-height: 44px; }
-            .smg-thead-unified.is-stuck .p-title-value { font-size: 17px !important; }
+            .smg-thead-unified.is-stuck { min-height: 48px; }
+            .smg-thead-unified.is-stuck .smg-thead-thumb { display: none !important; }
+            .smg-thead-unified.is-stuck .smg-thead-badges-row { display: none !important; }
+            .smg-thead-unified.is-stuck .p-title-value {
+                font-size: 13.5px !important;
+                font-weight: 600 !important;
+                line-height: 1.2 !important;
+                -webkit-line-clamp: 1 !important;
+                white-space: nowrap !important;
+            }
+            .smg-thead-unified.is-stuck .smg-thead-titleline .smg-thead-title-text {
+                white-space: nowrap !important;
+            }
+            .smg-thead-unified.is-stuck .smg-thead-controls { height: 32px; }
             .smg-thead-unified.is-stuck .p-title-value .label,
             .smg-thead-unified.is-stuck .p-title-value .prefix {
                 display: inline-block !important;
@@ -84,6 +130,13 @@
                 vertical-align: middle;
             }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
+            .smg-thead-spacer {
+                display: none;
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow-anchor: none !important;
+            }
             .smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }
             /* barra do header: mais apertada que a versão solta — cada px conta numa faixa fixa */
             html.smg-thread .smg-thead-unified .smg-bar { height: 36px; padding: 0; }
@@ -132,10 +185,10 @@
             .smg-thead-unified.is-stuck .smg-bar { height: 32px; }
             .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px; box-sizing: border-box; }
             .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px; height: 28px; }
-            /* hero agrupando thumbnail + info (titleline + tags) */
+            /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;
-                align-items: flex-end;
+                align-items: center;
                 gap: 16px;
                 min-width: 0;
                 flex: 1 1 auto;
@@ -143,22 +196,68 @@
             .smg-thead-info {
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-end;
-                align-self: flex-end;
+                justify-content: center;
                 min-width: 0;
                 flex: 1 1 auto;
                 gap: 6px;
+                padding: 0 !important;
+                padding-left: 0 !important;
+                margin: 0 !important;
+                margin-left: 0 !important;
             }
-            .smg-thead-titleline { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
-            .smg-thead-titleline .p-title-value { flex: 1 1 auto; min-width: 0; }
+            .smg-thead-badges-row {
+                display: flex !important;
+                align-items: center !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                padding-left: 0 !important;
+                margin-left: 0 !important;
+            }
+            .smg-thead-badges-row .label,
+            .smg-thead-badges-row .prefix {
+                font-size: 11px !important;
+                padding: 2px 7px !important;
+                border-radius: 5px !important;
+                font-weight: 700 !important;
+                letter-spacing: .02em;
+                line-height: 1.3 !important;
+                vertical-align: middle;
+            }
+            .smg-thead-titleline {
+                display: flex;
+                align-items: flex-start;
+                gap: 0;
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+                padding: 0 !important;
+                padding-left: 0 !important;
+                margin: 0 !important;
+                margin-left: 0 !important;
+            }
+            .smg-thead-titleline .p-title-value {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .smg-thead-titleline .smg-thead-title-text {
+                display: inline;
+                white-space: normal;
+                word-break: break-word;
+                padding: 0 !important;
+                padding-left: 0 !important;
+                margin: 0 !important;
+                margin-left: 0 !important;
+            }
             .smg-thead-thumb {
                 flex: 0 0 auto;
-                width: 76px;
-                height: 76px;
-                border-radius: 14px;
+                width: 108px;
+                height: 108px;
+                border-radius: 18px;
                 overflow: hidden;
                 background: rgba(255,255,255,0.06);
-                box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.38);
             }
             .smg-thead-thumb img {
                 width: 100%;
@@ -178,16 +277,39 @@
             .smg-thead-unified.is-stuck .smg-thead-thumb {
                 display: none !important;
             }
+            .smg-thead-unified.is-stuck .smg-thead-badges-row {
+                display: none !important;
+            }
             .smg-thead-unified.is-stuck .smg-thead-tags {
                 display: none !important;
+            }
+            html.smg-thread .smg-thead-tags-bar {
+                margin: 6px 0 14px 0 !important;
+                padding: 0 !important;
+                width: 100%;
+                display: block;
+            }
+            html.smg-thread .smg-thead-tags-bar .p-description {
+                margin: 0 !important;
             }
             .smg-thead-tags { margin: 0; }
             .smg-thead-tags .p-description { margin: 0 !important; }
             /* O ícone de tags e a lista são uma unidade de layout. Alguns skins colocam
                o ícone fora de .tagList; o JS normaliza os pais diretos nesta linha. */
             html.smg-thread .smg-thead-tags-row {
-                display: flex !important; align-items: center !important; flex-wrap: wrap;
-                gap: 4px; min-width: 0; width: 100%; margin: 0 !important; padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+                min-width: 0;
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            html.smg-thread .smg-thead-tags-row .tagItem {
+                font-size: 12px !important;
+                padding: 3px 10px !important;
+                border-radius: 8px !important;
             }
             html.smg-thread .smg-thead-tags-row > .listInline,
             html.smg-thread .smg-thead-tags-row > .tagList,
@@ -202,8 +324,11 @@
                 flex: 0 1 auto; max-width: 100%;
             }
             @media (max-width: 700px) {
-                html.smg-thread .smg-thead-unified .p-title > .smg-bar { margin-left: 0; width: 100%; }
+                html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
+                html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
+                .smg-thead-thumb { width: 64px; height: 64px; border-radius: 12px; }
+                html.smg-thread .p-body-header .p-title-value { font-size: 19px !important; }
             }
 
             .smg-thead-actions {
@@ -336,7 +461,9 @@
                     line-height: 1 !important;
                     color: #fff !important;
                     margin: 0 !important;
-                    padding: 0 0 0 2px !important;
+                    margin-left: 0 !important;
+                    padding: 0 !important;
+                    padding-left: 0 !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;

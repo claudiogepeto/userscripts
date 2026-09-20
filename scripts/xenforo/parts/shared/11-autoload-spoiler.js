@@ -52,9 +52,8 @@
             };
 
             tryClick();
-            // Retentativa para cobrir timing de inicialização do JS do Xenforo
-            setTimeout(tryClick, 250);
-            setTimeout(tryClick, 750);
+            // Retentativa síncrona durante a fase de composição inicial (sem salto tardio de 750ms pós-paint)
+            setTimeout(tryClick, 200);
         });
     }
 

@@ -9,7 +9,7 @@
     //    e tem a MESMA proporção, o swap não mexe no layout.
     let thumbIO = null, medIO = null;
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
-        return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '3000px 0px' }));
+        return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
     function getMedIO() {     // troca pra MÉDIA (.md.) mais perto da tela (thumb já dá o tamanho → swap sem flash)
         return medIO || (medIO = makeLazyIO(img => {
@@ -161,6 +161,72 @@
             img.src = med;
         }, card);
     }
+    // EXTRAÇÃO SÍNCRONA DE DIMENSÕES (Anti-CLS no loading):
+    // XenForo, wrappers, links e URLs de imagens frequentemente já trazem largura/altura
+    // no HTML ou nos parâmetros da URL. Extrair isso síncronamente na descoberta do post
+    // permite travar o aspect-ratio exato antes de qualquer byte ser baixado da rede,
+    // garantindo que os posts já nasçam na altura final e a página não fique se mexendo.
+    function extractMediaDimensions(el) {
+        if (!el) return null;
+        const img = el.tagName === 'IMG' ? el : (el.querySelector && el.querySelector('img.bbImage'));
+        if (!img) {
+            if (el.classList && (el.classList.contains('generic2wide-iframe-div') || el.classList.contains('smg-dm-wrap') || el.hasAttribute('data-s9e-mediaembed') || (el.tagName === 'IFRAME' && /turbo|saint|imagepond/i.test(el.src || '')))) {
+                return { w: 16, h: 9, ratio: 16 / 9, relH: 9 / 16 };
+            }
+            return null;
+        }
+
+        // 1. aspect-ratio inline já estabelecido
+        const styleRatio = img.style && img.style.aspectRatio;
+        if (styleRatio) {
+            const m = styleRatio.match(/([\d.]+)\D+([\d.]+)/);
+            if (m && +m[1] && +m[2] && (+m[1] !== 100 || +m[2] !== 100)) {
+                const w = +m[1], h = +m[2];
+                return { w, h, ratio: w / h, relH: h / w };
+            }
+        }
+
+        // 2. naturalWidth já carregada no cache do navegador
+        if (img.naturalWidth && img.naturalHeight) {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            return { w, h, ratio: w / h, relH: h / w };
+        }
+
+        // 3. Atributos HTML diretos na tag <img> (width, height, data-width, data-height)
+        let w = +(img.getAttribute('width') || (img.dataset && img.dataset.width) || 0);
+        let h = +(img.getAttribute('height') || (img.dataset && img.dataset.height) || 0);
+        if (w > 0 && h > 0) return { w, h, ratio: w / h, relH: h / w };
+
+        // 4. Elementos pais (.bbImageWrapper, a.js-lbImage, a.link--external)
+        const wrap = img.closest && img.closest('.bbImageWrapper, a.js-lbImage, a.link--external, [data-width]');
+        if (wrap) {
+            w = +(wrap.getAttribute('data-width') || wrap.getAttribute('width') || (wrap.dataset && wrap.dataset.width) || 0);
+            h = +(wrap.getAttribute('data-height') || wrap.getAttribute('height') || (wrap.dataset && wrap.dataset.height) || 0);
+            if (w > 0 && h > 0) return { w, h, ratio: w / h, relH: h / w };
+            const wrapStyle = wrap.getAttribute('style') || '';
+            const sm = wrapStyle.match(/aspect-ratio:\s*([\d.]+)\s*\/\s*([\d.]+)/i);
+            if (sm && +sm[1] && +sm[2]) return { w: +sm[1], h: +sm[2], ratio: (+sm[1]) / (+sm[2]), relH: (+sm[2]) / (+sm[1]) };
+        }
+
+        // 5. Parâmetros e padrões de dimensão na URL (query params ?w=1920&h=1080 ou /1920x1080/)
+        const url = img.currentSrc || img.getAttribute('src') || img.src || img.getAttribute('data-url') || img.getAttribute('data-src') || (img.dataset && img.dataset.smgLink) || '';
+        if (url) {
+            const qm = url.match(/[?&](?:w|width)=(\d{2,5})&[^#]*?(?:h|height)=(\d{2,5})/i) || url.match(/[?&](?:h|height)=(\d{2,5})&[^#]*?(?:w|width)=(\d{2,5})/i);
+            if (qm) {
+                const isWFirst = /[?&](?:w|width)=/i.test(qm[0]);
+                const qw = isWFirst ? +qm[1] : +qm[2];
+                const qh = isWFirst ? +qm[2] : +qm[1];
+                if (qw > 50 && qh > 50) return { w: qw, h: qh, ratio: qw / qh, relH: qh / qw };
+            }
+            const fm = url.match(/[-_/](\d{3,4})x(\d{3,4})[.-]/i);
+            if (fm && +fm[1] > 50 && +fm[2] > 50) {
+                return { w: +fm[1], h: +fm[2], ratio: (+fm[1]) / (+fm[2]), relH: (+fm[2]) / (+fm[1]) };
+            }
+        }
+
+        return null;
+    }
+
     function processOneImage(img) {
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
         if (!img.dataset.smgLink) {
@@ -217,13 +283,11 @@
         img.classList.remove('lazyload', 'lazyloading');   // o FÓRUM faz .lazyload/.lazyloading{opacity:0} até revelar; a img já tem src http → tira senão fica invisível esperando o reveal
         // NADA de timeout-de-link: a img carrega nativa igual ao site padrão (que carrega de boa). Link de fallback SÓ em erro real (onerror) ou complete sem dimensão (404/hotlink) — abaixo. O timeout de 7s trocava imagem offscreen (naturalWidth 0 pq ainda não rolou até ela) por chip de link → "imagem não aparece" no nosso mod.
 
-        if (!img.style.aspectRatio) {
-            const w = +(img.getAttribute('width') || (img.dataset && img.dataset.width) || 0);
-            const h = +(img.getAttribute('height') || (img.dataset && img.dataset.height) || 0);
-            if (w > 0 && h > 0) {
-                img.style.aspectRatio = w + ' / ' + h;
-                markWide(img, w, h);
-            }
+        const dim = extractMediaDimensions(img);
+        if (dim && !img.style.aspectRatio) {
+            img.style.aspectRatio = dim.w + ' / ' + dim.h;
+            markWide(img, dim.w, dim.h);
+            img.classList.add('smg-img-ready');
         }
 
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
@@ -237,7 +301,12 @@
             }
             markWide(img, img.naturalWidth, img.naturalHeight);   // deitada → largura limitada fora do mosaico
             const grid = img.closest('.auto-image-grid');
-            if (grid) scheduleRelayout(grid);
+            if (grid) {
+                if (img.style.aspectRatio && !grid.style.getPropertyValue('--smg-grid-img-ph')) {
+                    grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
+                }
+                scheduleRelayout(grid);
+            }
             img.classList.add('smg-img-ready');
         };
         if (img.complete) onReady();                 // já resolvida (ok ou quebrada) → sem shimmer preso
@@ -509,18 +578,15 @@
     // mesmo, senão todo item nasce torto e o grid se rearranja quando a imagem carrega.
     const IMG_PH_RELH = 1.3;
     try { document.documentElement.style.setProperty('--smg-img-ph', '1 / ' + IMG_PH_RELH); } catch (e) {}
-    function blockRelH(b) {   // altura relativa (h/w) p/ distribuir no masonry, SEM reflow (usa o aspect-ratio já conhecido)
-        if (b.tagName === 'IMG') {
-            const m = (b.style.aspectRatio || '').match(/([\d.]+)\D+([\d.]+)/);
-            if (m && +m[1] && (+m[1] !== 100 || +m[2] !== 100 || !b.naturalWidth)) return (+m[2]) / (+m[1]);
-            if (b.naturalWidth) return b.naturalHeight / b.naturalWidth;
-            return IMG_PH_RELH;
-        }
+    function blockRelH(b) {   // altura relativa (h/w) p/ distribuir no masonry, SEM reflow (usa dimensões extraídas do HTML/metadados)
+        const dim = extractMediaDimensions(b);
+        if (dim) return dim.relH;
         // embed: usa o aspect-ratio REAL se o player já souber (redgifs/turbo setam no .smg-rg após carregar — muitos são retrato, não 16:9)
         const rg = (b.matches && b.matches('.smg-rg')) ? b : (b.querySelector && b.querySelector('.smg-rg'));
         const am = rg && rg.style.aspectRatio && rg.style.aspectRatio.match(/([\d.]+)\D+([\d.]+)/);
         if (am && +am[1]) return (+am[2]) / (+am[1]);
-        return 0.5625;   // embeds/vídeo 16:9 (default até o player saber a proporção)
+        if (isVideoBlock(b)) return 0.5625;   // embeds/vídeo 16:9 (default até o player saber a proporção)
+        return IMG_PH_RELH;   // fotos/imagens default para 1.3 (retrato)
     }
     function getEffectiveWidth() {
         let w = (typeof window !== 'undefined' && window.innerWidth) || 1200;
@@ -579,6 +645,10 @@
         if (b.tagName === 'IMG') return false;
         return true;
     }
+    function isWideMedia(b) {
+        if (!b) return false;
+        return blockRelH(b) < WIDE_RELH;
+    }
     function gridColsFor(blocks) {
         const w = getEffectiveWidth();
         if (w < 600) return 1;
@@ -587,20 +657,29 @@
         const isCompact = w <= 1400;
         const videoCount = blocks.filter(isVideoBlock).length;
         const photoCount = blocks.length - videoCount;
+        const wideCount = blocks.filter(isWideMedia).length;
+        const tallCount = blocks.length - wideCount;
 
         if (blocks.length === 2) {
-            const allWide = blocks.every(b => blockRelH(b) < WIDE_RELH);
-            if (allWide) return 1;
+            // 2 itens (sejam vídeos, fotos horizontais, verticais ou misto) sempre em 2 colunas (1 row só)
             return 2;
         }
         if (blocks.length === 3) {
-            // Caso 1: 2 fotos + 1 vídeo -> 2 colunas (o vídeo span-all na linha inteira)
-            if (photoCount === 2 && videoCount === 1) return 2;
-            // Caso 2: 1 foto + 2 vídeos -> 2 colunas (a foto centrada na linha 2)
-            if (photoCount === 1 && videoCount === 2) return 2;
-            // Em telas compactas (<= 1400px), 3 fotos ficam mais confortáveis em 2 colunas
+            if (w < 600) return 1;
+            // Se houver vídeo (misto ou 3 vídeos): 2 colunas para acomodar players
+            if (videoCount > 0) return 2;
+            // 3 fotos horizontais: 2 colunas (2 no topo + 1 embaixo span-all)
+            if (wideCount === 3) return 2;
+            // 1 foto vertical + 2 fotos horizontais (caso do usuário): 2 COLUNAS (50% cada)!
+            // Coluna 1: 1 vertical | Coluna 2: 2 horizontais empilhadas.
+            // As alturas coincidem (~1.78 vs ~1.50) e preenchem 100% da largura útil sem coluna vazia!
+            if (tallCount === 1 && wideCount === 2) return 2;
+            // 2 fotos verticais + 1 foto horizontal: 2 colunas (linha 1: 2 verticais, linha 2: 1 horizontal span-all)
+            if (tallCount === 2 && wideCount === 1) return 2;
+            // 3 fotos verticais/quadradas puras (tallCount === 3):
+            // Em telas compactas (<= 1400px): 2 colunas
+            // Em telas amplas (> 1400px): 3 colunas (1 única linha equilibrada com 1 foto por coluna)
             if (isCompact) return 2;
-            // Em telas > 1400px: 3 colunas estáveis (1 única linha com 3 fotos lado a lado)
             return 3;
         }
         if (blocks.length === 4) {
@@ -610,13 +689,19 @@
         if (blocks.length === 5) {
             // Caso 3: 2 fotos + 3 vídeos -> 6 trilhas (2x span 3 + 3x span 2) apenas em telas amplas
             if (!isCompact && photoCount === 2 && videoCount === 3) return 6;
+            // 5 mídias wide -> 2 colunas (2 + 2 + 1)
+            if (wideCount === 5) return 2;
             return isCompact ? 2 : 3;
         }
         if (blocks.length === 6) {
             // Caso 4: 4 fotos + 2 vídeos -> 2 colunas (3 linhas perfeitas de 2 itens)
             if (photoCount === 4 && videoCount === 2) return 2;
+            // 6 mídias wide -> 2 colunas (3 linhas perfeitas de 2 itens)
+            if (wideCount === 6) return 2;
             return isCompact ? 2 : 3;
         }
+        // Se todas as mídias forem wide (vídeos e/ou fotos horizontais), mantém 2 colunas para preservar a largura
+        if (wideCount === blocks.length) return 2;
         return isCompact ? 2 : 3;
     }
     // ===== MASONRY por CSS Grid =====
@@ -661,6 +746,11 @@
         if (!first || !last || first === last) return false;
         if (!first.parentNode || !last.parentNode) return false;
 
+        // Se ambos estão dentro do mesmo auto-image-grid, todo o conteúdo entre eles é puramente mídia
+        const g1 = first.closest && first.closest('.auto-image-grid');
+        const g2 = last.closest && last.closest('.auto-image-grid');
+        if (g1 && g1 === g2) return false;
+
         try {
             const range = document.createRange();
             range.setStartAfter(first);
@@ -680,8 +770,23 @@
     function relayoutGrid(grid) {
         const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
         if (!items.length) return;
-        const postBody = grid.closest && grid.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
-        const hasTextBetween = hasTextBetweenMedia(postBody);
+
+        const isTrueMasonry = grid.classList.contains('smg-true-masonry');
+        const establishedCols = +(grid.dataset.smgCols || 0);
+        const prevCount = +(grid.dataset.smgItemCount || 0);
+        const prevBucket = +(grid.dataset.smgBucket || 0);
+        const currentWideCount = items.filter(isWideMedia).length;
+        const prevWideCount = +(grid.dataset.smgWideCount || -1);
+        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === gridCols() && prevWideCount === currentWideCount) {
+            // Em True Masonry estável com mesmo bucket e mesma orientação de mídias, atualiza apenas proporções individuais
+            items.forEach(it => {
+                const rh = blockRelH(it);
+                const r = rh > 0 ? (1 / rh) : 1;
+                it.style.setProperty('--smg-ratio', r.toFixed(4));
+            });
+            return;
+        }
+        grid.dataset.smgWideCount = currentWideCount;
 
         grid.classList.remove('smg-grid-2', 'smg-grid-2-tall', 'smg-grid-2-asym', 'smg-grid-pair-tall', 'smg-grid-6', 'smg-grid-orphan', 'smg-justified-grid', 'smg-true-masonry');
         grid.style.removeProperty('--smg-col1-w');
@@ -706,10 +811,25 @@
         const videoCount = items.filter(isVideoBlock).length;
         const photoCount = items.length - videoCount;
         const hasVideo = videoCount > 0;
+        const wideCount = items.filter(isWideMedia).length;
+        const tallCount = items.length - wideCount;
+        const isAllWide = wideCount === items.length;
 
-        const N = Math.min(6, Math.max(1, gridColsFor(items)));
+        // ESTABILIDADE DE COLUNAS (Anti-CLS): se a grade já teve suas colunas calculadas
+        // e a quantidade de itens é a mesma para o mesmo bucket de tela, não altera o número de colunas (N) por causa
+        // do término do carregamento de imagem individual para evitar que o layout pule!
+        let N;
+        const currentBucket = gridCols();
+        if (establishedCols && prevBucket === currentBucket && prevCount === items.length) {
+            N = establishedCols;
+        } else {
+            N = Math.min(6, Math.max(1, gridColsFor(items)));
+            grid.dataset.smgCols = N;
+            grid.dataset.smgBucket = currentBucket;
+            grid.dataset.smgItemCount = items.length;
+        }
         grid.style.setProperty('--smg-mcols', N);
-        masonryBucket = gridCols();
+        masonryBucket = currentBucket;
 
         if (items.length === 2) {
             grid.classList.add('smg-grid-2');
@@ -726,6 +846,29 @@
                 grid.style.setProperty('--smg-col1-w', 'calc((100% - 8px) * ' + w0.toFixed(4) + ')');
                 grid.style.setProperty('--smg-col2-w', 'calc((100% - 8px) * ' + w1.toFixed(4) + ')');
             }
+        } else if (isAllWide && items.length >= 3) {
+            // GRADE PURA DE MÍDIAS HORIZONTAIS (vídeos e/ou fotos 16:9, 4:3):
+            // Usa CSS Grid em 2 colunas para preservar a largura ampla de cada item sem espremer.
+            // Se houver item ímpar no final de uma grade de 2 colunas, ele é centralizado ou recebe span-all
+            if (N === 2 && items.length % 2 === 1) {
+                const lastItem = items[items.length - 1];
+                if (lastItem) lastItem.classList.add('smg-span-all');
+            }
+        } else if (!hasVideo && items.length === 3 && N === 2 && wideCount === 1 && tallCount === 2) {
+            // 2 verticais + 1 horizontal:
+            // CSS Grid 2 colunas — linha 1: 2 verticais (50% cada) | linha 2: 1 horizontal (span-all 100%)
+            const wideItem = items.find(isWideMedia);
+            if (wideItem) wideItem.classList.add('smg-span-all');
+        } else if (!hasVideo && items.length === 3 && N === 2 && tallCount === 1 && wideCount === 2) {
+            // 1 vertical + 2 horizontais (caso do usuário):
+            // True Masonry 2 colunas (50% cada) — Coluna 1: 1 vertical | Coluna 2: 2 horizontais empilhadas
+            // As alturas coincidem (~1.78 vs ~1.50) e ocupam 100% da largura útil sem coluna 3 vazia!
+            const tallItem = items.find(it => !isWideMedia(it));
+            if (tallItem && items.indexOf(tallItem) === 1) {
+                // Se a foto vertical estiver no meio (wide, tall, wide), move para o início para que as 2 wide fiquem juntas
+                grid.insertBefore(tallItem, grid.firstChild);
+            }
+            grid.classList.add('smg-true-masonry');
         } else if (hasVideo) {
             // Se houver vídeo (Casos 1, 2, 3, 4): utiliza o CSS Grid com spans estruturados
             if (items.length === 3 && N === 2) {
@@ -793,6 +936,20 @@
     function unwrapEmptyMediaFormatting(scope) {
         if (!scope || !scope.querySelectorAll) return;
         const sel = 'b, strong, i, em, u, s, span:not([data-s9e-mediaembed]), font, center';
+        const hasAuthorText = node => {
+            if (!node) return false;
+            if (node.nodeType === 3) return node.textContent.trim().length > 0;
+            if (node.nodeType !== 1) return false;
+            const tag = node.tagName;
+            if (/^(IMG|IFRAME|VIDEO|BR|NOSCRIPT|SCRIPT|STYLE)$/i.test(tag)) return false;
+            if (node.classList && (node.classList.contains('generic2wide-iframe-div') || node.classList.contains('smg-dm-wrap') || node.classList.contains('auto-image-grid'))) return false;
+            if (node.hasAttribute && node.hasAttribute('data-s9e-mediaembed')) return false;
+            for (let child = node.firstChild; child; child = child.nextSibling) {
+                if (hasAuthorText(child)) return true;
+            }
+            return false;
+        };
+
         let changed = true;
         let passes = 0;
         while (changed && passes < 10) {
@@ -806,11 +963,8 @@
                 const hasMedia = el.querySelector('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"], .auto-image-grid');
                 if (!hasMedia) continue;
 
-                // Verifica se há texto autoral real dentro de el (desconsiderando mídias, grids, breaks e tags técnicas)
-                const clone = el.cloneNode(true);
-                clone.querySelectorAll('img, iframe, video, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .auto-image-grid, br, noscript, script, style').forEach(n => n.remove());
-                const text = (clone.textContent || '').replace(/\s+/g, ' ').trim();
-                if (text === '') {
+                // Verifica se há texto autoral real dentro de el sem clonar o nó
+                if (!hasAuthorText(el)) {
                     // É puramente um wrapper de formatação ao redor de mídias sem nenhum texto:
                     // dissolve o wrapper no parent para que as mídias fiquem no mesmo nível das demais mídias
                     el.replaceWith(...el.childNodes);
@@ -836,7 +990,13 @@
                 next = next.nextSibling;
             }
             if (next && next.nodeType === 1 && next.classList.contains('auto-image-grid')) {
-                // Encontrou grid adjacente sem texto entre eles: mescla os itens do segundo grid no primeiro!
+                const grid1IsWide = Array.from(grid.children).every(isWideMedia);
+                const grid2IsWide = Array.from(next.children).every(isWideMedia);
+                // Não mescla se um grid for wide (2 colunas) e o outro for tall (True Masonry 3 colunas)
+                if (grid1IsWide !== grid2IsWide) {
+                    continue;
+                }
+                // Encontrou grid adjacente sem texto entre eles do mesmo tipo: mescla os itens do segundo grid no primeiro!
                 while (next.firstChild) {
                     grid.appendChild(next.firstChild);
                 }
@@ -891,21 +1051,64 @@
                 return;
             }
             let run = [];   // itens contíguos: {flow,blocks} (mídia nova) | {grid} (grid já existente → mídia nova adjacente entra nele)
+            const mountSubRun = (subItems, subUngri) => {
+                if (!subUngri.length) return;
+                let grid = (subItems.find(it => it.grid) || {}).grid;
+                const have = grid ? grid.children.length : 0;
+                if (subUngri.length + have < 2) return;   // 1 mídia isolada → fica inline no fluxo
+                if (!grid) {
+                    const firstFlow = (subItems.find(it => it.flow) || {}).flow;
+                    if (!firstFlow || !firstFlow.parentNode) return;
+                    grid = document.createElement('div'); grid.className = 'auto-image-grid';
+                    firstFlow.parentNode.insertBefore(grid, firstFlow);
+                }
+                fillGrid(grid, subUngri);
+                cleanupGhosts(grid);
+            };
+
             const flush = () => {
                 const items = run; run = [];
                 const ungridded = []; items.forEach(it => { if (it.blocks) ungridded.push.apply(ungridded, it.blocks); });
-                if (!ungridded.length) return;   // run sem mídia nova → nada a fazer (resize é tratado à parte)
-                let grid = (items.find(it => it.grid) || {}).grid;
-                const have = grid ? grid.children.length : 0;   // itens já no grid (filhos diretos)
-                if (ungridded.length + have < 2) return;   // run de 1 mídia → inline (sem grid)
-                if (!grid) {
-                    const firstFlow = (items.find(it => it.flow) || {}).flow;
-                    if (!firstFlow || !firstFlow.parentNode) return;
-                    grid = document.createElement('div'); grid.className = 'auto-image-grid';
-                    firstFlow.parentNode.insertBefore(grid, firstFlow);   // grid NO LUGAR (antes da 1ª mídia da run)
+                if (!ungridded.length) return;
+
+                const wideBlocks = ungridded.filter(isWideMedia);
+                const tallBlocks = ungridded.filter(b => !isWideMedia(b));
+                const isMixed = wideBlocks.length > 0 && tallBlocks.length > 0;
+                const isSmallSpecialCase = ungridded.length <= 2
+                    || (wideBlocks.length === 1 && tallBlocks.length === 2)
+                    || (wideBlocks.length === 2 && tallBlocks.length === 1)
+                    || (wideBlocks.length === 3 && tallBlocks.length === 2)
+                    || (wideBlocks.length === 2 && tallBlocks.length === 4);
+
+                if (!isMixed || isSmallSpecialCase || items.some(it => it.grid)) {
+                    mountSubRun(items, ungridded);
+                    return;
                 }
-                fillGrid(grid, ungridded);
-                cleanupGhosts(grid);
+
+                // PARTIÇÃO INTELIGENTE POR ORIENTAÇÃO (Mídias Wide vs Tall):
+                // Particiona itens contíguos de mesmo tipo (mídias wide: vídeos e fotos horizontais vs fotos verticais).
+                // - Corridas de mídia wide ficam no seu grid de 2 colunas amplas (50% cada).
+                // - Corridas de fotos verticais ficam no seu grid de 3 colunas em True Masonry contínuo!
+                // Isso elimina 100% os buracos vazios e garante que fotos horizontais tenham tamanho nobre.
+                const subRuns = [];
+                let currentType = null;
+                let curSub = [];
+                items.forEach(it => {
+                    const isW = it.blocks ? it.blocks.some(isWideMedia) : false;
+                    const type = isW ? 'wide' : 'tall';
+                    if (type !== currentType) {
+                        if (curSub.length) subRuns.push(curSub);
+                        curSub = [];
+                        currentType = type;
+                    }
+                    curSub.push(it);
+                });
+                if (curSub.length) subRuns.push(curSub);
+
+                subRuns.forEach(sub => {
+                    const subUngri = []; sub.forEach(it => { if (it.blocks) subUngri.push.apply(subUngri, it.blocks); });
+                    mountSubRun(sub, subUngri);
+                });
             };
             Array.from(parent.childNodes).forEach(node => {
                 if (node.nodeType === 3) { if (node.textContent.trim()) flush(); return; }   // texto real → quebra a run; whitespace → mantém
@@ -973,12 +1176,10 @@
         // gate barato (data-smg-galseen marca cada item 1x → steady-state ~0). Escopo = CORPO do post (.message-userContent)
         // inteiro, NÃO só dentro do .bbWrapper: no SMG nosso embed às vezes entra como IRMÃO do .bbWrapper (fora dele) e ficava de fora.
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
-        const types = ['img.bbImage', '.generic2wide-iframe-div', '.smg-dm-wrap', 'span[data-s9e-mediaembed]', 'iframe[src*="imagepond.net"]'];
-        const scopes = ['.bbCodeSpoiler-content', '.bbCodeBlock--spoiler .bbCodeBlock-content', '.message-userContent', '.comment-body'];
-        const sel = [];
-        scopes.forEach(root => types.forEach(t => sel.push(root + ' ' + t + ':not([data-smg-galseen])')));
+        // Seletores diretos de mídia — busca indexada rápida sem caminhar 20 combinações descendentes
+        const mediaSelector = 'img.bbImage:not([data-smg-galseen]), .generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), iframe[src*="imagepond.net"]:not([data-smg-galseen])';
         const bodies = new Set();
-        eachIn(roots, sel.join(','), el => {
+        eachIn(roots, mediaSelector, el => {
             el.dataset.smgGalseen = '1';
             if (el.closest('.bbCodeQuote, .message-signature')) return;
             const b = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
@@ -994,12 +1195,18 @@
             }
         });
         bodies.forEach(buildPostGallery);
+        // Marcação de prontidão das galerias nos posts processados (para sincronismo com o paint gate)
+        roots.forEach(r => {
+            if (!r || !r.querySelectorAll) return;
+            const ps = (r.matches && r.matches('article.message, .message--post')) ? [r] : r.querySelectorAll('article.message, .message--post');
+            ps.forEach(p => { p.dataset.smgGalReady = '1'; });
+        });
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
+        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
         window.processOneImage = processOneImage;
         window.goonboxEmbed = goonboxEmbed;
     }

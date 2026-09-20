@@ -44,7 +44,8 @@
             return;
         }
 
-        const badgeNodes = Array.from(nativeTitle.querySelectorAll('.label, .prefix'));
+        const header = document.querySelector('.p-body-header');
+        const badgeNodes = Array.from(header ? header.querySelectorAll('.smg-thead-badges-row .label, .smg-thead-badges-row .prefix, .p-title-value .label, .p-title-value .prefix') : (nativeTitle ? nativeTitle.querySelectorAll('.label, .prefix') : []));
         const badgeSignature = badgeNodes.map(node => (node.getAttribute('class') || '') + ':' + (node.textContent || '').replace(/\s+/g, ' ').trim()).join('|');
         const walker = document.createTreeWalker(nativeTitle, 4, {
             acceptNode(node) {

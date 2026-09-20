@@ -549,13 +549,8 @@
                 };
                 const dio = (FEATURES.lazyEmbeds && typeof getLazyEmbedIO === 'function') ? getLazyEmbedIO() : null;
                 if (dio) {
-                    const rect = v.getBoundingClientRect();
-                    if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
-                        v._smgActivate();
-                    } else {
-                        dio.observe(v);
-                        setTimeout(() => { if (v._smgActivate) v._smgActivate(); }, 250);
-                    }
+                    dio.observe(v);
+                    setTimeout(() => { if (v._smgActivate) v._smgActivate(); }, 250);
                 } else {
                     v._smgActivate();
                 }
