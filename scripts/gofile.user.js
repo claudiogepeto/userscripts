@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.2.5
+// @version      3.2.6
 // @description  Card grid, search, custom player, theater stage, gallery strip, and AMOLED styling for GoFile.
 // @author       claudiogepeto
 // @run-at       document-start
@@ -103,6 +103,12 @@
         .gf-bulk { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(20px); z-index: 2147482000; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 14px; background: #14161a; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 34px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; min-width: 320px; font-family: Inter, system-ui, sans-serif; }
         .gf-bulk.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
         .gf-bulk-count { font: 600 13px Inter, system-ui, sans-serif; color: #fff; white-space: nowrap; }
+
+        
+        /* ===================== SINGLE FILE VIEW AMOLED ===================== */
+        html.gf #fm-root section.panel { background: #12141a !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 14px !important; }
+        html.gf #fm-file-preview { border-radius: 14px !important; border: 1px solid rgba(255,255,255,0.08) !important; background: #000 !important; max-width: min(100%, 1200px) !important; margin: 16px auto !important; cursor: pointer; }
+        html.gf #fm-file-preview video { border-radius: 12px !important; max-height: min(75vh, 800px) !important; margin: 0 auto !important; display: block !important; }
 
         /* ===================== STAGE THEATER ===================== */
         html.gf.gf-has-stage, html.gf.gf-has-stage body { overflow: hidden !important; }
@@ -445,7 +451,14 @@
     function renderStrip() {
         const cards = playableCards();
         stStrip.textContent = "";
-        stage.classList.toggle("has-nav", cards.length > 1);
+        const stripwrap = stage ? stage.querySelector(".gf-stripwrap") : null;
+        if (cards.length <= 1) {
+            stage.classList.remove("has-nav");
+            if (stripwrap) stripwrap.style.display = "none";
+            return;
+        }
+        if (stripwrap) stripwrap.style.display = "";
+        stage.classList.add("has-nav");
         cards.forEach(card => {
             const d = card._gf;
             const it = el("div", { class: "gf-strip-item" + (card === stCur ? " is-current" : ""), title: d.name });
@@ -608,6 +621,45 @@
             if (e.tagName === "VIDEO" || e.tagName === "AUDIO") { try { e.pause(); } catch (err) {} }
             e.remove();
         });
+
+        // Single File View: se o vídeo/imagem nativo já estiver no DOM, monta imediatamente!
+        if (d.isSingleFile) {
+            const nativeVid = d.nativeVid || document.querySelector("#fm-file-preview video, #fm-root video");
+            const nativeImg = d.nativeImg || (document.getElementById("fm-file-preview") ? document.getElementById("fm-file-preview").querySelector("img") : null);
+
+            if (nativeVid) {
+                const src = nativeVid.currentSrc || nativeVid.src || (nativeVid.querySelector("source") ? (nativeVid.querySelector("source").getAttribute("src") || nativeVid.querySelector("source").src) : "");
+                if (src) {
+                    try { nativeVid.pause(); } catch (e) {}
+                    curAc = new AbortController();
+                    const playerVid = document.createElement("video");
+                    playerVid.className = "gf-video";
+                    playerVid.src = src;
+                    if (nativeVid.poster) playerVid.poster = nativeVid.poster;
+                    playerVid.preload = "auto";
+                    playerVid.playsInline = true;
+
+                    playerVid.volume = prefs.volume ?? 1;
+                    playerVid.muted = prefs.muted ?? false;
+                    playerVid.addEventListener("volumechange", () => {
+                        prefs.volume = playerVid.volume;
+                        prefs.muted = playerVid.muted;
+                        saveP();
+                    }, { signal: curAc.signal });
+
+                    const host = el("div", { class: "gf-host gf-pl" }, playerVid);
+                    buildPlayerControls(host, playerVid, src, curAc);
+                    stMid.appendChild(host);
+
+                    const p = playerVid.play();
+                    if (p && p.catch) p.catch(() => {});
+                    return;
+                }
+            } else if (nativeImg) {
+                mountPhotoZoom(stMid, mediaImageSource(nativeImg) || d.thumb);
+                return;
+            }
+        }
 
         // Dispara o preview nativo do GoFile
         if (d.previewBtn) {
@@ -815,29 +867,102 @@
     let autoExpandedUrl = null;
     let autoExpandTimer = null;
 
+    function getSingleFileCard() {
+        const previewSection = document.getElementById("fm-file-preview");
+        const vid = previewSection ? previewSection.querySelector("video") : document.querySelector("#fm-root video, #page video");
+        const img = previewSection ? previewSection.querySelector("img") : null;
+        const fileSection = document.querySelector("#fm-root .max-w-3xl section.panel, #fm-root section.panel");
+        if (!fileSection && !previewSection && !vid && !img) return null;
+
+        const h1 = (fileSection && fileSection.querySelector("h1")) || document.querySelector("#header-title");
+        const name = (h1 ? h1.textContent : document.title).replace(/\s*·\s*Gofile.*$/i, "").trim();
+        if (!name) return null;
+
+        const sizeText = Array.from(document.querySelectorAll("#fm-root p, #fm-root span"))
+            .map(e => (e.textContent || "").trim())
+            .find(t => SIZE_RE.test(t)) || "";
+
+        const downloadBtn = document.querySelector("#fm-root button[data-action='download']");
+        const previewBtn = document.querySelector("#fm-root button[data-action='preview']");
+        const isVid = !!vid || /\.(mp4|m4v|mov|webm|mkv|avi|ts|flv)$/i.test(name);
+        const isImg = !!img || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i.test(name);
+        const kind = isVid ? "video" : (isImg ? "image" : "other");
+        const thumb = vid ? (vid.getAttribute("poster") || "") : (img ? (img.getAttribute("src") || img.src) : "");
+
+        const card = fileSection || previewSection || document.getElementById("fm-root");
+        card._gf = {
+            name,
+            size: sizeText,
+            thumb,
+            kind,
+            playable: isVid || isImg,
+            downloadBtn,
+            previewBtn,
+            openBtn: previewBtn,
+            nativeVid: vid,
+            nativeImg: img,
+            isSingleFile: true
+        };
+
+        // Adiciona botão "Abrir no Player" no card caso o usuário queira reabrir
+        if (fileSection && !fileSection.querySelector(".gf-open-stage-btn")) {
+            const acts = fileSection.querySelector(".mt-5, [class*='gap-2']");
+            if (acts) {
+                const btn = el("button", {
+                    type: "button",
+                    class: "btn-primary gf-open-stage-btn w-full sm:w-auto",
+                    style: "background:#3b82f6!important; border-color:#3b82f6!important; color:#06101f!important; font-weight:700!important;"
+                });
+                btn.insertAdjacentHTML("beforeend", IC.play + " <span style='margin-left:6px'>Assistir no Player (Theater)</span>");
+                btn.addEventListener("click", e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openStage(card);
+                });
+                acts.prepend(btn);
+            }
+        }
+
+        // Se clicar no preview nativo na página, abre o stage
+        if (previewSection && !previewSection.dataset.gfClickBound) {
+            previewSection.dataset.gfClickBound = "1";
+            previewSection.addEventListener("click", e => {
+                e.preventDefault();
+                e.stopPropagation();
+                openStage(card);
+            });
+        }
+
+        return card;
+    }
+
     function checkAutoExpandSingleItem() {
         if (autoExpandedUrl === location.href) return;
         const allCards = Array.from(document.querySelectorAll(".gf-card")).filter(c => c._gf);
-        if (allCards.length > 1) {
+        let targetCard = null;
+
+        if (allCards.length === 1) {
+            targetCard = allCards[0];
+        } else if (allCards.length === 0) {
+            targetCard = getSingleFileCard();
+        } else {
             autoExpandedUrl = location.href;
             if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
             return;
         }
-        if (allCards.length === 1) {
-            const card = allCards[0];
-            if (card._gf && card._gf.playable) {
-                if (autoExpandTimer) clearTimeout(autoExpandTimer);
-                autoExpandTimer = setTimeout(() => {
-                    autoExpandTimer = null;
-                    const currentCards = Array.from(document.querySelectorAll(".gf-card")).filter(c => c._gf);
-                    if (currentCards.length === 1 && autoExpandedUrl !== location.href) {
-                        autoExpandedUrl = location.href;
-                        if (!stage || !stage.classList.contains("open")) {
-                            openStage(currentCards[0]);
-                        }
+
+        if (targetCard && targetCard._gf && targetCard._gf.playable) {
+            if (autoExpandTimer) clearTimeout(autoExpandTimer);
+            autoExpandTimer = setTimeout(() => {
+                autoExpandTimer = null;
+                if (autoExpandedUrl !== location.href) {
+                    autoExpandedUrl = location.href;
+                    buildStage();
+                    if (!stage || !stage.classList.contains("open")) {
+                        openStage(targetCard);
                     }
-                }, 160);
-            }
+                }
+            }, 80);
         }
     }
 
