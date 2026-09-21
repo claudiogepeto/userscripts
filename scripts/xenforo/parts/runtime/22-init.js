@@ -33,6 +33,7 @@
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
             if (FEATURES.autoFullImages) safe(processImages, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
+            safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
             if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             safe(processInstagramEmbeds, roots);

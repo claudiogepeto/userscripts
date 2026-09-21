@@ -31,6 +31,7 @@
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
         'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
         'no response': 'sem resposta', 'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
+        'Error': 'Erro', 'load error': 'erro ao carregar',
         // download modal
         'Scanning thread…': 'Varrendo a thread…', 'images': 'imagens', 'videos': 'vídeos', 'external links': 'links externos',
         'item': 'item', 'items': 'itens', 'Show gallery': 'Ver galeria', 'Open gallery': 'Abrir galeria', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
@@ -224,5 +225,7 @@
         });
     }
 
-    // ícones SVG monocromáticos (Lucide-style, traço bold), herdam currentColor.
-    // tamanho via font-size do botão (width/height em em).
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.i18n = i18n;
+        window.I18N_PT = I18N_PT;
+    }

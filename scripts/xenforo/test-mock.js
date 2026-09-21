@@ -315,7 +315,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.42'), 'Userscript deve estar na versão 3.12.42');
+    assert(scriptContent.includes('// @version      3.12.44'), 'Userscript deve estar na versão 3.12.44');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -6052,6 +6052,295 @@ async function runTests() {
 
     // Limpeza
     post49.remove();
+
+    // =========================================================================
+    // TESTE 50: Reescrever domínios Saint para Turbo.cr e Embed de Links/Cards Turbo/Saint /embed/
+    // =========================================================================
+    console.log('--- TESTE 50: Saint2.su e domínios Saint para Turbo.cr & Embeds de /embed/ ---');
+
+    // 1. Validar resolveProxyHref com domínios saint
+    const resolveProxyFn = window.resolveProxyHref || window.__resolveProxyHref;
+    assert(typeof resolveProxyFn === 'function', 'resolveProxyHref deve estar disponível no ambiente de testes');
+    assert(resolveProxyFn('https://saint2.su/embed/BV4sXlByMZ-ua') === 'https://turbo.cr/embed/BV4sXlByMZ-ua', 'saint2.su deve ser reescrito para turbo.cr em resolveProxyHref');
+    assert(resolveProxyFn('https://saint.cr/embed/xyz') === 'https://turbo.cr/embed/xyz', 'saint.cr deve ser reescrito para turbo.cr');
+    assert(resolveProxyFn('https://saint.to/v/vid123') === 'https://turbo.cr/v/vid123', 'saint.to deve ser reescrito para turbo.cr');
+    assert(resolveProxyFn('https://saint2.to/embed/test') === 'https://turbo.cr/embed/test', 'saint2.to deve ser reescrito para turbo.cr');
+    assert(resolveProxyFn('https://saint2.cr/embed/test') === 'https://turbo.cr/embed/test', 'saint2.cr deve ser reescrito para turbo.cr');
+    assert(resolveProxyFn('https://saint.su/embed/test') === 'https://turbo.cr/embed/test', 'saint.su deve ser reescrito para turbo.cr');
+
+    // 2. Validar collectMediaFrom com turbo e saint
+    const collectMediaFn = window.collectMediaFrom;
+    assert(typeof collectMediaFn === 'function', 'collectMediaFrom deve estar disponível no ambiente de testes');
+
+    const testRoot50 = document.createElement('div');
+    testRoot50.innerHTML = `
+        <a href="https://saint2.su/embed/BV4sXlByMZ-ua">saint2.su link</a>
+        <a href="https://turbo.cr/embed/turbo123">turbo link</a>
+        <div class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://saint2.su/embed/unfurl123"></div>
+        <div class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://turbo.cr/embed/unfurl456"></div>
+        <iframe src="https://saint2.su/embed/ifr789"></iframe>
+    `;
+    const collected50 = collectMediaFn(testRoot50);
+    const collectedUrls = collected50.map(i => i.url);
+    assert(collectedUrls.includes('https://turbo.cr/embed/BV4sXlByMZ-ua'), 'collectMediaFrom deve extrair embed do saint2.su reescrito para turbo.cr');
+    assert(collectedUrls.includes('https://turbo.cr/embed/turbo123'), 'collectMediaFrom deve extrair embed do turbo.cr');
+    assert(collectedUrls.includes('https://turbo.cr/embed/unfurl123'), 'collectMediaFrom deve extrair embed de unfurl saint reescrito');
+    assert(collectedUrls.includes('https://turbo.cr/embed/unfurl456'), 'collectMediaFrom deve extrair embed de unfurl turbo');
+    assert(collectedUrls.includes('https://turbo.cr/embed/ifr789'), 'collectMediaFrom deve extrair iframe reescrito para turbo.cr');
+
+    // 3. Validar processTurboEmbeds em DOM vivo
+    const procTurboFn = window.__processTurboEmbeds || window.processTurboEmbeds;
+    assert(typeof procTurboFn === 'function', 'processTurboEmbeds deve estar disponível');
+
+    const container50 = document.createElement('div');
+    container50.innerHTML = `
+        <iframe id="ifrSaint" src="https://saint2.su/embed/ifrTest1"></iframe>
+        <div id="unfurlSaint" class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://saint2.su/embed/unfurlTest2">
+            <a href="https://saint2.su/embed/unfurlTest2">Unfurl</a>
+        </div>
+        <div id="unfurlTurbo" class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://turbo.cr/embed/unfurlTest3">
+            <a href="https://turbo.cr/embed/unfurlTest3">Unfurl</a>
+        </div>
+        <p id="bareP">
+            <a id="bareSaint" href="https://saint2.su/embed/bareTest4">https://saint2.su/embed/bareTest4</a>
+            <a id="bareTurbo" href="https://turbo.cr/embed/bareTest5">https://turbo.cr/embed/bareTest5</a>
+            <a id="plainSaint" href="https://saint2.su/d/fileTest6">Download saint2.su file</a>
+        </p>
+        <div class="bbCodeBlock bbCodeBlock--quote">
+            <a id="quotedSaint" href="https://saint2.su/embed/quoted7">Quoted Link</a>
+        </div>
+    `;
+    document.body.appendChild(container50);
+
+    procTurboFn([container50]);
+
+    // Validar iframe existente reescrito
+    const ifrSaint = container50.querySelector('#ifrSaint');
+    assert(ifrSaint !== null, 'Iframe existente deve ser mantido');
+    assert(ifrSaint.getAttribute('src') === 'https://turbo.cr/embed/ifrTest1', 'src do iframe deve ser reescrito para turbo.cr');
+    assert(ifrSaint.classList.contains('saint-iframe'), 'Iframe deve receber a classe .saint-iframe');
+
+    // Validar unfurl saint substituído por .generic2wide-iframe-div > iframe.saint-iframe
+    assert(container50.querySelector('#unfurlSaint') === null, 'Unfurl card deve ter sido substituído');
+    const ifrFromUnfurlSaint = container50.querySelector('iframe[src="https://turbo.cr/embed/unfurlTest2"]');
+    assert(ifrFromUnfurlSaint !== null, 'Iframe turbo deve ser criado para unfurl saint');
+    assert(ifrFromUnfurlSaint.classList.contains('saint-iframe'), 'Iframe criado deve ter saint-iframe');
+    assert(ifrFromUnfurlSaint.parentElement.classList.contains('generic2wide-iframe-div'), 'Iframe deve estar dentro de .generic2wide-iframe-div');
+    assert(ifrFromUnfurlSaint.parentElement.dataset.tbDone === '1', 'Wrapper deve estar marcado com data-tb-done = 1');
+
+    // Validar unfurl turbo substituído por iframe
+    assert(container50.querySelector('#unfurlTurbo') === null, 'Unfurl turbo deve ter sido substituído');
+    const ifrFromUnfurlTurbo = container50.querySelector('iframe[src="https://turbo.cr/embed/unfurlTest3"]');
+    assert(ifrFromUnfurlTurbo !== null, 'Iframe turbo deve ser criado para unfurl turbo');
+
+    // Validar links bare /embed/ substituídos por player
+    assert(container50.querySelector('#bareSaint') === null, 'Link bare saint /embed/ deve ter sido substituído por wrapper');
+    const ifrFromBareSaint = container50.querySelector('iframe[src="https://turbo.cr/embed/bareTest4"]');
+    assert(ifrFromBareSaint !== null, 'Iframe deve ser criado para bare saint link');
+    assert(ifrFromBareSaint.parentElement.classList.contains('generic2wide-iframe-div'), 'Iframe bare saint deve estar dentro de .generic2wide-iframe-div');
+
+    assert(container50.querySelector('#bareTurbo') === null, 'Link bare turbo /embed/ deve ter sido substituído por wrapper');
+    const ifrFromBareTurbo = container50.querySelector('iframe[src="https://turbo.cr/embed/bareTest5"]');
+    assert(ifrFromBareTurbo !== null, 'Iframe deve ser criado para bare turbo link');
+
+    // Validar link plain saint (sem /embed/) reescrito para turbo.cr sem virar iframe
+    const plainSaint = container50.querySelector('#plainSaint');
+    assert(plainSaint !== null, 'Link saint sem /embed/ deve continuar sendo um elemento <a>');
+    assert(plainSaint.getAttribute('href') === 'https://turbo.cr/d/fileTest6', 'href do link saint deve ser reescrito para turbo.cr');
+    assert(plainSaint.textContent === 'Download turbo.cr file', 'textContent do link saint deve ser atualizado para turbo.cr');
+
+    // Validar link dentro de quote ignorado (permanece <a> sem embed)
+    const quotedSaint = container50.querySelector('#quotedSaint');
+    assert(quotedSaint !== null && quotedSaint.tagName === 'A', 'Link dentro de quote não deve ser transformado em embed');
+
+    // Limpeza
+    container50.remove();
+
+    // =========================================================================
+    // TESTE 51: Suporte a .pageContent no tagsBar em SocialMediaGirls (html.smg-smg)
+    // =========================================================================
+    console.log('--- TESTE 51: SMG tagsBar com wrapper .pageContent & regras de CSS ---');
+
+    // 1. Validar CSS gerado para SMG tagsBar
+    const allStyles51 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar'), 'CSS deve conter regra para html.smg-smg.smg-thread .smg-thead-tags-bar');
+    assert(allStyles51.includes('margin: 6px auto 14px auto !important;'), 'CSS deve conter margin: 6px auto 14px auto !important; para SMG tagsBar');
+    assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent'), 'CSS deve conter regra para html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent');
+    assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar:not(:has(.pageContent))'), 'CSS deve conter fallback para quando não houver .pageContent');
+    assert(allStyles51.includes('.smg-thead-tags-bar > .pageContent') && allStyles51.includes('max-width: var(--smg-cw) !important;'), 'CSS desktop deve conter .smg-thead-tags-bar > .pageContent com max-width: var(--smg-cw)');
+
+    // 2. Testar unifyThreadHeader no modo SMG quando o header possui .pageContent
+    document.documentElement.className = 'smg-smg smg-thread';
+
+    const smgHeader = document.createElement('div');
+    smgHeader.className = 'p-body-header';
+    smgHeader.innerHTML = `
+        <div class="pageContent">
+            <div class="p-title">
+                <h1 class="p-title-value">SMG Thread Title</h1>
+            </div>
+            <div class="p-description">
+                <ul class="listInline">
+                    <li class="tagList"><a class="tagItem" href="/tags/model/">model</a></li>
+                </ul>
+            </div>
+        </div>
+    `;
+    const smgBarHost = document.createElement('div');
+    smgBarHost.className = 'block-outer';
+    smgBarHost.innerHTML = '<div class="smg-bar"></div>';
+    document.body.append(smgHeader, smgBarHost);
+
+    const unifyFn = window.unifyThreadHeader || window.__filterbarExports?.unifyThreadHeader;
+    assert(typeof unifyFn === 'function', 'unifyThreadHeader deve estar disponível');
+    unifyFn(smgHeader);
+
+    // Validar tagsBar inserido após header
+    const smgTagsBar = smgHeader.nextElementSibling;
+    assert(smgTagsBar !== null, 'tagsBar deve existir como irmão após o header');
+    assert(smgTagsBar.classList.contains('smg-thead-tags-bar'), 'tagsBar deve ter a classe .smg-thead-tags-bar');
+    assert(smgTagsBar.classList.contains('smg-thead-tags'), 'tagsBar deve ter a classe .smg-thead-tags');
+
+    // Validar que desc está encapsulado por .pageContent
+    const innerPageContent = smgTagsBar.querySelector('.pageContent');
+    assert(innerPageContent !== null, 'tagsBar deve conter um wrapper .pageContent no SMG');
+    const descInInner = innerPageContent.querySelector('.p-description');
+    assert(descInInner !== null, '.p-description deve estar dentro de .pageContent');
+    assert(descInInner.parentElement === innerPageContent, '.p-description deve ser filho direto de .pageContent');
+
+    // Limpeza
+    smgHeader.remove();
+    smgBarHost.remove();
+    smgTagsBar.remove();
+    document.querySelector('.smg-thead-spacer')?.remove();
+    document.querySelector('.smg-thead-sentinel')?.remove();
+
+    // 3. Testar unifyThreadHeader quando header NÃO possui .pageContent (ex.: SimpCity)
+    document.documentElement.className = 'smg-sc smg-thread';
+
+    const scHeader = document.createElement('div');
+    scHeader.className = 'p-body-header';
+    scHeader.innerHTML = `
+        <div class="p-title">
+            <h1 class="p-title-value">SimpCity Thread Title</h1>
+        </div>
+        <div class="p-description">
+            <ul class="listInline">
+                <li class="tagList"><a class="tagItem" href="/tags/sc/">sc</a></li>
+            </ul>
+        </div>
+    `;
+    const scBarHost = document.createElement('div');
+    scBarHost.className = 'block-outer';
+    scBarHost.innerHTML = '<div class="smg-bar"></div>';
+    document.body.append(scHeader, scBarHost);
+
+    unifyFn(scHeader);
+
+    const scTagsBar = scHeader.nextElementSibling;
+    assert(scTagsBar !== null, 'tagsBar deve existir após scHeader');
+    assert(scTagsBar.classList.contains('smg-thead-tags-bar'), 'scTagsBar deve ter .smg-thead-tags-bar');
+    assert(scTagsBar.querySelector('.pageContent') === null, 'scTagsBar NÃO deve conter .pageContent quando header não possui');
+    assert(scTagsBar.querySelector('.p-description')?.parentElement === scTagsBar, '.p-description deve ser filho direto de scTagsBar');
+
+    // Limpeza
+    scHeader.remove();
+    scBarHost.remove();
+    scTagsBar.remove();
+    document.querySelector('.smg-thead-spacer')?.remove();
+    document.querySelector('.smg-thead-sentinel')?.remove();
+
+    // =========================================================================
+    // TESTE 52: Cards de Mídia Quebrada (.smg-dead) como Lista e Tratamento de Erro (200 / 0 / 404)
+    // =========================================================================
+    console.log('--- TESTE 52: Cards .smg-dead como lista, span-all e status de erro ---');
+    {
+        // 1. Validar deadReason(st)
+        const deadReasonFn = window.deadReason;
+        assert(typeof deadReasonFn === 'function', 'deadReason deve estar exposto em __TEST_MODE__');
+
+        const r200 = deadReasonFn(200);
+        const errWord = (typeof window.i18n === 'function') ? window.i18n('Error') : 'Erro';
+        assert(r200.code === 'Erro' || r200.code === 'Error' || r200.code === errWord, 'deadReason(200) deve retornar code "Erro" / "Error"');
+        assert(r200.code !== '200', 'deadReason(200) NÃO deve retornar "200" como código de erro');
+        assert(r200.why === 'load error', 'deadReason(200) deve retornar why "load error"');
+
+        const r404 = deadReasonFn(404);
+        assert(r404.code === '404', 'deadReason(404) deve retornar code "404"');
+        assert(r404.why === 'file deleted', 'deadReason(404) deve retornar why "file deleted"');
+
+        const r0 = deadReasonFn(0);
+        assert(r0.code === 'Erro' || r0.code === 'Error' || r0.code === errWord, 'deadReason(0) deve retornar code "Erro" / "Error"');
+        assert(r0.why === 'unavailable', 'deadReason(0) deve retornar why "unavailable"');
+
+        // 2. Validar buildDeadBox('https://simp4.selti-delivery.ru/test.jpg', { status: 200 })
+        const buildDeadBoxFn = window.buildDeadBox;
+        assert(typeof buildDeadBoxFn === 'function', 'buildDeadBox deve estar exposto em __TEST_MODE__');
+
+        const testUrl = 'https://simp4.selti-delivery.ru/test.jpg';
+        const deadBox = buildDeadBoxFn(testUrl, { status: 200 });
+        assert(deadBox instanceof window.HTMLElement, 'buildDeadBox deve retornar um HTMLElement');
+        assert(deadBox.classList.contains('smg-dead'), 'deadBox deve ter a classe .smg-dead');
+        assert(deadBox.getAttribute('href') === testUrl, 'deadBox href deve ser o testUrl');
+
+        const bCode = deadBox.querySelector('.smg-dead-code b');
+        assert(bCode !== null, '.smg-dead-code b deve existir no card');
+        assert(bCode.textContent === 'Erro' || bCode.textContent === 'Error', '.smg-dead-code b deve conter "Erro" ou "Error"');
+
+        const subText = deadBox.querySelector('.smg-dead-sub');
+        assert(subText !== null, '.smg-dead-sub deve existir no card');
+        assert(subText.textContent.includes('erro ao carregar') || subText.textContent.includes('load error'), '.smg-dead-sub deve conter "erro ao carregar" ou "load error"');
+        assert(subText.textContent.includes('simp4.selti-delivery.ru'), '.smg-dead-sub deve conter o hostname');
+        assert(!deadBox.textContent.includes('200'), 'Card de erro não deve exibir o código numérico "200"');
+
+        // 3. Validar no CSS injetado
+        const allStyles52 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(allStyles52.includes('flex-direction: row;'), 'CSS deve conter flex-direction: row para .smg-dead');
+        assert(allStyles52.includes('aspect-ratio: auto !important;'), 'CSS deve conter aspect-ratio: auto !important; para .smg-dead');
+        assert(allStyles52.includes('html.smg-masonry-on .auto-image-grid .smg-dead'), 'CSS deve conter seletor html.smg-masonry-on .auto-image-grid .smg-dead');
+        assert(allStyles52.includes('grid-column: 1 / -1 !important;'), 'CSS deve conter grid-column: 1 / -1 !important; para dead cards dentro do mosaico');
+
+        // 4. Validar comportamento no mosaico .auto-image-grid e imgFailLink
+        const postArticle52 = document.createElement('article');
+        postArticle52.className = 'message message--post';
+        const postBody52 = document.createElement('div');
+        postBody52.className = 'message-userContent';
+
+        const grid52 = document.createElement('div');
+        grid52.className = 'auto-image-grid';
+
+        const img1 = document.createElement('img');
+        img1.className = 'bbImage';
+        img1.src = 'https://simp4.selti-delivery.ru/dead1.jpg';
+        img1.style.aspectRatio = '1 / 1';
+
+        const img2 = document.createElement('img');
+        img2.className = 'bbImage';
+        img2.src = 'https://example.com/live.jpg';
+        img2.style.aspectRatio = '4 / 3';
+
+        grid52.append(img1, img2);
+        postBody52.appendChild(grid52);
+        postArticle52.appendChild(postBody52);
+        document.body.appendChild(postArticle52);
+
+        const imgFailLinkFn = window.__masonryExports?.imgFailLink;
+        assert(typeof imgFailLinkFn === 'function', 'imgFailLink deve estar disponível');
+
+        // Simular falha da img1
+        imgFailLinkFn(img1);
+
+        const deadItem = grid52.querySelector('.smg-dead');
+        assert(deadItem !== null, 'img1 deve ter sido substituída por .smg-dead');
+        assert(!deadItem.style.aspectRatio, 'deadItem na grade NÃO deve receber aspect-ratio inline forçado');
+
+        const isVideoBlockFn = window.__masonryExports?.isVideoBlock;
+        assert(typeof isVideoBlockFn === 'function', 'isVideoBlock deve estar disponível');
+        assert(isVideoBlockFn(deadItem) === false, 'isVideoBlock(deadItem) deve retornar false para .smg-dead');
+
+        // Limpeza
+        postArticle52.remove();
+    }
 
     // =========================================================================
     // RESUMO FINAL

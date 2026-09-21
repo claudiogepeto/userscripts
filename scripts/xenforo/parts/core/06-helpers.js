@@ -57,10 +57,11 @@
 
     function resolveProxyHref(href) {
         if (!href || typeof href !== 'string') return '';
-        const trimmed = href.trim();
+        let trimmed = href.trim();
         if (!trimmed) return '';
+        trimmed = trimmed.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         const decoded = decodeProxyHref(trimmed);
-        if (decoded && /^https?:/i.test(decoded)) return decoded;
+        if (decoded && /^https?:/i.test(decoded)) return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         if (/^https?:/i.test(trimmed)) return trimmed;
         if (decoded) return decoded;
         return trimmed;
@@ -952,12 +953,13 @@
     const deadProbeCache = new Map();   // url → status (0 = sem resposta); 1× por sessão
     const deadTasks = makeTaskQueue(3);
     function deadReason(st) {
-        if (st === 404 || st === 410) return { code: String(st), why: 'file deleted' };
-        if (st === 401 || st === 403) return { code: String(st), why: 'hotlink blocked' };
+        if (st === 200 || (st > 0 && st < 400)) return { code: i18n('Error'), why: 'load error' };
+        if (st === 404 || st === 410) return { code: '404', why: 'file deleted' };
+        if (st === 401 || st === 403) return { code: '403', why: 'hotlink blocked' };
         if (st === 429) return { code: '429', why: 'rate limited' };
         if (st >= 500) return { code: String(st), why: 'host down' };
         if (st > 0) return { code: String(st), why: 'unavailable' };
-        return { code: '—', why: 'no response' };
+        return { code: i18n('Error'), why: 'unavailable' };
     }
     function deadProbe(url, box, paint) {
         if (deadProbeCache.has(url)) { paint(deadProbeCache.get(url)); return; }
@@ -992,7 +994,7 @@
         a.className = 'smg-dead' + (opts.media ? ' smg-dead--media' : '');
         a.href = url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.title = url || '';
-        if (opts.aspect) a.style.aspectRatio = opts.aspect;
+        if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
         const code = document.createElement('span'); code.className = 'smg-dead-code';
@@ -1001,7 +1003,7 @@
         const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
         a.append(code, sub);
         const paint = st => {
-            const r = (st === undefined) ? { code: '', why: 'unavailable' } : deadReason(st);
+            const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
             num.textContent = r.code;
             sub.textContent = i18n(r.why) + (host ? ' · ' + host + ' ↗' : '');
         };
@@ -1289,6 +1291,8 @@
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.deadReason = deadReason;
+        window.buildDeadBox = buildDeadBox;
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
         window.__fetchDoc = fetchDoc;
@@ -1296,6 +1300,7 @@
         window.__rawParam = rawParam;
         window.__decodeProxyHref = decodeProxyHref;
         window.__resolveProxyHref = resolveProxyHref;
+        window.resolveProxyHref = resolveProxyHref;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
         window.normalizeRoots = normalizeRoots;

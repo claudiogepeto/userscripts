@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.42
+// @version      3.12.44
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -302,6 +302,7 @@
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
         'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
         'no response': 'sem resposta', 'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
+        'Error': 'Erro', 'load error': 'erro ao carregar',
         // download modal
         'Scanning thread…': 'Varrendo a thread…', 'images': 'imagens', 'videos': 'vídeos', 'external links': 'links externos',
         'item': 'item', 'items': 'itens', 'Show gallery': 'Ver galeria', 'Open gallery': 'Abrir galeria', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
@@ -495,8 +496,10 @@
         });
     }
 
-    // ícones SVG monocromáticos (Lucide-style, traço bold), herdam currentColor.
-    // tamanho via font-size do botão (width/height em em).
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.i18n = i18n;
+        window.I18N_PT = I18N_PT;
+    }
 
     // =========================================================
     // ÍCONES: svgIcon() (wrapper SVG) + ICONS{} (todos os ícones inline)
@@ -1756,23 +1759,45 @@
                passes as usam como marcador de "este slot já resolveu") e, com a mesma especificidade, quem vem
                por último vence. Borda tracejada = o vocabulário de "não é conteúdo, é um buraco". */
             .smg-dead {
-                position: relative; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-                box-sizing: border-box; width: 100%; max-width: 320px; min-height: 132px; margin: 3px 0; padding: 16px 14px;
-                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2)); border-radius: 10px;
-                background: var(--smg-s1, #16171b); color: var(--smg-tx, #e7e7ea) !important;
-                text-align: center; text-decoration: none !important; overflow: hidden;
+                position: relative;
+                display: flex !important;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                box-sizing: border-box;
+                width: 100%;
+                max-width: 100%;
+                min-height: 38px;
+                margin: 3px 0;
+                padding: 8px 14px;
+                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2));
+                border-radius: 8px;
+                background: var(--smg-s1, #16171b);
+                color: var(--smg-tx, #e7e7ea) !important;
+                text-align: left;
+                text-decoration: none !important;
+                overflow: hidden;
+                aspect-ratio: auto !important;
                 transition: border-color .15s ease, background .15s ease;
             }
             .smg-dead:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-link, #ff77b2); }
-            /* no lugar de player/embed: ocupa o bloco inteiro, não o tamanho compacto de imagem solta */
             .smg-dead--media { max-width: none; min-height: 0; aspect-ratio: 16 / 9; max-height: var(--smg-media-h); margin: 16px auto; }
             .smg-turbo-slot > .smg-dead { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; aspect-ratio: auto; border-radius: 0; }
-            .smg-dead-code { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; letter-spacing: .02em; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; }
-            .smg-dead-code svg { width: 19px; height: 19px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.75; }
-            .smg-dead-code b:empty { display: none; }   /* sonda ainda não voltou (ou não vai): só o triângulo, sem número solto */
-            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.5); overflow-wrap: anywhere; }
-            /* dentro do mosaico o item já tem a largura da coluna → o teto de 320px o deixaria estreito no meio da grade */
-            html.smg-masonry-on .auto-image-grid .smg-dead { max-width: none; margin: 0; }
+            .smg-dead-code { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #ff6b6b; flex-shrink: 0; white-space: nowrap; }
+            .smg-dead-code svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.9; }
+            .smg-dead-code b:empty { display: none; }
+            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.65); overflow-wrap: anywhere; flex: 1 1 auto; }
+            /* No mosaico/grade: os cards de erro viram itens de lista ocupando a largura total (span-all), empilhados horizontalmente */
+            html.smg-masonry-on .auto-image-grid .smg-dead {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 38px !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
+                margin: 2px 0 !important;
+            }
             .smg-rg-v {
                 position: absolute; inset: 0;    /* preenche a CAIXA (aspect-ratio do .smg-rg); inset:0 evita o bug de %-height não resolver com max-height */
                 display: block; width: 100%; height: 100%;
@@ -1948,7 +1973,8 @@
                 /* o socialmediagirls usa .pageContent (fora do .p-body-inner) no header/breadcrumb;
                    alinha com o conteúdo (mesma largura) pra não ficar torto */
                 .p-body-header > .pageContent,
-                .breadcrumb > .pageContent {
+                .breadcrumb > .pageContent,
+                .smg-thead-tags-bar > .pageContent {
                     max-width: var(--smg-cw) !important;
                     margin-left: auto !important;
                     margin-right: auto !important;
@@ -6368,6 +6394,21 @@
                 width: 100%;
                 display: block;
             }
+            html.smg-smg.smg-thread .smg-thead-tags-bar {
+                margin: 6px auto 14px auto !important;
+            }
+            html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            html.smg-smg.smg-thread .smg-thead-tags-bar:not(:has(.pageContent)) {
+                max-width: var(--smg-cw) !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                box-sizing: border-box;
+            }
             html.smg-thread .smg-thead-tags-bar .p-description {
                 margin: 0 !important;
             }
@@ -8650,10 +8691,11 @@
 
     function resolveProxyHref(href) {
         if (!href || typeof href !== 'string') return '';
-        const trimmed = href.trim();
+        let trimmed = href.trim();
         if (!trimmed) return '';
+        trimmed = trimmed.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         const decoded = decodeProxyHref(trimmed);
-        if (decoded && /^https?:/i.test(decoded)) return decoded;
+        if (decoded && /^https?:/i.test(decoded)) return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         if (/^https?:/i.test(trimmed)) return trimmed;
         if (decoded) return decoded;
         return trimmed;
@@ -9545,12 +9587,13 @@
     const deadProbeCache = new Map();   // url → status (0 = sem resposta); 1× por sessão
     const deadTasks = makeTaskQueue(3);
     function deadReason(st) {
-        if (st === 404 || st === 410) return { code: String(st), why: 'file deleted' };
-        if (st === 401 || st === 403) return { code: String(st), why: 'hotlink blocked' };
+        if (st === 200 || (st > 0 && st < 400)) return { code: i18n('Error'), why: 'load error' };
+        if (st === 404 || st === 410) return { code: '404', why: 'file deleted' };
+        if (st === 401 || st === 403) return { code: '403', why: 'hotlink blocked' };
         if (st === 429) return { code: '429', why: 'rate limited' };
         if (st >= 500) return { code: String(st), why: 'host down' };
         if (st > 0) return { code: String(st), why: 'unavailable' };
-        return { code: '—', why: 'no response' };
+        return { code: i18n('Error'), why: 'unavailable' };
     }
     function deadProbe(url, box, paint) {
         if (deadProbeCache.has(url)) { paint(deadProbeCache.get(url)); return; }
@@ -9585,7 +9628,7 @@
         a.className = 'smg-dead' + (opts.media ? ' smg-dead--media' : '');
         a.href = url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.title = url || '';
-        if (opts.aspect) a.style.aspectRatio = opts.aspect;
+        if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
         const code = document.createElement('span'); code.className = 'smg-dead-code';
@@ -9594,7 +9637,7 @@
         const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
         a.append(code, sub);
         const paint = st => {
-            const r = (st === undefined) ? { code: '', why: 'unavailable' } : deadReason(st);
+            const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
             num.textContent = r.code;
             sub.textContent = i18n(r.why) + (host ? ' · ' + host + ' ↗' : '');
         };
@@ -9882,6 +9925,8 @@
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.deadReason = deadReason;
+        window.buildDeadBox = buildDeadBox;
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
         window.__fetchDoc = fetchDoc;
@@ -9889,6 +9934,7 @@
         window.__rawParam = rawParam;
         window.__decodeProxyHref = decodeProxyHref;
         window.__resolveProxyHref = resolveProxyHref;
+        window.resolveProxyHref = resolveProxyHref;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
         window.normalizeRoots = normalizeRoots;
@@ -10667,12 +10713,9 @@
         const raw = img.dataset.smgLink || img.currentSrc || img.getAttribute('src') || '';
         if (!raw || /^data:/.test(raw)) { img.classList.add('smg-img-ready'); return; }   // sem destino útil → só tira o shimmer
         const href = resolveProxyHref(raw);   // mostra/abre a URL final, não o /goto/...&s=hash
-        // proporção JÁ conhecida (a thumb tinha pintado antes de a full morrer) → a caixa fica do tamanho que a
-        // mídia tinha, sem pulo de layout. Sem isso, cai no tamanho compacto padrão da CSS.
         // ABRIR = a página do host (smgLink, quando existe) · SONDAR = o arquivo que de fato não renderizou
         const direct = img.currentSrc || img.getAttribute('src') || '';
         const box = buildDeadBox(href, {
-            aspect: img.style.aspectRatio || '',
             probeUrl: /^https?:/i.test(direct) ? direct : href,
         });
         // se a img é o ÚNICO conteúdo do <a> wrapper (jpg6), troca o <a> INTEIRO — a caixa já é um <a>, e <a>
@@ -10681,6 +10724,8 @@
         if (wrap.tagName === 'A' && wrap.childElementCount === 1 && !(wrap.textContent || '').trim()) wrap.replaceWith(box);
         else img.replaceWith(box);
         dropChipBreaks(box);
+        const g = box.closest('.auto-image-grid');
+        if (g) scheduleRelayout(g);
     }
     // WATCHDOG do "loading eterno": alguns hosts aceitam a conexão e nunca respondem — a <img> não dispara load
     // NEM error, então nem o onReady nem o imgFailLink rodam e o shimmer gira pra sempre.
@@ -11281,6 +11326,7 @@
     function isVideoBlock(b) {
         if (!b) return false;
         if (b.tagName === 'IMG') return false;
+        if (b.classList && b.classList.contains('smg-dead')) return false;
         return true;
     }
     function isWideMedia(b) {
@@ -11844,7 +11890,7 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
+        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock };
         window.processOneImage = processOneImage;
         window.processImages = processImages;
         window.goonboxEmbed = goonboxEmbed;
@@ -16299,20 +16345,21 @@
         const local = new Set();
         const add = (type, url) => { if (url && !local.has(url)) { local.add(url); items.push({ type, url }); } };
 
-        root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback)').forEach(el => {
+        root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="turbo.cr"], iframe[src*="saint"], iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="turbo.cr/"]:not(.smg-turbo-fallback), a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback), a[href*="saint.su/"]:not(.smg-turbo-fallback), a[href*="saint2.su/"]:not(.smg-turbo-fallback)').forEach(el => {
             // FORMA CRUA (a galeria re-busca a página do servidor, SEM nosso processamento):
             if (el.matches('span[data-s9e-mediaembed-iframe]')) {   // redgifs = <span data-s9e-mediaembed-iframe='[...,"src","https:\/\/…/ifr/ID"]'> (sem <iframe> nem .generic2wide)
                 let arr; try { arr = JSON.parse(el.getAttribute('data-s9e-mediaembed-iframe') || '[]'); } catch (e) { return; }
-                const si = arr.indexOf('src'); const src = si >= 0 ? arr[si + 1] : '';
-                if (/redgifs\.com\/ifr\/|turbo\.cr\/embed\/|saint2?\.(?:su|cr)/i.test(src)) add('embed', src);
+                const si = arr.indexOf('src'); let src = si >= 0 ? arr[si + 1] : '';
+                if (/redgifs\.com\/ifr\/|turbo\.cr\/embed\/|saint2?\.(?:su|to|cr)/i.test(src)) {
+                    src = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+                    add('embed', src);
+                }
                 return;
             }
             if (el.matches('.bbCodeBlock--unfurl[data-url]')) {   // turbo/saint = card unfurl com data-url REAL (o <a> é um /goto base64). bunkr/pixeldrain caem aqui e são IGNORADOS (regex só turbo/saint).
                 const u = el.getAttribute('data-url') || '';
-                const t = u.match(/turbo\.cr\/embed\/([a-zA-Z0-9_-]+)/i);
-                if (t) { add('embed', 'https://turbo.cr/embed/' + t[1]); return; }
-                const s = u.match(/(saint2?\.(?:su|cr))\/(?:embed\/)?([a-zA-Z0-9_-]+)/i);
-                if (s) add('embed', 'https://' + s[1] + '/embed/' + s[2]);
+                const m = u.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:embed\/)?([a-zA-Z0-9_-]+)/i);
+                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
                 return;
             }
             if (el.tagName === 'IMG') {
@@ -16321,11 +16368,15 @@
                 if (el.dataset.rgid) add('embed', 'https://www.redgifs.com/ifr/' + el.dataset.rgid);
                 else if (el._rgFeed) add('embed', el._rgFeed);
             } else if (el.tagName === 'IFRAME') {
-                add('embed', absUrl(el.getAttribute('src') || ''));
-            } else if (el.tagName === 'A') {   // link cru de saint.cr (ex.: páginas buscadas pela galeria, onde o iframe ainda não foi montado)
+                let src = absUrl(el.getAttribute('src') || '');
+                if (src) {
+                    src = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+                    add('embed', src);
+                }
+            } else if (el.tagName === 'A') {   // link cru de saint/turbo (ex.: páginas buscadas pela galeria, onde o iframe ainda não foi montado)
                 const href = el.getAttribute('href') || '';
-                const s = href.match(/(saint2?\.cr)\/(?:[^/?#]+\/)*([a-zA-Z0-9_-]+)/i);
-                if (s) add('embed', 'https://' + s[1] + '/embed/' + s[2]);
+                const m = href.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:(?:embed|v)\/)?([a-zA-Z0-9_-]+)/i);
+                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
             } else { // div de redgifs ainda não carregado: pega o id do onclick
                 if (el.querySelector('iframe')) return;
                 const m = (el.getAttribute('onclick') || '').match(/redgifs\.com\/ifr\/([a-zA-Z0-9_-]+)/i);
@@ -17283,6 +17334,10 @@
         reel.style.transition = 'none';
         reel.style.transform = 'translateY(' + (-current * 100) + 'vh)';
         setActive(current);
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.collectMediaFrom = collectMediaFrom;
     }
 
     // =========================================================
@@ -18602,7 +18657,14 @@
             if (desc) {
                 const tagsBar = document.createElement('div');
                 tagsBar.className = 'smg-thead-tags-bar smg-thead-tags';
-                tagsBar.appendChild(desc);
+                if (header.querySelector('.pageContent')) {
+                    const inner = document.createElement('div');
+                    inner.className = 'pageContent';
+                    inner.appendChild(desc);
+                    tagsBar.appendChild(inner);
+                } else {
+                    tagsBar.appendChild(desc);
+                }
                 header.parentNode.insertBefore(tagsBar, header.nextSibling);
             }
         }
@@ -22059,7 +22121,7 @@
         { key: 'bunkr', label: 'Bunkr', re: /\/\/(?:[a-z0-9-]+\.)?bunkr[a-z]*\.[a-z]+\b/i },
         { key: 'cyberdrop', label: 'Cyberdrop', re: /\/\/(?:[a-z0-9-]+\.)?cyberdrop\.[a-z]+\b/i },
         { key: 'cyberfile', label: 'Cyberfile', re: /\/\/(?:[a-z0-9-]+\.)?cyberfile\.[a-z]+\b/i },
-        { key: 'saint', label: 'Saint/Turbo', re: /\/\/(?:[a-z0-9-]+\.)?(saint2?\.(su|to)|turbo\.cr)\b/i },
+        { key: 'saint', label: 'Saint/Turbo', re: /\/\/(?:[a-z0-9-]+\.)?(saint2?\.(su|to|cr)|turbo\.cr)\b/i },
         { key: 'erome', label: 'Erome', re: /\/\/(?:[a-z0-9-]+\.)?erome\.com\b/i },
         { key: 'jpghost', label: 'JPG host', re: /\/\/(?:[a-z0-9-]+\.)?(jpg\d?\.(church|su|fish|pet|fishing|homes)|jpeg\.pet|host\.church)\b/i },
         { key: 'imgbox', label: 'ImgBox', re: /\/\/(?:[a-z0-9-]+\.)?imgbox\.com\b/i },
@@ -22335,6 +22397,71 @@
                 }
             }
             if (isImg) scheduleRun();
+        });
+    }
+
+    // =========================================================
+    // FEATURE: Turbo / Saint embeds & domain rewrite
+    // =========================================================
+    function processTurboEmbeds(roots) {
+        // 1. IFRAMES nativos com domínios saint
+        eachIn(roots, 'iframe[src*="saint2.su"], iframe[src*="saint.su"], iframe[src*="saint2.cr"], iframe[src*="saint.cr"], iframe[src*="saint.to"], iframe[src*="saint2.to"]', ifr => {
+            const src = ifr.getAttribute('src') || ifr.src || '';
+            const newSrc = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+            if (newSrc !== src) {
+                ifr.setAttribute('src', newSrc);
+            }
+            if (!ifr.classList.contains('saint-iframe')) {
+                ifr.classList.add('saint-iframe');
+            }
+        });
+
+        // 2. UNFURL CARDS com /embed/
+        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="/embed/"]:not([data-tb-done])', unfurl => {
+            unfurl.dataset.tbDone = '1';
+            const dataUrl = unfurl.getAttribute('data-url') || '';
+            const m = dataUrl.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            if (!m) return;
+            const id = m[1];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.dataset.tbDone = '1';
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            unfurl.replaceWith(wrapper);
+        });
+
+        // 3. BARE LINKS com /embed/
+        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done])', link => {
+            link.dataset.tbDone = '1';
+            if (link.closest('.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-fhcard, .smg-turbo-fallback, .generic2wide-iframe-div, .smg-rg')) return;
+            if (link.querySelector('img')) return;
+            const unfurl = link.closest('.bbCodeBlock--unfurl');
+            if (unfurl && unfurl.dataset.tbDone === '1') return;
+            const href = resolveProxyHref(link.getAttribute('href') || link.href || '');
+            const m = href.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            if (!m) return;
+            const id = m[1];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.dataset.tbDone = '1';
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            const target = unfurl || link;
+            target.dataset.tbDone = '1';
+            target.replaceWith(wrapper);
+        });
+
+        // 4. Demais links saint -> turbo.cr
+        eachIn(roots, 'a[href*="saint2.su"], a[href*="saint.su"], a[href*="saint2.cr"], a[href*="saint.cr"], a[href*="saint.to"], a[href*="saint2.to"]', a => {
+            const raw = a.getAttribute('href') || a.href || '';
+            const replaced = raw.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/gi, 'https://turbo.cr');
+            if (replaced !== raw) {
+                a.setAttribute('href', replaced);
+            }
+            if (a.textContent && /saint2?\.(?:su|to|cr)/i.test(a.textContent)) {
+                a.textContent = a.textContent.replace(/(https?:\/\/)?(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/gi, (match, proto) => {
+                    return (proto || '') + 'turbo.cr';
+                });
+            }
         });
     }
 
@@ -23222,6 +23349,8 @@
         window.bunkrInflight = bunkrInflight;
         window.processFileHostCards = processFileHostCards;
         window.processDirectMedia = processDirectMedia;
+        window.__processTurboEmbeds = processTurboEmbeds;
+        window.processTurboEmbeds = processTurboEmbeds;
         window.fhCard = fhCard;
         window.pdPlace = pdPlace;
     }
@@ -25301,6 +25430,7 @@
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
             if (FEATURES.autoFullImages) safe(processImages, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
+            safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
             if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             safe(processInstagramEmbeds, roots);

@@ -60,12 +60,9 @@
         const raw = img.dataset.smgLink || img.currentSrc || img.getAttribute('src') || '';
         if (!raw || /^data:/.test(raw)) { img.classList.add('smg-img-ready'); return; }   // sem destino útil → só tira o shimmer
         const href = resolveProxyHref(raw);   // mostra/abre a URL final, não o /goto/...&s=hash
-        // proporção JÁ conhecida (a thumb tinha pintado antes de a full morrer) → a caixa fica do tamanho que a
-        // mídia tinha, sem pulo de layout. Sem isso, cai no tamanho compacto padrão da CSS.
         // ABRIR = a página do host (smgLink, quando existe) · SONDAR = o arquivo que de fato não renderizou
         const direct = img.currentSrc || img.getAttribute('src') || '';
         const box = buildDeadBox(href, {
-            aspect: img.style.aspectRatio || '',
             probeUrl: /^https?:/i.test(direct) ? direct : href,
         });
         // se a img é o ÚNICO conteúdo do <a> wrapper (jpg6), troca o <a> INTEIRO — a caixa já é um <a>, e <a>
@@ -74,6 +71,8 @@
         if (wrap.tagName === 'A' && wrap.childElementCount === 1 && !(wrap.textContent || '').trim()) wrap.replaceWith(box);
         else img.replaceWith(box);
         dropChipBreaks(box);
+        const g = box.closest('.auto-image-grid');
+        if (g) scheduleRelayout(g);
     }
     // WATCHDOG do "loading eterno": alguns hosts aceitam a conexão e nunca respondem — a <img> não dispara load
     // NEM error, então nem o onReady nem o imgFailLink rodam e o shimmer gira pra sempre.
@@ -674,6 +673,7 @@
     function isVideoBlock(b) {
         if (!b) return false;
         if (b.tagName === 'IMG') return false;
+        if (b.classList && b.classList.contains('smg-dead')) return false;
         return true;
     }
     function isWideMedia(b) {
@@ -1237,7 +1237,7 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
+        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock };
         window.processOneImage = processOneImage;
         window.processImages = processImages;
         window.goonboxEmbed = goonboxEmbed;

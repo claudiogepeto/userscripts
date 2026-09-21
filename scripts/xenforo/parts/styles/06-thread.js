@@ -289,6 +289,21 @@
                 width: 100%;
                 display: block;
             }
+            html.smg-smg.smg-thread .smg-thead-tags-bar {
+                margin: 6px auto 14px auto !important;
+            }
+            html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            html.smg-smg.smg-thread .smg-thead-tags-bar:not(:has(.pageContent)) {
+                max-width: var(--smg-cw) !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                box-sizing: border-box;
+            }
             html.smg-thread .smg-thead-tags-bar .p-description {
                 margin: 0 !important;
             }

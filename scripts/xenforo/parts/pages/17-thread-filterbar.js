@@ -532,7 +532,14 @@
             if (desc) {
                 const tagsBar = document.createElement('div');
                 tagsBar.className = 'smg-thead-tags-bar smg-thead-tags';
-                tagsBar.appendChild(desc);
+                if (header.querySelector('.pageContent')) {
+                    const inner = document.createElement('div');
+                    inner.className = 'pageContent';
+                    inner.appendChild(desc);
+                    tagsBar.appendChild(inner);
+                } else {
+                    tagsBar.appendChild(desc);
+                }
                 header.parentNode.insertBefore(tagsBar, header.nextSibling);
             }
         }

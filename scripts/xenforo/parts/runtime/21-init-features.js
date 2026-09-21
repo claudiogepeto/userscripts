@@ -304,7 +304,7 @@
         { key: 'bunkr', label: 'Bunkr', re: /\/\/(?:[a-z0-9-]+\.)?bunkr[a-z]*\.[a-z]+\b/i },
         { key: 'cyberdrop', label: 'Cyberdrop', re: /\/\/(?:[a-z0-9-]+\.)?cyberdrop\.[a-z]+\b/i },
         { key: 'cyberfile', label: 'Cyberfile', re: /\/\/(?:[a-z0-9-]+\.)?cyberfile\.[a-z]+\b/i },
-        { key: 'saint', label: 'Saint/Turbo', re: /\/\/(?:[a-z0-9-]+\.)?(saint2?\.(su|to)|turbo\.cr)\b/i },
+        { key: 'saint', label: 'Saint/Turbo', re: /\/\/(?:[a-z0-9-]+\.)?(saint2?\.(su|to|cr)|turbo\.cr)\b/i },
         { key: 'erome', label: 'Erome', re: /\/\/(?:[a-z0-9-]+\.)?erome\.com\b/i },
         { key: 'jpghost', label: 'JPG host', re: /\/\/(?:[a-z0-9-]+\.)?(jpg\d?\.(church|su|fish|pet|fishing|homes)|jpeg\.pet|host\.church)\b/i },
         { key: 'imgbox', label: 'ImgBox', re: /\/\/(?:[a-z0-9-]+\.)?imgbox\.com\b/i },
@@ -580,6 +580,71 @@
                 }
             }
             if (isImg) scheduleRun();
+        });
+    }
+
+    // =========================================================
+    // FEATURE: Turbo / Saint embeds & domain rewrite
+    // =========================================================
+    function processTurboEmbeds(roots) {
+        // 1. IFRAMES nativos com domínios saint
+        eachIn(roots, 'iframe[src*="saint2.su"], iframe[src*="saint.su"], iframe[src*="saint2.cr"], iframe[src*="saint.cr"], iframe[src*="saint.to"], iframe[src*="saint2.to"]', ifr => {
+            const src = ifr.getAttribute('src') || ifr.src || '';
+            const newSrc = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+            if (newSrc !== src) {
+                ifr.setAttribute('src', newSrc);
+            }
+            if (!ifr.classList.contains('saint-iframe')) {
+                ifr.classList.add('saint-iframe');
+            }
+        });
+
+        // 2. UNFURL CARDS com /embed/
+        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="/embed/"]:not([data-tb-done])', unfurl => {
+            unfurl.dataset.tbDone = '1';
+            const dataUrl = unfurl.getAttribute('data-url') || '';
+            const m = dataUrl.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            if (!m) return;
+            const id = m[1];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.dataset.tbDone = '1';
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            unfurl.replaceWith(wrapper);
+        });
+
+        // 3. BARE LINKS com /embed/
+        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done])', link => {
+            link.dataset.tbDone = '1';
+            if (link.closest('.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-fhcard, .smg-turbo-fallback, .generic2wide-iframe-div, .smg-rg')) return;
+            if (link.querySelector('img')) return;
+            const unfurl = link.closest('.bbCodeBlock--unfurl');
+            if (unfurl && unfurl.dataset.tbDone === '1') return;
+            const href = resolveProxyHref(link.getAttribute('href') || link.href || '');
+            const m = href.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            if (!m) return;
+            const id = m[1];
+            const wrapper = document.createElement('div');
+            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.dataset.tbDone = '1';
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            const target = unfurl || link;
+            target.dataset.tbDone = '1';
+            target.replaceWith(wrapper);
+        });
+
+        // 4. Demais links saint -> turbo.cr
+        eachIn(roots, 'a[href*="saint2.su"], a[href*="saint.su"], a[href*="saint2.cr"], a[href*="saint.cr"], a[href*="saint.to"], a[href*="saint2.to"]', a => {
+            const raw = a.getAttribute('href') || a.href || '';
+            const replaced = raw.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/gi, 'https://turbo.cr');
+            if (replaced !== raw) {
+                a.setAttribute('href', replaced);
+            }
+            if (a.textContent && /saint2?\.(?:su|to|cr)/i.test(a.textContent)) {
+                a.textContent = a.textContent.replace(/(https?:\/\/)?(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/gi, (match, proto) => {
+                    return (proto || '') + 'turbo.cr';
+                });
+            }
         });
     }
 
@@ -1467,6 +1532,8 @@
         window.bunkrInflight = bunkrInflight;
         window.processFileHostCards = processFileHostCards;
         window.processDirectMedia = processDirectMedia;
+        window.__processTurboEmbeds = processTurboEmbeds;
+        window.processTurboEmbeds = processTurboEmbeds;
         window.fhCard = fhCard;
         window.pdPlace = pdPlace;
     }

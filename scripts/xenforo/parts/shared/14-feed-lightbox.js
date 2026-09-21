@@ -31,20 +31,21 @@
         const local = new Set();
         const add = (type, url) => { if (url && !local.has(url)) { local.add(url); items.push({ type, url }); } };
 
-        root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback)').forEach(el => {
+        root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="turbo.cr"], iframe[src*="saint"], iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="turbo.cr/"]:not(.smg-turbo-fallback), a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback), a[href*="saint.su/"]:not(.smg-turbo-fallback), a[href*="saint2.su/"]:not(.smg-turbo-fallback)').forEach(el => {
             // FORMA CRUA (a galeria re-busca a página do servidor, SEM nosso processamento):
             if (el.matches('span[data-s9e-mediaembed-iframe]')) {   // redgifs = <span data-s9e-mediaembed-iframe='[...,"src","https:\/\/…/ifr/ID"]'> (sem <iframe> nem .generic2wide)
                 let arr; try { arr = JSON.parse(el.getAttribute('data-s9e-mediaembed-iframe') || '[]'); } catch (e) { return; }
-                const si = arr.indexOf('src'); const src = si >= 0 ? arr[si + 1] : '';
-                if (/redgifs\.com\/ifr\/|turbo\.cr\/embed\/|saint2?\.(?:su|cr)/i.test(src)) add('embed', src);
+                const si = arr.indexOf('src'); let src = si >= 0 ? arr[si + 1] : '';
+                if (/redgifs\.com\/ifr\/|turbo\.cr\/embed\/|saint2?\.(?:su|to|cr)/i.test(src)) {
+                    src = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+                    add('embed', src);
+                }
                 return;
             }
             if (el.matches('.bbCodeBlock--unfurl[data-url]')) {   // turbo/saint = card unfurl com data-url REAL (o <a> é um /goto base64). bunkr/pixeldrain caem aqui e são IGNORADOS (regex só turbo/saint).
                 const u = el.getAttribute('data-url') || '';
-                const t = u.match(/turbo\.cr\/embed\/([a-zA-Z0-9_-]+)/i);
-                if (t) { add('embed', 'https://turbo.cr/embed/' + t[1]); return; }
-                const s = u.match(/(saint2?\.(?:su|cr))\/(?:embed\/)?([a-zA-Z0-9_-]+)/i);
-                if (s) add('embed', 'https://' + s[1] + '/embed/' + s[2]);
+                const m = u.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:embed\/)?([a-zA-Z0-9_-]+)/i);
+                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
                 return;
             }
             if (el.tagName === 'IMG') {
@@ -53,11 +54,15 @@
                 if (el.dataset.rgid) add('embed', 'https://www.redgifs.com/ifr/' + el.dataset.rgid);
                 else if (el._rgFeed) add('embed', el._rgFeed);
             } else if (el.tagName === 'IFRAME') {
-                add('embed', absUrl(el.getAttribute('src') || ''));
-            } else if (el.tagName === 'A') {   // link cru de saint.cr (ex.: páginas buscadas pela galeria, onde o iframe ainda não foi montado)
+                let src = absUrl(el.getAttribute('src') || '');
+                if (src) {
+                    src = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+                    add('embed', src);
+                }
+            } else if (el.tagName === 'A') {   // link cru de saint/turbo (ex.: páginas buscadas pela galeria, onde o iframe ainda não foi montado)
                 const href = el.getAttribute('href') || '';
-                const s = href.match(/(saint2?\.cr)\/(?:[^/?#]+\/)*([a-zA-Z0-9_-]+)/i);
-                if (s) add('embed', 'https://' + s[1] + '/embed/' + s[2]);
+                const m = href.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:(?:embed|v)\/)?([a-zA-Z0-9_-]+)/i);
+                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
             } else { // div de redgifs ainda não carregado: pega o id do onclick
                 if (el.querySelector('iframe')) return;
                 const m = (el.getAttribute('onclick') || '').match(/redgifs\.com\/ifr\/([a-zA-Z0-9_-]+)/i);
@@ -1015,4 +1020,8 @@
         reel.style.transition = 'none';
         reel.style.transform = 'translateY(' + (-current * 100) + 'vh)';
         setActive(current);
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.collectMediaFrom = collectMediaFrom;
     }

@@ -1136,23 +1136,45 @@
                passes as usam como marcador de "este slot já resolveu") e, com a mesma especificidade, quem vem
                por último vence. Borda tracejada = o vocabulário de "não é conteúdo, é um buraco". */
             .smg-dead {
-                position: relative; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-                box-sizing: border-box; width: 100%; max-width: 320px; min-height: 132px; margin: 3px 0; padding: 16px 14px;
-                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2)); border-radius: 10px;
-                background: var(--smg-s1, #16171b); color: var(--smg-tx, #e7e7ea) !important;
-                text-align: center; text-decoration: none !important; overflow: hidden;
+                position: relative;
+                display: flex !important;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                box-sizing: border-box;
+                width: 100%;
+                max-width: 100%;
+                min-height: 38px;
+                margin: 3px 0;
+                padding: 8px 14px;
+                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2));
+                border-radius: 8px;
+                background: var(--smg-s1, #16171b);
+                color: var(--smg-tx, #e7e7ea) !important;
+                text-align: left;
+                text-decoration: none !important;
+                overflow: hidden;
+                aspect-ratio: auto !important;
                 transition: border-color .15s ease, background .15s ease;
             }
             .smg-dead:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-link, #ff77b2); }
-            /* no lugar de player/embed: ocupa o bloco inteiro, não o tamanho compacto de imagem solta */
             .smg-dead--media { max-width: none; min-height: 0; aspect-ratio: 16 / 9; max-height: var(--smg-media-h); margin: 16px auto; }
             .smg-turbo-slot > .smg-dead { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; aspect-ratio: auto; border-radius: 0; }
-            .smg-dead-code { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; letter-spacing: .02em; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; }
-            .smg-dead-code svg { width: 19px; height: 19px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.75; }
-            .smg-dead-code b:empty { display: none; }   /* sonda ainda não voltou (ou não vai): só o triângulo, sem número solto */
-            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.5); overflow-wrap: anywhere; }
-            /* dentro do mosaico o item já tem a largura da coluna → o teto de 320px o deixaria estreito no meio da grade */
-            html.smg-masonry-on .auto-image-grid .smg-dead { max-width: none; margin: 0; }
+            .smg-dead-code { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #ff6b6b; flex-shrink: 0; white-space: nowrap; }
+            .smg-dead-code svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.9; }
+            .smg-dead-code b:empty { display: none; }
+            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.65); overflow-wrap: anywhere; flex: 1 1 auto; }
+            /* No mosaico/grade: os cards de erro viram itens de lista ocupando a largura total (span-all), empilhados horizontalmente */
+            html.smg-masonry-on .auto-image-grid .smg-dead {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 38px !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
+                margin: 2px 0 !important;
+            }
             .smg-rg-v {
                 position: absolute; inset: 0;    /* preenche a CAIXA (aspect-ratio do .smg-rg); inset:0 evita o bug de %-height não resolver com max-height */
                 display: block; width: 100%; height: 100%;
@@ -1328,7 +1350,8 @@
                 /* o socialmediagirls usa .pageContent (fora do .p-body-inner) no header/breadcrumb;
                    alinha com o conteúdo (mesma largura) pra não ficar torto */
                 .p-body-header > .pageContent,
-                .breadcrumb > .pageContent {
+                .breadcrumb > .pageContent,
+                .smg-thead-tags-bar > .pageContent {
                     max-width: var(--smg-cw) !important;
                     margin-left: auto !important;
                     margin-right: auto !important;
