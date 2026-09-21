@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.41
+// @version      3.12.42
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -1576,11 +1576,42 @@
             .smg-nav-btn.smg-dl-busy { opacity: 0.6; pointer-events: none; }
             /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
             .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
-            .smg-dm-wrap.smg-wide, img.bbImage.smg-wide {
-                max-width: min(80%, 950px) !important;
+            /* Container de imagem horizontal/sheet standalone (fora de grid) */
+            a.smg-imglink.smg-wide-link,
+            a.smg-imglink:has(> img.bbImage.smg-wide),
+            a.smg-imglink:has(> .bbImage.smg-wide),
+            .bbImageWrapper.smg-wide-link,
+            .bbImageWrapper:has(> a.smg-wide-link),
+            .bbImageWrapper:has(> img.smg-wide) {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                margin-top: 14px !important;
+                margin-bottom: 14px !important;
+                text-align: center !important;
+            }
+            /* Imagens widescreen/sheets fora de grid: preenchem nobremente até 100% da largura útil (máx 1080px) */
+            .smg-dm-wrap.smg-wide,
+            img.bbImage.smg-wide,
+            a.smg-wide-link > img.bbImage,
+            .smg-wide-link img.bbImage {
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                height: auto !important;
+                max-height: none !important;
                 display: block !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
+                object-fit: contain !important;
+            }
+            /* Citações: imagens mantêm teto compacto */
+            .bbCodeBlock--quote a.smg-wide-link,
+            .bbCodeBlock--quote img.bbImage.smg-wide {
+                max-height: 280px !important;
+                width: auto !important;
+                max-width: 100% !important;
             }
             .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
                 max-width: min(75%, 880px) !important;
@@ -10583,7 +10614,7 @@
     //    pequena/barata → fixa o tamanho da caixa cedo, então mesmo num fling a imagem já entra dimensionada.
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
-    let thumbIO = null, medIO = null;
+    let thumbIO = null, medIO = null, fullIO = null;
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
@@ -10592,6 +10623,18 @@
             const med = img.dataset.smgMed;
             if (med && img.getAttribute('src') !== med) img.src = med;
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
+    }
+    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (qualidade cristalina)
+        return fullIO || (fullIO = makeLazyIO(img => {
+            if (img.closest && img.closest('.auto-image-grid')) return;
+            const full = img.dataset.smgFull;
+            if (full && img.getAttribute('src') !== full) {
+                if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                }
+                img.src = full;
+            }
+        }, { rootMargin: '1200px 0px' }));
     }
 
     // remove os <br> (+ whitespace) que separam DOIS chips de link adjacentes — post que é só lista de links (jpg6/jpg5 &
@@ -10882,6 +10925,11 @@
                     grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
                 }
                 scheduleRelayout(grid);
+            } else if (img.classList.contains('smg-wide') || img.dataset.smgFull) {
+                if (img.dataset.smgFull && img.dataset.smgFull !== img.src) {
+                    const fio = getFullIO();
+                    if (fio) fio.observe(img);
+                }
             }
             img.classList.add('smg-img-ready');
         };
@@ -10917,6 +10965,10 @@
             if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA (nunca vai pro full no post)
                 const mio = getMedIO();
                 if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+            }
+            if (!img.closest('.auto-image-grid') && full !== img.src) {
+                const fio = getFullIO();
+                if (fio) fio.observe(img);
             }
         }
     }
@@ -11214,6 +11266,16 @@
             wrap.classList.toggle('smg-wide', wide);
             wrap.classList.toggle('smg-vert', !wide);
             setVerticalMaxWidth(wrap, w, h, !wide);
+        }
+        const link = el.closest && (el.closest('a.smg-imglink') || (el.parentElement && el.parentElement.tagName === 'A' ? el.parentElement : null));
+        if (link) {
+            link.classList.toggle('smg-wide-link', wide);
+            link.classList.toggle('smg-vert-link', !wide);
+        }
+        const bbWrap = el.closest && el.closest('.bbImageWrapper');
+        if (bbWrap) {
+            bbWrap.classList.toggle('smg-wide-link', wide);
+            bbWrap.classList.toggle('smg-vert-link', !wide);
         }
     }
     function isVideoBlock(b) {
@@ -11782,8 +11844,9 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
+        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
         window.processOneImage = processOneImage;
+        window.processImages = processImages;
         window.goonboxEmbed = goonboxEmbed;
     }
 

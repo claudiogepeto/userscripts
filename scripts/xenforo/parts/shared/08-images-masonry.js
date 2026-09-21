@@ -7,7 +7,7 @@
     //    pequena/barata → fixa o tamanho da caixa cedo, então mesmo num fling a imagem já entra dimensionada.
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
-    let thumbIO = null, medIO = null;
+    let thumbIO = null, medIO = null, fullIO = null;
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
@@ -16,6 +16,18 @@
             const med = img.dataset.smgMed;
             if (med && img.getAttribute('src') !== med) img.src = med;
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
+    }
+    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (qualidade cristalina)
+        return fullIO || (fullIO = makeLazyIO(img => {
+            if (img.closest && img.closest('.auto-image-grid')) return;
+            const full = img.dataset.smgFull;
+            if (full && img.getAttribute('src') !== full) {
+                if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                }
+                img.src = full;
+            }
+        }, { rootMargin: '1200px 0px' }));
     }
 
     // remove os <br> (+ whitespace) que separam DOIS chips de link adjacentes — post que é só lista de links (jpg6/jpg5 &
@@ -306,6 +318,11 @@
                     grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
                 }
                 scheduleRelayout(grid);
+            } else if (img.classList.contains('smg-wide') || img.dataset.smgFull) {
+                if (img.dataset.smgFull && img.dataset.smgFull !== img.src) {
+                    const fio = getFullIO();
+                    if (fio) fio.observe(img);
+                }
             }
             img.classList.add('smg-img-ready');
         };
@@ -341,6 +358,10 @@
             if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA (nunca vai pro full no post)
                 const mio = getMedIO();
                 if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+            }
+            if (!img.closest('.auto-image-grid') && full !== img.src) {
+                const fio = getFullIO();
+                if (fio) fio.observe(img);
             }
         }
     }
@@ -638,6 +659,16 @@
             wrap.classList.toggle('smg-wide', wide);
             wrap.classList.toggle('smg-vert', !wide);
             setVerticalMaxWidth(wrap, w, h, !wide);
+        }
+        const link = el.closest && (el.closest('a.smg-imglink') || (el.parentElement && el.parentElement.tagName === 'A' ? el.parentElement : null));
+        if (link) {
+            link.classList.toggle('smg-wide-link', wide);
+            link.classList.toggle('smg-vert-link', !wide);
+        }
+        const bbWrap = el.closest && el.closest('.bbImageWrapper');
+        if (bbWrap) {
+            bbWrap.classList.toggle('smg-wide-link', wide);
+            bbWrap.classList.toggle('smg-vert-link', !wide);
         }
     }
     function isVideoBlock(b) {
@@ -1206,7 +1237,8 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
+        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids };
         window.processOneImage = processOneImage;
+        window.processImages = processImages;
         window.goonboxEmbed = goonboxEmbed;
     }

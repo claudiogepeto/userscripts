@@ -956,11 +956,42 @@
             .smg-nav-btn.smg-dl-busy { opacity: 0.6; pointer-events: none; }
             /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
             .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
-            .smg-dm-wrap.smg-wide, img.bbImage.smg-wide {
-                max-width: min(80%, 950px) !important;
+            /* Container de imagem horizontal/sheet standalone (fora de grid) */
+            a.smg-imglink.smg-wide-link,
+            a.smg-imglink:has(> img.bbImage.smg-wide),
+            a.smg-imglink:has(> .bbImage.smg-wide),
+            .bbImageWrapper.smg-wide-link,
+            .bbImageWrapper:has(> a.smg-wide-link),
+            .bbImageWrapper:has(> img.smg-wide) {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                margin-top: 14px !important;
+                margin-bottom: 14px !important;
+                text-align: center !important;
+            }
+            /* Imagens widescreen/sheets fora de grid: preenchem nobremente até 100% da largura útil (máx 1080px) */
+            .smg-dm-wrap.smg-wide,
+            img.bbImage.smg-wide,
+            a.smg-wide-link > img.bbImage,
+            .smg-wide-link img.bbImage {
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                height: auto !important;
+                max-height: none !important;
                 display: block !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
+                object-fit: contain !important;
+            }
+            /* Citações: imagens mantêm teto compacto */
+            .bbCodeBlock--quote a.smg-wide-link,
+            .bbCodeBlock--quote img.bbImage.smg-wide {
+                max-height: 280px !important;
+                width: auto !important;
+                max-width: 100% !important;
             }
             .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
                 max-width: min(75%, 880px) !important;

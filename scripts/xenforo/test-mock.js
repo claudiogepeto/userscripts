@@ -315,7 +315,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.41'), 'Userscript deve estar na versão 3.12.41');
+    assert(scriptContent.includes('// @version      3.12.42'), 'Userscript deve estar na versão 3.12.42');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -5994,6 +5994,64 @@ async function runTests() {
     tagsBar48?.remove();
     document.querySelector('.smg-thead-spacer')?.remove();
     document.querySelector('.smg-thead-sentinel')?.remove();
+
+    // =========================================================================
+    // TESTE 49: Imagens Widescreen Standalone e Sheets de Vídeo (Ocupação nobre de largura, sem miniatura de 500px)
+    // =========================================================================
+    console.log('--- TESTE 49: Imagens Widescreen Standalone e Sheets de Vídeo (Ocupação nobre de largura, sem miniatura de 500px) ---');
+
+    // 1. Validar no CSS gerado: .smg-wide-link, img.bbImage.smg-wide com width: 100% !important e max-width: min(100%, 1080px) !important
+    const allStyles49 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(allStyles49.includes('.smg-wide-link'), 'CSS deve conter regras para .smg-wide-link');
+    assert(allStyles49.includes('max-width: min(100%, 1080px) !important;'), 'CSS deve conter max-width: min(100%, 1080px) !important; para imagens wide standalone');
+    assert(allStyles49.includes('width: 100% !important;'), 'CSS deve conter width: 100% !important; para que imagens wide preencham o post');
+    assert(allStyles49.includes('.bbCodeBlock--quote img.bbImage.smg-wide'), 'CSS deve manter teto compacto para imagens dentro de quotes');
+
+    // 2. Mock de post real com imagem standalone horizontal (contact sheet / preview grid de 16 frames como do usuário)
+    const post49 = document.createElement('article');
+    post49.className = 'message message--post js-post';
+    post49.innerHTML = `
+        <div class="message-content">
+            <div class="message-userContent">
+                <div class="bbWrapper">
+                    <p>Mirrors</p>
+                    <a href="https://simp4.cuckcapital.cr/images2/video_sheet.jpg" class="js-lbImage smg-imglink">
+                        <img src="https://simp6.cuckcapital.cr/images2/video_sheet.md.jpg"
+                             data-url="https://simp6.cuckcapital.cr/images2/video_sheet.md.jpg"
+                             class="bbImage"
+                             alt="video_sheet.jpg">
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(post49);
+
+    const img49 = post49.querySelector('img.bbImage');
+    const link49 = post49.querySelector('a.smg-imglink');
+
+    // Simula dimensões naturais de um contact sheet widescreen (ex: 1920x1080 ou 500x281 na thumb)
+    Object.defineProperty(img49, 'naturalWidth', { value: 500, configurable: true });
+    Object.defineProperty(img49, 'naturalHeight', { value: 281, configurable: true });
+    Object.defineProperty(img49, 'complete', { value: true, configurable: true });
+
+    // Executa processImages
+    const procImages = window.processImages || window.__masonryExports?.processImages;
+    if (typeof procImages === 'function') {
+        procImages([post49]);
+    } else {
+        const procOne = window.__masonryExports?.processOneImage || window.processOneImage;
+        if (typeof procOne === 'function') procOne(img49);
+    }
+
+    // Validações
+    assert(img49.classList.contains('smg-wide'), 'Imagem widescreen/sheet deve receber a classe .smg-wide');
+    assert(link49.classList.contains('smg-wide-link'), 'Link container deve receber a classe .smg-wide-link para preencher a largura do post');
+    assert(img49.dataset.smgFull === 'https://simp6.cuckcapital.cr/images2/video_sheet.jpg', 'img.dataset.smgFull deve apontar para o original sem .md.');
+    assert(link49.href === 'https://simp6.cuckcapital.cr/images2/video_sheet.jpg', 'link.href deve apontar para o original em alta');
+
+    // Limpeza
+    post49.remove();
 
     // =========================================================================
     // RESUMO FINAL
