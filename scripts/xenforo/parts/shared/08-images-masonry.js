@@ -8,24 +8,73 @@
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
     let thumbIO = null, medIO = null, fullIO = null;
+    // Swaps in a higher-quality file only once it is downloaded and decoded, so the thumbnail stays visible until
+    // the replacement can paint in one frame (no blank/flash). The box size never depends on the file (see
+    // setVerticalMaxWidth / the wide rules), so the swap cannot move the page. A failed upgrade keeps the thumbnail.
+    function swapImgSrc(img, url) {
+        if (!img || !url) return;
+        const targetAbs = absUrl(url);
+        const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+        if (!targetAbs || currentAbs === targetAbs || img.dataset.smgSwapping === targetAbs) return;
+        img.dataset.smgSwapping = targetAbs;
+        if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+            img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+        }
+        if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
+            delete img.dataset.smgSwapping;
+            img.referrerPolicy = 'no-referrer';
+            img.src = targetAbs;
+            const grid = img.closest('.auto-image-grid');
+            if (grid) scheduleRelayout(grid);
+            return;
+        }
+        const pre = new Image();
+        pre.referrerPolicy = 'no-referrer';
+        const apply = () => {
+            if (img.dataset.smgSwapping === targetAbs) {
+                delete img.dataset.smgSwapping;
+                if (img.isConnected) {
+                    img.referrerPolicy = 'no-referrer';
+                    img.src = targetAbs;
+                    const grid = img.closest('.auto-image-grid');
+                    if (grid) scheduleRelayout(grid);
+                }
+            }
+        };
+        pre.onload = () => {
+            (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
+        };
+        pre.onerror = () => {
+            if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+        };
+        pre.decoding = 'async';
+        pre.src = targetAbs;
+        if (pre.complete && pre.naturalWidth) {
+            apply();
+        }
+    }
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
     function getMedIO() {     // troca pra MÉDIA (.md.) mais perto da tela (thumb já dá o tamanho → swap sem flash)
         return medIO || (medIO = makeLazyIO(img => {
             const med = img.dataset.smgMed;
-            if (med && img.getAttribute('src') !== med) img.src = med;
+            if (med && img.getAttribute('src') !== med) swapImgSrc(img, med);
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
     }
-    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (qualidade cristalina)
+    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (ou em todas se replaceThumbsWithFull estiver ativo)
         return fullIO || (fullIO = makeLazyIO(img => {
-            if (img.closest && img.closest('.auto-image-grid')) return;
+            if (!FEATURES.replaceThumbsWithFull && img.closest && img.closest('.auto-image-grid')) return;
             const full = img.dataset.smgFull;
-            if (full && img.getAttribute('src') !== full) {
-                if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+            if (full) {
+                const targetAbs = absUrl(full);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                    }
+                    swapImgSrc(img, targetAbs);
                 }
-                img.src = full;
             }
         }, { rootMargin: '1200px 0px' }));
     }
@@ -238,6 +287,96 @@
         return null;
     }
 
+    function resolveFullImageUrl(img) {
+        if (!img) return '';
+        if (img.dataset && img.dataset.smgFull) return absUrl(img.dataset.smgFull);
+
+        const rawSrc = img.currentSrc || img.getAttribute('src') || img.src || '';
+        let src = rawSrc;
+        if (!/^https?:/i.test(src) && !/^\//.test(src)) {
+            src = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original') || src;
+        }
+
+        // 1. Hosts e padrões reconhecidos pelo getBigUrl (.md., .th., imgbox _t->_o, pixhost thumbs->images)
+        const big = getBigUrl(src);
+        if (big && absUrl(big) !== absUrl(src)) return absUrl(big);
+
+        // 2. Parâmetros de query de thumbnail (ex.: ?thumb=1, ?thumbnail=1)
+        if (/[?&](?:thumb|thumbnail)=\d+/i.test(src)) {
+            const cleaned = src.replace(/([?&])(?:thumb|thumbnail)=\d+(&|$)/i, (m, p1, p2) => (p2 === '&' ? p1 : '')).replace(/[?&]$/, '');
+            if (cleaned && absUrl(cleaned) !== absUrl(src)) return absUrl(cleaned);
+        }
+
+        // 3. Link pai <a> (XenForo attachments ou link direto para arquivo de imagem)
+        const parentLink = img.closest && img.closest('a');
+        if (parentLink) {
+            const rawHref = parentLink.getAttribute('href') || parentLink.href || '';
+            const lh = resolveProxyHref(rawHref);
+            if (lh && lh !== '#' && !/^javascript:/i.test(lh)) {
+                if (/\.(?:jpe?g|png|gif|webp|avif|bmp)(?:[?#]|$)/i.test(lh)) {
+                    const bigLh = getBigUrl(lh);
+                    if (absUrl(bigLh) !== absUrl(src)) return absUrl(bigLh);
+                }
+                if (/\/attachments\/[^\s"'>]+/i.test(lh)) {
+                    if (absUrl(lh) !== absUrl(src)) return absUrl(lh);
+                }
+            }
+        }
+
+        // 4. Elemento wrapper (.bbImageWrapper, [data-src], [data-url])
+        const wrap = img.closest && img.closest('.bbImageWrapper, [data-src], [data-url]');
+        if (wrap && wrap !== img) {
+            const wrapSrc = wrap.getAttribute('data-src') || wrap.getAttribute('data-url') || (wrap.dataset && (wrap.dataset.src || wrap.dataset.url)) || '';
+            const resolvedWrap = resolveProxyHref(wrapSrc);
+            if (resolvedWrap && absUrl(resolvedWrap) !== absUrl(src)) {
+                if (/\.(?:jpe?g|png|gif|webp|avif|bmp)(?:[?#]|$)/i.test(resolvedWrap) || /\/attachments\/[^\s"'>]+/i.test(resolvedWrap)) {
+                    return absUrl(getBigUrl(resolvedWrap));
+                }
+            }
+        }
+
+        // 5. Atributo data-url / data-src na própria tag <img>
+        const imgDataUrl = img.getAttribute('data-url') || img.getAttribute('data-src');
+        if (imgDataUrl && absUrl(imgDataUrl) !== absUrl(src)) {
+            const resolvedData = resolveProxyHref(imgDataUrl);
+            if (resolvedData && absUrl(resolvedData) !== absUrl(src)) {
+                return absUrl(getBigUrl(resolvedData));
+            }
+        }
+
+        // 6. Goonbox resolvido em cache
+        const smgLink = (img.dataset && img.dataset.smgLink) || '';
+        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+            const cached = gbxCache.get(gbx.id);
+            if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
+        }
+
+        return '';
+    }
+
+    function applyReplaceThumbsWithFull(enabled) {
+        if (!enabled) return;
+        const imgs = document.querySelectorAll('img.bbImage');
+        imgs.forEach(img => {
+            let full = img.dataset.smgFull;
+            if (!full) {
+                full = resolveFullImageUrl(img);
+                if (full) img.dataset.smgFull = full;
+            }
+            if (full) {
+                const targetAbs = absUrl(full);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                    }
+                    swapImgSrc(img, targetAbs);
+                }
+            }
+        });
+    }
+
     function processOneImage(img) {
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
         if (!img.dataset.smgLink) {
@@ -266,12 +405,15 @@
                         }
                     });
                 }
+                if (FEATURES.replaceThumbsWithFull && res.original !== img.src) {
+                    swapImgSrc(img, res.original);
+                }
             }, img);
         }
         let src = img.currentSrc || img.getAttribute('src') || img.src || '';
-        if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
+        if (!/^https?:/i.test(src) && !/^\//.test(src)) {                // placeholder lazy ainda sem URL real
             const realSrc = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original');
-            if (realSrc && /^https?:/i.test(realSrc)) {
+            if (realSrc && (/^https?:/i.test(realSrc) || /^\//.test(realSrc))) {
                 src = realSrc;
                 img.src = realSrc;
             } else {
@@ -301,6 +443,24 @@
             img.classList.add('smg-img-ready');
         }
 
+        // Determina antecipadamente a URL full e média antes do onReady
+        const full = resolveFullImageUrl(img);
+        if (full) {
+            const convMd = src.includes('.md.'), convTh = src.includes('.th.');
+            const med = convMd ? src : (convTh ? src.replace('.th.', '.md.') : full);   // tier MÉDIO só p/ convenção .md/.th; resto exibe o FULL direto
+            img.dataset.smgFull = full;
+            img.dataset.smgMed = med;
+            img.removeAttribute('srcset');
+            const link = img.closest('a');
+            if (link) link.href = full;              // maximizar (feed/lightbox) abre o FULL (alta)
+            if (img.title) img.title = cleanText(img.title);
+            if (img.alt) img.alt = cleanText(img.alt);
+            if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA
+                const mio = getMedIO();
+                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+            }
+        }
+
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
@@ -317,13 +477,22 @@
                     grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
                 }
                 scheduleRelayout(grid);
-            } else if (img.classList.contains('smg-wide') || img.dataset.smgFull) {
-                if (img.dataset.smgFull && img.dataset.smgFull !== img.src) {
-                    const fio = getFullIO();
-                    if (fio) fio.observe(img);
-                }
             }
             img.classList.add('smg-img-ready');
+
+            const fullTarget = img.dataset.smgFull;
+            if (fullTarget) {
+                const targetAbs = absUrl(fullTarget);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (FEATURES.replaceThumbsWithFull) {
+                        swapImgSrc(img, targetAbs);
+                    } else if (!grid || img.classList.contains('smg-wide')) {
+                        const fio = getFullIO();
+                        if (fio) fio.observe(img);
+                    }
+                }
+            }
         };
         if (img.complete) onReady();                 // já resolvida (ok ou quebrada) → sem shimmer preso
         else {
@@ -333,34 +502,14 @@
         }
 
         const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-
-        // ANTI-PULO: NÃO troca a thumb pela full na hora. Mantém a thumb (carrega rápido e fixa
-        // o tamanho) e só troca pra full perto da viewport (IO). Como a full tem a MESMA proporção,
-        // subir/descer um thread enorme não reflui o layout — era o swap imediato + lazy que blankava
-        // a imagem e fazia ela "estourar" de tamanho ao carregar.
-        const imgbox = isImgboxThumb(src);   // imgbox: thumb `_t` → original `_o` (sem tier médio próprio → exibe o original no post)
-        const big = getBigUrl(src);          // sobe pra FULL nos hosts conhecidos (.md/.th, imgbox, pixhost, …)
-        const convMd = src.includes('.md.'), convTh = src.includes('.th.');
-        // ANTES só entrava .md/.th/imgbox → hosts com padrão próprio de thumb (pixhost & cia) ficavam na BAIXA.
-        // Agora qualquer host que o getBigUrl saiba subir (big !== src) também entra no upgrade.
-        if (convMd || convTh || imgbox || big !== src) {
-            const full = big;
-            const med = convMd ? src : (convTh ? src.replace('.th.', '.md.') : full);   // tier MÉDIO só p/ convenção .md/.th; resto (pixhost/imgbox) exibe o FULL direto
-            img.dataset.smgFull = full;
-            img.dataset.smgMed = med;
-            img.removeAttribute('srcset');
-            const link = img.closest('a');
-            if (link) link.href = full;              // maximizar (feed/lightbox) abre o FULL (alta)
-            if (img.title) img.title = cleanText(img.title);
-            if (img.alt) img.alt = cleanText(img.alt);
-            const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-            if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA (nunca vai pro full no post)
-                const mio = getMedIO();
-                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
-            }
-            if (!img.closest('.auto-image-grid') && full !== img.src) {
-                const fio = getFullIO();
-                if (fio) fio.observe(img);
+        if (img.dataset.smgFull) {
+            const targetAbs = absUrl(img.dataset.smgFull);
+            const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+            if (targetAbs && targetAbs !== currentAbs) {
+                if (FEATURES.replaceThumbsWithFull || !img.closest('.auto-image-grid')) {
+                    const fio = getFullIO();
+                    if (fio) fio.observe(img);
+                }
             }
         }
     }
@@ -642,10 +791,15 @@
             el.style.removeProperty('max-width');
             return;
         }
-        if (!vertical) { el.style.removeProperty('max-width'); return; }
+        if (!vertical) { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
         const ratio = w / h;
         const maxWidth = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
+        // STABLE BOX: the width is the SAME expression, not `auto`. With `auto` the box followed the intrinsic
+        // size of whatever file was loaded, so swapping the small thumbnail for the large original resized it
+        // (same ratio, bigger pixels) and pushed the page. Now the box is fixed by ratio + column, never by pixels.
+        // (the link/wrapper around it is a full-width block for this to resolve without a circular percentage)
+        el.style.setProperty('width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
         if (!el || !w || !h) return;
@@ -1234,11 +1388,15 @@
         });
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.buildPostGalleries = buildPostGalleries;
-        window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock };
-        window.processOneImage = processOneImage;
-        window.processImages = processImages;
-        window.goonboxEmbed = goonboxEmbed;
+    if (typeof window !== 'undefined') {
+        window.applyReplaceThumbsWithFull = applyReplaceThumbsWithFull;
+        window.resolveFullImageUrl = resolveFullImageUrl;
+        if (window.__TEST_MODE__) {
+            window.buildPostGalleries = buildPostGalleries;
+            window.__buildPostGalleries = buildPostGalleries;
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.processOneImage = processOneImage;
+            window.processImages = processImages;
+            window.goonboxEmbed = goonboxEmbed;
+        }
     }

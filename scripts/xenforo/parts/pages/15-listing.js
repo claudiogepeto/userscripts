@@ -61,7 +61,7 @@
     function syncReactiveBadges() {
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
-        setReactiveBadge(document.querySelector('#smg-nav-alerts .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
+        setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico, #smg-nav-alerts .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
         if (typeof aldockSyncCount === 'function') aldockSyncCount();   // contador do rail de notificações (se estiver docked)
     }
     function watchNativeBadges() {

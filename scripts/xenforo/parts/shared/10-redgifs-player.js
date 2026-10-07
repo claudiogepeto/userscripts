@@ -685,6 +685,80 @@
         rgControls(wrap, video);
         return { wrap, video };
     }
+
+    function showPlayerError(wrap, video, opts) {
+        if (!wrap) return;
+        opts = opts || {};
+        wrap.classList.remove('smg-rg-loading', 'smg-rg-buffering', 'smg-rg-ready', 'smg-rgc-playing');
+        wrap.classList.add('smg-rg-has-error');
+        if (wrap.querySelector('.smg-rg-error')) return;
+
+        let code = opts.code || 'Error';
+        let msg = opts.message || '';
+        let host = opts.host || '';
+        const ext = opts.extUrl || opts.url || (video && (video._rgExt || video._rgUrl)) || '';
+
+        if (!host && ext) {
+            try { host = new URL(ext, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
+        }
+        if (!msg) {
+            if (code === 502) msg = '502 Bad Gateway · ' + i18n('Server unavailable');
+            else if (code === 504) msg = '504 Gateway Timeout · ' + i18n('Server timed out');
+            else if (code === 404) msg = '404 · ' + i18n('file deleted');
+            else if (code === 403) msg = '403 · ' + i18n('forbidden');
+            else if (code === 'NetError') msg = i18n('unavailable');
+            else msg = i18n('Error') + ' ' + (code || '') + (host ? ' · ' + host : '');
+        }
+
+        const errDiv = document.createElement('div');
+        errDiv.className = 'smg-rg-error';
+        const badge = document.createElement('span');
+        badge.className = 'smg-rg-error-badge';
+        badge.innerHTML = ICONS.warn + '<b>' + (typeof code === 'number' ? code : i18n('Error')) + '</b>';
+
+        const desc = document.createElement('span');
+        desc.className = 'smg-rg-error-msg';
+        desc.textContent = msg;
+
+        const acts = document.createElement('div');
+        acts.className = 'smg-rg-error-acts';
+
+        if (ext) {
+            const openBtn = document.createElement('a');
+            openBtn.className = 'smg-rg-error-btn smg-rg-error-btn--open';
+            openBtn.href = ext;
+            openBtn.target = '_blank';
+            openBtn.rel = 'noopener noreferrer';
+            openBtn.innerHTML = (host ? host + ' ' : '') + '↗';
+            acts.appendChild(openBtn);
+        }
+
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'smg-rg-error-btn smg-rg-error-btn--retry';
+        retryBtn.textContent = '↻ ' + i18n('Retry');
+        retryBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            errDiv.remove();
+            wrap.classList.remove('smg-rg-has-error');
+            const retryFn = opts.onRetry || opts.retry;
+            if (retryFn) {
+                retryFn();
+            } else if (video && video._rgUrl) {
+                video.dataset.rgLoaded = '';
+                wrap.classList.add('smg-rg-loading');
+                rgLoadUrl(video, video._rgUrl, wrap);
+            } else if (video && video.dataset.rgid) {
+                video.dataset.rgLoaded = '';
+                wrap.classList.add('smg-rg-loading');
+                rgLoad(video);
+            }
+        });
+        acts.appendChild(retryBtn);
+
+        errDiv.append(badge, desc, acts);
+        wrap.appendChild(errDiv);
+    }
     // SPINNER NUNCA ETERNO: todo caminho de carga pode morrer calado (blob que não decodifica, host que
     // engoliu a request, promise que nunca resolve). Se em 25s não houver NENHUM frame, volta pro estado
     // PRONTO — play central de volta, com o link externo — e libera um novo clique pra tentar de novo.
@@ -729,7 +803,17 @@
         video.addEventListener('error', () => {
             if (!video._rgUserPlayed && wrap && wrap._rgFallback) {
                 wrap._rgFallback();
+                return;
             }
+            const errCode = (video.error && video.error.code === 4) ? 404 : 502;
+            showPlayerError(wrap, video, {
+                code: errCode,
+                extUrl: video._rgExt || url,
+                onRetry: () => {
+                    try { video.load(); } catch (e) {}
+                    if (video._rgUrl) rgLoadUrl(video, video._rgUrl, wrap);
+                }
+            });
         }, { once: true });
 
         const setNativeThumb = () => {
@@ -836,9 +920,10 @@
             for (let mm; (mm = re.exec(t));) { if (!/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(mm[0])) return mm[0].replace(/&amp;/g, '&'); }
             return null;
         };
-        GMX({ method: 'GET', url: pageUrl, timeout: 12000,
+        GMX({ method: 'GET', url: pageUrl, timeout: 8000,
             headers: { Referer: location.origin + '/', Accept: 'text/html,application/xhtml+xml,*/*' },
             onload: r => {
+                if (r.status >= 400) { finish({ error: r.status, host: 'imagepond.net' }); return; }
                 const t = r.responseText || '';
                 const vid = grabVid(t);
                 if (vid) { finish({ mp4: vid, img: null }); return; }
@@ -855,9 +940,10 @@
                         }
                     }
                 }
-                finish(null);
+                finish({ error: r.status === 200 ? 404 : (r.status || 0), host: 'imagepond.net' });
             },
-            onerror: () => finish(null), ontimeout: () => finish(null) });
+            onerror: () => finish({ error: 'NetError', host: 'imagepond.net' }),
+            ontimeout: () => finish({ error: 504, host: 'imagepond.net' }) });
     }
     function processImagepondNativeEmbeds(roots) {
         if (!(FEATURES.imagepondEmbeds && GMX)) return;
@@ -874,7 +960,16 @@
             slot.appendChild(loading);
             wrapper.appendChild(slot);
             ifr.replaceWith(wrapper);
-            const restoreIframe = () => { if (slot.querySelector('iframe')) return; unfillSlot(slot); loading.remove(); ifr.classList.add('saint-iframe'); ifr.removeAttribute('style'); slot.appendChild(ifr); };   // falha total → iframe nativo PREENCHENDO o slot 16:9 (saint-iframe + tira o style inline height:360px que quebrava na coluna)
+            const restoreIframe = () => {
+                if (slot.querySelector('iframe')) return;
+                unfillSlot(slot);
+                loading.remove();
+                const oldWrap = slot.querySelector('.smg-rg');
+                if (oldWrap) oldWrap.remove();
+                ifr.classList.add('saint-iframe');
+                ifr.removeAttribute('style');
+                slot.appendChild(ifr);
+            };
             const activate = () => {
                 if (slot.dataset.ipActivated) return;   // run-once (turboIO E o masonry podem chamar)
                 slot.dataset.ipActivated = '1'; slot._smgActivate = null;
@@ -898,7 +993,16 @@
                         scheduleRun();
                         return;
                     }
-                    restoreIframe();                                        // sem mp4 nem img → iframe nativo
+                    if (res && res.error) {
+                        loading.remove();
+                        const { wrap, video } = buildNativeVideo('', location.origin + '/', null, 'ImagePond');
+                        video._rgExt = pageUrl;
+                        slot.appendChild(wrap);
+                        fillSlot(slot);
+                        showPlayerError(wrap, video, { code: res.error, host: res.host || 'imagepond.net', extUrl: pageUrl });
+                        return;
+                    }
+                    restoreIframe();                                        // sem mp4 nem img nem erro específico → iframe nativo
                 });
             };
             const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
@@ -1151,4 +1255,5 @@
         window.__rgPrepareUrl = rgPrepareUrl;
         window.__rgViaDirect = rgViaDirect;
         window.__rgControls = rgControls;
+        window.__showPlayerError = showPlayerError;
     }

@@ -19,7 +19,7 @@
         infiniteScrollTimeline: true, // rolagem infinita na timeline / feed
         infiniteScrollWatched: true,  // rolagem infinita em fóruns / tópicos seguidos (watched)
         thumbPlaceholders: true,    // marca no lugar de thumb ausente/quebrada (grid/lista)
-        hoverPreview: true,         // preview maior da thumb ao passar o mouse (desktop)
+        replaceThumbsWithFull: false, // substitui miniaturas pelas imagens finais em resolução completa (desabilitado por padrão)
         homeRemake: true,           // reformula a home (cards/atalhos/sidebar pro topo) — off = home original
         customFavicon: true,        // troca a favicon pela marca SMG (SMG only)
         headerNotices: true,        // recolhe os avisos (.notices--block) num iconezinho dentro da página
@@ -66,7 +66,7 @@
         ] },
         { section: 'Images', items: [
             { key: 'autoFullImages', label: 'Image grid in posts', desc: { en: "Lays each post's images out in a masonry mosaic and loads them at medium quality to save data. Off, it keeps the original thumbnails, with no grid.", pt: 'Dispõe as imagens de cada post num mosaico (masonry) e as carrega em qualidade média, para poupar dados. Desligado, mantém as miniaturas originais, sem grade.' } },
-            { key: 'hoverPreview', label: 'Enlarged preview on hover', desc: { en: 'Shows a larger version of the thumbnail when the cursor rests over it (desktop only).', pt: 'Mostra uma versão maior da miniatura quando o cursor para sobre ela (apenas no desktop).' } },
+            { key: 'replaceThumbsWithFull', label: 'Replace thumbnails with full images', desc: { en: 'Replaces post thumbnails with their full resolution images directly in the post (uses more data).', pt: 'Substitui as miniaturas dos posts pelas imagens finais em resolução completa diretamente no post (consome mais dados).' } },
             { key: 'thumbPlaceholders', label: 'Placeholder for missing thumbnails', desc: { en: 'Puts a branded badge in place of thumbnails that are missing or failed to load.', pt: 'Coloca um selo com a identidade do site no lugar de miniaturas que faltam ou falharam ao carregar.' } },
         ] },
         { section: 'Videos', items: [
@@ -96,3 +96,7 @@
             { key: 'shareDirectLink', label: 'Share copies the direct link', desc: { en: 'Share on a post copies its direct link straight to the clipboard instead of opening the sharing menu.', pt: 'O Compartilhar do post copia o link direto para a área de transferência, em vez de abrir o menu de compartilhamento.' } },
         ] },
     ];
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__configExports = { DEFAULT_FEATURES, FEATURES, SETTINGS_META, saveFeatures };
+    }

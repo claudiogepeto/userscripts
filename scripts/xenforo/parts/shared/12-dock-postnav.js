@@ -209,6 +209,9 @@
                 if (!n || !pageJump.tpl) return;
                 let url = (n === 1) ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
                 if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
+                document.documentElement.classList.add('smg-page-pending');
+                document.documentElement.classList.remove('smg-page-ready');
+                if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
                 window.location.href = url;
             };
 
@@ -395,6 +398,16 @@
                 if (typeof toggleAlertsDock === 'function') toggleAlertsDock('watched');
             });
         }
+        // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
+        const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
+        if (btnBell) {
+            btnBell.addEventListener('click', e => {
+                if (typeof toggleAlertsDock !== 'function' || !FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAlertsDock('alerts');
+            });
+        }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Timeline', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
         const btnLogin = dockLoggedIn ? null : makeDockLink({ id: 'smg-nav-login', icon: ICONS.login, label: 'Log in', href: loginHref() });
         if (btnLogin) wireAuthClick(btnLogin, 'login');
@@ -433,6 +446,7 @@
             if (/[?&]view=feed/.test(location.search)) on(btnTimeline);   // ANTES do home: o feed mora NA home (?view=feed)
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
             else if (/\/watched\//.test(path)) on(btnWatched);
+            else if (/\/account\/alerts/.test(path)) on(btnBell);
             else if (/\/account(\/|$)/.test(path)) on(btnUser);                 // avatar ganha o anel
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
         })();
@@ -445,7 +459,7 @@
         // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · following · user.
         // Discover fica no DOM (escondido via CSS) → o wireSheet/sheet de opções ainda o alcança.
         // (a engrenagem fica escondida no mobile e some atrás do FAB de opções; no desktop tudo some e sobra ela)
-        const centralBtns = [btnHome, btnTimeline, btnSearch, btnWatched, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
+        const centralBtns = [btnWatched, btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
         const centralGroup = makeGroup(...centralBtns);
         centralGroup.classList.add('smg-nav-center');
 
@@ -1983,7 +1997,18 @@
             });
             // toggles (FEATURES)
             settingsPop.querySelectorAll('input[data-feat]').forEach(inp => {
-                inp.addEventListener('change', () => { FEATURES[inp.dataset.feat] = inp.checked; saveFeatures(); });
+                inp.addEventListener('change', () => {
+                    const feat = inp.dataset.feat;
+                    FEATURES[feat] = inp.checked;
+                    saveFeatures();
+                    if (feat === 'replaceThumbsWithFull') {
+                        if (typeof applyReplaceThumbsWithFull === 'function') {
+                            applyReplaceThumbsWithFull(inp.checked);
+                        } else if (typeof window !== 'undefined' && typeof window.applyReplaceThumbsWithFull === 'function') {
+                            window.applyReplaceThumbsWithFull(inp.checked);
+                        }
+                    }
+                });
             });
             // sliders (tunables do feed → gmSet; aplicam na próxima abertura do feed)
             settingsPop.querySelectorAll('input[data-tune]').forEach(inp => {

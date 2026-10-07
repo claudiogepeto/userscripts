@@ -390,7 +390,7 @@
                 }
             }
         });
-        const navAlerts = document.querySelector('#smg-nav-alerts');
+        const navAlerts = document.querySelector('#smg-nav-alerts, #smg-nav-bell');
         if (navAlerts) {
             const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
             if (typeof setReactiveBadge === 'function') {
@@ -749,6 +749,37 @@
             railApplyView(railTab);
             railFillViewport(railTab);   // a grade cabe mais por tela → pode faltar linha pra encher
         });
+
+        const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        if (alertsBody) {
+            alertsBody.addEventListener('click', e => {
+                const a = e.target.closest('a[href]');
+                if (!a) return;
+                const href = a.getAttribute('href') || a.href || '';
+                const postMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i)
+                    || (href.includes('/goto/') && href.match(/[?&]id=(\d+)/i));
+                if (postMatch && postMatch[1]) {
+                    const pid = postMatch[1];
+                    const inPagePost = document.getElementById('post-' + pid)
+                        || document.getElementById('js-post-' + pid)
+                        || document.querySelector('[data-content="post-' + pid + '"]')
+                        || document.querySelector('article.message[data-content*="' + pid + '"]');
+                    if (inPagePost) {
+                        e.preventDefault();
+                        if (aldockPhone()) closeAlertsDock();
+                        try {
+                            inPagePost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (err) {}
+                        if (typeof armScrollStabilizer === 'function') {
+                            armScrollStabilizer(inPagePost);
+                        }
+                        try {
+                            history.replaceState(null, '', '#post-' + pid);
+                        } catch (err) {}
+                    }
+                }
+            });
+        }
 
         // rolagem infinita DENTRO de cada aba (rAF-throttled, passive — mesmo padrão do resto do script)
         el.querySelectorAll('.smg-aldock-body').forEach(body => {

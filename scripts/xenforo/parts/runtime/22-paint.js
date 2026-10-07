@@ -15,6 +15,7 @@
         FOLLOWING: 'following',
         TIMELINE: 'timeline',
         BOOKMARKS: 'bookmarks',
+        GENERIC: 'generic',
         NONE: 'none',
     });
 
@@ -34,10 +35,11 @@
         if (home && feed) kind = PAINT_PAGE_KINDS.TIMELINE;
         else if (home) kind = PAINT_PAGE_KINDS.HOME;
         else if (tpl.includes('bookmarks') || /\/account\/bookmarks|\/bookmarks\//i.test(pathname)) kind = PAINT_PAGE_KINDS.BOOKMARKS;
-        else if (tpl === 'thread_view' || /\/threads\//i.test(pathname)) kind = PAINT_PAGE_KINDS.THREAD;
         else if (/\/watched\/threads(?:\/|$)/i.test(pathname) || tpl === 'watched_threads_list') kind = PAINT_PAGE_KINDS.FOLLOWING;
-        else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)/i.test(pathname)
+        else if (/^thread_view/i.test(tpl) || (!/\/watched\//i.test(pathname) && (/\/threads\//i.test(pathname) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(search || '')))) kind = PAINT_PAGE_KINDS.THREAD;
+        else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)|\/account\/alerts(?:\/|$)/i.test(pathname)
             || /^(?:forum_view|whats_new_posts|search_results)$/i.test(tpl)) kind = PAINT_PAGE_KINDS.LISTING;
+        else kind = PAINT_PAGE_KINDS.GENERIC;
 
         const gated = kind !== PAINT_PAGE_KINDS.NONE
             && (kind !== PAINT_PAGE_KINDS.HOME || !!FEATURES.homeRemake)
@@ -101,6 +103,8 @@
             body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(12) + '</div>';
         } else if (kind === PAINT_PAGE_KINDS.TIMELINE || kind === PAINT_PAGE_KINDS.BOOKMARKS) {
             body = '<div class="smg-page-skeleton-' + (kind === PAINT_PAGE_KINDS.TIMELINE ? 'feed' : 'bookmarks') + '">' + feedCard.repeat(8) + '</div>';
+        } else if (kind === PAINT_PAGE_KINDS.GENERIC) {
+            body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(8) + '</div>';
         }
         const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
@@ -142,23 +146,29 @@
         root.appendChild(rail);
     }
 
-    function ensurePageSkeleton() {
+    function ensurePageSkeleton(overrideKind) {
         const context = classifyPaintPage();
-        if (!context.gated) return;
-        if (context.kind === PAINT_PAGE_KINDS.HOME) {
+        if (!context.gated && !overrideKind) return;
+        const kind = overrideKind || context.kind;
+        if (kind === PAINT_PAGE_KINDS.HOME) {
             ensureHomeSkeleton();
             ensureSkeletonRail();
             return;
         }
-        if (document.getElementById('smg-page-skeleton')) {
+        let shell = document.getElementById('smg-page-skeleton');
+        if (shell) {
+            if (overrideKind && !shell.classList.contains('smg-page-skeleton--' + kind)) {
+                shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
+                shell.innerHTML = paintSkeletonMarkup(kind);
+            }
             ensureSkeletonRail();
             return;
         }
-        const shell = document.createElement('div');
+        shell = document.createElement('div');
         shell.id = 'smg-page-skeleton';
-        shell.className = 'smg-page-skeleton smg-page-skeleton--' + context.kind;
+        shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
         shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(context.kind);
+        shell.innerHTML = paintSkeletonMarkup(kind);
         document.documentElement.appendChild(shell);
         ensureSkeletonRail();
     }
@@ -203,8 +213,8 @@
     // sua primeira composição. O timeout é apenas um fallback para páginas quebradas ou
     // respostas interrompidas; em condições normais a liberação acontece por prontidão +
     // dois frames estáveis.
-    const PAINT_SETTLE_FRAMES = 2;
-    const PAINT_MAX_WAIT_MS = 4200;
+    const PAINT_SETTLE_FRAMES = 4;
+    const PAINT_MAX_WAIT_MS = 4500;
     const PAINT_RETRY_MS = 250;
     let paintTimer = 0;
     let paintRaf = 0;
@@ -240,10 +250,16 @@
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
+            const messages = document.querySelector('.block--messages, .block-body--messages');
             const posts = Array.from(document.querySelectorAll('article.message')).map(post =>
-                (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
+                (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgGalReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
             ).join('|');
-            return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']';
+            const grids = Array.from(document.querySelectorAll('.auto-image-grid')).map(g =>
+                g.children.length + ':' + g.className
+            ).join(';');
+            const imgsReady = document.querySelectorAll('article.message img.smg-img-ready, article.message img[style*="aspect-ratio"]').length;
+            const messagesH = messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+            return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']{' + grids + '}(imgs:' + imgsReady + ',h:' + messagesH + ')';
         }
         if (kind === PAINT_PAGE_KINDS.LISTING || kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const rows = Array.from(document.querySelectorAll('.structItemContainer .structItem--thread, .p-body-content .structItem--thread, .smg-article-grid .message--articlePreview'));
@@ -287,6 +303,86 @@
         return document.readyState === 'complete' && paintHasExplicitEmptyState();
     }
 
+    function requestedPostTargetId() {
+        const h = (location.hash || '').replace(/^#/, '');
+        const hm = h && h.match(/^(?:js-)?(?:post|comment|post-comment)-(\d+)$/i);
+        if (hm) return hm[1];
+        const postMatch = location.pathname.match(/\/(?:posts|post)[/-]?(\d+)/i)
+            || (location.pathname.includes('/goto/') && location.search.match(/[?&]id=(\d+)/i))
+            || location.search.match(/[?&](?:posts|post)[/-]?(\d+)/i)
+            || location.search.match(/[?&]id=(\d+)/i);
+        if (postMatch && postMatch[1]) return postMatch[1];
+        return null;
+    }
+
+    function findTargetPost() {
+        const reqId = requestedPostTargetId();
+        if (reqId) {
+            const el = document.getElementById('post-' + reqId)
+                || document.getElementById('js-post-' + reqId)
+                || document.querySelector('[data-content="post-' + reqId + '"]')
+                || document.querySelector('article.message[data-content*="' + reqId + '"]')
+                || document.querySelector('[data-smg-target-post="' + reqId + '"]');
+            if (el) return el.closest('article.message, .message--post, .comment') || el;
+        }
+        const unreadPost = document.querySelector('article.message.is-unread');
+        if (unreadPost) return unreadPost;
+        return document.querySelector('article.message');
+    }
+
+    // A árvore da thread só é considerada completa quando o streaming do servidor
+    // terminou (document.readyState !== 'loading') E os marcadores estruturais do
+    // fim da lista de mensagens e rodapé do fórum já foram parseados.
+    function threadTreeIsComplete() {
+        if (document.readyState === 'loading') return false;
+        if (document.readyState === 'complete') return true;
+
+        const messages = document.querySelector('.block--messages, .block-body--messages');
+        if (!messages) return false;
+
+        // Rodapé da página (sempre o último bloco antes do fechamento do HTML)
+        const hasFooter = !!document.querySelector('.p-footer, .p-footer-inner, .p-breadcrumbs--bottom');
+
+        // Nós posteriores à lista de mensagens (garante que não pegou o pager do topo)
+        const hasBottomPager = !!document.querySelector('.block-outer.block-outer--after, .block--messages ~ .block-outer, .block-outer--after .pageNav');
+        const hasQuickReply = !!document.querySelector('.message--quickReply, .js-quickReply, form[action*="/add-reply"], .block--messages ~ .block');
+
+        return hasFooter || hasBottomPager || hasQuickReply;
+    }
+
+    // O skeleton aguarda as mídias de TODOS os posts da thread terem proporção e dimensões reais
+    // estabelecidas antes de liberar a tela, impedindo que a página 'dance' ou mude de scroll.
+    const PAINT_MEDIA_MAX_WAIT_MS = 3200;
+    let paintMediaDeadline = 0;
+    function threadMediaTreeIsReady(content) {
+        // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
+        if (document.readyState === 'loading') return false;
+        if (!paintMediaDeadline) paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
+        if (Date.now() >= paintMediaDeadline) return true;
+        if (!content) return true;
+
+        // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
+        const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
+        for (const img of imgs) {
+            if (img.dataset.smgFailed || img.classList.contains('smg-img-ready')) continue;
+            const ar = img.style.aspectRatio;
+            if (ar && ar !== '100 / 100') continue;
+            if (img.complete && img.naturalWidth && img.naturalHeight) continue;
+            return false;
+        }
+
+        // 2. Garante que todos os embeds e iframes de vídeo possuam seus wrappers de proporção montados
+        const iframes = content.querySelectorAll('article.message iframe');
+        for (const ifr of iframes) {
+            const wrap = ifr.closest('.generic2wide-iframe-div, .smg-dm-wrap, .smg-rg, [style*="aspect-ratio"]');
+            if (!wrap && !ifr.style.aspectRatio) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function paintPageIsReady(context) {
         if (!paintChromeIsReady()) return false;
         if (context.kind === PAINT_PAGE_KINDS.HOME) {
@@ -301,8 +397,25 @@
             const header = document.querySelector('.p-body-header');
             const messages = document.querySelector('.block--messages, .block-body--messages');
             if (!content || !header || !messages || header.dataset.smgThead !== '1' || header.dataset.smgUnified !== '1') return false;
+
+            // Árvore da página: a thread precisa ter seus nós de fechamento (footer/pager) recebidos do servidor
+            if (!threadTreeIsComplete()) return false;
+
             const posts = Array.from(content.querySelectorAll('article.message'));
             if (!posts.length) return false;
+
+            // Se foi requisitado um post específico na URL (ex: #post-123 ou /posts/123/),
+            // ele OBRIGATORIAMENTE precisa existir no DOM antes de liberar o loading
+            const reqId = requestedPostTargetId();
+            if (reqId) {
+                const targetEl = document.getElementById('post-' + reqId)
+                    || document.getElementById('js-post-' + reqId)
+                    || document.querySelector('[data-content="post-' + reqId + '"]')
+                    || document.querySelector('article.message[data-content*="' + reqId + '"]')
+                    || document.querySelector('[data-smg-target-post="' + reqId + '"]');
+                if (!targetEl) return false;
+            }
+
             // Garante que TODOS os posts estejam com o card estilizado E suas galerias montadas
             // antes de liberar a pintura inicial, impedindo que a página 'dance' na frente do usuário.
             const postsReady = posts.every(post => (post.dataset.smgCardReady === '1' || post.dataset.smgCardReady === 'skip')
@@ -310,7 +423,7 @@
             const commentsReady = Array.from(content.querySelectorAll('.message-responses .comment')).every(comment =>
                 comment.dataset.smgCcReady === '1' || comment.dataset.smgCcReady === 'skip'
             );
-            return postsReady && commentsReady;
+            return postsReady && commentsReady && threadMediaTreeIsReady(content);
         }
         if (context.kind === PAINT_PAGE_KINDS.LISTING || context.kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const items = paintListItems();
@@ -359,9 +472,19 @@
             paintRaf = 0;
             paintReleaseScheduled = false;
             if (!root.classList.contains('smg-page-pending')) return;
+            const reqId = requestedPostTargetId();
+            const target = reqId ? findTargetPost() : null;
             root.classList.remove('smg-page-pending', 'smg-home-pending');
             root.classList.add('smg-page-ready');
             if (context.kind === PAINT_PAGE_KINDS.HOME) root.classList.add('smg-home-ready');
+            if (target && target.scrollIntoView) {
+                try {
+                    target.scrollIntoView({ block: 'start', behavior: 'instant' });
+                } catch (e) {}
+                if (typeof armScrollStabilizer === 'function') {
+                    armScrollStabilizer(target);
+                }
+            }
             releasePageSkeleton();
         };
         const waitForStableFrames = framesLeft => {
@@ -394,6 +517,54 @@
         paintRaf = requestAnimationFrame(() => waitForStableFrames(PAINT_SETTLE_FRAMES));
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS };
+    function setupNavigationTransition() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return;
+        if (window._smgNavTransitionBound) return;
+        window._smgNavTransitionBound = true;
+
+        document.addEventListener('click', e => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest && e.target.closest('a[href]');
+            if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            const href = a.getAttribute('href') || a.href || '';
+            if (!href || href === '#' || href.startsWith('javascript:')) return;
+            if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
+            const xfClick = a.getAttribute('data-xf-click') || '';
+            if (xfClick && xfClick !== 'scroll-to' && xfClick !== 'preview-click') return;
+            if (a.closest('#smg-feed, .smg-feed, .smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
+
+            const isThreadNav = /\/(?:threads|posts|goto)\//i.test(href) || /[?&](?:threads|posts|goto)=/i.test(href);
+            const isPageNav = /(?:\/page-\d+|[?&]page=\d+)/i.test(href);
+            const isListingNav = /\/(?:forums|whats-new|watched|categories|account\/alerts)\//i.test(href);
+
+            if (isThreadNav || isPageNav || isListingNav) {
+                // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
+                if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+                    const pid = resolvePostIdFromHref(href);
+                    if (pid && findPostElementById(pid)) return;
+                }
+
+                const root = document.documentElement;
+                root.classList.add('smg-page-pending');
+                root.classList.remove('smg-page-ready');
+                const targetKind = isThreadNav ? PAINT_PAGE_KINDS.THREAD : (isListingNav ? PAINT_PAGE_KINDS.LISTING : classifyPaintPage().kind);
+                ensurePageSkeleton(targetKind);
+            }
+        }, { capture: true, passive: true });
+
+        window.addEventListener('pageshow', e => {
+            if (e.persisted) {
+                const root = document.documentElement;
+                root.classList.remove('smg-page-pending');
+                root.classList.add('smg-page-ready');
+                releasePageSkeleton();
+            }
+        });
+    }
+
+    if (typeof window !== 'undefined') {
+        window.setupNavigationTransition = setupNavigationTransition;
+        if (window.__TEST_MODE__) {
+            window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS, threadTreeIsComplete, threadMediaTreeIsReady, requestedPostTargetId, setupNavigationTransition };
+        }
     }

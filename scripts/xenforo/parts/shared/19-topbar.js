@@ -417,15 +417,14 @@
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
-            // ZONA DIREITA, ícone 3 — PAINEL LATERAL, logo à direita do avatar. Controle ÚNICO do rail:
-            // abre no painel lateral de Seguidos (Following).
-            // Leva o BADGE de seguidos não lidos: .smg-rt-watched é o alvo do sync reativo,
-            // e o valor inicial vem de getWatchedUnreadCount() pra não nascer mudo.
+            // ZONA DIREITA, ícone 3 — SINO de alertas: controle ÚNICO do painel lateral (abre/fecha o rail).
+            // Leva o BADGE de alertas não lidos (.smg-rt-alerts é o alvo do sync reativo). No celular some:
+            // lá o sino mora na navbar inferior.
             if (FEATURES.alertsDock) {
-                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, alertsBadgeCount());
-                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-alerts');
-                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
-                actions.appendChild(railBtn);
+                const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
+                bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
+                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
+                actions.appendChild(bellBtn);
             }
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
@@ -565,7 +564,7 @@
             };
             const sheetRow = it => it.divider
                 ? '<div class="smg-tb-popdiv"></div>'
-                : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
+                : '<a class="smg-tb-poprow"' + (it.id ? ' data-smg-id="' + it.id + '"' : '') + ' href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
                     '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
                     (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
@@ -584,9 +583,20 @@
             // um sheet vazio, o botão da navbar leva direto pro login.
             let uSheet = null;
             if (loggedIn) {
-                const uBody = accSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
+                // mobile-only: Following (watched threads) lives here now, right above Bookmarks
+                const sheetSections = accSections.map((sec, i) => i === 1
+                    ? [{ id: 'following', label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
+                    : sec);
+                const uBody = sheetSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
                         .map(sec => sec.map(sheetRow).join('')).join('<div class="smg-tb-popdiv"></div>');
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
+                const followRow = uSheet.querySelector('[data-smg-id="following"]');
+                if (followRow) followRow.addEventListener('click', e => {
+                    if (typeof openAlertsDock !== 'function') return;   // no rail → plain navigation to the list page
+                    e.preventDefault();
+                    smgSheetClose(uSheet);
+                    openAlertsDock('watched', false);
+                });
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X

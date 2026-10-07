@@ -53,13 +53,21 @@
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
 
-            
-            /* Anti-CLS para posts e galerias da thread */
-            article.message.smg-pc {
+            /* Anti-CLS para posts e galerias da thread:
+               O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
+               embeds, vídeos) têm overflow-anchor: none para não disputarem a âncora enquanto carregam. */
+            article.message.smg-pc,
+            .block--messages,
+            .block-body--messages {
                 overflow-anchor: auto !important;
             }
-            .auto-image-grid {
-                overflow-anchor: auto !important;
+            .auto-image-grid,
+            .auto-image-grid > *,
+            .auto-image-grid img.bbImage,
+            .smg-dm-wrap,
+            .smg-rg,
+            .generic2wide-iframe-div {
+                overflow-anchor: none !important;
             }
             img.bbImage[style*="aspect-ratio"] {
                 width: 100% !important;
@@ -542,13 +550,75 @@
             .smg-linktext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-imglink-fallback:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-bd2, rgba(255,255,255,0.2)); color: var(--smg-link, #ff77b2) !important; }
 
-            /* card de link de file-host (pixeldrain/bunkr): thumb(s) à ESQUERDA + host + sub (galeria/contagem) + ↗. O card é o próprio <a>. */
-            .smg-fhcard { display: flex; align-items: center; gap: 4px; width: 100%; box-sizing: border-box; margin: 8px 0; padding: 6px; border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)); border-radius: 14px; background: var(--smg-s1, #16171b); transition: border-color .15s ease, box-shadow .15s ease, transform .12s ease; }
-            .smg-fhcard:hover { border-color: var(--smg-bd2, rgba(255,255,255,0.22)); box-shadow: 0 6px 20px rgba(0,0,0,0.32); }
-            .smg-fhcard-main { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; min-width: 0; padding: 4px; border-radius: 10px; text-decoration: none !important; color: var(--smg-tx, #e7e7ea) !important; }
-            .smg-fhcard-main:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); }
-            .smg-fhcard-btn { flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--smg-link, #ff77b2); cursor: pointer; text-decoration: none !important; transition: background .14s ease; }
-            .smg-fhcard-btn:hover { background: var(--smg-s2, rgba(255,255,255,0.08)); }
+            /* card de link de file-host (pixeldrain/bunkr/gofile): estilo limpo, escuro e neutro */
+            .smg-fhcard {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+                box-sizing: border-box;
+                margin: 8px 0;
+                padding: 8px 12px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 12px;
+                background: #181920;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+            }
+            .smg-fhcard:hover {
+                border-color: rgba(255, 255, 255, 0.25);
+                background: #1f2029;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+            }
+            .smg-fhcard,
+            .smg-fhcard * {
+                text-decoration: none !important;
+                filter: none !important;
+            }
+            .smg-fhcard-main {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex: 1 1 auto;
+                min-width: 0;
+                padding: 4px;
+                border-radius: 8px;
+                text-decoration: none !important;
+                color: var(--smg-tx, #e7e7ea) !important;
+                filter: none !important;
+                transition: opacity .15s ease;
+            }
+            .smg-fhcard-main:hover {
+                background: transparent;
+                text-decoration: none !important;
+                filter: none !important;
+            }
+            .smg-fhcard-main:hover .smg-fhcard-host {
+                color: #fff !important;
+            }
+            .smg-fhcard-btn {
+                flex: 0 0 auto;
+                align-self: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 9px;
+                background: rgba(255,255,255,0.05);
+                color: rgba(255,255,255,0.75);
+                cursor: pointer;
+                text-decoration: none !important;
+                filter: none !important;
+                transition: background .14s ease, border-color .14s ease, color .14s ease;
+            }
+            .smg-fhcard-btn:hover {
+                background: rgba(255,255,255,0.12);
+                border-color: rgba(255,255,255,0.25);
+                color: #fff;
+                filter: none !important;
+            }
             .smg-fhcard-btn svg { width: 17px; height: 17px; }
             .smg-fhcard-copied { color: #46d369 !important; }
             /* preview RICO: mosaico de até 4 thumbs + badge de contagem + "+N" no último */
@@ -993,6 +1063,17 @@
                 width: auto !important;
                 max-width: 100% !important;
             }
+            /* Vertical standalone images: wrapper is a full-width block so the img width (a % of it) resolves from
+               the column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *),
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                pointer-events: none;
+            }
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *) > img.bbImage,
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) img.bbImage { pointer-events: auto; }
             .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
                 max-width: min(75%, 880px) !important;
                 max-height: var(--smg-media-h) !important;
@@ -1134,46 +1215,112 @@
             /* ---- MÍDIA MORTA (buildDeadBox): um estado de falha só p/ imagem/vídeo/embed 404 ----
                Fica DEPOIS de .smg-rg-fail e .smg-turbo-error de propósito: a caixa acumula essas classes (outros
                passes as usam como marcador de "este slot já resolveu") e, com a mesma especificidade, quem vem
-               por último vence. Borda tracejada = o vocabulário de "não é conteúdo, é um buraco". */
+               por último vence. */
             .smg-dead {
                 position: relative;
                 display: flex !important;
-                flex-direction: row;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 10px;
-                box-sizing: border-box;
-                width: 100%;
-                max-width: 100%;
-                min-height: 38px;
-                margin: 3px 0;
-                padding: 8px 14px;
-                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2));
-                border-radius: 8px;
-                background: var(--smg-s1, #16171b);
-                color: var(--smg-tx, #e7e7ea) !important;
-                text-align: left;
-                text-decoration: none !important;
-                overflow: hidden;
-                aspect-ratio: auto !important;
-                transition: border-color .15s ease, background .15s ease;
-            }
-            .smg-dead:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-link, #ff77b2); }
-            .smg-dead--media { max-width: none; min-height: 0; aspect-ratio: 16 / 9; max-height: var(--smg-media-h); margin: 16px auto; }
-            .smg-turbo-slot > .smg-dead { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; aspect-ratio: auto; border-radius: 0; }
-            .smg-dead-code { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #ff6b6b; flex-shrink: 0; white-space: nowrap; }
-            .smg-dead-code svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.9; }
-            .smg-dead-code b:empty { display: none; }
-            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.65); overflow-wrap: anywhere; flex: 1 1 auto; }
-            /* No mosaico/grade: os cards de erro viram itens de lista ocupando a largura total (span-all), empilhados horizontalmente */
-            html.smg-masonry-on .auto-image-grid .smg-dead {
-                grid-column: 1 / -1 !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 10px !important;
+                box-sizing: border-box !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                min-height: 38px !important;
+                min-height: 42px !important;
+                margin: 4px 0 !important;
+                padding: 10px 16px !important;
+                border: 1px solid rgba(255, 75, 75, 0.32) !important;
+                border-radius: 10px !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1, #16171b) !important;
+                color: var(--smg-tx, #e7e7ea) !important;
+                text-align: left !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                aspect-ratio: auto !important;
+                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
+            }
+            .smg-dead:hover {
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2, #202127) !important;
+                border-color: rgba(255, 95, 95, 0.55) !important;
+                box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
+            }
+            .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: 16px auto !important; }
+            .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
+            .smg-dead-code {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 2px 8px !important;
+                border-radius: 6px !important;
+                background: rgba(255, 75, 75, 0.2) !important;
+                border: 1px solid rgba(255, 75, 75, 0.4) !important;
+                font-size: 13px !important;
+                font-weight: 800 !important;
+                color: #ff6b6b !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+            }
+            .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
+            .smg-dead-code b:empty { display: none; }
+            .smg-dead-sep { color: rgba(255,255,255,0.3) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
+            .smg-dead-sub { font-size: 13px !important; font-weight: 500 !important; color: rgba(255,255,255,0.75) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            /* No mosaico/grade: os cards de erro viram itens ocupando a largura total (span-all), empilhados horizontalmente */
+            html.smg-masonry-on .auto-image-grid .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > .smg-dead {
+                grid-column: 1 / -1 !important;
+                column-span: all !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 42px !important;
                 height: auto !important;
                 aspect-ratio: auto !important;
-                margin: 2px 0 !important;
+                margin: 4px 0 !important;
+                display: flex !important;
+            }
+            /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
+                background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                border-radius: 8px !important;
+                position: relative !important;
+                min-height: 120px;
+                aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
+                overflow: hidden !important;
+            }
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+                background-size: 200% 100%;
+                animation: smg-img-shimmer 1.8s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 1;
+            }
+            /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
+                color: var(--smg-link, #ff77b2) !important;
+                font-weight: 500;
+                text-decoration: underline !important;
+                text-decoration-color: var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
+                text-underline-offset: 3px !important;
+                text-decoration-thickness: 1px !important;
+                transition: color .15s ease, text-decoration-color .15s ease;
+            }
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
+                color: #fff !important;
+                text-decoration-color: #fff !important;
+                filter: none !important;
+            }
+            .smg-fhcard, .smg-fhcard *,
+            .smg-dead, .smg-dead *,
+            .smg-link-chip, .smg-link-chip * {
+                text-decoration: none !important;
+                filter: none !important;
             }
             .smg-rg-v {
                 position: absolute; inset: 0;    /* preenche a CAIXA (aspect-ratio do .smg-rg); inset:0 evita o bug de %-height não resolver com max-height */
@@ -1182,33 +1329,53 @@
                 background: #000;
                 cursor: pointer;
             }
-            /* SKELETON de verdade: enquanto carrega, a caixa (com aspect-ratio = altura reservada) mostra SÓ
-               shimmer + spinner; o player (vídeo + controles + badge) fica ESCONDIDO até o vídeo ter um frame
-               real (o JS tira .smg-rg-loading no 'loadeddata'). */
-            .smg-rg.smg-rg-loading { background: #141414; overflow: hidden; }   /* overflow: clipa o shimmer transladado (abaixo) */
-            .smg-rg.smg-rg-loading > .smg-rg-v,
-            .smg-rg.smg-rg-loading > .smg-rgc-flash,
-            .smg-rg.smg-rg-loading > .smg-rgc-bottom,
-            .smg-rg.smg-rg-loading > .smg-rgc-src { opacity: 0 !important; pointer-events: none !important; }   /* skeleton esconde o vídeo+controles; a caixa (aspect-ratio do .smg-rg) já reserva o espaço */
-            .smg-rg.smg-rg-loading::before {
-                content: ""; position: absolute; inset: 0; z-index: 1;
-                /* PERF: shimmer por TRANSFORM (composita; mesmo padrão do .smg-gallery-skel) — bg-position repintava o skeleton inteiro (até 1400px) por frame */
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 50%, transparent);
-                transform: translateX(-100%);
-                animation: smg-skel-shimmer 1.25s ease-in-out infinite;
-            }
+            /* LOADING NO PLAYER: o vídeo e seu poster NUNCA somem com opacity 0! Mostra spinner central sobre o poster */
+            .smg-rg.smg-rg-loading { background: #141414; overflow: hidden; }
+            .smg-rg.smg-rg-loading > .smg-rg-v { opacity: 1 !important; pointer-events: auto; }
+            .smg-rg.smg-rg-loading > .smg-rgc-flash { opacity: 0 !important; pointer-events: none !important; }
+            .smg-rg.smg-rg-loading > .smg-rgc-bottom { opacity: 0.6; pointer-events: none; }
             .smg-rg.smg-rg-loading::after {
                 content: "";
                 position: absolute;
                 top: 50%; left: 50%;
-                width: 42px; height: 42px;
-                margin: -21px 0 0 -21px;
+                width: 46px; height: 46px;
+                margin: -23px 0 0 -23px;
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.15);
-                border-top-color: rgba(255,255,255,0.85);
+                border: 3px solid rgba(255,255,255,0.2);
+                border-top-color: var(--smg-link, #ff77b2);
                 animation: smg-spin 0.8s linear infinite;
-                z-index: 2;
+                z-index: 5;
+                pointer-events: none;
             }
+            /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) */
+            .smg-rg-error {
+                position: absolute; inset: 0; z-index: 8;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 12px; padding: 20px;
+                background: rgba(18, 19, 24, 0.94);
+                backdrop-filter: blur(8px);
+                color: #fff; text-align: center; box-sizing: border-box;
+            }
+            .smg-rg-error-badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                padding: 6px 14px; border-radius: 999px;
+                background: rgba(255, 75, 75, 0.18);
+                border: 1px solid rgba(255, 75, 75, 0.45);
+                color: #ff5e5e; font-size: 14px; font-weight: 800; letter-spacing: 0.4px;
+            }
+            .smg-rg-error-badge svg { width: 17px; height: 17px; fill: none !important; stroke: currentColor; }
+            .smg-rg-error-msg { font-size: 13px; color: rgba(255,255,255,0.75); max-width: 85%; line-height: 1.4; overflow-wrap: anywhere; }
+            .smg-rg-error-acts { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+            .smg-rg-error-btn {
+                display: inline-flex; align-items: center; gap: 6px;
+                padding: 6px 14px; border-radius: 8px;
+                font-size: 12.5px; font-weight: 600; text-decoration: none !important;
+                cursor: pointer; transition: background .15s ease, color .15s ease;
+            }
+            .smg-rg-error-btn--open { background: var(--smg-link, #ff77b2); color: #fff !important; border: 0; }
+            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong, #d14d8f); }
+            .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
+            .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
                poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }

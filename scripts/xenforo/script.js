@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.44
+// @version      3.12.45
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -128,9 +128,8 @@
     const SMG_CRITICAL_PAINT_STYLE_ID = 'smg-critical-paint';
     const smgCriticalPaintRoot = document.documentElement;
     const smgCriticalPaintPath = location.pathname || '/';
-    const smgCriticalPaintRoute = smgCriticalPaintPath === '/'
-        || /\/(?:threads|forums|watched|whats-new|tags|categories|search)(?:\/|$)/i.test(smgCriticalPaintPath)
-        || /\/account\/bookmarks(?:\/|$)/i.test(smgCriticalPaintPath);
+    const smgCriticalPaintSearch = location.search || '';
+    const smgCriticalPaintRoute = true;
     const smgCriticalPaintDisabled = (() => {
         try {
             if (typeof GM_getValue === 'function' && String(GM_getValue('smg-off', '0')) === '1') return true;
@@ -190,7 +189,7 @@
         infiniteScrollTimeline: true, // rolagem infinita na timeline / feed
         infiniteScrollWatched: true,  // rolagem infinita em fóruns / tópicos seguidos (watched)
         thumbPlaceholders: true,    // marca no lugar de thumb ausente/quebrada (grid/lista)
-        hoverPreview: true,         // preview maior da thumb ao passar o mouse (desktop)
+        replaceThumbsWithFull: false, // substitui miniaturas pelas imagens finais em resolução completa (desabilitado por padrão)
         homeRemake: true,           // reformula a home (cards/atalhos/sidebar pro topo) — off = home original
         customFavicon: true,        // troca a favicon pela marca SMG (SMG only)
         headerNotices: true,        // recolhe os avisos (.notices--block) num iconezinho dentro da página
@@ -237,7 +236,7 @@
         ] },
         { section: 'Images', items: [
             { key: 'autoFullImages', label: 'Image grid in posts', desc: { en: "Lays each post's images out in a masonry mosaic and loads them at medium quality to save data. Off, it keeps the original thumbnails, with no grid.", pt: 'Dispõe as imagens de cada post num mosaico (masonry) e as carrega em qualidade média, para poupar dados. Desligado, mantém as miniaturas originais, sem grade.' } },
-            { key: 'hoverPreview', label: 'Enlarged preview on hover', desc: { en: 'Shows a larger version of the thumbnail when the cursor rests over it (desktop only).', pt: 'Mostra uma versão maior da miniatura quando o cursor para sobre ela (apenas no desktop).' } },
+            { key: 'replaceThumbsWithFull', label: 'Replace thumbnails with full images', desc: { en: 'Replaces post thumbnails with their full resolution images directly in the post (uses more data).', pt: 'Substitui as miniaturas dos posts pelas imagens finais em resolução completa diretamente no post (consome mais dados).' } },
             { key: 'thumbPlaceholders', label: 'Placeholder for missing thumbnails', desc: { en: 'Puts a branded badge in place of thumbnails that are missing or failed to load.', pt: 'Coloca um selo com a identidade do site no lugar de miniaturas que faltam ou falharam ao carregar.' } },
         ] },
         { section: 'Videos', items: [
@@ -268,6 +267,10 @@
         ] },
     ];
 
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.__configExports = { DEFAULT_FEATURES, FEATURES, SETTINGS_META, saveFeatures };
+    }
+
     // =========================================================
     // i18n: traduz a UI QUE A GENTE INJETA conforme o idioma do site (<html lang>).
     // Default = inglês (as próprias chaves). PT-BR quando o XF está em pt-*.
@@ -285,7 +288,7 @@
         'Redesigned top bar': 'Barra superior redesenhada', 'Reworked homepage': 'Página inicial reformulada',
         'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado',
         'Image grid in posts': 'Grade de imagens nos posts',
-        'Enlarged preview on hover': 'Prévia ampliada ao passar o mouse', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
+        'Replace thumbnails with full images': 'Substituir miniaturas pelas imagens finais', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
         'RedGifs — load automatically': 'RedGifs — carregar automaticamente', 'RedGifs — built-in player': 'RedGifs — player próprio',
         'Turbo.cr — show videos': 'Turbo.cr — exibir vídeos', 'Turbo.cr — built-in player': 'Turbo.cr — player próprio',
         'Saint.su — show videos': 'Saint.su — exibir vídeos', 'Direct media from CDNs': 'Mídia direta de CDNs',
@@ -675,13 +678,21 @@
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
 
-            
-            /* Anti-CLS para posts e galerias da thread */
-            article.message.smg-pc {
+            /* Anti-CLS para posts e galerias da thread:
+               O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
+               embeds, vídeos) têm overflow-anchor: none para não disputarem a âncora enquanto carregam. */
+            article.message.smg-pc,
+            .block--messages,
+            .block-body--messages {
                 overflow-anchor: auto !important;
             }
-            .auto-image-grid {
-                overflow-anchor: auto !important;
+            .auto-image-grid,
+            .auto-image-grid > *,
+            .auto-image-grid img.bbImage,
+            .smg-dm-wrap,
+            .smg-rg,
+            .generic2wide-iframe-div {
+                overflow-anchor: none !important;
             }
             img.bbImage[style*="aspect-ratio"] {
                 width: 100% !important;
@@ -1164,13 +1175,75 @@
             .smg-linktext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-imglink-fallback:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-bd2, rgba(255,255,255,0.2)); color: var(--smg-link, #ff77b2) !important; }
 
-            /* card de link de file-host (pixeldrain/bunkr): thumb(s) à ESQUERDA + host + sub (galeria/contagem) + ↗. O card é o próprio <a>. */
-            .smg-fhcard { display: flex; align-items: center; gap: 4px; width: 100%; box-sizing: border-box; margin: 8px 0; padding: 6px; border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)); border-radius: 14px; background: var(--smg-s1, #16171b); transition: border-color .15s ease, box-shadow .15s ease, transform .12s ease; }
-            .smg-fhcard:hover { border-color: var(--smg-bd2, rgba(255,255,255,0.22)); box-shadow: 0 6px 20px rgba(0,0,0,0.32); }
-            .smg-fhcard-main { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; min-width: 0; padding: 4px; border-radius: 10px; text-decoration: none !important; color: var(--smg-tx, #e7e7ea) !important; }
-            .smg-fhcard-main:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); }
-            .smg-fhcard-btn { flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--smg-link, #ff77b2); cursor: pointer; text-decoration: none !important; transition: background .14s ease; }
-            .smg-fhcard-btn:hover { background: var(--smg-s2, rgba(255,255,255,0.08)); }
+            /* card de link de file-host (pixeldrain/bunkr/gofile): estilo limpo, escuro e neutro */
+            .smg-fhcard {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+                box-sizing: border-box;
+                margin: 8px 0;
+                padding: 8px 12px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 12px;
+                background: #181920;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+            }
+            .smg-fhcard:hover {
+                border-color: rgba(255, 255, 255, 0.25);
+                background: #1f2029;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+            }
+            .smg-fhcard,
+            .smg-fhcard * {
+                text-decoration: none !important;
+                filter: none !important;
+            }
+            .smg-fhcard-main {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex: 1 1 auto;
+                min-width: 0;
+                padding: 4px;
+                border-radius: 8px;
+                text-decoration: none !important;
+                color: var(--smg-tx, #e7e7ea) !important;
+                filter: none !important;
+                transition: opacity .15s ease;
+            }
+            .smg-fhcard-main:hover {
+                background: transparent;
+                text-decoration: none !important;
+                filter: none !important;
+            }
+            .smg-fhcard-main:hover .smg-fhcard-host {
+                color: #fff !important;
+            }
+            .smg-fhcard-btn {
+                flex: 0 0 auto;
+                align-self: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 9px;
+                background: rgba(255,255,255,0.05);
+                color: rgba(255,255,255,0.75);
+                cursor: pointer;
+                text-decoration: none !important;
+                filter: none !important;
+                transition: background .14s ease, border-color .14s ease, color .14s ease;
+            }
+            .smg-fhcard-btn:hover {
+                background: rgba(255,255,255,0.12);
+                border-color: rgba(255,255,255,0.25);
+                color: #fff;
+                filter: none !important;
+            }
             .smg-fhcard-btn svg { width: 17px; height: 17px; }
             .smg-fhcard-copied { color: #46d369 !important; }
             /* preview RICO: mosaico de até 4 thumbs + badge de contagem + "+N" no último */
@@ -1615,6 +1688,17 @@
                 width: auto !important;
                 max-width: 100% !important;
             }
+            /* Vertical standalone images: wrapper is a full-width block so the img width (a % of it) resolves from
+               the column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *),
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                pointer-events: none;
+            }
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *) > img.bbImage,
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) img.bbImage { pointer-events: auto; }
             .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
                 max-width: min(75%, 880px) !important;
                 max-height: var(--smg-media-h) !important;
@@ -1756,46 +1840,112 @@
             /* ---- MÍDIA MORTA (buildDeadBox): um estado de falha só p/ imagem/vídeo/embed 404 ----
                Fica DEPOIS de .smg-rg-fail e .smg-turbo-error de propósito: a caixa acumula essas classes (outros
                passes as usam como marcador de "este slot já resolveu") e, com a mesma especificidade, quem vem
-               por último vence. Borda tracejada = o vocabulário de "não é conteúdo, é um buraco". */
+               por último vence. */
             .smg-dead {
                 position: relative;
                 display: flex !important;
-                flex-direction: row;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 10px;
-                box-sizing: border-box;
-                width: 100%;
-                max-width: 100%;
-                min-height: 38px;
-                margin: 3px 0;
-                padding: 8px 14px;
-                border: 1px dashed var(--smg-bd2, rgba(255,255,255,0.2));
-                border-radius: 8px;
-                background: var(--smg-s1, #16171b);
-                color: var(--smg-tx, #e7e7ea) !important;
-                text-align: left;
-                text-decoration: none !important;
-                overflow: hidden;
-                aspect-ratio: auto !important;
-                transition: border-color .15s ease, background .15s ease;
-            }
-            .smg-dead:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-link, #ff77b2); }
-            .smg-dead--media { max-width: none; min-height: 0; aspect-ratio: 16 / 9; max-height: var(--smg-media-h); margin: 16px auto; }
-            .smg-turbo-slot > .smg-dead { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; aspect-ratio: auto; border-radius: 0; }
-            .smg-dead-code { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #ff6b6b; flex-shrink: 0; white-space: nowrap; }
-            .smg-dead-code svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none !important; stroke: currentColor; opacity: 0.9; }
-            .smg-dead-code b:empty { display: none; }
-            .smg-dead-sub { font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,0.65); overflow-wrap: anywhere; flex: 1 1 auto; }
-            /* No mosaico/grade: os cards de erro viram itens de lista ocupando a largura total (span-all), empilhados horizontalmente */
-            html.smg-masonry-on .auto-image-grid .smg-dead {
-                grid-column: 1 / -1 !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 10px !important;
+                box-sizing: border-box !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                min-height: 38px !important;
+                min-height: 42px !important;
+                margin: 4px 0 !important;
+                padding: 10px 16px !important;
+                border: 1px solid rgba(255, 75, 75, 0.32) !important;
+                border-radius: 10px !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1, #16171b) !important;
+                color: var(--smg-tx, #e7e7ea) !important;
+                text-align: left !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                aspect-ratio: auto !important;
+                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
+            }
+            .smg-dead:hover {
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2, #202127) !important;
+                border-color: rgba(255, 95, 95, 0.55) !important;
+                box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
+            }
+            .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: 16px auto !important; }
+            .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
+            .smg-dead-code {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 2px 8px !important;
+                border-radius: 6px !important;
+                background: rgba(255, 75, 75, 0.2) !important;
+                border: 1px solid rgba(255, 75, 75, 0.4) !important;
+                font-size: 13px !important;
+                font-weight: 800 !important;
+                color: #ff6b6b !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+            }
+            .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
+            .smg-dead-code b:empty { display: none; }
+            .smg-dead-sep { color: rgba(255,255,255,0.3) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
+            .smg-dead-sub { font-size: 13px !important; font-weight: 500 !important; color: rgba(255,255,255,0.75) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            /* No mosaico/grade: os cards de erro viram itens ocupando a largura total (span-all), empilhados horizontalmente */
+            html.smg-masonry-on .auto-image-grid .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > .smg-dead {
+                grid-column: 1 / -1 !important;
+                column-span: all !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 42px !important;
                 height: auto !important;
                 aspect-ratio: auto !important;
-                margin: 2px 0 !important;
+                margin: 4px 0 !important;
+                display: flex !important;
+            }
+            /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
+                background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                border-radius: 8px !important;
+                position: relative !important;
+                min-height: 120px;
+                aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
+                overflow: hidden !important;
+            }
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+                background-size: 200% 100%;
+                animation: smg-img-shimmer 1.8s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 1;
+            }
+            /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
+                color: var(--smg-link, #ff77b2) !important;
+                font-weight: 500;
+                text-decoration: underline !important;
+                text-decoration-color: var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
+                text-underline-offset: 3px !important;
+                text-decoration-thickness: 1px !important;
+                transition: color .15s ease, text-decoration-color .15s ease;
+            }
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
+                color: #fff !important;
+                text-decoration-color: #fff !important;
+                filter: none !important;
+            }
+            .smg-fhcard, .smg-fhcard *,
+            .smg-dead, .smg-dead *,
+            .smg-link-chip, .smg-link-chip * {
+                text-decoration: none !important;
+                filter: none !important;
             }
             .smg-rg-v {
                 position: absolute; inset: 0;    /* preenche a CAIXA (aspect-ratio do .smg-rg); inset:0 evita o bug de %-height não resolver com max-height */
@@ -1804,33 +1954,53 @@
                 background: #000;
                 cursor: pointer;
             }
-            /* SKELETON de verdade: enquanto carrega, a caixa (com aspect-ratio = altura reservada) mostra SÓ
-               shimmer + spinner; o player (vídeo + controles + badge) fica ESCONDIDO até o vídeo ter um frame
-               real (o JS tira .smg-rg-loading no 'loadeddata'). */
-            .smg-rg.smg-rg-loading { background: #141414; overflow: hidden; }   /* overflow: clipa o shimmer transladado (abaixo) */
-            .smg-rg.smg-rg-loading > .smg-rg-v,
-            .smg-rg.smg-rg-loading > .smg-rgc-flash,
-            .smg-rg.smg-rg-loading > .smg-rgc-bottom,
-            .smg-rg.smg-rg-loading > .smg-rgc-src { opacity: 0 !important; pointer-events: none !important; }   /* skeleton esconde o vídeo+controles; a caixa (aspect-ratio do .smg-rg) já reserva o espaço */
-            .smg-rg.smg-rg-loading::before {
-                content: ""; position: absolute; inset: 0; z-index: 1;
-                /* PERF: shimmer por TRANSFORM (composita; mesmo padrão do .smg-gallery-skel) — bg-position repintava o skeleton inteiro (até 1400px) por frame */
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 50%, transparent);
-                transform: translateX(-100%);
-                animation: smg-skel-shimmer 1.25s ease-in-out infinite;
-            }
+            /* LOADING NO PLAYER: o vídeo e seu poster NUNCA somem com opacity 0! Mostra spinner central sobre o poster */
+            .smg-rg.smg-rg-loading { background: #141414; overflow: hidden; }
+            .smg-rg.smg-rg-loading > .smg-rg-v { opacity: 1 !important; pointer-events: auto; }
+            .smg-rg.smg-rg-loading > .smg-rgc-flash { opacity: 0 !important; pointer-events: none !important; }
+            .smg-rg.smg-rg-loading > .smg-rgc-bottom { opacity: 0.6; pointer-events: none; }
             .smg-rg.smg-rg-loading::after {
                 content: "";
                 position: absolute;
                 top: 50%; left: 50%;
-                width: 42px; height: 42px;
-                margin: -21px 0 0 -21px;
+                width: 46px; height: 46px;
+                margin: -23px 0 0 -23px;
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.15);
-                border-top-color: rgba(255,255,255,0.85);
+                border: 3px solid rgba(255,255,255,0.2);
+                border-top-color: var(--smg-link, #ff77b2);
                 animation: smg-spin 0.8s linear infinite;
-                z-index: 2;
+                z-index: 5;
+                pointer-events: none;
             }
+            /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) */
+            .smg-rg-error {
+                position: absolute; inset: 0; z-index: 8;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 12px; padding: 20px;
+                background: rgba(18, 19, 24, 0.94);
+                backdrop-filter: blur(8px);
+                color: #fff; text-align: center; box-sizing: border-box;
+            }
+            .smg-rg-error-badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                padding: 6px 14px; border-radius: 999px;
+                background: rgba(255, 75, 75, 0.18);
+                border: 1px solid rgba(255, 75, 75, 0.45);
+                color: #ff5e5e; font-size: 14px; font-weight: 800; letter-spacing: 0.4px;
+            }
+            .smg-rg-error-badge svg { width: 17px; height: 17px; fill: none !important; stroke: currentColor; }
+            .smg-rg-error-msg { font-size: 13px; color: rgba(255,255,255,0.75); max-width: 85%; line-height: 1.4; overflow-wrap: anywhere; }
+            .smg-rg-error-acts { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+            .smg-rg-error-btn {
+                display: inline-flex; align-items: center; gap: 6px;
+                padding: 6px 14px; border-radius: 8px;
+                font-size: 12.5px; font-weight: 600; text-decoration: none !important;
+                cursor: pointer; transition: background .15s ease, color .15s ease;
+            }
+            .smg-rg-error-btn--open { background: var(--smg-link, #ff77b2); color: #fff !important; border: 0; }
+            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong, #d14d8f); }
+            .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
+            .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
                poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
@@ -3359,7 +3529,6 @@
                 .smg-tb-actions > * { display: none !important; }
                 .smg-tb-actions > .smg-tb-searchbtn,
                 .smg-tb-actions > .smg-tb-account,
-                .smg-tb-actions > .smg-tb-railbtn,
                 html.smg-guest .smg-tb-actions > .smg-tb-loginbtn { display: inline-flex !important; }
                 .smg-tb-act, .smg-tb-account { width: 44px; height: 44px; }
                 .smg-tb-act svg { width: 21px; height: 21px; }
@@ -3419,9 +3588,11 @@
 
             /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
                no mobile esses botões continuam (viram a navbar inferior) */
+            /* Following no longer lives in the bottom navbar: it moved into the mobile account sheet (the node stays so the badge sync keeps working) */
+            #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-alerts, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-watched, #smg-nav-alerts, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -7267,10 +7438,11 @@
                POST estilo REDDIT (.smg-pc no <article>): 1 coluna · header · conteúdo · action bar.
                O JS moveu os nativos pro card; aqui esconde os containers esvaziados e estiliza.
                ============================================================ */
-            /* contain layout+style (SEM paint/size): mutação intra-post (player montando, masonry, smg-img-ready)
-               não invalida o layout dos outros N posts. abs/fixed: nada dentro do post ancora fora dele
-               (morepop é absolute no morewrap relative); medidas via getBoundingClientRect seguem normais. */
-            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: layout style; }
+            /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
+               de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
+               overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
+            html.smg-thread .block--messages, html.smg-thread .block-body--messages { overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
             html.smg-thread .smg-pc:hover { border-color: rgba(255,255,255,0.22) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
@@ -8416,8 +8588,8 @@
             .smg-aldock-list .smg-al-title { font-size: 14.5px; }
             .smg-aldock-list li.alert { padding: 14px 15px; }
             /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
-            .smg-tb-railbtn.active,
-            html.smg-aldock-on .smg-tb-railbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
+            .smg-tb-bellbtn.active,
+            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1099px) and (min-width: 601px) {
@@ -8425,7 +8597,7 @@
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
-                .smg-tb-railbtn { display: none !important; }
+                .smg-tb-bellbtn { display: none !important; }
             }
             /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
                página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
@@ -8439,7 +8611,7 @@
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
                 .smg-aldock-grip { display: none !important; }        /* não se arrasta largura em tela cheia */
-                .smg-tb-railbtn { display: none !important; }         /* o controle é o sino da navbar */
+                .smg-tb-bellbtn { display: none !important; }         /* o controle é o sino da navbar inferior */
                 /* respeita as barras do sistema (notch em cima, gesto embaixo) */
                 .smg-aldock-head { padding-top: calc(10px + env(safe-area-inset-top)); }
                 .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
@@ -9633,8 +9805,9 @@
         const code = document.createElement('span'); code.className = 'smg-dead-code';
         code.innerHTML = ICONS.warn;
         const num = document.createElement('b'); code.appendChild(num);
+        const sep = document.createElement('span'); sep.className = 'smg-dead-sep'; sep.textContent = '·';
         const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
-        a.append(code, sub);
+        a.append(code, sep, sub);
         const paint = st => {
             const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
             num.textContent = r.code;
@@ -10660,24 +10833,73 @@
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
     let thumbIO = null, medIO = null, fullIO = null;
+    // Swaps in a higher-quality file only once it is downloaded and decoded, so the thumbnail stays visible until
+    // the replacement can paint in one frame (no blank/flash). The box size never depends on the file (see
+    // setVerticalMaxWidth / the wide rules), so the swap cannot move the page. A failed upgrade keeps the thumbnail.
+    function swapImgSrc(img, url) {
+        if (!img || !url) return;
+        const targetAbs = absUrl(url);
+        const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+        if (!targetAbs || currentAbs === targetAbs || img.dataset.smgSwapping === targetAbs) return;
+        img.dataset.smgSwapping = targetAbs;
+        if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+            img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+        }
+        if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
+            delete img.dataset.smgSwapping;
+            img.referrerPolicy = 'no-referrer';
+            img.src = targetAbs;
+            const grid = img.closest('.auto-image-grid');
+            if (grid) scheduleRelayout(grid);
+            return;
+        }
+        const pre = new Image();
+        pre.referrerPolicy = 'no-referrer';
+        const apply = () => {
+            if (img.dataset.smgSwapping === targetAbs) {
+                delete img.dataset.smgSwapping;
+                if (img.isConnected) {
+                    img.referrerPolicy = 'no-referrer';
+                    img.src = targetAbs;
+                    const grid = img.closest('.auto-image-grid');
+                    if (grid) scheduleRelayout(grid);
+                }
+            }
+        };
+        pre.onload = () => {
+            (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
+        };
+        pre.onerror = () => {
+            if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+        };
+        pre.decoding = 'async';
+        pre.src = targetAbs;
+        if (pre.complete && pre.naturalWidth) {
+            apply();
+        }
+    }
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
     function getMedIO() {     // troca pra MÉDIA (.md.) mais perto da tela (thumb já dá o tamanho → swap sem flash)
         return medIO || (medIO = makeLazyIO(img => {
             const med = img.dataset.smgMed;
-            if (med && img.getAttribute('src') !== med) img.src = med;
+            if (med && img.getAttribute('src') !== med) swapImgSrc(img, med);
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
     }
-    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (qualidade cristalina)
+    function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (ou em todas se replaceThumbsWithFull estiver ativo)
         return fullIO || (fullIO = makeLazyIO(img => {
-            if (img.closest && img.closest('.auto-image-grid')) return;
+            if (!FEATURES.replaceThumbsWithFull && img.closest && img.closest('.auto-image-grid')) return;
             const full = img.dataset.smgFull;
-            if (full && img.getAttribute('src') !== full) {
-                if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+            if (full) {
+                const targetAbs = absUrl(full);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                    }
+                    swapImgSrc(img, targetAbs);
                 }
-                img.src = full;
             }
         }, { rootMargin: '1200px 0px' }));
     }
@@ -10890,6 +11112,96 @@
         return null;
     }
 
+    function resolveFullImageUrl(img) {
+        if (!img) return '';
+        if (img.dataset && img.dataset.smgFull) return absUrl(img.dataset.smgFull);
+
+        const rawSrc = img.currentSrc || img.getAttribute('src') || img.src || '';
+        let src = rawSrc;
+        if (!/^https?:/i.test(src) && !/^\//.test(src)) {
+            src = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original') || src;
+        }
+
+        // 1. Hosts e padrões reconhecidos pelo getBigUrl (.md., .th., imgbox _t->_o, pixhost thumbs->images)
+        const big = getBigUrl(src);
+        if (big && absUrl(big) !== absUrl(src)) return absUrl(big);
+
+        // 2. Parâmetros de query de thumbnail (ex.: ?thumb=1, ?thumbnail=1)
+        if (/[?&](?:thumb|thumbnail)=\d+/i.test(src)) {
+            const cleaned = src.replace(/([?&])(?:thumb|thumbnail)=\d+(&|$)/i, (m, p1, p2) => (p2 === '&' ? p1 : '')).replace(/[?&]$/, '');
+            if (cleaned && absUrl(cleaned) !== absUrl(src)) return absUrl(cleaned);
+        }
+
+        // 3. Link pai <a> (XenForo attachments ou link direto para arquivo de imagem)
+        const parentLink = img.closest && img.closest('a');
+        if (parentLink) {
+            const rawHref = parentLink.getAttribute('href') || parentLink.href || '';
+            const lh = resolveProxyHref(rawHref);
+            if (lh && lh !== '#' && !/^javascript:/i.test(lh)) {
+                if (/\.(?:jpe?g|png|gif|webp|avif|bmp)(?:[?#]|$)/i.test(lh)) {
+                    const bigLh = getBigUrl(lh);
+                    if (absUrl(bigLh) !== absUrl(src)) return absUrl(bigLh);
+                }
+                if (/\/attachments\/[^\s"'>]+/i.test(lh)) {
+                    if (absUrl(lh) !== absUrl(src)) return absUrl(lh);
+                }
+            }
+        }
+
+        // 4. Elemento wrapper (.bbImageWrapper, [data-src], [data-url])
+        const wrap = img.closest && img.closest('.bbImageWrapper, [data-src], [data-url]');
+        if (wrap && wrap !== img) {
+            const wrapSrc = wrap.getAttribute('data-src') || wrap.getAttribute('data-url') || (wrap.dataset && (wrap.dataset.src || wrap.dataset.url)) || '';
+            const resolvedWrap = resolveProxyHref(wrapSrc);
+            if (resolvedWrap && absUrl(resolvedWrap) !== absUrl(src)) {
+                if (/\.(?:jpe?g|png|gif|webp|avif|bmp)(?:[?#]|$)/i.test(resolvedWrap) || /\/attachments\/[^\s"'>]+/i.test(resolvedWrap)) {
+                    return absUrl(getBigUrl(resolvedWrap));
+                }
+            }
+        }
+
+        // 5. Atributo data-url / data-src na própria tag <img>
+        const imgDataUrl = img.getAttribute('data-url') || img.getAttribute('data-src');
+        if (imgDataUrl && absUrl(imgDataUrl) !== absUrl(src)) {
+            const resolvedData = resolveProxyHref(imgDataUrl);
+            if (resolvedData && absUrl(resolvedData) !== absUrl(src)) {
+                return absUrl(getBigUrl(resolvedData));
+            }
+        }
+
+        // 6. Goonbox resolvido em cache
+        const smgLink = (img.dataset && img.dataset.smgLink) || '';
+        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+            const cached = gbxCache.get(gbx.id);
+            if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
+        }
+
+        return '';
+    }
+
+    function applyReplaceThumbsWithFull(enabled) {
+        if (!enabled) return;
+        const imgs = document.querySelectorAll('img.bbImage');
+        imgs.forEach(img => {
+            let full = img.dataset.smgFull;
+            if (!full) {
+                full = resolveFullImageUrl(img);
+                if (full) img.dataset.smgFull = full;
+            }
+            if (full) {
+                const targetAbs = absUrl(full);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
+                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                    }
+                    swapImgSrc(img, targetAbs);
+                }
+            }
+        });
+    }
+
     function processOneImage(img) {
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
         if (!img.dataset.smgLink) {
@@ -10918,12 +11230,15 @@
                         }
                     });
                 }
+                if (FEATURES.replaceThumbsWithFull && res.original !== img.src) {
+                    swapImgSrc(img, res.original);
+                }
             }, img);
         }
         let src = img.currentSrc || img.getAttribute('src') || img.src || '';
-        if (!/^https?:/i.test(src)) {                // placeholder lazy ainda sem URL real
+        if (!/^https?:/i.test(src) && !/^\//.test(src)) {                // placeholder lazy ainda sem URL real
             const realSrc = img.getAttribute('data-url') || img.getAttribute('data-src') || img.getAttribute('data-original');
-            if (realSrc && /^https?:/i.test(realSrc)) {
+            if (realSrc && (/^https?:/i.test(realSrc) || /^\//.test(realSrc))) {
                 src = realSrc;
                 img.src = realSrc;
             } else {
@@ -10953,6 +11268,24 @@
             img.classList.add('smg-img-ready');
         }
 
+        // Determina antecipadamente a URL full e média antes do onReady
+        const full = resolveFullImageUrl(img);
+        if (full) {
+            const convMd = src.includes('.md.'), convTh = src.includes('.th.');
+            const med = convMd ? src : (convTh ? src.replace('.th.', '.md.') : full);   // tier MÉDIO só p/ convenção .md/.th; resto exibe o FULL direto
+            img.dataset.smgFull = full;
+            img.dataset.smgMed = med;
+            img.removeAttribute('srcset');
+            const link = img.closest('a');
+            if (link) link.href = full;              // maximizar (feed/lightbox) abre o FULL (alta)
+            if (img.title) img.title = cleanText(img.title);
+            if (img.alt) img.alt = cleanText(img.alt);
+            if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA
+                const mio = getMedIO();
+                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+            }
+        }
+
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
@@ -10969,13 +11302,22 @@
                     grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
                 }
                 scheduleRelayout(grid);
-            } else if (img.classList.contains('smg-wide') || img.dataset.smgFull) {
-                if (img.dataset.smgFull && img.dataset.smgFull !== img.src) {
-                    const fio = getFullIO();
-                    if (fio) fio.observe(img);
-                }
             }
             img.classList.add('smg-img-ready');
+
+            const fullTarget = img.dataset.smgFull;
+            if (fullTarget) {
+                const targetAbs = absUrl(fullTarget);
+                const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+                if (targetAbs && targetAbs !== currentAbs) {
+                    if (FEATURES.replaceThumbsWithFull) {
+                        swapImgSrc(img, targetAbs);
+                    } else if (!grid || img.classList.contains('smg-wide')) {
+                        const fio = getFullIO();
+                        if (fio) fio.observe(img);
+                    }
+                }
+            }
         };
         if (img.complete) onReady();                 // já resolvida (ok ou quebrada) → sem shimmer preso
         else {
@@ -10985,34 +11327,14 @@
         }
 
         const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-
-        // ANTI-PULO: NÃO troca a thumb pela full na hora. Mantém a thumb (carrega rápido e fixa
-        // o tamanho) e só troca pra full perto da viewport (IO). Como a full tem a MESMA proporção,
-        // subir/descer um thread enorme não reflui o layout — era o swap imediato + lazy que blankava
-        // a imagem e fazia ela "estourar" de tamanho ao carregar.
-        const imgbox = isImgboxThumb(src);   // imgbox: thumb `_t` → original `_o` (sem tier médio próprio → exibe o original no post)
-        const big = getBigUrl(src);          // sobe pra FULL nos hosts conhecidos (.md/.th, imgbox, pixhost, …)
-        const convMd = src.includes('.md.'), convTh = src.includes('.th.');
-        // ANTES só entrava .md/.th/imgbox → hosts com padrão próprio de thumb (pixhost & cia) ficavam na BAIXA.
-        // Agora qualquer host que o getBigUrl saiba subir (big !== src) também entra no upgrade.
-        if (convMd || convTh || imgbox || big !== src) {
-            const full = big;
-            const med = convMd ? src : (convTh ? src.replace('.th.', '.md.') : full);   // tier MÉDIO só p/ convenção .md/.th; resto (pixhost/imgbox) exibe o FULL direto
-            img.dataset.smgFull = full;
-            img.dataset.smgMed = med;
-            img.removeAttribute('srcset');
-            const link = img.closest('a');
-            if (link) link.href = full;              // maximizar (feed/lightbox) abre o FULL (alta)
-            if (img.title) img.title = cleanText(img.title);
-            if (img.alt) img.alt = cleanText(img.alt);
-            const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-            if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA (nunca vai pro full no post)
-                const mio = getMedIO();
-                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
-            }
-            if (!img.closest('.auto-image-grid') && full !== img.src) {
-                const fio = getFullIO();
-                if (fio) fio.observe(img);
+        if (img.dataset.smgFull) {
+            const targetAbs = absUrl(img.dataset.smgFull);
+            const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
+            if (targetAbs && targetAbs !== currentAbs) {
+                if (FEATURES.replaceThumbsWithFull || !img.closest('.auto-image-grid')) {
+                    const fio = getFullIO();
+                    if (fio) fio.observe(img);
+                }
             }
         }
     }
@@ -11294,10 +11616,15 @@
             el.style.removeProperty('max-width');
             return;
         }
-        if (!vertical) { el.style.removeProperty('max-width'); return; }
+        if (!vertical) { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
         const ratio = w / h;
         const maxWidth = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
         el.style.setProperty('max-width', maxWidth, 'important');
+        // STABLE BOX: the width is the SAME expression, not `auto`. With `auto` the box followed the intrinsic
+        // size of whatever file was loaded, so swapping the small thumbnail for the large original resized it
+        // (same ratio, bigger pixels) and pushed the page. Now the box is fixed by ratio + column, never by pixels.
+        // (the link/wrapper around it is a full-width block for this to resolve without a circular percentage)
+        el.style.setProperty('width', maxWidth, 'important');
     }
     function markWide(el, w, h) {
         if (!el || !w || !h) return;
@@ -11886,13 +12213,17 @@
         });
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.buildPostGalleries = buildPostGalleries;
-        window.__buildPostGalleries = buildPostGalleries;
-        window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock };
-        window.processOneImage = processOneImage;
-        window.processImages = processImages;
-        window.goonboxEmbed = goonboxEmbed;
+    if (typeof window !== 'undefined') {
+        window.applyReplaceThumbsWithFull = applyReplaceThumbsWithFull;
+        window.resolveFullImageUrl = resolveFullImageUrl;
+        if (window.__TEST_MODE__) {
+            window.buildPostGalleries = buildPostGalleries;
+            window.__buildPostGalleries = buildPostGalleries;
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.processOneImage = processOneImage;
+            window.processImages = processImages;
+            window.goonboxEmbed = goonboxEmbed;
+        }
     }
 
     // =========================================================
@@ -12582,6 +12913,80 @@
         rgControls(wrap, video);
         return { wrap, video };
     }
+
+    function showPlayerError(wrap, video, opts) {
+        if (!wrap) return;
+        opts = opts || {};
+        wrap.classList.remove('smg-rg-loading', 'smg-rg-buffering', 'smg-rg-ready', 'smg-rgc-playing');
+        wrap.classList.add('smg-rg-has-error');
+        if (wrap.querySelector('.smg-rg-error')) return;
+
+        let code = opts.code || 'Error';
+        let msg = opts.message || '';
+        let host = opts.host || '';
+        const ext = opts.extUrl || opts.url || (video && (video._rgExt || video._rgUrl)) || '';
+
+        if (!host && ext) {
+            try { host = new URL(ext, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
+        }
+        if (!msg) {
+            if (code === 502) msg = '502 Bad Gateway · ' + i18n('Server unavailable');
+            else if (code === 504) msg = '504 Gateway Timeout · ' + i18n('Server timed out');
+            else if (code === 404) msg = '404 · ' + i18n('file deleted');
+            else if (code === 403) msg = '403 · ' + i18n('forbidden');
+            else if (code === 'NetError') msg = i18n('unavailable');
+            else msg = i18n('Error') + ' ' + (code || '') + (host ? ' · ' + host : '');
+        }
+
+        const errDiv = document.createElement('div');
+        errDiv.className = 'smg-rg-error';
+        const badge = document.createElement('span');
+        badge.className = 'smg-rg-error-badge';
+        badge.innerHTML = ICONS.warn + '<b>' + (typeof code === 'number' ? code : i18n('Error')) + '</b>';
+
+        const desc = document.createElement('span');
+        desc.className = 'smg-rg-error-msg';
+        desc.textContent = msg;
+
+        const acts = document.createElement('div');
+        acts.className = 'smg-rg-error-acts';
+
+        if (ext) {
+            const openBtn = document.createElement('a');
+            openBtn.className = 'smg-rg-error-btn smg-rg-error-btn--open';
+            openBtn.href = ext;
+            openBtn.target = '_blank';
+            openBtn.rel = 'noopener noreferrer';
+            openBtn.innerHTML = (host ? host + ' ' : '') + '↗';
+            acts.appendChild(openBtn);
+        }
+
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'smg-rg-error-btn smg-rg-error-btn--retry';
+        retryBtn.textContent = '↻ ' + i18n('Retry');
+        retryBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            errDiv.remove();
+            wrap.classList.remove('smg-rg-has-error');
+            const retryFn = opts.onRetry || opts.retry;
+            if (retryFn) {
+                retryFn();
+            } else if (video && video._rgUrl) {
+                video.dataset.rgLoaded = '';
+                wrap.classList.add('smg-rg-loading');
+                rgLoadUrl(video, video._rgUrl, wrap);
+            } else if (video && video.dataset.rgid) {
+                video.dataset.rgLoaded = '';
+                wrap.classList.add('smg-rg-loading');
+                rgLoad(video);
+            }
+        });
+        acts.appendChild(retryBtn);
+
+        errDiv.append(badge, desc, acts);
+        wrap.appendChild(errDiv);
+    }
     // SPINNER NUNCA ETERNO: todo caminho de carga pode morrer calado (blob que não decodifica, host que
     // engoliu a request, promise que nunca resolve). Se em 25s não houver NENHUM frame, volta pro estado
     // PRONTO — play central de volta, com o link externo — e libera um novo clique pra tentar de novo.
@@ -12626,7 +13031,17 @@
         video.addEventListener('error', () => {
             if (!video._rgUserPlayed && wrap && wrap._rgFallback) {
                 wrap._rgFallback();
+                return;
             }
+            const errCode = (video.error && video.error.code === 4) ? 404 : 502;
+            showPlayerError(wrap, video, {
+                code: errCode,
+                extUrl: video._rgExt || url,
+                onRetry: () => {
+                    try { video.load(); } catch (e) {}
+                    if (video._rgUrl) rgLoadUrl(video, video._rgUrl, wrap);
+                }
+            });
         }, { once: true });
 
         const setNativeThumb = () => {
@@ -12733,9 +13148,10 @@
             for (let mm; (mm = re.exec(t));) { if (!/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(mm[0])) return mm[0].replace(/&amp;/g, '&'); }
             return null;
         };
-        GMX({ method: 'GET', url: pageUrl, timeout: 12000,
+        GMX({ method: 'GET', url: pageUrl, timeout: 8000,
             headers: { Referer: location.origin + '/', Accept: 'text/html,application/xhtml+xml,*/*' },
             onload: r => {
+                if (r.status >= 400) { finish({ error: r.status, host: 'imagepond.net' }); return; }
                 const t = r.responseText || '';
                 const vid = grabVid(t);
                 if (vid) { finish({ mp4: vid, img: null }); return; }
@@ -12752,9 +13168,10 @@
                         }
                     }
                 }
-                finish(null);
+                finish({ error: r.status === 200 ? 404 : (r.status || 0), host: 'imagepond.net' });
             },
-            onerror: () => finish(null), ontimeout: () => finish(null) });
+            onerror: () => finish({ error: 'NetError', host: 'imagepond.net' }),
+            ontimeout: () => finish({ error: 504, host: 'imagepond.net' }) });
     }
     function processImagepondNativeEmbeds(roots) {
         if (!(FEATURES.imagepondEmbeds && GMX)) return;
@@ -12771,7 +13188,16 @@
             slot.appendChild(loading);
             wrapper.appendChild(slot);
             ifr.replaceWith(wrapper);
-            const restoreIframe = () => { if (slot.querySelector('iframe')) return; unfillSlot(slot); loading.remove(); ifr.classList.add('saint-iframe'); ifr.removeAttribute('style'); slot.appendChild(ifr); };   // falha total → iframe nativo PREENCHENDO o slot 16:9 (saint-iframe + tira o style inline height:360px que quebrava na coluna)
+            const restoreIframe = () => {
+                if (slot.querySelector('iframe')) return;
+                unfillSlot(slot);
+                loading.remove();
+                const oldWrap = slot.querySelector('.smg-rg');
+                if (oldWrap) oldWrap.remove();
+                ifr.classList.add('saint-iframe');
+                ifr.removeAttribute('style');
+                slot.appendChild(ifr);
+            };
             const activate = () => {
                 if (slot.dataset.ipActivated) return;   // run-once (turboIO E o masonry podem chamar)
                 slot.dataset.ipActivated = '1'; slot._smgActivate = null;
@@ -12795,7 +13221,16 @@
                         scheduleRun();
                         return;
                     }
-                    restoreIframe();                                        // sem mp4 nem img → iframe nativo
+                    if (res && res.error) {
+                        loading.remove();
+                        const { wrap, video } = buildNativeVideo('', location.origin + '/', null, 'ImagePond');
+                        video._rgExt = pageUrl;
+                        slot.appendChild(wrap);
+                        fillSlot(slot);
+                        showPlayerError(wrap, video, { code: res.error, host: res.host || 'imagepond.net', extUrl: pageUrl });
+                        return;
+                    }
+                    restoreIframe();                                        // sem mp4 nem img nem erro específico → iframe nativo
                 });
             };
             const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
@@ -13048,6 +13483,7 @@
         window.__rgPrepareUrl = rgPrepareUrl;
         window.__rgViaDirect = rgViaDirect;
         window.__rgControls = rgControls;
+        window.__showPlayerError = showPlayerError;
     }
 
     // =========================================================
@@ -13324,6 +13760,9 @@
                 if (!n || !pageJump.tpl) return;
                 let url = (n === 1) ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
                 if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
+                document.documentElement.classList.add('smg-page-pending');
+                document.documentElement.classList.remove('smg-page-ready');
+                if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
                 window.location.href = url;
             };
 
@@ -13510,6 +13949,16 @@
                 if (typeof toggleAlertsDock === 'function') toggleAlertsDock('watched');
             });
         }
+        // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
+        const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
+        if (btnBell) {
+            btnBell.addEventListener('click', e => {
+                if (typeof toggleAlertsDock !== 'function' || !FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAlertsDock('alerts');
+            });
+        }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Timeline', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
         const btnLogin = dockLoggedIn ? null : makeDockLink({ id: 'smg-nav-login', icon: ICONS.login, label: 'Log in', href: loginHref() });
         if (btnLogin) wireAuthClick(btnLogin, 'login');
@@ -13548,6 +13997,7 @@
             if (/[?&]view=feed/.test(location.search)) on(btnTimeline);   // ANTES do home: o feed mora NA home (?view=feed)
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
             else if (/\/watched\//.test(path)) on(btnWatched);
+            else if (/\/account\/alerts/.test(path)) on(btnBell);
             else if (/\/account(\/|$)/.test(path)) on(btnUser);                 // avatar ganha o anel
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
         })();
@@ -13560,7 +14010,7 @@
         // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · following · user.
         // Discover fica no DOM (escondido via CSS) → o wireSheet/sheet de opções ainda o alcança.
         // (a engrenagem fica escondida no mobile e some atrás do FAB de opções; no desktop tudo some e sobra ela)
-        const centralBtns = [btnHome, btnTimeline, btnSearch, btnWatched, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
+        const centralBtns = [btnWatched, btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
         const centralGroup = makeGroup(...centralBtns);
         centralGroup.classList.add('smg-nav-center');
 
@@ -15098,7 +15548,18 @@
             });
             // toggles (FEATURES)
             settingsPop.querySelectorAll('input[data-feat]').forEach(inp => {
-                inp.addEventListener('change', () => { FEATURES[inp.dataset.feat] = inp.checked; saveFeatures(); });
+                inp.addEventListener('change', () => {
+                    const feat = inp.dataset.feat;
+                    FEATURES[feat] = inp.checked;
+                    saveFeatures();
+                    if (feat === 'replaceThumbsWithFull') {
+                        if (typeof applyReplaceThumbsWithFull === 'function') {
+                            applyReplaceThumbsWithFull(inp.checked);
+                        } else if (typeof window !== 'undefined' && typeof window.applyReplaceThumbsWithFull === 'function') {
+                            window.applyReplaceThumbsWithFull(inp.checked);
+                        }
+                    }
+                });
             });
             // sliders (tunables do feed → gmSet; aplicam na próxima abertura do feed)
             settingsPop.querySelectorAll('input[data-tune]').forEach(inp => {
@@ -17402,7 +17863,7 @@
     function syncReactiveBadges() {
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
-        setReactiveBadge(document.querySelector('#smg-nav-alerts .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
+        setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico, #smg-nav-alerts .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
         if (typeof aldockSyncCount === 'function') aldockSyncCount();   // contador do rail de notificações (se estiver docked)
     }
     function watchNativeBadges() {
@@ -20355,7 +20816,7 @@
                 }
             }
         });
-        const navAlerts = document.querySelector('#smg-nav-alerts');
+        const navAlerts = document.querySelector('#smg-nav-alerts, #smg-nav-bell');
         if (navAlerts) {
             const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
             if (typeof setReactiveBadge === 'function') {
@@ -20714,6 +21175,37 @@
             railApplyView(railTab);
             railFillViewport(railTab);   // a grade cabe mais por tela → pode faltar linha pra encher
         });
+
+        const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        if (alertsBody) {
+            alertsBody.addEventListener('click', e => {
+                const a = e.target.closest('a[href]');
+                if (!a) return;
+                const href = a.getAttribute('href') || a.href || '';
+                const postMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i)
+                    || (href.includes('/goto/') && href.match(/[?&]id=(\d+)/i));
+                if (postMatch && postMatch[1]) {
+                    const pid = postMatch[1];
+                    const inPagePost = document.getElementById('post-' + pid)
+                        || document.getElementById('js-post-' + pid)
+                        || document.querySelector('[data-content="post-' + pid + '"]')
+                        || document.querySelector('article.message[data-content*="' + pid + '"]');
+                    if (inPagePost) {
+                        e.preventDefault();
+                        if (aldockPhone()) closeAlertsDock();
+                        try {
+                            inPagePost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (err) {}
+                        if (typeof armScrollStabilizer === 'function') {
+                            armScrollStabilizer(inPagePost);
+                        }
+                        try {
+                            history.replaceState(null, '', '#post-' + pid);
+                        } catch (err) {}
+                    }
+                }
+            });
+        }
 
         // rolagem infinita DENTRO de cada aba (rAF-throttled, passive — mesmo padrão do resto do script)
         el.querySelectorAll('.smg-aldock-body').forEach(body => {
@@ -21310,15 +21802,14 @@
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
-            // ZONA DIREITA, ícone 3 — PAINEL LATERAL, logo à direita do avatar. Controle ÚNICO do rail:
-            // abre no painel lateral de Seguidos (Following).
-            // Leva o BADGE de seguidos não lidos: .smg-rt-watched é o alvo do sync reativo,
-            // e o valor inicial vem de getWatchedUnreadCount() pra não nascer mudo.
+            // ZONA DIREITA, ícone 3 — SINO de alertas: controle ÚNICO do painel lateral (abre/fecha o rail).
+            // Leva o BADGE de alertas não lidos (.smg-rt-alerts é o alvo do sync reativo). No celular some:
+            // lá o sino mora na navbar inferior.
             if (FEATURES.alertsDock) {
-                const railBtn = iconAct(ICONS.panelRight, 'Side panel', null, alertsBadgeCount());
-                railBtn.classList.add('smg-tb-railbtn', 'smg-rt-alerts');
-                railBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
-                actions.appendChild(railBtn);
+                const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
+                bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
+                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
+                actions.appendChild(bellBtn);
             }
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
@@ -21458,7 +21949,7 @@
             };
             const sheetRow = it => it.divider
                 ? '<div class="smg-tb-popdiv"></div>'
-                : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
+                : '<a class="smg-tb-poprow"' + (it.id ? ' data-smg-id="' + it.id + '"' : '') + ' href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
                     '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
                     (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
@@ -21477,9 +21968,20 @@
             // um sheet vazio, o botão da navbar leva direto pro login.
             let uSheet = null;
             if (loggedIn) {
-                const uBody = accSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
+                // mobile-only: Following (watched threads) lives here now, right above Bookmarks
+                const sheetSections = accSections.map((sec, i) => i === 1
+                    ? [{ id: 'following', label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
+                    : sec);
+                const uBody = sheetSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
                         .map(sec => sec.map(sheetRow).join('')).join('<div class="smg-tb-popdiv"></div>');
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
+                const followRow = uSheet.querySelector('[data-smg-id="following"]');
+                if (followRow) followRow.addEventListener('click', e => {
+                    if (typeof openAlertsDock !== 'function') return;   // no rail → plain navigation to the list page
+                    e.preventDefault();
+                    smgSheetClose(uSheet);
+                    openAlertsDock('watched', false);
+                });
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X
@@ -22525,6 +23027,9 @@
         return false;
     }
     function pdPlace(node, card) {   // troca o link/card cru (o unfurl inteiro, se houver) pelo nosso card
+        if (!node || !card) return;
+        if (node.classList && node.classList.contains('smg-dead')) return;
+        if (node.closest && node.closest('.smg-dead')) return;
         const host = node.closest('.bbCodeBlock--unfurl') || node;
         // TÍTULO DO LINK: quando o <a> tem TEXTO próprio (não a URL crua), ele é a única descrição do
         // item. Esconder o link jogava esse texto fora e uma lista de 80 links virava 80 cards
@@ -22532,7 +23037,7 @@
         if (node.tagName === 'A') {
             const txt = (node.textContent || '').replace(/\s+/g, ' ').trim();
             const h = card.querySelector('.smg-fhcard-host'), s = card.querySelector('.smg-fhcard-sub');
-            if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt)) {
+            if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt) && !/^(?:Error|404|403|502|504|unavailable)/i.test(txt)) {
                 let plat = card.querySelector('.smg-fhcard-platform');
                 if (!plat && h.textContent && h.textContent.toLowerCase() !== txt.toLowerCase()) {
                     plat = document.createElement('span');
@@ -23283,6 +23788,7 @@
         // LINKS crus (sem unfurl) dos providers
         eachIn(roots, FH_BARE_SEL, a => {
             a.dataset.fhDone = '1';
+            if (a.classList.contains('smg-dead') || a.closest('.smg-dead, .auto-image-grid')) return;
             if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-ig-embed-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
             if (a.querySelector('img.bbImage')) return;   // link de imagem (lightbox)
             const url = absUrl(resolveProxyHref(a.getAttribute('href') || '') || a.href);
@@ -25011,6 +25517,7 @@
         FOLLOWING: 'following',
         TIMELINE: 'timeline',
         BOOKMARKS: 'bookmarks',
+        GENERIC: 'generic',
         NONE: 'none',
     });
 
@@ -25030,10 +25537,11 @@
         if (home && feed) kind = PAINT_PAGE_KINDS.TIMELINE;
         else if (home) kind = PAINT_PAGE_KINDS.HOME;
         else if (tpl.includes('bookmarks') || /\/account\/bookmarks|\/bookmarks\//i.test(pathname)) kind = PAINT_PAGE_KINDS.BOOKMARKS;
-        else if (tpl === 'thread_view' || /\/threads\//i.test(pathname)) kind = PAINT_PAGE_KINDS.THREAD;
         else if (/\/watched\/threads(?:\/|$)/i.test(pathname) || tpl === 'watched_threads_list') kind = PAINT_PAGE_KINDS.FOLLOWING;
-        else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)/i.test(pathname)
+        else if (/^thread_view/i.test(tpl) || (!/\/watched\//i.test(pathname) && (/\/threads\//i.test(pathname) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(search || '')))) kind = PAINT_PAGE_KINDS.THREAD;
+        else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)|\/account\/alerts(?:\/|$)/i.test(pathname)
             || /^(?:forum_view|whats_new_posts|search_results)$/i.test(tpl)) kind = PAINT_PAGE_KINDS.LISTING;
+        else kind = PAINT_PAGE_KINDS.GENERIC;
 
         const gated = kind !== PAINT_PAGE_KINDS.NONE
             && (kind !== PAINT_PAGE_KINDS.HOME || !!FEATURES.homeRemake)
@@ -25097,6 +25605,8 @@
             body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(12) + '</div>';
         } else if (kind === PAINT_PAGE_KINDS.TIMELINE || kind === PAINT_PAGE_KINDS.BOOKMARKS) {
             body = '<div class="smg-page-skeleton-' + (kind === PAINT_PAGE_KINDS.TIMELINE ? 'feed' : 'bookmarks') + '">' + feedCard.repeat(8) + '</div>';
+        } else if (kind === PAINT_PAGE_KINDS.GENERIC) {
+            body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(8) + '</div>';
         }
         const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
@@ -25138,23 +25648,29 @@
         root.appendChild(rail);
     }
 
-    function ensurePageSkeleton() {
+    function ensurePageSkeleton(overrideKind) {
         const context = classifyPaintPage();
-        if (!context.gated) return;
-        if (context.kind === PAINT_PAGE_KINDS.HOME) {
+        if (!context.gated && !overrideKind) return;
+        const kind = overrideKind || context.kind;
+        if (kind === PAINT_PAGE_KINDS.HOME) {
             ensureHomeSkeleton();
             ensureSkeletonRail();
             return;
         }
-        if (document.getElementById('smg-page-skeleton')) {
+        let shell = document.getElementById('smg-page-skeleton');
+        if (shell) {
+            if (overrideKind && !shell.classList.contains('smg-page-skeleton--' + kind)) {
+                shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
+                shell.innerHTML = paintSkeletonMarkup(kind);
+            }
             ensureSkeletonRail();
             return;
         }
-        const shell = document.createElement('div');
+        shell = document.createElement('div');
         shell.id = 'smg-page-skeleton';
-        shell.className = 'smg-page-skeleton smg-page-skeleton--' + context.kind;
+        shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
         shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(context.kind);
+        shell.innerHTML = paintSkeletonMarkup(kind);
         document.documentElement.appendChild(shell);
         ensureSkeletonRail();
     }
@@ -25199,8 +25715,8 @@
     // sua primeira composição. O timeout é apenas um fallback para páginas quebradas ou
     // respostas interrompidas; em condições normais a liberação acontece por prontidão +
     // dois frames estáveis.
-    const PAINT_SETTLE_FRAMES = 2;
-    const PAINT_MAX_WAIT_MS = 4200;
+    const PAINT_SETTLE_FRAMES = 4;
+    const PAINT_MAX_WAIT_MS = 4500;
     const PAINT_RETRY_MS = 250;
     let paintTimer = 0;
     let paintRaf = 0;
@@ -25236,10 +25752,16 @@
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
+            const messages = document.querySelector('.block--messages, .block-body--messages');
             const posts = Array.from(document.querySelectorAll('article.message')).map(post =>
-                (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
+                (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgGalReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
             ).join('|');
-            return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']';
+            const grids = Array.from(document.querySelectorAll('.auto-image-grid')).map(g =>
+                g.children.length + ':' + g.className
+            ).join(';');
+            const imgsReady = document.querySelectorAll('article.message img.smg-img-ready, article.message img[style*="aspect-ratio"]').length;
+            const messagesH = messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+            return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']{' + grids + '}(imgs:' + imgsReady + ',h:' + messagesH + ')';
         }
         if (kind === PAINT_PAGE_KINDS.LISTING || kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const rows = Array.from(document.querySelectorAll('.structItemContainer .structItem--thread, .p-body-content .structItem--thread, .smg-article-grid .message--articlePreview'));
@@ -25283,6 +25805,86 @@
         return document.readyState === 'complete' && paintHasExplicitEmptyState();
     }
 
+    function requestedPostTargetId() {
+        const h = (location.hash || '').replace(/^#/, '');
+        const hm = h && h.match(/^(?:js-)?(?:post|comment|post-comment)-(\d+)$/i);
+        if (hm) return hm[1];
+        const postMatch = location.pathname.match(/\/(?:posts|post)[/-]?(\d+)/i)
+            || (location.pathname.includes('/goto/') && location.search.match(/[?&]id=(\d+)/i))
+            || location.search.match(/[?&](?:posts|post)[/-]?(\d+)/i)
+            || location.search.match(/[?&]id=(\d+)/i);
+        if (postMatch && postMatch[1]) return postMatch[1];
+        return null;
+    }
+
+    function findTargetPost() {
+        const reqId = requestedPostTargetId();
+        if (reqId) {
+            const el = document.getElementById('post-' + reqId)
+                || document.getElementById('js-post-' + reqId)
+                || document.querySelector('[data-content="post-' + reqId + '"]')
+                || document.querySelector('article.message[data-content*="' + reqId + '"]')
+                || document.querySelector('[data-smg-target-post="' + reqId + '"]');
+            if (el) return el.closest('article.message, .message--post, .comment') || el;
+        }
+        const unreadPost = document.querySelector('article.message.is-unread');
+        if (unreadPost) return unreadPost;
+        return document.querySelector('article.message');
+    }
+
+    // A árvore da thread só é considerada completa quando o streaming do servidor
+    // terminou (document.readyState !== 'loading') E os marcadores estruturais do
+    // fim da lista de mensagens e rodapé do fórum já foram parseados.
+    function threadTreeIsComplete() {
+        if (document.readyState === 'loading') return false;
+        if (document.readyState === 'complete') return true;
+
+        const messages = document.querySelector('.block--messages, .block-body--messages');
+        if (!messages) return false;
+
+        // Rodapé da página (sempre o último bloco antes do fechamento do HTML)
+        const hasFooter = !!document.querySelector('.p-footer, .p-footer-inner, .p-breadcrumbs--bottom');
+
+        // Nós posteriores à lista de mensagens (garante que não pegou o pager do topo)
+        const hasBottomPager = !!document.querySelector('.block-outer.block-outer--after, .block--messages ~ .block-outer, .block-outer--after .pageNav');
+        const hasQuickReply = !!document.querySelector('.message--quickReply, .js-quickReply, form[action*="/add-reply"], .block--messages ~ .block');
+
+        return hasFooter || hasBottomPager || hasQuickReply;
+    }
+
+    // O skeleton aguarda as mídias de TODOS os posts da thread terem proporção e dimensões reais
+    // estabelecidas antes de liberar a tela, impedindo que a página 'dance' ou mude de scroll.
+    const PAINT_MEDIA_MAX_WAIT_MS = 3200;
+    let paintMediaDeadline = 0;
+    function threadMediaTreeIsReady(content) {
+        // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
+        if (document.readyState === 'loading') return false;
+        if (!paintMediaDeadline) paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
+        if (Date.now() >= paintMediaDeadline) return true;
+        if (!content) return true;
+
+        // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
+        const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
+        for (const img of imgs) {
+            if (img.dataset.smgFailed || img.classList.contains('smg-img-ready')) continue;
+            const ar = img.style.aspectRatio;
+            if (ar && ar !== '100 / 100') continue;
+            if (img.complete && img.naturalWidth && img.naturalHeight) continue;
+            return false;
+        }
+
+        // 2. Garante que todos os embeds e iframes de vídeo possuam seus wrappers de proporção montados
+        const iframes = content.querySelectorAll('article.message iframe');
+        for (const ifr of iframes) {
+            const wrap = ifr.closest('.generic2wide-iframe-div, .smg-dm-wrap, .smg-rg, [style*="aspect-ratio"]');
+            if (!wrap && !ifr.style.aspectRatio) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function paintPageIsReady(context) {
         if (!paintChromeIsReady()) return false;
         if (context.kind === PAINT_PAGE_KINDS.HOME) {
@@ -25297,8 +25899,25 @@
             const header = document.querySelector('.p-body-header');
             const messages = document.querySelector('.block--messages, .block-body--messages');
             if (!content || !header || !messages || header.dataset.smgThead !== '1' || header.dataset.smgUnified !== '1') return false;
+
+            // Árvore da página: a thread precisa ter seus nós de fechamento (footer/pager) recebidos do servidor
+            if (!threadTreeIsComplete()) return false;
+
             const posts = Array.from(content.querySelectorAll('article.message'));
             if (!posts.length) return false;
+
+            // Se foi requisitado um post específico na URL (ex: #post-123 ou /posts/123/),
+            // ele OBRIGATORIAMENTE precisa existir no DOM antes de liberar o loading
+            const reqId = requestedPostTargetId();
+            if (reqId) {
+                const targetEl = document.getElementById('post-' + reqId)
+                    || document.getElementById('js-post-' + reqId)
+                    || document.querySelector('[data-content="post-' + reqId + '"]')
+                    || document.querySelector('article.message[data-content*="' + reqId + '"]')
+                    || document.querySelector('[data-smg-target-post="' + reqId + '"]');
+                if (!targetEl) return false;
+            }
+
             // Garante que TODOS os posts estejam com o card estilizado E suas galerias montadas
             // antes de liberar a pintura inicial, impedindo que a página 'dance' na frente do usuário.
             const postsReady = posts.every(post => (post.dataset.smgCardReady === '1' || post.dataset.smgCardReady === 'skip')
@@ -25306,7 +25925,7 @@
             const commentsReady = Array.from(content.querySelectorAll('.message-responses .comment')).every(comment =>
                 comment.dataset.smgCcReady === '1' || comment.dataset.smgCcReady === 'skip'
             );
-            return postsReady && commentsReady;
+            return postsReady && commentsReady && threadMediaTreeIsReady(content);
         }
         if (context.kind === PAINT_PAGE_KINDS.LISTING || context.kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const items = paintListItems();
@@ -25355,9 +25974,19 @@
             paintRaf = 0;
             paintReleaseScheduled = false;
             if (!root.classList.contains('smg-page-pending')) return;
+            const reqId = requestedPostTargetId();
+            const target = reqId ? findTargetPost() : null;
             root.classList.remove('smg-page-pending', 'smg-home-pending');
             root.classList.add('smg-page-ready');
             if (context.kind === PAINT_PAGE_KINDS.HOME) root.classList.add('smg-home-ready');
+            if (target && target.scrollIntoView) {
+                try {
+                    target.scrollIntoView({ block: 'start', behavior: 'instant' });
+                } catch (e) {}
+                if (typeof armScrollStabilizer === 'function') {
+                    armScrollStabilizer(target);
+                }
+            }
             releasePageSkeleton();
         };
         const waitForStableFrames = framesLeft => {
@@ -25390,8 +26019,56 @@
         paintRaf = requestAnimationFrame(() => waitForStableFrames(PAINT_SETTLE_FRAMES));
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS };
+    function setupNavigationTransition() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return;
+        if (window._smgNavTransitionBound) return;
+        window._smgNavTransitionBound = true;
+
+        document.addEventListener('click', e => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest && e.target.closest('a[href]');
+            if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            const href = a.getAttribute('href') || a.href || '';
+            if (!href || href === '#' || href.startsWith('javascript:')) return;
+            if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
+            const xfClick = a.getAttribute('data-xf-click') || '';
+            if (xfClick && xfClick !== 'scroll-to' && xfClick !== 'preview-click') return;
+            if (a.closest('#smg-feed, .smg-feed, .smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
+
+            const isThreadNav = /\/(?:threads|posts|goto)\//i.test(href) || /[?&](?:threads|posts|goto)=/i.test(href);
+            const isPageNav = /(?:\/page-\d+|[?&]page=\d+)/i.test(href);
+            const isListingNav = /\/(?:forums|whats-new|watched|categories|account\/alerts)\//i.test(href);
+
+            if (isThreadNav || isPageNav || isListingNav) {
+                // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
+                if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+                    const pid = resolvePostIdFromHref(href);
+                    if (pid && findPostElementById(pid)) return;
+                }
+
+                const root = document.documentElement;
+                root.classList.add('smg-page-pending');
+                root.classList.remove('smg-page-ready');
+                const targetKind = isThreadNav ? PAINT_PAGE_KINDS.THREAD : (isListingNav ? PAINT_PAGE_KINDS.LISTING : classifyPaintPage().kind);
+                ensurePageSkeleton(targetKind);
+            }
+        }, { capture: true, passive: true });
+
+        window.addEventListener('pageshow', e => {
+            if (e.persisted) {
+                const root = document.documentElement;
+                root.classList.remove('smg-page-pending');
+                root.classList.add('smg-page-ready');
+                releasePageSkeleton();
+            }
+        });
+    }
+
+    if (typeof window !== 'undefined') {
+        window.setupNavigationTransition = setupNavigationTransition;
+        if (window.__TEST_MODE__) {
+            window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS, threadTreeIsComplete, threadMediaTreeIsReady, requestedPostTargetId, setupNavigationTransition };
+        }
     }
 
     function rootTouches(roots, selector, alreadyNormalized) {
@@ -25414,7 +26091,9 @@
         if (FEATURES.customFavicon) safe(setFavicon);
 
         const path = location.pathname;
-        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || /\/threads\//.test(path);
+        const isThreadRoute = !/\/watched\//.test(path)
+            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
+        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute;
         const isThreadList = [PAINT_PAGE_KINDS.LISTING, PAINT_PAGE_KINDS.FOLLOWING].includes(paintContext.kind)
             || cls.contains('smg-threadlist') || /\/forums\//.test(path) || /\/watched\//.test(path);
         const isHome = paintContext.kind === PAINT_PAGE_KINDS.HOME || (cls.contains('smg-home') && !cls.contains('smg-watched-feed'));
@@ -25425,9 +26104,9 @@
         const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === 'function' && feedContext());
 
         if (isContentFeed && contentDirty) {
-            if (FEATURES.autoFullImages) safe(unlazyImageLinks, roots);
+            if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
-            if (FEATURES.autoFullImages) safe(processImages, roots);
+            if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
@@ -25588,7 +26267,9 @@
             cls.add('smg-home');
             cls.add('smg-home-pending');
         }
-        if (tpl === 'thread_view' || /\/threads\//.test(path)) cls.add('smg-thread');
+        const isThreadRoute = !/\/watched\//.test(path)
+            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
+        if (/^thread_view/i.test(tpl) || isThreadRoute) cls.add('smg-thread');
         const isList = /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
             || /^(?:forum_view|watched_threads_list|search_results)$/i.test(tpl)
             || !!document.querySelector('.structItem--thread');
@@ -25608,6 +26289,7 @@
     if (FEATURES.autoFullImages) cls.add('smg-masonry-on');   // "Galeria" (full-res + masonry por post) — masonry atrelado à galeria
     if (FEATURES.unwrapLinks) { bindProxyClick(); handleRedirectPage(); }   // liga o intercept de clique JÁ no document-start (antes do XF) + pula página de aviso
     if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+    safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
     // Reserve the persisted desktop dock before the body and topbar are built.
     // The panel itself is mounted during boot, but this class prevents its
@@ -25627,20 +26309,182 @@
     const earlyObs = new MutationObserver(scheduleRun);
     earlyObs.observe(document.documentElement, { childList: true, subtree: true });
 
-    // DEEP-LINK (notificação/permalink → #post-X): ao cair fundo na thread,
+    // SCROLL STABILIZER: media, embeds, post cards and galleries finish sizing AFTER the first paint, and
+    // everything above the viewport growing pushes the reading position down (opening on the last post ended
+    // mid-thread). Native scroll anchoring cannot help because the script rebuilds posts (the anchor node is
+    // replaced). So the post the reader landed on is pinned at its original viewport offset: every layout change
+    // (ResizeObserver runs before paint, so there is no visible jump) and every late image/video load
+    // re-aligns it. It lets go IMMEDIATELY on ANY user input (wheel, touch, click, scroll, key), or after
+    // a brief safety deadline (2.5s), never fighting against user scrolling.
+    let activeScrollStabilizer = null;
+
+    function armScrollStabilizer(target) {
+        if (!target || !target.isConnected || typeof ResizeObserver !== 'function') return;
+        if (activeScrollStabilizer) {
+            activeScrollStabilizer.stop();
+            activeScrollStabilizer = null;
+        }
+
+        const PIN_MAX_MS = 1200;
+        const startedAt = Date.now();
+        let wantTop = target.getBoundingClientRect().top;
+        let done = false;
+        let adjusting = false;
+        let ro = null;
+
+        const stabilizerObj = {
+            stop: () => stop(),
+            isActive: () => !done
+        };
+
+        const stop = () => {
+            if (done) return;
+            done = true;
+            if (activeScrollStabilizer === stabilizerObj) {
+                activeScrollStabilizer = null;
+            }
+            if (ro) ro.disconnect();
+            const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
+            inputs.forEach(ev => window.removeEventListener(ev, stop, true));
+            window.removeEventListener('scroll', onScroll, true);
+            window.removeEventListener('load', onLoad, true);
+            document.removeEventListener('load', realign, true);
+        };
+
+        const onScroll = () => {
+            if (done) return;
+            if (!adjusting) {
+                // Rolagem iniciada pelo usuário: solta o controle instantaneamente
+                stop();
+            }
+        };
+
+        const realign = () => {
+            if (done) return;
+            if (Date.now() - startedAt > PIN_MAX_MS || !target.isConnected) { stop(); return; }
+            const currentTop = target.getBoundingClientRect().top;
+            const delta = currentTop - wantTop;
+            if (Math.abs(delta) > 1) {
+                adjusting = true;
+                window.scrollBy(0, delta);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        adjusting = false;
+                    });
+                });
+            }
+        };
+
+        const onLoad = () => realign();
+
+        const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
+        inputs.forEach(ev => window.addEventListener(ev, stop, { capture: true, passive: true }));
+        window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+        document.addEventListener('load', realign, true);   // <img>/<video>/<iframe> loads do not bubble → capture
+        window.addEventListener('load', onLoad, true);
+
+        ro = new ResizeObserver(realign);
+        ro.observe(document.documentElement);
+        const root = document.querySelector('.block--messages, .block-body--messages, .p-body-content');
+        if (root) ro.observe(root);
+
+        activeScrollStabilizer = stabilizerObj;
+        setTimeout(stop, PIN_MAX_MS + 200);
+        return stabilizerObj;
+    }
+
+    // DEEP-LINK (notificação/permalink → #post-X ou /posts/X): ao cair fundo na thread,
     // processa o post-alvo primeiro e faz o scroll suave inicial uma única vez
     // sem sequestrar a rolagem do usuário.
     function pinDeepLinkPost() {
         const h = (location.hash || '').replace(/^#/, '');
-        if (!h || !/^(?:js-)?(?:post|comment|post-comment)-\d+$/.test(h)) return;
-        const el = document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]');
-        const target = el && (el.closest('article.message, .message--post, .comment, .message-responseRow') || el);
-        if (!target) return;
-        safe(processAll, [target]);   // a mídia do post VISÍVEL monta antes do scan completo
+        const hasHashTarget = h && /^(?:js-)?(?:post|comment|post-comment)-\d+$/.test(h);
+        const hasPathTarget = /\/(?:posts|post)[/-]?\d+/i.test(location.pathname)
+            || (location.pathname.includes('/goto/') && /[?&]id=\d+/i.test(location.search));
+        if (!hasHashTarget && !hasPathTarget) return;
+        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null)
+            || (h && (document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]')));
+        const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
+        if (!post) return;
+        safe(processAll, [post]);   // a mídia do post VISÍVEL monta antes do scan completo
         try {
-            target.scrollIntoView({ block: 'start', behavior: 'instant' });
+            post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
+        safe(armScrollStabilizer, post);
     }
+    // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
+    function pinRestoredPost() {
+        if (!cls.contains('smg-thread') || (location.hash || '').length > 1 || window.scrollY < 80) return;
+        const posts = document.querySelectorAll('article.message');
+        for (const post of posts) {
+            const r = post.getBoundingClientRect();
+            if (r.bottom > 70) { safe(armScrollStabilizer, post); return; }
+        }
+    }
+
+    function resolvePostIdFromHref(href) {
+        if (!href || typeof href !== 'string') return null;
+        const hashMatch = href.match(/#(?:js-)?(?:post|comment|post-comment)-(\d+)/i);
+        if (hashMatch) return hashMatch[1];
+        const pathMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i);
+        if (pathMatch) return pathMatch[1];
+        if (href.includes('/goto/')) {
+            const gotoMatch = href.match(/[?&]id=(\d+)/i);
+            if (gotoMatch) return gotoMatch[1];
+        }
+        const queryMatch = href.match(/[?&](?:posts|post)[/-]?(\d+)/i);
+        if (queryMatch) return queryMatch[1];
+        return null;
+    }
+
+    function findPostElementById(pid) {
+        if (!pid) return null;
+        const el = document.getElementById('post-' + pid)
+            || document.getElementById('js-post-' + pid)
+            || document.querySelector('[data-content="post-' + pid + '"]')
+            || document.querySelector('article.message[data-content*="' + pid + '"]');
+        return el ? (el.closest('article.message, .message--post, .comment, .message-responseRow') || el) : null;
+    }
+
+    // INTERCEPTOR GLOBAL DE CLIQUES EM POSTS/THREADS:
+    // Qualquer link no site (quote, notificação, menção, permalink, etc.) que aponte para um
+    // post já presente no DOM da página atual é rolado suavemente com estabilizador de scroll,
+    // sem disparar recarregamento desnecessário nem layout shift.
+    function handleInPagePostClick(e) {
+        if (e.defaultPrevented) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button && e.button !== 0)) return;
+        const a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        const href = a.getAttribute('href') || a.href || '';
+        const pid = resolvePostIdFromHref(href);
+        if (!pid) return;
+        const postEl = findPostElementById(pid);
+        if (postEl) {
+            e.preventDefault();
+            if (typeof aldockPhone === 'function' && aldockPhone() && typeof closeAlertsDock === 'function') {
+                closeAlertsDock();
+            }
+            try {
+                postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {}
+            if (typeof armScrollStabilizer === 'function') {
+                armScrollStabilizer(postEl);
+            }
+            try {
+                history.replaceState(null, '', '#post-' + pid);
+            } catch (err) {}
+            postEl.classList.add('is-target');
+            setTimeout(() => { postEl.classList.remove('is-target'); }, 2000);
+        }
+    }
+
+    document.addEventListener('click', handleInPagePostClick);
+    window.addEventListener('hashchange', () => {
+        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        if (target && typeof armScrollStabilizer === 'function') {
+            armScrollStabilizer(target);
+        }
+    });
     // ===== FASE 2 (DOM pronto): re-detecta (DOM) + monta os componentes (topbar/dock/filter bar) =====
     function boot() {
         safe(handleCrossSiteSearch);
@@ -25653,7 +26497,6 @@
         if (FEATURES.sidebarNavigation) safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
         if (FEATURES.imageLightbox) safe(setupImageClickFeed);
-        if (FEATURES.hoverPreview) safe(setupThumbPreview);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
@@ -25663,8 +26506,9 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (/\/threads\//.test(location.pathname)) safe(harvestCurrentThreadPage);
+        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
         safe(pinDeepLinkPost);
+        safe(pinRestoredPost);
         safe(startTimelineCron);
 
         processAll([document.body]);
@@ -25676,6 +26520,7 @@
         window.__processImagepondNativeEmbeds = processImagepondNativeEmbeds;
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
+        window.__inPagePostExports = { resolvePostIdFromHref, findPostElementById, handleInPagePostClick, armScrollStabilizer, getActiveScrollStabilizer: () => activeScrollStabilizer };
     }
 
     if (document.readyState === 'loading') {

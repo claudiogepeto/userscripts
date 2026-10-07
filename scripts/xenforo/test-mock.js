@@ -92,6 +92,25 @@ async function runTests() {
     }
     window.IntersectionObserver = MockIntersectionObserver;
 
+    // Mock ResizeObserver
+    class MockResizeObserver {
+        constructor(callback) {
+            this.callback = callback;
+            this.elements = new Set();
+        }
+        observe(target) {
+            this.elements.add(target);
+        }
+        unobserve(target) {
+            this.elements.delete(target);
+        }
+        disconnect() {
+            this.elements.clear();
+        }
+    }
+    window.ResizeObserver = MockResizeObserver;
+    window.scrollBy = () => {};
+
     // Mock requestAnimationFrame
     window.requestAnimationFrame = (fn) => setTimeout(fn, 0);
     window.cancelAnimationFrame = (id) => clearTimeout(id);
@@ -315,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.44'), 'Userscript deve estar na versão 3.12.44');
+    assert(scriptContent.includes('// @version      3.12.45'), 'Userscript deve estar na versão 3.12.45');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -6340,6 +6359,474 @@ async function runTests() {
 
         // Limpeza
         postArticle52.remove();
+    }
+
+    // =========================================================================
+    console.log('--- TESTE 53: Rotas de Notificação (/posts/ e /goto/) & Paint Gate Estável ---');
+    // =========================================================================
+    if (window.__paintExports) {
+        const { classifyPaintPage } = window.__paintExports;
+        const setPage53 = (url, template) => {
+            window.history.pushState({}, '', url);
+            if (template == null) document.documentElement.removeAttribute('data-template');
+            else document.documentElement.setAttribute('data-template', template);
+            return classifyPaintPage();
+        };
+
+        const postRoute = setPage53('/posts/987654/');
+        assert(postRoute.kind === 'thread', 'Rota /posts/987654/ deve ser classificada como thread');
+        assert(postRoute.gated === true, 'Rota /posts/987654/ deve ativar o paint gate');
+
+        const gotoRoute = setPage53('/goto/post?id=987654');
+        assert(gotoRoute.kind === 'thread', 'Rota /goto/post?id=987654 deve ser classificada como thread');
+        assert(gotoRoute.gated === true, 'Rota /goto/post?id=987654 deve ativar o paint gate');
+
+        const alertsRoute = setPage53('/account/alerts');
+        assert(alertsRoute.kind === 'listing', 'Rota /account/alerts deve ser classificada como listing');
+        assert(alertsRoute.gated === true, 'Rota /account/alerts deve ativar o paint gate');
+
+        const watchedRoute = setPage53('/watched/threads');
+        assert(watchedRoute.kind === 'following', 'Rota /watched/threads deve ser classificada como following');
+
+        const queryThreadRoute = setPage53('/index.php?threads/example-thread.12345/');
+        assert(queryThreadRoute.kind === 'thread', 'Rota /index.php?threads/... deve ser classificada como thread');
+        assert(queryThreadRoute.gated === true, 'Rota /index.php?threads/... deve ativar o paint gate');
+
+        const articleTypeRoute = setPage53('/threads/art.123/', 'thread_view_type_article');
+        assert(articleTypeRoute.kind === 'thread', 'Template thread_view_type_article deve ser classificado como thread');
+
+        const questionTypeRoute = setPage53('/threads/q.123/', 'thread_view_type_question');
+        assert(questionTypeRoute.kind === 'thread', 'Template thread_view_type_question deve ser classificado como thread');
+
+        // Testar delegação de clique em alerta in-page
+        const dockEl = document.getElementById('smg-aldock') || (typeof buildAlertsDock === 'function' ? buildAlertsDock() : null);
+        if (dockEl) {
+            const alertsPane = dockEl.querySelector('.smg-aldock-body[data-tab="alerts"]');
+            if (alertsPane) {
+                // Criar post fictício no DOM
+                const mockPost = document.createElement('article');
+                mockPost.className = 'message message--post';
+                mockPost.id = 'post-777888';
+                mockPost.scrollIntoView = () => { mockPost._scrolled = true; };
+                document.body.appendChild(mockPost);
+
+                const mockLink = document.createElement('a');
+                mockLink.href = '/posts/777888/';
+                alertsPane.appendChild(mockLink);
+
+                const clickEvt = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+                mockLink.dispatchEvent(clickEvt);
+
+                assert(clickEvt.defaultPrevented === true, 'Clique em alerta de post existente na página deve prevenir navegação padrão');
+                assert(mockPost._scrolled === true, 'Post existente no DOM deve ter scrollIntoView chamado ao clicar no alerta');
+
+                mockPost.remove();
+                mockLink.remove();
+            }
+        }
+
+        // Testar interceptor global em citação de post (quote jump)
+        const mockPostQuote = document.createElement('article');
+        mockPostQuote.className = 'message message--post';
+        mockPostQuote.id = 'post-999111';
+        mockPostQuote.scrollIntoView = () => { mockPostQuote._scrolled = true; };
+        document.body.appendChild(mockPostQuote);
+
+        const quoteLink = document.createElement('a');
+        quoteLink.href = '/goto/post?id=999111';
+        quoteLink.className = 'bbCodeBlock-sourceJump';
+        document.body.appendChild(quoteLink);
+
+        const quoteClickEvt = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+        quoteLink.dispatchEvent(quoteClickEvt);
+
+        assert(quoteClickEvt.defaultPrevented === true, 'Clique em citação de post existente na página deve prevenir navegação padrão');
+        assert(mockPostQuote._scrolled === true, 'Post citado existente no DOM deve ter scroll suave e ancoragem ativada');
+
+        mockPostQuote.remove();
+        quoteLink.remove();
+
+        // Testar armScrollStabilizer e liberação imediata em interação/rolagem do usuário
+        const { armScrollStabilizer, getActiveScrollStabilizer } = window.__inPagePostExports || {};
+        assert(typeof armScrollStabilizer === 'function', 'armScrollStabilizer deve ser função');
+        assert(typeof getActiveScrollStabilizer === 'function', 'getActiveScrollStabilizer deve ser função');
+
+        const stabPost = document.createElement('article');
+        stabPost.className = 'message message--post';
+        stabPost.getBoundingClientRect = () => ({ top: 120, bottom: 450 });
+        document.body.appendChild(stabPost);
+
+        const s1 = armScrollStabilizer(stabPost);
+        assert(s1 && s1.isActive(), 'armScrollStabilizer deve inicializar como ativo');
+        assert(getActiveScrollStabilizer() === s1, 'getActiveScrollStabilizer deve referenciar o stabilizer atual');
+
+        // Rolagem de usuário deve desativar o stabilizer instantaneamente
+        window.dispatchEvent(new window.Event('scroll'));
+        assert(s1.isActive() === false, 'Disparo de evento scroll do usuário deve soltar o stabilizer imediatamente');
+        assert(getActiveScrollStabilizer() === null, 'activeScrollStabilizer deve ser nulo após scroll');
+
+        // Testar evento de wheel / toque / pointerdown
+        const s2 = armScrollStabilizer(stabPost);
+        assert(s2 && s2.isActive(), 'armScrollStabilizer rearmado deve estar ativo');
+        window.dispatchEvent(new window.Event('wheel'));
+        assert(s2.isActive() === false, 'Disparo de evento wheel deve soltar o stabilizer imediatamente');
+        assert(getActiveScrollStabilizer() === null, 'activeScrollStabilizer deve ser nulo após wheel');
+
+        const s3 = armScrollStabilizer(stabPost);
+        assert(s3 && s3.isActive(), 'armScrollStabilizer deve estar ativo para teste de pointerdown');
+        window.dispatchEvent(new window.Event('pointerdown'));
+        assert(s3.isActive() === false, 'Disparo de evento pointerdown deve soltar o stabilizer imediatamente');
+
+        stabPost.remove();
+    }
+
+    // =========================================================================
+    console.log('--- TESTE 54: Universal Paint Gate, Dead Box Formatação, Player Error UI & FileHost Guard ---');
+    // =========================================================================
+    // 1. Universal Paint Gate (rotas genéricas)
+    if (window.__paintExports) {
+        const { classifyPaintPage, paintSkeletonMarkup } = window.__paintExports;
+        const setPage54 = (url, template) => {
+            window.history.pushState({}, '', url);
+            if (template == null) document.documentElement.removeAttribute('data-template');
+            else document.documentElement.setAttribute('data-template', template);
+            return classifyPaintPage();
+        };
+
+        const genericRoute = setPage54('/some-unknown-path/xyz', 'custom_template_foo');
+        assert(genericRoute.kind === 'generic', 'Rotas desconhecidas devem ser classificadas como generic');
+        assert(genericRoute.gated === true, 'Rotas genéricas devem ter paint gate ativado (gated: true)');
+
+        const genericSkeleton = paintSkeletonMarkup('generic');
+        assert(genericSkeleton.includes('smg-page-skeleton-main'), 'Skeleton genérico deve possuir container main');
+        assert(genericSkeleton.includes('smg-page-skeleton-row'), 'Skeleton genérico deve possuir linhas de skeleton');
+        assert(genericSkeleton.includes('smg-page-skeleton-bottom-nav'), 'Skeleton genérico deve possuir bottom nav');
+    }
+
+    // 2. Dead Box com separador explícito e formatação limpa
+    if (typeof window.buildDeadBox === 'function') {
+        const deadBox = window.buildDeadBox('https://pixeldrain.com/api/file/QBWwuDfk', { media: true });
+        assert(deadBox instanceof window.HTMLElement, 'buildDeadBox deve retornar HTMLElement');
+        assert(deadBox.classList.contains('smg-dead'), 'buildDeadBox deve possuir a classe .smg-dead');
+        const sepEl = deadBox.querySelector('.smg-dead-sep');
+        assert(sepEl !== null, 'buildDeadBox deve possuir separador .smg-dead-sep');
+        assert(sepEl.textContent.trim() === '·', 'Separador .smg-dead-sep deve conter caractere de ponto');
+        const codeEl = deadBox.querySelector('.smg-dead-code');
+        const subEl = deadBox.querySelector('.smg-dead-sub');
+        assert(codeEl !== null && subEl !== null, 'buildDeadBox deve conter .smg-dead-code e .smg-dead-sub');
+    }
+
+    // 3. pdPlace e processFileHostCards ignorando .smg-dead e links de auto-image-grid
+    if (typeof window.pdPlace === 'function') {
+        const dummyDead = document.createElement('a');
+        dummyDead.className = 'smg-dead';
+        const dummyCard = document.createElement('div');
+        dummyCard.className = 'smg-fhcard';
+        const parent = document.createElement('div');
+        parent.appendChild(dummyDead);
+        window.pdPlace(dummyDead, dummyCard);
+        assert(!parent.querySelector('.smg-fhcard'), 'pdPlace não deve inserir card quando o nó for .smg-dead');
+    }
+
+    if (typeof window.processFileHostCards === 'function') {
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'auto-image-grid';
+        const gridDeadLink = document.createElement('a');
+        gridDeadLink.href = 'https://pixeldrain.com/u/12345';
+        gridDeadLink.className = 'smg-dead';
+        gridContainer.appendChild(gridDeadLink);
+        document.body.appendChild(gridContainer);
+
+        window.processFileHostCards([gridContainer]);
+        assert(!gridContainer.querySelector('.smg-fhcard'), 'processFileHostCards não deve converter links .smg-dead ou dentro de .auto-image-grid');
+        gridContainer.remove();
+    }
+
+    // 4. Video Player Error UI
+    if (typeof window.__showPlayerError === 'function') {
+        const testWrap = document.createElement('div');
+        testWrap.className = 'smg-rg smg-rg-loading';
+        const testVideo = document.createElement('video');
+        testVideo.className = 'smg-rg-v';
+        testWrap.appendChild(testVideo);
+        document.body.appendChild(testWrap);
+
+        let retryTriggered = false;
+        window.__showPlayerError(testWrap, testVideo, {
+            code: 502,
+            message: 'Bad Gateway · Host offline',
+            url: 'https://imagepond.com/v/test123',
+            retry: () => { retryTriggered = true; }
+        });
+
+        const errorOverlay = testWrap.querySelector('.smg-rg-error');
+        assert(errorOverlay !== null, '__showPlayerError deve injetar .smg-rg-error dentro do wrap');
+        assert(testWrap.classList.contains('smg-rg-has-error'), 'Wrap do player deve receber classe smg-rg-has-error');
+        assert(!testWrap.classList.contains('smg-rg-loading'), 'Wrap do player não deve mais ter classe smg-rg-loading após erro');
+
+        const badge = errorOverlay.querySelector('.smg-rg-error-badge');
+        assert(badge !== null && badge.textContent.includes('502'), 'Overlay deve conter badge com código de erro 502');
+
+        const msg = errorOverlay.querySelector('.smg-rg-error-msg');
+        assert(msg !== null && msg.textContent.includes('Bad Gateway'), 'Overlay deve conter mensagem do erro');
+
+        const retryBtn = errorOverlay.querySelector('.smg-rg-error-btn--retry');
+        assert(retryBtn !== null, 'Overlay deve conter botão de retry');
+        retryBtn.click();
+        assert(retryTriggered === true, 'Clique no botão de retry deve invocar callback de retry');
+
+        const extBtn = errorOverlay.querySelector('.smg-rg-error-btn--open');
+        assert(extBtn !== null && extBtn.getAttribute('href') === 'https://imagepond.com/v/test123', 'Botão externo deve apontar para a URL do vídeo');
+
+        testWrap.remove();
+    }
+
+    // 5. CSS checks: link contrast & loading player opacity
+    const allCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(allCss.includes('.smg-rg-error'), 'CSS deve conter estilos para .smg-rg-error');
+    assert(allCss.includes('.smg-dead-sep'), 'CSS deve conter estilos para .smg-dead-sep');
+    assert(!allCss.includes('.smg-rg.smg-rg-loading > .smg-rg-v { opacity: 0'), 'CSS não deve ocultar vídeo com opacity: 0 durante loading do player');
+
+    // =========================================================================
+    console.log('--- TESTE 55: Remoção de hoverPreview, Nova Opção replaceThumbsWithFull & Limpeza de Hover ---');
+    // =========================================================================
+    if (window.__configExports) {
+        const { DEFAULT_FEATURES, FEATURES, SETTINGS_META } = window.__configExports;
+        assert(DEFAULT_FEATURES.hoverPreview === undefined, 'DEFAULT_FEATURES não deve mais possuir hoverPreview');
+        assert(DEFAULT_FEATURES.replaceThumbsWithFull === false, 'DEFAULT_FEATURES deve possuir replaceThumbsWithFull desabilitado por padrão');
+
+        const imagesSection = SETTINGS_META.find(s => s.section === 'Images');
+        assert(imagesSection !== undefined, 'SETTINGS_META deve conter seção Images');
+        assert(!imagesSection.items.some(it => it.key === 'hoverPreview'), 'Seção Images não deve conter chave hoverPreview');
+        assert(imagesSection.items.some(it => it.key === 'replaceThumbsWithFull'), 'Seção Images deve conter chave replaceThumbsWithFull');
+
+        // Testar comportamento com replaceThumbsWithFull ativo vs inativo
+        const { getFullIO, processOneImage, resolveFullImageUrl, applyReplaceThumbsWithFull, swapImgSrc } = window.__masonryExports || {};
+        assert(typeof resolveFullImageUrl === 'function', 'resolveFullImageUrl deve estar disponível');
+        assert(typeof applyReplaceThumbsWithFull === 'function', 'applyReplaceThumbsWithFull deve estar disponível');
+
+        // 1. Resolução de anexos XenForo em links pai
+        const xfAnchor = document.createElement('a');
+        xfAnchor.href = '/attachments/screenshot-png.4512043/';
+        const xfImg = document.createElement('img');
+        xfImg.className = 'bbImage';
+        xfImg.src = '/data/attachments/4512/4512043-a1b2c3d4e5.jpg';
+        xfAnchor.appendChild(xfImg);
+        document.body.appendChild(xfAnchor);
+
+        const xfFull = resolveFullImageUrl(xfImg);
+        assert(xfFull.includes('/attachments/screenshot-png.4512043/'), 'resolveFullImageUrl deve extrair URL de anexo XenForo do link pai');
+
+        // 2. Resolução de anexos XenForo em wrappers (.bbImageWrapper[data-src])
+        const xfWrap = document.createElement('div');
+        xfWrap.className = 'bbImageWrapper js-lbImage';
+        xfWrap.setAttribute('data-src', '/attachments/attachment-sample-jpg.999888/');
+        const xfWrapImg = document.createElement('img');
+        xfWrapImg.className = 'bbImage';
+        xfWrapImg.src = '/data/attachments/999/999888-abcdef.jpg';
+        xfWrap.appendChild(xfWrapImg);
+        document.body.appendChild(xfWrap);
+
+        const wrapFull = resolveFullImageUrl(xfWrapImg);
+        assert(wrapFull.includes('/attachments/attachment-sample-jpg.999888/'), 'resolveFullImageUrl deve extrair URL de anexo do wrapper data-src');
+
+        // 3. Resolução de query params de thumbnail (?thumb=1)
+        const qThumbImg = document.createElement('img');
+        qThumbImg.className = 'bbImage';
+        qThumbImg.src = 'https://example.com/gallery/image123.jpg?thumb=1';
+        const qFull = resolveFullImageUrl(qThumbImg);
+        assert(qFull === 'https://example.com/gallery/image123.jpg', 'resolveFullImageUrl deve limpar parâmetros de thumbnail');
+
+        // 4. Resolução de Pixhost e Imgbox
+        const pixImg = document.createElement('img');
+        pixImg.className = 'bbImage';
+        pixImg.src = 'https://t12.pixhost.to/thumbs/100/200.jpg';
+        assert(resolveFullImageUrl(pixImg) === 'https://img12.pixhost.to/images/100/200.jpg', 'resolveFullImageUrl deve converter thumb Pixhost em imagem full');
+
+        const boxImg = document.createElement('img');
+        boxImg.className = 'bbImage';
+        boxImg.src = 'https://thumbs2.imgbox.com/aa/bb/cc123_t.jpg';
+        assert(resolveFullImageUrl(boxImg) === 'https://images2.imgbox.com/aa/bb/cc123_o.jpg', 'resolveFullImageUrl deve converter thumb Imgbox _t em _o');
+
+        // 5. Testar processOneImage com flag desativada (padrão) vs ativada
+        if (typeof processOneImage === 'function') {
+            const grid = document.createElement('div');
+            grid.className = 'auto-image-grid';
+            const imgEl = document.createElement('img');
+            imgEl.className = 'bbImage';
+            imgEl.src = 'https://example.com/photo.th.jpg';
+            grid.appendChild(imgEl);
+            document.body.appendChild(grid);
+
+            // Com a flag desativada (padrão)
+            FEATURES.replaceThumbsWithFull = false;
+            processOneImage(imgEl);
+            assert(imgEl.dataset.smgFull === 'https://example.com/photo.jpg', 'processOneImage deve extrair URL full em smgFull');
+            assert(imgEl.dataset.smgMed === 'https://example.com/photo.md.jpg', 'processOneImage deve extrair URL med em smgMed');
+
+            // Com a flag ativada, swapImgSrc substitui a imagem final
+            FEATURES.replaceThumbsWithFull = true;
+            assert(typeof getFullIO === 'function', 'getFullIO deve estar disponível');
+            const fio = getFullIO();
+            assert(fio !== null, 'getFullIO deve retornar instância de observer');
+
+            // 6. Testar applyReplaceThumbsWithFull em lote
+            applyReplaceThumbsWithFull(true);
+            assert(imgEl.src === 'https://example.com/photo.jpg', 'applyReplaceThumbsWithFull deve substituir o src da miniatura pela imagem final');
+            assert(xfImg.src.includes('/attachments/screenshot-png.4512043/'), 'applyReplaceThumbsWithFull deve substituir miniatura de anexo XF pela URL original');
+
+            grid.remove();
+        }
+
+        xfAnchor.remove();
+        xfWrap.remove();
+    }
+
+    // Validação de CSS limpo para hover
+    const baseCss55 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert(!baseCss55.includes('filter: drop-shadow(0 0 6px var(--smg-link'), 'CSS não deve conter drop-shadow neon em links no hover');
+    assert(baseCss55.includes('.smg-fhcard, .smg-fhcard *') || baseCss55.includes('.smg-fhcard,\n            .smg-fhcard *'), 'CSS deve conter reset explícito de text-decoration e filter para .smg-fhcard e descendentes');
+
+    // =========================================================================
+    console.log('--- TESTE 56: Ciclo de Vida do Loading da Thread, Árvore Completa & Anti-Drifting ---');
+    // =========================================================================
+    if (window.__paintExports) {
+        const {
+            threadTreeIsComplete,
+            threadMediaTreeIsReady,
+            paintPageIsReady,
+            paintPageSignature,
+            requestedPostTargetId,
+            setupNavigationTransition,
+            PAINT_PAGE_KINDS
+        } = window.__paintExports;
+
+        assert(typeof threadTreeIsComplete === 'function', 'threadTreeIsComplete deve estar disponível em __paintExports');
+        assert(typeof threadMediaTreeIsReady === 'function', 'threadMediaTreeIsReady deve estar disponível em __paintExports');
+
+        // 1. threadTreeIsComplete deve retornar false enquanto readyState for 'loading'
+        const origReadyState = Object.getOwnPropertyDescriptor(window.Document.prototype, 'readyState') ||
+                               Object.getOwnPropertyDescriptor(document, 'readyState');
+        Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true, writable: true });
+        assert(threadTreeIsComplete() === false, 'threadTreeIsComplete deve retornar false enquanto document.readyState for "loading"');
+
+        // 2. Com readyState 'interactive', mas apenas com pager no topo e sem footer ou fechamento, deve retornar false
+        document.readyState = 'interactive';
+        const dummyContent = document.createElement('div');
+        dummyContent.className = 'p-body-content';
+        const dummyMessages = document.createElement('div');
+        dummyMessages.className = 'block--messages';
+        const topPager = document.createElement('div');
+        topPager.className = 'pageNav';
+        document.body.appendChild(topPager);
+        document.body.appendChild(dummyMessages);
+
+        assert(threadTreeIsComplete() === false, 'threadTreeIsComplete NÃO deve ser enganada pelo pageNav do topo e deve retornar false sem footer');
+
+        // 3. Ao adicionar o rodapé .p-footer, threadTreeIsComplete passa a retornar true
+        const footer = document.createElement('footer');
+        footer.className = 'p-footer';
+        document.body.appendChild(footer);
+        assert(threadTreeIsComplete() === true, 'threadTreeIsComplete deve retornar true quando o rodapé .p-footer estiver presente');
+
+        // 4. Testar threadMediaTreeIsReady
+        document.readyState = 'loading';
+        assert(threadMediaTreeIsReady(dummyContent) === false, 'threadMediaTreeIsReady deve retornar false enquanto readyState for loading');
+
+        document.readyState = 'interactive';
+        const postWithImg = document.createElement('article');
+        postWithImg.className = 'message';
+        const testImg = document.createElement('img');
+        testImg.className = 'bbImage';
+        postWithImg.appendChild(testImg);
+        dummyMessages.appendChild(postWithImg);
+
+        assert(threadMediaTreeIsReady(dummyMessages) === false, 'threadMediaTreeIsReady deve retornar false para imagem sem dimensão nem aspect-ratio');
+
+        testImg.style.aspectRatio = '16 / 9';
+        assert(threadMediaTreeIsReady(dummyMessages) === true, 'threadMediaTreeIsReady deve retornar true quando todas as imagens possuem aspect-ratio travado');
+
+        // 5. Testar paintPageIsReady exigindo post solicitado específico
+        const realContent = document.querySelector('.p-body-content');
+        let header = document.querySelector('.p-body-header');
+        let createdHeader = false;
+        if (!header) {
+            header = document.createElement('div');
+            header.className = 'p-body-header';
+            document.body.prepend(header);
+            createdHeader = true;
+        }
+        header.setAttribute('data-smg-thead', '1');
+        header.setAttribute('data-smg-unified', '1');
+        header.dataset.smgThead = '1';
+        header.dataset.smgUnified = '1';
+
+        let messages = realContent.querySelector('.block--messages');
+        let createdMessages = false;
+        if (!messages) {
+            messages = document.createElement('div');
+            messages.className = 'block--messages';
+            realContent.appendChild(messages);
+            createdMessages = true;
+        }
+
+        // Move postWithImg para messages com id post-1001 e marca posts como prontos
+        postWithImg.id = 'post-1001';
+        postWithImg.dataset.content = 'post-1001';
+        postWithImg.dataset.smgCardReady = '1';
+        postWithImg.dataset.smgGalReady = '1';
+        messages.appendChild(postWithImg);
+        realContent.querySelectorAll('article.message').forEach(p => {
+            p.dataset.smgCardReady = '1';
+            p.dataset.smgGalReady = '1';
+        });
+
+        // Simula hash apontando para post inexistente
+        window.location.hash = '#post-9999';
+        const threadCtx = { kind: PAINT_PAGE_KINDS.THREAD, gated: true };
+        assert(paintPageIsReady(threadCtx) === false, 'paintPageIsReady deve retornar false se o post alvo solicitado (#post-9999) ainda não estiver no DOM');
+
+        // Corrige o hash para apontar para o post existente no DOM (#post-1001)
+        window.location.hash = '#post-1001';
+        assert(paintPageIsReady(threadCtx) === true, 'paintPageIsReady deve retornar true quando o post alvo solicitado (#post-1001) existe e está pronto');
+
+        // 6. Testar paintPageSignature incluindo altura e imagens
+        const sig = paintPageSignature(threadCtx);
+        assert(sig.includes('imgs:'), 'paintPageSignature deve incluir contador de imagens prontas');
+        assert(sig.includes(',h:'), 'paintPageSignature deve incluir altura do bloco de mensagens');
+
+        // 7. Testar setupNavigationTransition com links internos vs links de navegação
+        setupNavigationTransition();
+        const docRoot = document.documentElement;
+        docRoot.classList.remove('smg-page-pending');
+
+        // Link de post na mesma página (#post-1001) não deve disparar skeleton de página
+        const inPageLink = document.createElement('a');
+        inPageLink.href = '#post-1001';
+        document.body.appendChild(inPageLink);
+        inPageLink.click();
+        assert(!docRoot.classList.contains('smg-page-pending'), 'Clique em link de post na mesma página NÃO deve ativar smg-page-pending');
+
+        // Link de navegação para outro tópico deve ativar smg-page-pending
+        const threadLink = document.createElement('a');
+        threadLink.href = '/threads/outro-topico.12345/';
+        document.body.appendChild(threadLink);
+        threadLink.click();
+        assert(docRoot.classList.contains('smg-page-pending'), 'Clique em link de outro tópico DEVE ativar smg-page-pending imediatamente');
+
+        // Limpeza do DOM de teste
+        docRoot.classList.remove('smg-page-pending');
+        topPager.remove();
+        dummyMessages.remove();
+        if (createdHeader && header) header.remove();
+        if (createdMessages && messages) messages.remove();
+        postWithImg.remove();
+        dummyContent.remove();
+        footer.remove();
+        inPageLink.remove();
+        threadLink.remove();
+        window.location.hash = '';
+        if (origReadyState) Object.defineProperty(document, 'readyState', origReadyState);
     }
 
     // =========================================================================

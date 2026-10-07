@@ -1000,8 +1000,9 @@
         const code = document.createElement('span'); code.className = 'smg-dead-code';
         code.innerHTML = ICONS.warn;
         const num = document.createElement('b'); code.appendChild(num);
+        const sep = document.createElement('span'); sep.className = 'smg-dead-sep'; sep.textContent = '·';
         const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
-        a.append(code, sub);
+        a.append(code, sep, sub);
         const paint = st => {
             const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
             num.textContent = r.code;

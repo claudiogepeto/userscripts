@@ -15,7 +15,7 @@
         'Redesigned top bar': 'Barra superior redesenhada', 'Reworked homepage': 'Página inicial reformulada',
         'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado',
         'Image grid in posts': 'Grade de imagens nos posts',
-        'Enlarged preview on hover': 'Prévia ampliada ao passar o mouse', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
+        'Replace thumbnails with full images': 'Substituir miniaturas pelas imagens finais', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
         'RedGifs — load automatically': 'RedGifs — carregar automaticamente', 'RedGifs — built-in player': 'RedGifs — player próprio',
         'Turbo.cr — show videos': 'Turbo.cr — exibir vídeos', 'Turbo.cr — built-in player': 'Turbo.cr — player próprio',
         'Saint.su — show videos': 'Saint.su — exibir vídeos', 'Direct media from CDNs': 'Mídia direta de CDNs',

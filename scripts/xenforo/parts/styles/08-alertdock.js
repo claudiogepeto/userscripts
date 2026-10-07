@@ -194,8 +194,8 @@
             .smg-aldock-list .smg-al-title { font-size: 14.5px; }
             .smg-aldock-list li.alert { padding: 14px 15px; }
             /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
-            .smg-tb-railbtn.active,
-            html.smg-aldock-on .smg-tb-railbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
+            .smg-tb-bellbtn.active,
+            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1099px) and (min-width: 601px) {
@@ -203,7 +203,7 @@
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
-                .smg-tb-railbtn { display: none !important; }
+                .smg-tb-bellbtn { display: none !important; }
             }
             /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
                página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
@@ -217,7 +217,7 @@
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
                 .smg-aldock-grip { display: none !important; }        /* não se arrasta largura em tela cheia */
-                .smg-tb-railbtn { display: none !important; }         /* o controle é o sino da navbar */
+                .smg-tb-bellbtn { display: none !important; }         /* o controle é o sino da navbar inferior */
                 /* respeita as barras do sistema (notch em cima, gesto embaixo) */
                 .smg-aldock-head { padding-top: calc(10px + env(safe-area-inset-top)); }
                 .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }

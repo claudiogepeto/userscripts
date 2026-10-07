@@ -18,7 +18,9 @@
         if (FEATURES.customFavicon) safe(setFavicon);
 
         const path = location.pathname;
-        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || /\/threads\//.test(path);
+        const isThreadRoute = !/\/watched\//.test(path)
+            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
+        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute;
         const isThreadList = [PAINT_PAGE_KINDS.LISTING, PAINT_PAGE_KINDS.FOLLOWING].includes(paintContext.kind)
             || cls.contains('smg-threadlist') || /\/forums\//.test(path) || /\/watched\//.test(path);
         const isHome = paintContext.kind === PAINT_PAGE_KINDS.HOME || (cls.contains('smg-home') && !cls.contains('smg-watched-feed'));
@@ -29,9 +31,9 @@
         const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === 'function' && feedContext());
 
         if (isContentFeed && contentDirty) {
-            if (FEATURES.autoFullImages) safe(unlazyImageLinks, roots);
+            if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
-            if (FEATURES.autoFullImages) safe(processImages, roots);
+            if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
@@ -192,7 +194,9 @@
             cls.add('smg-home');
             cls.add('smg-home-pending');
         }
-        if (tpl === 'thread_view' || /\/threads\//.test(path)) cls.add('smg-thread');
+        const isThreadRoute = !/\/watched\//.test(path)
+            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
+        if (/^thread_view/i.test(tpl) || isThreadRoute) cls.add('smg-thread');
         const isList = /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
             || /^(?:forum_view|watched_threads_list|search_results)$/i.test(tpl)
             || !!document.querySelector('.structItem--thread');
@@ -212,6 +216,7 @@
     if (FEATURES.autoFullImages) cls.add('smg-masonry-on');   // "Galeria" (full-res + masonry por post) — masonry atrelado à galeria
     if (FEATURES.unwrapLinks) { bindProxyClick(); handleRedirectPage(); }   // liga o intercept de clique JÁ no document-start (antes do XF) + pula página de aviso
     if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+    safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
     // Reserve the persisted desktop dock before the body and topbar are built.
     // The panel itself is mounted during boot, but this class prevents its
@@ -231,20 +236,182 @@
     const earlyObs = new MutationObserver(scheduleRun);
     earlyObs.observe(document.documentElement, { childList: true, subtree: true });
 
-    // DEEP-LINK (notificação/permalink → #post-X): ao cair fundo na thread,
+    // SCROLL STABILIZER: media, embeds, post cards and galleries finish sizing AFTER the first paint, and
+    // everything above the viewport growing pushes the reading position down (opening on the last post ended
+    // mid-thread). Native scroll anchoring cannot help because the script rebuilds posts (the anchor node is
+    // replaced). So the post the reader landed on is pinned at its original viewport offset: every layout change
+    // (ResizeObserver runs before paint, so there is no visible jump) and every late image/video load
+    // re-aligns it. It lets go IMMEDIATELY on ANY user input (wheel, touch, click, scroll, key), or after
+    // a brief safety deadline (2.5s), never fighting against user scrolling.
+    let activeScrollStabilizer = null;
+
+    function armScrollStabilizer(target) {
+        if (!target || !target.isConnected || typeof ResizeObserver !== 'function') return;
+        if (activeScrollStabilizer) {
+            activeScrollStabilizer.stop();
+            activeScrollStabilizer = null;
+        }
+
+        const PIN_MAX_MS = 1200;
+        const startedAt = Date.now();
+        let wantTop = target.getBoundingClientRect().top;
+        let done = false;
+        let adjusting = false;
+        let ro = null;
+
+        const stabilizerObj = {
+            stop: () => stop(),
+            isActive: () => !done
+        };
+
+        const stop = () => {
+            if (done) return;
+            done = true;
+            if (activeScrollStabilizer === stabilizerObj) {
+                activeScrollStabilizer = null;
+            }
+            if (ro) ro.disconnect();
+            const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
+            inputs.forEach(ev => window.removeEventListener(ev, stop, true));
+            window.removeEventListener('scroll', onScroll, true);
+            window.removeEventListener('load', onLoad, true);
+            document.removeEventListener('load', realign, true);
+        };
+
+        const onScroll = () => {
+            if (done) return;
+            if (!adjusting) {
+                // Rolagem iniciada pelo usuário: solta o controle instantaneamente
+                stop();
+            }
+        };
+
+        const realign = () => {
+            if (done) return;
+            if (Date.now() - startedAt > PIN_MAX_MS || !target.isConnected) { stop(); return; }
+            const currentTop = target.getBoundingClientRect().top;
+            const delta = currentTop - wantTop;
+            if (Math.abs(delta) > 1) {
+                adjusting = true;
+                window.scrollBy(0, delta);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        adjusting = false;
+                    });
+                });
+            }
+        };
+
+        const onLoad = () => realign();
+
+        const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
+        inputs.forEach(ev => window.addEventListener(ev, stop, { capture: true, passive: true }));
+        window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+        document.addEventListener('load', realign, true);   // <img>/<video>/<iframe> loads do not bubble → capture
+        window.addEventListener('load', onLoad, true);
+
+        ro = new ResizeObserver(realign);
+        ro.observe(document.documentElement);
+        const root = document.querySelector('.block--messages, .block-body--messages, .p-body-content');
+        if (root) ro.observe(root);
+
+        activeScrollStabilizer = stabilizerObj;
+        setTimeout(stop, PIN_MAX_MS + 200);
+        return stabilizerObj;
+    }
+
+    // DEEP-LINK (notificação/permalink → #post-X ou /posts/X): ao cair fundo na thread,
     // processa o post-alvo primeiro e faz o scroll suave inicial uma única vez
     // sem sequestrar a rolagem do usuário.
     function pinDeepLinkPost() {
         const h = (location.hash || '').replace(/^#/, '');
-        if (!h || !/^(?:js-)?(?:post|comment|post-comment)-\d+$/.test(h)) return;
-        const el = document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]');
-        const target = el && (el.closest('article.message, .message--post, .comment, .message-responseRow') || el);
-        if (!target) return;
-        safe(processAll, [target]);   // a mídia do post VISÍVEL monta antes do scan completo
+        const hasHashTarget = h && /^(?:js-)?(?:post|comment|post-comment)-\d+$/.test(h);
+        const hasPathTarget = /\/(?:posts|post)[/-]?\d+/i.test(location.pathname)
+            || (location.pathname.includes('/goto/') && /[?&]id=\d+/i.test(location.search));
+        if (!hasHashTarget && !hasPathTarget) return;
+        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null)
+            || (h && (document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]')));
+        const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
+        if (!post) return;
+        safe(processAll, [post]);   // a mídia do post VISÍVEL monta antes do scan completo
         try {
-            target.scrollIntoView({ block: 'start', behavior: 'instant' });
+            post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
+        safe(armScrollStabilizer, post);
     }
+    // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
+    function pinRestoredPost() {
+        if (!cls.contains('smg-thread') || (location.hash || '').length > 1 || window.scrollY < 80) return;
+        const posts = document.querySelectorAll('article.message');
+        for (const post of posts) {
+            const r = post.getBoundingClientRect();
+            if (r.bottom > 70) { safe(armScrollStabilizer, post); return; }
+        }
+    }
+
+    function resolvePostIdFromHref(href) {
+        if (!href || typeof href !== 'string') return null;
+        const hashMatch = href.match(/#(?:js-)?(?:post|comment|post-comment)-(\d+)/i);
+        if (hashMatch) return hashMatch[1];
+        const pathMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i);
+        if (pathMatch) return pathMatch[1];
+        if (href.includes('/goto/')) {
+            const gotoMatch = href.match(/[?&]id=(\d+)/i);
+            if (gotoMatch) return gotoMatch[1];
+        }
+        const queryMatch = href.match(/[?&](?:posts|post)[/-]?(\d+)/i);
+        if (queryMatch) return queryMatch[1];
+        return null;
+    }
+
+    function findPostElementById(pid) {
+        if (!pid) return null;
+        const el = document.getElementById('post-' + pid)
+            || document.getElementById('js-post-' + pid)
+            || document.querySelector('[data-content="post-' + pid + '"]')
+            || document.querySelector('article.message[data-content*="' + pid + '"]');
+        return el ? (el.closest('article.message, .message--post, .comment, .message-responseRow') || el) : null;
+    }
+
+    // INTERCEPTOR GLOBAL DE CLIQUES EM POSTS/THREADS:
+    // Qualquer link no site (quote, notificação, menção, permalink, etc.) que aponte para um
+    // post já presente no DOM da página atual é rolado suavemente com estabilizador de scroll,
+    // sem disparar recarregamento desnecessário nem layout shift.
+    function handleInPagePostClick(e) {
+        if (e.defaultPrevented) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e.button && e.button !== 0)) return;
+        const a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        const href = a.getAttribute('href') || a.href || '';
+        const pid = resolvePostIdFromHref(href);
+        if (!pid) return;
+        const postEl = findPostElementById(pid);
+        if (postEl) {
+            e.preventDefault();
+            if (typeof aldockPhone === 'function' && aldockPhone() && typeof closeAlertsDock === 'function') {
+                closeAlertsDock();
+            }
+            try {
+                postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {}
+            if (typeof armScrollStabilizer === 'function') {
+                armScrollStabilizer(postEl);
+            }
+            try {
+                history.replaceState(null, '', '#post-' + pid);
+            } catch (err) {}
+            postEl.classList.add('is-target');
+            setTimeout(() => { postEl.classList.remove('is-target'); }, 2000);
+        }
+    }
+
+    document.addEventListener('click', handleInPagePostClick);
+    window.addEventListener('hashchange', () => {
+        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        if (target && typeof armScrollStabilizer === 'function') {
+            armScrollStabilizer(target);
+        }
+    });
     // ===== FASE 2 (DOM pronto): re-detecta (DOM) + monta os componentes (topbar/dock/filter bar) =====
     function boot() {
         safe(handleCrossSiteSearch);
@@ -257,7 +424,6 @@
         if (FEATURES.sidebarNavigation) safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
         if (FEATURES.imageLightbox) safe(setupImageClickFeed);
-        if (FEATURES.hoverPreview) safe(setupThumbPreview);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
@@ -267,8 +433,9 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (/\/threads\//.test(location.pathname)) safe(harvestCurrentThreadPage);
+        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
         safe(pinDeepLinkPost);
+        safe(pinRestoredPost);
         safe(startTimelineCron);
 
         processAll([document.body]);
@@ -280,6 +447,7 @@
         window.__processImagepondNativeEmbeds = processImagepondNativeEmbeds;
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
+        window.__inPagePostExports = { resolvePostIdFromHref, findPostElementById, handleInPagePostClick, armScrollStabilizer, getActiveScrollStabilizer: () => activeScrollStabilizer };
     }
 
     if (document.readyState === 'loading') {

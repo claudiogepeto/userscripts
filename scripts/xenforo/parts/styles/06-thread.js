@@ -1163,10 +1163,11 @@
                POST estilo REDDIT (.smg-pc no <article>): 1 coluna · header · conteúdo · action bar.
                O JS moveu os nativos pro card; aqui esconde os containers esvaziados e estiliza.
                ============================================================ */
-            /* contain layout+style (SEM paint/size): mutação intra-post (player montando, masonry, smg-img-ready)
-               não invalida o layout dos outros N posts. abs/fixed: nada dentro do post ancora fora dele
-               (morepop é absolute no morewrap relative); medidas via getBoundingClientRect seguem normais. */
-            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: layout style; }
+            /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
+               de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
+               overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
+            html.smg-thread .block--messages, html.smg-thread .block-body--messages { overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
             html.smg-thread .smg-pc:hover { border-color: rgba(255,255,255,0.22) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }

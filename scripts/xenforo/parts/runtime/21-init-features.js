@@ -709,6 +709,9 @@
         return false;
     }
     function pdPlace(node, card) {   // troca o link/card cru (o unfurl inteiro, se houver) pelo nosso card
+        if (!node || !card) return;
+        if (node.classList && node.classList.contains('smg-dead')) return;
+        if (node.closest && node.closest('.smg-dead')) return;
         const host = node.closest('.bbCodeBlock--unfurl') || node;
         // TÍTULO DO LINK: quando o <a> tem TEXTO próprio (não a URL crua), ele é a única descrição do
         // item. Esconder o link jogava esse texto fora e uma lista de 80 links virava 80 cards
@@ -716,7 +719,7 @@
         if (node.tagName === 'A') {
             const txt = (node.textContent || '').replace(/\s+/g, ' ').trim();
             const h = card.querySelector('.smg-fhcard-host'), s = card.querySelector('.smg-fhcard-sub');
-            if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt)) {
+            if (h && s && txt.length > 2 && !/^https?:\/\//i.test(txt) && !/^(?:Error|404|403|502|504|unavailable)/i.test(txt)) {
                 let plat = card.querySelector('.smg-fhcard-platform');
                 if (!plat && h.textContent && h.textContent.toLowerCase() !== txt.toLowerCase()) {
                     plat = document.createElement('span');
@@ -1467,6 +1470,7 @@
         // LINKS crus (sem unfurl) dos providers
         eachIn(roots, FH_BARE_SEL, a => {
             a.dataset.fhDone = '1';
+            if (a.classList.contains('smg-dead') || a.closest('.smg-dead, .auto-image-grid')) return;
             if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-ig-embed-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
             if (a.querySelector('img.bbImage')) return;   // link de imagem (lightbox)
             const url = absUrl(resolveProxyHref(a.getAttribute('href') || '') || a.href);

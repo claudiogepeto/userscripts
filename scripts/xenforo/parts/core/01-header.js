@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.44
+// @version      3.12.45
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -128,9 +128,8 @@
     const SMG_CRITICAL_PAINT_STYLE_ID = 'smg-critical-paint';
     const smgCriticalPaintRoot = document.documentElement;
     const smgCriticalPaintPath = location.pathname || '/';
-    const smgCriticalPaintRoute = smgCriticalPaintPath === '/'
-        || /\/(?:threads|forums|watched|whats-new|tags|categories|search)(?:\/|$)/i.test(smgCriticalPaintPath)
-        || /\/account\/bookmarks(?:\/|$)/i.test(smgCriticalPaintPath);
+    const smgCriticalPaintSearch = location.search || '';
+    const smgCriticalPaintRoute = true;
     const smgCriticalPaintDisabled = (() => {
         try {
             if (typeof GM_getValue === 'function' && String(GM_getValue('smg-off', '0')) === '1') return true;

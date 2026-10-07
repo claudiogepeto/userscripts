@@ -887,7 +887,6 @@
                 .smg-tb-actions > * { display: none !important; }
                 .smg-tb-actions > .smg-tb-searchbtn,
                 .smg-tb-actions > .smg-tb-account,
-                .smg-tb-actions > .smg-tb-railbtn,
                 html.smg-guest .smg-tb-actions > .smg-tb-loginbtn { display: inline-flex !important; }
                 .smg-tb-act, .smg-tb-account { width: 44px; height: 44px; }
                 .smg-tb-act svg { width: 21px; height: 21px; }
@@ -947,9 +946,11 @@
 
             /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
                no mobile esses botões continuam (viram a navbar inferior) */
+            /* Following no longer lives in the bottom navbar: it moved into the mobile account sheet (the node stays so the badge sync keeps working) */
+            #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-alerts, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-watched, #smg-nav-alerts, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
