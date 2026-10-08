@@ -45,9 +45,23 @@
     // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
     function unproxyAttr(a) {
         if (!a) return;
-        const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '') || a.href;
-        if (real && /^https?:/i.test(real) && a.getAttribute('href') !== real) {
-            a.setAttribute('href', real);
+        const raw = a.getAttribute('href') || a.getAttribute('data-proxy-href') || '';
+        let real = resolveProxyHref(raw);
+        if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            const txt = a.textContent && a.textContent.trim();
+            if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                try {
+                    const parsed = new URL(txt);
+                    if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                } catch (e) {}
+            }
+        }
+        if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+            a.href = real;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.dataset.smgUnwrap = '1';
         }
         a.removeAttribute('data-proxy-href');
         a.removeAttribute('data-blank-handler');
@@ -68,14 +82,26 @@
                 return;
             }
 
-            const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
+            const rawHref = a.getAttribute('href') || '';
+            const isProxy = a.hasAttribute('data-proxy-href') || (typeof isProxyUrl === 'function' ? (isProxyUrl(rawHref) || isProxyUrl(a.href)) : /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href)) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
 
             if (!isProxy && !isExternal) return;
 
-            const real = resolveProxyHref(a.getAttribute('href') || '') || a.href;
-            if (real && /^https?:/i.test(real)) {
+            let real = resolveProxyHref(rawHref) || resolveProxyHref(a.href || '');
+            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                const txt = a.textContent && a.textContent.trim();
+                if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                    try {
+                        const parsed = new URL(txt);
+                        if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                    } catch (e) {}
+                }
+            }
+
+            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
                 if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+                a.href = real;
                 a.dataset.smgUnwrap = '1';
                 a.target = '_blank';
                 a.rel = 'noopener noreferrer';
@@ -95,13 +121,27 @@
         bindProxyClick();
         // PERF: Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
-        eachIn(roots, 'a[href*="/goto/link-confirmation"]:not([data-smg-unwrap]), a[href*="/redirect/"]:not([data-smg-unwrap]), a[href*="/proxy.php?link="]:not([data-smg-unwrap]), a[href*="/link-proxy/"]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
-            a.dataset.smgUnwrap = '1';
-            const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
-            if (real && /^https?:/i.test(real)) a.href = real;
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
-            a.removeAttribute('data-blank-handler');
-            unproxyText(a);
+        eachIn(roots, 'a[href*="/goto/link-confirmation"], a[href*="/redirect/"], a[href*="/proxy.php?link="], a[href*="/link-proxy/"], a[data-proxy-href]', a => {
+            let real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
+            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                const txt = a.textContent && a.textContent.trim();
+                if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                    try {
+                        const parsed = new URL(txt);
+                        if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                    } catch (e) {}
+                }
+            }
+            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                a.href = real;
+                a.setAttribute('href', real);
+                a.dataset.smgUnwrap = '1';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.removeAttribute('data-proxy-href');
+                a.removeAttribute('data-blank-handler');
+                unproxyText(a);
+            }
         });
     }
     // se o usuário CAIR direto na página de aviso, pula pro destino na hora
@@ -110,13 +150,13 @@
             if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
 
             const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
-            if (realParam && /^https?:/i.test(realParam) && realParam !== location.href) {
+            if (realParam && /^https?:/i.test(realParam) && !(typeof isProxyUrl === 'function' && isProxyUrl(realParam)) && realParam !== location.href) {
                 location.replace(realParam);
                 return;
             }
 
             const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
-            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname)) {
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(typeof isProxyUrl === 'function' && isProxyUrl(domTarget.href))) {
                 location.replace(domTarget.href);
                 return;
             }
@@ -1540,4 +1580,8 @@
         window.processTurboEmbeds = processTurboEmbeds;
         window.fhCard = fhCard;
         window.pdPlace = pdPlace;
+        window.unwrapRedirectLinks = unwrapRedirectLinks;
+        window.__unwrapRedirectLinks = unwrapRedirectLinks;
+        window.unproxyAttr = unproxyAttr;
+        window.handleRedirectPage = handleRedirectPage;
     }

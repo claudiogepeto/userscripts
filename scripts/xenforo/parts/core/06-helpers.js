@@ -7,14 +7,35 @@
         try { return new URL(u, location.href).href; } catch (e) { return u; }
     }
 
+    function cleanProxyString(str) {
+        if (!str || typeof str !== 'string') return '';
+        let s = str.trim().replace(/&amp;/g, '&');
+        const cut = s.search(/["'<>\s]/);
+        if (cut >= 0) s = s.slice(0, cut);
+        return s.trim();
+    }
+
+    function isProxyUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        return /[\/?](goto\/link-confirmation|redirect\/?|link-proxy\/?|proxy\.php)/i.test(url);
+    }
+
     function b64decode(s) {
         if (!s) return null;
-        let str = String(s).trim().replace(/-/g, '+').replace(/_/g, '/');
+        let str = String(s).trim();
+        try { str = decodeURIComponent(str); } catch (e) {}
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
         while (str.length % 4) str += '=';
         for (const t of [str, s]) {
             try {
                 const r = atob(t);
-                if (r) return r;
+                if (r) {
+                    try {
+                        const utf8 = decodeURIComponent(escape(r));
+                        if (utf8) return utf8;
+                    } catch (e) {}
+                    return r;
+                }
             } catch (e) {}
         }
         return null;
@@ -22,48 +43,70 @@
 
     function rawParam(href, key) {
         if (!href) return null;
-        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&#]+)'));
+        const cleanHref = String(href).replace(/&amp;/g, '&');
+        const m = cleanHref.match(new RegExp('[?&]' + key + '=([^&#]+)'));
         if (m) {
-            try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+            let val = m[1];
+            try { val = decodeURIComponent(val); } catch (e) {}
+            return cleanProxyString(val);
         }
         try {
-            const u = new URL(href, location.href);
-            return u.searchParams.get(key);
+            const u = new URL(cleanHref, location.href);
+            const val = u.searchParams.get(key);
+            return val ? cleanProxyString(val) : null;
         } catch (e) {}
         return null;
     }
 
-    function decodeProxyHref(href) {
+    function decodeProxyHrefOnce(href) {
         if (!href || typeof href !== 'string') return null;
+        const clean = cleanProxyString(href);
         let target = null;
-        if (/\/goto\/link-confirmation/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'to');
-        } else if (/\/redirect\/?/i.test(href)) {
-            target = rawParam(href, 'to') || rawParam(href, 'url') || rawParam(href, 'link');
-        } else if (/\/proxy\.php/i.test(href)) {
-            target = rawParam(href, 'link') || rawParam(href, 'url');
-        } else if (/\/link-proxy\/?/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'link') || rawParam(href, 'to');
-        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'to') || rawParam(href, 'link');
+        if (/\/goto\/link-confirmation/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'to');
+        } else if (/\/redirect\/?/i.test(clean)) {
+            target = rawParam(clean, 'to') || rawParam(clean, 'url') || rawParam(clean, 'link');
+        } else if (/\/proxy\.php/i.test(clean)) {
+            target = rawParam(clean, 'link') || rawParam(clean, 'url');
+        } else if (/\/link-proxy\/?/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'link') || rawParam(clean, 'to');
+        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'to') || rawParam(clean, 'link');
         }
         if (!target) return null;
-        target = target.trim();
-        if (/^https?:\/\//i.test(target)) return target;
+        target = cleanProxyString(target);
+        if (/^https?:\/\//i.test(target) || isProxyUrl(target)) return target;
         const decoded = b64decode(target);
-        if (decoded && /^https?:\/\//i.test(decoded.trim())) return decoded.trim();
-        return decoded || target;
+        if (decoded) {
+            const cleanedDecoded = cleanProxyString(decoded);
+            if (/^https?:\/\//i.test(cleanedDecoded) || isProxyUrl(cleanedDecoded)) return cleanedDecoded;
+        }
+        return null;
+    }
+
+    function decodeProxyHref(href) {
+        if (!href || typeof href !== 'string' || !isProxyUrl(href)) return null;
+        let current = href;
+        for (let i = 0; i < 6; i++) {
+            if (!isProxyUrl(current) && /^https?:\/\//i.test(current)) break;
+            const next = decodeProxyHrefOnce(current);
+            if (!next || next === current) break;
+            current = next;
+        }
+        if (/^https?:\/\//i.test(current) && !isProxyUrl(current)) return current;
+        return null;
     }
 
     function resolveProxyHref(href) {
         if (!href || typeof href !== 'string') return '';
-        let trimmed = href.trim();
+        let trimmed = cleanProxyString(href);
         if (!trimmed) return '';
         trimmed = trimmed.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         const decoded = decodeProxyHref(trimmed);
-        if (decoded && /^https?:/i.test(decoded)) return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
-        if (/^https?:/i.test(trimmed)) return trimmed;
-        if (decoded) return decoded;
+        if (decoded && /^https?:/i.test(decoded) && !isProxyUrl(decoded)) {
+            return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+        }
+        if (/^https?:/i.test(trimmed) && !isProxyUrl(trimmed)) return trimmed;
         return trimmed;
     }
 
@@ -1302,6 +1345,10 @@
         window.__decodeProxyHref = decodeProxyHref;
         window.__resolveProxyHref = resolveProxyHref;
         window.resolveProxyHref = resolveProxyHref;
+        window.isProxyUrl = isProxyUrl;
+        window.__isProxyUrl = isProxyUrl;
+        window.cleanProxyString = cleanProxyString;
+        window.__cleanProxyString = cleanProxyString;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
         window.normalizeRoots = normalizeRoots;

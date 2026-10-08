@@ -22,44 +22,53 @@
         }
         if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
             delete img.dataset.smgSwapping;
-            img.referrerPolicy = 'no-referrer';
             img.src = targetAbs;
             const grid = img.closest('.auto-image-grid');
             if (grid) scheduleRelayout(grid);
             return;
         }
-        const pre = new Image();
-        pre.referrerPolicy = 'no-referrer';
-        const apply = () => {
-            if (img.dataset.smgSwapping === targetAbs) {
-                delete img.dataset.smgSwapping;
-                if (img.isConnected) {
-                    img.referrerPolicy = 'no-referrer';
-                    img.src = targetAbs;
-                    const grid = img.closest('.auto-image-grid');
-                    if (grid) scheduleRelayout(grid);
+        const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
+        const loadWithPolicy = (policy, canRetry) => {
+            const pre = new Image();
+            if (policy) pre.referrerPolicy = policy;
+            pre.decoding = 'async';
+            const apply = () => {
+                if (img.dataset.smgSwapping === targetAbs) {
+                    delete img.dataset.smgSwapping;
+                    if (img.isConnected !== false) {
+                        if (policy) img.referrerPolicy = policy;
+                        else img.removeAttribute('referrerpolicy');
+                        img.src = targetAbs;
+                        const grid = img.closest('.auto-image-grid');
+                        if (grid) scheduleRelayout(grid);
+                    }
                 }
+            };
+            pre.onload = () => {
+                (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
+            };
+            pre.onerror = () => {
+                if (canRetry) {
+                    // CDNs com proteção anti-hotlink podem rejeitar o Referer do fórum. Tenta fallback sem referrer.
+                    loadWithPolicy('no-referrer', false);
+                } else {
+                    if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+                }
+            };
+            pre.src = targetAbs;
+            if (pre.complete && pre.naturalWidth) {
+                apply();
             }
         };
-        pre.onload = () => {
-            (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
-        };
-        pre.onerror = () => {
-            if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
-        };
-        pre.decoding = 'async';
-        pre.src = targetAbs;
-        if (pre.complete && pre.naturalWidth) {
-            apply();
-        }
+        loadWithPolicy(initialPolicy, !initialPolicy);
     }
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
     function getMedIO() {     // troca pra MÉDIA (.md.) mais perto da tela (thumb já dá o tamanho → swap sem flash)
         return medIO || (medIO = makeLazyIO(img => {
-            const med = img.dataset.smgMed;
-            if (med && img.getAttribute('src') !== med) swapImgSrc(img, med);
+            const target = (FEATURES.replaceThumbsWithFull && img.dataset.smgFull) ? img.dataset.smgFull : img.dataset.smgMed;
+            if (target && img.getAttribute('src') !== target) swapImgSrc(img, target);
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
     }
     function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (ou em todas se replaceThumbsWithFull estiver ativo)
@@ -355,9 +364,19 @@
         return '';
     }
 
-    function applyReplaceThumbsWithFull(enabled) {
+    function applyReplaceThumbsWithFull(enabled, roots) {
         if (!enabled) return;
-        const imgs = document.querySelectorAll('img.bbImage');
+        const selector = 'img.bbImage';
+        const imgs = [];
+        if (roots && Array.isArray(roots)) {
+            roots.forEach(r => {
+                if (!r || !r.querySelectorAll) return;
+                if (r.matches && r.matches(selector)) imgs.push(r);
+                r.querySelectorAll(selector).forEach(im => imgs.push(im));
+            });
+        } else {
+            document.querySelectorAll(selector).forEach(im => imgs.push(im));
+        }
         imgs.forEach(img => {
             let full = img.dataset.smgFull;
             if (!full) {
@@ -457,7 +476,7 @@
             if (img.alt) img.alt = cleanText(img.alt);
             if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA
                 const mio = getMedIO();
-                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+                if (mio) mio.observe(img); else img.src = (FEATURES.replaceThumbsWithFull ? (full || med) : med);     // sem IO → troca direto (fallback)
             }
         }
 
@@ -1394,7 +1413,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;

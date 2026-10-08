@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.12.45
+// @version      3.12.46
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -8813,14 +8813,35 @@
         try { return new URL(u, location.href).href; } catch (e) { return u; }
     }
 
+    function cleanProxyString(str) {
+        if (!str || typeof str !== 'string') return '';
+        let s = str.trim().replace(/&amp;/g, '&');
+        const cut = s.search(/["'<>\s]/);
+        if (cut >= 0) s = s.slice(0, cut);
+        return s.trim();
+    }
+
+    function isProxyUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        return /[\/?](goto\/link-confirmation|redirect\/?|link-proxy\/?|proxy\.php)/i.test(url);
+    }
+
     function b64decode(s) {
         if (!s) return null;
-        let str = String(s).trim().replace(/-/g, '+').replace(/_/g, '/');
+        let str = String(s).trim();
+        try { str = decodeURIComponent(str); } catch (e) {}
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
         while (str.length % 4) str += '=';
         for (const t of [str, s]) {
             try {
                 const r = atob(t);
-                if (r) return r;
+                if (r) {
+                    try {
+                        const utf8 = decodeURIComponent(escape(r));
+                        if (utf8) return utf8;
+                    } catch (e) {}
+                    return r;
+                }
             } catch (e) {}
         }
         return null;
@@ -8828,48 +8849,70 @@
 
     function rawParam(href, key) {
         if (!href) return null;
-        const m = (href || '').match(new RegExp('[?&]' + key + '=([^&#]+)'));
+        const cleanHref = String(href).replace(/&amp;/g, '&');
+        const m = cleanHref.match(new RegExp('[?&]' + key + '=([^&#]+)'));
         if (m) {
-            try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+            let val = m[1];
+            try { val = decodeURIComponent(val); } catch (e) {}
+            return cleanProxyString(val);
         }
         try {
-            const u = new URL(href, location.href);
-            return u.searchParams.get(key);
+            const u = new URL(cleanHref, location.href);
+            const val = u.searchParams.get(key);
+            return val ? cleanProxyString(val) : null;
         } catch (e) {}
         return null;
     }
 
-    function decodeProxyHref(href) {
+    function decodeProxyHrefOnce(href) {
         if (!href || typeof href !== 'string') return null;
+        const clean = cleanProxyString(href);
         let target = null;
-        if (/\/goto\/link-confirmation/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'to');
-        } else if (/\/redirect\/?/i.test(href)) {
-            target = rawParam(href, 'to') || rawParam(href, 'url') || rawParam(href, 'link');
-        } else if (/\/proxy\.php/i.test(href)) {
-            target = rawParam(href, 'link') || rawParam(href, 'url');
-        } else if (/\/link-proxy\/?/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'link') || rawParam(href, 'to');
-        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(href)) {
-            target = rawParam(href, 'url') || rawParam(href, 'to') || rawParam(href, 'link');
+        if (/\/goto\/link-confirmation/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'to');
+        } else if (/\/redirect\/?/i.test(clean)) {
+            target = rawParam(clean, 'to') || rawParam(clean, 'url') || rawParam(clean, 'link');
+        } else if (/\/proxy\.php/i.test(clean)) {
+            target = rawParam(clean, 'link') || rawParam(clean, 'url');
+        } else if (/\/link-proxy\/?/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'link') || rawParam(clean, 'to');
+        } else if (/[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(clean)) {
+            target = rawParam(clean, 'url') || rawParam(clean, 'to') || rawParam(clean, 'link');
         }
         if (!target) return null;
-        target = target.trim();
-        if (/^https?:\/\//i.test(target)) return target;
+        target = cleanProxyString(target);
+        if (/^https?:\/\//i.test(target) || isProxyUrl(target)) return target;
         const decoded = b64decode(target);
-        if (decoded && /^https?:\/\//i.test(decoded.trim())) return decoded.trim();
-        return decoded || target;
+        if (decoded) {
+            const cleanedDecoded = cleanProxyString(decoded);
+            if (/^https?:\/\//i.test(cleanedDecoded) || isProxyUrl(cleanedDecoded)) return cleanedDecoded;
+        }
+        return null;
+    }
+
+    function decodeProxyHref(href) {
+        if (!href || typeof href !== 'string' || !isProxyUrl(href)) return null;
+        let current = href;
+        for (let i = 0; i < 6; i++) {
+            if (!isProxyUrl(current) && /^https?:\/\//i.test(current)) break;
+            const next = decodeProxyHrefOnce(current);
+            if (!next || next === current) break;
+            current = next;
+        }
+        if (/^https?:\/\//i.test(current) && !isProxyUrl(current)) return current;
+        return null;
     }
 
     function resolveProxyHref(href) {
         if (!href || typeof href !== 'string') return '';
-        let trimmed = href.trim();
+        let trimmed = cleanProxyString(href);
         if (!trimmed) return '';
         trimmed = trimmed.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         const decoded = decodeProxyHref(trimmed);
-        if (decoded && /^https?:/i.test(decoded)) return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
-        if (/^https?:/i.test(trimmed)) return trimmed;
-        if (decoded) return decoded;
+        if (decoded && /^https?:/i.test(decoded) && !isProxyUrl(decoded)) {
+            return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
+        }
+        if (/^https?:/i.test(trimmed) && !isProxyUrl(trimmed)) return trimmed;
         return trimmed;
     }
 
@@ -10108,6 +10151,10 @@
         window.__decodeProxyHref = decodeProxyHref;
         window.__resolveProxyHref = resolveProxyHref;
         window.resolveProxyHref = resolveProxyHref;
+        window.isProxyUrl = isProxyUrl;
+        window.__isProxyUrl = isProxyUrl;
+        window.cleanProxyString = cleanProxyString;
+        window.__cleanProxyString = cleanProxyString;
         window.__absUrl = absUrl;
         window.isThreadPostElement = isThreadPostElement;
         window.normalizeRoots = normalizeRoots;
@@ -10848,44 +10895,53 @@
         }
         if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
             delete img.dataset.smgSwapping;
-            img.referrerPolicy = 'no-referrer';
             img.src = targetAbs;
             const grid = img.closest('.auto-image-grid');
             if (grid) scheduleRelayout(grid);
             return;
         }
-        const pre = new Image();
-        pre.referrerPolicy = 'no-referrer';
-        const apply = () => {
-            if (img.dataset.smgSwapping === targetAbs) {
-                delete img.dataset.smgSwapping;
-                if (img.isConnected) {
-                    img.referrerPolicy = 'no-referrer';
-                    img.src = targetAbs;
-                    const grid = img.closest('.auto-image-grid');
-                    if (grid) scheduleRelayout(grid);
+        const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
+        const loadWithPolicy = (policy, canRetry) => {
+            const pre = new Image();
+            if (policy) pre.referrerPolicy = policy;
+            pre.decoding = 'async';
+            const apply = () => {
+                if (img.dataset.smgSwapping === targetAbs) {
+                    delete img.dataset.smgSwapping;
+                    if (img.isConnected !== false) {
+                        if (policy) img.referrerPolicy = policy;
+                        else img.removeAttribute('referrerpolicy');
+                        img.src = targetAbs;
+                        const grid = img.closest('.auto-image-grid');
+                        if (grid) scheduleRelayout(grid);
+                    }
                 }
+            };
+            pre.onload = () => {
+                (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
+            };
+            pre.onerror = () => {
+                if (canRetry) {
+                    // CDNs com proteção anti-hotlink podem rejeitar o Referer do fórum. Tenta fallback sem referrer.
+                    loadWithPolicy('no-referrer', false);
+                } else {
+                    if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+                }
+            };
+            pre.src = targetAbs;
+            if (pre.complete && pre.naturalWidth) {
+                apply();
             }
         };
-        pre.onload = () => {
-            (pre.decode ? pre.decode().catch(() => {}) : Promise.resolve()).then(apply);
-        };
-        pre.onerror = () => {
-            if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
-        };
-        pre.decoding = 'async';
-        pre.src = targetAbs;
-        if (pre.complete && pre.naturalWidth) {
-            apply();
-        }
+        loadWithPolicy(initialPolicy, !initialPolicy);
     }
     function getThumbIO() {   // tira a THUMB do lazy nativo (loading=eager) bem antes da viewport (3000px)
         return thumbIO || (thumbIO = makeLazyIO(el => { el.loading = 'eager'; }, { rootMargin: '1200px 0px' }));
     }
     function getMedIO() {     // troca pra MÉDIA (.md.) mais perto da tela (thumb já dá o tamanho → swap sem flash)
         return medIO || (medIO = makeLazyIO(img => {
-            const med = img.dataset.smgMed;
-            if (med && img.getAttribute('src') !== med) swapImgSrc(img, med);
+            const target = (FEATURES.replaceThumbsWithFull && img.dataset.smgFull) ? img.dataset.smgFull : img.dataset.smgMed;
+            if (target && img.getAttribute('src') !== target) swapImgSrc(img, target);
         }, { rootMargin: '2000px 0px' }));   // 2000px: troca bem antes de aparecer (mesma proporção da thumb → não desloca nada)
     }
     function getFullIO() {    // troca pra FULL (.jpg) em imagens standalone/sheets perto da tela (ou em todas se replaceThumbsWithFull estiver ativo)
@@ -11181,9 +11237,19 @@
         return '';
     }
 
-    function applyReplaceThumbsWithFull(enabled) {
+    function applyReplaceThumbsWithFull(enabled, roots) {
         if (!enabled) return;
-        const imgs = document.querySelectorAll('img.bbImage');
+        const selector = 'img.bbImage';
+        const imgs = [];
+        if (roots && Array.isArray(roots)) {
+            roots.forEach(r => {
+                if (!r || !r.querySelectorAll) return;
+                if (r.matches && r.matches(selector)) imgs.push(r);
+                r.querySelectorAll(selector).forEach(im => imgs.push(im));
+            });
+        } else {
+            document.querySelectorAll(selector).forEach(im => imgs.push(im));
+        }
         imgs.forEach(img => {
             let full = img.dataset.smgFull;
             if (!full) {
@@ -11283,7 +11349,7 @@
             if (img.alt) img.alt = cleanText(img.alt);
             if (med !== src) {                       // src é .th. → sobe pra .md. perto da viewport; .md. já exibido FICA
                 const mio = getMedIO();
-                if (mio) mio.observe(img); else img.src = med;     // sem IO → troca direto (fallback)
+                if (mio) mio.observe(img); else img.src = (FEATURES.replaceThumbsWithFull ? (full || med) : med);     // sem IO → troca direto (fallback)
             }
         }
 
@@ -12220,7 +12286,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;
@@ -22364,9 +22430,23 @@
     // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
     function unproxyAttr(a) {
         if (!a) return;
-        const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '') || a.href;
-        if (real && /^https?:/i.test(real) && a.getAttribute('href') !== real) {
-            a.setAttribute('href', real);
+        const raw = a.getAttribute('href') || a.getAttribute('data-proxy-href') || '';
+        let real = resolveProxyHref(raw);
+        if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            const txt = a.textContent && a.textContent.trim();
+            if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                try {
+                    const parsed = new URL(txt);
+                    if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                } catch (e) {}
+            }
+        }
+        if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+            a.href = real;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.dataset.smgUnwrap = '1';
         }
         a.removeAttribute('data-proxy-href');
         a.removeAttribute('data-blank-handler');
@@ -22387,14 +22467,26 @@
                 return;
             }
 
-            const isProxy = a.hasAttribute('data-proxy-href') || /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href) || a.hasAttribute('data-smg-unwrap');
+            const rawHref = a.getAttribute('href') || '';
+            const isProxy = a.hasAttribute('data-proxy-href') || (typeof isProxyUrl === 'function' ? (isProxyUrl(rawHref) || isProxyUrl(a.href)) : /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href)) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
 
             if (!isProxy && !isExternal) return;
 
-            const real = resolveProxyHref(a.getAttribute('href') || '') || a.href;
-            if (real && /^https?:/i.test(real)) {
+            let real = resolveProxyHref(rawHref) || resolveProxyHref(a.href || '');
+            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                const txt = a.textContent && a.textContent.trim();
+                if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                    try {
+                        const parsed = new URL(txt);
+                        if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                    } catch (e) {}
+                }
+            }
+
+            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
                 if (a.getAttribute('href') !== real) a.setAttribute('href', real);
+                a.href = real;
                 a.dataset.smgUnwrap = '1';
                 a.target = '_blank';
                 a.rel = 'noopener noreferrer';
@@ -22414,13 +22506,27 @@
         bindProxyClick();
         // PERF: Escopado nos subtrees mutados (eachIn) sai ~0 no steady-state. O clique em link
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
-        eachIn(roots, 'a[href*="/goto/link-confirmation"]:not([data-smg-unwrap]), a[href*="/redirect/"]:not([data-smg-unwrap]), a[href*="/proxy.php?link="]:not([data-smg-unwrap]), a[href*="/link-proxy/"]:not([data-smg-unwrap]), a[data-proxy-href]:not([data-smg-unwrap])', a => {
-            a.dataset.smgUnwrap = '1';
-            const real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
-            if (real && /^https?:/i.test(real)) a.href = real;
-            if (a.hasAttribute('data-proxy-href')) unproxyAttr(a);
-            a.removeAttribute('data-blank-handler');
-            unproxyText(a);
+        eachIn(roots, 'a[href*="/goto/link-confirmation"], a[href*="/redirect/"], a[href*="/proxy.php?link="], a[href*="/link-proxy/"], a[data-proxy-href]', a => {
+            let real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
+            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                const txt = a.textContent && a.textContent.trim();
+                if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
+                    try {
+                        const parsed = new URL(txt);
+                        if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
+                    } catch (e) {}
+                }
+            }
+            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+                a.href = real;
+                a.setAttribute('href', real);
+                a.dataset.smgUnwrap = '1';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.removeAttribute('data-proxy-href');
+                a.removeAttribute('data-blank-handler');
+                unproxyText(a);
+            }
         });
     }
     // se o usuário CAIR direto na página de aviso, pula pro destino na hora
@@ -22429,13 +22535,13 @@
             if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
 
             const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
-            if (realParam && /^https?:/i.test(realParam) && realParam !== location.href) {
+            if (realParam && /^https?:/i.test(realParam) && !(typeof isProxyUrl === 'function' && isProxyUrl(realParam)) && realParam !== location.href) {
                 location.replace(realParam);
                 return;
             }
 
             const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
-            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname)) {
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(typeof isProxyUrl === 'function' && isProxyUrl(domTarget.href))) {
                 location.replace(domTarget.href);
                 return;
             }
@@ -23859,6 +23965,10 @@
         window.processTurboEmbeds = processTurboEmbeds;
         window.fhCard = fhCard;
         window.pdPlace = pdPlace;
+        window.unwrapRedirectLinks = unwrapRedirectLinks;
+        window.__unwrapRedirectLinks = unwrapRedirectLinks;
+        window.unproxyAttr = unproxyAttr;
+        window.handleRedirectPage = handleRedirectPage;
     }
 
     // =========================================================
@@ -26108,6 +26218,7 @@
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
+            if (FEATURES.replaceThumbsWithFull) safe(applyReplaceThumbsWithFull, true, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);

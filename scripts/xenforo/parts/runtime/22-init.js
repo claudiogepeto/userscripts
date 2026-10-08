@@ -34,6 +34,7 @@
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
+            if (FEATURES.replaceThumbsWithFull) safe(applyReplaceThumbsWithFull, true, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);

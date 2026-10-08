@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.45'), 'Userscript deve estar na versão 3.12.45');
+    assert(scriptContent.includes('// @version      3.12.46'), 'Userscript deve estar na versão 3.12.46');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -6827,6 +6827,214 @@ async function runTests() {
         threadLink.remove();
         window.location.hash = '';
         if (origReadyState) Object.defineProperty(document, 'readyState', origReadyState);
+    }
+
+    // =========================================================================
+    // TESTE 57: Desembrulho Recursivo de Proxies Aninhados, Limpeza de HTML & Fallback de Texto
+    // =========================================================================
+    console.log('--- TESTE 57: Proxies Aninhados, Limpeza de HTML & Fallback de Texto ---');
+    {
+        const decodeProxyHref = window.__decodeProxyHref || window.decodeProxyHref;
+        const resolveProxyHref = window.__resolveProxyHref || window.resolveProxyHref;
+        const isProxyUrl = window.__isProxyUrl || window.isProxyUrl;
+        const cleanProxyString = window.__cleanProxyString || window.cleanProxyString;
+
+        assert(typeof isProxyUrl === 'function', 'isProxyUrl deve estar disponível');
+        assert(typeof cleanProxyString === 'function', 'cleanProxyString deve estar disponível');
+
+        // 1. isProxyUrl validação
+        assert(isProxyUrl('/goto/link-confirmation?url=abc'), 'isProxyUrl deve identificar /goto/link-confirmation');
+        assert(isProxyUrl('https://forums.socialmediagirls.com/goto/link-confirmation?url=abc'), 'isProxyUrl deve identificar URL completa de link-confirmation');
+        assert(isProxyUrl('/redirect/?to=xyz'), 'isProxyUrl deve identificar /redirect/');
+        assert(isProxyUrl('/proxy.php?link=xyz'), 'isProxyUrl deve identificar /proxy.php');
+        assert(!isProxyUrl('https://goonbox.cr/a/campopiano.aqa9je'), 'isProxyUrl deve retornar false para URL externa direta');
+
+        // 2. Caso real SMG: Link aninhado com vazamento de aspas e classes HTML
+        const nestedUserHref = '/goto/link-confirmation?url=L2dvdG8vbGluay1jb25maXJtYXRpb24%2FdXJsPWFIUjBjSE02THk5bmIyOXVZbTk0TG1OeUwyRXZZMkZ0Y0c5d2FXRnVieTVoY1dFNWFtVSUzRCZhbXA7cz0wMmM2ODRhNDUyYTBiMTZkYjMwM2E3N2RlZWQ2OWI3OCIgY2xhc3M9ImxpbmsgbGluay0taW50ZXJuYWw%3D&s=4e4d75b4241b84f1ef767ee719921a3b';
+        const expectedFinalUrl = 'https://goonbox.cr/a/campopiano.aqa9je';
+
+        assert(decodeProxyHref(nestedUserHref) === expectedFinalUrl, 'decodeProxyHref deve desembrulhar proxy aninhado e limpar aspas/classes HTML');
+        assert(resolveProxyHref(nestedUserHref) === expectedFinalUrl, 'resolveProxyHref deve resolver proxy aninhado para o destino real');
+
+        // 3. Caso com domínio completo do fórum
+        const fullDomainNested = 'https://forums.socialmediagirls.com' + nestedUserHref;
+        assert(decodeProxyHref(fullDomainNested) === expectedFinalUrl, 'decodeProxyHref deve resolver proxy aninhado com domínio do fórum');
+        assert(resolveProxyHref(fullDomainNested) === expectedFinalUrl, 'resolveProxyHref deve resolver proxy aninhado com domínio do fórum');
+
+        // 4. unwrapRedirectLinks com elemento que já continha data-smg-unwrap="1" e data-blank-handler="true"
+        const brokenLink = document.createElement('a');
+        brokenLink.href = nestedUserHref;
+        brokenLink.setAttribute('data-smg-unwrap', '1');
+        brokenLink.setAttribute('data-blank-handler', 'true');
+        brokenLink.textContent = expectedFinalUrl;
+        document.body.appendChild(brokenLink);
+
+        const unwrapFn = window.__unwrapRedirectLinks || window.unwrapRedirectLinks;
+        assert(typeof unwrapFn === 'function', 'unwrapRedirectLinks deve estar disponível');
+        unwrapFn([document.body]);
+
+        assert(brokenLink.getAttribute('href') === expectedFinalUrl, 'unwrapRedirectLinks deve corrigir href de link aninhado mesmo que já possuísse data-smg-unwrap');
+        assert(!brokenLink.hasAttribute('data-blank-handler'), 'unwrapRedirectLinks deve desarmar data-blank-handler');
+        assert(brokenLink.target === '_blank', 'unwrapRedirectLinks deve assegurar target="_blank"');
+        assert(brokenLink.rel.includes('noopener'), 'unwrapRedirectLinks deve assegurar rel noopener');
+        brokenLink.remove();
+
+        // 5. Fallback por texto visível quando o proxy está completamente corrompido
+        const corruptedLink = document.createElement('a');
+        corruptedLink.href = '/goto/link-confirmation?url=corrompido-invalido-123';
+        corruptedLink.setAttribute('data-blank-handler', 'true');
+        corruptedLink.textContent = 'https://pixeldrain.com/u/abcdef';
+        document.body.appendChild(corruptedLink);
+
+        unwrapFn([document.body]);
+
+        assert(corruptedLink.getAttribute('href') === 'https://pixeldrain.com/u/abcdef', 'unwrapRedirectLinks deve usar URL do textContent como fallback quando proxy for irrecuperável');
+        assert(!corruptedLink.hasAttribute('data-blank-handler'), 'Fallback de texto deve remover data-blank-handler');
+        corruptedLink.remove();
+
+        // 6. Clique interceptado via bindProxyClick em link aninhado recém-inserido
+        const dynamicNestedLink = document.createElement('a');
+        dynamicNestedLink.className = 'link link--external';
+        dynamicNestedLink.href = nestedUserHref;
+        dynamicNestedLink.setAttribute('data-blank-handler', 'true');
+        document.body.appendChild(dynamicNestedLink);
+
+        let clickStopped = false;
+        const testClick = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+        const origStop = testClick.stopImmediatePropagation;
+        testClick.stopImmediatePropagation = function() {
+            clickStopped = true;
+            origStop.call(this);
+        };
+
+        dynamicNestedLink.dispatchEvent(testClick);
+
+        assert(clickStopped, 'bindProxyClick deve interceptar clique em link proxy aninhado');
+        assert(dynamicNestedLink.getAttribute('href') === expectedFinalUrl, 'bindProxyClick deve resolver href do link aninhado no ato do clique');
+        assert(!dynamicNestedLink.hasAttribute('data-blank-handler'), 'bindProxyClick deve remover data-blank-handler');
+        dynamicNestedLink.remove();
+    }
+
+    // TESTE 58: Substituição de Thumbnails por Alta Resolução (replaceThumbsWithFull) & Referer de CDN
+    console.log('--- TESTE 58: Substituição de Thumbnails por Alta Resolução & Referer de CDN ---');
+    {
+        const { FEATURES } = window.__configExports || {};
+        const { swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull, processOneImage, getMedIO } = window.__masonryExports || {};
+        assert(typeof swapImgSrc === 'function', 'swapImgSrc deve estar disponível');
+
+        // 1. Simulação do caso do usuário com Cuckcapital / Goonbox no SMG
+        const gbxPost = document.createElement('div');
+        gbxPost.className = 'message-userContent';
+        const cuckThumbUrl = 'https://simp6.cuckcapital.cr/panda/th/c876f8c1-9010-4c1c-8c37-ad5e03959143.jpg';
+        const cuckFullUrl = 'https://simp6.cuckcapital.cr/panda/4e589165-1e43-4eed-9301-b792c0f2388d.jpg?s=tXtpi-v2ycCG8G-yi8SAs5WUkeh0mzzuqTN4vTNtv2E';
+
+        const gbxImg = document.createElement('img');
+        gbxImg.className = 'bbImage';
+        gbxImg.src = cuckThumbUrl;
+        gbxImg.setAttribute('data-url', cuckFullUrl);
+        gbxImg.dataset.smgLink = 'https://goonbox.cr/img/tB8GXfi';
+        gbxPost.appendChild(gbxImg);
+        document.body.appendChild(gbxPost);
+
+        // Resolução de URL completa via data-url
+        const resolvedFull = resolveFullImageUrl(gbxImg);
+        assert(resolvedFull === cuckFullUrl, 'resolveFullImageUrl deve extrair a URL de alta resolução de data-url');
+
+        // Ativa a flag replaceThumbsWithFull
+        FEATURES.replaceThumbsWithFull = true;
+
+        // Processamento da imagem com a flag ativa
+        processOneImage(gbxImg);
+        assert(gbxImg.dataset.smgFull === cuckFullUrl, 'processOneImage deve armazenar a URL full em dataset.smgFull');
+
+        // getMedIO deve mirar no full diretamente quando replaceThumbsWithFull estiver ativo
+        const mio = getMedIO();
+        assert(mio !== null, 'getMedIO deve retornar observer');
+
+        // applyReplaceThumbsWithFull deve trocar o src da miniatura para a imagem final de alta resolução
+        applyReplaceThumbsWithFull(true, [gbxPost]);
+        assert(gbxImg.src === cuckFullUrl, 'applyReplaceThumbsWithFull deve substituir o src da miniatura pela imagem final');
+        assert(gbxImg.dataset.smgFull === cuckFullUrl, 'smgFull deve manter a referência da imagem full');
+
+        // 2. Testar comportamento do preload assíncrono e estratégia de retry de referer no swapImgSrc
+        const mockImg = document.createElement('img');
+        mockImg.className = 'bbImage';
+        mockImg.src = 'https://example.com/thumb.jpg';
+        document.body.appendChild(mockImg);
+
+        // Salvar implementação original de Image
+        const originalImage = window.Image;
+
+        // Mock A: Host que exige referer (como simp6.cuckcapital.cr)
+        // Se receber no-referrer, falha com onerror; se receber default/vazio, sucede com onload
+        let mockLoadAttempts = [];
+        window.Image = function() {
+            const imgInstance = {
+                decode: () => Promise.resolve(),
+                set src(val) {
+                    this._src = val;
+                    setTimeout(() => {
+                        mockLoadAttempts.push({ src: val, policy: this.referrerPolicy || '' });
+                        if (this.referrerPolicy === 'no-referrer') {
+                            if (this.onerror) this.onerror(new Error('403 Forbidden'));
+                        } else {
+                            if (this.onload) this.onload();
+                        }
+                    }, 5);
+                },
+                get src() { return this._src; }
+            };
+            return imgInstance;
+        };
+
+        swapImgSrc(mockImg, cuckFullUrl);
+        await new Promise(r => setTimeout(r, 20));
+
+        assert(mockImg.src === cuckFullUrl, 'swapImgSrc deve ter sucesso na primeira tentativa para CDN que exige Referer');
+        assert(mockLoadAttempts.length === 1, 'Deve ter feito apenas 1 tentativa para CDN com Referer válido');
+        assert(mockLoadAttempts[0].policy === '', 'Primeira tentativa deve preservar o Referer padrão do documento');
+
+        // Mock B: Host com proteção anti-hotlink (que bloqueia o fórum na 1ª tentativa e exige no-referrer)
+        mockLoadAttempts = [];
+        const antiHotlinkImg = document.createElement('img');
+        antiHotlinkImg.className = 'bbImage';
+        antiHotlinkImg.src = 'https://antihotlink.com/thumb.jpg';
+        document.body.appendChild(antiHotlinkImg);
+
+        window.Image = function() {
+            const imgInstance = {
+                decode: () => Promise.resolve(),
+                set src(val) {
+                    this._src = val;
+                    setTimeout(() => {
+                        mockLoadAttempts.push({ src: val, policy: this.referrerPolicy || '' });
+                        if (this.referrerPolicy === 'no-referrer') {
+                            if (this.onload) this.onload();
+                        } else {
+                            if (this.onerror) this.onerror(new Error('403 Forbidden hotlink'));
+                        }
+                    }, 5);
+                },
+                get src() { return this._src; }
+            };
+            return imgInstance;
+        };
+
+        const targetHotlinkFull = 'https://antihotlink.com/full.jpg';
+        swapImgSrc(antiHotlinkImg, targetHotlinkFull);
+        await new Promise(r => setTimeout(r, 30));
+
+        assert(antiHotlinkImg.src === targetHotlinkFull, 'swapImgSrc deve ter sucesso após fallback para no-referrer');
+        assert(mockLoadAttempts.length === 2, 'Deve ter tentado 2 vezes (1ª com referer padrão, 2ª com no-referrer)');
+        assert(mockLoadAttempts[0].policy === '', '1ª tentativa deve usar o referer padrão');
+        assert(mockLoadAttempts[1].policy === 'no-referrer', '2ª tentativa deve tentar com no-referrer');
+        assert(antiHotlinkImg.referrerPolicy === 'no-referrer', 'Elemento da imagem deve ter referrerPolicy configurada como no-referrer');
+
+        // Restaurar Image e limpar
+        window.Image = originalImage;
+        gbxPost.remove();
+        mockImg.remove();
+        antiHotlinkImg.remove();
     }
 
     // =========================================================================
