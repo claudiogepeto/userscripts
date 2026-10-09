@@ -455,6 +455,7 @@
         document.body.insertBefore(wrap, document.body.firstChild);
         document.documentElement.classList.add('smg-topbar-on');
         if (!loggedIn) document.documentElement.classList.add('smg-guest');   // marcador estático p/ o CSS (esconde o que é de membro)
+        if (typeof markTopbarReady === 'function') markTopbarReady();
 
         // ---- abrir/fechar popovers (megamenu: hover troca, clique abre/fecha) ----
         const wirePopovers = () => {

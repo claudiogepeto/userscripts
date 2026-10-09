@@ -680,6 +680,7 @@
             '</div>';
         document.body.appendChild(el);
         aldock = el;
+        if (typeof markSidebarReady === 'function') markSidebarReady();
 
         const applyMarkAllReadSuccess = () => {
             el.querySelectorAll('li.alert.is-unread').forEach(row => {
@@ -864,6 +865,7 @@
             // The preference can survive a logout. Remove the early layout
             // reservation when there is no account control to own the dock.
             document.documentElement.classList.remove('smg-aldock-on');
+            if (typeof markSidebarReady === 'function') markSidebarReady();
             return;
         }   // deslogado / tema sem sino → não há o que dockar
         aldockBound = true;
@@ -916,7 +918,11 @@
         });
         window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
 
-        if (aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(null, false);
+        if (aldockWanted() && aldockFits() && !aldockPhone()) {
+            openAlertsDock(null, false);
+        } else {
+            if (typeof markSidebarReady === 'function') markSidebarReady();
+        }
     }
 
     function onFollowedAllSeen() {

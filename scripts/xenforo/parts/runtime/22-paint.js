@@ -121,6 +121,7 @@
 
     function ensureHomeSkeleton() {
         const root = document.documentElement;
+        if (root.classList.contains('smg-home-ready') || root.classList.contains('smg-page-ready')) return;
         if (!root.classList.contains('smg-home-pending') || document.getElementById('smg-home-skeleton')) return;
         const shell = document.createElement('div');
         shell.id = 'smg-home-skeleton';
@@ -133,7 +134,7 @@
     function ensureSkeletonRail() {
         const root = document.documentElement;
         const current = document.getElementById('smg-page-skeleton-rail');
-        if (!root.classList.contains('smg-page-pending') || !root.classList.contains('smg-aldock-on')) {
+        if (root.classList.contains('smg-sidebar-ready') || !root.classList.contains('smg-page-pending') || !root.classList.contains('smg-aldock-on')) {
             if (current) current.remove();
             return;
         }
@@ -147,6 +148,10 @@
     }
 
     function ensurePageSkeleton(overrideKind) {
+        const root = document.documentElement;
+        if (!overrideKind && (root.classList.contains('smg-page-ready') || root.classList.contains('smg-content-ready'))) {
+            return;
+        }
         const context = classifyPaintPage();
         if (!context.gated && !overrideKind) return;
         const kind = overrideKind || context.kind;
@@ -176,18 +181,30 @@
     function releaseHomeSkeleton() {
         const shell = document.getElementById('smg-home-skeleton');
         if (!shell) return;
-        // Swap the composed DOM and the shell in the same task. A fade would expose the
-        // native XenForo tree behind it for a few frames, which is more noticeable than
-        // an immediate, already-stable handoff.
         if (shell.parentNode) shell.remove();
     }
 
     function releasePageSkeleton() {
-        releaseHomeSkeleton();
         const shell = document.getElementById('smg-page-skeleton');
-        if (shell) shell.remove();
+        const homeShell = document.getElementById('smg-home-skeleton');
         const rail = document.getElementById('smg-page-skeleton-rail');
-        if (rail) rail.remove();
+        if (!shell && !homeShell && !rail) return;
+
+        const root = document.documentElement;
+        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+            releaseHomeSkeleton();
+            if (shell && shell.parentNode) shell.remove();
+            if (rail && rail.parentNode) rail.remove();
+            return;
+        }
+
+        root.classList.add('smg-skeleton-fade-out');
+        setTimeout(() => {
+            releaseHomeSkeleton();
+            if (shell && shell.parentNode) shell.remove();
+            if (rail && rail.parentNode) rail.remove();
+            root.classList.remove('smg-skeleton-fade-out');
+        }, 120);
     }
 
     function homeNoticesAreReady() {
@@ -213,7 +230,7 @@
     // sua primeira composição. O timeout é apenas um fallback para páginas quebradas ou
     // respostas interrompidas; em condições normais a liberação acontece por prontidão +
     // dois frames estáveis.
-    const PAINT_SETTLE_FRAMES = 4;
+    const PAINT_SETTLE_FRAMES = 2;
     const PAINT_MAX_WAIT_MS = 4500;
     const PAINT_RETRY_MS = 250;
     let paintTimer = 0;
@@ -223,6 +240,18 @@
     let paintObservedKind = '';
     let paintObservedSignature = null;
     let homePassSignature = null;
+    let isNavigatingOut = false;
+    let navSafetyTimer = 0;
+
+    function setNavigatingOut() {
+        isNavigatingOut = true;
+        cancelPagePaintRelease();
+        if (navSafetyTimer) clearTimeout(navSafetyTimer);
+        navSafetyTimer = setTimeout(() => {
+            isNavigatingOut = false;
+            schedulePagePaintRelease();
+        }, 3500);
+    }
 
     function cancelPagePaintRelease() {
         if (paintTimer) clearTimeout(paintTimer);
@@ -233,6 +262,49 @@
         paintReleaseScheduled = false;
         paintObservedKind = '';
         paintObservedSignature = null;
+    }
+
+    let topbarIsReady = false;
+    let sidebarIsReady = false;
+    let contentIsReady = false;
+
+    function isTopbarReady() {
+        return topbarIsReady && document.documentElement.classList.contains('smg-topbar-ready');
+    }
+    function isSidebarReady() {
+        return sidebarIsReady && document.documentElement.classList.contains('smg-sidebar-ready');
+    }
+    function isContentReady() {
+        return contentIsReady && document.documentElement.classList.contains('smg-content-ready');
+    }
+
+    function markTopbarReady() {
+        topbarIsReady = true;
+        const root = document.documentElement;
+        root.classList.remove('smg-topbar-loading', 'smg-topbar-pending');
+        root.classList.add('smg-topbar-ready');
+        const topSkel = document.getElementById('smg-topbar-skeleton');
+        if (topSkel) topSkel.remove();
+    }
+
+    function markSidebarReady() {
+        sidebarIsReady = true;
+        const root = document.documentElement;
+        root.classList.remove('smg-sidebar-loading', 'smg-sidebar-pending');
+        root.classList.add('smg-sidebar-ready');
+        const rail = document.getElementById('smg-page-skeleton-rail');
+        if (rail) rail.remove();
+    }
+
+    function markContentReady(context) {
+        contentIsReady = true;
+        const root = document.documentElement;
+        root.classList.remove('smg-content-loading', 'smg-content-pending');
+        root.classList.add('smg-content-ready');
+        root.classList.remove('smg-page-pending', 'smg-home-pending');
+        root.classList.add('smg-page-ready');
+        if (context && context.kind === PAINT_PAGE_KINDS.HOME) root.classList.add('smg-home-ready');
+        releasePageSkeleton();
     }
 
     function paintChromeIsReady() {
@@ -350,9 +422,9 @@
         return hasFooter || hasBottomPager || hasQuickReply;
     }
 
-    // O skeleton aguarda as mídias de TODOS os posts da thread terem proporção e dimensões reais
+    // O skeleton aguarda as mídias da viewport inicial e do post alvo terem proporção e dimensões reais
     // estabelecidas antes de liberar a tela, impedindo que a página 'dance' ou mude de scroll.
-    const PAINT_MEDIA_MAX_WAIT_MS = 3200;
+    const PAINT_MEDIA_MAX_WAIT_MS = 1000;
     let paintMediaDeadline = 0;
     function threadMediaTreeIsReady(content) {
         // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
@@ -361,6 +433,8 @@
         if (Date.now() >= paintMediaDeadline) return true;
         if (!content) return true;
 
+        const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+
         // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
         const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
         for (const img of imgs) {
@@ -368,6 +442,17 @@
             const ar = img.style.aspectRatio;
             if (ar && ar !== '100 / 100') continue;
             if (img.complete && img.naturalWidth && img.naturalHeight) continue;
+
+            // Se a imagem já pertence a uma grade estruturada com colunas e relayout prontos:
+            // fora do post alvo, pré-atribui o aspect-ratio do placeholder da grade para não bloquear o first paint
+            const grid = img.closest('.auto-image-grid');
+            if (grid && (grid.dataset.smgRelayoutDone === '1' || grid.style.getPropertyValue('--smg-mcols'))) {
+                const post = img.closest('article.message');
+                if (post && post !== targetPost && (!img.style.aspectRatio || img.style.aspectRatio === '100 / 100')) {
+                    img.style.aspectRatio = grid.style.getPropertyValue('--smg-grid-img-ph') || '4 / 3';
+                    continue;
+                }
+            }
             return false;
         }
 
@@ -380,6 +465,38 @@
             }
         }
 
+        return true;
+    }
+
+    function threadStructureIsRecorded(content, header) {
+        if (!content || !header) return false;
+        if (document.readyState === 'loading') return false;
+        if (header.dataset.smgThead !== '1' || header.dataset.smgUnified !== '1') return false;
+
+        const posts = Array.from(content.querySelectorAll('article.message'));
+        if (!posts.length) return false;
+
+        const postsReady = posts.every(post => (post.dataset.smgCardReady === '1' || post.dataset.smgCardReady === 'skip')
+            && (post.dataset.smgGalReady === '1' || post.dataset.smgGalReady === 'skip' || !FEATURES.autoFullImages));
+        if (!postsReady) return false;
+
+        const grids = Array.from(content.querySelectorAll('.auto-image-grid'));
+        const gridsReady = grids.every(g => g.dataset.smgCols && (g.dataset.smgRelayoutDone === '1' || g.style.getPropertyValue('--smg-mcols')));
+        if (!gridsReady) return false;
+
+        if (!threadMediaTreeIsReady(content)) return false;
+
+        const reqId = requestedPostTargetId();
+        if (reqId) {
+            const targetEl = document.getElementById('post-' + reqId)
+                || document.getElementById('js-post-' + reqId)
+                || document.querySelector('[data-content="post-' + reqId + '"]')
+                || document.querySelector('article.message[data-content*="' + reqId + '"]')
+                || document.querySelector('[data-smg-target-post="' + reqId + '"]');
+            if (!targetEl || targetEl.dataset.smgCardReady !== '1') return false;
+        }
+
+        content.dataset.smgStructureRecorded = '1';
         return true;
     }
 
@@ -423,7 +540,7 @@
             const commentsReady = Array.from(content.querySelectorAll('.message-responses .comment')).every(comment =>
                 comment.dataset.smgCcReady === '1' || comment.dataset.smgCcReady === 'skip'
             );
-            return postsReady && commentsReady && threadMediaTreeIsReady(content);
+            return postsReady && commentsReady && threadMediaTreeIsReady(content) && threadStructureIsRecorded(content, header);
         }
         if (context.kind === PAINT_PAGE_KINDS.LISTING || context.kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const items = paintListItems();
@@ -461,6 +578,7 @@
     }
 
     function schedulePagePaintRelease() {
+        if (isNavigatingOut) return;
         const root = document.documentElement;
         const context = classifyPaintPage();
         if (!context.gated || !root.classList.contains('smg-page-pending') || document.readyState === 'loading') return;
@@ -471,12 +589,10 @@
         const release = () => {
             paintRaf = 0;
             paintReleaseScheduled = false;
-            if (!root.classList.contains('smg-page-pending')) return;
+            if (!root.classList.contains('smg-page-pending') && !root.classList.contains('smg-content-pending')) return;
             const reqId = requestedPostTargetId();
             const target = reqId ? findTargetPost() : null;
-            root.classList.remove('smg-page-pending', 'smg-home-pending');
-            root.classList.add('smg-page-ready');
-            if (context.kind === PAINT_PAGE_KINDS.HOME) root.classList.add('smg-home-ready');
+            markContentReady(context);
             if (target && target.scrollIntoView) {
                 try {
                     target.scrollIntoView({ block: 'start', behavior: 'instant' });
@@ -485,7 +601,6 @@
                     armScrollStabilizer(target);
                 }
             }
-            releasePageSkeleton();
         };
         const waitForStableFrames = framesLeft => {
             paintRaf = 0;
@@ -507,8 +622,12 @@
                 release();
                 return;
             }
+            if (paintPageIsReady(context) && !expired && framesLeft > 0) {
+                paintRaf = requestAnimationFrame(() => waitForStableFrames(framesLeft));
+                return;
+            }
             paintReleaseScheduled = false;
-            const wait = expired ? PAINT_RETRY_MS : Math.min(80, Math.max(0, paintDeadline - Date.now()));
+            const wait = expired ? PAINT_RETRY_MS : Math.min(50, Math.max(0, paintDeadline - Date.now()));
             paintTimer = setTimeout(() => {
                 paintTimer = 0;
                 schedulePagePaintRelease();
@@ -526,6 +645,7 @@
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a[href]');
             if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            if (a.origin && a.origin !== location.origin) return;
             const href = a.getAttribute('href') || a.href || '';
             if (!href || href === '#' || href.startsWith('javascript:')) return;
             if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
@@ -544,15 +664,20 @@
                     if (pid && findPostElementById(pid)) return;
                 }
 
+                setNavigatingOut();
                 const root = document.documentElement;
                 root.classList.add('smg-page-pending');
                 root.classList.remove('smg-page-ready');
+                root.classList.add('smg-content-pending');
+                root.classList.remove('smg-content-ready');
                 const targetKind = isThreadNav ? PAINT_PAGE_KINDS.THREAD : (isListingNav ? PAINT_PAGE_KINDS.LISTING : classifyPaintPage().kind);
                 ensurePageSkeleton(targetKind);
             }
         }, { capture: true, passive: true });
 
         window.addEventListener('pageshow', e => {
+            isNavigatingOut = false;
+            if (navSafetyTimer) clearTimeout(navSafetyTimer);
             if (e.persisted) {
                 const root = document.documentElement;
                 root.classList.remove('smg-page-pending');
@@ -560,11 +685,40 @@
                 releasePageSkeleton();
             }
         });
+
+        window.addEventListener('popstate', () => {
+            isNavigatingOut = false;
+            if (navSafetyTimer) clearTimeout(navSafetyTimer);
+        });
     }
 
     if (typeof window !== 'undefined') {
         window.setupNavigationTransition = setupNavigationTransition;
+        window.setNavigatingOut = setNavigatingOut;
         if (window.__TEST_MODE__) {
-            window.__paintExports = { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageSignature, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS, threadTreeIsComplete, threadMediaTreeIsReady, requestedPostTargetId, setupNavigationTransition };
+            window.__paintExports = {
+                classifyPaintPage,
+                paintSkeletonMarkup,
+                paintRailMarkup,
+                paintHasFatalError,
+                paintPageSignature,
+                paintPageIsReady,
+                paintPageCanFallback,
+                PAINT_PAGE_KINDS,
+                threadTreeIsComplete,
+                threadMediaTreeIsReady,
+                threadStructureIsRecorded,
+                requestedPostTargetId,
+                setupNavigationTransition,
+                markTopbarReady,
+                markSidebarReady,
+                markContentReady,
+                isTopbarReady,
+                isSidebarReady,
+                isContentReady,
+                setNavigatingOut,
+                isNavigatingOut: () => isNavigatingOut,
+                ensurePageSkeleton
+            };
         }
     }

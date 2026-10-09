@@ -988,6 +988,7 @@
                 const r = rh > 0 ? (1 / rh) : 1;
                 it.style.setProperty('--smg-ratio', r.toFixed(4));
             });
+            grid.dataset.smgRelayoutDone = '1';
             return;
         }
         grid.dataset.smgWideCount = currentWideCount;
@@ -1101,6 +1102,7 @@
                 if (allTallOrSquare) grid.classList.add('smg-grid-pair-tall');
             }
         }
+        grid.dataset.smgRelayoutDone = '1';
     }
     // move os novos blocos pra serem filhos DIRETOS do grid e deixa o CSS Grid recalcular as linhas.
     function fillGrid(grid, newBlocks) {

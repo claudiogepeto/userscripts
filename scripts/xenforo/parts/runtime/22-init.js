@@ -190,10 +190,24 @@
         if (isForumHome) cls.add('smg-home-page'); // a URL identifica a home antes do data-template
         const paintContext = classifyPaintPage({ pathname: path, search: location.search, template: tpl });
         ['home', 'thread', 'listing', 'following', 'timeline', 'bookmarks'].forEach(kind => cls.toggle('smg-page-' + kind, paintContext.kind === kind));
-        if (paintContext.gated) cls.add('smg-page-pending');
+        const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (typeof isContentReady === 'function' && isContentReady());
+        if (paintContext.gated && !isContentAlreadyReady) {
+            cls.add('smg-page-pending');
+            cls.add('smg-content-pending');
+        }
+        const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (typeof isTopbarReady === 'function' && isTopbarReady());
+        if (FEATURES.topBar && !isTopbarAlreadyReady) {
+            cls.add('smg-topbar-loading');
+            cls.add('smg-topbar-pending');
+        } else if (typeof markTopbarReady === 'function') {
+            markTopbarReady();
+        }
         if (isForumHome && !isFeedView && FEATURES.homeRemake) {
             cls.add('smg-home');
-            cls.add('smg-home-pending');
+            const isHomeAlreadyReady = cls.contains('smg-home-ready') || cls.contains('smg-page-ready');
+            if (!isHomeAlreadyReady) {
+                cls.add('smg-home-pending');
+            }
         }
         const isThreadRoute = !/\/watched\//.test(path)
             && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
@@ -225,6 +239,13 @@
     if (FEATURES.alertsDock && typeof aldockWanted === 'function'
         && aldockWanted() && aldockFits() && !aldockPhone()) {
         cls.add('smg-aldock-on');
+        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (typeof isSidebarReady === 'function' && isSidebarReady());
+        if (!isSidebarAlreadyReady) {
+            cls.add('smg-sidebar-loading');
+            cls.add('smg-sidebar-pending');
+        }
+    } else if (typeof markSidebarReady === 'function') {
+        markSidebarReady();
     }
     ensurePageSkeleton();
     if (FEATURES.topBar) cls.add('smg-topbar-on');        // esconde o header nativo já (reserva o espaço)
@@ -449,6 +470,7 @@
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
         window.__inPagePostExports = { resolvePostIdFromHref, findPostElementById, handleInPagePostClick, armScrollStabilizer, getActiveScrollStabilizer: () => activeScrollStabilizer };
+        window.detectPageClasses = detectPageClasses;
     }
 
     if (document.readyState === 'loading') {

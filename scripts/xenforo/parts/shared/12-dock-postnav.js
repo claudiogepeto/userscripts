@@ -209,6 +209,7 @@
                 if (!n || !pageJump.tpl) return;
                 let url = (n === 1) ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
                 if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
+                if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
                 document.documentElement.classList.add('smg-page-pending');
                 document.documentElement.classList.remove('smg-page-ready');
                 if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();

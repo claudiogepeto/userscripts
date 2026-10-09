@@ -574,6 +574,7 @@
         }
 
         createStickySync(header, sentinel, spacer);
+        header.dataset.smgStructureRecorded = '1';
     }
 
     function createStickySync(header, sentinel, spacer) {

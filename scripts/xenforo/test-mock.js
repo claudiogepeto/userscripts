@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.12.46'), 'Userscript deve estar na versão 3.12.46');
+    assert(scriptContent.includes('// @version      3.13.0'), 'Userscript deve estar na versão 3.13.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -7035,6 +7035,166 @@ async function runTests() {
         gbxPost.remove();
         mockImg.remove();
         antiHotlinkImg.remove();
+    }
+
+    // =========================================================================
+    // TESTE 59: Loadings Separados por Componente (Topbar, Sidebar, Conteúdo) & Gravação Estável da Estrutura da Thread
+    // =========================================================================
+    console.log('--- TESTE 59: Loadings Separados por Componente (Topbar, Sidebar, Conteúdo) & Gravação Estável da Estrutura da Thread ---');
+    if (window.__paintExports) {
+        const {
+            markTopbarReady,
+            markSidebarReady,
+            markContentReady,
+            isTopbarReady,
+            isSidebarReady,
+            isContentReady,
+            threadStructureIsRecorded,
+            PAINT_PAGE_KINDS
+        } = window.__paintExports;
+
+        assert(typeof markTopbarReady === 'function', 'markTopbarReady deve estar disponível em __paintExports');
+        assert(typeof markSidebarReady === 'function', 'markSidebarReady deve estar disponível em __paintExports');
+        assert(typeof markContentReady === 'function', 'markContentReady deve estar disponível em __paintExports');
+        assert(typeof threadStructureIsRecorded === 'function', 'threadStructureIsRecorded deve estar disponível em __paintExports');
+
+        // 1. Desacoplamento da Topbar: Topbar pode ficar pronta independentemente do conteúdo
+        const docEl = document.documentElement;
+        docEl.classList.remove('smg-topbar-ready', 'smg-sidebar-ready', 'smg-content-ready', 'smg-page-ready');
+        docEl.classList.add('smg-page-pending', 'smg-topbar-loading', 'smg-content-pending');
+
+        markTopbarReady();
+        assert(docEl.classList.contains('smg-topbar-ready'), 'markTopbarReady deve adicionar smg-topbar-ready ao elemento raiz');
+        assert(!docEl.classList.contains('smg-topbar-loading'), 'markTopbarReady deve remover smg-topbar-loading do elemento raiz');
+        assert(docEl.classList.contains('smg-content-pending'), 'Prontidão da topbar NÃO deve remover o loading pendente do conteúdo');
+        assert(isTopbarReady() === true, 'isTopbarReady deve retornar true após markTopbarReady');
+        assert(isContentReady() === false, 'isContentReady deve continuar false enquanto conteúdo não estiver pronto');
+
+        // 2. Desacoplamento da Sidebar/Rail: Sidebar pode ficar pronta independentemente do conteúdo
+        docEl.classList.add('smg-sidebar-loading');
+        markSidebarReady();
+        assert(docEl.classList.contains('smg-sidebar-ready'), 'markSidebarReady deve adicionar smg-sidebar-ready');
+        assert(!docEl.classList.contains('smg-sidebar-loading'), 'markSidebarReady deve remover smg-sidebar-loading');
+        assert(isSidebarReady() === true, 'isSidebarReady deve retornar true após markSidebarReady');
+        assert(isContentReady() === false, 'isContentReady deve continuar false com sidebar pronta');
+
+        // 3. CSS deve conter regras de desacoplamento por componente
+        const stylesText = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(stylesText.includes('html.smg-topbar-ready #smg-topbar-wrap'), 'CSS deve permitir exibição imediata de #smg-topbar-wrap via smg-topbar-ready');
+        assert(stylesText.includes('html.smg-sidebar-ready #smg-aldock'), 'CSS deve permitir exibição imediata de #smg-aldock via smg-sidebar-ready');
+        assert(stylesText.includes('html.smg-topbar-ready #smg-page-skeleton'), 'CSS deve ajustar topo do skeleton para não cobrir topbar pronta');
+
+        // 4. Verificação de Gravação Estável da Estrutura da Thread (threadStructureIsRecorded)
+        const tContent = document.createElement('div');
+        tContent.className = 'p-body-content';
+        const tHeader = document.createElement('div');
+        tHeader.className = 'p-body-header';
+        const tMessages = document.createElement('div');
+        tMessages.className = 'block--messages';
+        const tFooter = document.createElement('footer');
+        tFooter.className = 'p-footer';
+
+        tContent.appendChild(tMessages);
+        document.body.appendChild(tHeader);
+        document.body.appendChild(tContent);
+        document.body.appendChild(tFooter);
+
+        // Sem dataset unificado no header, deve retornar false
+        assert(threadStructureIsRecorded(tContent, tHeader) === false, 'threadStructureIsRecorded deve retornar false com header sem unificação');
+
+        tHeader.dataset.smgThead = '1';
+        tHeader.dataset.smgUnified = '1';
+
+        // Com posts sem card estilizado (smgCardReady ausente), deve retornar false
+        const tPost = document.createElement('article');
+        tPost.className = 'message message--post';
+        tMessages.appendChild(tPost);
+        assert(threadStructureIsRecorded(tContent, tHeader) === false, 'threadStructureIsRecorded deve retornar false com post sem card pronto');
+
+        tPost.dataset.smgCardReady = '1';
+
+        // Com galeria que ainda não calculou colunas ou relayout, deve retornar false
+        const tGrid = document.createElement('div');
+        tGrid.className = 'auto-image-grid';
+        tPost.appendChild(tGrid);
+        assert(threadStructureIsRecorded(tContent, tHeader) === false, 'threadStructureIsRecorded deve retornar false com grade sem colunas/relayout computados');
+
+        // Ao gravar colunas e relayout na grade e marcar galeria pronta
+        tGrid.dataset.smgCols = '2';
+        tGrid.dataset.smgRelayoutDone = '1';
+        tPost.dataset.smgGalReady = '1';
+
+        // Com imagem pendente de aspect ratio, deve retornar false
+        const tImg = document.createElement('img');
+        tImg.className = 'bbImage';
+        tGrid.appendChild(tImg);
+        assert(threadStructureIsRecorded(tContent, tHeader) === false, 'threadStructureIsRecorded deve retornar false se houver imagem sem dimensão nem ratio');
+
+        // Com aspect-ratio travado na imagem, estrutura está completamente gravada
+        tImg.style.aspectRatio = '4 / 3';
+        assert(threadStructureIsRecorded(tContent, tHeader) === true, 'threadStructureIsRecorded deve retornar true quando header, posts, grids e mídias estão gravados');
+        assert(tContent.dataset.smgStructureRecorded === '1', 'threadStructureIsRecorded deve gravar smgStructureRecorded="1" no container de conteúdo');
+
+        // 5. Prontidão do Conteúdo (markContentReady)
+        markContentReady({ kind: PAINT_PAGE_KINDS.THREAD });
+        assert(docEl.classList.contains('smg-content-ready'), 'markContentReady deve adicionar smg-content-ready');
+        assert(!docEl.classList.contains('smg-content-pending'), 'markContentReady deve remover smg-content-pending');
+        assert(!docEl.classList.contains('smg-page-pending'), 'markContentReady deve finalizar o paint gate da página');
+        assert(docEl.classList.contains('smg-page-ready'), 'markContentReady deve adicionar smg-page-ready');
+        assert(isContentReady() === true, 'isContentReady deve retornar true');
+
+        // Limpeza dos nós de teste
+        tHeader.remove();
+        tContent.remove();
+        tFooter.remove();
+        docEl.classList.remove('smg-topbar-ready', 'smg-sidebar-ready', 'smg-content-ready', 'smg-page-ready');
+    }
+
+    // =========================================================================
+    // TESTE 60: Anti-Flickering do Skeleton, Transição Suave & Proteção de Navegação
+    // =========================================================================
+    console.log('--- TESTE 60: Anti-Flickering do Skeleton & Proteção de Transições ---');
+    if (window.__paintExports) {
+        const { setNavigatingOut, isNavigatingOut, ensurePageSkeleton } = window.__paintExports;
+        const docEl = document.documentElement;
+
+        // 1. Helpers de transição de navegação
+        assert(typeof setNavigatingOut === 'function', 'setNavigatingOut deve estar disponível em __paintExports');
+        assert(typeof isNavigatingOut === 'function', 'isNavigatingOut deve estar disponível em __paintExports');
+        assert(isNavigatingOut() === false, 'isNavigatingOut deve iniciar como false');
+
+        setNavigatingOut();
+        assert(isNavigatingOut() === true, 'setNavigatingOut deve definir isNavigatingOut como true');
+
+        // Navegação pelo histórico deve resetar o bloqueio
+        window.dispatchEvent(new window.Event('popstate'));
+        assert(isNavigatingOut() === false, 'popstate deve resetar isNavigatingOut para false');
+
+        // 2. Proteção do CSS contra cortes secos e flickers
+        const paintCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(paintCss.includes('smg-skeleton-fade-out'), 'CSS deve conter classe de saída smg-skeleton-fade-out');
+        assert(paintCss.includes('transition: opacity 0.12s'), 'Skeleton deve possuir transição suave de opacidade');
+        assert(paintCss.includes('html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton'), 'CSS deve manter skeleton durante fade-out sem corte display:none');
+
+        // 3. Blindagem contra re-criação de skeleton se página já estiver pronta
+        docEl.classList.add('smg-page-ready', 'smg-content-ready');
+        const existingSkeleton = document.getElementById('smg-page-skeleton');
+        if (existingSkeleton) existingSkeleton.remove();
+
+        if (typeof ensurePageSkeleton === 'function') {
+            ensurePageSkeleton();
+            assert(document.getElementById('smg-page-skeleton') === null, 'ensurePageSkeleton NÃO deve criar skeleton se smg-page-ready já estiver presente');
+        }
+
+        // 4. Blindagem de detectPageClasses contra re-injeção de pending após liberação
+        if (typeof window.detectPageClasses === 'function') {
+            window.detectPageClasses();
+            assert(!docEl.classList.contains('smg-page-pending'), 'detectPageClasses NÃO deve re-adicionar smg-page-pending se página já estiver pronta');
+            assert(!docEl.classList.contains('smg-content-pending'), 'detectPageClasses NÃO deve re-adicionar smg-content-pending se página já estiver pronta');
+        }
+
+        // Limpeza
+        docEl.classList.remove('smg-page-ready', 'smg-content-ready');
     }
 
     // =========================================================================

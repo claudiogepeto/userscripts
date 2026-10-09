@@ -243,7 +243,7 @@
     }
 
     function homeComponentsReady() {
-        return homeSidebarDone && homeFeedDone && homeFeedReady;
+        return homeSidebarDone && homeFeedDone;
     }
     // URL da thumbnail da THREAD (não do avatar): dcThumbnail tem em background-image; dtt no src.
     function feedThumbUrl(it) {
