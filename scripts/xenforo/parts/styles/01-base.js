@@ -34,8 +34,8 @@
             /* ACENTO do tema, POR SITE: VERDE no SimpCity, ROSA no SocialMediaGirls. Usa o linkColor real do
                fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link, ...) passa a seguir isto. */
             html.smg-sc  { --smg-link: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%)); --smg-link-soft: hsla(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%), 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), 38%); }
-            /* SMG: saturação CONTROLADA (a do fórum era neon demais) — hue do fórum, s/l fixos mais suaves */
-            html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 76%, 70%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 76%, 70%, 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 64%, 48%); }
+            /* SMG: rosa institucional da marca (#ff3d84 / hue 334) */
+            html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 85%, 68%, 0.12); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 75%, 52%); }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */

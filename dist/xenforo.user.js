@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.17.4
+// @version      3.18.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -390,7 +390,7 @@
         'Mark every notification as read?': 'Marcar todas as notificações como lidas?',
         'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
-        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'forums': 'fóruns', 'forum': 'fórum',
+        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
         'Previous': 'Anterior', 'Next': 'Próximo', 'Go to new': 'Ir para os novos',
         'Watch': 'Seguir', 'Unwatch': 'Deixar de seguir', 'Translate': 'Traduzir', 'More': 'Mais',
@@ -662,8 +662,8 @@
             /* ACENTO do tema, POR SITE: VERDE no SimpCity, ROSA no SocialMediaGirls. Usa o linkColor real do
                fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link, ...) passa a seguir isto. */
             html.smg-sc  { --smg-link: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%)); --smg-link-soft: hsla(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%), 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), 38%); }
-            /* SMG: saturação CONTROLADA (a do fórum era neon demais) — hue do fórum, s/l fixos mais suaves */
-            html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 76%, 70%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 76%, 70%, 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 64%, 48%); }
+            /* SMG: rosa institucional da marca (#ff3d84 / hue 334) */
+            html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 85%, 68%, 0.12); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 75%, 52%); }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
@@ -2574,6 +2574,11 @@
                 background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
                 color: rgba(255,255,255,0.5); margin-left: 10px;
             }
+            html.smg-smg.smg-home .smg-hub-badge {
+                background: var(--smg-link-soft, rgba(255, 61, 132, 0.12));
+                border-color: rgba(255, 61, 132, 0.25);
+                color: var(--smg-link, #ff3d84);
+            }
 
             html.smg-home .block--category .block-body,
             html.smg-smg.smg-home .block--category .block-body {
@@ -2614,12 +2619,15 @@
                 box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
 
-            /* SMG alternância */
+            /* SMG alternância & destaque dos cards com a cor da marca (#ff3d84) */
             html.smg-smg.smg-home .block--category .node {
                 background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #141519 !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
             }
             html.smg-smg.smg-home .block--category .block-body > .node:hover {
-                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), #181920 !important;
+                border-color: var(--smg-link, #ff3d84) !important;
+                background: linear-gradient(160deg, rgba(255, 61, 132, 0.08) 0%, rgba(255, 61, 132, 0.02) 100%), #181920 !important;
+                box-shadow: 0 10px 24px -4px rgba(0,0,0,0.65), 0 0 20px -2px var(--smg-link-soft, rgba(255, 61, 132, 0.25)) !important;
             }
 
             /* Node body e alinhamento horizontal */
@@ -2686,9 +2694,15 @@
                 flex: 1 1 auto !important; height: 1px !important;
                 background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important;
             }
+            html.smg-smg.smg-home .smg-hub-divider-line {
+                background: linear-gradient(90deg, rgba(255, 61, 132, 0.25), rgba(255,255,255,0.03)) !important;
+            }
             html.smg-home .smg-hub-divider-text {
                 font-size: 11px !important; font-weight: 750 !important; letter-spacing: 0.08em !important;
                 text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
+            }
+            html.smg-smg.smg-home .smg-hub-divider-text {
+                color: var(--smg-link, #ff3d84) !important;
             }
 
             /* Últimos posts (.node-extra) à direita no layout de lista */
@@ -2719,10 +2733,31 @@
                 white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
                 text-decoration: none !important; transition: color .15s ease !important;
             }
+            html.smg-home .node-extra-title .prefix {
+                margin-right: 6px !important;
+                font-size: 10px !important; font-weight: 700 !important; letter-spacing: .02em !important;
+                text-transform: uppercase !important; padding: 2px 6px !important; border-radius: 5px !important;
+                line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
+            }
+            html.smg-home .node-title a:hover {
+                color: var(--smg-link, #ff3d84) !important;
+            }
+            html.smg-home .node-title .uix_newIndicator {
+                margin-left: 8px !important;
+                font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.04em !important;
+                text-transform: uppercase !important; padding: 1.5px 6px !important; border-radius: 5px !important;
+                line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
+                background: var(--smg-link-soft, rgba(255, 61, 132, 0.15)) !important;
+                color: var(--smg-link, #ff3d84) !important;
+                border: 1px solid var(--smg-link-soft, rgba(255, 61, 132, 0.3)) !important;
+            }
             html.smg-home .node-extra:hover .node-extra-title,
             html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link, #ff3d84) !important;
                 text-decoration: underline !important;
+            }
+            html.smg-smg.smg-home .node-extra-title:hover {
+                color: var(--smg-link, #ff3d84) !important;
             }
             html.smg-home .node-extra .listInline {
                 display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
@@ -2914,7 +2949,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link, #ff3d84) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {
@@ -19577,22 +19612,54 @@
         }).join('||');
     }
 
+    const MAIN_SITE_PATTERNS = [
+        /^cameraprive\b/i,
+        /^(?:camwhores|camwhores\.tv)\b/i,
+        /^facecast\b/i,
+        /^(?:instagram|instagram\s*models?)\b/i,
+        /^onlyfans\b/i,
+        /^patreon\b/i,
+        /^privacy\b/i,
+        /^reddit\b/i,
+        /^snapchat\b/i,
+        /^tiktok\b/i,
+        /^(?:twitter|twitter\s*nudes|x)\b/i,
+        /^(?:twitch|twitch\s*streamers?)\b/i,
+        /^(?:youtube|youtubers?)\b/i
+    ];
+
+    function cleanHomeNodeTitle(title) {
+        return (title || '').replace(/\s+/g, ' ').replace(/\s*\bnew\b/i, '').trim();
+    }
+
+    function getMainSiteOrder(title) {
+        const clean = cleanHomeNodeTitle(title);
+        for (let i = 0; i < MAIN_SITE_PATTERNS.length; i++) {
+            if (MAIN_SITE_PATTERNS[i].test(clean)) return i;
+        }
+        return 999;
+    }
+
     const MAIN_CATEGORY_PATTERNS = [
         /^3d\b/i,
-        /^animated\b/i,
+        /^(?:adult\s*comics|animated)\b/i,
+        /^adult\s*productions?\b/i,
+        /^amateurs?\b/i,
+        /^(?:anime\s*(?:&|e)\s*hentai|anime|hentai)\b/i,
         /^asians?\b/i,
         /^asmr\b/i,
         /^cam\s*girls?\b/i,
         /^celebrit(y|ies)\b/i,
-        /^hentai\b/i,
+        /^foot\s*fetish\b/i,
         /^hotwives?\b/i,
+        /^male\b/i,
         /^trans(?:gender)?\b/i,
         /^v[- ]?tubers?\b/i,
         /^(?:xxx|porn|pornstars?)\b/i
     ];
 
     function getMainCategoryOrder(title) {
-        const clean = (title || '').trim();
+        const clean = cleanHomeNodeTitle(title);
         for (let i = 0; i < MAIN_CATEGORY_PATTERNS.length; i++) {
             if (MAIN_CATEGORY_PATTERNS[i].test(clean)) return i;
         }
@@ -19610,15 +19677,24 @@
         const linkEl = titleEl ? (titleEl.querySelector('a') || titleEl) : null;
         let title = (titleEl ? titleEl.textContent : '').trim();
         const href = (linkEl ? (linkEl.getAttribute('href') || '') : '').toLowerCase();
+        const clean = cleanHomeNodeTitle(title);
 
-        // 1. Remover container de "Brasileiras | Brazilian Girls"
-        if (/brasileiras?\s*(?:\||\/|-)?\s*brazilian\s*girls/i.test(title) || /brazilian\s*girls/i.test(title)) {
+        // 1. Remover containers puramente agrupadores quando seus subfóruns já foram extraídos ou viraram subcards
+        // (ex.: Brasileiras no SC, Video Sharing & Streaming Apps, More Social Media Sites, More Premium Sites, Other Girls no SMG)
+        const isPureContainer = /brasileiras?\s*(?:\||\/|-)?\s*brazilian\s*girls/i.test(clean)
+            || /brazilian\s*girls/i.test(clean)
+            || /video\s*sharing\s*&\s*streaming\s*apps/i.test(clean)
+            || /more\s*social\s*media\s*sites/i.test(clean)
+            || /^more\s*premium\s*sites$/i.test(clean)
+            || /^other\s*girls$/i.test(clean);
+
+        if (isPureContainer && !node.classList.contains('smg-subcard')) {
             node.remove();
             return null;
         }
 
         // 2. Trans Reviews e Reviews em geral vão para Discussions:
-        if (/\btrans\s*reviews?\b/i.test(title) || /\btrans\s*reviews?\b/i.test(href) || /^(?:reviews?|model\s*reviews?)$/i.test(title)) {
+        if (/\btrans\s*reviews?\b/i.test(clean) || /\btrans\s*reviews?\b/i.test(href) || /^(?:reviews?|model\s*reviews?)$/i.test(clean)) {
             return 'discussions';
         }
 
@@ -19626,11 +19702,11 @@
         const isBrasil = /brasil|brasileir/i.test(parentTitle)
             || /brasil|brasileir/i.test(origCat)
             || /brasil|brasileir/i.test(href)
-            || /^(?:brasil|brasileiras)$/i.test(title);
+            || /^(?:brasil|brasileiras)$/i.test(clean);
 
         if (isBrasil) {
-            if (!/^(?:brasil|brasileir)/i.test(title)) {
-                const newTitle = 'Brasil - ' + title;
+            if (!/^(?:brasil|brasileir)/i.test(clean)) {
+                const newTitle = 'Brasil - ' + clean;
                 if (linkEl && linkEl !== titleEl) linkEl.textContent = newTitle;
                 if (titleEl) {
                     if (linkEl && linkEl !== titleEl) {
@@ -19647,57 +19723,58 @@
             return 'categories';
         }
 
-        // 3. ASMR exception (SMG):
-        if (/\basmr\b/i.test(title) || /\basmr\b/i.test(href)) {
+        // 4. ASMR exception (SMG):
+        if (/\basmr\b/i.test(clean) || /\basmr\b/i.test(href)) {
             return 'categories';
         }
 
-        // 4. Celebridades e XXX / Porn vão para Categorias:
-        if (/\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(title) || /\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(href)) {
+        // 5. Categorias explícitas por tema/conteúdo (Celebrities, XXX / Porn, Porn Mixxx, Pornstars, Adult Comics, Feet, Male/Gay, etc.):
+        const explicitCatRe = /\b(celebrit(y|ies)|xxx|porn|porn\s*mixxx|pornstars?|foot\s*fetish|feet|transgender|non-binary|male|gay|adult\s*comics|anime|hentai|comics|animations?|online\s*marketplaces?)\b/i;
+        if (explicitCatRe.test(clean) || explicitCatRe.test(href)) {
             return 'categories';
         }
 
-        // 5. Workflows e Guides vão para Site Navigation:
-        const isGuidesOrWorkflows = /\b(workflows?|guides?)\b/i.test(title) || /\b(workflows?|guides?)\b/i.test(href) || /\b(workflows?|guides?)\b/i.test(origCat);
+        // 6. Workflows, Guides, Rules, Help e Announcements vão para Site Navigation:
+        const isGuidesOrWorkflows = /\b(workflows?|guides?)\b/i.test(clean) || /\b(workflows?|guides?)\b/i.test(href) || /\b(workflows?|guides?)\b/i.test(origCat);
         if (isGuidesOrWorkflows) {
             return 'nav';
         }
 
-        // 6. Navigation explícita por título/link (Rules, Announcements, Help, Lounge, etc.):
-        const navTitleRe = /^(?:announcements?|rules|site rules|help|faq|feedback|introductions?|the lounge|community|info and links|informações e links|anúncios|regras)$/i;
-        const navHrefRe = /\b(announcements|rules|lounge|introductions|help|feedback|info-and-links)\b/i;
-        if (navTitleRe.test(title) || navHrefRe.test(href)) {
+        const navTitleRe = /^(?:announcements?|rules|site rules|help|faq|feedback|introductions?|the lounge|community|info and links|informações e links|anúncios|regras|self\s*promotion)$/i;
+        const navHrefRe = /\b(announcements|rules|lounge|introductions|help|feedback|info-and-links|self-promotion)\b/i;
+        if (navTitleRe.test(clean) || navHrefRe.test(href)) {
             return 'nav';
         }
 
-        const sitesPlatformRe = /\b(onlyfans|patreon|fansly|manyvids|loyalfans|fanvue|ifans|my\.club|admireme|pocketstars|instagram|tiktok|reddit|twitter|twitch|youtube|snapchat|facebook|discord|threads|kick|chaturbate|stripchat|cam4|myfreecams|bongacams|livejasmin|camsoda|pornhub|xvideos|spankbang|redtube|tube8|brazzers|realitykings|naughtyamerica|slushy|passes|sextpanther)\b/i;
+        // 7. Plataformas e sites individuais (Sites):
+        const sitesPlatformRe = /\b(onlyfans|patreon|fansly|manyvids|loyalfans|fanvue|ifans|my\.club|admireme|pocketstars|memberme|instagram|tiktok|reddit|twitter|twitch|youtube|youtubers|snapchat|facebook|discord|threads|kick|chaturbate|stripchat|cam4|myfreecams|bongacams|livejasmin|camsoda|camwhores|cameraprive|privacy|swame|deviantart|pornhub|xvideos|spankbang|redtube|tube8|brazzers|realitykings|naughtyamerica|slushy|passes|sextpanther|live\.me|younow|facecast|peeks|crazycash|viewhub|dreamdares|omegle|barista|tumblr)\b/i;
 
-        // 7. Requests (pedidos):
+        // 8. Requests (pedidos):
         const reqRe = /\b(requests?|pedidos?)\b/i;
-        if (reqRe.test(title) || reqRe.test(href) || (reqRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+        if (reqRe.test(clean) || reqRe.test(href) || (reqRe.test(origCat) && !sitesPlatformRe.test(clean) && !sitesPlatformRe.test(href))) {
             return 'requests';
         }
 
-        // 8. Discussions (inclui Megathreads, Debates, Discussões):
-        const discRe = /\b(megathreads?|discussions?|debates?)\b/i;
-        if (discRe.test(title) || discRe.test(href) || (discRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+        // 9. Discussions (Megathreads, Off Topic, Downloads, Debates, Discussões):
+        const discRe = /\b(megathreads?|discussions?|debates?|off\s*topic|link\s*downloads?)\b/i;
+        if (discRe.test(clean) || discRe.test(href) || (discRe.test(origCat) && !sitesPlatformRe.test(clean) && !sitesPlatformRe.test(href))) {
             return 'discussions';
         }
 
-        // 9. Categorias de navegação geral (Info and Links, Announcements, Community):
+        // 10. Categorias de navegação geral (Info and Links, Announcements, Community):
         const navCatRe = /info(\s*and\s*|\s*&\s*)links|announcements|community|the\s*lounge|rules|regras|avisos|informações|anúncios|feedback|help|suporte|introductions|apresentações/i;
-        if (navCatRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href)) {
+        if (navCatRe.test(origCat) && !sitesPlatformRe.test(clean) && !sitesPlatformRe.test(href)) {
             return 'nav';
         }
 
-        // 10. Sites:
-        const sitesCatRe = /social\s*media|fan\s*sites?|premium\s*fan\s*sites?|professional\s*sites?|paid\s*sites?|adult\s*sites?|cam\s*sites?|tube\s*sites?|creators?|websites?|^sites$/i;
+        // 11. Sites por categoria ou regex de plataforma:
+        const sitesCatRe = /social\s*media|fan\s*sites?|premium\s*fan\s*sites?|premium\s*sites?|professional\s*sites?|paid\s*sites?|adult\s*sites?|cam\s*sites?|tube\s*sites?|creators?|websites?|^sites$/i;
 
-        if (sitesCatRe.test(origCat) || sitesPlatformRe.test(href) || sitesPlatformRe.test(title)) {
+        if (sitesPlatformRe.test(href) || sitesPlatformRe.test(clean) || sitesCatRe.test(origCat)) {
             return 'sites';
         }
 
-        // 11. Categorias (default):
+        // 12. Categorias (default):
         return 'categories';
     }
 
@@ -19757,12 +19834,24 @@
 
         const keyOf = n => ((n.querySelector('.node-title') || {}).textContent || '').trim().toLowerCase();
         const sortAlpha = arr => arr.sort((a, b) => keyOf(a).localeCompare(keyOf(b), 'pt', { numeric: true, sensitivity: 'base' }));
-        sortAlpha(sitesNodes);
         sortAlpha(discussionsNodes);
         sortAlpha(requestsNodes);
         sortAlpha(navNodes);
 
-        // Categorias: 9 principais no topo na ordem definida, seguidas pelo restante em A-Z
+        // Sites: principais no topo na ordem definida, seguidos por "Mais sites" em A-Z
+        sitesNodes.sort((a, b) => {
+            const titleA = ((a.querySelector('.node-title') || {}).textContent || '').trim();
+            const titleB = ((b.querySelector('.node-title') || {}).textContent || '').trim();
+            const orderA = getMainSiteOrder(titleA);
+            const orderB = getMainSiteOrder(titleB);
+
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return titleA.localeCompare(titleB, 'pt', { numeric: true, sensitivity: 'base' });
+        });
+
+        // Categorias: principais no topo na ordem definida, seguidas pelo restante em A-Z
         categoriesNodes.sort((a, b) => {
             const titleA = ((a.querySelector('.node-title') || {}).textContent || '').trim();
             const titleB = ((b.querySelector('.node-title') || {}).textContent || '').trim();
@@ -19803,6 +19892,33 @@
             body.appendChild(frag);
         };
 
+        const fillSitesBody = (sec, nodes) => {
+            const body = sec.querySelector('.block-body');
+            if (!body) return;
+            const frag = document.createDocumentFragment();
+            let dividerInserted = false;
+            const hasMain = nodes.some(n => getMainSiteOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
+            const hasOthers = nodes.some(n => getMainSiteOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
+
+            nodes.forEach(n => {
+                const title = ((n.querySelector('.node-title') || {}).textContent || '').trim();
+                const isMain = getMainSiteOrder(title) !== 999;
+                if (!isMain && !dividerInserted && hasMain && hasOthers) {
+                    const divider = document.createElement('div');
+                    divider.className = 'smg-hub-category-divider smg-hub-sites-divider';
+                    divider.setAttribute('role', 'separator');
+                    divider.innerHTML = '<span class="smg-hub-divider-line"></span>'
+                        + `<span class="smg-hub-divider-text">${i18n('More sites')}</span>`
+                        + '<span class="smg-hub-divider-line"></span>';
+                    frag.appendChild(divider);
+                    dividerInserted = true;
+                }
+                frag.appendChild(n);
+            });
+            body.innerHTML = '';
+            body.appendChild(frag);
+        };
+
         const fillCategoryBody = (sec, nodes) => {
             const body = sec.querySelector('.block-body');
             if (!body) return;
@@ -19830,7 +19946,7 @@
             body.appendChild(frag);
         };
 
-        fillBody(sitesSec, sitesNodes);
+        fillSitesBody(sitesSec, sitesNodes);
         fillCategoryBody(catSec, categoriesNodes);
         fillBody(discSec, discussionsNodes);
         fillBody(reqSec, requestsNodes);
@@ -20074,6 +20190,38 @@
                 if (e.target.closest('a')) return; // links reais funcionam normal
                 window.location.href = href;
             });
+        });
+    }
+
+    // home: garante fallback visual robusto em ícones de nós ausentes ou com imagem quebrada (404/rede)
+    function ensureHomeNodeIcons(roots) {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+        const scope = (roots && Array.isArray(roots) && roots[0] && roots[0].nodeType === 1) ? roots[0] : document;
+        const fallbackSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+        scope.querySelectorAll('.block--category .node:not(.node--link)').forEach(node => {
+            let iconSpan = node.querySelector('.node-icon');
+            if (!iconSpan) {
+                iconSpan = document.createElement('span');
+                iconSpan.className = 'node-icon';
+                iconSpan.setAttribute('aria-hidden', 'true');
+                const nodeBody = node.querySelector('.node-body') || node;
+                nodeBody.insertBefore(iconSpan, nodeBody.firstChild);
+            }
+            const img = iconSpan.querySelector('img');
+            if (img) {
+                if (!img.dataset.smgFallbackAttached) {
+                    img.dataset.smgFallbackAttached = '1';
+                    img.addEventListener('error', () => {
+                        iconSpan.innerHTML = fallbackSvg;
+                    });
+                    if (img.complete && img.naturalWidth === 0) {
+                        iconSpan.innerHTML = fallbackSvg;
+                    }
+                }
+            } else if (!iconSpan.querySelector('svg')) {
+                // Se só tiver um <i> vazio / quebrado ou nada, substitui pelo SVG inline genérico
+                iconSpan.innerHTML = fallbackSvg;
+            }
         });
     }
 
@@ -20565,11 +20713,14 @@
             FEED_CACHE_KEY_PREFIX,
             FEED_CACHE_TTL_MS,
             enhanceHomeHubSections,
+            ensureHomeNodeIcons,
             homeLayoutSignature,
             classifyHomeNode,
             organizeHomeHub,
             getMainCategoryOrder,
             MAIN_CATEGORY_PATTERNS,
+            getMainSiteOrder,
+            MAIN_SITE_PATTERNS,
         };
     }
 
@@ -28438,6 +28589,7 @@
             safe(expandSubForums, roots);
             safe(organizeHomeHub, roots);
             safe(makeHomeCardsClickable, roots);
+            safe(ensureHomeNodeIcons, roots);
             safe(enhanceHomeHubSections, roots);
             homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
         }

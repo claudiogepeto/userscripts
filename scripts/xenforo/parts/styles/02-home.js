@@ -360,6 +360,11 @@
                 background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
                 color: rgba(255,255,255,0.5); margin-left: 10px;
             }
+            html.smg-smg.smg-home .smg-hub-badge {
+                background: var(--smg-link-soft, rgba(255, 61, 132, 0.12));
+                border-color: rgba(255, 61, 132, 0.25);
+                color: var(--smg-link, #ff3d84);
+            }
 
             html.smg-home .block--category .block-body,
             html.smg-smg.smg-home .block--category .block-body {
@@ -400,12 +405,15 @@
                 box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
 
-            /* SMG alternância */
+            /* SMG alternância & destaque dos cards com a cor da marca (#ff3d84) */
             html.smg-smg.smg-home .block--category .node {
                 background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #141519 !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
             }
             html.smg-smg.smg-home .block--category .block-body > .node:hover {
-                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), #181920 !important;
+                border-color: var(--smg-link, #ff3d84) !important;
+                background: linear-gradient(160deg, rgba(255, 61, 132, 0.08) 0%, rgba(255, 61, 132, 0.02) 100%), #181920 !important;
+                box-shadow: 0 10px 24px -4px rgba(0,0,0,0.65), 0 0 20px -2px var(--smg-link-soft, rgba(255, 61, 132, 0.25)) !important;
             }
 
             /* Node body e alinhamento horizontal */
@@ -472,9 +480,15 @@
                 flex: 1 1 auto !important; height: 1px !important;
                 background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important;
             }
+            html.smg-smg.smg-home .smg-hub-divider-line {
+                background: linear-gradient(90deg, rgba(255, 61, 132, 0.25), rgba(255,255,255,0.03)) !important;
+            }
             html.smg-home .smg-hub-divider-text {
                 font-size: 11px !important; font-weight: 750 !important; letter-spacing: 0.08em !important;
                 text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
+            }
+            html.smg-smg.smg-home .smg-hub-divider-text {
+                color: var(--smg-link, #ff3d84) !important;
             }
 
             /* Últimos posts (.node-extra) à direita no layout de lista */
@@ -505,10 +519,31 @@
                 white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
                 text-decoration: none !important; transition: color .15s ease !important;
             }
+            html.smg-home .node-extra-title .prefix {
+                margin-right: 6px !important;
+                font-size: 10px !important; font-weight: 700 !important; letter-spacing: .02em !important;
+                text-transform: uppercase !important; padding: 2px 6px !important; border-radius: 5px !important;
+                line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
+            }
+            html.smg-home .node-title a:hover {
+                color: var(--smg-link, #ff3d84) !important;
+            }
+            html.smg-home .node-title .uix_newIndicator {
+                margin-left: 8px !important;
+                font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.04em !important;
+                text-transform: uppercase !important; padding: 1.5px 6px !important; border-radius: 5px !important;
+                line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
+                background: var(--smg-link-soft, rgba(255, 61, 132, 0.15)) !important;
+                color: var(--smg-link, #ff3d84) !important;
+                border: 1px solid var(--smg-link-soft, rgba(255, 61, 132, 0.3)) !important;
+            }
             html.smg-home .node-extra:hover .node-extra-title,
             html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link, #ff3d84) !important;
                 text-decoration: underline !important;
+            }
+            html.smg-smg.smg-home .node-extra-title:hover {
+                color: var(--smg-link, #ff3d84) !important;
             }
             html.smg-home .node-extra .listInline {
                 display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
@@ -700,7 +735,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link, #ff3d84) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {

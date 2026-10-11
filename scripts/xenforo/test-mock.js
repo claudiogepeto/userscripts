@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.17.4'), 'Userscript deve estar na versão 3.17.4');
+    assert(scriptContent.includes('// @version      3.18.0'), 'Userscript deve estar na versão 3.18.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -7846,21 +7846,44 @@ async function runTests() {
         assert(classifyHomeNode(mockBrPatreon) === 'categories', 'Subfórum Patreon do Brasil deve ir para categories');
         assert(mockBrPatreon.querySelector('.node-title a').textContent === 'Brasil - Patreon', 'Subfórum Patreon do Brasil deve ser renomeado para Brasil - Patreon');
 
-        // Testar ordem das 11 categorias principais (incluindo Celebrities e XXX / Porn)
+        // Testar ordem das categorias principais (incluindo Adult Productions, Amateur, Anime & Hentai, Celebrities, Foot Fetish, Male e XXX / Porn)
         assert(getMainCategoryOrder('3D') === 0, '3D deve ser prioridade 0');
         assert(getMainCategoryOrder('Animated') === 1, 'Animated deve ser prioridade 1');
-        assert(getMainCategoryOrder('Asians') === 2, 'Asians deve ser prioridade 2');
-        assert(getMainCategoryOrder('ASMR') === 3, 'ASMR deve ser prioridade 3');
-        assert(getMainCategoryOrder('Cam Girls') === 4, 'Cam Girls deve ser prioridade 4');
-        assert(getMainCategoryOrder('Celebrities') === 5, 'Celebrities deve ser prioridade 5');
-        assert(getMainCategoryOrder('Hentai') === 6, 'Hentai deve ser prioridade 6');
-        assert(getMainCategoryOrder('Hotwives') === 7, 'Hotwives deve ser prioridade 7');
-        assert(getMainCategoryOrder('Transgender') === 8, 'Transgender deve ser prioridade 8');
-        assert(getMainCategoryOrder('VTubers') === 9, 'VTubers deve ser prioridade 9');
-        assert(getMainCategoryOrder('XXX / Porn') === 10, 'XXX / Porn deve ser prioridade 10');
+        assert(getMainCategoryOrder('Adult Comics & Animations') === 1, 'Adult Comics deve ser prioridade 1');
+        assert(getMainCategoryOrder('Adult Productions') === 2, 'Adult Productions deve ser prioridade 2');
+        assert(getMainCategoryOrder('Amateur') === 3, 'Amateur deve ser prioridade 3');
+        assert(getMainCategoryOrder('Anime & Hentai') === 4, 'Anime & Hentai deve ser prioridade 4');
+        assert(getMainCategoryOrder('Asians') === 5, 'Asians deve ser prioridade 5');
+        assert(getMainCategoryOrder('ASMR') === 6, 'ASMR deve ser prioridade 6');
+        assert(getMainCategoryOrder('Cam Girls') === 7, 'Cam Girls deve ser prioridade 7');
+        assert(getMainCategoryOrder('Celebrities') === 8, 'Celebrities deve ser prioridade 8');
+        assert(getMainCategoryOrder('Foot Fetish') === 9, 'Foot Fetish deve ser prioridade 9');
+        assert(getMainCategoryOrder('Hotwives') === 10, 'Hotwives deve ser prioridade 10');
+        assert(getMainCategoryOrder('Male/Gay') === 11, 'Male/Gay deve ser prioridade 11');
+        assert(getMainCategoryOrder('Transgender') === 12, 'Transgender deve ser prioridade 12');
+        assert(getMainCategoryOrder('VTubers') === 13, 'VTubers deve ser prioridade 13');
+        assert(getMainCategoryOrder('XXX / Porn') === 14, 'XXX / Porn deve ser prioridade 14');
         assert(getMainCategoryOrder('Cosplay') === 999, 'Cosplay não é prioridade principal (999)');
         assert(getMainCategoryOrder('Brasil - Animated') === 999, 'Brasil - Animated não é prioridade principal (999)');
         assert(getMainCategoryOrder('Brasil - OnlyFans') === 999, 'Brasil - OnlyFans não é prioridade principal (999)');
+
+        // Testar ordem dos sites principais
+        const { getMainSiteOrder } = window.__homeExports;
+        assert(getMainSiteOrder('CameraPrive') === 0, 'CameraPrive deve ser prioridade 0 de sites');
+        assert(getMainSiteOrder('CamWhores.tv') === 1, 'CamWhores deve ser prioridade 1 de sites');
+        assert(getMainSiteOrder('Facecast') === 2, 'Facecast deve ser prioridade 2 de sites');
+        assert(getMainSiteOrder('Instagram Models') === 3, 'Instagram deve ser prioridade 3 de sites');
+        assert(getMainSiteOrder('Onlyfans') === 4, 'OnlyFans deve ser prioridade 4 de sites');
+        assert(getMainSiteOrder('Patreon') === 5, 'Patreon deve ser prioridade 5 de sites');
+        assert(getMainSiteOrder('Privacy') === 6, 'Privacy deve ser prioridade 6 de sites');
+        assert(getMainSiteOrder('Reddit') === 7, 'Reddit deve ser prioridade 7 de sites');
+        assert(getMainSiteOrder('Snapchat') === 8, 'Snapchat deve ser prioridade 8 de sites');
+        assert(getMainSiteOrder('TikTok') === 9, 'TikTok deve ser prioridade 9 de sites');
+        assert(getMainSiteOrder('Twitter Nudes') === 10, 'Twitter deve ser prioridade 10 de sites');
+        assert(getMainSiteOrder('Twitch Streamers') === 11, 'Twitch deve ser prioridade 11 de sites');
+        assert(getMainSiteOrder('Youtubers') === 12, 'YouTube deve ser prioridade 12 de sites');
+        assert(getMainSiteOrder('Barista') === 999, 'Barista deve ser 999 (mais sites)');
+        assert(getMainSiteOrder('MemberMe') === 999, 'MemberMe deve ser 999 (mais sites)');
 
         // Testar organizeHomeHub
         assert(typeof organizeHomeHub === 'function', 'organizeHomeHub deve ser função');
@@ -7930,8 +7953,8 @@ async function runTests() {
         const catList = Array.from(container.querySelectorAll('[data-smg-home-hub="categories"] .node-title a')).map(a => a.textContent.trim());
         assert(catList.indexOf('3D') === 0, '3D deve ser a primeira categoria');
         assert(catList.indexOf('Animated') === 1, 'Animated deve vir em segundo');
-        assert(catList.indexOf('Celebrities') === 2, 'Celebrities deve vir em terceiro entre os presentes');
-        assert(catList.indexOf('Hentai') === 3, 'Hentai deve vir em quarto entre os presentes');
+        assert(catList.indexOf('Hentai') === 2, 'Hentai deve vir em terceiro entre os presentes');
+        assert(catList.indexOf('Celebrities') === 3, 'Celebrities deve vir em quarto entre os presentes');
         assert(catList.indexOf('Transgender') === 4, 'Transgender deve vir em quinto entre os presentes');
         assert(catList.indexOf('XXX / Porn') === 5, 'XXX / Porn deve ser a 6ª categoria principal entre os presentes');
         assert(catList.indexOf('Brasil - Animated') > catList.indexOf('XXX / Porn'), 'Brasil - Animated deve vir após as categorias principais');
@@ -8053,6 +8076,140 @@ async function runTests() {
 
         listWrapper.remove();
         document.documentElement.classList.remove('smg-threadlist');
+    }
+
+    // =========================================================================
+    // TESTE 69: Validação da Página Inicial e Cores do SocialMediaGirls (SMG)
+    // =========================================================================
+    console.log('--- TESTE 69: Validação da Página Inicial e Cores do SocialMediaGirls (SMG) ---');
+    {
+        const { classifyHomeNode } = window.__homeExports;
+
+        // 1. Cores e tokens do SMG
+        assert(allStyles.includes('html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%);'), 'SMG deve definir --smg-link com rosa institucional (#ff3d84 / 334deg)');
+        assert(allStyles.includes('.node-title .uix_newIndicator'), 'CSS da home deve estilizar .uix_newIndicator');
+        assert(allStyles.includes('.node-extra-title .prefix'), 'CSS da home deve estilizar .prefix nos últimos tópicos');
+        assert(allStyles.includes('html.smg-smg.smg-home .block--category .block-body > .node:hover'), 'CSS da home deve ter hover temático rosa no SMG');
+        assert(allStyles.includes('html.smg-smg.smg-home .smg-hub-badge'), 'CSS da home deve ter badges de contagem com rosa no SMG');
+
+        // 2. Remoção de wrappers no SMG (Video Sharing & Streaming Apps e More Social Media Sites)
+        const mockVideoWrapper = document.createElement('div');
+        mockVideoWrapper.className = 'node';
+        mockVideoWrapper.innerHTML = '<div class="node-body"><div class="node-title"><a href="/forums/video-sharing-streaming-apps.78/">Video Sharing & Streaming Apps</a></div></div>';
+        document.body.appendChild(mockVideoWrapper);
+        assert(classifyHomeNode(mockVideoWrapper) === null, 'Video Sharing & Streaming Apps deve ser removido (retorna null)');
+        assert(!document.body.contains(mockVideoWrapper), 'Video Sharing & Streaming Apps deve ter sido removido do DOM');
+
+        const mockMoreSocialWrapper = document.createElement('div');
+        mockMoreSocialWrapper.className = 'node';
+        mockMoreSocialWrapper.innerHTML = '<div class="node-body"><div class="node-title"><a href="/forums/more-social-media-sites.153/">More Social Media Sites</a></div></div>';
+        document.body.appendChild(mockMoreSocialWrapper);
+        assert(classifyHomeNode(mockMoreSocialWrapper) === null, 'More Social Media Sites deve ser removido (retorna null)');
+        assert(!document.body.contains(mockMoreSocialWrapper), 'More Social Media Sites deve ter sido removido do DOM');
+
+        // 3. Fallback de ícones quebrados na home (ensureHomeNodeIcons)
+        const { ensureHomeNodeIcons } = window.__homeExports;
+        document.documentElement.classList.add('smg-home');
+        const testIconCat = document.createElement('div');
+        testIconCat.className = 'block block--category';
+        testIconCat.innerHTML = `
+            <div class="block-body">
+                <div class="node" id="test-broken-img">
+                    <div class="node-body">
+                        <span class="node-icon"><img src="/invalid-404-icon.png"></span>
+                        <div class="node-title"><a href="/f/1">Broken Img Node</a></div>
+                    </div>
+                </div>
+                <div class="node" id="test-empty-i">
+                    <div class="node-body">
+                        <span class="node-icon"><i class="far fa-comments"></i></span>
+                        <div class="node-title"><a href="/f/2">Empty I Node</a></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(testIconCat);
+        ensureHomeNodeIcons();
+        // Disparar erro na imagem quebrada
+        const brokenImg = testIconCat.querySelector('#test-broken-img img');
+        brokenImg.dispatchEvent(new dom.window.Event('error'));
+        assert(testIconCat.querySelector('#test-broken-img .node-icon svg') !== null, 'Imagem com erro deve ter fallback substituído por SVG');
+        assert(testIconCat.querySelector('#test-empty-i .node-icon svg') !== null, 'Nó com ícone sem imagem nem SVG deve receber SVG genérico');
+        testIconCat.remove();
+        document.documentElement.classList.remove('smg-home');
+
+        // 4. Classificação de Sites do SMG (plataformas reais)
+        const checkSite = (title, href) => {
+            const el = document.createElement('div');
+            el.className = 'node';
+            el.dataset.smgOrigCategory = 'Social Media';
+            el.innerHTML = `<div class="node-body"><div class="node-title"><a href="${href}">${title}</a></div></div>`;
+            assert(classifyHomeNode(el) === 'sites', `${title} (${href}) deve ser classificado como 'sites'`);
+        };
+
+        checkSite('TikTok', '/forums/tiktok.51/');
+        checkSite('Live.me', '/forums/live-me.53/');
+        checkSite('YouNow', '/forums/younow.54/');
+        checkSite('Facecast', '/forums/facecast.66/');
+        checkSite('Peeks', '/forums/peeks.69/');
+        checkSite('CrazyCash/ViewHub/Dreamdares', '/forums/crazycash-viewhub-dreamdares.109/');
+        checkSite('Omegle', '/forums/omegle.112/');
+        checkSite('Reddit', '/forums/reddit.72/');
+        checkSite('Barista', '/forums/barista.49/');
+        checkSite('Twitter Nudes', '/forums/twitter-nudes.56/');
+        checkSite('Tumblr', '/tumblr/');
+        checkSite('Onlyfans', '/forums/onlyfans.138/');
+        checkSite('MemberMe', '/memberme/');
+        checkSite('DeviantArt', '/forums/deviantart.154/');
+        checkSite('CamWhores.tv', '/forums/camwhores-tv.156/');
+        checkSite('CameraPrive', '/forums/cameraprive.106/');
+        checkSite('Privacy', '/forums/privacy.127/');
+        checkSite('Swame', '/forums/swame.114/');
+
+        // 4. Classificação de Categorias do SMG (conteúdo/nichos)
+        const checkCat = (title, href) => {
+            const el = document.createElement('div');
+            el.className = 'node';
+            el.dataset.smgOrigCategory = 'More Categories';
+            el.innerHTML = `<div class="node-body"><div class="node-title"><a href="${href}">${title}</a></div></div>`;
+            assert(classifyHomeNode(el) === 'categories', `${title} (${href}) deve ser classificado como 'categories'`);
+        };
+
+        checkCat('Celebrities', '/forums/celebrities.20/');
+        checkCat('Foot Fetish', '/forums/foot-fetish.73/');
+        checkCat('Transgender / Non-Binary', '/forums/transgender-non-binary.76/');
+        checkCat('Male/Gay', '/forums/male-gay.157/');
+        checkCat('Adult Comics & Animations', '/adult-comics-animations/');
+        checkCat('Anime & Hentai', '/forums/anime-hentai.121/');
+        checkCat('Online Marketplaces', '/forums/online-marketplaces.90/');
+        checkCat('ASMR', '/forums/asmr.75/');
+        checkCat('Brazilian/Portuguese', '/forums/brazilian-portuguese.135/');
+
+        // 5. Classificação de Discussions do SMG
+        const checkDisc = (title, href, origCat) => {
+            const el = document.createElement('div');
+            el.className = 'node';
+            el.dataset.smgOrigCategory = origCat || 'Discussion';
+            el.innerHTML = `<div class="node-body"><div class="node-title"><a href="${href}">${title}</a></div></div>`;
+            assert(classifyHomeNode(el) === 'discussions', `${title} (${href}) deve ser classificado como 'discussions'`);
+        };
+
+        checkDisc('Megathreads', '/forums/megathreads.155/', 'More Categories');
+        checkDisc('Model Reviews', '/forums/model-reviews.159/', 'Discussion');
+        checkDisc('Off Topic', '/off-topic/', 'Discussion');
+        checkDisc('Premium Link Downloads', '/forums/premium-link-downloads.33/', 'Discussion');
+
+        // 6. Classificação de Nav do SMG
+        const checkNav = (title, href, origCat) => {
+            const el = document.createElement('div');
+            el.className = 'node';
+            el.dataset.smgOrigCategory = origCat || 'Announcements';
+            el.innerHTML = `<div class="node-body"><div class="node-title"><a href="${href}">${title}</a></div></div>`;
+            assert(classifyHomeNode(el) === 'nav', `${title} (${href}) deve ser classificado como 'nav'`);
+        };
+
+        checkNav('Forum Guides & Updates', '/forums/forum-guides-updates.13/', 'Announcements');
+        checkNav('Self Promotion', '/forums/self-promotion.50/', 'Self Promotion');
     }
 
 

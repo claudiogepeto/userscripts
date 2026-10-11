@@ -95,6 +95,7 @@
             safe(expandSubForums, roots);
             safe(organizeHomeHub, roots);
             safe(makeHomeCardsClickable, roots);
+            safe(ensureHomeNodeIcons, roots);
             safe(enhanceHomeHubSections, roots);
             homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
         }
