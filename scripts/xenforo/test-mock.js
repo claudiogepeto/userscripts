@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.14.0'), 'Userscript deve estar na versão 3.14.0');
+    assert(scriptContent.includes('// @version      3.15.0'), 'Userscript deve estar na versão 3.15.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -7428,6 +7428,189 @@ async function runTests() {
 
         testGrid.remove();
         window.GM_xmlhttpRequest = origGmx;
+
+        // =========================================================================
+        // TESTE 65: Busca Flexível de Títulos (Espaços vs. Sem Espaços, CamelCase e Separadores)
+        // =========================================================================
+        console.log('--- TESTE 65: Busca Flexível de Títulos (Espaços vs. Sem Espaços) ---');
+        const bfk = window.buildFlexibleKeywords;
+        assert(typeof bfk === 'function', 'buildFlexibleKeywords deve estar disponível');
+
+        // 1. Termo com espaços deve gerar variante original e variante concatenada unidas por OR
+        const resSpaces = bfk('jade the jaguar', true);
+        assert(resSpaces.includes('jade* the* jaguar*') || resSpaces.includes('jade the jaguar'), 'Deve conter as palavras originais');
+        assert(resSpaces.includes('jadethejaguar*') || resSpaces.includes('jadethejaguar'), 'Deve conter a forma concatenada sem espaços');
+        assert(resSpaces.includes(' OR '), 'Deve unir as variantes com operador OR');
+
+        // 2. Termo com separadores (underline/hífen/ponto) deve gerar variantes
+        const resUnderline = bfk('jade_the_jaguar', true);
+        assert(resUnderline.includes('jadethejaguar') || resUnderline.includes('jade the jaguar'), 'Deve gerar formas limpas para termos com underline');
+        assert(resUnderline.includes(' OR '), 'Deve unir com operador OR');
+
+        // 3. Termo em CamelCase deve gerar forma separada
+        const resCamel = bfk('JadeTheJaguar', true);
+        assert(resCamel.includes('JadeTheJaguar'), 'Deve manter a forma original');
+        assert(resCamel.includes('Jade') && resCamel.includes('Jaguar'), 'Deve conter a forma decomposta em palavras');
+        assert(resCamel.includes(' OR '), 'Deve unir com operador OR');
+
+        // 4. Termo com aspas explícitas deve respeitar literalidade sem OR
+        const resQuotes = bfk('"jade the jaguar"', true);
+        assert(!resQuotes.includes(' OR '), 'Busca com aspas explícitas NÃO deve inventar variantes com OR');
+        assert(resQuotes === '"jade the jaguar"', 'Busca com aspas explícitas deve permanecer inalterada');
+
+        // 5. Palavra única simples não deve inventar OR
+        const resSingle = bfk('jaguar', true);
+        assert(!resSingle.includes(' OR '), 'Palavra única não deve ter variantes com OR');
+        assert(resSingle.startsWith('jaguar'), 'Palavra única deve ser preservada');
+    }
+
+    // =========================================================================
+    // TESTE 66: Melhorias Avançadas do Search (Social Handles, Acentos, Clear, Atalho / e Chips Dinâmicos)
+    // =========================================================================
+    console.log('--- TESTE 66: Melhorias Avançadas do Search ---');
+    {
+        const bfk = window.buildFlexibleKeywords;
+        const dockExports = window.__dockSearchExports || {};
+        const extractHandle = window.extractSocialHandle || dockExports.extractSocialHandle;
+        const removeAccents = window.removeAccents || dockExports.removeAccents;
+
+        // 1. Extração de Identificadores Sociais e Limpeza de URLs
+        assert(typeof extractHandle === 'function', 'extractSocialHandle deve estar disponível');
+        assert(extractHandle('https://www.instagram.com/jadethejaguar/') === 'jadethejaguar', 'Deve extrair handle de link do Instagram');
+        assert(extractHandle('https://x.com/jadethejaguar?t=abcd') === 'jadethejaguar', 'Deve extrair handle de link do Twitter/X com query params');
+        assert(extractHandle('https://onlyfans.com/jadethejaguar') === 'jadethejaguar', 'Deve extrair handle de link do OnlyFans');
+        assert(extractHandle('https://www.tiktok.com/@jadethejaguar') === 'jadethejaguar', 'Deve extrair handle de link do TikTok com @');
+        assert(extractHandle('@jadethejaguar') === 'jadethejaguar', 'Deve limpar @ de @handle');
+        assert(extractHandle('jadethejaguar') === 'jadethejaguar', 'Texto comum sem formato social deve ser preservado');
+
+        const resSocial = bfk('https://www.instagram.com/jade_the_jaguar/', true);
+        assert(resSocial.includes('jade_the_jaguar'), 'buildFlexibleKeywords com URL de rede social deve conter o handle extraído');
+        assert(resSocial.includes(' OR '), 'buildFlexibleKeywords deve gerar variantes do handle social');
+
+        // 2. Normalização de Diacríticos / Acentos (Unicode Unaccent)
+        assert(typeof removeAccents === 'function', 'removeAccents deve estar disponível');
+        assert(removeAccents('vitória') === 'vitoria', 'Deve remover acento agudo');
+        assert(removeAccents('chloë') === 'chloe', 'Deve remover trema');
+        assert(removeAccents('amanda leão') === 'amanda leao', 'Deve remover til');
+
+        const resAccents = bfk('vitória', true);
+        assert(resAccents.includes('vitória') && resAccents.includes('vitoria'), 'buildFlexibleKeywords deve gerar variantes com e sem acento');
+        assert(resAccents.includes(' OR '), 'Variantes com/sem acento devem ser unidas por OR');
+
+        const resCompoundAccent = bfk('amanda leão', true);
+        assert(resCompoundAccent.includes('leao') || resCompoundAccent.includes('amandaleao'), 'Deve gerar variantes desacentuadas para palavras compostas');
+
+        // 3. Botão de Limpar Busca (✕) no Input
+        const searchInput = (dockExports.getSearchInput && dockExports.getSearchInput()) || document.querySelector('.smg-search-input');
+        const bar = searchInput ? searchInput.closest('.smg-search-bar, .smg-tb-search') : null;
+        const clearBtn = bar ? bar.querySelector('.smg-search-clear') : document.querySelector('.smg-search-clear');
+        assert(clearBtn !== null, 'Botão .smg-search-clear deve existir no DOM da barra de busca');
+
+        if (searchInput && clearBtn) {
+            searchInput.value = 'teste query';
+            dockExports.updateSearchClearButtons();
+            assert(clearBtn.hidden === false, 'Botão .smg-search-clear deve ficar visível quando input tem texto');
+
+            clearBtn.click();
+            assert(searchInput.value === '', 'Clique em .smg-search-clear deve esvaziar o valor do input');
+            assert(clearBtn.hidden === true, 'Botão .smg-search-clear deve ficar oculto após a limpeza');
+            searchInput.blur();
+        }
+
+        // 4. Atalho Global de Teclado "/"
+        const searchOverlay = document.getElementById('smg-search-overlay');
+        assert(searchOverlay !== null, 'searchOverlay deve existir');
+
+        if (searchOverlay && dockExports.closeSearch) {
+            dockExports.closeSearch();
+            assert(!searchOverlay.classList.contains('open'), 'Search overlay deve estar fechado antes do atalho');
+
+            if (searchInput) searchInput.blur();
+            if (document.body) document.body.focus();
+
+            // Dispara tecla / em elemento neutro (ex: body)
+            window.dispatchEvent(new window.KeyboardEvent('keydown', { key: '/', bubbles: true }));
+            assert(searchOverlay.classList.contains('open'), 'Pressionar "/" em elemento neutro deve abrir a busca');
+
+            dockExports.closeSearch();
+        }
+
+        // 5. Chips Dinâmicos de Prefixo nos Resultados da Busca
+        const searchResultsEl = dockExports.searchResultsEl;
+        assert(searchResultsEl !== null, 'searchResultsEl deve estar disponível');
+
+        if (dockExports.activeSearchBadges) {
+            dockExports.activeSearchBadges.clear();
+        }
+
+        if (dockExports.paintResults && searchResultsEl) {
+            const mockLabelOF = document.createElement('span');
+            mockLabelOF.className = 'label label--misc';
+            mockLabelOF.textContent = 'OnlyFans';
+
+            const mockLabelMega = document.createElement('span');
+            mockLabelMega.className = 'label label--accent';
+            mockLabelMega.textContent = 'Mega';
+
+            const mockResults = [
+                {
+                    href: '/threads/1',
+                    title: 'Thread Um',
+                    snippet: 'Preview um',
+                    meta: 'Meta um',
+                    photo: '',
+                    labels: [mockLabelOF]
+                },
+                {
+                    href: '/threads/2',
+                    title: 'Thread Dois',
+                    snippet: 'Preview dois',
+                    meta: 'Meta dois',
+                    photo: '',
+                    labels: [mockLabelMega]
+                },
+                {
+                    href: '/threads/3',
+                    title: 'Thread Tres',
+                    snippet: 'Preview tres',
+                    meta: 'Meta tres',
+                    photo: '',
+                    labels: [mockLabelOF]
+                }
+            ];
+
+            dockExports.paintResults(mockResults, null);
+
+            const chipsRow = searchResultsEl.querySelector('.smg-search-chips-row');
+            assert(chipsRow !== null, 'Linha .smg-search-chips-row deve ser criada quando há 2 ou mais tags distintas');
+
+            const chipButtons = chipsRow ? chipsRow.querySelectorAll('.smg-search-result-chip') : [];
+            assert(chipButtons.length === 3, 'Deve renderizar 3 chips: All (Todos), OnlyFans e Mega');
+
+            const allChip = chipButtons[0];
+            assert(allChip && allChip.classList.contains('is-active'), 'Chip All deve iniciar com classe is-active');
+
+            const cardsList = searchResultsEl.querySelector('.smg-search-results-list');
+            assert(cardsList !== null, '.smg-search-results-list deve conter a lista de cards');
+            assert(cardsList && cardsList.querySelectorAll('.smg-search-result').length === 3, 'Inicialmente todos os 3 cards devem estar visíveis');
+
+            // Clica no chip OnlyFans
+            const ofChip = Array.from(chipButtons).find(c => c.dataset.tag === 'onlyfans');
+            assert(ofChip !== undefined, 'Chip OnlyFans deve existir com data-tag="onlyfans"');
+            if (ofChip) {
+                ofChip.click();
+                assert(ofChip.classList.contains('is-active'), 'Chip OnlyFans deve se tornar is-active após clique');
+                assert(!allChip.classList.contains('is-active'), 'Chip All não deve mais ser is-active');
+                assert(cardsList.querySelectorAll('.smg-search-result').length === 2, 'Apenas os 2 cards com tag OnlyFans devem estar visíveis');
+            }
+
+            // Clica de volta no chip All
+            if (allChip) {
+                allChip.click();
+                assert(allChip.classList.contains('is-active'), 'Chip All deve voltar a ser is-active');
+                assert(cardsList.querySelectorAll('.smg-search-result').length === 3, 'Todos os 3 cards devem voltar a estar visíveis');
+            }
+        }
     }
 
     // =========================================================================

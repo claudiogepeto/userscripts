@@ -103,6 +103,16 @@
             .smg-tb-search-close { flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; margin: 0 -6px 0 4px; border: 0; border-radius: 8px; background: transparent; color: rgba(255,255,255,0.55); cursor: pointer; transition: background .14s ease, color .14s ease; }
             .smg-tb-search-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
             .smg-tb-search-close svg { width: 17px; height: 17px; fill: none !important; }
+            .smg-search-clear {
+                flex: 0 0 auto; width: 28px; height: 28px;
+                display: inline-flex; align-items: center; justify-content: center;
+                margin: 0 2px; border: 0; border-radius: 8px; background: transparent;
+                color: rgba(255,255,255,0.45); cursor: pointer;
+                transition: background .14s ease, color .14s ease; padding: 0;
+            }
+            .smg-search-clear:hover { background: rgba(255,255,255,0.12); color: #fff; }
+            .smg-search-clear svg { width: 14px; height: 14px; fill: none !important; }
+            .smg-search-clear[hidden] { display: none !important; }
             /* SEARCH: chip de contexto (Reddit-style) + tooltip de comandos — valem na barra da topbar E no modal da dock */
             .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; max-width: 42%; margin-right: 2px; padding: 4px 5px 4px 11px; border: 0; border-radius: 9px; background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: 2; }
             .smg-tb-search-chip[hidden], .smg-search-chip[hidden] { display: none !important; }   /* o display:inline-flex de autor vencia o [hidden] do browser → chip vazio aparecia fora de tópico/fórum */
@@ -2234,6 +2244,32 @@
             .smg-search-hist-act svg { width: 14px; height: 14px; fill: none; }
             /* resultados da busca INLINE (mostrados no próprio dropdown) */
             .smg-search-results { display: flex; flex-direction: column; gap: 2px; }
+            .smg-search-results-list { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+            .smg-search-chips-row {
+                display: flex; flex-wrap: nowrap; gap: 6px;
+                overflow-x: auto; padding: 4px 6px 10px; margin-bottom: 4px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+                scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            }
+            .smg-search-chips-row::-webkit-scrollbar { display: none; }
+            .smg-search-result-chip {
+                flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
+                height: 28px; padding: 0 10px; border-radius: 999px;
+                border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06);
+                color: rgba(255,255,255,0.78); font-size: 12px; font-weight: 600;
+                cursor: pointer; white-space: nowrap; transition: all .15s ease;
+            }
+            .smg-search-result-chip:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
+            .smg-search-result-chip.is-active {
+                background: var(--smg-link, #ff77b2); color: #fff;
+                border-color: var(--smg-link, #ff77b2); font-weight: 700;
+                box-shadow: 0 2px 8px rgba(255,119,178,0.3);
+            }
+            .smg-search-result-chip .smg-chip-count {
+                padding: 1px 5px; border-radius: 999px;
+                background: rgba(0,0,0,0.25); font-size: 11px; font-weight: 700; line-height: 1;
+            }
+            .smg-search-result-chip.is-active .smg-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
             .smg-search-rloading { display: flex; align-items: center; justify-content: center; padding: 28px 0; }
             .smg-search-noresults { padding: 18px 4px; text-align: center; font-size: 13.5px; color: rgba(255,255,255,0.45); }
             .smg-search-result {

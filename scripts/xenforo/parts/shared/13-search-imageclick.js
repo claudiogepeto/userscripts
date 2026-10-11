@@ -113,8 +113,8 @@
 
         function submit() {
             const q = qInput.value.trim(), by = byInput.value.trim();
-            if (!q && !by) { qInput.focus(); return; }
-            const fields = [['keywords', q]];
+            const finalKeywords = (typeof buildFlexibleKeywords === 'function') ? buildFlexibleKeywords(q, titlesOn) : ((typeof window !== 'undefined' && typeof window.buildFlexibleKeywords === 'function') ? window.buildFlexibleKeywords(q, titlesOn) : q);
+            const fields = [['keywords', finalKeywords]];
             if (scope === 'threads') fields.push(['search_type', 'thread']);
             else if (scope === 'type' && tParam) fields.push(['search_type', tParam]);
             else if (scope === 'thread' && inThread) fields.push(['c[thread]', inThread]);

@@ -617,6 +617,7 @@
                 '<button type="button" class="smg-search-chip" hidden><span class="smg-search-chip-t"></span><span class="smg-search-chip-x" aria-label="' + i18n('Clear') + '">' + ICONS.close + '</span></button>' +
                 '<input type="text" class="smg-search-input" placeholder="Search the forum…" enterkeyhint="search" autocapitalize="off" autocomplete="off" spellcheck="false">' +
                 '<span class="smg-search-acts">' +
+                    '<button type="button" class="smg-search-clear" aria-label="' + i18n('Clear search') + '" title="' + i18n('Clear') + '" hidden>' + ICONS.close + '</button>' +
                     '<span class="smg-search-kbd" title="Press Esc to close">esc</span>' +
                     '<button type="button" class="smg-search-close" aria-label="Close">' + ICONS.close + '</button>' +
                 '</span>' +
@@ -1075,7 +1076,7 @@
                     keywords = (keywords ? (keywords + ' ') : '') + fallbackBadges.join(' ');
                 }
                 if (keywords) {
-                    fields.push(['keywords', likeify(keywords)]);
+                    fields.push(['keywords', buildFlexibleKeywords(keywords, titles)]);
                 } else if (hasPid) {
                     fields.push(['search_type', 'thread']);
                 }
@@ -1229,6 +1230,95 @@
                 return q.split(/\s+/).map(w => (w.length >= 3 && /^[\wÀ-ſ]+$/.test(w)) ? w + '*' : w).join(' ');
             }
 
+            // EXTRAÇÃO DE IDENTIFICADORES SOCIAIS:
+            // Converte URLs de perfis (Instagram, Twitter/X, TikTok, OnlyFans, Fansly, Patreon, Telegram, Reddit, YouTube)
+            // ou formatos @handle diretamente no handle limpo, facilitando buscas copiadas/coladas da web.
+            function extractSocialHandle(str) {
+                if (!str) return '';
+                let s = str.trim();
+                const m = s.match(/(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|threads\.net|twitter\.com|x\.com|tiktok\.com|onlyfans\.com|fansly\.com|patreon\.com|t\.me|telegram\.me|youtube\.com\/(?:@)?|reddit\.com\/(?:user|u))\/(?:@)?([a-zA-Z0-9_.-]+)/i);
+                if (m && m[1]) {
+                    s = m[1];
+                } else if (/^@([a-zA-Z0-9_.-]+)$/.test(s)) {
+                    s = s.slice(1);
+                }
+                return s.replace(/[/?#].*$/, '').replace(/[/]$/, '').trim();
+            }
+            if (typeof window !== 'undefined') window.extractSocialHandle = extractSocialHandle;
+
+            // NORMALIZAÇÃO DE DIACRÍTICOS / ACENTOS (Unicode Unaccent):
+            function removeAccents(str) {
+                if (!str) return '';
+                return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+            if (typeof window !== 'undefined') window.removeAccents = removeAccents;
+
+            // GERAÇÃO FLEXÍVEL DE PALAVRAS-CHAVE:
+            // Permite dar match tanto com espaços ("jade the jaguar") quanto sem espaços ("jadethejaguar"),
+            // delimitadores ("jade_the_jaguar") ou CamelCase ("JadeTheJaguar"), unindo as variantes pelo
+            // operador nativo OR do XenForo. Não abre a busca para palavras genéricas isoladas.
+            // Suporta também extração de handles de redes sociais e normalização de acentos.
+            function buildFlexibleKeywords(q, isTitlesOnly) {
+                if (!q) return '';
+                const cleanSocial = extractSocialHandle(q);
+                const raw = cleanSocial.trim();
+                // Se contiver aspas explícitas, operadores manuais (+, -, ~) ou operador booleano OR existente:
+                // preserva a intenção literal do usuário sem inventar variantes.
+                if (/[*"+~\-]|\bOR\b/.test(raw)) {
+                    return likeify(raw);
+                }
+
+                const likeifyPart = part => {
+                    if (!cfgLike || !part || /[*"+\-]/.test(part)) return part;
+                    return part.split(/\s+/).map(w => (w.length >= 3 && /^[\wÀ-ſ]+$/.test(w)) ? w + '*' : w).join(' ');
+                };
+
+                const variants = new Set();
+                const addVariantGroup = text => {
+                    if (!text) return;
+                    variants.add(likeifyPart(text));
+
+                    // 1. Termo com espaços → gera versão unificada sem espaços
+                    if (/\s+/.test(text)) {
+                        const unspaced = text.replace(/[\s\-_.]+/g, '');
+                        if (unspaced.length >= 3) {
+                            variants.add(likeifyPart(unspaced));
+                        }
+                    }
+
+                    // 2. Termo com delimitadores (_, -, .) → gera versão espaçada e sem separadores
+                    if (/[\-_.]/.test(text)) {
+                        const spaced = text.replace(/[\-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
+                        if (spaced && spaced !== text) {
+                            variants.add(likeifyPart(spaced));
+                        }
+                        const unspaced = text.replace(/[\s\-_.]+/g, '');
+                        if (unspaced.length >= 3) {
+                            variants.add(likeifyPart(unspaced));
+                        }
+                    }
+
+                    // 3. Termo em CamelCase → gera versão decomposta com espaços
+                    if (/[a-z][A-Z]/.test(text)) {
+                        const deCamel = text.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+                        if (deCamel && deCamel !== text) {
+                            variants.add(likeifyPart(deCamel));
+                        }
+                    }
+                };
+
+                addVariantGroup(raw);
+
+                // Normalização de acentos: gera também variantes sem acento
+                const unaccented = removeAccents(raw);
+                if (unaccented && unaccented !== raw) {
+                    addVariantGroup(unaccented);
+                }
+
+                return Array.from(variants).filter(Boolean).join(' OR ');
+            }
+            if (typeof window !== 'undefined') window.buildFlexibleKeywords = buildFlexibleKeywords;
+
             // ---- histórico (últimos 1000, COMPARTILHADO entre os fóruns via GM storage) ----
             const SEARCH_HISTORY_KEY = 'smg-search-history';
             const HIST_CHUNK = 20;   // linhas por lote: render incremental no scroll (nunca monta as 1000 de uma vez)
@@ -1279,6 +1369,7 @@
                 }
                 currentScope = ((e.scope === 'thread' && threadId) || (e.scope === 'forum' && forumId)) ? e.scope : 'everywhere';   // só reusa o escopo se existe NESTA página
                 applyScopeUI();
+                updateSearchClearButtons();
                 applyingEntry = false;
             }
             function applyHistoryEntry(e) { fillFromEntry(e); doSearch(true); }            // clique na linha: busca direto (grava)
@@ -1441,6 +1532,7 @@
                 // o arrasto pra fechar leva o documento junto. No dropdown do desktop, não.
                 if (!drop && !searchLocked) { searchLocked = true; smgLockScroll(); }
                 document.documentElement.classList.add('smg-search-open');   // mostra o botão Buscar dentro do input da topbar (CSS)
+                updateSearchClearButtons();
                 // foco síncrono mantém o gesto p/ abrir o teclado no mobile (no desktop o input já é o da topbar, foco é no-op)
                 getSearchInput().focus({ preventScroll: true });
                 if (!drop) { syncSearchKeyboard(); setTimeout(syncSearchKeyboard, 260); }   // mobile: ajusta acima do teclado
@@ -1494,7 +1586,7 @@
                     keywords = (keywords ? (keywords + ' ') : '') + fallbackBadges.join(' ');
                 }
                 if (keywords) {
-                    fields.push(['keywords', likeify(keywords)]);
+                    fields.push(['keywords', buildFlexibleKeywords(keywords, titlesOn)]);
                 } else if (hasPid) {
                     fields.push(['search_type', 'thread']);
                 }
@@ -1561,12 +1653,13 @@
                             });
                         }
                         const curTerms = hlTerms();
+                        const targetList = searchResultsEl.querySelector('.smg-search-results-list') || searchResultsEl;
                         moreFiltered.forEach(r => {
                             const card = renderSearchCard(r, curTerms);
-                            if (searchSentinelEl && searchSentinelEl.parentNode) {
-                                searchResultsEl.insertBefore(card, searchSentinelEl);
+                            if (searchSentinelEl && searchSentinelEl.parentNode === targetList) {
+                                targetList.insertBefore(card, searchSentinelEl);
                             } else {
-                                searchResultsEl.appendChild(card);
+                                targetList.appendChild(card);
                             }
                         });
                         const nextEl = doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
@@ -1617,6 +1710,33 @@
                             if (nextUrl) {
                                 try { nextUrl = new URL(nextUrl, o.url || location.href).href; } catch (e) {}
                             }
+                            // Fallback resiliente: se a busca com OR retornar 0 resultados, tenta imediatamente
+                            // a variante sem espaços para casos de instâncias MySQL que bloqueiem união booleana
+                            if (!results.length && fields.some(f => f[0] === 'keywords' && f[1].includes(' OR '))) {
+                                const kwField = fields.find(f => f[0] === 'keywords');
+                                const parts = kwField[1].split(' OR ');
+                                if (parts.length > 1) {
+                                    const fallbackFields = fields.map(f => f[0] === 'keywords' ? [f[0], parts[1]] : f);
+                                    const fallbackBody = fallbackFields.map(f => encodeURIComponent(f[0]) + '=' + encodeURIComponent(f[1])).join('&');
+                                    fetch(searchAction, { method: 'POST', body: fallbackBody, credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctrl ? ctrl.signal : undefined })
+                                        .then(r2 => r2.text().then(h2 => ({ html: h2, url: r2.url })))
+                                        .then(o2 => {
+                                            if (seq === searchSeq) {
+                                                const doc2 = new DOMParser().parseFromString(o2.html, 'text/html');
+                                                const r2 = parseSearchResults(doc2);
+                                                if (r2.length) {
+                                                    paintResults(r2, null);
+                                                    return;
+                                                }
+                                                paintResults(results, nextUrl);
+                                            }
+                                        })
+                                        .catch(() => {
+                                            if (seq === searchSeq) paintResults(results, nextUrl);
+                                        });
+                                    return;
+                                }
+                            }
                             paintResults(results, nextUrl);
                         }
                     })
@@ -1663,8 +1783,23 @@
             }
             // termos p/ highlight = keywords digitadas (sem aspas/wildcard), ≥2 chars
             function hlTerms() {
-                const kw = getSearchInput().value.trim();
-                return kw.split(/\s+/).map(s => s.replace(/["*]/g, '').trim()).filter(s => s.length >= 2);
+                const kw = extractSocialHandle(getSearchInput().value.trim());
+                const terms = kw.split(/\s+/).map(s => s.replace(/["*]/g, '').trim()).filter(s => s.length >= 2);
+                const unspaced = kw.replace(/[\s\-_.]+/g, '').trim();
+                if (unspaced.length >= 3 && !terms.includes(unspaced)) {
+                    terms.push(unspaced);
+                }
+                const camel = kw.replace(/([a-z])([A-Z])/g, '$1 $2').split(/\s+/).map(s => s.trim()).filter(s => s.length >= 2);
+                camel.forEach(w => { if (!terms.includes(w)) terms.push(w); });
+
+                const unaccented = removeAccents(kw);
+                if (unaccented && unaccented !== kw) {
+                    unaccented.split(/\s+/).map(s => s.replace(/["*]/g, '').trim()).filter(s => s.length >= 2).forEach(w => {
+                        if (!terms.includes(w)) terms.push(w);
+                    });
+                }
+
+                return terms;
             }
             // escreve `text` em `el` envolvendo as ocorrências dos termos em <mark> (text nodes → SEM injeção de HTML).
             // como a busca usa wildcard de prefixo, o termo "fileste" destaca a palavra inteira "filester" ([\w] após o termo).
@@ -1683,10 +1818,12 @@
                 }
                 if (last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
             }
+            let currentTagFilter = '';
             function paintResults(results, nextUrl) {
                 searchResultsEl.innerHTML = '';
                 currentSearchNextUrl = nextUrl || null;
                 searchIsLoadingMore = false;
+                currentTagFilter = '';
                 if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
                 if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
                 searchSentinelEl = null;
@@ -1708,18 +1845,89 @@
                     });
                 }
 
-                if (!filtered.length) {
-                    const e = document.createElement('div');
-                    e.className = 'smg-search-noresults';
-                    e.textContent = (activeSearchBadges && activeSearchBadges.size > 0)
-                        ? (IS_PT ? 'Nenhum resultado com os filtros selecionados' : 'No results found with selected filters')
-                        : i18n('No results');
-                    searchResultsEl.appendChild(e);
-                } else {
-                    filtered.forEach(r => {
-                        searchResultsEl.appendChild(renderSearchCard(r, terms));
+                // Coletar chips dinâmicos de prefixo/tags presentes nestes resultados
+                const tagCountMap = new Map();
+                filtered.forEach(r => {
+                    const seen = new Set();
+                    (r.labels || []).forEach(l => {
+                        const txt = (l.textContent || '').replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim();
+                        if (txt && !seen.has(txt.toLowerCase())) {
+                            const low = txt.toLowerCase();
+                            seen.add(low);
+                            const cur = tagCountMap.get(low) || { name: txt, count: 0 };
+                            cur.count++;
+                            tagCountMap.set(low, cur);
+                        }
                     });
+                });
+
+                const listContainer = document.createElement('div');
+                listContainer.className = 'smg-search-results-list';
+
+                const renderCardsForList = (items) => {
+                    listContainer.innerHTML = '';
+                    if (!items.length) {
+                        const e = document.createElement('div');
+                        e.className = 'smg-search-noresults';
+                        e.textContent = (activeSearchBadges && activeSearchBadges.size > 0 || currentTagFilter)
+                            ? (IS_PT ? 'Nenhum resultado com os filtros selecionados' : 'No results found with selected filters')
+                            : i18n('No results');
+                        listContainer.appendChild(e);
+                    } else {
+                        items.forEach(r => {
+                            listContainer.appendChild(renderSearchCard(r, terms));
+                        });
+                    }
+                };
+
+                // Se houver 2 ou mais tags distintas nos resultados, cria a linha de chips dinâmicos
+                if (tagCountMap.size >= 2) {
+                    const chipsRow = document.createElement('div');
+                    chipsRow.className = 'smg-search-chips-row';
+
+                    const allChip = document.createElement('button');
+                    allChip.type = 'button';
+                    allChip.className = 'smg-search-result-chip is-active';
+                    allChip.dataset.tag = '';
+                    allChip.innerHTML = i18n('All') + ' <span class="smg-chip-count">' + filtered.length + '</span>';
+                    chipsRow.appendChild(allChip);
+
+                    const sortedTags = Array.from(tagCountMap.values()).sort((a, b) => b.count - a.count);
+                    sortedTags.forEach(t => {
+                        const chip = document.createElement('button');
+                        chip.type = 'button';
+                        chip.className = 'smg-search-result-chip';
+                        chip.dataset.tag = t.name.toLowerCase();
+                        chip.innerHTML = t.name + ' <span class="smg-chip-count">' + t.count + '</span>';
+                        chipsRow.appendChild(chip);
+                    });
+
+                    chipsRow.addEventListener('click', e => {
+                        const chipBtn = e.target.closest && e.target.closest('.smg-search-result-chip');
+                        if (!chipBtn) return;
+                        e.preventDefault();
+                        chipsRow.querySelectorAll('.smg-search-result-chip').forEach(c => c.classList.remove('is-active'));
+                        chipBtn.classList.add('is-active');
+                        const tagKey = chipBtn.dataset.tag;
+                        currentTagFilter = tagKey;
+                        if (!tagKey) {
+                            renderCardsForList(filtered);
+                            if (searchSentinelEl) searchSentinelEl.hidden = false;
+                        } else {
+                            const subFiltered = filtered.filter(r => {
+                                const lTexts = (r.labels || []).map(l => (l.textContent || '').toLowerCase().replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim());
+                                return lTexts.some(lt => lt === tagKey || lt.includes(tagKey) || tagKey.includes(lt));
+                            });
+                            renderCardsForList(subFiltered);
+                            if (searchSentinelEl) searchSentinelEl.hidden = true;
+                        }
+                    });
+
+                    searchResultsEl.appendChild(chipsRow);
                 }
+
+                searchResultsEl.appendChild(listContainer);
+                renderCardsForList(filtered);
 
                 if (currentSearchNextUrl) {
                     searchSentinelEl = document.createElement('div');
@@ -1752,6 +1960,15 @@
 
                 searchResultsEl.hidden = false;
             }
+            function updateSearchClearButtons() {
+                const curVal = getSearchInput().value.trim();
+                document.querySelectorAll('.smg-search-clear').forEach(btn => {
+                    const bar = btn.closest('.smg-search-bar, .smg-tb-search');
+                    const inp = bar ? bar.querySelector('.smg-search-input, .smg-tb-search-input') : null;
+                    const val = inp ? inp.value.trim() : curVal;
+                    btn.hidden = !val;
+                });
+            }
             function clearResults() {   // volta pro histórico — sem re-render se ele JÁ está na tela (era rebuild por keystroke)
                 currentSearchNextUrl = null;
                 searchIsLoadingMore = false;
@@ -1762,6 +1979,7 @@
                 if (searchPop) searchPop.onscroll = null;
                 if (!searchResultsEl.hidden) { searchResultsEl.hidden = true; searchResultsEl.innerHTML = ''; }
                 if (searchHistEl.hidden && searchEmptyEl.hidden) renderHistory();
+                updateSearchClearButtons();
             }
             // DEBOUNCE: busca enquanto digita (não grava histórico; só Enter/Buscar grava). Delegado: vale pro input da topbar E do modal + autor.
             let searchDebounce = null;
@@ -1773,7 +1991,12 @@
                 if (kw.length < 3 && !by && !hasBadges && currentScope !== 'watched') { clearResults(); return; }   // vazio/curto demais → histórico (XF tem mínimo de caracteres)
                 searchDebounce = setTimeout(() => doSearch(false), 420);
             }
-            document.addEventListener('input', e => { if (e.target && e.target.matches && e.target.matches('.smg-tb-search-input, .smg-search-input')) onSearchInput(); });
+            document.addEventListener('input', e => {
+                if (e.target && e.target.matches && e.target.matches('.smg-tb-search-input, .smg-search-input')) {
+                    updateSearchClearButtons();
+                    onSearchInput();
+                }
+            });
             // mudança de FILTRO (escopo via chip) re-busca JÁ (sem debounce) se já existe query. Hoisted → ok no init.
             function researchOnFilter() {
                 if (applyingEntry) return;
@@ -2015,9 +2238,68 @@
                     get searchSentinelEl() { return searchSentinelEl; },
                     get searchSentinelIO() { return searchSentinelIO; },
                     renderSearchCard,
-                    clearResults
+                    clearResults,
+                    openSearch,
+                    closeSearch,
+                    updateSearchClearButtons,
+                    extractSocialHandle,
+                    removeAccents
                 };
             }
+
+            // Limpar busca (✕) no input
+            document.addEventListener('click', e => {
+                const clearBtn = e.target.closest && e.target.closest('.smg-search-clear');
+                if (!clearBtn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const bar = clearBtn.closest('.smg-search-bar, .smg-tb-search');
+                const inp = bar ? bar.querySelector('.smg-search-input, .smg-tb-search-input') : getSearchInput();
+                if (inp) {
+                    inp.value = '';
+                    updateSearchClearButtons();
+                    clearResults();
+                    inp.focus();
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+
+            // Extrair handle ao colar link de rede social no input
+            document.addEventListener('paste', e => {
+                const inp = e.target;
+                if (!inp || !inp.matches || !inp.matches('.smg-tb-search-input, .smg-search-input')) return;
+                const pasted = (e.clipboardData || window.clipboardData)?.getData('text');
+                if (pasted) {
+                    const handle = extractSocialHandle(pasted);
+                    if (handle && handle !== pasted.trim()) {
+                        e.preventDefault();
+                        inp.value = handle;
+                        updateSearchClearButtons();
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
+
+            // Atalho "/" foca a busca no desktop (estilo GitHub/YouTube)
+            window.addEventListener('keydown', e => {
+                if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const active = document.activeElement;
+                    const tag = active ? (active.tagName || '').toLowerCase() : '';
+                    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (active && active.isContentEditable)) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openSearch();
+                    const inp = getSearchInput();
+                    if (inp) {
+                        try {
+                            inp.focus({ preventScroll: true });
+                            inp.select();
+                        } catch (err) {}
+                    }
+                }
+            });
 
             btnSearch.addEventListener('click', e => {
                 e.stopPropagation();

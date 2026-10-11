@@ -305,8 +305,18 @@
         // ações agrupadas à direita — apenas botão de fechar (.smg-search-close)
         const tbActs = document.createElement('span');
         tbActs.className = 'smg-search-acts'; searchBar.appendChild(tbActs);
+        const tbClear = document.createElement('button');
+        tbClear.type = 'button';
+        tbClear.className = 'smg-tb-search-clear smg-search-clear';
+        tbClear.setAttribute('aria-label', i18n('Clear search'));
+        tbClear.title = i18n('Clear');
+        tbClear.hidden = true;
+        tbClear.innerHTML = ICONS.close;
+        tbActs.appendChild(tbClear);
         const tbClose = document.createElement('button');
-        tbClose.type = 'button'; tbClose.className = 'smg-search-close'; tbClose.setAttribute('aria-label', i18n('Close'));
+        tbClose.type = 'button';
+        tbClose.className = 'smg-search-close';
+        tbClose.setAttribute('aria-label', i18n('Close'));
         tbClose.innerHTML = ICONS.close;
         tbClose.addEventListener('click', () => document.dispatchEvent(new CustomEvent('smg-search-close')));
         tbActs.appendChild(tbClose);
