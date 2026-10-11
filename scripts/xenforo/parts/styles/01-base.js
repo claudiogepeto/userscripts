@@ -1279,7 +1279,7 @@
                 display: flex !important;
             }
             /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
                 background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
                 border-radius: 8px !important;
                 position: relative !important;
@@ -1287,7 +1287,7 @@
                 aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
                 overflow: hidden !important;
             }
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
                 content: "";
                 position: absolute;
                 inset: 0;
@@ -1296,6 +1296,25 @@
                 animation: smg-img-shimmer 1.8s ease-in-out infinite;
                 pointer-events: none;
                 z-index: 1;
+            }
+            /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
+            .generic2wide-iframe-div::before,
+            .generic2wide-iframe-div::after,
+            .generic2wide-iframe-div > iframe::before,
+            .generic2wide-iframe-div > iframe::after,
+            iframe.saint-iframe::before,
+            iframe.saint-iframe::after,
+            iframe[src*="turbo.cr"]::before,
+            iframe[src*="turbo.cr"]::after,
+            .smg-turbo-slot::before,
+            .smg-turbo-slot::after,
+            .tb-fallback::before,
+            .tb-fallback::after,
+            [data-url*="turbo.cr"]::before,
+            [data-url*="turbo.cr"]::after {
+                display: none !important;
+                content: none !important;
+                animation: none !important;
             }
             /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),

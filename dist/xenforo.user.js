@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.16.0
+// @version      3.17.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -600,7 +600,7 @@
     // logo do SMG: wordmark "SMG" (G rosa = acento da marca)
     const SMG_LOGO_HTML = '<span class="smg-logo"><span class="smg-logo-word">SM<span class="smg-logo-accent">G</span></span></span>';
     // marca usada no placeholder de cards sem thumb — mesma cara do logo (SM + G rosa), só que apagada
-    const SMG_PH_MARK = '<span class="smg-ph-word">SM<span class="smg-ph-g">G</span></span>';
+    const SMG_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="smg-ph-word">SM<span class="smg-ph-g">G</span></span></div>';
     // favicon SVG (data-URI, nada hospedado): quadrado arredondado rosa + "S" branca (legível a 16px)
     const SMG_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
@@ -608,8 +608,8 @@
         '<rect width="64" height="64" rx="15" fill="url(#g)"/>' +
         '<text x="32" y="45" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="800" fill="#fff" text-anchor="middle">S</text>' +
         '</svg>');
-    // SimpCity (e fallback): marca "SC" (mesmo estilo do "SMG", só que sem o acento rosa)
-    const SC_PH_MARK = '<span class="smg-ph-word">SC</span>';
+    // SimpCity (e fallback): marca moderna com ícone de mídia e monograma
+    const SC_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="smg-ph-word">SC</span></div>';
 
     // =========================================================
     // STYLES: compose context-owned CSS fragments in one deterministic style node.
@@ -1907,7 +1907,7 @@
                 display: flex !important;
             }
             /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
                 background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
                 border-radius: 8px !important;
                 position: relative !important;
@@ -1915,7 +1915,7 @@
                 aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
                 overflow: hidden !important;
             }
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
                 content: "";
                 position: absolute;
                 inset: 0;
@@ -1924,6 +1924,25 @@
                 animation: smg-img-shimmer 1.8s ease-in-out infinite;
                 pointer-events: none;
                 z-index: 1;
+            }
+            /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
+            .generic2wide-iframe-div::before,
+            .generic2wide-iframe-div::after,
+            .generic2wide-iframe-div > iframe::before,
+            .generic2wide-iframe-div > iframe::after,
+            iframe.saint-iframe::before,
+            iframe.saint-iframe::after,
+            iframe[src*="turbo.cr"]::before,
+            iframe[src*="turbo.cr"]::after,
+            .smg-turbo-slot::before,
+            .smg-turbo-slot::after,
+            .tb-fallback::before,
+            .tb-fallback::after,
+            [data-url*="turbo.cr"]::before,
+            [data-url*="turbo.cr"]::after {
+                display: none !important;
+                content: none !important;
+                animation: none !important;
             }
             /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
@@ -2281,9 +2300,13 @@
             .smg-home-skeleton-feed-head i:nth-child(2) { width: 78px; opacity: .65; }
             .smg-home-skeleton-feed-head span { width: 62px; height: 11px; border-radius: 5px; margin-left: auto; }
             .smg-home-skeleton-feed-cards { display: flex; gap: 14px; overflow: hidden; }
-            .smg-home-skeleton-card { position: relative; flex: 0 0 230px; aspect-ratio: 3 / 4; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; background: rgba(255,255,255,0.06); overflow: hidden; }
+            .smg-home-skeleton-card { position: relative; flex: 0 0 295px; width: 295px; height: 395px; aspect-ratio: 3 / 4.02; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; background: rgba(255,255,255,0.06); overflow: hidden; }
+            .smg-home-skeleton-card-badges { position: absolute; top: 12px; left: 12px; z-index: 2; display: flex; gap: 5px; }
+            .smg-home-skeleton-card-badges i { display: block; width: 48px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.12); }
+            .smg-home-skeleton-card-badges i:nth-child(2) { width: 38px; }
             .smg-home-skeleton-card::after,
             .smg-home-skeleton-tile::after,
+            .smg-home-skeleton-row::after,
             .smg-home-skeleton-notices-head::after,
             .smg-home-skeleton-topbar-logo::after,
             .smg-home-skeleton-topbar-nav i::after,
@@ -2307,8 +2330,14 @@
             .smg-home-skeleton-line.short { width: 62%; margin-bottom: 0; }
             .smg-home-skeleton-sections { display: grid; gap: 36px; padding-bottom: 10vh; }
             .smg-home-skeleton-section-head { display: flex; align-items: center; gap: 16px; margin: 0 2px 16px; }
-            .smg-home-skeleton-section-title { flex: 0 0 190px; position: relative; width: 190px; height: 13px; margin: 0; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+            .smg-home-skeleton-section-title { flex: 0 0 190px; position: relative; width: 190px; height: 16px; margin: 0; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+            .smg-home-skeleton-section-badge { margin-left: auto; width: 56px; height: 18px; border-radius: 999px; background: rgba(255,255,255,0.08); }
             .smg-home-skeleton-section-divider { position: relative; flex: 1 1 auto; height: 1px; min-width: 0; background: rgba(255,255,255,0.10); overflow: hidden; }
+            .smg-home-skeleton-list { display: flex; flex-direction: column; gap: 8px; }
+            .smg-home-skeleton-row { position: relative; display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; background: rgba(255,255,255,0.04); overflow: hidden; }
+            .smg-home-skeleton-row-icon { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.08); }
+            .smg-home-skeleton-row-copy { flex: 1 1 auto; min-width: 0; }
+            .smg-home-skeleton-row-meta { margin-left: auto; width: 140px; height: 12px; border-radius: 5px; background: rgba(255,255,255,0.06); }
             .smg-home-skeleton-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
             .smg-home-skeleton-tile { position: relative; min-height: 158px; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; background: rgba(255,255,255,0.055); overflow: hidden; }
             .smg-home-skeleton-tile::before { content: ""; position: absolute; top: 24px; left: 50%; width: 58px; height: 58px; border-radius: 16px; transform: translateX(-50%); background: rgba(255,255,255,0.08); }
@@ -2819,6 +2848,86 @@
                 html.smg-threadlist .block--category .node-body { padding: 14px 10px !important; gap: 7px !important; }
                 html.smg-threadlist .block--category .node-icon { width: 50px !important; height: 50px !important; padding: 7px !important; }
                 html.smg-threadlist .block--category .node-title { font-size: 13.5px !important; }
+            }
+            /* ---- SEÇÃO SITES: layout em lista elegante com exibição dos últimos posts ---- */
+            html.smg-threadlist .block--category.smg-home-section-sites .block-body {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node {
+                display: flex !important;
+                align-items: center !important;
+                padding: 10px 16px !important;
+                border-radius: 12px !important;
+                min-height: 60px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-body {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                padding: 0 !important;
+                gap: 14px !important;
+                width: 100% !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-icon {
+                width: 42px !important;
+                height: 42px !important;
+                margin: 0 !important;
+                padding: 6px !important;
+                border-radius: 12px !important;
+                flex: 0 0 42px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-main {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-title {
+                font-size: 14.5px !important;
+                font-weight: 700 !important;
+                justify-content: flex-start !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-end !important;
+                justify-content: center !important;
+                margin-left: auto !important;
+                max-width: 380px !important;
+                text-align: right !important;
+                flex-shrink: 0 !important;
+                gap: 3px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-row {
+                font-size: 12px !important;
+                color: rgba(255,255,255,0.7) !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 100% !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title {
+                color: #fff !important;
+                font-weight: 600 !important;
+                text-decoration: none !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {
+                font-size: 11px !important;
+                color: rgba(255,255,255,0.4) !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
+                color: rgba(255,255,255,0.55) !important;
+            }
+            @media (max-width: 600px) {
+                html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
+                    display: none !important;
+                }
             }
 
             `;
@@ -6815,7 +6924,8 @@
                 box-sizing: border-box !important;
                 overflow-anchor: none !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08);
-                clip-path: inset(0 -100vmax -1px);
+                clip-path: inset(0 -100vmax 0);
+                transition: padding 0.18s cubic-bezier(0.2, 0, 0, 1), height 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -6846,8 +6956,8 @@
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
-                clip-path: inset(0 -100vmax -8px);
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08), 0 3px 6px rgba(0,0,0,0.35);
+                clip-path: inset(0 -100vmax 0) !important;
+                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08) !important;
             }
             @media (max-width: 800px) {
                 html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
@@ -7575,6 +7685,135 @@
             }
             #smg-thumb-pop img { display: block; max-width: min(620px, 46vw); max-height: 84vh; object-fit: contain; }
 
+            /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
+            .tooltip--preview { display: none !important; }
+
+            /* ---- LISTINHA COMPACTA DE TÓPICOS FIXOS / LINKS DE AJUDA NO TOPO ---- */
+            html.smg-threadlist .smg-sticky-compact-list,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+                margin: 0 0 16px 0 !important;
+                padding: 6px 10px !important;
+                background: var(--smg-s1, #16171b) !important;
+                border: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
+                border-radius: 12px !important;
+                list-style: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 12px !important;
+                padding: 6px 10px !important;
+                border: 0 !important;
+                border-radius: 8px !important;
+                background: transparent !important;
+                min-height: 38px !important;
+                height: auto !important;
+                max-height: none !important;
+                transition: background 0.14s ease !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread:hover,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread:hover {
+                background: rgba(255,255,255,0.06) !important;
+                border-color: transparent !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread + .structItem--thread,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread + .structItem--thread {
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dcThumbnail,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dcThumbnail,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail {
+                width: 26px !important;
+                height: 26px !important;
+                min-width: 26px !important;
+                max-width: 26px !important;
+                flex: 0 0 26px !important;
+                aspect-ratio: 1 / 1 !important;
+                border-radius: 6px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dcThumbnail img,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dcThumbnail img,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail img,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                border-radius: 6px !important;
+                display: block !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-cell--main,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-cell--main {
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 8px !important;
+                padding: 0 !important;
+                min-width: 0 !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 6px !important;
+                font-size: 13.5px !important;
+                font-weight: 600 !important;
+                min-width: 0 !important;
+                white-space: nowrap !important;
+                margin: 0 !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a[href*="/threads/"],
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a[href*="/threads/"],
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a:not(.label):not(.labelLink),
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a:not(.label):not(.labelLink) {
+                display: inline !important;
+                width: auto !important;
+                margin: 0 !important;
+                color: #fff !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a:hover,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a:hover {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .smg-card-dates,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .smg-card-dates,
+            html.smg-threadlist .smg-sticky-compact-list .structItem-minor,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-minor {
+                margin-left: auto !important;
+                margin-top: 0 !important;
+                padding: 0 !important;
+                flex-shrink: 0 !important;
+                font-size: 11px !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-pageJump,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-pageJump {
+                display: none !important;
+            }
+
             /* ---- modo grade (cards, máx 6 colunas) — .smg-tl-grid é marcado via JS no
                container real dos itens (varia entre fórum e watched) ---- */
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
@@ -7582,16 +7821,19 @@
                 grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 14px !important;
-                align-items: start !important;
+                align-items: stretch !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
             html.smg-threadlist.smg-tv-grid .stickySeparatortop,
             html.smg-threadlist.smg-tv-grid .stickySeparatorbottom { display: none !important; }
             /* ---- GRID DE TÓPICOS IDENTICO AO NOSSO MODELO ---- */
-            html.smg-threadlist.smg-tv-grid .structItem--thread {
+            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: stretch !important;
+                height: 100% !important;
+                box-sizing: border-box !important;
                 gap: 0 !important;
                 padding: 0 !important;
                 border: 1px solid rgba(127,127,127,0.18) !important;
@@ -7603,14 +7845,14 @@
                 content-visibility: auto;
                 contain-intrinsic-size: auto 320px;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread:hover {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
                 border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dcThumbnail,
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dtt-thread-thumbnail {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dtt-thread-thumbnail {
                 width: 100% !important;
                 aspect-ratio: 1 / 1 !important;
                 height: auto !important;
@@ -7620,8 +7862,8 @@
                 flex: 0 0 auto !important;
                 position: relative !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dcThumbnail img,
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dtt-thread-thumbnail img {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail img,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dtt-thread-thumbnail img {
                 width: 100% !important;
                 height: 100% !important;
                 object-fit: cover !important;
@@ -7719,7 +7961,13 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a[href*="/threads/"],
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a:not(.label):not(.labelLink) {
                 width: 100% !important;
-                display: block !important;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                min-height: 2.6em !important;
+                line-height: 1.3 !important;
                 margin-top: 5px !important;
                 color: #fff !important;
                 text-decoration: none !important;
@@ -7762,7 +8010,8 @@
                 flex-wrap: wrap !important;
                 align-items: center !important;
                 gap: 5px !important;
-                margin-top: 6px !important;
+                margin-top: auto !important;
+                padding-top: 8px !important;
                 font-size: 11.5px !important;
                 color: rgba(255,255,255,0.45) !important;
                 line-height: 1.3 !important;
@@ -7824,10 +8073,11 @@
                esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho do placeholder muda por modo. */
             .smg-thumb-ph { display: none; }
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .avatar,
+            html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .structItem-iconContainer,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
             .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: radial-gradient(circle at 50% 40%, var(--smg-s3), var(--smg-s1)); }
+                background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.06), rgba(255,255,255,0.01)), var(--smg-s1, #16171b) !important; }
             /* GRID: quadrado, ocupa a célula toda */
             html.smg-threadlist.smg-tv-grid .structItem--thread.smg-no-thumb .smg-thumb-ph {
                 display: flex !important; width: 100% !important; aspect-ratio: 1 / 1;
@@ -7839,10 +8089,12 @@
             @media (max-width: 600px) {
                 /* LISTA mobile: thumb 92×70 + marca menor */
                 html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-thumb-ph { width: 92px; height: 70px; border-radius: 7px; }
-                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: 15px; letter-spacing: 1px; }
+                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: 13px; letter-spacing: 1px; }
             }
-            .smg-ph-word { font-size: 34px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.2); line-height: 1; user-select: none; }
-            .smg-ph-g { color: rgba(255,77,141,0.45); }
+            .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: rgba(255,255,255,0.25); text-align: center; }
+            .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
+            .smg-ph-word { font-size: 14px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; }
+            .smg-ph-g { color: rgba(255,77,141,0.55); }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
@@ -18954,7 +19206,18 @@
         if (!document.documentElement.classList.contains('smg-threadlist')) return;   // structItem só existe em listagem; evita varrer o DOM em toda página/tick
         eachIn(roots, '.structItem--thread:not([data-smg-tl])', it => {
             it.dataset.smgTl = '1';   // guard: NodeList vazia uma vez marcados (não varre todo frame)
-            if (it.parentElement) it.parentElement.classList.add('smg-tl-grid');
+            const parent = it.parentElement;
+            const stickyGroup = it.closest('.structItemContainer-group--sticky');
+            if (stickyGroup) {
+                stickyGroup.classList.remove('smg-tl-grid');
+                stickyGroup.classList.add('smg-sticky-compact-list');
+            } else if (parent && !parent.classList.contains('smg-sticky-compact-list')) {
+                parent.classList.add('smg-tl-grid');
+            }
+            it.querySelectorAll('a[data-xf-init*="preview-tooltip"], a[data-preview-url]').forEach(a => {
+                a.removeAttribute('data-xf-init');
+                a.removeAttribute('data-preview-url');
+            });
             if (typeof decorateThreadCard === 'function') decorateThreadCard(it);
         });
     }
@@ -19157,14 +19420,16 @@
             if (!img) { addPh(); return; }
             // simpcity (.dcThumbnail): o thumb REAL vem no background-image do <img> (src é 1x1).
             if (thumb.classList.contains('dcThumbnail')) {
-                const m = (img.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
+                const m = (img.style.backgroundImage || thumb.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
                 const url = m && m[1];
-                if (!url || /^data:/i.test(url)) { addPh(); return; }   // sem bg real → placeholder
+                if (!url || /^data:/i.test(url) || /defaultThumbnailImage|no_image/i.test(url)) { addPh(); return; }   // sem bg real ou no_image padrão do fórum → nosso placeholder
                 // bg-image não tem onerror → testa o carregamento (ex.: thumbs do domínio .su morto → 404)
                 probeThumb(url, ok => { if (!ok) addPh(); else it.dataset.smgPhReady = '1'; });
                 return;
             }
-            // SMG (.dtt-thread-thumbnail): <img src> real → placeholder se quebrar
+            // SMG (.dtt-thread-thumbnail): <img src> real → placeholder se quebrar ou se for no_image
+            const src = img.getAttribute('src') || img.src || '';
+            if (/defaultThumbnailImage|no_image/i.test(src)) { addPh(); return; }
             if (img.complete) {
                 if (img.naturalWidth === 0) addPh();
                 else it.dataset.smgPhReady = '1';
@@ -19173,6 +19438,11 @@
                 img.addEventListener('error', addPh, { once: true });
             }
         });
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.markThreadGridContainer = markThreadGridContainer;
+        window.markGridPlaceholders = markGridPlaceholders;
     }
 
     // =========================================================
@@ -19268,6 +19538,9 @@
                     }
                 }
                 title = newTitle;
+            }
+            if (/bate[\s-]*papo|tutoriais|ajuda|discussion/i.test(title) || /bate[\s-]*papo|tutoriais|ajuda/i.test(href)) {
+                return 'discussions';
             }
             return 'categories';
         }
@@ -23907,23 +24180,22 @@
         };
         const hide = () => { clearTimeout(timer); cur = null; pop.style.display = 'none'; };
 
-        // vale na LISTAGEM, no painel lateral e no header da thread (alertas, seguidas, lista, grade e thread).
-        // Na GRADE a espera é maior: o card já mostra a imagem em bom tamanho, então o popover é um
-        // extra — com os 300ms da lista ele dispararia sem parar enquanto o olho varre a grade.
-        const PREV_SEL = '.dcThumbnail, .dtt-thread-thumbnail, .smg-watched-card-thumb, .structItem-cell--icon, .structItem-iconContainer, #smg-aldock .smg-al-icon--thumb, #smg-aldock .smg-rail-wt-thumb, .smg-thead-thumb, .articlePreview-image, .message--articlePreview .articlePreview-image';
-        const HOVER_MS = 300, HOVER_MS_GRID = 750;
-        const previewDelay = t => {
-            const pane = t.closest('.smg-aldock-body');
-            return (pane && pane.classList.contains('is-grid')) ? HOVER_MS_GRID : HOVER_MS;
-        };
+        // Vale apenas no MODO LISTA e no hover estrito da IMAGEM (nunca no texto e nunca na grade)
+        const PREV_SEL = '.dcThumbnail, .dtt-thread-thumbnail, .smg-watched-card-thumb, .structItem-cell--icon .avatar, .structItem-iconContainer .avatar, #smg-aldock .smg-al-icon--thumb, #smg-aldock .smg-rail-wt-thumb, .articlePreview-image';
+        const HOVER_MS = 300;
         document.addEventListener('mouseover', e => {
+            // Se estiver no modo grade global ou local, não dispara preview
+            if (document.documentElement.classList.contains('smg-tv-grid')) return;
+            // Se o mouse estiver sobre texto, títulos ou links de conteúdo, ignora
+            if (e.target.closest && e.target.closest('.structItem-title, .structItem-cell--main, .smg-card-dates, .structItem-pageJump, .articlePreview-main, .articlePreview-title, .structItem-parts')) return;
             const thumb = e.target.closest && e.target.closest(PREV_SEL);
             if (!thumb || thumb === cur) return;
+            if (thumb.closest && thumb.closest('.smg-tl-grid, .smg-article-grid, .is-grid')) return;
             const url = dcThumbUrl(thumb);
             if (!url) return;
             cur = thumb;
             clearTimeout(timer);
-            timer = setTimeout(() => { // só mostra depois de parado sobre a thumb (mais tempo na grade)
+            timer = setTimeout(() => { // só mostra depois de parado sobre a thumb
                 if (cur !== thumb) return;
                 pop.style.display = 'none'; // esconde enquanto a nova carrega (evita flash da imagem anterior)
                 const show = () => {
@@ -23935,7 +24207,7 @@
                 img.onerror = () => { if (cur === thumb) hide(); };
                 if (img.src !== url) img.src = url; else if (img.complete) show();
                 if (img.complete && img.naturalWidth) show(); // cache: onload pode não disparar
-            }, previewDelay(thumb));
+            }, HOVER_MS);
         });
         document.addEventListener('mouseout', e => {
             if (!cur) return;   // preview nem está aberto → não paga o closest() em todo mouseout da página
@@ -24596,7 +24868,7 @@
             if (!m) return;
             const id = m[1];
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
             wrapper.dataset.tbDone = '1';
             wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
             unfurl.replaceWith(wrapper);
@@ -24614,7 +24886,7 @@
             if (!m) return;
             const id = m[1];
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
             wrapper.dataset.tbDone = '1';
             wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
             const target = unfurl || link;
@@ -27228,15 +27500,25 @@
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
+                + '<div class="smg-home-skeleton-card-badges"><i></i><i></i></div>'
                 + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line"></i>'
                 + '<i class="smg-home-skeleton-line short"></i></div></div>'
+            ).join('');
+            const listRows = Array.from({ length: 6 }, () =>
+                '<div class="smg-home-skeleton-row"><i class="smg-home-skeleton-row-icon"></i>'
+                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line"></i>'
+                + '<i class="smg-home-skeleton-line short"></i></div>'
+                + '<i class="smg-home-skeleton-row-meta"></i></div>'
             ).join('');
             const categoryTiles = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-tile"><i class="smg-home-skeleton-line"></i>'
                 + '<i class="smg-home-skeleton-line short"></i></div>'
             ).join('');
-            const section = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span>'
+            const sectionList = '<section><div class="smg-home-skeleton-section-head">'
+                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '</div><div class="smg-home-skeleton-list">' + listRows + '</div></section>';
+            const sectionGrid = '<section><div class="smg-home-skeleton-section-head">'
+                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-grid">' + categoryTiles + '</div></section>';
             const noticesExpanded = gmGet('smg-notices-expanded', '0') === '1';
             const notices = '<div class="smg-home-skeleton-notices' + (noticesExpanded ? ' is-expanded' : '') + '">'
@@ -27250,7 +27532,7 @@
                 + '<main class="smg-home-skeleton-main">' + notices
                 + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
-                + '<div class="smg-home-skeleton-sections">' + section + section + section + '</div></main>'
+                + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
                 + '<nav class="smg-home-skeleton-bottom-nav" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></nav>';
         }
 

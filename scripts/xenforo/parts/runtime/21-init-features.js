@@ -647,7 +647,7 @@
             if (!m) return;
             const id = m[1];
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
             wrapper.dataset.tbDone = '1';
             wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
             unfurl.replaceWith(wrapper);
@@ -665,7 +665,7 @@
             if (!m) return;
             const id = m[1];
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div';
+            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
             wrapper.dataset.tbDone = '1';
             wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
             const target = unfurl || link;

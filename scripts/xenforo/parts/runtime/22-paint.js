@@ -51,15 +51,25 @@
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
+                + '<div class="smg-home-skeleton-card-badges"><i></i><i></i></div>'
                 + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line"></i>'
                 + '<i class="smg-home-skeleton-line short"></i></div></div>'
+            ).join('');
+            const listRows = Array.from({ length: 6 }, () =>
+                '<div class="smg-home-skeleton-row"><i class="smg-home-skeleton-row-icon"></i>'
+                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line"></i>'
+                + '<i class="smg-home-skeleton-line short"></i></div>'
+                + '<i class="smg-home-skeleton-row-meta"></i></div>'
             ).join('');
             const categoryTiles = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-tile"><i class="smg-home-skeleton-line"></i>'
                 + '<i class="smg-home-skeleton-line short"></i></div>'
             ).join('');
-            const section = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span>'
+            const sectionList = '<section><div class="smg-home-skeleton-section-head">'
+                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '</div><div class="smg-home-skeleton-list">' + listRows + '</div></section>';
+            const sectionGrid = '<section><div class="smg-home-skeleton-section-head">'
+                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-grid">' + categoryTiles + '</div></section>';
             const noticesExpanded = gmGet('smg-notices-expanded', '0') === '1';
             const notices = '<div class="smg-home-skeleton-notices' + (noticesExpanded ? ' is-expanded' : '') + '">'
@@ -73,7 +83,7 @@
                 + '<main class="smg-home-skeleton-main">' + notices
                 + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
-                + '<div class="smg-home-skeleton-sections">' + section + section + section + '</div></main>'
+                + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
                 + '<nav class="smg-home-skeleton-bottom-nav" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></nav>';
         }
 

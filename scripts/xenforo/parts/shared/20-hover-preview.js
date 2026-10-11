@@ -43,23 +43,22 @@
         };
         const hide = () => { clearTimeout(timer); cur = null; pop.style.display = 'none'; };
 
-        // vale na LISTAGEM, no painel lateral e no header da thread (alertas, seguidas, lista, grade e thread).
-        // Na GRADE a espera é maior: o card já mostra a imagem em bom tamanho, então o popover é um
-        // extra — com os 300ms da lista ele dispararia sem parar enquanto o olho varre a grade.
-        const PREV_SEL = '.dcThumbnail, .dtt-thread-thumbnail, .smg-watched-card-thumb, .structItem-cell--icon, .structItem-iconContainer, #smg-aldock .smg-al-icon--thumb, #smg-aldock .smg-rail-wt-thumb, .smg-thead-thumb, .articlePreview-image, .message--articlePreview .articlePreview-image';
-        const HOVER_MS = 300, HOVER_MS_GRID = 750;
-        const previewDelay = t => {
-            const pane = t.closest('.smg-aldock-body');
-            return (pane && pane.classList.contains('is-grid')) ? HOVER_MS_GRID : HOVER_MS;
-        };
+        // Vale apenas no MODO LISTA e no hover estrito da IMAGEM (nunca no texto e nunca na grade)
+        const PREV_SEL = '.dcThumbnail, .dtt-thread-thumbnail, .smg-watched-card-thumb, .structItem-cell--icon .avatar, .structItem-iconContainer .avatar, #smg-aldock .smg-al-icon--thumb, #smg-aldock .smg-rail-wt-thumb, .articlePreview-image';
+        const HOVER_MS = 300;
         document.addEventListener('mouseover', e => {
+            // Se estiver no modo grade global ou local, não dispara preview
+            if (document.documentElement.classList.contains('smg-tv-grid')) return;
+            // Se o mouse estiver sobre texto, títulos ou links de conteúdo, ignora
+            if (e.target.closest && e.target.closest('.structItem-title, .structItem-cell--main, .smg-card-dates, .structItem-pageJump, .articlePreview-main, .articlePreview-title, .structItem-parts')) return;
             const thumb = e.target.closest && e.target.closest(PREV_SEL);
             if (!thumb || thumb === cur) return;
+            if (thumb.closest && thumb.closest('.smg-tl-grid, .smg-article-grid, .is-grid')) return;
             const url = dcThumbUrl(thumb);
             if (!url) return;
             cur = thumb;
             clearTimeout(timer);
-            timer = setTimeout(() => { // só mostra depois de parado sobre a thumb (mais tempo na grade)
+            timer = setTimeout(() => { // só mostra depois de parado sobre a thumb
                 if (cur !== thumb) return;
                 pop.style.display = 'none'; // esconde enquanto a nova carrega (evita flash da imagem anterior)
                 const show = () => {
@@ -71,7 +70,7 @@
                 img.onerror = () => { if (cur === thumb) hide(); };
                 if (img.src !== url) img.src = url; else if (img.complete) show();
                 if (img.complete && img.naturalWidth) show(); // cache: onload pode não disparar
-            }, previewDelay(thumb));
+            }, HOVER_MS);
         });
         document.addEventListener('mouseout', e => {
             if (!cur) return;   // preview nem está aberto → não paga o closest() em todo mouseout da página

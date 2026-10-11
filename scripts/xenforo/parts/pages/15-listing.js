@@ -7,7 +7,18 @@
         if (!document.documentElement.classList.contains('smg-threadlist')) return;   // structItem só existe em listagem; evita varrer o DOM em toda página/tick
         eachIn(roots, '.structItem--thread:not([data-smg-tl])', it => {
             it.dataset.smgTl = '1';   // guard: NodeList vazia uma vez marcados (não varre todo frame)
-            if (it.parentElement) it.parentElement.classList.add('smg-tl-grid');
+            const parent = it.parentElement;
+            const stickyGroup = it.closest('.structItemContainer-group--sticky');
+            if (stickyGroup) {
+                stickyGroup.classList.remove('smg-tl-grid');
+                stickyGroup.classList.add('smg-sticky-compact-list');
+            } else if (parent && !parent.classList.contains('smg-sticky-compact-list')) {
+                parent.classList.add('smg-tl-grid');
+            }
+            it.querySelectorAll('a[data-xf-init*="preview-tooltip"], a[data-preview-url]').forEach(a => {
+                a.removeAttribute('data-xf-init');
+                a.removeAttribute('data-preview-url');
+            });
             if (typeof decorateThreadCard === 'function') decorateThreadCard(it);
         });
     }
@@ -210,14 +221,16 @@
             if (!img) { addPh(); return; }
             // simpcity (.dcThumbnail): o thumb REAL vem no background-image do <img> (src é 1x1).
             if (thumb.classList.contains('dcThumbnail')) {
-                const m = (img.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
+                const m = (img.style.backgroundImage || thumb.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
                 const url = m && m[1];
-                if (!url || /^data:/i.test(url)) { addPh(); return; }   // sem bg real → placeholder
+                if (!url || /^data:/i.test(url) || /defaultThumbnailImage|no_image/i.test(url)) { addPh(); return; }   // sem bg real ou no_image padrão do fórum → nosso placeholder
                 // bg-image não tem onerror → testa o carregamento (ex.: thumbs do domínio .su morto → 404)
                 probeThumb(url, ok => { if (!ok) addPh(); else it.dataset.smgPhReady = '1'; });
                 return;
             }
-            // SMG (.dtt-thread-thumbnail): <img src> real → placeholder se quebrar
+            // SMG (.dtt-thread-thumbnail): <img src> real → placeholder se quebrar ou se for no_image
+            const src = img.getAttribute('src') || img.src || '';
+            if (/defaultThumbnailImage|no_image/i.test(src)) { addPh(); return; }
             if (img.complete) {
                 if (img.naturalWidth === 0) addPh();
                 else it.dataset.smgPhReady = '1';
@@ -226,4 +239,9 @@
                 img.addEventListener('error', addPh, { once: true });
             }
         });
+    }
+
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
+        window.markThreadGridContainer = markThreadGridContainer;
+        window.markGridPlaceholders = markGridPlaceholders;
     }

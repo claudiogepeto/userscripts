@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.16.0'), 'Userscript deve estar na versão 3.16.0');
+    assert(scriptContent.includes('// @version      3.17.0'), 'Userscript deve estar na versão 3.17.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -7018,7 +7018,7 @@ async function runTests() {
 
         const targetHotlinkFull = 'https://antihotlink.com/full.jpg';
         swapImgSrc(antiHotlinkImg, targetHotlinkFull);
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise(r => setTimeout(r, 500));
 
         assert(antiHotlinkImg.src === targetHotlinkFull, 'swapImgSrc deve ter sucesso após fallback para no-referrer');
         assert(mockLoadAttempts.length === 2, 'Deve ter tentado 2 vezes (1ª com referer padrão, 2ª com no-referrer)');
@@ -7967,6 +7967,94 @@ async function runTests() {
         container.remove();
         document.documentElement.classList.remove('smg-home');
     }
+
+    // =========================================================================
+    // TESTE 68: Refinamentos de Listagem, Sticky Links, Placeholders e Subtopbar
+    // =========================================================================
+    console.log('--- TESTE 68: Refinamentos de Listagem, Sticky Links, Placeholders e Subtopbar ---');
+    {
+        const { classifyHomeNode } = window.__homeExports;
+        const { markThreadGridContainer, markGridPlaceholders } = window;
+        // 1. Roteamento de Bate-papo / Tutoriais / Ajuda do Brasil para Discussions
+        const mockHelpNode = document.createElement('div');
+        mockHelpNode.className = 'node';
+        mockHelpNode.dataset.smgOrigCategory = 'Brasil';
+        mockHelpNode.innerHTML = '<div class="node-body"><div class="node-title"><a href="/forums/bate-papo-tutoriais-ajuda.39/">Bate-papo | Tutoriais | Ajuda</a></div></div>';
+        assert(classifyHomeNode(mockHelpNode) === 'discussions', 'Brasil - Bate-papo | Tutoriais | Ajuda deve ser classificado como discussions');
+
+        // 2. markThreadGridContainer: .structItemContainer-group--sticky deve virar smg-sticky-compact-list
+        document.documentElement.classList.add('smg-threadlist');
+        const listWrapper = document.createElement('div');
+        listWrapper.innerHTML = `
+            <div class="structItemContainer-group structItemContainer-group--sticky smg-tl-grid">
+                <div class="structItem structItem--thread">
+                    <div class="structItem-cell structItem-cell--main">
+                        <div class="structItem-title"><a href="/threads/sticky-1" data-xf-init="preview-tooltip" data-preview-url="/threads/sticky-1/preview">Sticky Thread</a></div>
+                    </div>
+                </div>
+            </div>
+            <div class="structItemContainer-group js-threadList">
+                <div class="structItem structItem--thread">
+                    <div class="structItem-cell structItem-cell--main">
+                        <div class="structItem-title"><a href="/threads/normal-1" data-xf-init="preview-tooltip" data-preview-url="/threads/normal-1/preview">Normal Thread</a></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(listWrapper);
+
+        markThreadGridContainer([listWrapper]);
+
+        const stickyGroupEl = listWrapper.querySelector('.structItemContainer-group--sticky');
+        const normalGroupEl = listWrapper.querySelector('.js-threadList');
+        assert(stickyGroupEl.classList.contains('smg-sticky-compact-list'), 'Grupo sticky deve receber smg-sticky-compact-list');
+        assert(!stickyGroupEl.classList.contains('smg-tl-grid'), 'Grupo sticky deve ter smg-tl-grid removido');
+        assert(normalGroupEl.classList.contains('smg-tl-grid'), 'Grupo normal de threads deve receber smg-tl-grid');
+
+        // Validar remoção de preview tooltip nativo nos links de título
+        const stickyLink = stickyGroupEl.querySelector('.structItem-title a');
+        assert(!stickyLink.hasAttribute('data-xf-init'), 'Link não deve possuir atributo data-xf-init');
+        assert(!stickyLink.hasAttribute('data-preview-url'), 'Link não deve possuir atributo data-preview-url');
+
+        // 3. markGridPlaceholders: SimpCity no_image.jpg deve ser interceptado e receber nosso placeholder
+        const noImageItem = document.createElement('div');
+        noImageItem.className = 'structItem structItem--thread';
+        noImageItem.innerHTML = `
+            <div class="structItem-cell structItem-cell--icon">
+                <a class="avatar dcThumbnail">
+                    <img style="background-image: url(https://simpcity.cr/data/assets/defaultThumbnailImage/no_image.jpg);">
+                </a>
+            </div>
+        `;
+        listWrapper.appendChild(noImageItem);
+
+        markGridPlaceholders([listWrapper]);
+
+        assert(noImageItem.classList.contains('smg-no-thumb'), 'Thread com no_image.jpg do SimpCity deve receber classe smg-no-thumb');
+        const phEl = noImageItem.querySelector('.smg-thumb-ph');
+        assert(phEl !== null, 'Thread sem foto real deve receber elemento .smg-thumb-ph');
+        assert(phEl.innerHTML.includes('smg-ph-ico'), 'Placeholder customizado deve conter ícone SVG');
+
+        // 4. Validação das regras de CSS
+        assert(allStyles.includes('.smg-sticky-compact-list'), 'CSS deve conter estilos para .smg-sticky-compact-list');
+        assert(allStyles.includes('html.smg-threadlist.smg-tv-grid .smg-tl-grid') && allStyles.includes('align-items: stretch !important;'), 'Grid de tópicos deve esticar cards uniformemente (align-items: stretch)');
+        assert(allStyles.includes('min-height: 2.6em !important;') && allStyles.includes('-webkit-line-clamp: 2 !important;'), 'Títulos na grade devem reservar 2 linhas uniformes (min-height: 2.6em)');
+        assert(allStyles.includes('margin-top: auto !important;') && allStyles.includes('padding-top: 8px !important;'), 'Datas no card devem colar na base uniformemente (margin-top: auto)');
+        assert(allStyles.includes('clip-path: inset(0 -100vmax 0) !important;'), 'Subtopbar fixa deve cortar borda exatamente no limite (clip-path: inset(0 -100vmax 0))');
+        assert(allStyles.includes('iframe[src*="turbo.cr"]::before') && allStyles.includes('display: none !important;'), 'Shimmer/loading deve ser suprimido em iframes do turbo.cr');
+        assert(allStyles.includes('.tooltip--preview { display: none !important; }'), 'Tooltip nativo de preview deve ser ocultado no CSS');
+        assert(allStyles.includes('.smg-home-section-sites .node-extra'), 'CSS deve estilizar .node-extra da seção Sites');
+
+        // 5. Validação de markup de skeleton
+        const homeSkel = paintSkeletonMarkup(PAINT_PAGE_KINDS.HOME);
+        assert(homeSkel.includes('smg-home-skeleton-card-badges'), 'Home skeleton deve conter badges nos cards do feed');
+        assert(homeSkel.includes('smg-home-skeleton-list'), 'Home skeleton deve conter seções de lista');
+        assert(homeSkel.includes('smg-home-skeleton-row'), 'Home skeleton deve conter linhas de lista .smg-home-skeleton-row');
+
+        listWrapper.remove();
+        document.documentElement.classList.remove('smg-threadlist');
+    }
+
 
     // =========================================================================
     // RESUMO FINAL

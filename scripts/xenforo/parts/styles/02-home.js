@@ -86,9 +86,13 @@
             .smg-home-skeleton-feed-head i:nth-child(2) { width: 78px; opacity: .65; }
             .smg-home-skeleton-feed-head span { width: 62px; height: 11px; border-radius: 5px; margin-left: auto; }
             .smg-home-skeleton-feed-cards { display: flex; gap: 14px; overflow: hidden; }
-            .smg-home-skeleton-card { position: relative; flex: 0 0 230px; aspect-ratio: 3 / 4; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; background: rgba(255,255,255,0.06); overflow: hidden; }
+            .smg-home-skeleton-card { position: relative; flex: 0 0 295px; width: 295px; height: 395px; aspect-ratio: 3 / 4.02; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; background: rgba(255,255,255,0.06); overflow: hidden; }
+            .smg-home-skeleton-card-badges { position: absolute; top: 12px; left: 12px; z-index: 2; display: flex; gap: 5px; }
+            .smg-home-skeleton-card-badges i { display: block; width: 48px; height: 16px; border-radius: 4px; background: rgba(255,255,255,0.12); }
+            .smg-home-skeleton-card-badges i:nth-child(2) { width: 38px; }
             .smg-home-skeleton-card::after,
             .smg-home-skeleton-tile::after,
+            .smg-home-skeleton-row::after,
             .smg-home-skeleton-notices-head::after,
             .smg-home-skeleton-topbar-logo::after,
             .smg-home-skeleton-topbar-nav i::after,
@@ -112,8 +116,14 @@
             .smg-home-skeleton-line.short { width: 62%; margin-bottom: 0; }
             .smg-home-skeleton-sections { display: grid; gap: 36px; padding-bottom: 10vh; }
             .smg-home-skeleton-section-head { display: flex; align-items: center; gap: 16px; margin: 0 2px 16px; }
-            .smg-home-skeleton-section-title { flex: 0 0 190px; position: relative; width: 190px; height: 13px; margin: 0; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+            .smg-home-skeleton-section-title { flex: 0 0 190px; position: relative; width: 190px; height: 16px; margin: 0; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+            .smg-home-skeleton-section-badge { margin-left: auto; width: 56px; height: 18px; border-radius: 999px; background: rgba(255,255,255,0.08); }
             .smg-home-skeleton-section-divider { position: relative; flex: 1 1 auto; height: 1px; min-width: 0; background: rgba(255,255,255,0.10); overflow: hidden; }
+            .smg-home-skeleton-list { display: flex; flex-direction: column; gap: 8px; }
+            .smg-home-skeleton-row { position: relative; display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; background: rgba(255,255,255,0.04); overflow: hidden; }
+            .smg-home-skeleton-row-icon { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.08); }
+            .smg-home-skeleton-row-copy { flex: 1 1 auto; min-width: 0; }
+            .smg-home-skeleton-row-meta { margin-left: auto; width: 140px; height: 12px; border-radius: 5px; background: rgba(255,255,255,0.06); }
             .smg-home-skeleton-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
             .smg-home-skeleton-tile { position: relative; min-height: 158px; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; background: rgba(255,255,255,0.055); overflow: hidden; }
             .smg-home-skeleton-tile::before { content: ""; position: absolute; top: 24px; left: 50%; width: 58px; height: 58px; border-radius: 16px; transform: translateX(-50%); background: rgba(255,255,255,0.08); }
@@ -624,6 +634,86 @@
                 html.smg-threadlist .block--category .node-body { padding: 14px 10px !important; gap: 7px !important; }
                 html.smg-threadlist .block--category .node-icon { width: 50px !important; height: 50px !important; padding: 7px !important; }
                 html.smg-threadlist .block--category .node-title { font-size: 13.5px !important; }
+            }
+            /* ---- SEÇÃO SITES: layout em lista elegante com exibição dos últimos posts ---- */
+            html.smg-threadlist .block--category.smg-home-section-sites .block-body {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node {
+                display: flex !important;
+                align-items: center !important;
+                padding: 10px 16px !important;
+                border-radius: 12px !important;
+                min-height: 60px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-body {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                padding: 0 !important;
+                gap: 14px !important;
+                width: 100% !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-icon {
+                width: 42px !important;
+                height: 42px !important;
+                margin: 0 !important;
+                padding: 6px !important;
+                border-radius: 12px !important;
+                flex: 0 0 42px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-main {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-title {
+                font-size: 14.5px !important;
+                font-weight: 700 !important;
+                justify-content: flex-start !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-end !important;
+                justify-content: center !important;
+                margin-left: auto !important;
+                max-width: 380px !important;
+                text-align: right !important;
+                flex-shrink: 0 !important;
+                gap: 3px !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-row {
+                font-size: 12px !important;
+                color: rgba(255,255,255,0.7) !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 100% !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title {
+                color: #fff !important;
+                font-weight: 600 !important;
+                text-decoration: none !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {
+                font-size: 11px !important;
+                color: rgba(255,255,255,0.4) !important;
+            }
+            html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
+                color: rgba(255,255,255,0.55) !important;
+            }
+            @media (max-width: 600px) {
+                html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
+                    display: none !important;
+                }
             }
 
             `;

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Turbo — Native Player & Theater Stage (embed bypass)
 // @namespace    turbo-theater
-// @version      2.0.1
+// @version      2.0.2
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js
 // @description  Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling.
@@ -532,16 +532,16 @@
         }, ms);
     }
     function mountIframe(mid) {   // fallback: usa o <iframe> de embed nativo do turbo
+        document.documentElement.classList.add("tb-fallback");
+        mid.querySelectorAll(".tb-spin").forEach(s => s.remove());
         const ifr = document.querySelector("iframe.saint-iframe, iframe[src*='/embed/']");
         if (ifr) {
-            mid.querySelectorAll(".tb-spin").forEach(s => s.remove());
             ifr.style.borderRadius = "0 !important";
             mid.appendChild(ifr);
             return true;
         }
         const id = vidId();
         if (id) {
-            mid.querySelectorAll(".tb-spin").forEach(s => s.remove());
             const newIfr = el("iframe", { src: "/embed/" + id, allowfullscreen: "true", style: { width: "100%", height: "100%", border: "0", background: "#000" } });
             mid.appendChild(newIfr);
             return true;

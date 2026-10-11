@@ -92,6 +92,9 @@
                 }
                 title = newTitle;
             }
+            if (/bate[\s-]*papo|tutoriais|ajuda|discussion/i.test(title) || /bate[\s-]*papo|tutoriais|ajuda/i.test(href)) {
+                return 'discussions';
+            }
             return 'categories';
         }
 

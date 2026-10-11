@@ -79,7 +79,8 @@
                 box-sizing: border-box !important;
                 overflow-anchor: none !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08);
-                clip-path: inset(0 -100vmax -1px);
+                clip-path: inset(0 -100vmax 0);
+                transition: padding 0.18s cubic-bezier(0.2, 0, 0, 1), height 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -110,8 +111,8 @@
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
-                clip-path: inset(0 -100vmax -8px);
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08), 0 3px 6px rgba(0,0,0,0.35);
+                clip-path: inset(0 -100vmax 0) !important;
+                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08) !important;
             }
             @media (max-width: 800px) {
                 html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
@@ -839,6 +840,135 @@
             }
             #smg-thumb-pop img { display: block; max-width: min(620px, 46vw); max-height: 84vh; object-fit: contain; }
 
+            /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
+            .tooltip--preview { display: none !important; }
+
+            /* ---- LISTINHA COMPACTA DE TÓPICOS FIXOS / LINKS DE AJUDA NO TOPO ---- */
+            html.smg-threadlist .smg-sticky-compact-list,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+                margin: 0 0 16px 0 !important;
+                padding: 6px 10px !important;
+                background: var(--smg-s1, #16171b) !important;
+                border: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
+                border-radius: 12px !important;
+                list-style: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 12px !important;
+                padding: 6px 10px !important;
+                border: 0 !important;
+                border-radius: 8px !important;
+                background: transparent !important;
+                min-height: 38px !important;
+                height: auto !important;
+                max-height: none !important;
+                transition: background 0.14s ease !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread:hover,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread:hover {
+                background: rgba(255,255,255,0.06) !important;
+                border-color: transparent !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread + .structItem--thread,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread + .structItem--thread {
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dcThumbnail,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dcThumbnail,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail {
+                width: 26px !important;
+                height: 26px !important;
+                min-width: 26px !important;
+                max-width: 26px !important;
+                flex: 0 0 26px !important;
+                aspect-ratio: 1 / 1 !important;
+                border-radius: 6px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dcThumbnail img,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dcThumbnail img,
+            html.smg-threadlist .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail img,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .dtt-thread-thumbnail img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                border-radius: 6px !important;
+                display: block !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-cell--main,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-cell--main {
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 8px !important;
+                padding: 0 !important;
+                min-width: 0 !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 6px !important;
+                font-size: 13.5px !important;
+                font-weight: 600 !important;
+                min-width: 0 !important;
+                white-space: nowrap !important;
+                margin: 0 !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a[href*="/threads/"],
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a[href*="/threads/"],
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a:not(.label):not(.labelLink),
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a:not(.label):not(.labelLink) {
+                display: inline !important;
+                width: auto !important;
+                margin: 0 !important;
+                color: #fff !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-title a:hover,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-title a:hover {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .smg-card-dates,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .smg-card-dates,
+            html.smg-threadlist .smg-sticky-compact-list .structItem-minor,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-minor {
+                margin-left: auto !important;
+                margin-top: 0 !important;
+                padding: 0 !important;
+                flex-shrink: 0 !important;
+                font-size: 11px !important;
+            }
+            html.smg-threadlist .smg-sticky-compact-list .structItem-pageJump,
+            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem-pageJump {
+                display: none !important;
+            }
+
             /* ---- modo grade (cards, máx 6 colunas) — .smg-tl-grid é marcado via JS no
                container real dos itens (varia entre fórum e watched) ---- */
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
@@ -846,16 +976,19 @@
                 grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 14px !important;
-                align-items: start !important;
+                align-items: stretch !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
             html.smg-threadlist.smg-tv-grid .stickySeparatortop,
             html.smg-threadlist.smg-tv-grid .stickySeparatorbottom { display: none !important; }
             /* ---- GRID DE TÓPICOS IDENTICO AO NOSSO MODELO ---- */
-            html.smg-threadlist.smg-tv-grid .structItem--thread {
+            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: stretch !important;
+                height: 100% !important;
+                box-sizing: border-box !important;
                 gap: 0 !important;
                 padding: 0 !important;
                 border: 1px solid rgba(127,127,127,0.18) !important;
@@ -867,14 +1000,14 @@
                 content-visibility: auto;
                 contain-intrinsic-size: auto 320px;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread:hover {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
                 border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dcThumbnail,
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dtt-thread-thumbnail {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dtt-thread-thumbnail {
                 width: 100% !important;
                 aspect-ratio: 1 / 1 !important;
                 height: auto !important;
@@ -884,8 +1017,8 @@
                 flex: 0 0 auto !important;
                 position: relative !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dcThumbnail img,
-            html.smg-threadlist.smg-tv-grid .structItem--thread .dtt-thread-thumbnail img {
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail img,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dtt-thread-thumbnail img {
                 width: 100% !important;
                 height: 100% !important;
                 object-fit: cover !important;
@@ -983,7 +1116,13 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a[href*="/threads/"],
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a:not(.label):not(.labelLink) {
                 width: 100% !important;
-                display: block !important;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                min-height: 2.6em !important;
+                line-height: 1.3 !important;
                 margin-top: 5px !important;
                 color: #fff !important;
                 text-decoration: none !important;
@@ -1026,7 +1165,8 @@
                 flex-wrap: wrap !important;
                 align-items: center !important;
                 gap: 5px !important;
-                margin-top: 6px !important;
+                margin-top: auto !important;
+                padding-top: 8px !important;
                 font-size: 11.5px !important;
                 color: rgba(255,255,255,0.45) !important;
                 line-height: 1.3 !important;
@@ -1088,10 +1228,11 @@
                esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho do placeholder muda por modo. */
             .smg-thumb-ph { display: none; }
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .avatar,
+            html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .structItem-iconContainer,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
             .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: radial-gradient(circle at 50% 40%, var(--smg-s3), var(--smg-s1)); }
+                background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.06), rgba(255,255,255,0.01)), var(--smg-s1, #16171b) !important; }
             /* GRID: quadrado, ocupa a célula toda */
             html.smg-threadlist.smg-tv-grid .structItem--thread.smg-no-thumb .smg-thumb-ph {
                 display: flex !important; width: 100% !important; aspect-ratio: 1 / 1;
@@ -1103,10 +1244,12 @@
             @media (max-width: 600px) {
                 /* LISTA mobile: thumb 92×70 + marca menor */
                 html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-thumb-ph { width: 92px; height: 70px; border-radius: 7px; }
-                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: 15px; letter-spacing: 1px; }
+                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: 13px; letter-spacing: 1px; }
             }
-            .smg-ph-word { font-size: 34px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.2); line-height: 1; user-select: none; }
-            .smg-ph-g { color: rgba(255,77,141,0.45); }
+            .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: rgba(255,255,255,0.25); text-align: center; }
+            .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
+            .smg-ph-word { font-size: 14px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; }
+            .smg-ph-g { color: rgba(255,77,141,0.55); }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
