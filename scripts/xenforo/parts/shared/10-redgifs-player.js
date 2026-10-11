@@ -911,13 +911,42 @@
         const VEXT = '(?:mp4|mov|m4v|webm)';
         const grabVid = t => {
             let m = t.match(new RegExp('<source[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));   // <source> direto (não HLS .m3u8)
+            if (!m) m = t.match(new RegExp('<video[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));
+            if (!m) m = t.match(new RegExp('<meta\\s+[^>]*property=["\'](?:og:video|og:video:url|twitter:player:stream)["\'][^>]*content=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));
             let v = m ? m[1] : null;
-            if (!v) { const g = t.match(new RegExp('https?://[^"\'\\s)]*media\\.imagepond\\.net/media/videos/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i')); v = g ? g[0] : null; }
+            if (!v) {
+                const g = t.match(new RegExp('https?:\\/\\/[^"\'\\s)]*imagepond\\.net\\/[^"\'\\s)]*media\\/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i'));
+                v = g ? g[0] : null;
+            }
+            if (!v) {
+                const g = t.match(new RegExp('https?:\\/\\/[^"\'\\s)]*imagepond\\.net\\/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i'));
+                v = g ? g[0] : null;
+            }
             return v ? v.replace(/&amp;/g, '&') : null;
         };
-        const grabImg = t => {   // imagem de CONTEÚDO (/media/images/) EXCLUINDO ícones do site (android-chrome/favicon/apple-touch/mstile/logo)
-            const re = /https?:\/\/[^"'\s)]*media\.imagepond\.net\/media\/images\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
-            for (let mm; (mm = re.exec(t));) { if (!/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(mm[0])) return mm[0].replace(/&amp;/g, '&'); }
+        const grabImg = t => {   // imagem de CONTEÚDO (/media/images/, /media/new/images/) EXCLUINDO ícones do site
+            const isSiteIcon = u => /android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(u);
+            let m = t.match(/<div class=["']media-container["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i);
+            if (m && !isSiteIcon(m[1])) return m[1].replace(/&amp;/g, '&');
+            let og = t.match(/<meta\s+[^>]*property=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']/i);
+            if (og && !isSiteIcon(og[1])) return og[1].replace(/&amp;/g, '&');
+            const re = /https?:\/\/[^"'\s)]*imagepond\.net\/[^"'\s)]*media\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
+            for (let mm; (mm = re.exec(t));) {
+                if (!isSiteIcon(mm[0])) return mm[0].replace(/&amp;/g, '&');
+            }
+            const re2 = /https?:\/\/[^"'\s)]*imagepond\.net\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
+            for (let mm; (mm = re2.exec(t));) {
+                if (!isSiteIcon(mm[0])) return mm[0].replace(/&amp;/g, '&');
+            }
+            return null;
+        };
+        const grabPoster = t => {
+            let m = t.match(/<video[^>]+poster=["']([^"']+)["']/i);
+            if (m) return m[1].replace(/&amp;/g, '&');
+            let og = t.match(/<meta\s+[^>]*property=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']/i);
+            if (og && !/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(og[1])) {
+                return og[1].replace(/&amp;/g, '&');
+            }
             return null;
         };
         GMX({ method: 'GET', url: pageUrl, timeout: 8000,
@@ -926,9 +955,10 @@
                 if (r.status >= 400) { finish({ error: r.status, host: 'imagepond.net' }); return; }
                 const t = r.responseText || '';
                 const vid = grabVid(t);
-                if (vid) { finish({ mp4: vid, img: null }); return; }
+                const poster = grabPoster(t);
+                if (vid) { finish({ mp4: vid, img: null, poster }); return; }
                 const img = grabImg(t);
-                if (img) { finish({ mp4: null, img }); return; }
+                if (img) { finish({ mp4: null, img, poster: null }); return; }
                 // /videos/{id}: o arquivo mora na página /i/{slug} (linkada aqui). Segue UMA vez (não a partir de uma /i/, evita loop), pulando o /i/{id}/download.
                 if (!/\/i\//.test(pageUrl)) {
                     const re = /https?:\/\/[^"'\s)]*imagepond\.net\/i\/[^"'\s)]+/ig;
@@ -940,7 +970,7 @@
                         }
                     }
                 }
-                finish({ error: r.status === 200 ? 404 : (r.status || 0), host: 'imagepond.net' });
+                finish({ error: r.status === 200 ? null : (r.status || 0), host: 'imagepond.net' });
             },
             onerror: () => finish({ error: 'NetError', host: 'imagepond.net' }),
             ontimeout: () => finish({ error: 504, host: 'imagepond.net' }) });
@@ -982,14 +1012,35 @@
                         loading.remove();
                         slot.appendChild(wrap);
                         fillSlot(slot);                                    // solta o 16:9/overflow do slot → não corta vídeo vertical
-                        rgPrepareUrl(video, res.mp4, wrap, imagepondPoster(res.mp4));   // poster + pronto; stream só no play
+                        rgPrepareUrl(video, res.mp4, wrap, res.poster || imagepondPoster(res.mp4));   // poster + pronto; stream só no play
                         return;
                     }
                     if (res && res.img) {                                   // IMAGEM (o /videos/ do imagepond às vezes é foto) → troca o embed por <img> (entra no pipeline de img + masonry)
-                        const a = document.createElement('a'); a.href = res.img; a.target = '_blank'; a.rel = 'noopener noreferrer';
-                        const img = document.createElement('img'); img.className = 'bbImage'; img.src = res.img; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = pageUrl;
-                        a.appendChild(img);
-                        wrapper.replaceWith(a);
+                        const inGrid = wrapper.closest && wrapper.closest('.auto-image-grid');
+                        const grid = inGrid || null;
+                        const img = document.createElement('img');
+                        img.className = 'bbImage';
+                        img.src = res.img;
+                        img.loading = 'lazy';
+                        img.alt = '';
+                        img.dataset.smgLink = pageUrl;
+                        img.dataset.smgFull = res.img;
+                        img.dataset.smgMed = res.img;
+                        if (grid) {
+                            img.dataset.smgGridded = '1';
+                            wrapper.replaceWith(img);
+                            if (typeof cleanupGhosts === 'function') cleanupGhosts(grid);
+                            if (typeof relayoutGrid === 'function') relayoutGrid(grid);
+                        } else {
+                            const a = document.createElement('a');
+                            a.href = res.img;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.className = 'smg-imglink';
+                            a.appendChild(img);
+                            wrapper.replaceWith(a);
+                        }
+                        if (typeof processOneImage === 'function') processOneImage(img);
                         scheduleRun();
                         return;
                     }

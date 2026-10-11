@@ -21,12 +21,14 @@
             html.smg-page-pending .p-body,
             html.smg-page-pending .p-pageWrapper { visibility: hidden !important; }
             html.smg-page-pending #smg-topbar-wrap,
-            html.smg-page-pending #smg-aldock {
+            html.smg-page-pending #smg-aldock,
+            html.smg-page-pending #smg-post-nav-wrapper {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
             html.smg-page-pending #smg-topbar-wrap { z-index: 1100 !important; }
             html.smg-page-pending #smg-aldock { z-index: 1101 !important; }
+            html.smg-page-pending #smg-post-nav-wrapper { z-index: 1102 !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: 1000; display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
                 pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
@@ -70,6 +72,11 @@
                     min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
                     min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;
                 }
+                html.smg-thread.smg-topbar-ready #smg-page-skeleton {
+                    top: 0 !important;
+                    min-height: 100vh !important;
+                    min-height: 100dvh !important;
+                }
             }
             html.smg-sidebar-ready #smg-aldock {
                 visibility: visible !important;
@@ -77,6 +84,15 @@
                 z-index: 1101 !important;
             }
             html.smg-sidebar-ready #smg-page-skeleton-rail {
+                display: none !important;
+            }
+            html.smg-navbar-ready #smg-post-nav-wrapper {
+                visibility: visible !important;
+                pointer-events: auto !important;
+                z-index: 1102 !important;
+            }
+            html.smg-navbar-ready .smg-page-skeleton-bottom-nav,
+            html.smg-navbar-ready .smg-home-skeleton-bottom-nav {
                 display: none !important;
             }
             html.smg-content-ready .p-body-content {

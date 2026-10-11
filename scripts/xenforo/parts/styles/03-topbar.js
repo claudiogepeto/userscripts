@@ -893,14 +893,18 @@
                 html.smg-topbar-on body { padding-top: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top)) !important; }
                 html.smg-topbar-on :target { scroll-margin-top: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top)); }
 
-                /* Thread: título centralizado entre duas colunas de 44px, sem overflow do
-                   nome para fora da viewport e com alvo de toque confortável no voltar. */
-                html.smg-thread #smg-tb-inner { display: none !important; }
+                /* Thread no mobile: topbar fixa completamente removida (no topo ficam apenas as infos da thread e os avisos) */
+                html.smg-thread #smg-topbar-wrap,
                 html.smg-thread .smg-mobile-threadbar {
-                    display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px;
-                    align-items: center; width: 100%; height: var(--smg-mobile-topbar-h);
-                    padding: 0 8px; box-sizing: border-box;
+                    display: none !important;
                 }
+                html.smg-thread.smg-topbar-on body {
+                    padding-top: max(0px, env(safe-area-inset-top)) !important;
+                }
+                html.smg-thread.smg-topbar-on :target {
+                    scroll-margin-top: 10px !important;
+                }
+                html.smg-thread #smg-tb-inner { display: none !important; }
                 .smg-mobile-threadbar-back {
                     width: 44px; height: 44px; padding: 0; border: 0; border-radius: 999px;
                     display: inline-flex; align-items: center; justify-content: center;
@@ -988,8 +992,8 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 6px;
-                padding: 8px;
+                gap: 5px;
+                padding: 9px 10px;
                 border-radius: 999px;
                 background: rgba(26, 26, 26, 0.95); /* PERF: bg quase-opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
                 border: 1px solid rgba(255,255,255,0.09);
@@ -1008,12 +1012,12 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 6px;
+                gap: 5px;
             }
             .smg-nav-divider {
                 width: 1px;
-                height: 26px;
-                margin: 0 13px;
+                height: 28px;
+                margin: 0 6px;
                 flex: 0 0 auto;
                 background: linear-gradient(180deg, transparent, rgba(255,255,255,0.22) 50%, transparent);
             }
@@ -1064,8 +1068,8 @@
             /* ---- dock: botões circulares (icon-only) ---- */
             .smg-nav-btn {
                 position: relative;
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1081,10 +1085,12 @@
             }
             .smg-nav-ico {
                 position: relative;   /* âncora do badge reativo (alertas) */
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                font-size: var(--smg-btn-fs, 19px);
+                width: 22px;
+                height: 22px;
+                font-size: var(--smg-btn-fs, 20px);
                 line-height: 1;
                 filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
             }
@@ -1100,7 +1106,11 @@
             /* o CSS do fórum sobrescreve o atributo fill="none" e "enche" os SVGs;
                força outline em todos (o ponto do sino tem fill próprio e sobrevive) */
             .smg-nav-ico svg {
+                width: 20px;
+                height: 20px;
                 fill: none !important;
+                display: block;
+                margin: 0 auto;
             }
             .smg-nav-btn:not(:disabled):hover {
                 background: rgba(255,255,255,0.13);
@@ -1147,7 +1157,7 @@
             }
 
             /* ---- dock: botão com label VISÍVEL (pílula) — ex.: sort mostrando "Data"/"Reações" nas 2 docks ---- */
-            .smg-nav-btn.smg-nav-labeled { width: auto !important; border-radius: 20px !important; padding: 0 14px 0 12px !important; gap: 7px; }
+            .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: 22px !important; padding: 0 14px 0 12px !important; gap: 6px; }
             .smg-nav-btn-text { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
 
             /* ---- dock: botão Ocultar (secundário, mais discreto) ---- */
@@ -1462,11 +1472,58 @@
             .smg-search-tb-spacer {
                 flex: 1 1 auto;
             }
-            .smg-search-badges-slot {
-                position: relative !important;
-                z-index: 10001 !important;
+            .smg-search-select-wrap {
+                position: relative;
                 display: inline-flex;
                 align-items: center;
+            }
+            .smg-search-select-wrap .smg-search-select-ic {
+                position: absolute;
+                left: 10px;
+                pointer-events: none;
+                z-index: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 15px;
+                height: 15px;
+                color: rgba(255,255,255,0.7);
+            }
+            .smg-search-select-wrap .smg-search-select-ic svg {
+                width: 15px;
+                height: 15px;
+                fill: none !important;
+            }
+            .smg-search-select-wrap select {
+                appearance: none;
+                -webkit-appearance: none;
+                height: 34px;
+                padding: 0 28px 0 31px;
+                border-radius: 9px;
+                background-color: rgba(255,255,255,0.055);
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 9px center;
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.9);
+                font-size: 12.5px;
+                font-weight: 600;
+                cursor: pointer;
+                outline: none;
+                transition: all .15s ease;
+            }
+            .smg-search-select-wrap select:hover {
+                background-color: rgba(255,255,255,0.09);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
+            }
+            .smg-search-select-wrap select:focus {
+                border-color: var(--smg-link, #ff77b2);
+                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+            }
+            .smg-search-select-wrap select option {
+                background: #18181b;
+                color: #fff;
             }
             .smg-search-tb-left, .smg-search-tb-right {
                 display: flex;
@@ -1476,76 +1533,159 @@
             .smg-search-tb-right {
                 margin-left: auto;
             }
-            .smg-search-author-box {
+            /* AUTOR: trigger icon-only compacto e row expansível no lugar da toolbar */
+            .smg-search-author-trigger {
                 display: inline-flex;
                 align-items: center;
-                position: relative;
-                height: 32px;
-                padding: 0 10px;
-                border-radius: 9px;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.12);
-                gap: 8px;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
                 box-sizing: border-box;
-                transition: border-color .15s ease, background .15s ease;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.7);
+                cursor: pointer;
+                transition: all .15s ease;
             }
-            .smg-search-author-box:focus-within {
-                border-color: var(--smg-link, #ff77b2);
-                background: rgba(255,255,255,0.09);
+            .smg-search-author-trigger:hover {
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
             }
-            .smg-search-author-box.has-value {
+            .smg-search-author-trigger.has-value {
                 background: var(--smg-link-soft, rgba(255,119,178,0.18));
                 border-color: var(--smg-link, #ff77b2);
+                color: var(--smg-link, #ff77b2);
             }
-            .smg-search-author-ic {
+            .smg-search-author-trigger svg {
+                width: 15px;
+                height: 15px;
+                fill: none !important;
+            }
+            .smg-search-global-toolbar.author-open .smg-search-tb-row {
+                display: none !important;
+            }
+            .smg-search-author-row {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                width: 100%;
+                height: 34px;
+                box-sizing: border-box;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid var(--smg-link, #ff77b2);
+                padding: 0 8px 0 10px;
+                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                transition: all .15s ease;
+            }
+            .smg-search-author-row[hidden] {
+                display: none !important;
+            }
+            .smg-search-author-row .smg-search-author-ic {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 14px;
-                height: 14px;
-                opacity: 0.6;
-                color: currentColor;
-                pointer-events: none;
+                color: var(--smg-link, #ff77b2);
                 flex-shrink: 0;
             }
-            .smg-search-author-ic svg {
-                width: 14px;
-                height: 14px;
+            .smg-search-author-row .smg-search-author-ic svg {
+                width: 15px;
+                height: 15px;
                 fill: none !important;
             }
-            .smg-search-author-input, .smg-search-author-inp {
+            .smg-search-author-row .smg-search-author-inp {
+                flex: 1 1 auto;
+                min-width: 0;
+                width: 100%;
+                height: 100%;
                 border: none;
                 background: transparent;
                 outline: none;
                 color: #fff;
-                font-size: 12.5px;
-                font-weight: 600;
+                font-size: 13px;
+                font-weight: 500;
                 font-family: inherit;
-                width: 110px;
                 padding: 0;
                 margin: 0;
             }
-            .smg-search-author-input::placeholder, .smg-search-author-inp::placeholder {
-                color: rgba(255,255,255,0.4);
-                font-weight: 500;
+            .smg-search-author-row .smg-search-author-inp::placeholder {
+                color: rgba(255,255,255,0.42);
+            }
+            .smg-search-author-row .smg-search-author-clear,
+            .smg-search-author-row .smg-search-author-close {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                transition: all .15s ease;
+            }
+            .smg-search-author-row .smg-search-author-clear {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                color: rgba(255,255,255,0.45);
+                padding: 0;
+            }
+            .smg-search-author-row .smg-search-author-clear:hover {
+                background: rgba(255,255,255,0.12);
+                color: #fff;
+            }
+            .smg-search-author-row .smg-search-author-clear svg {
+                width: 13px;
+                height: 13px;
+                fill: none !important;
+            }
+            .smg-search-author-row .smg-search-author-close {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                background: rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.75);
+                padding: 0;
+            }
+            .smg-search-author-row .smg-search-author-close:hover {
+                background: rgba(255,255,255,0.16);
+                color: #fff;
+            }
+            .smg-search-author-row .smg-search-author-close svg {
+                width: 13px;
+                height: 13px;
+                fill: none !important;
             }
             .smg-search-tb-row .smg-search-cfg, .smg-search-tb-right .smg-search-cfg {
-                width: 32px;
-                height: 32px;
+                width: 34px;
+                height: 34px;
                 padding: 0;
                 border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.7);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all .15s ease;
+            }
+            .smg-search-tb-row .smg-search-cfg:hover, .smg-search-tb-right .smg-search-cfg:hover {
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
             }
             .smg-search-tb-row .smg-search-adv, .smg-search-tb-right .smg-search-adv {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
-                height: 32px;
+                gap: 7px;
+                height: 34px;
                 padding: 0 12px;
                 border-radius: 9px;
                 border: 1px solid rgba(255,255,255,0.12);
-                background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.7);
-                font-size: 12px;
+                background: rgba(255,255,255,0.055);
+                color: rgba(255,255,255,0.75);
+                font-size: 12.5px;
                 font-weight: 600;
                 text-decoration: none;
                 cursor: pointer;
@@ -1566,16 +1706,32 @@
                 opacity: 0.7;
             }
             .smg-search-global-toolbar .smg-multiselect-btn {
-                height: 32px;
-                padding: 0 11px;
+                height: 34px;
+                padding: 0 12px;
                 font-size: 12.5px;
+                font-weight: 600;
                 border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.9);
+                gap: 7px;
+                transition: all .15s ease;
+            }
+            .smg-search-global-toolbar .smg-multiselect-btn:hover {
+                background: rgba(255,255,255,0.09);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
+            }
+            .smg-search-global-toolbar .smg-multiselect-btn.has-active {
+                background: var(--smg-link-soft, rgba(255,119,178,0.18));
+                border-color: var(--smg-link, #ff77b2);
+                color: #fff;
             }
             .smg-search-tool-btn {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                height: 32px;
+                height: 34px;
                 padding: 0 11px;
                 border-radius: 9px;
                 background: rgba(255,255,255,0.05);
@@ -1618,13 +1774,23 @@
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
+                height: 34px;
+                padding: 0 10px;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(255,255,255,0.1);
                 cursor: pointer;
                 user-select: none;
-                padding: 4px 6px;
+                box-sizing: border-box;
+                transition: all .15s ease;
+            }
+            .smg-ios-toggle:hover {
+                background: rgba(255,255,255,0.07);
+                border-color: rgba(255,255,255,0.18);
             }
             .smg-ios-toggle input { display: none; }
             .smg-ios-switch {
-                width: 34px;
+                width: 32px;
                 height: 18px;
                 border-radius: 999px;
                 background: rgba(255,255,255,0.18);
@@ -1648,28 +1814,12 @@
                 background: var(--smg-link, #ff77b2);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch::before {
-                transform: translateX(16px);
+                transform: translateX(14px);
             }
             .smg-ios-label {
                 font-size: 12.5px;
                 font-weight: 600;
-                color: rgba(255,255,255,0.8);
-            }
-            .smg-search-select-wrap select {
-                height: 32px;
-                padding: 0 10px;
-                border-radius: 9px;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.12);
-                color: #fff;
-                font-size: 12.5px;
-                font-weight: 600;
-                cursor: pointer;
-                outline: none;
-            }
-            .smg-search-select-wrap select option {
-                background: #18181b;
-                color: #fff;
+                color: rgba(255,255,255,0.85);
             }
 
             /* filtros: label + chips de escopo + toggle "só títulos" + autor */
@@ -2430,42 +2580,45 @@
                 .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
 
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
+                /* Linha 1 (Controles de Thread / Lista no Mobile) */
                 .smg-dock-thread-bar {
                     display: flex !important;
                     flex-direction: row !important;
                     width: 100% !important;
-                    height: 40px !important;
+                    height: 38px !important;
                     align-items: center !important;
                     justify-content: space-around !important;
                     padding: 0 4px !important;
                     box-sizing: border-box !important;
                     border-bottom: 1px solid rgba(255,255,255,0.06) !important;
                     background: rgba(255,255,255,0.025) !important;
-                    gap: 2px !important;
+                    gap: 0 !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn {
                     flex: 1 1 0 !important;
+                    min-width: 0 !important;
+                    width: auto !important;
                     height: 34px !important;
                     min-height: 34px !important;
                     max-height: 34px !important;
-                    width: auto !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
                     border-radius: 8px !important;
-                    padding: 0 !important;
+                    padding: 0 2px !important;
                     margin: 0 !important;
                     box-shadow: none !important;
                     vertical-align: middle !important;
+                    transition: background .15s ease, color .15s ease;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico {
-                    font-size: 18px !important;
+                    font-size: 19px !important;
                     line-height: 1 !important;
-                    height: 18px !important;
-                    width: 18px !important;
-                    color: rgba(255,255,255,0.8) !important;
+                    height: 19px !important;
+                    width: 19px !important;
+                    color: rgba(255,255,255,0.85) !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
@@ -2473,18 +2626,21 @@
                     padding: 0 !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico svg {
-                    width: 18px !important;
-                    height: 18px !important;
-                    stroke-width: 1.9 !important;
+                    width: 19px !important;
+                    height: 19px !important;
+                    stroke-width: 2 !important;
                     display: block !important;
                     margin: 0 auto !important;
                 }
 
-                /* Botão de Ordenação (Data / Reações / etc.) no Mobile - Flat Text + Icon */
+                /* Botões com texto no Mobile (Sort e Pages) - Flex uniforme com espaçamento padrão */
                 .smg-dock-thread-bar #smg-post-sort-toggle,
                 .smg-dock-thread-bar #smg-list-sort-m,
-                .smg-dock-thread-bar .smg-sort-pill {
-                    flex: 1.2 1 0 !important;
+                .smg-dock-thread-bar .smg-sort-pill,
+                .smg-dock-thread-bar #smg-mobile-page-btn {
+                    flex: 1 1 0 !important;
+                    width: auto !important;
+                    min-width: 0 !important;
                     height: 34px !important;
                     min-height: 34px !important;
                     max-height: 34px !important;
@@ -2493,30 +2649,37 @@
                     border: none !important;
                     box-shadow: none !important;
                     border-radius: 0 !important;
-                    padding: 0 !important;
-                    gap: 4px !important;
+                    padding: 0 2px !important;
+                    gap: 3px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-ico svg,
                 .smg-dock-thread-bar #smg-list-sort-m .smg-nav-ico svg,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg {
+                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg,
+                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
                     width: 14px !important;
                     height: 14px !important;
+                    flex-shrink: 0 !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-list-sort-m .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text {
+                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text,
+                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
                     display: inline-block !important;
-                    font-size: 12px !important;
+                    font-size: 11.5px !important;
                     font-weight: 700 !important;
-                    color: rgba(255,255,255,0.85) !important;
+                    color: rgba(255,255,255,0.88) !important;
                     line-height: 1 !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle.smg-active,
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active {
+                .smg-dock-thread-bar .smg-sort-pill.smg-active,
+                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
                     background: transparent !important;
                     border: none !important;
                     box-shadow: none !important;
@@ -2526,49 +2689,28 @@
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link, #ff77b2) !important;
-                }
-
-                /* Botão de Paginação Mobile - Flat Text + Icon */
-                .smg-dock-thread-bar #smg-mobile-page-btn {
-                    flex: 1.25 1 0 !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
-                    align-self: center !important;
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    border-radius: 0 !important;
-                    padding: 0 !important;
-                    gap: 4px !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
-                    width: 14px !important;
-                    height: 14px !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
-                    display: inline-block !important;
-                    font-size: 12px !important;
-                    font-weight: 700 !important;
-                    color: rgba(255,255,255,0.92) !important;
-                    line-height: 1 !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
+                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
                     color: var(--smg-link, #ff77b2) !important;
                 }
-                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico {
+
+                /* Botão de View Mode no Mobile */
+                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico,
+                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico svg {
                     color: var(--smg-link, #ff77b2) !important;
+                    stroke: var(--smg-link, #ff77b2) !important;
+                }
+
+                /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
+                .smg-dock-thread-bar #smg-thread-watch.smg-active {
+                    background: rgba(255, 119, 178, 0.12) !important;
+                    border-radius: 8px !important;
+                }
+                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
+                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
+                    color: var(--smg-link, #ff77b2) !important;
+                    stroke: var(--smg-link, #ff77b2) !important;
                 }
 
                 /* Linha 2 (Navbar Global do Fórum no Mobile) */

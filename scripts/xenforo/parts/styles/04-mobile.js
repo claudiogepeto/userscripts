@@ -35,21 +35,28 @@
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
                 #smg-search-pop {
-                    top: auto; bottom: 0; left: 0; right: 0;
-                    width: 100%; max-width: 100%; max-height: min(90vh, 760px); max-height: min(90dvh, 760px);
-                    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
-                    border: none; border-top: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 24px 24px 0 0;
+                    position: fixed !important; inset: 0 !important;
+                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+                    width: 100vw !important; max-width: 100vw !important;
+                    height: 100dvh !important; max-height: 100dvh !important;
+                    padding: calc(10px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom)) 16px !important;
+                    border: none !important; border-radius: 0 !important;
+                    box-sizing: border-box !important;
+                    display: flex !important; flex-direction: column !important; justify-content: flex-end !important;
                     transform: translateY(100%);
                     transition: transform .32s cubic-bezier(.2,.85,.25,1), opacity .2s ease;
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
+                #smg-search-pop::before { display: none !important; }
 
+                /* Barra de busca na BASE (thumb-friendly) colada aos filtros */
                 #smg-search-pop .smg-search-bar {
-                    flex: 0 0 54px !important; height: 54px !important; min-height: 54px !important;
+                    order: 3 !important;
+                    flex: 0 0 50px !important; height: 50px !important; min-height: 50px !important;
+                    width: 100% !important;
                     display: flex !important; flex-wrap: nowrap !important; align-items: center !important;
-                    gap: 9px; margin: 0; padding: 0 7px 0 14px;
-                    border-radius: 16px; background: rgba(255,255,255,0.07);
+                    gap: 9px; margin: 2px 0 0 0 !important; padding: 0 7px 0 14px;
+                    border-radius: 15px; background: rgba(255,255,255,0.07);
                     border-color: rgba(255,255,255,0.14);
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
                 }
@@ -57,7 +64,7 @@
                 #smg-search-pop .smg-search-lupa svg { width: 19px; height: 19px; }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
-                    height: 100% !important; font-size: 17px; font-weight: 500;
+                    height: 100% !important; font-size: 16.5px; font-weight: 500;
                 }
                 #smg-search-pop .smg-search-chip {
                     flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
@@ -75,55 +82,108 @@
                 }
                 #smg-search-pop .smg-search-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
+                /* Toolbar de filtros ACIMA da barra de busca, coladinha */
                 #smg-search-pop .smg-search-global-toolbar {
-                    flex: 0 0 auto !important; min-height: 0 !important; width: auto; height: auto;
-                    margin: 0; padding: 12px 0 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
+                    order: 2 !important;
+                    flex: 0 0 auto !important; min-height: 0 !important; width: 100% !important; height: auto;
+                    margin: auto 0 0 0 !important; padding: 6px 0 4px !important;
+                    border-top: 1px solid rgba(255,255,255,0.08) !important;
+                    border-bottom: none !important;
                     gap: 0; overflow: visible !important;
                 }
                 #smg-search-pop .smg-search-tb-row {
-                    display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr));
-                    align-items: center; gap: 8px; width: 100%; flex-wrap: nowrap;
+                    display: flex !important; flex-wrap: nowrap !important;
+                    align-items: center !important; gap: 6px !important; width: 100%;
                 }
-                #smg-search-pop .smg-search-select-wrap { min-width: 0; width: 100%; }
+                /* Dropdowns viram ICON ONLY monocromáticos no mobile */
+                #smg-search-pop .smg-search-select-wrap {
+                    position: relative !important; flex: 0 0 38px !important;
+                    width: 38px !important; height: 38px !important; min-width: 38px !important; max-width: 38px !important;
+                    border-radius: 10px !important; background: rgba(255,255,255,0.055) !important;
+                    border: 1px solid rgba(255,255,255,0.13) !important;
+                    display: flex !important; align-items: center !important; justify-content: center !important;
+                    box-sizing: border-box !important;
+                }
+                #smg-search-pop .smg-search-select-wrap .smg-search-select-ic {
+                    position: static !important;
+                    display: flex !important; align-items: center; justify-content: center;
+                    width: 100% !important; height: 100% !important;
+                    pointer-events: none; color: rgba(255,255,255,0.85) !important;
+                }
+                #smg-search-pop .smg-search-select-wrap .smg-search-select-ic svg {
+                    width: 17px !important; height: 17px !important; fill: none !important;
+                }
                 #smg-search-pop .smg-search-select-wrap select {
-                    width: 100%; min-width: 0; height: 44px; padding: 0 28px 0 11px;
-                    border-radius: 12px; font-size: 13px; font-weight: 650;
-                    background-color: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.13);
-                    text-overflow: ellipsis;
+                    position: absolute !important; inset: 0 !important;
+                    width: 100% !important; height: 100% !important; opacity: 0 !important;
+                    cursor: pointer !important; -webkit-appearance: none !important; appearance: none !important;
+                    z-index: 2 !important; padding: 0 !important; margin: 0 !important;
                 }
-                #smg-search-pop .smg-search-badges-slot {
-                    grid-column: 1 / -1; width: 100%; min-width: 0; margin-top: 0;
-                }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-container { display: flex; width: 100%; }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-btn {
-                    width: 100%; height: 44px; justify-content: flex-start; padding: 0 12px;
-                    border-radius: 12px; font-size: 13.5px; background: rgba(255,255,255,0.055);
-                    border-color: rgba(255,255,255,0.13);
-                }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-btn-arrow { margin-left: auto; }
                 #smg-search-pop .smg-ios-toggle {
-                    min-width: 0; width: 100%; min-height: 44px; height: 44px; justify-content: center;
-                    gap: 8px; padding: 0 8px; border: 1px solid rgba(255,255,255,0.13);
-                    border-radius: 12px; background: rgba(255,255,255,0.04);
+                    flex: 0 0 auto !important; width: auto !important; min-width: 0 !important;
+                    height: 38px !important; min-height: 38px !important; padding: 0 8px !important;
+                    gap: 6px !important; border-radius: 10px !important;
+                    background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.13) !important;
                 }
-                #smg-search-pop .smg-ios-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
-                #smg-search-pop .smg-search-author-box {
-                    min-width: 0; width: 100%; height: 44px; padding: 0 11px; border-radius: 12px;
-                    gap: 7px; background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.13);
+                #smg-search-pop .smg-ios-label {
+                    font-size: 11.5px !important; white-space: nowrap !important;
                 }
-                #smg-search-pop .smg-search-author-inp {
-                    flex: 1 1 auto; min-width: 0; width: auto; font-size: 13.5px;
+                /* Autor icon-only trigger e row expansível no mobile */
+                #smg-search-pop .smg-search-author-trigger {
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    background: rgba(255,255,255,0.055) !important; border: 1px solid rgba(255,255,255,0.13) !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
-                #smg-search-pop .smg-search-tb-spacer { display: none; }
-                #smg-search-pop .smg-search-tb-row .smg-search-cfg,
+                #smg-search-pop .smg-search-author-trigger.has-value {
+                    background: var(--smg-link-soft, rgba(255,119,178,0.22)) !important;
+                    border-color: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link, #ff77b2) !important;
+                }
+                #smg-search-pop .smg-search-author-trigger svg {
+                    width: 17px !important; height: 17px !important; fill: none !important;
+                }
+                #smg-search-pop .smg-search-global-toolbar.author-open .smg-search-author-row {
+                    height: 40px !important; border-radius: 11px !important;
+                    padding: 0 10px !important;
+                }
+                #smg-search-pop .smg-search-global-toolbar.author-open .smg-search-author-row .smg-search-author-inp {
+                    font-size: 14px !important;
+                }
+                /* Spacer empurra os botões de config e avançado para a direita da tela (igual desktop) */
+                #smg-search-pop .smg-search-tb-spacer {
+                    display: block !important;
+                    flex: 1 1 auto !important;
+                    min-width: 4px !important;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-cfg {
+                    margin-left: auto !important;
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv {
-                    width: 100%; min-width: 0; height: 44px; justify-content: center;
-                    border-radius: 12px; font-size: 13px;
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv span:first-child {
+                    display: none !important;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv .smg-ext-ic {
+                    margin: 0 !important; display: flex !important; align-items: center; justify-content: center;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv .smg-ext-ic svg {
+                    width: 15px; height: 15px;
+                }
+                /* Resultados e histórico no TOPO (order: 1) rolando livremente */
                 #smg-search-pop .smg-search-results,
-                #smg-search-pop .smg-search-history {
+                #smg-search-pop .smg-search-history,
+                #smg-search-pop .smg-search-empty {
+                    order: 1 !important;
                     flex: 1 1 auto !important; min-height: 0 !important;
                     max-height: none !important; padding-top: 6px;
+                    overflow-y: auto !important;
                 }
                 #smg-search-pop .smg-search-result { padding: 10px 6px; gap: 9px; border-radius: 12px; }
                 #smg-search-pop .smg-search-result-fig { flex-basis: 78px; width: 78px; height: 58px; }
@@ -133,8 +193,8 @@
                 #smg-search-pop .smg-search-hist-head { padding: 0 4px; }
                 #smg-search-pop .smg-search-hist-item { min-height: 44px; padding: 8px 6px; }
 
-                /* grip (puxador) no topo de cada sheet */
-                #smg-search-pop::before, #smg-settings-pop::before,
+                /* grip (puxador) no topo dos demais sheets (settings, filtro, ordenar) */
+                #smg-settings-pop::before,
                 #smg-filter-pop::before, #smg-listfilter-pop::before, #smg-listsort-pop::before {
                     content: ''; flex: 0 0 auto; width: 40px; height: 5px;
                     border-radius: 999px; background: rgba(255,255,255,0.25);

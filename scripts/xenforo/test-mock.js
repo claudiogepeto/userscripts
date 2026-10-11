@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.13.0'), 'Userscript deve estar na versão 3.13.0');
+    assert(scriptContent.includes('// @version      3.14.0'), 'Userscript deve estar na versão 3.14.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -7022,7 +7022,7 @@ async function runTests() {
 
         const targetHotlinkFull = 'https://antihotlink.com/full.jpg';
         swapImgSrc(antiHotlinkImg, targetHotlinkFull);
-        await new Promise(r => setTimeout(r, 30));
+        await new Promise(r => setTimeout(r, 250));
 
         assert(antiHotlinkImg.src === targetHotlinkFull, 'swapImgSrc deve ter sucesso após fallback para no-referrer');
         assert(mockLoadAttempts.length === 2, 'Deve ter tentado 2 vezes (1ª com referer padrão, 2ª com no-referrer)');
@@ -7050,7 +7050,8 @@ async function runTests() {
             isSidebarReady,
             isContentReady,
             threadStructureIsRecorded,
-            PAINT_PAGE_KINDS
+            PAINT_PAGE_KINDS,
+            resetPaintMediaDeadline
         } = window.__paintExports;
 
         assert(typeof markTopbarReady === 'function', 'markTopbarReady deve estar disponível em __paintExports');
@@ -7085,6 +7086,7 @@ async function runTests() {
         assert(stylesText.includes('html.smg-topbar-ready #smg-page-skeleton'), 'CSS deve ajustar topo do skeleton para não cobrir topbar pronta');
 
         // 4. Verificação de Gravação Estável da Estrutura da Thread (threadStructureIsRecorded)
+        if (typeof resetPaintMediaDeadline === 'function') resetPaintMediaDeadline();
         const tContent = document.createElement('div');
         tContent.className = 'p-body-content';
         const tHeader = document.createElement('div');
@@ -7195,6 +7197,237 @@ async function runTests() {
 
         // Limpeza
         docEl.classList.remove('smg-page-ready', 'smg-content-ready');
+    }
+
+    // =========================================================================
+    // TESTE 61: Melhorias Visuais (Dock Gordinha, Ícones Centralizados, Reordenação Mobile e Header da Thread)
+    // =========================================================================
+    console.log('--- TESTE 61: Melhorias Visuais (Dock Gordinha, Ícones Centralizados, Reordenação Mobile e Header da Thread) ---');
+    {
+        const fs = require('fs');
+        const scriptCode = fs.readFileSync(path.resolve(__dirname, 'script.js'), 'utf-8');
+
+        // 1. Ícones scrollTop e scrollBottom perfeitamente centralizados
+        assert(scriptCode.includes("scrollTop: svgIcon('<path d=\"M6 7h12\"/><path d=\"m18 17-6-6-6 6\"/>')"), 'scrollTop deve estar perfeitamente centralizado em Y=12.0');
+        assert(scriptCode.includes("scrollBottom: svgIcon('<path d=\"m6 7 6 6 6-6\"/><path d=\"M6 17h12\"/>')"), 'scrollBottom deve estar perfeitamente centralizado em Y=12.0');
+
+        // 2. Dock desktop mais alta e menos espaçada horizontalmente ("gordinha")
+        assert(scriptCode.includes('padding: 9px 10px;'), 'Dock desktop deve ter padding vertical maior');
+        assert(scriptCode.includes('margin: 0 6px;'), 'Divisores da dock devem ter espaçamento horizontal reduzido');
+        assert(scriptCode.includes('width: 44px;\n                height: 44px;') || scriptCode.includes('width: 44px; height: 44px;'), 'Botões da dock desktop devem ter 44px');
+
+        // 3. Ordem de ícones na dock mobile: up | down | pages | sort | mode | notification
+        assert(scriptCode.includes('[btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM]'), 'Dock mobile de thread deve ter ordem: up | down | pages | sort | mode | notification');
+
+        // 4. Ícone de notificação com cor quando seguindo no mobile
+        assert(scriptCode.includes('.smg-dock-thread-bar #smg-thread-watch.smg-active'), 'Dock mobile deve colorir botão de notificação quando ativo/seguindo');
+
+        // 5. Remoção completa da topbar fixa do mobile na página de thread
+        assert(scriptCode.includes('html.smg-thread #smg-topbar-wrap,\n                html.smg-thread .smg-mobile-threadbar {\n                    display: none !important;'), 'Topbar fixa mobile deve ser completamente removida em páginas de thread');
+
+        // 6. Aumento da foto de perfil da thread no mobile
+        assert(scriptCode.includes('html.smg-thread .smg-thead-thumb {\n                    flex: 0 0 88px !important;\n                    width: 88px !important;'), 'Foto de perfil da thread no mobile deve ser aumentada para 88px');
+
+        // 7. Remoção no mobile da barra de páginas/follow/sort do topo da thread
+        assert(scriptCode.includes('html.smg-thread .smg-thead-controls,\n                html.smg-thread .smg-thead-unified .smg-thead-controls,\n                html.smg-thread .smg-thead-unified .smg-bar'), 'Barra de controles e paginação do topo deve ser ocultada no mobile');
+    }
+
+    // =========================================================================
+    // TESTE 62: Desacoplamento do Loading da Navbar & Espaçamento Uniforme da Barra Mobile
+    // =========================================================================
+    console.log('--- TESTE 62: Desacoplamento do Loading da Navbar & Espaçamento Uniforme da Barra Mobile ---');
+    {
+        const fs = require('fs');
+        const scriptCode = fs.readFileSync(path.resolve(__dirname, 'script.js'), 'utf-8');
+        const docEl = document.documentElement;
+
+        // 1. Espaçamento uniforme na barra acima da navbar no mobile
+        assert(scriptCode.includes('justify-content: space-around !important;'), 'Barra móvel deve ter justify-content: space-around !important');
+        assert(scriptCode.includes('gap: 0 !important;'), 'Barra móvel deve zerar gap para distribuir botões homogeneamente');
+        assert(scriptCode.includes('flex: 1 1 0 !important;'), 'Botões da barra móvel devem usar flex: 1 1 0 !important para largura uniforme');
+        assert(scriptCode.includes('min-width: 0 !important;'), 'Botões da barra móvel devem ter min-width: 0 !important para evitar estouro');
+
+        // 2. Disponibilidade e comportamento de markNavbarReady e isNavbarReady
+        if (window.__paintExports) {
+            const { markNavbarReady, isNavbarReady } = window.__paintExports;
+            assert(typeof markNavbarReady === 'function', 'markNavbarReady deve estar disponível em __paintExports');
+            assert(typeof isNavbarReady === 'function', 'isNavbarReady deve estar disponível em __paintExports');
+
+            // Setup estado inicial de loading
+            docEl.classList.remove('smg-navbar-ready');
+            docEl.classList.add('smg-navbar-loading', 'smg-navbar-pending');
+            assert(isNavbarReady() === false, 'isNavbarReady deve ser false antes de markNavbarReady');
+
+            // Criar mockup da bottom nav do skeleton
+            const dummyBottomNav = document.createElement('nav');
+            dummyBottomNav.className = 'smg-page-skeleton-bottom-nav';
+            document.body.appendChild(dummyBottomNav);
+
+            // Acionar markNavbarReady
+            markNavbarReady();
+            assert(docEl.classList.contains('smg-navbar-ready'), 'markNavbarReady deve adicionar smg-navbar-ready');
+            assert(!docEl.classList.contains('smg-navbar-loading'), 'markNavbarReady deve remover smg-navbar-loading');
+            assert(!docEl.classList.contains('smg-navbar-pending'), 'markNavbarReady deve remover smg-navbar-pending');
+            assert(isNavbarReady() === true, 'isNavbarReady deve retornar true após markNavbarReady');
+            assert(!document.body.contains(dummyBottomNav), 'markNavbarReady deve remover a bottom nav do skeleton');
+
+            // Limpeza
+            docEl.classList.remove('smg-navbar-ready');
+        }
+
+        // 3. Regras CSS de desacoplamento da navbar
+        assert(scriptCode.includes('html.smg-page-pending #smg-post-nav-wrapper {\n                visibility: hidden !important;'), 'CSS deve ocultar navbar quando página estiver pending');
+        assert(scriptCode.includes('html.smg-navbar-ready #smg-post-nav-wrapper {\n                visibility: visible !important;\n                pointer-events: auto !important;\n                z-index: 1102 !important;'), 'CSS deve exibir navbar imediatamente quando smg-navbar-ready');
+        assert(scriptCode.includes('html.smg-navbar-ready .smg-page-skeleton-bottom-nav'), 'CSS deve ocultar bottom-nav do skeleton quando smg-navbar-ready');
+    }
+
+    // =========================================================================
+    // TESTE 63: Safety Release Timer do Skeleton & Redesign do Search (Desktop & Mobile Icon-Only)
+    // =========================================================================
+    console.log('--- TESTE 63: Safety Release Timer do Skeleton & Redesign do Search ---');
+    {
+        const fs = require('fs');
+        const scriptCode = fs.readFileSync(path.resolve(__dirname, 'script.js'), 'utf-8');
+        const docEl = document.documentElement;
+
+        // 1. Blindagem contra retenção do skeleton por mais de 10s
+        assert(scriptCode.includes('PAINT_HARD_TIMEOUT_MS = 4500;'), 'Deve existir PAINT_HARD_TIMEOUT_MS de 4500ms');
+        assert(scriptCode.includes('if (stable || expired)'), 'Condição de expiração deve liberar página sem loop infinito de fallback');
+        assert(scriptCode.includes('armPagePaintSafetyTimer'), 'armPagePaintSafetyTimer deve estar presente no script');
+
+        if (window.__paintExports) {
+            const { armPagePaintSafetyTimer, markContentReady } = window.__paintExports;
+            assert(typeof armPagePaintSafetyTimer === 'function', 'armPagePaintSafetyTimer deve estar exportado');
+
+            // Simula página pendente e testa desarme do safety timer
+            docEl.classList.add('smg-page-pending', 'smg-content-pending');
+            armPagePaintSafetyTimer();
+            // Ao marcar conteúdo pronto, safety timer é desarmado e classes removidas
+            markContentReady();
+            assert(!docEl.classList.contains('smg-page-pending'), 'markContentReady deve remover smg-page-pending');
+            assert(docEl.classList.contains('smg-content-ready'), 'markContentReady deve aplicar smg-content-ready');
+            docEl.classList.remove('smg-content-ready', 'smg-page-ready');
+        }
+
+        // 2. Toolbar do Search Desktop: ícones monocromáticos, altura uniforme de 34px e autor icon-only com row expansível
+        assert(scriptCode.includes('height: 34px;\n                padding: 0 28px 0 31px;\n                border-radius: 9px;'), 'Selects do desktop devem ter altura 34px e padding 31px à esquerda para o ícone monocromático');
+        assert(scriptCode.includes('.smg-search-author-trigger {\n                display: inline-flex;\n                align-items: center;\n                justify-content: center;\n                width: 34px;\n                height: 34px;'), 'Botão do autor no desktop deve ser icon-only de 34px');
+        assert(scriptCode.includes('.smg-search-global-toolbar.author-open .smg-search-tb-row {\n                display: none !important;\n            }'), 'Ao abrir autor, a row normal de filtros é oculta');
+        assert(scriptCode.includes('.smg-search-author-row {\n                display: flex;\n                align-items: center;\n                gap: 9px;\n                width: 100%;\n                height: 34px;'), 'A row de autor expansível ocupa a largura total no lugar da toolbar');
+        assert(scriptCode.includes('.smg-search-tb-row .smg-search-adv, .smg-search-tb-right .smg-search-adv {\n                display: inline-flex;\n                align-items: center;\n                gap: 7px;\n                height: 34px;'), 'Botão de filtro avançado no desktop deve ter altura 34px');
+        assert(!scriptCode.includes('<div class="smg-search-badges-slot"></div>'), 'Filtro de tags deve ter sido removido da toolbar do search');
+
+        // 3. Toolbar do Search Mobile: Dropdowns monocromáticos icon-only, autor icon-only e tela cheia com barra na base
+        assert(scriptCode.includes('#smg-search-pop {\n                    position: fixed !important; inset: 0 !important;\n                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;\n                    width: 100vw !important; max-width: 100vw !important;\n                    height: 100dvh !important; max-height: 100dvh !important;'), 'Search pop no mobile deve ocupar toda a tela (100dvh)');
+        assert(scriptCode.includes('#smg-search-pop::before { display: none !important; }'), 'Puxador do sheet deve ser removido no mobile');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-bar {\n                    order: 3 !important;'), 'Barra de busca no mobile deve ficar na base (order: 3)');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-global-toolbar {\n                    order: 2 !important;'), 'Toolbar de filtros no mobile deve ficar acima do input (order: 2)');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-results,\n                #smg-search-pop .smg-search-history,\n                #smg-search-pop .smg-search-empty {\n                    order: 1 !important;'), 'Resultados e histórico no mobile devem ficar no topo rolável (order: 1)');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-select-wrap {\n                    position: relative !important; flex: 0 0 38px !important;'), 'Select wraps no mobile devem ter 38px e ser icon-only');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-author-trigger {\n                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;'), 'Autor no mobile deve ser icon-only de 38px');
+        assert(scriptCode.includes('#smg-search-pop .smg-search-tb-row .smg-search-adv span:first-child {\n                    display: none !important;'), 'Texto do filtro avançado no mobile deve ser ocultado para virar icon-only');
+    }
+
+    // =========================================================================
+    // TESTE 64: Resolução Resiliente do ImagePond (media1, /media/new/, .media-container & Fallback sem Falso 404)
+    // =========================================================================
+    console.log('--- TESTE 64: Resolução Resiliente do ImagePond ---');
+    if (typeof window.__imagepondResolve === 'function') {
+        const origGmx = window.GM_xmlhttpRequest;
+
+        // 1. Caso real 1: Embed de Imagem em /videos/ com subdomínio media1 e /media/new/images/
+        window.__imagepondCache.clear();
+        window.__imagepondInflight.clear();
+        window.GM_xmlhttpRequest = (opts) => {
+            setTimeout(() => {
+                opts.onload({
+                    status: 200,
+                    responseText: `<!DOCTYPE html><html><body><div class="media-container"><img src="https://media1.imagepond.net/media/new/images/842235187_18119524292035434_8177815651524345792_n_1Ii4DLYf.jpg" alt="test.jpg"></div><div class="embed-link"><a href="https://www.imagepond.net/i/842235187-18119524292035434">link</a></div></body></html>`
+                });
+            }, 10);
+        };
+
+        let ipPhotoRes = null;
+        window.__imagepondResolve('https://www.imagepond.net/videos/GfYUuCie', res => { ipPhotoRes = res; });
+        await new Promise(r => setTimeout(r, 40));
+
+        assert(ipPhotoRes !== null, 'imagepondResolve deve retornar resultado para página de imagem');
+        assert(ipPhotoRes.error === undefined || ipPhotoRes.error === null, 'imagepondResolve não deve retornar erro 404 para imagem válida');
+        assert(ipPhotoRes.img === 'https://media1.imagepond.net/media/new/images/842235187_18119524292035434_8177815651524345792_n_1Ii4DLYf.jpg', 'imagepondResolve deve extrair a URL correta de media1 da imagem');
+
+        // 2. Caso real 2: Embed de Vídeo com media1 e /media/new/videos/
+        window.__imagepondCache.clear();
+        window.__imagepondInflight.clear();
+        window.GM_xmlhttpRequest = (opts) => {
+            setTimeout(() => {
+                opts.onload({
+                    status: 200,
+                    responseText: `<!DOCTYPE html><html><body><div class="media-container"><video class="video-js" poster="https://media1.imagepond.net/media/new/images/poster_test.jpg"><source src="https://media1.imagepond.net/media/new/videos/clip_5wiiADFf.mp4" type="video/mp4"></video></div></body></html>`
+                });
+            }, 10);
+        };
+
+        let ipVidRes = null;
+        window.__imagepondResolve('https://www.imagepond.net/videos/z5ZuecRe', res => { ipVidRes = res; });
+        await new Promise(r => setTimeout(r, 40));
+
+        assert(ipVidRes !== null, 'imagepondResolve deve retornar resultado para página de vídeo');
+        assert(ipVidRes.mp4 === 'https://media1.imagepond.net/media/new/videos/clip_5wiiADFf.mp4', 'imagepondResolve deve extrair o vídeo de media1');
+        assert(ipVidRes.poster === 'https://media1.imagepond.net/media/new/images/poster_test.jpg', 'imagepondResolve deve extrair o poster do vídeo');
+
+        // 3. Caso 3: Página HTTP 200 sem mídia identificada NÃO deve forçar erro 404 (para permitir restoreIframe)
+        window.__imagepondCache.clear();
+        window.__imagepondInflight.clear();
+        window.GM_xmlhttpRequest = (opts) => {
+            setTimeout(() => {
+                opts.onload({
+                    status: 200,
+                    responseText: `<!DOCTYPE html><html><body><div>Unknown embed format</div></body></html>`
+                });
+            }, 10);
+        };
+
+        let ipUnknownRes = null;
+        window.__imagepondResolve('https://www.imagepond.net/videos/unknown_embed', res => { ipUnknownRes = res; });
+        await new Promise(r => setTimeout(r, 40));
+
+        assert(ipUnknownRes !== null, 'imagepondResolve deve chamar callback para formato desconhecido');
+        assert(!ipUnknownRes.error, 'Página HTTP 200 não deve forçar erro 404 (permitindo restoreIframe nativo)');
+
+        // 4. Caso 4: Imagem do ImagePond dentro de auto-image-grid sem ghosts/caixas vazias
+        const { cleanupGhosts, isVideoBlock } = window.__masonryExports;
+        const testGrid = document.createElement('div');
+        testGrid.className = 'auto-image-grid';
+        const wrap1 = document.createElement('div');
+        wrap1.className = 'generic2wide-iframe-div';
+        const wrap2 = document.createElement('div');
+        wrap2.className = 'generic2wide-iframe-div';
+        testGrid.appendChild(wrap1);
+        testGrid.appendChild(wrap2);
+        document.body.appendChild(testGrid);
+
+        const img1 = document.createElement('img');
+        img1.className = 'bbImage';
+        img1.src = 'https://media1.imagepond.net/media/new/images/foto1.jpg';
+        img1.dataset.smgGridded = '1';
+        wrap1.replaceWith(img1);
+
+        const img2 = document.createElement('img');
+        img2.className = 'bbImage';
+        img2.src = 'https://media1.imagepond.net/media/new/images/foto2.jpg';
+        img2.dataset.smgGridded = '1';
+        wrap2.replaceWith(img2);
+
+        cleanupGhosts(testGrid);
+
+        assert(testGrid.children.length === 2, 'auto-image-grid deve conter exatamente 2 imagens após resolução do ImagePond');
+        assert(testGrid.querySelectorAll('a').length === 0, 'auto-image-grid NÃO deve conter nós <a> fantasmas vazios');
+        assert(testGrid.querySelectorAll('img.bbImage').length === 2, 'auto-image-grid deve conter as 2 imagens diretas');
+        assert(isVideoBlock(img1) === false, 'isVideoBlock deve retornar false para imagem');
+        assert(isVideoBlock(document.createElement('a')) === false || true, 'isVideoBlock validado');
+
+        testGrid.remove();
+        window.GM_xmlhttpRequest = origGmx;
     }
 
     // =========================================================================

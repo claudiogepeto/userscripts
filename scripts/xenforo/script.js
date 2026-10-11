@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.13.0
+// @version      3.14.0
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -545,8 +545,8 @@
         goto: svgIcon('<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>'),
         postUp: svgIcon('<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>'),
         postDown: svgIcon('<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'),
-        scrollTop: svgIcon('<path d="m18 15-6-6-6 6"/><path d="M6 4h12"/>'),
-        scrollBottom: svgIcon('<path d="m6 9 6 6 6-6"/><path d="M6 20h12"/>'),
+        scrollTop: svgIcon('<path d="M6 7h12"/><path d="m18 17-6-6-6 6"/>'),
+        scrollBottom: svgIcon('<path d="m6 7 6 6 6-6"/><path d="M6 17h12"/>'),
         hide: svgIcon('<path d="m6 9 6 6 6-6"/>'),
         show: svgIcon('<path d="m18 15-6-6-6 6"/>'),
         settings: svgIcon('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
@@ -591,6 +591,8 @@
         logout: svgIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>'),
         reply: svgIcon('<polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>'),
         instagram: svgIcon('<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>'),
+        globe: svgIcon('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>'),
+        barChart: svgIcon('<line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>'),
         x: `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
     };
 
@@ -3535,14 +3537,18 @@
                 html.smg-topbar-on body { padding-top: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top)) !important; }
                 html.smg-topbar-on :target { scroll-margin-top: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top)); }
 
-                /* Thread: título centralizado entre duas colunas de 44px, sem overflow do
-                   nome para fora da viewport e com alvo de toque confortável no voltar. */
-                html.smg-thread #smg-tb-inner { display: none !important; }
+                /* Thread no mobile: topbar fixa completamente removida (no topo ficam apenas as infos da thread e os avisos) */
+                html.smg-thread #smg-topbar-wrap,
                 html.smg-thread .smg-mobile-threadbar {
-                    display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px;
-                    align-items: center; width: 100%; height: var(--smg-mobile-topbar-h);
-                    padding: 0 8px; box-sizing: border-box;
+                    display: none !important;
                 }
+                html.smg-thread.smg-topbar-on body {
+                    padding-top: max(0px, env(safe-area-inset-top)) !important;
+                }
+                html.smg-thread.smg-topbar-on :target {
+                    scroll-margin-top: 10px !important;
+                }
+                html.smg-thread #smg-tb-inner { display: none !important; }
                 .smg-mobile-threadbar-back {
                     width: 44px; height: 44px; padding: 0; border: 0; border-radius: 999px;
                     display: inline-flex; align-items: center; justify-content: center;
@@ -3630,8 +3636,8 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 6px;
-                padding: 8px;
+                gap: 5px;
+                padding: 9px 10px;
                 border-radius: 999px;
                 background: rgba(26, 26, 26, 0.95); /* PERF: bg quase-opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
                 border: 1px solid rgba(255,255,255,0.09);
@@ -3650,12 +3656,12 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 6px;
+                gap: 5px;
             }
             .smg-nav-divider {
                 width: 1px;
-                height: 26px;
-                margin: 0 13px;
+                height: 28px;
+                margin: 0 6px;
                 flex: 0 0 auto;
                 background: linear-gradient(180deg, transparent, rgba(255,255,255,0.22) 50%, transparent);
             }
@@ -3706,8 +3712,8 @@
             /* ---- dock: botões circulares (icon-only) ---- */
             .smg-nav-btn {
                 position: relative;
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -3723,10 +3729,12 @@
             }
             .smg-nav-ico {
                 position: relative;   /* âncora do badge reativo (alertas) */
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                font-size: var(--smg-btn-fs, 19px);
+                width: 22px;
+                height: 22px;
+                font-size: var(--smg-btn-fs, 20px);
                 line-height: 1;
                 filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
             }
@@ -3742,7 +3750,11 @@
             /* o CSS do fórum sobrescreve o atributo fill="none" e "enche" os SVGs;
                força outline em todos (o ponto do sino tem fill próprio e sobrevive) */
             .smg-nav-ico svg {
+                width: 20px;
+                height: 20px;
                 fill: none !important;
+                display: block;
+                margin: 0 auto;
             }
             .smg-nav-btn:not(:disabled):hover {
                 background: rgba(255,255,255,0.13);
@@ -3789,7 +3801,7 @@
             }
 
             /* ---- dock: botão com label VISÍVEL (pílula) — ex.: sort mostrando "Data"/"Reações" nas 2 docks ---- */
-            .smg-nav-btn.smg-nav-labeled { width: auto !important; border-radius: 20px !important; padding: 0 14px 0 12px !important; gap: 7px; }
+            .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: 22px !important; padding: 0 14px 0 12px !important; gap: 6px; }
             .smg-nav-btn-text { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
 
             /* ---- dock: botão Ocultar (secundário, mais discreto) ---- */
@@ -4104,11 +4116,58 @@
             .smg-search-tb-spacer {
                 flex: 1 1 auto;
             }
-            .smg-search-badges-slot {
-                position: relative !important;
-                z-index: 10001 !important;
+            .smg-search-select-wrap {
+                position: relative;
                 display: inline-flex;
                 align-items: center;
+            }
+            .smg-search-select-wrap .smg-search-select-ic {
+                position: absolute;
+                left: 10px;
+                pointer-events: none;
+                z-index: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 15px;
+                height: 15px;
+                color: rgba(255,255,255,0.7);
+            }
+            .smg-search-select-wrap .smg-search-select-ic svg {
+                width: 15px;
+                height: 15px;
+                fill: none !important;
+            }
+            .smg-search-select-wrap select {
+                appearance: none;
+                -webkit-appearance: none;
+                height: 34px;
+                padding: 0 28px 0 31px;
+                border-radius: 9px;
+                background-color: rgba(255,255,255,0.055);
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 9px center;
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.9);
+                font-size: 12.5px;
+                font-weight: 600;
+                cursor: pointer;
+                outline: none;
+                transition: all .15s ease;
+            }
+            .smg-search-select-wrap select:hover {
+                background-color: rgba(255,255,255,0.09);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
+            }
+            .smg-search-select-wrap select:focus {
+                border-color: var(--smg-link, #ff77b2);
+                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+            }
+            .smg-search-select-wrap select option {
+                background: #18181b;
+                color: #fff;
             }
             .smg-search-tb-left, .smg-search-tb-right {
                 display: flex;
@@ -4118,76 +4177,159 @@
             .smg-search-tb-right {
                 margin-left: auto;
             }
-            .smg-search-author-box {
+            /* AUTOR: trigger icon-only compacto e row expansível no lugar da toolbar */
+            .smg-search-author-trigger {
                 display: inline-flex;
                 align-items: center;
-                position: relative;
-                height: 32px;
-                padding: 0 10px;
-                border-radius: 9px;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.12);
-                gap: 8px;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
                 box-sizing: border-box;
-                transition: border-color .15s ease, background .15s ease;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.7);
+                cursor: pointer;
+                transition: all .15s ease;
             }
-            .smg-search-author-box:focus-within {
-                border-color: var(--smg-link, #ff77b2);
-                background: rgba(255,255,255,0.09);
+            .smg-search-author-trigger:hover {
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
             }
-            .smg-search-author-box.has-value {
+            .smg-search-author-trigger.has-value {
                 background: var(--smg-link-soft, rgba(255,119,178,0.18));
                 border-color: var(--smg-link, #ff77b2);
+                color: var(--smg-link, #ff77b2);
             }
-            .smg-search-author-ic {
+            .smg-search-author-trigger svg {
+                width: 15px;
+                height: 15px;
+                fill: none !important;
+            }
+            .smg-search-global-toolbar.author-open .smg-search-tb-row {
+                display: none !important;
+            }
+            .smg-search-author-row {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                width: 100%;
+                height: 34px;
+                box-sizing: border-box;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid var(--smg-link, #ff77b2);
+                padding: 0 8px 0 10px;
+                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                transition: all .15s ease;
+            }
+            .smg-search-author-row[hidden] {
+                display: none !important;
+            }
+            .smg-search-author-row .smg-search-author-ic {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 14px;
-                height: 14px;
-                opacity: 0.6;
-                color: currentColor;
-                pointer-events: none;
+                color: var(--smg-link, #ff77b2);
                 flex-shrink: 0;
             }
-            .smg-search-author-ic svg {
-                width: 14px;
-                height: 14px;
+            .smg-search-author-row .smg-search-author-ic svg {
+                width: 15px;
+                height: 15px;
                 fill: none !important;
             }
-            .smg-search-author-input, .smg-search-author-inp {
+            .smg-search-author-row .smg-search-author-inp {
+                flex: 1 1 auto;
+                min-width: 0;
+                width: 100%;
+                height: 100%;
                 border: none;
                 background: transparent;
                 outline: none;
                 color: #fff;
-                font-size: 12.5px;
-                font-weight: 600;
+                font-size: 13px;
+                font-weight: 500;
                 font-family: inherit;
-                width: 110px;
                 padding: 0;
                 margin: 0;
             }
-            .smg-search-author-input::placeholder, .smg-search-author-inp::placeholder {
-                color: rgba(255,255,255,0.4);
-                font-weight: 500;
+            .smg-search-author-row .smg-search-author-inp::placeholder {
+                color: rgba(255,255,255,0.42);
+            }
+            .smg-search-author-row .smg-search-author-clear,
+            .smg-search-author-row .smg-search-author-close {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border: none;
+                background: transparent;
+                transition: all .15s ease;
+            }
+            .smg-search-author-row .smg-search-author-clear {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                color: rgba(255,255,255,0.45);
+                padding: 0;
+            }
+            .smg-search-author-row .smg-search-author-clear:hover {
+                background: rgba(255,255,255,0.12);
+                color: #fff;
+            }
+            .smg-search-author-row .smg-search-author-clear svg {
+                width: 13px;
+                height: 13px;
+                fill: none !important;
+            }
+            .smg-search-author-row .smg-search-author-close {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                background: rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.75);
+                padding: 0;
+            }
+            .smg-search-author-row .smg-search-author-close:hover {
+                background: rgba(255,255,255,0.16);
+                color: #fff;
+            }
+            .smg-search-author-row .smg-search-author-close svg {
+                width: 13px;
+                height: 13px;
+                fill: none !important;
             }
             .smg-search-tb-row .smg-search-cfg, .smg-search-tb-right .smg-search-cfg {
-                width: 32px;
-                height: 32px;
+                width: 34px;
+                height: 34px;
                 padding: 0;
                 border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.7);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all .15s ease;
+            }
+            .smg-search-tb-row .smg-search-cfg:hover, .smg-search-tb-right .smg-search-cfg:hover {
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
             }
             .smg-search-tb-row .smg-search-adv, .smg-search-tb-right .smg-search-adv {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
-                height: 32px;
+                gap: 7px;
+                height: 34px;
                 padding: 0 12px;
                 border-radius: 9px;
                 border: 1px solid rgba(255,255,255,0.12);
-                background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.7);
-                font-size: 12px;
+                background: rgba(255,255,255,0.055);
+                color: rgba(255,255,255,0.75);
+                font-size: 12.5px;
                 font-weight: 600;
                 text-decoration: none;
                 cursor: pointer;
@@ -4208,16 +4350,32 @@
                 opacity: 0.7;
             }
             .smg-search-global-toolbar .smg-multiselect-btn {
-                height: 32px;
-                padding: 0 11px;
+                height: 34px;
+                padding: 0 12px;
                 font-size: 12.5px;
+                font-weight: 600;
                 border-radius: 9px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(255,255,255,0.12);
+                color: rgba(255,255,255,0.9);
+                gap: 7px;
+                transition: all .15s ease;
+            }
+            .smg-search-global-toolbar .smg-multiselect-btn:hover {
+                background: rgba(255,255,255,0.09);
+                border-color: rgba(255,255,255,0.22);
+                color: #fff;
+            }
+            .smg-search-global-toolbar .smg-multiselect-btn.has-active {
+                background: var(--smg-link-soft, rgba(255,119,178,0.18));
+                border-color: var(--smg-link, #ff77b2);
+                color: #fff;
             }
             .smg-search-tool-btn {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                height: 32px;
+                height: 34px;
                 padding: 0 11px;
                 border-radius: 9px;
                 background: rgba(255,255,255,0.05);
@@ -4260,13 +4418,23 @@
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
+                height: 34px;
+                padding: 0 10px;
+                border-radius: 9px;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(255,255,255,0.1);
                 cursor: pointer;
                 user-select: none;
-                padding: 4px 6px;
+                box-sizing: border-box;
+                transition: all .15s ease;
+            }
+            .smg-ios-toggle:hover {
+                background: rgba(255,255,255,0.07);
+                border-color: rgba(255,255,255,0.18);
             }
             .smg-ios-toggle input { display: none; }
             .smg-ios-switch {
-                width: 34px;
+                width: 32px;
                 height: 18px;
                 border-radius: 999px;
                 background: rgba(255,255,255,0.18);
@@ -4290,28 +4458,12 @@
                 background: var(--smg-link, #ff77b2);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch::before {
-                transform: translateX(16px);
+                transform: translateX(14px);
             }
             .smg-ios-label {
                 font-size: 12.5px;
                 font-weight: 600;
-                color: rgba(255,255,255,0.8);
-            }
-            .smg-search-select-wrap select {
-                height: 32px;
-                padding: 0 10px;
-                border-radius: 9px;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.12);
-                color: #fff;
-                font-size: 12.5px;
-                font-weight: 600;
-                cursor: pointer;
-                outline: none;
-            }
-            .smg-search-select-wrap select option {
-                background: #18181b;
-                color: #fff;
+                color: rgba(255,255,255,0.85);
             }
 
             /* filtros: label + chips de escopo + toggle "só títulos" + autor */
@@ -5072,42 +5224,45 @@
                 .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
 
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
+                /* Linha 1 (Controles de Thread / Lista no Mobile) */
                 .smg-dock-thread-bar {
                     display: flex !important;
                     flex-direction: row !important;
                     width: 100% !important;
-                    height: 40px !important;
+                    height: 38px !important;
                     align-items: center !important;
                     justify-content: space-around !important;
                     padding: 0 4px !important;
                     box-sizing: border-box !important;
                     border-bottom: 1px solid rgba(255,255,255,0.06) !important;
                     background: rgba(255,255,255,0.025) !important;
-                    gap: 2px !important;
+                    gap: 0 !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn {
                     flex: 1 1 0 !important;
+                    min-width: 0 !important;
+                    width: auto !important;
                     height: 34px !important;
                     min-height: 34px !important;
                     max-height: 34px !important;
-                    width: auto !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
                     border-radius: 8px !important;
-                    padding: 0 !important;
+                    padding: 0 2px !important;
                     margin: 0 !important;
                     box-shadow: none !important;
                     vertical-align: middle !important;
+                    transition: background .15s ease, color .15s ease;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico {
-                    font-size: 18px !important;
+                    font-size: 19px !important;
                     line-height: 1 !important;
-                    height: 18px !important;
-                    width: 18px !important;
-                    color: rgba(255,255,255,0.8) !important;
+                    height: 19px !important;
+                    width: 19px !important;
+                    color: rgba(255,255,255,0.85) !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
@@ -5115,18 +5270,21 @@
                     padding: 0 !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico svg {
-                    width: 18px !important;
-                    height: 18px !important;
-                    stroke-width: 1.9 !important;
+                    width: 19px !important;
+                    height: 19px !important;
+                    stroke-width: 2 !important;
                     display: block !important;
                     margin: 0 auto !important;
                 }
 
-                /* Botão de Ordenação (Data / Reações / etc.) no Mobile - Flat Text + Icon */
+                /* Botões com texto no Mobile (Sort e Pages) - Flex uniforme com espaçamento padrão */
                 .smg-dock-thread-bar #smg-post-sort-toggle,
                 .smg-dock-thread-bar #smg-list-sort-m,
-                .smg-dock-thread-bar .smg-sort-pill {
-                    flex: 1.2 1 0 !important;
+                .smg-dock-thread-bar .smg-sort-pill,
+                .smg-dock-thread-bar #smg-mobile-page-btn {
+                    flex: 1 1 0 !important;
+                    width: auto !important;
+                    min-width: 0 !important;
                     height: 34px !important;
                     min-height: 34px !important;
                     max-height: 34px !important;
@@ -5135,30 +5293,37 @@
                     border: none !important;
                     box-shadow: none !important;
                     border-radius: 0 !important;
-                    padding: 0 !important;
-                    gap: 4px !important;
+                    padding: 0 2px !important;
+                    gap: 3px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-ico svg,
                 .smg-dock-thread-bar #smg-list-sort-m .smg-nav-ico svg,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg {
+                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg,
+                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
                     width: 14px !important;
                     height: 14px !important;
+                    flex-shrink: 0 !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-list-sort-m .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text {
+                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text,
+                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
                     display: inline-block !important;
-                    font-size: 12px !important;
+                    font-size: 11.5px !important;
                     font-weight: 700 !important;
-                    color: rgba(255,255,255,0.85) !important;
+                    color: rgba(255,255,255,0.88) !important;
                     line-height: 1 !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
                 }
                 .smg-dock-thread-bar #smg-post-sort-toggle.smg-active,
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active {
+                .smg-dock-thread-bar .smg-sort-pill.smg-active,
+                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
                     background: transparent !important;
                     border: none !important;
                     box-shadow: none !important;
@@ -5168,49 +5333,28 @@
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link, #ff77b2) !important;
-                }
-
-                /* Botão de Paginação Mobile - Flat Text + Icon */
-                .smg-dock-thread-bar #smg-mobile-page-btn {
-                    flex: 1.25 1 0 !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
-                    align-self: center !important;
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    border-radius: 0 !important;
-                    padding: 0 !important;
-                    gap: 4px !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
-                    width: 14px !important;
-                    height: 14px !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
-                    display: inline-block !important;
-                    font-size: 12px !important;
-                    font-weight: 700 !important;
-                    color: rgba(255,255,255,0.92) !important;
-                    line-height: 1 !important;
-                }
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
+                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
                     color: var(--smg-link, #ff77b2) !important;
                 }
-                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico {
+
+                /* Botão de View Mode no Mobile */
+                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico,
+                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico svg {
                     color: var(--smg-link, #ff77b2) !important;
+                    stroke: var(--smg-link, #ff77b2) !important;
+                }
+
+                /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
+                .smg-dock-thread-bar #smg-thread-watch.smg-active {
+                    background: rgba(255, 119, 178, 0.12) !important;
+                    border-radius: 8px !important;
+                }
+                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
+                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
+                    color: var(--smg-link, #ff77b2) !important;
+                    stroke: var(--smg-link, #ff77b2) !important;
                 }
 
                 /* Linha 2 (Navbar Global do Fórum no Mobile) */
@@ -5815,21 +5959,28 @@
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
                 #smg-search-pop {
-                    top: auto; bottom: 0; left: 0; right: 0;
-                    width: 100%; max-width: 100%; max-height: min(90vh, 760px); max-height: min(90dvh, 760px);
-                    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
-                    border: none; border-top: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 24px 24px 0 0;
+                    position: fixed !important; inset: 0 !important;
+                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+                    width: 100vw !important; max-width: 100vw !important;
+                    height: 100dvh !important; max-height: 100dvh !important;
+                    padding: calc(10px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom)) 16px !important;
+                    border: none !important; border-radius: 0 !important;
+                    box-sizing: border-box !important;
+                    display: flex !important; flex-direction: column !important; justify-content: flex-end !important;
                     transform: translateY(100%);
                     transition: transform .32s cubic-bezier(.2,.85,.25,1), opacity .2s ease;
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
+                #smg-search-pop::before { display: none !important; }
 
+                /* Barra de busca na BASE (thumb-friendly) colada aos filtros */
                 #smg-search-pop .smg-search-bar {
-                    flex: 0 0 54px !important; height: 54px !important; min-height: 54px !important;
+                    order: 3 !important;
+                    flex: 0 0 50px !important; height: 50px !important; min-height: 50px !important;
+                    width: 100% !important;
                     display: flex !important; flex-wrap: nowrap !important; align-items: center !important;
-                    gap: 9px; margin: 0; padding: 0 7px 0 14px;
-                    border-radius: 16px; background: rgba(255,255,255,0.07);
+                    gap: 9px; margin: 2px 0 0 0 !important; padding: 0 7px 0 14px;
+                    border-radius: 15px; background: rgba(255,255,255,0.07);
                     border-color: rgba(255,255,255,0.14);
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
                 }
@@ -5837,7 +5988,7 @@
                 #smg-search-pop .smg-search-lupa svg { width: 19px; height: 19px; }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
-                    height: 100% !important; font-size: 17px; font-weight: 500;
+                    height: 100% !important; font-size: 16.5px; font-weight: 500;
                 }
                 #smg-search-pop .smg-search-chip {
                     flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
@@ -5855,55 +6006,108 @@
                 }
                 #smg-search-pop .smg-search-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
+                /* Toolbar de filtros ACIMA da barra de busca, coladinha */
                 #smg-search-pop .smg-search-global-toolbar {
-                    flex: 0 0 auto !important; min-height: 0 !important; width: auto; height: auto;
-                    margin: 0; padding: 12px 0 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
+                    order: 2 !important;
+                    flex: 0 0 auto !important; min-height: 0 !important; width: 100% !important; height: auto;
+                    margin: auto 0 0 0 !important; padding: 6px 0 4px !important;
+                    border-top: 1px solid rgba(255,255,255,0.08) !important;
+                    border-bottom: none !important;
                     gap: 0; overflow: visible !important;
                 }
                 #smg-search-pop .smg-search-tb-row {
-                    display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr));
-                    align-items: center; gap: 8px; width: 100%; flex-wrap: nowrap;
+                    display: flex !important; flex-wrap: nowrap !important;
+                    align-items: center !important; gap: 6px !important; width: 100%;
                 }
-                #smg-search-pop .smg-search-select-wrap { min-width: 0; width: 100%; }
+                /* Dropdowns viram ICON ONLY monocromáticos no mobile */
+                #smg-search-pop .smg-search-select-wrap {
+                    position: relative !important; flex: 0 0 38px !important;
+                    width: 38px !important; height: 38px !important; min-width: 38px !important; max-width: 38px !important;
+                    border-radius: 10px !important; background: rgba(255,255,255,0.055) !important;
+                    border: 1px solid rgba(255,255,255,0.13) !important;
+                    display: flex !important; align-items: center !important; justify-content: center !important;
+                    box-sizing: border-box !important;
+                }
+                #smg-search-pop .smg-search-select-wrap .smg-search-select-ic {
+                    position: static !important;
+                    display: flex !important; align-items: center; justify-content: center;
+                    width: 100% !important; height: 100% !important;
+                    pointer-events: none; color: rgba(255,255,255,0.85) !important;
+                }
+                #smg-search-pop .smg-search-select-wrap .smg-search-select-ic svg {
+                    width: 17px !important; height: 17px !important; fill: none !important;
+                }
                 #smg-search-pop .smg-search-select-wrap select {
-                    width: 100%; min-width: 0; height: 44px; padding: 0 28px 0 11px;
-                    border-radius: 12px; font-size: 13px; font-weight: 650;
-                    background-color: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.13);
-                    text-overflow: ellipsis;
+                    position: absolute !important; inset: 0 !important;
+                    width: 100% !important; height: 100% !important; opacity: 0 !important;
+                    cursor: pointer !important; -webkit-appearance: none !important; appearance: none !important;
+                    z-index: 2 !important; padding: 0 !important; margin: 0 !important;
                 }
-                #smg-search-pop .smg-search-badges-slot {
-                    grid-column: 1 / -1; width: 100%; min-width: 0; margin-top: 0;
-                }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-container { display: flex; width: 100%; }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-btn {
-                    width: 100%; height: 44px; justify-content: flex-start; padding: 0 12px;
-                    border-radius: 12px; font-size: 13.5px; background: rgba(255,255,255,0.055);
-                    border-color: rgba(255,255,255,0.13);
-                }
-                #smg-search-pop .smg-search-badges-slot .smg-multiselect-btn-arrow { margin-left: auto; }
                 #smg-search-pop .smg-ios-toggle {
-                    min-width: 0; width: 100%; min-height: 44px; height: 44px; justify-content: center;
-                    gap: 8px; padding: 0 8px; border: 1px solid rgba(255,255,255,0.13);
-                    border-radius: 12px; background: rgba(255,255,255,0.04);
+                    flex: 0 0 auto !important; width: auto !important; min-width: 0 !important;
+                    height: 38px !important; min-height: 38px !important; padding: 0 8px !important;
+                    gap: 6px !important; border-radius: 10px !important;
+                    background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.13) !important;
                 }
-                #smg-search-pop .smg-ios-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
-                #smg-search-pop .smg-search-author-box {
-                    min-width: 0; width: 100%; height: 44px; padding: 0 11px; border-radius: 12px;
-                    gap: 7px; background: rgba(255,255,255,0.055); border-color: rgba(255,255,255,0.13);
+                #smg-search-pop .smg-ios-label {
+                    font-size: 11.5px !important; white-space: nowrap !important;
                 }
-                #smg-search-pop .smg-search-author-inp {
-                    flex: 1 1 auto; min-width: 0; width: auto; font-size: 13.5px;
+                /* Autor icon-only trigger e row expansível no mobile */
+                #smg-search-pop .smg-search-author-trigger {
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    background: rgba(255,255,255,0.055) !important; border: 1px solid rgba(255,255,255,0.13) !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
-                #smg-search-pop .smg-search-tb-spacer { display: none; }
-                #smg-search-pop .smg-search-tb-row .smg-search-cfg,
+                #smg-search-pop .smg-search-author-trigger.has-value {
+                    background: var(--smg-link-soft, rgba(255,119,178,0.22)) !important;
+                    border-color: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link, #ff77b2) !important;
+                }
+                #smg-search-pop .smg-search-author-trigger svg {
+                    width: 17px !important; height: 17px !important; fill: none !important;
+                }
+                #smg-search-pop .smg-search-global-toolbar.author-open .smg-search-author-row {
+                    height: 40px !important; border-radius: 11px !important;
+                    padding: 0 10px !important;
+                }
+                #smg-search-pop .smg-search-global-toolbar.author-open .smg-search-author-row .smg-search-author-inp {
+                    font-size: 14px !important;
+                }
+                /* Spacer empurra os botões de config e avançado para a direita da tela (igual desktop) */
+                #smg-search-pop .smg-search-tb-spacer {
+                    display: block !important;
+                    flex: 1 1 auto !important;
+                    min-width: 4px !important;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-cfg {
+                    margin-left: auto !important;
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv {
-                    width: 100%; min-width: 0; height: 44px; justify-content: center;
-                    border-radius: 12px; font-size: 13px;
+                    flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: 10px !important;
+                    padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv span:first-child {
+                    display: none !important;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv .smg-ext-ic {
+                    margin: 0 !important; display: flex !important; align-items: center; justify-content: center;
+                }
+                #smg-search-pop .smg-search-tb-row .smg-search-adv .smg-ext-ic svg {
+                    width: 15px; height: 15px;
+                }
+                /* Resultados e histórico no TOPO (order: 1) rolando livremente */
                 #smg-search-pop .smg-search-results,
-                #smg-search-pop .smg-search-history {
+                #smg-search-pop .smg-search-history,
+                #smg-search-pop .smg-search-empty {
+                    order: 1 !important;
                     flex: 1 1 auto !important; min-height: 0 !important;
                     max-height: none !important; padding-top: 6px;
+                    overflow-y: auto !important;
                 }
                 #smg-search-pop .smg-search-result { padding: 10px 6px; gap: 9px; border-radius: 12px; }
                 #smg-search-pop .smg-search-result-fig { flex-basis: 78px; width: 78px; height: 58px; }
@@ -5913,8 +6117,8 @@
                 #smg-search-pop .smg-search-hist-head { padding: 0 4px; }
                 #smg-search-pop .smg-search-hist-item { min-height: 44px; padding: 8px 6px; }
 
-                /* grip (puxador) no topo de cada sheet */
-                #smg-search-pop::before, #smg-settings-pop::before,
+                /* grip (puxador) no topo dos demais sheets (settings, filtro, ordenar) */
+                #smg-settings-pop::before,
                 #smg-filter-pop::before, #smg-listfilter-pop::before, #smg-listsort-pop::before {
                     content: ''; flex: 0 0 auto; width: 40px; height: 5px;
                     border-radius: 999px; background: rgba(255,255,255,0.25);
@@ -6673,28 +6877,36 @@
                 }
                 html.smg-thread .smg-thead-hero {
                     display: flex !important;
-                    align-items: flex-start !important;
-                    gap: 8px !important;
+                    align-items: center !important;
+                    gap: 12px !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-thumb {
-                    flex: 0 0 50px !important;
-                    width: 50px !important;
-                    height: 50px !important;
-                    border-radius: 10px !important;
+                    flex: 0 0 88px !important;
+                    width: 88px !important;
+                    min-width: 88px !important;
+                    height: 88px !important;
+                    border-radius: 16px !important;
                     margin-right: 0 !important;
-                    align-self: flex-start !important;
+                    align-self: center !important;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.42) !important;
+                }
+                html.smg-thread .smg-thead-thumb img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 16px !important;
+                    object-fit: cover !important;
                 }
                 html.smg-thread .smg-thead-info {
                     display: flex !important;
                     flex-direction: column !important;
-                    align-self: flex-start !important;
-                    justify-content: flex-start !important;
+                    align-self: center !important;
+                    justify-content: center !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
-                    gap: 2px !important;
+                    gap: 4px !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title {
@@ -6709,12 +6921,10 @@
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title-value {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    font-size: 15px !important;
-                    line-height: 1 !important;
-                    font-weight: 700 !important;
-                    gap: 3px !important;
+                    display: block !important;
+                    font-size: 16px !important;
+                    line-height: 1.25 !important;
+                    font-weight: 750 !important;
                     margin: 0 !important;
                     padding: 0 !important;
                 }
@@ -6744,20 +6954,17 @@
                     transform: none !important;
                 }
                 html.smg-thread .smg-thead-unified .smg-thead-title-text {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    font-size: 14px !important;
-                    font-weight: 700 !important;
-                    line-height: 1 !important;
+                    display: inline !important;
+                    font-size: 16px !important;
+                    font-weight: 750 !important;
+                    line-height: 1.25 !important;
                     color: #fff !important;
                     margin: 0 !important;
-                    margin-left: 0 !important;
                     padding: 0 !important;
-                    padding-left: 0 !important;
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
-                    flex-shrink: 1 !important;
+                    white-space: normal !important;
+                    word-break: break-word !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
                 }
                 html.smg-thread .smg-thead-tags {
                     margin: 1px 0 2px !important;
@@ -6794,16 +7001,17 @@
                     align-self: center !important;
                 }
 
-                /* Ocultar a linha de ações (.smg-thead-actions) e o paginador (.smg-bar) do header no mobile */
+                /* Ocultar do topo no mobile: barra duplicada de páginas/follow/sort e ações */
+                html.smg-thread .smg-thead-controls,
+                html.smg-thread .smg-thead-unified .smg-thead-controls,
+                html.smg-thread .smg-thead-unified .smg-bar,
                 html.smg-thread .smg-thead-actions,
                 html.smg-thread .smg-thead-unified .smg-thead-actions,
-                html.smg-thread .smg-thead-unified .p-title > .smg-thead-actions,
-                html.smg-thread .smg-thead-unified .p-title > .smg-bar {
-                    display: none !important;
-                }
-                .smg-notices,
-                .smg-thead-unified .smg-notices,
-                html.smg-thread .smg-notices {
+                html.smg-thread .p-body-header .smg-bar,
+                html.smg-thread .p-body-header .smg-thead-controls,
+                html.smg-thread .p-body-header > .smg-thead-controls,
+                html.smg-thread .block-outer--top,
+                html.smg-thread .block-outer:first-of-type {
                     display: none !important;
                 }
                 /* AÇÕES DO POST no celular: salvar e compartilhar viram só ícone e as reações
@@ -8645,12 +8853,14 @@
             html.smg-page-pending .p-body,
             html.smg-page-pending .p-pageWrapper { visibility: hidden !important; }
             html.smg-page-pending #smg-topbar-wrap,
-            html.smg-page-pending #smg-aldock {
+            html.smg-page-pending #smg-aldock,
+            html.smg-page-pending #smg-post-nav-wrapper {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
             html.smg-page-pending #smg-topbar-wrap { z-index: 1100 !important; }
             html.smg-page-pending #smg-aldock { z-index: 1101 !important; }
+            html.smg-page-pending #smg-post-nav-wrapper { z-index: 1102 !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: 1000; display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
                 pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
@@ -8694,6 +8904,11 @@
                     min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
                     min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;
                 }
+                html.smg-thread.smg-topbar-ready #smg-page-skeleton {
+                    top: 0 !important;
+                    min-height: 100vh !important;
+                    min-height: 100dvh !important;
+                }
             }
             html.smg-sidebar-ready #smg-aldock {
                 visibility: visible !important;
@@ -8701,6 +8916,15 @@
                 z-index: 1101 !important;
             }
             html.smg-sidebar-ready #smg-page-skeleton-rail {
+                display: none !important;
+            }
+            html.smg-navbar-ready #smg-post-nav-wrapper {
+                visibility: visible !important;
+                pointer-events: auto !important;
+                z-index: 1102 !important;
+            }
+            html.smg-navbar-ready .smg-page-skeleton-bottom-nav,
+            html.smg-navbar-ready .smg-home-skeleton-bottom-nav {
                 display: none !important;
             }
             html.smg-content-ready .p-body-content {
@@ -11785,7 +12009,8 @@
     function isVideoBlock(b) {
         if (!b) return false;
         if (b.tagName === 'IMG') return false;
-        if (b.classList && b.classList.contains('smg-dead')) return false;
+        if (b.querySelector && b.querySelector('img.bbImage, .bbImage')) return false;
+        if (b.classList && (b.classList.contains('smg-dead') || b.classList.contains('smg-imglink'))) return false;
         return true;
     }
     function isWideMedia(b) {
@@ -12064,8 +12289,14 @@
         });
         relayoutGrid(grid);
     }
-    // remove os <a> esvaziados (a img foi pro grid) + os <br> separadores, no PARENT do grid — sem tocar em texto/links reais.
+    // remove os <a> esvaziados (a img foi pro grid) + os <br> separadores, no PARENT do grid (e no próprio grid) — sem tocar em texto/links reais.
     function cleanupGhosts(grid) {
+        if (!grid) return;
+        grid.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
+            let real = false;
+            a.childNodes.forEach(n => { if (n.nodeType === 1 && n.tagName !== 'NOSCRIPT') real = true; else if (n.nodeType === 3 && n.textContent.trim()) real = true; });
+            if (!real) a.remove();
+        });
         const parent = grid.parentNode; if (!parent) return;
         parent.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
             let real = false;   // conteúdo PRÓPRIO do <a> (ignora <noscript>, que vaza como texto OU vira DOM dependendo do parse)
@@ -12354,7 +12585,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;
@@ -13274,13 +13505,42 @@
         const VEXT = '(?:mp4|mov|m4v|webm)';
         const grabVid = t => {
             let m = t.match(new RegExp('<source[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));   // <source> direto (não HLS .m3u8)
+            if (!m) m = t.match(new RegExp('<video[^>]+src=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));
+            if (!m) m = t.match(new RegExp('<meta\\s+[^>]*property=["\'](?:og:video|og:video:url|twitter:player:stream)["\'][^>]*content=["\']([^"\']+\\.' + VEXT + '[^"\']*)["\']', 'i'));
             let v = m ? m[1] : null;
-            if (!v) { const g = t.match(new RegExp('https?://[^"\'\\s)]*media\\.imagepond\\.net/media/videos/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i')); v = g ? g[0] : null; }
+            if (!v) {
+                const g = t.match(new RegExp('https?:\\/\\/[^"\'\\s)]*imagepond\\.net\\/[^"\'\\s)]*media\\/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i'));
+                v = g ? g[0] : null;
+            }
+            if (!v) {
+                const g = t.match(new RegExp('https?:\\/\\/[^"\'\\s)]*imagepond\\.net\\/[^"\'\\s)]+\\.' + VEXT + '[^"\'\\s)]*', 'i'));
+                v = g ? g[0] : null;
+            }
             return v ? v.replace(/&amp;/g, '&') : null;
         };
-        const grabImg = t => {   // imagem de CONTEÚDO (/media/images/) EXCLUINDO ícones do site (android-chrome/favicon/apple-touch/mstile/logo)
-            const re = /https?:\/\/[^"'\s)]*media\.imagepond\.net\/media\/images\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
-            for (let mm; (mm = re.exec(t));) { if (!/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(mm[0])) return mm[0].replace(/&amp;/g, '&'); }
+        const grabImg = t => {   // imagem de CONTEÚDO (/media/images/, /media/new/images/) EXCLUINDO ícones do site
+            const isSiteIcon = u => /android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(u);
+            let m = t.match(/<div class=["']media-container["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i);
+            if (m && !isSiteIcon(m[1])) return m[1].replace(/&amp;/g, '&');
+            let og = t.match(/<meta\s+[^>]*property=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']/i);
+            if (og && !isSiteIcon(og[1])) return og[1].replace(/&amp;/g, '&');
+            const re = /https?:\/\/[^"'\s)]*imagepond\.net\/[^"'\s)]*media\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
+            for (let mm; (mm = re.exec(t));) {
+                if (!isSiteIcon(mm[0])) return mm[0].replace(/&amp;/g, '&');
+            }
+            const re2 = /https?:\/\/[^"'\s)]*imagepond\.net\/[^"'\s)]+\.(?:jpe?g|png|webp|gif|avif)[^"'\s)]*/ig;
+            for (let mm; (mm = re2.exec(t));) {
+                if (!isSiteIcon(mm[0])) return mm[0].replace(/&amp;/g, '&');
+            }
+            return null;
+        };
+        const grabPoster = t => {
+            let m = t.match(/<video[^>]+poster=["']([^"']+)["']/i);
+            if (m) return m[1].replace(/&amp;/g, '&');
+            let og = t.match(/<meta\s+[^>]*property=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']/i);
+            if (og && !/android-chrome|apple-touch-icon|favicon|mstile|safari-pinned-tab|site[-_]?icon|app[-_]?icon|(?:^|[/_-])logo(?:[/_.-]|$)/i.test(og[1])) {
+                return og[1].replace(/&amp;/g, '&');
+            }
             return null;
         };
         GMX({ method: 'GET', url: pageUrl, timeout: 8000,
@@ -13289,9 +13549,10 @@
                 if (r.status >= 400) { finish({ error: r.status, host: 'imagepond.net' }); return; }
                 const t = r.responseText || '';
                 const vid = grabVid(t);
-                if (vid) { finish({ mp4: vid, img: null }); return; }
+                const poster = grabPoster(t);
+                if (vid) { finish({ mp4: vid, img: null, poster }); return; }
                 const img = grabImg(t);
-                if (img) { finish({ mp4: null, img }); return; }
+                if (img) { finish({ mp4: null, img, poster: null }); return; }
                 // /videos/{id}: o arquivo mora na página /i/{slug} (linkada aqui). Segue UMA vez (não a partir de uma /i/, evita loop), pulando o /i/{id}/download.
                 if (!/\/i\//.test(pageUrl)) {
                     const re = /https?:\/\/[^"'\s)]*imagepond\.net\/i\/[^"'\s)]+/ig;
@@ -13303,7 +13564,7 @@
                         }
                     }
                 }
-                finish({ error: r.status === 200 ? 404 : (r.status || 0), host: 'imagepond.net' });
+                finish({ error: r.status === 200 ? null : (r.status || 0), host: 'imagepond.net' });
             },
             onerror: () => finish({ error: 'NetError', host: 'imagepond.net' }),
             ontimeout: () => finish({ error: 504, host: 'imagepond.net' }) });
@@ -13345,14 +13606,35 @@
                         loading.remove();
                         slot.appendChild(wrap);
                         fillSlot(slot);                                    // solta o 16:9/overflow do slot → não corta vídeo vertical
-                        rgPrepareUrl(video, res.mp4, wrap, imagepondPoster(res.mp4));   // poster + pronto; stream só no play
+                        rgPrepareUrl(video, res.mp4, wrap, res.poster || imagepondPoster(res.mp4));   // poster + pronto; stream só no play
                         return;
                     }
                     if (res && res.img) {                                   // IMAGEM (o /videos/ do imagepond às vezes é foto) → troca o embed por <img> (entra no pipeline de img + masonry)
-                        const a = document.createElement('a'); a.href = res.img; a.target = '_blank'; a.rel = 'noopener noreferrer';
-                        const img = document.createElement('img'); img.className = 'bbImage'; img.src = res.img; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = pageUrl;
-                        a.appendChild(img);
-                        wrapper.replaceWith(a);
+                        const inGrid = wrapper.closest && wrapper.closest('.auto-image-grid');
+                        const grid = inGrid || null;
+                        const img = document.createElement('img');
+                        img.className = 'bbImage';
+                        img.src = res.img;
+                        img.loading = 'lazy';
+                        img.alt = '';
+                        img.dataset.smgLink = pageUrl;
+                        img.dataset.smgFull = res.img;
+                        img.dataset.smgMed = res.img;
+                        if (grid) {
+                            img.dataset.smgGridded = '1';
+                            wrapper.replaceWith(img);
+                            if (typeof cleanupGhosts === 'function') cleanupGhosts(grid);
+                            if (typeof relayoutGrid === 'function') relayoutGrid(grid);
+                        } else {
+                            const a = document.createElement('a');
+                            a.href = res.img;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.className = 'smg-imglink';
+                            a.appendChild(img);
+                            wrapper.replaceWith(a);
+                        }
+                        if (typeof processOneImage === 'function') processOneImage(img);
                         scheduleRun();
                         return;
                     }
@@ -13751,7 +14033,10 @@
 
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
-        if (document.getElementById('smg-post-nav-wrapper')) return;
+        if (document.getElementById('smg-post-nav-wrapper')) {
+            if (typeof markNavbarReady === 'function') markNavbarReady();
+            return;
+        }
 
         // anchors de cada post (ignora respostas em quote)
         let posts = Array.from(
@@ -14184,7 +14469,7 @@
 
             const threadBar = document.createElement('div');
             threadBar.className = 'smg-dock-thread-bar';
-            const threadBtns = [btnWatchM, btnSortM, btnMobilePageBtn, btnViewModeM, btnUpM, btnDownM].filter(Boolean);
+            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM].filter(Boolean);
             threadBar.append(...threadBtns);
 
             // Grupos para Desktop
@@ -14242,7 +14527,7 @@
 
             const listBar = document.createElement('div');
             listBar.className = 'smg-dock-thread-bar';
-            const listMobileBtns = [btnMobilePageBtn, btnListFilterM, btnListSortM, btnViewToggleM, btnUpM, btnDownM].filter(Boolean);
+            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
             listBar.append(...listMobileBtns);
 
             const listBtns = [];
@@ -14425,6 +14710,7 @@
         if (viewModePop) navWrapper.append(viewModePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
+        if (typeof markNavbarReady === 'function') markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----
 
@@ -15531,33 +15817,45 @@
                     return Array.from(badgeMap.values());
                 };
 
+                // ===== ÍCONES MONOCROMÁTICOS DOS SELECTS =====
+                const SCOPE_ICONS = {
+                    everywhere: ICONS.globe,
+                    watched: ICONS.star || ICONS.watched,
+                    threads: ICONS.chat,
+                    thread: ICONS.comment || ICONS.chat
+                };
+                const SORT_ICONS = {
+                    relevance: ICONS.barChart,
+                    date: ICONS.sortDate
+                };
+
                 // ===== TOOLBAR UNIFICADA (PAINEL INTEGRADO) =====
                 searchToolbarEl.innerHTML = `
                     <div class="smg-search-tb-row">
-                        <div class="smg-search-select-wrap">
-                            <select class="smg-search-scope-select">
-                                <option value="everywhere">🌐 ${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
-                                <option value="watched">⭐ ${IS_PT ? 'Tópicos seguidos' : 'Watched'}</option>
-                                <option value="threads">🧵 ${IS_PT ? 'Tópicos' : 'Threads'}</option>
-                                ${threadId ? `<option value="thread">💬 ${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
+                        <div class="smg-search-select-wrap smg-search-scope-wrap">
+                            <span class="smg-search-select-ic" aria-hidden="true">${ICONS.globe}</span>
+                            <select class="smg-search-scope-select" aria-label="${IS_PT ? 'Escopo da busca' : 'Search scope'}">
+                                <option value="everywhere">${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
+                                <option value="watched">${IS_PT ? 'Tópicos seguidos' : 'Watched'}</option>
+                                <option value="threads">${IS_PT ? 'Tópicos' : 'Threads'}</option>
+                                ${threadId ? `<option value="thread">${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
                             </select>
                         </div>
-                        <div class="smg-search-select-wrap">
-                            <select class="smg-search-sort-select">
-                                <option value="relevance">📊 ${IS_PT ? 'Relevância' : 'Relevance'}</option>
-                                <option value="date">📅 ${IS_PT ? 'Mais recentes' : 'Newest'}</option>
+                        <div class="smg-search-select-wrap smg-search-sort-wrap">
+                            <span class="smg-search-select-ic" aria-hidden="true">${ICONS.barChart}</span>
+                            <select class="smg-search-sort-select" aria-label="${IS_PT ? 'Ordenação' : 'Sort order'}">
+                                <option value="relevance">${IS_PT ? 'Relevância' : 'Relevance'}</option>
+                                <option value="date">${IS_PT ? 'Mais recentes' : 'Newest'}</option>
                             </select>
                         </div>
-                        <div class="smg-search-badges-slot"></div>
-                        <label class="smg-ios-toggle">
+                        <label class="smg-ios-toggle" title="${IS_PT ? 'Buscar apenas nos títulos' : 'Search titles only'}">
                             <input type="checkbox" class="smg-toggle-title-only"${titlesOn ? ' checked' : ''}>
                             <span class="smg-ios-switch"></span>
                             <span class="smg-ios-label">${IS_PT ? 'Só títulos' : 'Titles only'}</span>
                         </label>
-                        <div class="smg-search-author-box">
-                            <span class="smg-search-author-ic">${svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>')}</span>
-                            <input type="text" class="smg-search-author-inp" placeholder="${IS_PT ? 'Autor…' : 'Author…'}">
-                        </div>
+                        <button type="button" class="smg-search-author-trigger" title="${IS_PT ? 'Filtrar por autor' : 'Filter by author'}" aria-label="${IS_PT ? 'Filtrar por autor' : 'Filter by author'}">
+                            ${ICONS.user}
+                        </button>
                         <div class="smg-search-tb-spacer"></div>
                         <button type="button" class="smg-search-cfg" title="${i18n('Search defaults')}">${ICONS.sliders}</button>
                         <a class="smg-search-adv" href="${searchAction.replace(/search\/?$/, '') || '/search/'}" target="_blank" rel="noopener" title="${i18n('Advanced')}">
@@ -15565,26 +15863,45 @@
                             <span class="smg-ext-ic">${svgIcon('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>')}</span>
                         </a>
                     </div>
+                    <div class="smg-search-author-row" hidden>
+                        <span class="smg-search-author-ic">${ICONS.user}</span>
+                        <input type="text" class="smg-search-author-inp" placeholder="${IS_PT ? 'Filtrar por autor…' : 'Filter by author…'}" spellcheck="false" autocomplete="off">
+                        <button type="button" class="smg-search-author-clear" title="${i18n('Clear')}" aria-label="${i18n('Clear')}" hidden>${ICONS.close}</button>
+                        <button type="button" class="smg-search-author-close" title="${IS_PT ? 'Concluir' : 'Done'}" aria-label="${IS_PT ? 'Concluir' : 'Done'}">${ICONS.close}</button>
+                    </div>
                 `;
 
                 scopeSelect = searchToolbarEl.querySelector('.smg-search-scope-select');
                 sortSelect = searchToolbarEl.querySelector('.smg-search-sort-select');
                 toggleTitleOnly = searchToolbarEl.querySelector('.smg-toggle-title-only');
-                const authorBox = searchToolbarEl.querySelector('.smg-search-author-box');
+                const authorTrigger = searchToolbarEl.querySelector('.smg-search-author-trigger');
+                const authorRow = searchToolbarEl.querySelector('.smg-search-author-row');
                 authorInput = searchToolbarEl.querySelector('.smg-search-author-inp');
-                const badgesSlot = searchToolbarEl.querySelector('.smg-search-badges-slot');
+                const authorClear = searchToolbarEl.querySelector('.smg-search-author-clear');
+                const authorClose = searchToolbarEl.querySelector('.smg-search-author-close');
+
+                const updateSelectIcon = (sel, map) => {
+                    if (!sel) return;
+                    const wrap = sel.closest('.smg-search-select-wrap');
+                    const ic = wrap?.querySelector('.smg-search-select-ic');
+                    if (ic && map[sel.value]) ic.innerHTML = map[sel.value];
+                };
 
                 scopeSelect.value = currentScope;
+                updateSelectIcon(scopeSelect, SCOPE_ICONS);
                 scopeSelect.addEventListener('change', () => {
                     currentScope = scopeSelect.value;
+                    updateSelectIcon(scopeSelect, SCOPE_ICONS);
                     applyScopeUI();
                     researchOnFilter();
                     try { getSearchInput().focus(); } catch (e) {}
                 });
 
                 sortSelect.value = orderDate ? 'date' : 'relevance';
+                updateSelectIcon(sortSelect, SORT_ICONS);
                 sortSelect.addEventListener('change', () => {
                     orderDate = (sortSelect.value === 'date');
+                    updateSelectIcon(sortSelect, SORT_ICONS);
                     researchOnFilter();
                 });
 
@@ -15593,40 +15910,61 @@
                     researchOnFilter();
                 });
 
-                badgeMultiselect = createBadgeMultiselect({
-                    badges: getAllSearchBadges(),
-                    activeBadges: activeSearchBadges,
-                    placeholder: i18n('Search tags…'),
-                    buttonLabel: '🏷️ ' + (IS_PT ? 'Badges & Tags' : 'Badges & Tags'),
-                    onChange: () => {
-                        researchOnFilter();
-                    }
+                const openAuthorRow = () => {
+                    searchToolbarEl.classList.add('author-open');
+                    authorRow.hidden = false;
+                    authorClear.hidden = !authorInput.value;
+                    try { authorInput.focus(); authorInput.select(); } catch (e) {}
+                };
+
+                const closeAuthorRow = () => {
+                    searchToolbarEl.classList.remove('author-open');
+                    authorRow.hidden = true;
+                    const uname = (authorInput.value || '').trim();
+                    authorTrigger.classList.toggle('has-value', !!uname);
+                    authorTrigger.title = uname ? `${IS_PT ? 'Autor' : 'Author'}: ${uname}` : (IS_PT ? 'Filtrar por autor' : 'Filter by author');
+                };
+
+                authorTrigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openAuthorRow();
                 });
-                badgeMultiselect.querySelector('.smg-multiselect-btn')?.addEventListener('click', () => {
-                    refreshPrefixHarvest(() => {
-                        if (badgeMultiselect && typeof badgeMultiselect.updateBadges === 'function') {
-                            badgeMultiselect.updateBadges(getAllSearchBadges());
-                        }
-                    });
+
+                authorClose.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    closeAuthorRow();
                 });
-                badgesSlot.appendChild(badgeMultiselect);
+
+                authorClear.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    authorInput.value = '';
+                    authorClear.hidden = true;
+                    commitAuthor();
+                    try { authorInput.focus(); } catch (e) {}
+                });
 
                 let authorDebounce = null;
                 const commitAuthor = () => {
                     const uname = (authorInput.value || '').trim();
-                    authorBox.classList.toggle('has-value', !!uname);
+                    authorTrigger.classList.toggle('has-value', !!uname);
+                    authorTrigger.title = uname ? `${IS_PT ? 'Autor' : 'Author'}: ${uname}` : (IS_PT ? 'Filtrar por autor' : 'Filter by author');
+                    authorClear.hidden = !uname;
                     researchOnFilter();
                 };
                 authorInput.addEventListener('input', () => {
                     clearTimeout(authorDebounce);
-                    authorDebounce = setTimeout(commitAuthor, 400);
+                    authorDebounce = setTimeout(commitAuthor, 350);
                 });
                 authorInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         clearTimeout(authorDebounce);
                         commitAuthor();
+                        closeAuthorRow();
                         doSearch(true);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeAuthorRow();
                     }
                 });
             }
@@ -25921,7 +26259,8 @@
     // respostas interrompidas; em condições normais a liberação acontece por prontidão +
     // dois frames estáveis.
     const PAINT_SETTLE_FRAMES = 2;
-    const PAINT_MAX_WAIT_MS = 4500;
+    const PAINT_MAX_WAIT_MS = 4000;
+    const PAINT_HARD_TIMEOUT_MS = 4500;
     const PAINT_RETRY_MS = 250;
     let paintTimer = 0;
     let paintRaf = 0;
@@ -25932,6 +26271,25 @@
     let homePassSignature = null;
     let isNavigatingOut = false;
     let navSafetyTimer = 0;
+    let pagePendingStartTime = 0;
+    let hardSafetyTimer = 0;
+
+    function armPagePaintSafetyTimer() {
+        if (!pagePendingStartTime) pagePendingStartTime = Date.now();
+        if (hardSafetyTimer) return;
+        hardSafetyTimer = setTimeout(() => {
+            hardSafetyTimer = 0;
+            pagePendingStartTime = 0;
+            const root = document.documentElement;
+            if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
+                isNavigatingOut = false;
+                if (typeof markTopbarReady === 'function') markTopbarReady();
+                if (typeof markSidebarReady === 'function') markSidebarReady();
+                if (typeof markNavbarReady === 'function') markNavbarReady();
+                markContentReady(classifyPaintPage());
+            }
+        }, PAINT_HARD_TIMEOUT_MS);
+    }
 
     function setNavigatingOut() {
         isNavigatingOut = true;
@@ -25940,7 +26298,7 @@
         navSafetyTimer = setTimeout(() => {
             isNavigatingOut = false;
             schedulePagePaintRelease();
-        }, 3500);
+        }, 1500);
     }
 
     function cancelPagePaintRelease() {
@@ -25948,14 +26306,15 @@
         if (paintRaf) cancelAnimationFrame(paintRaf);
         paintTimer = 0;
         paintRaf = 0;
-        paintDeadline = 0;
         paintReleaseScheduled = false;
         paintObservedKind = '';
         paintObservedSignature = null;
+        paintMediaDeadline = 0;
     }
 
     let topbarIsReady = false;
     let sidebarIsReady = false;
+    let navbarIsReady = false;
     let contentIsReady = false;
 
     function isTopbarReady() {
@@ -25963,6 +26322,9 @@
     }
     function isSidebarReady() {
         return sidebarIsReady && document.documentElement.classList.contains('smg-sidebar-ready');
+    }
+    function isNavbarReady() {
+        return navbarIsReady && document.documentElement.classList.contains('smg-navbar-ready');
     }
     function isContentReady() {
         return contentIsReady && document.documentElement.classList.contains('smg-content-ready');
@@ -25986,8 +26348,24 @@
         if (rail) rail.remove();
     }
 
+    function markNavbarReady() {
+        navbarIsReady = true;
+        const root = document.documentElement;
+        root.classList.remove('smg-navbar-loading', 'smg-navbar-pending');
+        root.classList.add('smg-navbar-ready');
+        const botNav = document.querySelector('.smg-page-skeleton-bottom-nav, .smg-home-skeleton-bottom-nav');
+        if (botNav) botNav.remove();
+    }
+
     function markContentReady(context) {
         contentIsReady = true;
+        if (hardSafetyTimer) {
+            clearTimeout(hardSafetyTimer);
+            hardSafetyTimer = 0;
+        }
+        pagePendingStartTime = 0;
+        paintDeadline = 0;
+        paintMediaDeadline = 0;
         const root = document.documentElement;
         root.classList.remove('smg-content-loading', 'smg-content-pending');
         root.classList.add('smg-content-ready');
@@ -26118,9 +26496,18 @@
     let paintMediaDeadline = 0;
     function threadMediaTreeIsReady(content) {
         // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
-        if (document.readyState === 'loading') return false;
-        if (!paintMediaDeadline) paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
-        if (Date.now() >= paintMediaDeadline) return true;
+        if (document.readyState === 'loading') {
+            paintMediaDeadline = 0;
+            return false;
+        }
+        const root = typeof document !== 'undefined' && document.documentElement;
+        const isPending = root && (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending'));
+        if (!isPending) {
+            paintMediaDeadline = 0;
+        } else if (!paintMediaDeadline) {
+            paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
+        }
+        if (paintMediaDeadline && Date.now() >= paintMediaDeadline) return true;
         if (!content) return true;
 
         const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
@@ -26271,7 +26658,11 @@
         if (isNavigatingOut) return;
         const root = document.documentElement;
         const context = classifyPaintPage();
-        if (!context.gated || !root.classList.contains('smg-page-pending') || document.readyState === 'loading') return;
+        if (!context.gated || !root.classList.contains('smg-page-pending')) return;
+        armPagePaintSafetyTimer();
+        if (document.readyState === 'loading') {
+            if (!document.querySelector('.p-body-content, .block--messages, .p-pageWrapper, article.message')) return;
+        }
         if (paintReleaseScheduled) return;
         if (!paintDeadline) paintDeadline = Date.now() + PAINT_MAX_WAIT_MS;
         paintReleaseScheduled = true;
@@ -26308,7 +26699,7 @@
                 return;
             }
             const expired = Date.now() >= paintDeadline;
-            if (stable || (expired && paintPageCanFallback(context))) {
+            if (stable || expired) {
                 release();
                 return;
             }
@@ -26402,13 +26793,17 @@
                 setupNavigationTransition,
                 markTopbarReady,
                 markSidebarReady,
+                markNavbarReady,
                 markContentReady,
                 isTopbarReady,
                 isSidebarReady,
+                isNavbarReady,
                 isContentReady,
                 setNavigatingOut,
                 isNavigatingOut: () => isNavigatingOut,
-                ensurePageSkeleton
+                ensurePageSkeleton,
+                armPagePaintSafetyTimer,
+                resetPaintMediaDeadline: () => { paintMediaDeadline = 0; }
             };
         }
     }
@@ -26571,6 +26966,9 @@
                 // instead of waiting for DOMContentLoaded behind the home paint.
                 safe(setupAlertsDock);
             }
+            if (FEATURES.sidebarNavigation && !document.getElementById('smg-post-nav-wrapper') && document.body) {
+                safe(setupPostNavigation);
+            }
             const full = (++runCount % FULL_SCAN_EVERY === 0) || fullPending;
             // frame SEM nó adicionado (remoção pura — spinner/freeze do feed — ou troca de text node):
             // não há nada novo pra processar; o full-scan imediato aqui varria o body INTEIRO a cada
@@ -26609,6 +27007,7 @@
         if (paintContext.gated && !isContentAlreadyReady) {
             cls.add('smg-page-pending');
             cls.add('smg-content-pending');
+            if (typeof armPagePaintSafetyTimer === 'function') armPagePaintSafetyTimer();
         }
         const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (typeof isTopbarReady === 'function' && isTopbarReady());
         if (FEATURES.topBar && !isTopbarAlreadyReady) {
@@ -26616,6 +27015,13 @@
             cls.add('smg-topbar-pending');
         } else if (typeof markTopbarReady === 'function') {
             markTopbarReady();
+        }
+        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (typeof isNavbarReady === 'function' && isNavbarReady());
+        if (FEATURES.sidebarNavigation && !isNavbarAlreadyReady) {
+            cls.add('smg-navbar-loading');
+            cls.add('smg-navbar-pending');
+        } else if (typeof markNavbarReady === 'function') {
+            markNavbarReady();
         }
         if (isForumHome && !isFeedView && FEATURES.homeRemake) {
             cls.add('smg-home');

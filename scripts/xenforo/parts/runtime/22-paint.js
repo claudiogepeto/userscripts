@@ -231,7 +231,8 @@
     // respostas interrompidas; em condições normais a liberação acontece por prontidão +
     // dois frames estáveis.
     const PAINT_SETTLE_FRAMES = 2;
-    const PAINT_MAX_WAIT_MS = 4500;
+    const PAINT_MAX_WAIT_MS = 4000;
+    const PAINT_HARD_TIMEOUT_MS = 4500;
     const PAINT_RETRY_MS = 250;
     let paintTimer = 0;
     let paintRaf = 0;
@@ -242,6 +243,25 @@
     let homePassSignature = null;
     let isNavigatingOut = false;
     let navSafetyTimer = 0;
+    let pagePendingStartTime = 0;
+    let hardSafetyTimer = 0;
+
+    function armPagePaintSafetyTimer() {
+        if (!pagePendingStartTime) pagePendingStartTime = Date.now();
+        if (hardSafetyTimer) return;
+        hardSafetyTimer = setTimeout(() => {
+            hardSafetyTimer = 0;
+            pagePendingStartTime = 0;
+            const root = document.documentElement;
+            if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
+                isNavigatingOut = false;
+                if (typeof markTopbarReady === 'function') markTopbarReady();
+                if (typeof markSidebarReady === 'function') markSidebarReady();
+                if (typeof markNavbarReady === 'function') markNavbarReady();
+                markContentReady(classifyPaintPage());
+            }
+        }, PAINT_HARD_TIMEOUT_MS);
+    }
 
     function setNavigatingOut() {
         isNavigatingOut = true;
@@ -250,7 +270,7 @@
         navSafetyTimer = setTimeout(() => {
             isNavigatingOut = false;
             schedulePagePaintRelease();
-        }, 3500);
+        }, 1500);
     }
 
     function cancelPagePaintRelease() {
@@ -258,14 +278,15 @@
         if (paintRaf) cancelAnimationFrame(paintRaf);
         paintTimer = 0;
         paintRaf = 0;
-        paintDeadline = 0;
         paintReleaseScheduled = false;
         paintObservedKind = '';
         paintObservedSignature = null;
+        paintMediaDeadline = 0;
     }
 
     let topbarIsReady = false;
     let sidebarIsReady = false;
+    let navbarIsReady = false;
     let contentIsReady = false;
 
     function isTopbarReady() {
@@ -273,6 +294,9 @@
     }
     function isSidebarReady() {
         return sidebarIsReady && document.documentElement.classList.contains('smg-sidebar-ready');
+    }
+    function isNavbarReady() {
+        return navbarIsReady && document.documentElement.classList.contains('smg-navbar-ready');
     }
     function isContentReady() {
         return contentIsReady && document.documentElement.classList.contains('smg-content-ready');
@@ -296,8 +320,24 @@
         if (rail) rail.remove();
     }
 
+    function markNavbarReady() {
+        navbarIsReady = true;
+        const root = document.documentElement;
+        root.classList.remove('smg-navbar-loading', 'smg-navbar-pending');
+        root.classList.add('smg-navbar-ready');
+        const botNav = document.querySelector('.smg-page-skeleton-bottom-nav, .smg-home-skeleton-bottom-nav');
+        if (botNav) botNav.remove();
+    }
+
     function markContentReady(context) {
         contentIsReady = true;
+        if (hardSafetyTimer) {
+            clearTimeout(hardSafetyTimer);
+            hardSafetyTimer = 0;
+        }
+        pagePendingStartTime = 0;
+        paintDeadline = 0;
+        paintMediaDeadline = 0;
         const root = document.documentElement;
         root.classList.remove('smg-content-loading', 'smg-content-pending');
         root.classList.add('smg-content-ready');
@@ -428,9 +468,18 @@
     let paintMediaDeadline = 0;
     function threadMediaTreeIsReady(content) {
         // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
-        if (document.readyState === 'loading') return false;
-        if (!paintMediaDeadline) paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
-        if (Date.now() >= paintMediaDeadline) return true;
+        if (document.readyState === 'loading') {
+            paintMediaDeadline = 0;
+            return false;
+        }
+        const root = typeof document !== 'undefined' && document.documentElement;
+        const isPending = root && (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending'));
+        if (!isPending) {
+            paintMediaDeadline = 0;
+        } else if (!paintMediaDeadline) {
+            paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
+        }
+        if (paintMediaDeadline && Date.now() >= paintMediaDeadline) return true;
         if (!content) return true;
 
         const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
@@ -581,7 +630,11 @@
         if (isNavigatingOut) return;
         const root = document.documentElement;
         const context = classifyPaintPage();
-        if (!context.gated || !root.classList.contains('smg-page-pending') || document.readyState === 'loading') return;
+        if (!context.gated || !root.classList.contains('smg-page-pending')) return;
+        armPagePaintSafetyTimer();
+        if (document.readyState === 'loading') {
+            if (!document.querySelector('.p-body-content, .block--messages, .p-pageWrapper, article.message')) return;
+        }
         if (paintReleaseScheduled) return;
         if (!paintDeadline) paintDeadline = Date.now() + PAINT_MAX_WAIT_MS;
         paintReleaseScheduled = true;
@@ -618,7 +671,7 @@
                 return;
             }
             const expired = Date.now() >= paintDeadline;
-            if (stable || (expired && paintPageCanFallback(context))) {
+            if (stable || expired) {
                 release();
                 return;
             }
@@ -712,13 +765,17 @@
                 setupNavigationTransition,
                 markTopbarReady,
                 markSidebarReady,
+                markNavbarReady,
                 markContentReady,
                 isTopbarReady,
                 isSidebarReady,
+                isNavbarReady,
                 isContentReady,
                 setNavigatingOut,
                 isNavigatingOut: () => isNavigatingOut,
-                ensurePageSkeleton
+                ensurePageSkeleton,
+                armPagePaintSafetyTimer,
+                resetPaintMediaDeadline: () => { paintMediaDeadline = 0; }
             };
         }
     }

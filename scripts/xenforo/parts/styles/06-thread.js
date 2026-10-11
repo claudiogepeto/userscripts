@@ -398,28 +398,36 @@
                 }
                 html.smg-thread .smg-thead-hero {
                     display: flex !important;
-                    align-items: flex-start !important;
-                    gap: 8px !important;
+                    align-items: center !important;
+                    gap: 12px !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-thumb {
-                    flex: 0 0 50px !important;
-                    width: 50px !important;
-                    height: 50px !important;
-                    border-radius: 10px !important;
+                    flex: 0 0 88px !important;
+                    width: 88px !important;
+                    min-width: 88px !important;
+                    height: 88px !important;
+                    border-radius: 16px !important;
                     margin-right: 0 !important;
-                    align-self: flex-start !important;
+                    align-self: center !important;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.42) !important;
+                }
+                html.smg-thread .smg-thead-thumb img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 16px !important;
+                    object-fit: cover !important;
                 }
                 html.smg-thread .smg-thead-info {
                     display: flex !important;
                     flex-direction: column !important;
-                    align-self: flex-start !important;
-                    justify-content: flex-start !important;
+                    align-self: center !important;
+                    justify-content: center !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
-                    gap: 2px !important;
+                    gap: 4px !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title {
@@ -434,12 +442,10 @@
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title-value {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    font-size: 15px !important;
-                    line-height: 1 !important;
-                    font-weight: 700 !important;
-                    gap: 3px !important;
+                    display: block !important;
+                    font-size: 16px !important;
+                    line-height: 1.25 !important;
+                    font-weight: 750 !important;
                     margin: 0 !important;
                     padding: 0 !important;
                 }
@@ -469,20 +475,17 @@
                     transform: none !important;
                 }
                 html.smg-thread .smg-thead-unified .smg-thead-title-text {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    font-size: 14px !important;
-                    font-weight: 700 !important;
-                    line-height: 1 !important;
+                    display: inline !important;
+                    font-size: 16px !important;
+                    font-weight: 750 !important;
+                    line-height: 1.25 !important;
                     color: #fff !important;
                     margin: 0 !important;
-                    margin-left: 0 !important;
                     padding: 0 !important;
-                    padding-left: 0 !important;
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
-                    flex-shrink: 1 !important;
+                    white-space: normal !important;
+                    word-break: break-word !important;
+                    overflow: visible !important;
+                    text-overflow: clip !important;
                 }
                 html.smg-thread .smg-thead-tags {
                     margin: 1px 0 2px !important;
@@ -519,16 +522,17 @@
                     align-self: center !important;
                 }
 
-                /* Ocultar a linha de ações (.smg-thead-actions) e o paginador (.smg-bar) do header no mobile */
+                /* Ocultar do topo no mobile: barra duplicada de páginas/follow/sort e ações */
+                html.smg-thread .smg-thead-controls,
+                html.smg-thread .smg-thead-unified .smg-thead-controls,
+                html.smg-thread .smg-thead-unified .smg-bar,
                 html.smg-thread .smg-thead-actions,
                 html.smg-thread .smg-thead-unified .smg-thead-actions,
-                html.smg-thread .smg-thead-unified .p-title > .smg-thead-actions,
-                html.smg-thread .smg-thead-unified .p-title > .smg-bar {
-                    display: none !important;
-                }
-                .smg-notices,
-                .smg-thead-unified .smg-notices,
-                html.smg-thread .smg-notices {
+                html.smg-thread .p-body-header .smg-bar,
+                html.smg-thread .p-body-header .smg-thead-controls,
+                html.smg-thread .p-body-header > .smg-thead-controls,
+                html.smg-thread .block-outer--top,
+                html.smg-thread .block-outer:first-of-type {
                     display: none !important;
                 }
                 /* AÇÕES DO POST no celular: salvar e compartilhar viram só ícone e as reações

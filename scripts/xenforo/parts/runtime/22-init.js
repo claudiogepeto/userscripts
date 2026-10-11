@@ -156,6 +156,9 @@
                 // instead of waiting for DOMContentLoaded behind the home paint.
                 safe(setupAlertsDock);
             }
+            if (FEATURES.sidebarNavigation && !document.getElementById('smg-post-nav-wrapper') && document.body) {
+                safe(setupPostNavigation);
+            }
             const full = (++runCount % FULL_SCAN_EVERY === 0) || fullPending;
             // frame SEM nó adicionado (remoção pura — spinner/freeze do feed — ou troca de text node):
             // não há nada novo pra processar; o full-scan imediato aqui varria o body INTEIRO a cada
@@ -194,6 +197,7 @@
         if (paintContext.gated && !isContentAlreadyReady) {
             cls.add('smg-page-pending');
             cls.add('smg-content-pending');
+            if (typeof armPagePaintSafetyTimer === 'function') armPagePaintSafetyTimer();
         }
         const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (typeof isTopbarReady === 'function' && isTopbarReady());
         if (FEATURES.topBar && !isTopbarAlreadyReady) {
@@ -201,6 +205,13 @@
             cls.add('smg-topbar-pending');
         } else if (typeof markTopbarReady === 'function') {
             markTopbarReady();
+        }
+        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (typeof isNavbarReady === 'function' && isNavbarReady());
+        if (FEATURES.sidebarNavigation && !isNavbarAlreadyReady) {
+            cls.add('smg-navbar-loading');
+            cls.add('smg-navbar-pending');
+        } else if (typeof markNavbarReady === 'function') {
+            markNavbarReady();
         }
         if (isForumHome && !isFeedView && FEATURES.homeRemake) {
             cls.add('smg-home');

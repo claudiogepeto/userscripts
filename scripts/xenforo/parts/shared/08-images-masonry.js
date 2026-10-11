@@ -846,7 +846,8 @@
     function isVideoBlock(b) {
         if (!b) return false;
         if (b.tagName === 'IMG') return false;
-        if (b.classList && b.classList.contains('smg-dead')) return false;
+        if (b.querySelector && b.querySelector('img.bbImage, .bbImage')) return false;
+        if (b.classList && (b.classList.contains('smg-dead') || b.classList.contains('smg-imglink'))) return false;
         return true;
     }
     function isWideMedia(b) {
@@ -1125,8 +1126,14 @@
         });
         relayoutGrid(grid);
     }
-    // remove os <a> esvaziados (a img foi pro grid) + os <br> separadores, no PARENT do grid — sem tocar em texto/links reais.
+    // remove os <a> esvaziados (a img foi pro grid) + os <br> separadores, no PARENT do grid (e no próprio grid) — sem tocar em texto/links reais.
     function cleanupGhosts(grid) {
+        if (!grid) return;
+        grid.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
+            let real = false;
+            a.childNodes.forEach(n => { if (n.nodeType === 1 && n.tagName !== 'NOSCRIPT') real = true; else if (n.nodeType === 3 && n.textContent.trim()) real = true; });
+            if (!real) a.remove();
+        });
         const parent = grid.parentNode; if (!parent) return;
         parent.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
             let real = false;   // conteúdo PRÓPRIO do <a> (ignora <noscript>, que vaza como texto OU vira DOM dependendo do parse)
@@ -1415,7 +1422,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;

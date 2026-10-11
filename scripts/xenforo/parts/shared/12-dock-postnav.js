@@ -65,7 +65,10 @@
 
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
-        if (document.getElementById('smg-post-nav-wrapper')) return;
+        if (document.getElementById('smg-post-nav-wrapper')) {
+            if (typeof markNavbarReady === 'function') markNavbarReady();
+            return;
+        }
 
         // anchors de cada post (ignora respostas em quote)
         let posts = Array.from(
@@ -498,7 +501,7 @@
 
             const threadBar = document.createElement('div');
             threadBar.className = 'smg-dock-thread-bar';
-            const threadBtns = [btnWatchM, btnSortM, btnMobilePageBtn, btnViewModeM, btnUpM, btnDownM].filter(Boolean);
+            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM].filter(Boolean);
             threadBar.append(...threadBtns);
 
             // Grupos para Desktop
@@ -556,7 +559,7 @@
 
             const listBar = document.createElement('div');
             listBar.className = 'smg-dock-thread-bar';
-            const listMobileBtns = [btnMobilePageBtn, btnListFilterM, btnListSortM, btnViewToggleM, btnUpM, btnDownM].filter(Boolean);
+            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
             listBar.append(...listMobileBtns);
 
             const listBtns = [];
@@ -739,6 +742,7 @@
         if (viewModePop) navWrapper.append(viewModePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
+        if (typeof markNavbarReady === 'function') markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----
 
@@ -1845,33 +1849,45 @@
                     return Array.from(badgeMap.values());
                 };
 
+                // ===== ÍCONES MONOCROMÁTICOS DOS SELECTS =====
+                const SCOPE_ICONS = {
+                    everywhere: ICONS.globe,
+                    watched: ICONS.star || ICONS.watched,
+                    threads: ICONS.chat,
+                    thread: ICONS.comment || ICONS.chat
+                };
+                const SORT_ICONS = {
+                    relevance: ICONS.barChart,
+                    date: ICONS.sortDate
+                };
+
                 // ===== TOOLBAR UNIFICADA (PAINEL INTEGRADO) =====
                 searchToolbarEl.innerHTML = `
                     <div class="smg-search-tb-row">
-                        <div class="smg-search-select-wrap">
-                            <select class="smg-search-scope-select">
-                                <option value="everywhere">🌐 ${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
-                                <option value="watched">⭐ ${IS_PT ? 'Tópicos seguidos' : 'Watched'}</option>
-                                <option value="threads">🧵 ${IS_PT ? 'Tópicos' : 'Threads'}</option>
-                                ${threadId ? `<option value="thread">💬 ${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
+                        <div class="smg-search-select-wrap smg-search-scope-wrap">
+                            <span class="smg-search-select-ic" aria-hidden="true">${ICONS.globe}</span>
+                            <select class="smg-search-scope-select" aria-label="${IS_PT ? 'Escopo da busca' : 'Search scope'}">
+                                <option value="everywhere">${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
+                                <option value="watched">${IS_PT ? 'Tópicos seguidos' : 'Watched'}</option>
+                                <option value="threads">${IS_PT ? 'Tópicos' : 'Threads'}</option>
+                                ${threadId ? `<option value="thread">${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
                             </select>
                         </div>
-                        <div class="smg-search-select-wrap">
-                            <select class="smg-search-sort-select">
-                                <option value="relevance">📊 ${IS_PT ? 'Relevância' : 'Relevance'}</option>
-                                <option value="date">📅 ${IS_PT ? 'Mais recentes' : 'Newest'}</option>
+                        <div class="smg-search-select-wrap smg-search-sort-wrap">
+                            <span class="smg-search-select-ic" aria-hidden="true">${ICONS.barChart}</span>
+                            <select class="smg-search-sort-select" aria-label="${IS_PT ? 'Ordenação' : 'Sort order'}">
+                                <option value="relevance">${IS_PT ? 'Relevância' : 'Relevance'}</option>
+                                <option value="date">${IS_PT ? 'Mais recentes' : 'Newest'}</option>
                             </select>
                         </div>
-                        <div class="smg-search-badges-slot"></div>
-                        <label class="smg-ios-toggle">
+                        <label class="smg-ios-toggle" title="${IS_PT ? 'Buscar apenas nos títulos' : 'Search titles only'}">
                             <input type="checkbox" class="smg-toggle-title-only"${titlesOn ? ' checked' : ''}>
                             <span class="smg-ios-switch"></span>
                             <span class="smg-ios-label">${IS_PT ? 'Só títulos' : 'Titles only'}</span>
                         </label>
-                        <div class="smg-search-author-box">
-                            <span class="smg-search-author-ic">${svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>')}</span>
-                            <input type="text" class="smg-search-author-inp" placeholder="${IS_PT ? 'Autor…' : 'Author…'}">
-                        </div>
+                        <button type="button" class="smg-search-author-trigger" title="${IS_PT ? 'Filtrar por autor' : 'Filter by author'}" aria-label="${IS_PT ? 'Filtrar por autor' : 'Filter by author'}">
+                            ${ICONS.user}
+                        </button>
                         <div class="smg-search-tb-spacer"></div>
                         <button type="button" class="smg-search-cfg" title="${i18n('Search defaults')}">${ICONS.sliders}</button>
                         <a class="smg-search-adv" href="${searchAction.replace(/search\/?$/, '') || '/search/'}" target="_blank" rel="noopener" title="${i18n('Advanced')}">
@@ -1879,26 +1895,45 @@
                             <span class="smg-ext-ic">${svgIcon('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>')}</span>
                         </a>
                     </div>
+                    <div class="smg-search-author-row" hidden>
+                        <span class="smg-search-author-ic">${ICONS.user}</span>
+                        <input type="text" class="smg-search-author-inp" placeholder="${IS_PT ? 'Filtrar por autor…' : 'Filter by author…'}" spellcheck="false" autocomplete="off">
+                        <button type="button" class="smg-search-author-clear" title="${i18n('Clear')}" aria-label="${i18n('Clear')}" hidden>${ICONS.close}</button>
+                        <button type="button" class="smg-search-author-close" title="${IS_PT ? 'Concluir' : 'Done'}" aria-label="${IS_PT ? 'Concluir' : 'Done'}">${ICONS.close}</button>
+                    </div>
                 `;
 
                 scopeSelect = searchToolbarEl.querySelector('.smg-search-scope-select');
                 sortSelect = searchToolbarEl.querySelector('.smg-search-sort-select');
                 toggleTitleOnly = searchToolbarEl.querySelector('.smg-toggle-title-only');
-                const authorBox = searchToolbarEl.querySelector('.smg-search-author-box');
+                const authorTrigger = searchToolbarEl.querySelector('.smg-search-author-trigger');
+                const authorRow = searchToolbarEl.querySelector('.smg-search-author-row');
                 authorInput = searchToolbarEl.querySelector('.smg-search-author-inp');
-                const badgesSlot = searchToolbarEl.querySelector('.smg-search-badges-slot');
+                const authorClear = searchToolbarEl.querySelector('.smg-search-author-clear');
+                const authorClose = searchToolbarEl.querySelector('.smg-search-author-close');
+
+                const updateSelectIcon = (sel, map) => {
+                    if (!sel) return;
+                    const wrap = sel.closest('.smg-search-select-wrap');
+                    const ic = wrap?.querySelector('.smg-search-select-ic');
+                    if (ic && map[sel.value]) ic.innerHTML = map[sel.value];
+                };
 
                 scopeSelect.value = currentScope;
+                updateSelectIcon(scopeSelect, SCOPE_ICONS);
                 scopeSelect.addEventListener('change', () => {
                     currentScope = scopeSelect.value;
+                    updateSelectIcon(scopeSelect, SCOPE_ICONS);
                     applyScopeUI();
                     researchOnFilter();
                     try { getSearchInput().focus(); } catch (e) {}
                 });
 
                 sortSelect.value = orderDate ? 'date' : 'relevance';
+                updateSelectIcon(sortSelect, SORT_ICONS);
                 sortSelect.addEventListener('change', () => {
                     orderDate = (sortSelect.value === 'date');
+                    updateSelectIcon(sortSelect, SORT_ICONS);
                     researchOnFilter();
                 });
 
@@ -1907,40 +1942,61 @@
                     researchOnFilter();
                 });
 
-                badgeMultiselect = createBadgeMultiselect({
-                    badges: getAllSearchBadges(),
-                    activeBadges: activeSearchBadges,
-                    placeholder: i18n('Search tags…'),
-                    buttonLabel: '🏷️ ' + (IS_PT ? 'Badges & Tags' : 'Badges & Tags'),
-                    onChange: () => {
-                        researchOnFilter();
-                    }
+                const openAuthorRow = () => {
+                    searchToolbarEl.classList.add('author-open');
+                    authorRow.hidden = false;
+                    authorClear.hidden = !authorInput.value;
+                    try { authorInput.focus(); authorInput.select(); } catch (e) {}
+                };
+
+                const closeAuthorRow = () => {
+                    searchToolbarEl.classList.remove('author-open');
+                    authorRow.hidden = true;
+                    const uname = (authorInput.value || '').trim();
+                    authorTrigger.classList.toggle('has-value', !!uname);
+                    authorTrigger.title = uname ? `${IS_PT ? 'Autor' : 'Author'}: ${uname}` : (IS_PT ? 'Filtrar por autor' : 'Filter by author');
+                };
+
+                authorTrigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openAuthorRow();
                 });
-                badgeMultiselect.querySelector('.smg-multiselect-btn')?.addEventListener('click', () => {
-                    refreshPrefixHarvest(() => {
-                        if (badgeMultiselect && typeof badgeMultiselect.updateBadges === 'function') {
-                            badgeMultiselect.updateBadges(getAllSearchBadges());
-                        }
-                    });
+
+                authorClose.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    closeAuthorRow();
                 });
-                badgesSlot.appendChild(badgeMultiselect);
+
+                authorClear.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    authorInput.value = '';
+                    authorClear.hidden = true;
+                    commitAuthor();
+                    try { authorInput.focus(); } catch (e) {}
+                });
 
                 let authorDebounce = null;
                 const commitAuthor = () => {
                     const uname = (authorInput.value || '').trim();
-                    authorBox.classList.toggle('has-value', !!uname);
+                    authorTrigger.classList.toggle('has-value', !!uname);
+                    authorTrigger.title = uname ? `${IS_PT ? 'Autor' : 'Author'}: ${uname}` : (IS_PT ? 'Filtrar por autor' : 'Filter by author');
+                    authorClear.hidden = !uname;
                     researchOnFilter();
                 };
                 authorInput.addEventListener('input', () => {
                     clearTimeout(authorDebounce);
-                    authorDebounce = setTimeout(commitAuthor, 400);
+                    authorDebounce = setTimeout(commitAuthor, 350);
                 });
                 authorInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         clearTimeout(authorDebounce);
                         commitAuthor();
+                        closeAuthorRow();
                         doSearch(true);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeAuthorRow();
                     }
                 });
             }
