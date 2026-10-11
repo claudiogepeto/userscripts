@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.15.0'), 'Userscript deve estar na versão 3.15.0');
+    assert(scriptContent.includes('// @version      3.16.0'), 'Userscript deve estar na versão 3.16.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -5941,17 +5941,17 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 48: Refatoração da Topbar da Thread (Badges acima do título, tags fora do header sticky, thumb ampliado e controles agrupados) ---');
 
-    // 1. Validar no CSS gerado: .smg-thead-badges-row, .smg-thead-thumb com 108px, -webkit-line-clamp: 2, padding-left: 0 !important, -webkit-line-clamp: 1 no stuck, etc.
+    // 1. Validar no CSS gerado: .smg-thead-badges-row, .smg-thead-thumb com 120px, -webkit-line-clamp: 2, padding-left: 0 !important, -webkit-line-clamp: 1 no stuck, etc.
     const allStyles48 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(allStyles48.includes('.smg-thead-badges-row'), 'CSS deve conter regra para .smg-thead-badges-row');
-    assert(allStyles48.includes('width: 108px;') && allStyles48.includes('height: 108px;'), 'CSS deve conter .smg-thead-thumb com 108px');
+    assert(allStyles48.includes('width: 120px;') && allStyles48.includes('height: 120px;'), 'CSS deve conter .smg-thead-thumb com 120px');
     assert(allStyles48.includes('-webkit-line-clamp: 2 !important;'), 'CSS deve conter -webkit-line-clamp: 2 para permitir até 2 linhas no título');
     assert(allStyles48.includes('padding-left: 0 !important;'), 'CSS deve conter padding-left: 0 !important;');
     assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('-webkit-line-clamp: 1 !important;'), 'CSS deve conter -webkit-line-clamp: 1 no estado stuck');
     assert(allStyles48.includes('.smg-thead-controls') && allStyles48.includes('margin-left: auto') && allStyles48.includes('flex-shrink: 0'), 'CSS deve conter .smg-thead-controls com margin-left: auto e flex-shrink: 0');
     assert(allStyles48.includes('.smg-thead-unified.is-stuck .smg-thead-badges-row') && allStyles48.includes('display: none !important;'), 'CSS deve ocultar .smg-thead-badges-row quando o header estiver stuck');
     assert(allStyles48.includes('.smg-thead-spacer') && allStyles48.includes('overflow-anchor: none !important;'), 'CSS deve conter .smg-thead-spacer com overflow-anchor: none !important;');
-    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('font-size: 13.5px !important;'), 'CSS deve conter font-size: 13.5px !important; no estado stuck');
+    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('font-size: 14.5px !important;'), 'CSS deve conter font-size: 14.5px !important; no estado stuck');
 
     // 2. Criar header mockado com thumb, badges (.label), título longo e tags (.p-description)
     document.documentElement.classList.add('smg-thread');
@@ -5995,11 +5995,11 @@ async function runTests() {
     assert(!/^\s|\s$/.test(titleTextSpan48.textContent), 'Sanitização rigorosa deve garantir zero espaços no início e no fim do título');
     assert(!titleTextSpan48.textContent.includes('Twitch'), 'Badges não devem estar misturadas ao texto do título');
 
-    // 5. Validar que as tags estão em .smg-thead-tags-bar inseridas como irmão após o header (fora do sticky header)
-    const tagsBar48 = header48.nextElementSibling;
-    assert(tagsBar48 !== null && tagsBar48.classList.contains('smg-thead-tags-bar'), 'Tags devem estar em .smg-thead-tags-bar inseridas como irmão após o header');
-    assert(tagsBar48.querySelector('.p-description') !== null, '.p-description deve estar dentro de .smg-thead-tags-bar');
-    assert(!header48.contains(tagsBar48), 'Tags não devem estar dentro do header sticky');
+    // 5. Validar que as tags estão em .smg-thead-tags dentro de .smg-thead-info ao lado do título e da imagem
+    const tagsBar48 = header48.querySelector('.smg-thead-tags') || header48.nextElementSibling;
+    assert(tagsBar48 !== null && (tagsBar48.classList.contains('smg-thead-tags-bar') || tagsBar48.classList.contains('smg-thead-tags')), 'Tags devem estar em .smg-thead-tags');
+    assert(tagsBar48.querySelector('.p-description') !== null, '.p-description deve estar dentro de .smg-thead-tags');
+    assert(header48.contains(tagsBar48), 'Tags devem estar dentro do header junto ao título e à imagem');
 
     // 6. Validar que .smg-thead-controls abriga tanto .smg-bar quanto .smg-thead-actions
     const controls48 = header48.querySelector('.smg-thead-controls');
@@ -6214,23 +6214,20 @@ async function runTests() {
     assert(typeof unifyFn === 'function', 'unifyThreadHeader deve estar disponível');
     unifyFn(smgHeader);
 
-    // Validar tagsBar inserido após header
-    const smgTagsBar = smgHeader.nextElementSibling;
-    assert(smgTagsBar !== null, 'tagsBar deve existir como irmão após o header');
+    // Validar tagsBar inserido
+    const smgTagsBar = smgHeader.querySelector('.smg-thead-tags') || smgHeader.nextElementSibling;
+    assert(smgTagsBar !== null, 'tagsBar deve existir');
     assert(smgTagsBar.classList.contains('smg-thead-tags-bar'), 'tagsBar deve ter a classe .smg-thead-tags-bar');
     assert(smgTagsBar.classList.contains('smg-thead-tags'), 'tagsBar deve ter a classe .smg-thead-tags');
 
-    // Validar que desc está encapsulado por .pageContent
-    const innerPageContent = smgTagsBar.querySelector('.pageContent');
-    assert(innerPageContent !== null, 'tagsBar deve conter um wrapper .pageContent no SMG');
-    const descInInner = innerPageContent.querySelector('.p-description');
-    assert(descInInner !== null, '.p-description deve estar dentro de .pageContent');
-    assert(descInInner.parentElement === innerPageContent, '.p-description deve ser filho direto de .pageContent');
+    // Validar que desc está em tagsBar
+    const descInInner = smgTagsBar.querySelector('.p-description');
+    assert(descInInner !== null, '.p-description deve estar dentro de tagsBar');
 
     // Limpeza
     smgHeader.remove();
     smgBarHost.remove();
-    smgTagsBar.remove();
+    smgTagsBar?.remove();
     document.querySelector('.smg-thead-spacer')?.remove();
     document.querySelector('.smg-thead-sentinel')?.remove();
 
@@ -6256,11 +6253,10 @@ async function runTests() {
 
     unifyFn(scHeader);
 
-    const scTagsBar = scHeader.nextElementSibling;
-    assert(scTagsBar !== null, 'tagsBar deve existir após scHeader');
+    const scTagsBar = scHeader.querySelector('.smg-thead-tags') || scHeader.nextElementSibling;
+    assert(scTagsBar !== null, 'tagsBar deve existir no scHeader');
     assert(scTagsBar.classList.contains('smg-thead-tags-bar'), 'scTagsBar deve ter .smg-thead-tags-bar');
-    assert(scTagsBar.querySelector('.pageContent') === null, 'scTagsBar NÃO deve conter .pageContent quando header não possui');
-    assert(scTagsBar.querySelector('.p-description')?.parentElement === scTagsBar, '.p-description deve ser filho direto de scTagsBar');
+    assert(scTagsBar.querySelector('.p-description') !== null, '.p-description deve existir em scTagsBar');
 
     // Limpeza
     scHeader.remove();
@@ -7611,6 +7607,365 @@ async function runTests() {
                 assert(cardsList.querySelectorAll('.smg-search-result').length === 3, 'Todos os 3 cards devem voltar a estar visíveis');
             }
         }
+    }
+
+    // =========================================================================
+    // TESTE 67: Revamp da Homepage (Topbar, Hero Carousel & Category Hub)
+    // =========================================================================
+    console.log('--- TESTE 67: Revamp da Homepage (Topbar, Hero Carousel & Category Hub) ---');
+    const allStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+
+    // 1. Topbar no estado default e flutuante
+    assert(allStyles.includes('height: 72px;'), 'Topbar default deve ter 72px de altura');
+    assert(allStyles.includes('padding-top: 72px !important;'), 'Body deve ter padding-top de 72px para compensar a topbar');
+    assert(allStyles.includes('scroll-margin-top: 86px;'), ':target deve compensar 86px para a topbar de 72px');
+    assert(allStyles.includes('#smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }'), 'Topbar flutuante deve encolher para 60px no scroll');
+    assert(allStyles.includes('.smg-tb-logo {') && allStyles.includes('height: 48px;'), '.smg-tb-logo deve ter 48px de altura');
+    assert(allStyles.includes('.smg-tb-logo img {') && allStyles.includes('height: 42px;'), '.smg-tb-logo img deve ter 42px de altura');
+    assert(allStyles.includes('max-width: 220px;'), 'Logo deve ter max-width expandido para 220px');
+    assert(allStyles.includes('.smg-logo-word {') && allStyles.includes('font-size: 26px;'), 'Logo SMG deve ter font-size 26px');
+    assert(allStyles.includes('font-weight: 900;'), 'Logo SMG deve ter font-weight 900');
+    assert(allStyles.includes('.smg-home-skeleton-topbar {') && allStyles.includes('height: 72px;'), 'Skeleton da topbar da home deve ter 72px');
+    assert(allStyles.includes('.smg-home-skeleton-topbar-logo { width: 160px; height: 36px;'), 'Skeleton do logo deve ter 160x36px');
+
+    // 2. Carousel de Últimos Posts e Em Alta
+    assert(allStyles.includes('width: 295px;'), 'Cards do carousel devem ter largura expandida de 295px');
+    assert(allStyles.includes('height: 395px;'), 'Cards do carousel devem ter altura expandida de 395px');
+    assert(allStyles.includes('aspect-ratio: 3 / 4.02;'), 'Cards do carousel devem ter aspect-ratio de 3 / 4.02');
+    assert(allStyles.includes('.smg-feed-card-badges'), 'CSS deve conter classe .smg-feed-card-badges para tags isoladas');
+    assert(allStyles.includes('.smg-feed-card-meta .smg-feed-user'), 'CSS deve conter estilo para o usuário do card no meta');
+    assert(allStyles.includes('.smg-feed-nav'), 'CSS deve conter botões de navegação .smg-feed-nav');
+
+    if (window.__homeExports) {
+        const {
+            extractFeedItemData,
+            createFeedCardEl,
+            getCachedFeed,
+            setCachedFeed,
+            FEED_CACHE_KEY_PREFIX,
+            enhanceHomeHubSections,
+            homeLayoutSignature,
+            classifyHomeNode,
+            organizeHomeHub,
+            getMainCategoryOrder
+        } = window.__homeExports;
+
+        // Testar extração de dados da thread
+        const mockItem = document.createElement('div');
+        mockItem.className = 'structItem structItem--thread';
+        mockItem.innerHTML = `
+            <div class="structItem-cell structItem-cell--icon">
+                <div class="dcThumbnail"><img src="https://media.test/thumb.jpg"></div>
+            </div>
+            <div class="structItem-cell structItem-cell--main">
+                <div class="structItem-title">
+                    <span class="label label--instagram">Instagram</span>
+                    <span class="prefix">MILF</span>
+                    <a href="/threads/sample-model.123/">Sample Model</a>
+                </div>
+            </div>
+            <div class="structItem-cell structItem-cell--latest">
+                <a href="/posts/9999/" class="structItem-latestDate">10 minutos atrás</a>
+                <span class="username">TestAuthor</span>
+            </div>
+        `;
+        const itemData = extractFeedItemData(mockItem);
+        assert(itemData !== null, 'extractFeedItemData deve extrair dados válidos da thread');
+        assert(itemData.titleText === 'Sample Model', 'Deve extrair o texto limpo do título');
+        assert(itemData.labels.length === 2, 'Deve extrair os 2 badges separadamente');
+        assert(itemData.metaUser === 'TestAuthor', 'Deve extrair o autor mais recente');
+        assert(itemData.metaTime === '10 minutos atrás', 'Deve extrair a data mais recente');
+
+        // Testar renderização do card
+        const cardEl = createFeedCardEl(itemData, '<svg></svg>');
+        assert(cardEl !== null, 'createFeedCardEl deve criar elemento de card');
+        assert(cardEl.classList.contains('smg-feed-card'), 'Card deve ter classe .smg-feed-card');
+        const badgesEl = cardEl.querySelector('.smg-feed-card-badges');
+        assert(badgesEl !== null, 'Card deve ter container isolado de badges');
+        assert(badgesEl.querySelectorAll('.label, .prefix').length === 2, 'Badges devem estar dentro do container');
+        const titleEl = cardEl.querySelector('.smg-feed-card-title');
+        assert(titleEl !== null && titleEl.textContent === 'Sample Model', 'Título do card deve conter texto sem misturar spans');
+        const metaEl = cardEl.querySelector('.smg-feed-card-meta');
+        assert(metaEl !== null && metaEl.querySelector('.smg-feed-user')?.textContent === 'TestAuthor', 'Meta deve destacar o usuário em .smg-feed-user');
+
+        // Testar cache do feed em sessionStorage
+        const testCacheItems = [itemData];
+        setCachedFeed('test_tab', testCacheItems, '/whats-new/posts/?page=2');
+        const retrievedCache = getCachedFeed('test_tab');
+        assert(retrievedCache !== null, 'getCachedFeed deve recuperar o feed salvo em cache');
+        assert(Array.isArray(retrievedCache.items) && retrievedCache.items.length === 1, 'Cache deve conter 1 item salvo');
+        assert(retrievedCache.items[0].titleText === 'Sample Model', 'Item do cache deve preservar título');
+        assert(retrievedCache.nextUrl === '/whats-new/posts/?page=2', 'Cache deve preservar a próxima URL de paginação');
+
+        // Testar List Layout e Hub Styles
+        assert(allStyles.includes('/* ================= CATEGORY HUB ================= */'), 'CSS deve conter seção Category Hub');
+        assert(allStyles.includes('.smg-hub-badge'), 'CSS deve estilizar badge .smg-hub-badge');
+        assert(allStyles.includes('html.smg-home .block--category .block-body') && allStyles.includes('flex-direction: column !important;'), 'Seções da home devem utilizar layout em lista (flex column)');
+        assert(allStyles.includes('html.smg-home .node-extra {') && allStyles.includes('background: transparent !important;'), '.node-extra deve ter background transparente');
+        assert(allStyles.includes('.node-extra-title'), 'CSS deve conter estilo para o título do último post .node-extra-title');
+        assert(allStyles.includes('.smg-hub-category-divider'), 'CSS deve conter estilo para o divisor de categorias .smg-hub-category-divider');
+        assert(allStyles.includes('.p-body-header.smg-thead-unified') && allStyles.includes('top: 60px;'), 'Header sticky da thread deve respeitar top: 60px');
+        assert(allStyles.includes('.p-body-header.smg-thead-unified') && allStyles.includes('justify-content: space-between !important;'), 'Header sticky da thread deve manter layout horizontal space-between');
+        assert(allStyles.includes('.p-body-header.smg-thead-unified.is-stuck') && allStyles.includes('padding: 8px 0 !important;'), 'Header sticky no estado stuck deve ter padding simétrico 8px');
+
+        // Testar classifyHomeNode
+        assert(typeof classifyHomeNode === 'function', 'classifyHomeNode deve ser função');
+        
+        // 1. Sites
+        const mockSiteNode = document.createElement('div');
+        mockSiteNode.className = 'node';
+        mockSiteNode.dataset.smgOrigCategory = 'Social Media';
+        mockSiteNode.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/insta">Instagram</a></div></div>';
+        assert(classifyHomeNode(mockSiteNode) === 'sites', 'Instagram deve ser classificado como sites');
+
+        const mockOnlyFans = document.createElement('div');
+        mockOnlyFans.className = 'node';
+        mockOnlyFans.dataset.smgOrigCategory = 'Premium Fan Sites';
+        mockOnlyFans.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/onlyfans">OnlyFans</a></div></div>';
+        assert(classifyHomeNode(mockOnlyFans) === 'sites', 'OnlyFans deve ser classificado como sites');
+
+        // 2. Navigation (inclui Workflows e Guides)
+        const mockLounge = document.createElement('div');
+        mockLounge.className = 'node';
+        mockLounge.dataset.smgOrigCategory = 'Community';
+        mockLounge.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/lounge">The Lounge</a></div></div>';
+        assert(classifyHomeNode(mockLounge) === 'nav', 'The Lounge deve ser classificado como nav');
+
+        const mockRules = document.createElement('div');
+        mockRules.className = 'node';
+        mockRules.dataset.smgOrigCategory = 'Info and Links';
+        mockRules.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/rules">Rules</a></div></div>';
+        assert(classifyHomeNode(mockRules) === 'nav', 'Rules deve ser classificado como nav');
+
+        const mockWorkflows = document.createElement('div');
+        mockWorkflows.className = 'node';
+        mockWorkflows.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/workflows">Workflows</a></div></div>';
+        assert(classifyHomeNode(mockWorkflows) === 'nav', 'Workflows deve ser classificado como nav');
+
+        const mockGuides = document.createElement('div');
+        mockGuides.className = 'node';
+        mockGuides.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/guides">Guides + Discussion</a></div></div>';
+        assert(classifyHomeNode(mockGuides) === 'nav', 'Guides + Discussion deve ser classificado como nav');
+
+        // 3. Requests
+        const mockRequests = document.createElement('div');
+        mockRequests.className = 'node';
+        mockRequests.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/requests">Requests</a></div></div>';
+        assert(classifyHomeNode(mockRequests) === 'requests', 'Requests deve ser classificado como requests');
+
+        // 4. Discussions (inclui Megathreads e Trans Reviews)
+        const mockMegathreads = document.createElement('div');
+        mockMegathreads.className = 'node';
+        mockMegathreads.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/megathreads">Megathreads</a></div></div>';
+        assert(classifyHomeNode(mockMegathreads) === 'discussions', 'Megathreads deve ser classificado como discussions');
+
+        const mockGeneralDisc = document.createElement('div');
+        mockGeneralDisc.className = 'node';
+        mockGeneralDisc.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/discussion">General Discussion</a></div></div>';
+        assert(classifyHomeNode(mockGeneralDisc) === 'discussions', 'General Discussion deve ser classificado como discussions');
+
+        const mockTransReviews = document.createElement('div');
+        mockTransReviews.className = 'node';
+        mockTransReviews.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/trans-reviews">Trans Reviews</a></div></div>';
+        assert(classifyHomeNode(mockTransReviews) === 'discussions', 'Trans Reviews deve ir para discussions');
+
+        // 5. Celebrities e XXX / Porn devem ir para categories (não sites)
+        const mockCelebs = document.createElement('div');
+        mockCelebs.className = 'node';
+        mockCelebs.dataset.smgOrigCategory = 'Social Media';
+        mockCelebs.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/celebrities">Celebrities</a></div></div>';
+        assert(classifyHomeNode(mockCelebs) === 'categories', 'Celebrities deve ir para categories');
+
+        const mockPorn = document.createElement('div');
+        mockPorn.className = 'node';
+        mockPorn.dataset.smgOrigCategory = 'Adult Sites';
+        mockPorn.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/xxx-porn">XXX / Porn</a></div></div>';
+        assert(classifyHomeNode(mockPorn) === 'categories', 'XXX / Porn deve ir para categories');
+
+        // 6. Remover container "Brasileiras | Brazilian Girls"
+        const mockBrContainer = document.createElement('div');
+        mockBrContainer.className = 'node';
+        mockBrContainer.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/br-girls">Brasileiras | Brazilian Girls</a></div></div>';
+        assert(classifyHomeNode(mockBrContainer) === null, 'Container Brasileiras | Brazilian Girls deve ser removido (retorna null)');
+
+        // 7. Categories normais e 10 principais
+        const mockCosplay = document.createElement('div');
+        mockCosplay.className = 'node';
+        mockCosplay.dataset.smgOrigCategory = 'Specialised Interests';
+        mockCosplay.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/cosplay">Cosplay</a></div></div>';
+        assert(classifyHomeNode(mockCosplay) === 'categories', 'Cosplay deve ser classificado como categories');
+
+        const mockAnimatedGeneral = document.createElement('div');
+        mockAnimatedGeneral.className = 'node';
+        mockAnimatedGeneral.dataset.smgOrigCategory = 'Specialised Interests';
+        mockAnimatedGeneral.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/animated">Animated</a></div></div>';
+        assert(classifyHomeNode(mockAnimatedGeneral) === 'categories', 'Animated geral deve ser classificado como categories');
+        assert(mockAnimatedGeneral.querySelector('.node-title a').textContent === 'Animated', 'Animated geral deve manter o título');
+
+        const mock3D = document.createElement('div');
+        mock3D.className = 'node';
+        mock3D.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/3d">3D</a></div></div>';
+        assert(classifyHomeNode(mock3D) === 'categories', '3D deve ir para categories');
+
+        const mockHentai = document.createElement('div');
+        mockHentai.className = 'node';
+        mockHentai.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/hentai">Hentai</a></div></div>';
+        assert(classifyHomeNode(mockHentai) === 'categories', 'Hentai deve ir para categories');
+
+        const mockTransgender = document.createElement('div');
+        mockTransgender.className = 'node';
+        mockTransgender.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/transgender">Transgender</a></div></div>';
+        assert(classifyHomeNode(mockTransgender) === 'categories', 'Transgender geral deve ir para categories');
+
+        // 8. Brasil - detecção e renomeação
+        const mockAnimatedBr = document.createElement('div');
+        mockAnimatedBr.className = 'node smg-subcard';
+        mockAnimatedBr.dataset.smgParentTitle = 'Brasileiras';
+        mockAnimatedBr.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/animated-br">Animated</a></div></div>';
+        assert(classifyHomeNode(mockAnimatedBr) === 'categories', 'Subfórum Animated do Brasil deve ir para categories');
+        assert(mockAnimatedBr.querySelector('.node-title a').textContent === 'Brasil - Animated', 'Subfórum Animated do Brasil deve ser renomeado para Brasil - Animated');
+
+        const mockTransBr = document.createElement('div');
+        mockTransBr.className = 'node smg-subcard';
+        mockTransBr.dataset.smgParentTitle = 'Brasileiras';
+        mockTransBr.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/trans-br">Trans</a></div></div>';
+        assert(classifyHomeNode(mockTransBr) === 'categories', 'Subfórum Trans do Brasil deve ir para categories');
+        assert(mockTransBr.querySelector('.node-title a').textContent === 'Brasil - Trans', 'Subfórum Trans do Brasil deve ser renomeado para Brasil - Trans');
+
+        const mockBrOnlyFans = document.createElement('div');
+        mockBrOnlyFans.className = 'node smg-subcard';
+        mockBrOnlyFans.dataset.smgParentTitle = 'Brasileiras';
+        mockBrOnlyFans.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/br-onlyfans">OnlyFans</a></div></div>';
+        assert(classifyHomeNode(mockBrOnlyFans) === 'categories', 'Subfórum OnlyFans do Brasil deve ir para categories');
+        assert(mockBrOnlyFans.querySelector('.node-title a').textContent === 'Brasil - OnlyFans', 'Subfórum OnlyFans do Brasil deve ser renomeado para Brasil - OnlyFans');
+
+        const mockBrPatreon = document.createElement('div');
+        mockBrPatreon.className = 'node smg-subcard';
+        mockBrPatreon.dataset.smgParentTitle = 'Brasileiras';
+        mockBrPatreon.innerHTML = '<div class="node-body"><div class="node-title"><a href="/f/br-patreon">Patreon</a></div></div>';
+        assert(classifyHomeNode(mockBrPatreon) === 'categories', 'Subfórum Patreon do Brasil deve ir para categories');
+        assert(mockBrPatreon.querySelector('.node-title a').textContent === 'Brasil - Patreon', 'Subfórum Patreon do Brasil deve ser renomeado para Brasil - Patreon');
+
+        // Testar ordem das 11 categorias principais (incluindo Celebrities e XXX / Porn)
+        assert(getMainCategoryOrder('3D') === 0, '3D deve ser prioridade 0');
+        assert(getMainCategoryOrder('Animated') === 1, 'Animated deve ser prioridade 1');
+        assert(getMainCategoryOrder('Asians') === 2, 'Asians deve ser prioridade 2');
+        assert(getMainCategoryOrder('ASMR') === 3, 'ASMR deve ser prioridade 3');
+        assert(getMainCategoryOrder('Cam Girls') === 4, 'Cam Girls deve ser prioridade 4');
+        assert(getMainCategoryOrder('Celebrities') === 5, 'Celebrities deve ser prioridade 5');
+        assert(getMainCategoryOrder('Hentai') === 6, 'Hentai deve ser prioridade 6');
+        assert(getMainCategoryOrder('Hotwives') === 7, 'Hotwives deve ser prioridade 7');
+        assert(getMainCategoryOrder('Transgender') === 8, 'Transgender deve ser prioridade 8');
+        assert(getMainCategoryOrder('VTubers') === 9, 'VTubers deve ser prioridade 9');
+        assert(getMainCategoryOrder('XXX / Porn') === 10, 'XXX / Porn deve ser prioridade 10');
+        assert(getMainCategoryOrder('Cosplay') === 999, 'Cosplay não é prioridade principal (999)');
+        assert(getMainCategoryOrder('Brasil - Animated') === 999, 'Brasil - Animated não é prioridade principal (999)');
+        assert(getMainCategoryOrder('Brasil - OnlyFans') === 999, 'Brasil - OnlyFans não é prioridade principal (999)');
+
+        // Testar organizeHomeHub
+        assert(typeof organizeHomeHub === 'function', 'organizeHomeHub deve ser função');
+        const container = document.createElement('div');
+        container.className = 'p-body-content';
+        container.innerHTML = `
+            <div class="block block--category">
+                <h2 class="block-header"><span class="uix_categoryTitle">Social Media</span></h2>
+                <div class="block-container"><div class="block-body"></div></div>
+            </div>
+            <div class="block block--category">
+                <h2 class="block-header"><span class="uix_categoryTitle">Community</span></h2>
+                <div class="block-container"><div class="block-body"></div></div>
+            </div>
+            <div class="block block--category">
+                <h2 class="block-header"><span class="uix_categoryTitle">Specialised Interests</span></h2>
+                <div class="block-container"><div class="block-body"></div></div>
+            </div>
+        `;
+        const bodies = container.querySelectorAll('.block-body');
+        bodies[0].appendChild(mockOnlyFans);
+        bodies[0].appendChild(mockSiteNode);
+        bodies[0].appendChild(mockCelebs);
+        bodies[0].appendChild(mockPorn);
+        bodies[0].appendChild(mockBrContainer);
+        bodies[1].appendChild(mockLounge);
+        bodies[1].appendChild(mockRules);
+        bodies[1].appendChild(mockWorkflows);
+        bodies[1].appendChild(mockGuides);
+        bodies[1].appendChild(mockRequests);
+        bodies[1].appendChild(mockMegathreads);
+        bodies[1].appendChild(mockGeneralDisc);
+        bodies[1].appendChild(mockTransReviews);
+        bodies[2].appendChild(mockAnimatedBr);
+        bodies[2].appendChild(mockTransBr);
+        bodies[2].appendChild(mockBrOnlyFans);
+        bodies[2].appendChild(mockBrPatreon);
+        bodies[2].appendChild(mockCosplay);
+        bodies[2].appendChild(mockAnimatedGeneral);
+        bodies[2].appendChild(mock3D);
+        bodies[2].appendChild(mockHentai);
+        bodies[2].appendChild(mockTransgender);
+
+        document.body.appendChild(container);
+        document.documentElement.classList.add('smg-home');
+
+        organizeHomeHub([container]);
+
+        const hubSections = container.querySelectorAll('.block--category[data-smg-home-hub]');
+        assert(hubSections.length === 5, `organizeHomeHub deve consolidar exatamente em 5 seções (obtido: ${hubSections.length})`);
+        assert(container.querySelector('[data-smg-home-hub="sites"]') !== null, 'Deve existir seção Sites');
+        assert(container.querySelector('[data-smg-home-hub="categories"]') !== null, 'Deve existir seção Categories');
+        assert(container.querySelector('[data-smg-home-hub="discussions"]') !== null, 'Deve existir seção Discussions');
+        assert(container.querySelector('[data-smg-home-hub="requests"]') !== null, 'Deve existir seção Requests');
+        assert(container.querySelector('[data-smg-home-hub="nav"]') !== null, 'Deve existir seção Site Navigation');
+
+        // Divisor visual de categorias
+        const catDivider = container.querySelector('[data-smg-home-hub="categories"] .smg-hub-category-divider');
+        assert(catDivider !== null, 'Deve existir divisor entre categorias principais e outras categorias');
+
+        // Verificar ordenação em Sites
+        const sitesList = Array.from(container.querySelectorAll('[data-smg-home-hub="sites"] .node-title a')).map(a => a.textContent.trim());
+        assert(sitesList[0] === 'Instagram' && sitesList[1] === 'OnlyFans', 'Sites devem conter Instagram e OnlyFans em ordem alfabética');
+        assert(!sitesList.includes('Celebrities') && !sitesList.includes('XXX / Porn'), 'Sites NÃO deve conter Celebrities nem XXX / Porn');
+
+        // Verificar ordenação em Categories
+        const catList = Array.from(container.querySelectorAll('[data-smg-home-hub="categories"] .node-title a')).map(a => a.textContent.trim());
+        assert(catList.indexOf('3D') === 0, '3D deve ser a primeira categoria');
+        assert(catList.indexOf('Animated') === 1, 'Animated deve vir em segundo');
+        assert(catList.indexOf('Celebrities') === 2, 'Celebrities deve vir em terceiro entre os presentes');
+        assert(catList.indexOf('Hentai') === 3, 'Hentai deve vir em quarto entre os presentes');
+        assert(catList.indexOf('Transgender') === 4, 'Transgender deve vir em quinto entre os presentes');
+        assert(catList.indexOf('XXX / Porn') === 5, 'XXX / Porn deve ser a 6ª categoria principal entre os presentes');
+        assert(catList.indexOf('Brasil - Animated') > catList.indexOf('XXX / Porn'), 'Brasil - Animated deve vir após as categorias principais');
+        assert(catList.indexOf('Brasil - OnlyFans') > catList.indexOf('XXX / Porn'), 'Brasil - OnlyFans deve vir após o divisor');
+        assert(catList.indexOf('Brasil - Patreon') > catList.indexOf('XXX / Porn'), 'Brasil - Patreon deve vir após o divisor');
+        assert(!catList.some(t => t.includes('Brasileiras | Brazilian Girls')), 'Brasileiras | Brazilian Girls deve ter sido removido');
+
+        // Verificar Discussions
+        const discList = Array.from(container.querySelectorAll('[data-smg-home-hub="discussions"] .node-title a')).map(a => a.textContent.trim());
+        assert(discList.includes('General Discussion') && discList.includes('Megathreads') && discList.includes('Trans Reviews'), 'Discussions deve conter General Discussion, Megathreads e Trans Reviews');
+
+        // Verificar Requests
+        const reqList = Array.from(container.querySelectorAll('[data-smg-home-hub="requests"] .node-title a')).map(a => a.textContent.trim());
+        assert(reqList.includes('Requests'), 'Requests deve conter Requests');
+
+        // Verificar Nav
+        const navList = Array.from(container.querySelectorAll('[data-smg-home-hub="nav"] .node-title a')).map(a => a.textContent.trim());
+        assert(navList.includes('Workflows') && navList.includes('Guides + Discussion'), 'Nav deve conter Workflows e Guides + Discussion');
+
+        // Testar enhanceHomeHubSections no Hub
+        enhanceHomeHubSections();
+        const sitesBadge = container.querySelector('[data-smg-home-hub="sites"] .smg-hub-badge');
+        assert(sitesBadge !== null && sitesBadge.textContent.includes('2'), 'Badge de Sites deve exibir 2 fóruns');
+
+        const catBadge = container.querySelector('[data-smg-home-hub="categories"] .smg-hub-badge');
+        assert(catBadge !== null && catBadge.textContent.includes('11'), `Badge de Categories deve exibir 11 fóruns (obtido: ${catBadge ? catBadge.textContent : 'null'})`);
+
+        // Testar estabilidade do homeLayoutSignature
+        const sig1 = homeLayoutSignature();
+        const sig2 = homeLayoutSignature();
+        assert(sig1 === sig2, 'homeLayoutSignature deve ser 100% estável nas seções consolidadas');
+
+        container.remove();
+        document.documentElement.classList.remove('smg-home');
     }
 
     // =========================================================================

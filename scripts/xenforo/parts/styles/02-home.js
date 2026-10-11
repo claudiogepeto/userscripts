@@ -32,10 +32,10 @@
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
             .smg-home-skeleton-topbar {
                 display: flex; align-items: center; justify-content: space-between; gap: 24px;
-                height: 62px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
+                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
                 border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
             }
-            .smg-home-skeleton-topbar-logo { width: 142px; height: 28px; border-radius: 7px; }
+            .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: 8px; }
             .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: 30px; margin-left: auto; }
             .smg-home-skeleton-topbar-logo,
             .smg-home-skeleton-topbar-nav i,
@@ -183,86 +183,145 @@
                 padding: 12px 16px !important; font-size: 14px !important; font-weight: 700 !important;
             }
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
-            /* hero shelf: surface elevada NEUTRA (sem tingir de rosa) → destaca das sections (transparentes) só pela elevação */
-            html.smg-home .smg-feed-block { margin: 8px 0 40px !important; padding: 14px 18px 20px; background: var(--smg-s1, #16171b); border: 1px solid var(--smg-bd); border-radius: 20px; box-shadow: 0 10px 34px rgba(0,0,0,0.34); overflow: visible; }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: 10px 12px 14px; border-radius: 16px; margin-bottom: 30px !important; } }
-            /* tabbar = "header" da section (pills + borda inferior, igual às outras sections) */
-            html.smg-home .smg-feed-tabs { display: flex; align-items: center; gap: 8px; padding: 0 2px; margin: 0 0 18px; background: transparent; border-bottom: 1px solid var(--smg-bd); }
-            /* tabs scrollam aqui; o "See all" + notices ficam fora desse scroll, à direita */
-            html.smg-home .smg-feed-tablist { display: flex; gap: 2px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+            /* hero shelf: surface elevada com gradiente sutil e highlight superior */
+            html.smg-home .smg-feed-block {
+                margin: 28px 0 46px !important; padding: 20px 22px 24px;
+                background: linear-gradient(180deg, rgba(255,255,255,0.038) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a);
+                border: 1px solid rgba(255,255,255,0.08); border-radius: 22px;
+                box-shadow: 0 20px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+                overflow: visible;
+            }
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: 14px 14px 18px; border-radius: 18px; margin-top: 16px !important; margin-bottom: 30px !important; } }
+            /* tabbar = header da section com segmented control moderno */
+            html.smg-home .smg-feed-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; margin: 0 0 20px; background: transparent; border-bottom: 0 !important; }
+            /* tabs scrollam aqui; o "See all" fica fixo à direita */
+            html.smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+            html.smg-home .smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
             html.smg-home .smg-feed-tablist::-webkit-scrollbar { display: none; }
-            /* abas = sublinhado-accent (mesma linguagem do header do Feed): chrome neutro, rosa SÓ no item ativo */
+            /* abas em cápsula moderna com realce no item ativo */
             html.smg-home .smg-feed-tab {
                 position: relative;
-                display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; height: 44px; padding: 0 13px;
-                border: 0; background: transparent; color: rgba(255,255,255,0.5);
-                font-size: 14px; font-weight: 700; letter-spacing: .005em; cursor: pointer; white-space: nowrap; transition: color .15s ease;
+                display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; height: 36px; padding: 0 16px;
+                border: 0; border-radius: 10px; background: transparent; color: rgba(255,255,255,0.55);
+                font-size: 13.5px; font-weight: 700; letter-spacing: .01em; cursor: pointer; white-space: nowrap;
+                transition: color .18s ease, background .18s ease, box-shadow .18s ease;
             }
-            html.smg-home .smg-feed-tab:hover { color: rgba(255,255,255,0.86); }
-            html.smg-home .smg-feed-tab.is-active { color: #fff; }
-            html.smg-home .smg-feed-tab::after { content: ""; position: absolute; left: 11px; right: 11px; bottom: -1px; height: 2.5px; border-radius: 3px 3px 0 0; background: var(--smg-link, #ff77b2); transform: scaleX(0); transition: transform .2s ease; }
-            html.smg-home .smg-feed-tab.is-active::after { transform: scaleX(1); }
+            html.smg-home .smg-feed-tab:hover { color: #fff; background: rgba(255,255,255,0.06); }
+            html.smg-home .smg-feed-tab.is-active {
+                color: #fff;
+                background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+            }
+            html.smg-home .smg-feed-tab::after { display: none !important; }
             html.smg-home .smg-feed-tab-ic { display: inline-flex; }
-            html.smg-home .smg-feed-tab-ic svg { width: 16px; height: 16px; fill: none !important; }
-            /* "See all" → empurrado pra direita da tabbar; vai pra página da aba ativa */
-            html.smg-home .smg-feed-seeall { flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 5px; padding: 0 2px 0 8px; color: rgba(255,255,255,0.6); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: color .14s ease; }
-            html.smg-home .smg-feed-seeall:hover { color: #fff; }
+            html.smg-home .smg-feed-tab-ic svg { width: 15px; height: 15px; fill: none !important; }
+            html.smg-home .smg-feed-tab[data-feed="trending"] .smg-feed-tab-ic { color: #ff8a3d; }
+            /* "See all" pill moderno */
+            html.smg-home .smg-feed-seeall {
+                flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 6px;
+                height: 36px; padding: 0 14px; border-radius: 11px; background: rgba(255,255,255,0.045);
+                border: 1px solid rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.72); font-size: 12.5px; font-weight: 600; text-decoration: none;
+                white-space: nowrap; transition: all .16s ease;
+            }
+            html.smg-home .smg-feed-seeall:hover {
+                background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.16); color: #fff; transform: translateY(-1px);
+            }
             html.smg-home .smg-feed-seeall svg { display: block; }
-            /* corpo: scroll horizontal de cards (mobile-friendly), com setas ‹ › no desktop */
+            /* corpo: scroll horizontal de cards, com setas flutuantes no desktop */
             html.smg-home .smg-feed-scroll { position: relative; }
             html.smg-home .smg-feed-panel { display: none; }
             html.smg-home .smg-feed-panel.is-active { display: flex; gap: 14px; padding: 2px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none; }
             html.smg-home .smg-feed-panel::-webkit-scrollbar { display: none; }
-            /* CARD IMERSIVO: a imagem preenche o tile (3:4); título/meta flutuam no rodapé sobre um scrim. Imagem em 1º plano, menos chrome. */
+            /* CARD IMERSIVO AMPLIADO (largura & altura expandidas, presença visual nobre) */
             html.smg-home .smg-feed-card {
-                position: relative; flex: 0 0 230px; width: 230px; aspect-ratio: 3 / 4; scroll-snap-align: start;
-                display: block; border-radius: 16px; overflow: hidden;
-                background: var(--smg-s2); border: 1px solid var(--smg-bd); text-decoration: none;
-                transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+                position: relative; flex: 0 0 295px; width: 295px; height: 395px; aspect-ratio: 3 / 4.02; scroll-snap-align: start;
+                display: block; border-radius: 18px; overflow: hidden;
+                background: var(--smg-s2, #18191f); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
+                box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
+                transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), border-color .2s ease, box-shadow .2s ease;
             }
-            html.smg-home .smg-feed-card:hover { transform: translateY(-4px); border-color: var(--smg-bd2); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
-            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
+            html.smg-home .smg-feed-card:hover {
+                transform: translateY(-6px); border-color: rgba(255,255,255,0.22);
+                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft, rgba(255,119,178,0.22));
+            }
+            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2, #18191f); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
-            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.07); }   /* zoom suave da mídia no hover */
+            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg .smg-ph-word { font-size: 32px; opacity: .5; }
-            html.smg-home .smg-feed-card-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 28px 13px 13px; display: flex; flex-direction: column; gap: 5px; min-width: 0; background: linear-gradient(to top, rgba(0,0,0,0.94) 6%, rgba(0,0,0,0.7) 38%, rgba(0,0,0,0.18) 78%, transparent 100%); }
+            /* Scrim gradiente cinematográfico */
+            html.smg-home .smg-feed-card-body {
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 56px 16px 15px;
+                display: flex; flex-direction: column; gap: 5px; min-width: 0;
+                background: linear-gradient(to top, rgba(8,9,12,0.96) 0%, rgba(8,9,12,0.85) 45%, rgba(8,9,12,0.3) 78%, transparent 100%);
+            }
             html.smg-home .smg-feed-skel .smg-feed-card-body { background: none; }
-            html.smg-home .smg-feed-card-title { font-size: 13.5px; font-weight: 600; color: #fff; line-height: 1.32; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.55); }
+            /* Linha de badges/tags */
+            html.smg-home .smg-feed-card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+            html.smg-home .smg-feed-card-badges .label,
+            html.smg-home .smg-feed-card-badges .prefix,
             html.smg-home .smg-feed-card-title .label,
             html.smg-home .smg-feed-card-title .prefix {
-                margin-right: 3px !important;
-                font-size: 9px !important;
-                padding: 1px 4.5px !important;
-                border-radius: 3.5px !important;
+                margin: 0 !important;
+                font-size: 9.5px !important;
+                font-weight: 700 !important;
+                letter-spacing: .02em !important;
+                text-transform: uppercase !important;
+                padding: 2.5px 6.5px !important;
+                border-radius: 5px !important;
                 line-height: 1.2 !important;
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255,255,255,0.12);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             }
-            html.smg-home .smg-feed-card-meta { font-size: 11.5px; color: rgba(255,255,255,0.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+            html.smg-home .smg-feed-card-title {
+                font-size: 15.5px; font-weight: 750; color: #fff; line-height: 1.3; letter-spacing: -0.015em;
+                display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            }
+            html.smg-home .smg-feed-card-meta {
+                font-size: 12px; color: rgba(255,255,255,0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 6px; margin-top: 4px;
+            }
+            html.smg-home .smg-feed-card-meta .smg-feed-user { color: rgba(255,255,255,0.92); font-weight: 600; }
+            html.smg-home .smg-feed-card-meta .smg-feed-dot { opacity: 0.5; }
+            html.smg-home .smg-feed-card-meta .smg-feed-time { opacity: 0.75; }
             html.smg-home .smg-feed-loading { width: 100%; padding: 40px; text-align: center; color: rgba(255,255,255,0.45); font-size: 13px; }
-            /* skeletons de loading (cards-fantasma com shimmer) */
+            /* skeletons de loading */
             html.smg-home .smg-feed-skel { pointer-events: none; }
-            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2); }
-            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2); }
+            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2, #18191f); }
+            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2, #18191f); }
             html.smg-home .smg-skel-line { height: 11px; border-radius: 5px; margin-bottom: 7px; }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: 5px; margin-bottom: 0; }
             html.smg-home .smg-skel-box::after, html.smg-home .smg-skel-line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
-            html.smg-home .smg-feed-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #fff; line-height: 0; border: 1px solid var(--smg-bd2); background: rgba(20,20,20,0.94); box-shadow: 0 6px 18px rgba(0,0,0,0.5); transition: background .15s ease, transform .12s ease, opacity .18s ease, visibility .18s; }   /* PERF: removido backdrop-filter blur(8px) — botão flutua sobre o carrossel que rola; bg 0.94 já é legível sem o blur */
-            html.smg-home .smg-feed-nav:hover { background: rgba(46,46,46,0.96); }
-            html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.9); }
-            html.smg-home .smg-feed-nav svg { width: 18px; height: 18px; fill: none !important; }
-            html.smg-home .smg-feed-prev { left: -7px; }
-            html.smg-home .smg-feed-next { right: -7px; }
+            /* Setas flutuantes glass */
+            html.smg-home .smg-feed-nav {
+                position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+                width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+                border-radius: 50%; cursor: pointer; color: #fff; line-height: 0;
+                border: 1px solid rgba(255,255,255,0.16); background: rgba(20,21,26,0.88);
+                backdrop-filter: blur(12px);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+                transition: background .15s ease, transform .16s ease, border-color .15s ease, opacity .18s ease, visibility .18s;
+            }
+            html.smg-home .smg-feed-nav:hover { background: rgba(35,37,45,0.96); border-color: rgba(255,255,255,0.3); transform: translateY(-50%) scale(1.08); }
+            html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.95); }
+            html.smg-home .smg-feed-nav svg { width: 20px; height: 20px; fill: none !important; }
+            html.smg-home .smg-feed-prev { left: -10px; }
+            html.smg-home .smg-feed-next { right: -10px; }
             html.smg-home .smg-feed-nav.smg-nav-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
             @media (max-width: 600px) {
                 html.smg-home .smg-feed-card { flex-basis: 210px; width: 210px; }
                 html.smg-home .smg-feed-nav { display: none; }
             }
 
-            /* sections: minimalistas — grupo transparente, sem caixa pesada (cards é que têm presença) */
+            /* ================= CATEGORY HUB ================= */
+            /* sections: Grupo Hub limpo e moderno */
             html.smg-home .block--category {
-                margin-bottom: 34px !important; border-radius: 0 !important;
+                margin-bottom: 38px !important; border-radius: 0 !important;
                 background: transparent !important;
                 border: 0 !important; box-shadow: none !important; overflow: visible !important;
             }
@@ -274,92 +333,213 @@
             html.smg-home .block--category .block-header {
                 display: flex !important; align-items: center; justify-content: flex-start; position: relative;
                 background: transparent !important;
-                padding: 0 2px 12px !important; margin: 0 0 16px !important;
-                font-size: 12.5px !important; font-weight: 700 !important; letter-spacing: .14em; text-transform: uppercase;
-                color: rgba(255,255,255,0.55) !important;
-                border: 0 !important; border-bottom: 1px solid var(--smg-bd) !important;
+                padding: 0 4px 14px !important; margin: 0 0 18px !important;
+                font-size: 13px !important; font-weight: 800 !important; letter-spacing: .12em; text-transform: uppercase;
+                color: rgba(255,255,255,0.65) !important;
+                border: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important;
             }
             html.smg-home .block--category .block-header a,
             html.smg-home .block--category .uix_categoryTitle { color: #fff !important; }
             html.smg-home .block--category .categoryCollapse--trigger { position: absolute !important; right: 16px; top: 50%; transform: translateY(-50%); margin: 0 !important; }
-            html.smg-home .block--category .block-body {
-                display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
-                gap: 14px !important; padding: 0 !important; background: transparent !important; border: 0 !important;
+
+            /* Badge de contagem de fóruns no header da seção */
+            html.smg-home .smg-hub-badge {
+                display: inline-flex; align-items: center;
+                padding: 2.5px 8px; border-radius: 7px;
+                font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+                background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.5); margin-left: 10px;
             }
-            /* SMG: 5 colunas (igual SimpCity), caindo de 1 em 1 por breakpoint */
-            html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-            @media (max-width: 1180px) { html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
-            @media (max-width: 820px)  { html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
-            /* mobile: 2 colunas nas sections (os dois sites) */
+
+            html.smg-home .block--category .block-body,
+            html.smg-smg.smg-home .block--category .block-body {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                padding: 0 !important;
+                background: transparent !important;
+                border: 0 !important;
+            }
             @media (max-width: 600px) {
-                html.smg-home .block--category .block-body,
-                html.smg-smg.smg-home .block--category .block-body {
-                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 9px !important; padding: 10px !important;
-                }
-                /* divider: dá um respiro no texto pra alinhar com os cards (inset de 10px no mobile) */
-                html.smg-home .block--category .block-header { padding-left: 12px !important; }
-                html.smg-home .block--category .node { min-height: 136px !important; }
-                html.smg-home .node-body { padding: 14px 10px !important; gap: 7px !important; }
-                html.smg-home .node-icon { width: 50px !important; height: 50px !important; padding: 7px !important; }
-                html.smg-home .node-title { font-size: 13.5px !important; }
+                html.smg-home .block--category .block-header { padding-left: 6px !important; }
             }
-            /* home: remove a linha do header da página (título + New Posts/Post Thread) — vai pro botão "Novo" da topbar */
+            /* home: remove a linha do header da página (título + New Posts/Post Thread) */
             html.smg-home .p-body-header { display: none !important; }
+
+            /* HUB LIST ITEM: Superfície limpa com feixe lateral interativo */
             html.smg-home .block--category .node {
-                border: 1px solid var(--smg-bd) !important;
+                position: relative !important;
+                display: flex !important; flex-direction: row !important; align-items: center !important;
+                cursor: pointer;
+                border: 1px solid rgba(255,255,255,0.07) !important;
                 border-radius: 14px !important;
-                background: var(--smg-s1) !important;
-                overflow: visible !important;
-                min-height: 180px !important;
-                transition: background .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a) !important;
+                overflow: hidden !important;
+                min-height: 64px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+                transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1), border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
             }
-            /* SMG: cards da home na MESMA cor/rounding do SimpCity (o tema SMG deixava mais claro e o --smg-s1 é 13.5%). Especificidade alta + !important. */
-            /* XADREZ (igual SimpCity): card sim/card não. ímpar = 12.5%, par = 9.5%. 5 colunas (ímpar) → alterna em 2D.
-               node-body transparente → o bg do node aparece; overflow:hidden corta o vazamento do canto arredondado. */
-            html.smg-smg.smg-home .block--category .node { background-color: hsl(0 0% 12.5%) !important; border-radius: 14px !important; overflow: hidden !important; }
-            html.smg-smg.smg-home .block--category .block-body > .node:nth-child(even) { background-color: hsl(0 0% 11%) !important; }
-            html.smg-smg.smg-home .block--category .node-body { background: transparent !important; }
-            html.smg-smg.smg-home .block--category .block-body > .node:hover { background-color: hsl(0 0% 16%) !important; }
-            /* nada de truncar/cortar conteúdo dentro do card */
-            html.smg-home .node-title, html.smg-home .node-title a,
-            html.smg-home .node-description, html.smg-home .node-extra-title {
-                white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
-            }
+            /* Sem feixe lateral no hover */
+            html.smg-home .block--category .node::before { display: none !important; }
+            html.smg-home .block--category .node:hover::before { display: none !important; }
+            /* Hover do Hub Row */
             html.smg-home .block--category .node:hover {
-                background: var(--smg-s2) !important;
-                border-color: var(--smg-bd2) !important; transform: translateY(-3px);
-                box-shadow: 0 12px 28px rgba(0,0,0,0.42) !important;   /* elevação no hover (best-practice dark: profundidade na interação, não só borda) */
+                transform: translateY(-2px) !important;
+                border-color: rgba(255,255,255,0.18) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2, #181920) !important;
+                box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
-            /* card centralizado: ÍCONE / NOME / subtítulo · card inteiro clicável */
-            html.smg-home .block--category .node { display: flex !important; cursor: pointer; }
+
+            /* SMG alternância */
+            html.smg-smg.smg-home .block--category .node {
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #141519 !important;
+            }
+            html.smg-smg.smg-home .block--category .block-body > .node:hover {
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), #181920 !important;
+            }
+
+            /* Node body e alinhamento horizontal */
             html.smg-home .node-body {
+                position: relative !important;
                 flex: 1 1 auto !important;
-                display: flex !important; flex-direction: column !important;
-                align-items: center !important; justify-content: center !important;
-                text-align: center !important; gap: 9px !important; padding: 16px 12px !important;   /* densificado: menos espaço morto, card mais "app tile" */
+                display: flex !important; flex-direction: row !important;
+                align-items: center !important; justify-content: flex-start !important;
+                text-align: left !important; gap: 16px !important; padding: 10px 18px !important;
+                background: transparent !important; box-sizing: border-box !important;
             }
+
+            /* Ícone / Logo puro (sem moldura rounded) */
             html.smg-home .node-icon {
-                width: 60px !important; height: 60px !important; margin: 0 0 2px !important; padding: 8px !important; box-sizing: border-box !important;
+                width: 38px !important; height: 38px !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
+                flex: 0 0 auto !important;
                 display: flex !important; align-items: center; justify-content: center;
-                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
-                transition: transform .18s ease, border-color .18s ease, background .18s ease;
+                background: transparent !important;
+                border: 0 !important; border-radius: 0 !important;
+                box-shadow: none !important;
+                transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
-            html.smg-home .block--category .node:hover .node-icon { transform: scale(1.08) translateY(-1px); background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16); }   /* microinteração: ícone "salta" no hover */
-            html.smg-home .node-icon img { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 100% !important; border-radius: 9px !important; object-fit: contain !important; }
-            html.smg-home .node-icon i { font-size: 28px; display: inline-flex; }
-            html.smg-home .node-icon i svg, html.smg-home .node-icon > svg { width: 28px !important; height: 28px !important; color: rgba(255,255,255,0.75); }
+            html.smg-home .block--category .node:hover .node-icon {
+                transform: scale(1.08) !important;
+                border-color: transparent !important;
+            }
+            html.smg-home .node-icon img {
+                width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important;
+                border-radius: 8px !important; object-fit: contain !important;
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)) !important;
+            }
+            html.smg-home .node-icon i { font-size: 24px; display: inline-flex; }
+            html.smg-home .node-icon i svg, html.smg-home .node-icon > svg {
+                width: 24px !important; height: 24px !important; color: rgba(255,255,255,0.85);
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)) !important;
+            }
             html.smg-home .node-icon .node-icon-fix-verti { width: auto !important; height: auto !important; }
-            html.smg-home .node-icon .node-icon-fix-verti img { width: 46px !important; height: 46px !important; max-width: 46px !important; max-height: 46px !important; }
-            html.smg-home .node-main { min-width: 0 !important; width: 100% !important; }
-            html.smg-home .node-title { font-size: 15px !important; font-weight: 700 !important; justify-content: center !important; line-height: 1.3 !important; }
-            html.smg-home .node-title a { color: #fff !important; }
-            html.smg-home .node-description { font-size: 12.5px !important; color: rgba(255,255,255,0.5) !important; margin-top: 3px; }
-            /* tira último post, estatísticas e a lista de subitems (viram cards próprios) */
+            html.smg-home .node-icon .node-icon-fix-verti img { width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important; }
+            html.smg-home .node-main { min-width: 0 !important; width: auto !important; flex: 1 1 auto !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+            html.smg-home .node-title {
+                font-size: 15px !important; font-weight: 700 !important; letter-spacing: -0.01em !important;
+                justify-content: flex-start !important; text-align: left !important; line-height: 1.3 !important;
+            }
+            html.smg-home .node-title a { color: #fff !important; text-decoration: none !important; transition: color .15s ease; }
+            html.smg-home .block--category .node:hover .node-title a {
+                color: #fff !important; text-shadow: 0 0 10px rgba(255,255,255,0.35);
+            }
+            html.smg-home .node-description {
+                font-size: 12px !important; line-height: 1.4 !important;
+                color: rgba(255,255,255,0.5) !important; margin-top: 1px !important;
+                display: -webkit-box !important; -webkit-line-clamp: 1 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
+                transition: color .15s ease;
+            }
+            html.smg-home .block--category .node:hover .node-description {
+                color: rgba(255,255,255,0.72) !important;
+            }
+
+            /* Divisor entre categorias principais e restantes */
+            html.smg-home .smg-hub-category-divider {
+                display: flex !important; align-items: center !important; gap: 14px !important;
+                margin: 16px 4px 10px !important; width: calc(100% - 8px) !important;
+            }
+            html.smg-home .smg-hub-divider-line {
+                flex: 1 1 auto !important; height: 1px !important;
+                background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important;
+            }
+            html.smg-home .smg-hub-divider-text {
+                font-size: 11px !important; font-weight: 750 !important; letter-spacing: 0.08em !important;
+                text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
+            }
+
+            /* Últimos posts (.node-extra) à direita no layout de lista */
+            html.smg-home .node-extra {
+                display: flex !important; flex-direction: column !important;
+                align-items: flex-end !important; justify-content: center !important;
+                flex: 0 0 auto !important; max-width: 380px !important; min-width: 180px !important;
+                text-align: right !important; gap: 3px !important; margin-left: auto !important;
+                padding: 4px 0 !important; border-radius: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                position: relative; z-index: 2;
+            }
+            html.smg-home .node-extra:hover {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-home .node-extra-icon { display: none !important; }
+            html.smg-home .node-extra-row {
+                display: block !important; max-width: 100% !important;
+                white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+            }
+            html.smg-home .node-extra-title {
+                display: inline-block !important; max-width: 100% !important;
+                color: rgba(255,255,255,0.9) !important; font-size: 13px !important; font-weight: 600 !important;
+                white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+                text-decoration: none !important; transition: color .15s ease !important;
+            }
+            html.smg-home .node-extra:hover .node-extra-title,
+            html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-home .node-extra .listInline {
+                display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
+                gap: 5px !important; margin: 0 !important; padding: 0 !important;
+                list-style: none !important; font-size: 11.5px !important; color: rgba(255,255,255,0.45) !important;
+            }
+            html.smg-home .node-extra .username {
+                color: rgba(255,255,255,0.7) !important; font-weight: 600 !important;
+            }
+            html.smg-home .node-extra time,
+            html.smg-home .node-extra .node-extra-date {
+                color: rgba(255,255,255,0.45) !important;
+            }
+
+            @media (max-width: 650px) {
+                html.smg-home .block--category .node { min-height: 60px !important; }
+                html.smg-home .block--category .node-body {
+                    flex-wrap: wrap !important; padding: 10px 14px !important; gap: 8px 12px !important;
+                }
+                html.smg-home .node-icon { width: 38px !important; height: 38px !important; }
+                html.smg-home .node-icon img { max-width: 26px !important; max-height: 26px !important; }
+                html.smg-home .node-icon svg { width: 18px !important; height: 18px !important; }
+                html.smg-home .node-main { flex: 1 1 calc(100% - 54px) !important; }
+                html.smg-home .node-title { font-size: 14px !important; }
+                html.smg-home .node-extra {
+                    flex: 0 0 100% !important; max-width: 100% !important; min-width: 0 !important;
+                    align-items: flex-start !important; text-align: left !important;
+                    border-top: 1px solid rgba(255,255,255,0.06) !important; padding-top: 6px !important; margin-left: 0 !important;
+                }
+                html.smg-home .node-extra .listInline { justify-content: flex-start !important; }
+            }
+
+            /* tira estatísticas e a lista de subitems (viram cards próprios) */
             html.smg-home .node-meta,
             html.smg-home .node-stats,
-            html.smg-home .node-extra,
             html.smg-home .node-subNodesFlat { display: none !important; }
+
+            /* controle de truncamento/quebra */
+            html.smg-home .node-title, html.smg-home .node-title a {
+                white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+            }
 
             /* remove ads/links promocionais e blocos de anúncio na home
                PERF: .smg-ad-block é marcado pelo JS (markHomeAdBlocks, 16-home) — substitui o

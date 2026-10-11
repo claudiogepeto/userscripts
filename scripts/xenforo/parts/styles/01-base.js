@@ -1530,8 +1530,8 @@
             .p-body > * { padding-top: 0 !important; }
             /* respiro abaixo da topbar FIXA: o título não cola na barra (era 10px → colava no desktop, onde
                body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
-            .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
-            @media (max-width: 600px) { .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
+            html:not(.smg-thread) .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
             .p-body-header .p-title { text-align: left !important; }
             .p-body-header .p-title-value { font-size: 30px !important; font-weight: 800 !important; line-height: 1.2 !important; }
 

@@ -91,16 +91,12 @@
             && (homePassSignature !== currentHomeSignature || rootTouches(roots, '.node--link, .node-subNodesFlat', true));
         if (homeCandidate && !homeSidebarDone) safe(layoutHomeSidebar, roots);
         if (isHome && homeDirty) {
-            homePassSignature = currentHomeSignature;
             safe(markHomeAdBlocks);
-            safe(relocateSimpcityNodes, roots);
-            safe(mergeSmallHomeSections, roots);
             safe(expandSubForums, roots);
-            safe(relocateSmgNodes, roots);
-            safe(splitTransSection, roots);
-            safe(sortHomeCards, roots);
-            safe(reorderHomeSections, roots);
+            safe(organizeHomeHub, roots);
             safe(makeHomeCardsClickable, roots);
+            safe(enhanceHomeHubSections, roots);
+            homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
         }
 
         // 4. Passes de Páginas Específicas

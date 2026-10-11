@@ -524,23 +524,21 @@
             if (tv) line.appendChild(tv);
             info.appendChild(line);
 
+            // Tags da thread: inseridas em .smg-thead-info ao lado da imagem e do título
+            const desc = header.querySelector('.p-description');
+            if (desc) {
+                const tagsBox = document.createElement('div');
+                tagsBox.className = 'smg-thead-tags smg-thead-tags-bar';
+                tagsBox.appendChild(desc);
+                info.appendChild(tagsBox);
+            }
+
             hero.appendChild(info);
             title.insertBefore(hero, title.firstChild);
 
-            // Tags da thread: movidas para uma linha própria ABAIXO do header (fora do sticky header)
-            const desc = header.querySelector('.p-description');
-            if (desc) {
-                const tagsBar = document.createElement('div');
-                tagsBar.className = 'smg-thead-tags-bar smg-thead-tags';
-                if (header.querySelector('.pageContent')) {
-                    const inner = document.createElement('div');
-                    inner.className = 'pageContent';
-                    inner.appendChild(desc);
-                    tagsBar.appendChild(inner);
-                } else {
-                    tagsBar.appendChild(desc);
-                }
-                header.parentNode.insertBefore(tagsBar, header.nextSibling);
+            const oldTagsBar = header.parentNode ? header.parentNode.querySelector('.smg-thead-tags-bar') : null;
+            if (oldTagsBar && !header.contains(oldTagsBar)) {
+                oldTagsBar.remove();
             }
         }
 
@@ -590,8 +588,8 @@
                 header.classList.remove('is-stuck');
                 if (spacer) spacer.style.display = 'none';
             }
-            naturalHeight = header.offsetHeight || 126;
-            topOff = parseFloat(getComputedStyle(header).top) || 50;
+            naturalHeight = header.offsetHeight || 156;
+            topOff = parseFloat(getComputedStyle(header).top) || 60;
             if (wasStuck) {
                 header.classList.add('is-stuck');
                 if (spacer) {

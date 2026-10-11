@@ -12,7 +12,13 @@
     // não reexecutam a organização da home.
     function homeLayoutSignature() {
         return Array.from(document.querySelectorAll('.p-body-content .block--category')).map(category => {
-            const title = (category.querySelector('.block-header') || {}).textContent || '';
+            const header = category.querySelector('.block-header');
+            let title = '';
+            if (header) {
+                const hClone = header.cloneNode(true);
+                hClone.querySelectorAll('.smg-hub-badge, .categoryCollapse--trigger').forEach(el => el.remove());
+                title = hClone.textContent || '';
+            }
             const nodes = Array.from(category.querySelectorAll(':scope > .block-container > .block-body > .node')).map(node => {
                 const link = node.querySelector('.node-title a, a[href]');
                 const subLinks = Array.from(node.querySelectorAll('.node-subNodesFlat .subNodeLink')).map(sub => (sub.getAttribute('href') || '') + ':' + sub.textContent.trim()).join(',');
@@ -20,6 +26,295 @@
             });
             return title.replace(/\s+/g, ' ').trim() + '[' + nodes.join('|') + ']';
         }).join('||');
+    }
+
+    const MAIN_CATEGORY_PATTERNS = [
+        /^3d\b/i,
+        /^animated\b/i,
+        /^asians?\b/i,
+        /^asmr\b/i,
+        /^cam\s*girls?\b/i,
+        /^celebrit(y|ies)\b/i,
+        /^hentai\b/i,
+        /^hotwives?\b/i,
+        /^trans(?:gender)?\b/i,
+        /^v[- ]?tubers?\b/i,
+        /^(?:xxx|porn|pornstars?)\b/i
+    ];
+
+    function getMainCategoryOrder(title) {
+        const clean = (title || '').trim();
+        for (let i = 0; i < MAIN_CATEGORY_PATTERNS.length; i++) {
+            if (MAIN_CATEGORY_PATTERNS[i].test(clean)) return i;
+        }
+        return 999;
+    }
+
+    // Classifica um nó da home em:
+    // 'sites', 'categories', 'discussions', 'requests', 'nav', ou null (se deve ser removido),
+    // renomeando nós de subfóruns do Brasil (ex.: Animated -> Brasil - Animated)
+    function classifyHomeNode(node) {
+        if (!node) return 'categories';
+        const origCat = (node.dataset.smgOrigCategory || '').trim();
+        const parentTitle = (node.dataset.smgParentTitle || '').trim();
+        const titleEl = node.querySelector('.node-title');
+        const linkEl = titleEl ? (titleEl.querySelector('a') || titleEl) : null;
+        let title = (titleEl ? titleEl.textContent : '').trim();
+        const href = (linkEl ? (linkEl.getAttribute('href') || '') : '').toLowerCase();
+
+        // 1. Remover container de "Brasileiras | Brazilian Girls"
+        if (/brasileiras?\s*(?:\||\/|-)?\s*brazilian\s*girls/i.test(title) || /brazilian\s*girls/i.test(title)) {
+            node.remove();
+            return null;
+        }
+
+        // 2. Trans Reviews e Reviews em geral vão para Discussions:
+        if (/\btrans\s*reviews?\b/i.test(title) || /\btrans\s*reviews?\b/i.test(href) || /^(?:reviews?|model\s*reviews?)$/i.test(title)) {
+            return 'discussions';
+        }
+
+        // 3. Brasil detection & rename (vai para outras categorias):
+        const isBrasil = /brasil|brasileir/i.test(parentTitle)
+            || /brasil|brasileir/i.test(origCat)
+            || /brasil|brasileir/i.test(href)
+            || /^(?:brasil|brasileiras)$/i.test(title);
+
+        if (isBrasil) {
+            if (!/^(?:brasil|brasileir)/i.test(title)) {
+                const newTitle = 'Brasil - ' + title;
+                if (linkEl && linkEl !== titleEl) linkEl.textContent = newTitle;
+                if (titleEl) {
+                    if (linkEl && linkEl !== titleEl) {
+                        // linkEl já atualizado
+                    } else {
+                        titleEl.textContent = newTitle;
+                    }
+                }
+                title = newTitle;
+            }
+            return 'categories';
+        }
+
+        // 3. ASMR exception (SMG):
+        if (/\basmr\b/i.test(title) || /\basmr\b/i.test(href)) {
+            return 'categories';
+        }
+
+        // 4. Celebridades e XXX / Porn vão para Categorias:
+        if (/\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(title) || /\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(href)) {
+            return 'categories';
+        }
+
+        // 5. Workflows e Guides vão para Site Navigation:
+        const isGuidesOrWorkflows = /\b(workflows?|guides?)\b/i.test(title) || /\b(workflows?|guides?)\b/i.test(href) || /\b(workflows?|guides?)\b/i.test(origCat);
+        if (isGuidesOrWorkflows) {
+            return 'nav';
+        }
+
+        // 6. Navigation explícita por título/link (Rules, Announcements, Help, Lounge, etc.):
+        const navTitleRe = /^(?:announcements?|rules|site rules|help|faq|feedback|introductions?|the lounge|community|info and links|informações e links|anúncios|regras)$/i;
+        const navHrefRe = /\b(announcements|rules|lounge|introductions|help|feedback|info-and-links)\b/i;
+        if (navTitleRe.test(title) || navHrefRe.test(href)) {
+            return 'nav';
+        }
+
+        const sitesPlatformRe = /\b(onlyfans|patreon|fansly|manyvids|loyalfans|fanvue|ifans|my\.club|admireme|pocketstars|instagram|tiktok|reddit|twitter|twitch|youtube|snapchat|facebook|discord|threads|kick|chaturbate|stripchat|cam4|myfreecams|bongacams|livejasmin|camsoda|pornhub|xvideos|spankbang|redtube|tube8|brazzers|realitykings|naughtyamerica|slushy|passes|sextpanther)\b/i;
+
+        // 7. Requests (pedidos):
+        const reqRe = /\b(requests?|pedidos?)\b/i;
+        if (reqRe.test(title) || reqRe.test(href) || (reqRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+            return 'requests';
+        }
+
+        // 8. Discussions (inclui Megathreads, Debates, Discussões):
+        const discRe = /\b(megathreads?|discussions?|debates?)\b/i;
+        if (discRe.test(title) || discRe.test(href) || (discRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+            return 'discussions';
+        }
+
+        // 9. Categorias de navegação geral (Info and Links, Announcements, Community):
+        const navCatRe = /info(\s*and\s*|\s*&\s*)links|announcements|community|the\s*lounge|rules|regras|avisos|informações|anúncios|feedback|help|suporte|introductions|apresentações/i;
+        if (navCatRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href)) {
+            return 'nav';
+        }
+
+        // 10. Sites:
+        const sitesCatRe = /social\s*media|fan\s*sites?|premium\s*fan\s*sites?|professional\s*sites?|paid\s*sites?|adult\s*sites?|cam\s*sites?|tube\s*sites?|creators?|websites?|^sites$/i;
+
+        if (sitesCatRe.test(origCat) || sitesPlatformRe.test(href) || sitesPlatformRe.test(title)) {
+            return 'sites';
+        }
+
+        // 11. Categorias (default):
+        return 'categories';
+    }
+
+    // Organiza a home nas 5 seções consolidadas:
+    // 1. Sites (ordem alfabética)
+    // 2. Categories (9 principais no topo na ordem definida, seguidas pelo restante em A-Z)
+    // 3. Discussions (ordem alfabética, incluindo Megathreads)
+    // 4. Requests (ordem alfabética)
+    // 5. Site Navigation (ordem alfabética, incluindo Workflows e Guides)
+    function organizeHomeHub(roots) {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+
+        const scope = (roots && Array.isArray(roots) && roots[0] && roots[0].nodeType === 1 && !roots[0].matches('body'))
+            ? roots[0]
+            : document;
+
+        // Anota a categoria original antes de qualquer movimentação
+        const nativeCats = Array.from(scope.querySelectorAll('.block--category:not([data-smg-home-hub])'));
+        nativeCats.forEach(cat => {
+            const header = cat.querySelector('.block-header');
+            let origTitle = '';
+            if (header) {
+                const hClone = header.cloneNode(true);
+                hClone.querySelectorAll('.smg-hub-badge, .categoryCollapse--trigger').forEach(el => el.remove());
+                origTitle = (hClone.textContent || '').trim();
+            }
+            cat.querySelectorAll('.node:not(.node--link)').forEach(node => {
+                if (!node.dataset.smgOrigCategory && origTitle) {
+                    node.dataset.smgOrigCategory = origTitle;
+                }
+            });
+        });
+
+        const allNodes = Array.from(scope.querySelectorAll('.block--category .node:not(.node--link)'));
+        if (!allNodes.length) return;
+
+        const existingHubSections = scope.querySelectorAll('[data-smg-home-hub]');
+        if (nativeCats.length === 0 && existingHubSections.length > 0) {
+            return;
+        }
+
+        const sitesNodes = [];
+        const categoriesNodes = [];
+        const discussionsNodes = [];
+        const requestsNodes = [];
+        const navNodes = [];
+
+        allNodes.forEach(node => {
+            const bucket = classifyHomeNode(node);
+            if (!bucket) return;
+            if (bucket === 'sites') sitesNodes.push(node);
+            else if (bucket === 'nav') navNodes.push(node);
+            else if (bucket === 'requests') requestsNodes.push(node);
+            else if (bucket === 'discussions') discussionsNodes.push(node);
+            else categoriesNodes.push(node);
+        });
+
+        const keyOf = n => ((n.querySelector('.node-title') || {}).textContent || '').trim().toLowerCase();
+        const sortAlpha = arr => arr.sort((a, b) => keyOf(a).localeCompare(keyOf(b), 'pt', { numeric: true, sensitivity: 'base' }));
+        sortAlpha(sitesNodes);
+        sortAlpha(discussionsNodes);
+        sortAlpha(requestsNodes);
+        sortAlpha(navNodes);
+
+        // Categorias: 9 principais no topo na ordem definida, seguidas pelo restante em A-Z
+        categoriesNodes.sort((a, b) => {
+            const titleA = ((a.querySelector('.node-title') || {}).textContent || '').trim();
+            const titleB = ((b.querySelector('.node-title') || {}).textContent || '').trim();
+            const orderA = getMainCategoryOrder(titleA);
+            const orderB = getMainCategoryOrder(titleB);
+
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return titleA.localeCompare(titleB, 'pt', { numeric: true, sensitivity: 'base' });
+        });
+
+        const getOrCreateHubSection = (key, label) => {
+            let section = scope.querySelector(`.block--category[data-smg-home-hub="${key}"]`)
+                || document.querySelector(`.block--category[data-smg-home-hub="${key}"]`);
+            if (!section) {
+                section = document.createElement('div');
+                section.className = `block block--category smg-home-section-${key}`;
+                section.dataset.smgHomeHub = key;
+                section.innerHTML = `<h2 class="block-header"><div class="uix_categoryStrip-content"><span class="uix_categoryTitle">${label}</span></div></h2>`
+                    + `<div class="block-container"><div class="block-body"></div></div>`;
+            }
+            return section;
+        };
+
+        const sitesSec = getOrCreateHubSection('sites', i18n('Sites'));
+        const catSec = getOrCreateHubSection('categories', i18n('Categories'));
+        const discSec = getOrCreateHubSection('discussions', i18n('Discussions'));
+        const reqSec = getOrCreateHubSection('requests', i18n('Requests'));
+        const navSec = getOrCreateHubSection('nav', i18n('Site Navigation'));
+
+        const fillBody = (sec, nodes) => {
+            const body = sec.querySelector('.block-body');
+            if (!body) return;
+            const frag = document.createDocumentFragment();
+            nodes.forEach(n => frag.appendChild(n));
+            body.innerHTML = '';
+            body.appendChild(frag);
+        };
+
+        const fillCategoryBody = (sec, nodes) => {
+            const body = sec.querySelector('.block-body');
+            if (!body) return;
+            const frag = document.createDocumentFragment();
+            let dividerInserted = false;
+            const hasMain = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
+            const hasOthers = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
+
+            nodes.forEach(n => {
+                const title = ((n.querySelector('.node-title') || {}).textContent || '').trim();
+                const isMain = getMainCategoryOrder(title) !== 999;
+                if (!isMain && !dividerInserted && hasMain && hasOthers) {
+                    const divider = document.createElement('div');
+                    divider.className = 'smg-hub-category-divider';
+                    divider.setAttribute('role', 'separator');
+                    divider.innerHTML = '<span class="smg-hub-divider-line"></span>'
+                        + `<span class="smg-hub-divider-text">${i18n('More categories')}</span>`
+                        + '<span class="smg-hub-divider-line"></span>';
+                    frag.appendChild(divider);
+                    dividerInserted = true;
+                }
+                frag.appendChild(n);
+            });
+            body.innerHTML = '';
+            body.appendChild(frag);
+        };
+
+        fillBody(sitesSec, sitesNodes);
+        fillCategoryBody(catSec, categoriesNodes);
+        fillBody(discSec, discussionsNodes);
+        fillBody(reqSec, requestsNodes);
+        fillBody(navSec, navNodes);
+
+        // Monta as seções no DOM
+        const toMount = [];
+        if (sitesNodes.length) toMount.push(sitesSec);
+        if (categoriesNodes.length) toMount.push(catSec);
+        if (discussionsNodes.length) toMount.push(discSec);
+        if (requestsNodes.length) toMount.push(reqSec);
+        if (navNodes.length) toMount.push(navSec);
+
+        const feedBlock = scope.querySelector('.smg-feed-block') || document.querySelector('.smg-feed-block');
+        if (feedBlock && feedBlock.parentNode) {
+            let prev = feedBlock;
+            toMount.forEach(sec => {
+                prev.insertAdjacentElement('afterend', sec);
+                prev = sec;
+            });
+        } else {
+            const targetParent = (nativeCats[0] && nativeCats[0].parentElement)
+                || scope.querySelector('.p-body-content .p-body-pageContent')
+                || scope.querySelector('.p-body-content')
+                || (scope !== document ? scope : document.querySelector('.p-body-content'));
+            if (targetParent) {
+                const hubFrag = document.createDocumentFragment();
+                toMount.forEach(sec => hubFrag.appendChild(sec));
+                targetParent.appendChild(hubFrag);
+            }
+        }
+
+        // Remove categorias nativas esvaziadas SOMENTE após as novas estarem montadas no DOM
+        nativeCats.forEach(cat => {
+            if (!cat.dataset.smgHomeHub) cat.remove();
+        });
     }
 
     // home: junta sections pequenas (≤3 cards reais) consecutivas numa só
@@ -230,6 +525,25 @@
         });
     }
 
+    // home: enriquece os headers de categoria com badge de contagem de fóruns
+    function enhanceHomeHubSections(roots) {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+        document.querySelectorAll('.block--category').forEach(cat => {
+            const header = cat.querySelector('.block-header');
+            if (!header) return;
+            const count = cat.querySelectorAll('.block-body > .node:not(.node--link)').length;
+            if (!count) return;
+            let badge = header.querySelector('.smg-hub-badge');
+            const badgeText = count + ' ' + (count === 1 ? i18n('forum') : i18n('forums'));
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'smg-hub-badge';
+                header.appendChild(badge);
+            }
+            if (badge.textContent !== badgeText) badge.textContent = badgeText;
+        });
+    }
+
     let homeSidebarDone = false;
 
     // home: FEED com abas (Latest posts · Trending). Cada aba busca sua fonte
@@ -255,38 +569,101 @@
         const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
         return /^data:/.test(u) ? '' : u;
     }
-    // monta 1 card vertical a partir de um .structItem--thread
-    function feedCard(it, phMark) {
+    // monta dados serializáveis de 1 card a partir de um .structItem--thread
+    function extractFeedItemData(it) {
         const titleCell = it.querySelector('.structItem-title');
         const titleLink = titleCell && titleCell.querySelector('a[href*="/threads/"]');
         if (!titleLink) return null;
-        const card = document.createElement('a');
-        card.className = 'smg-feed-card';
-        // href → último post (newest) p/ cair na última página da thread; cai pro /latest se não achar o link da data
         const lastA = it.querySelector('a.structItem-latestDate[href], .structItem-cell--latest a[href*="/post-"]');
-        card.href = safeHref((lastA && lastA.getAttribute('href'))
+        const href = safeHref((lastA && lastA.getAttribute('href'))
             || (titleLink.getAttribute('href').replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '') + '/latest'));
-        // thumb: imagem real (com onerror → placeholder da marca, p/ cobrir .su morto)
-        const thumb = document.createElement('div'); thumb.className = 'smg-feed-card-thumb';
-        const url = feedThumbUrl(it);
-        if (url) {
-            const im = document.createElement('img'); im.loading = 'lazy'; im.src = url;
-            im.addEventListener('error', () => { thumb.classList.add('smg-feed-noimg'); thumb.innerHTML = phMark; });
-            thumb.appendChild(im);
-        } else { thumb.classList.add('smg-feed-noimg'); thumb.innerHTML = phMark; }
-        // título: prefixos (spans) + texto
-        const body = document.createElement('div'); body.className = 'smg-feed-card-body';
-        const title = document.createElement('div'); title.className = 'smg-feed-card-title';
-        titleCell.querySelectorAll('.label, .prefix').forEach(s => { title.appendChild(s.cloneNode(true)); title.appendChild(document.createTextNode(' ')); });
-        title.appendChild(document.createTextNode(titleLink.textContent.trim()));
-        body.appendChild(title);
-        // meta: último autor · data (.structItem-latestDate mantém o texto PT do site)
+        const thumbUrl = feedThumbUrl(it);
+        const labels = [];
+        titleCell.querySelectorAll('.label, .prefix').forEach(s => {
+            labels.push({ cls: s.getAttribute('class') || 'label', text: s.textContent.trim() });
+        });
+        const titleText = titleLink.textContent.trim();
         const lastUser = it.querySelector('.structItem-cell--latest .username');
         const time = it.querySelector('.structItem-latestDate') || it.querySelector('.structItem-cell--latest time');
-        const metaTxt = [lastUser && lastUser.textContent.trim(), time && time.textContent.trim()].filter(Boolean).join(' · ');
-        if (metaTxt) { const meta = document.createElement('div'); meta.className = 'smg-feed-card-meta'; meta.textContent = metaTxt; body.appendChild(meta); }
+        const metaUser = lastUser ? lastUser.textContent.trim() : '';
+        const metaTime = time ? time.textContent.trim() : '';
+        return { href, thumbUrl, labels, titleText, metaUser, metaTime };
+    }
+
+    // renderiza 1 card vertical refinado a partir dos dados do item
+    function createFeedCardEl(data, phMark) {
+        if (!data) return null;
+        const card = document.createElement('a');
+        card.className = 'smg-feed-card';
+        card.href = safeHref(data.href);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'smg-feed-card-thumb';
+        if (data.thumbUrl) {
+            const im = document.createElement('img');
+            im.loading = 'lazy';
+            im.src = data.thumbUrl;
+            im.addEventListener('error', () => {
+                thumb.classList.add('smg-feed-noimg');
+                thumb.innerHTML = phMark;
+            });
+            thumb.appendChild(im);
+        } else {
+            thumb.classList.add('smg-feed-noimg');
+            thumb.innerHTML = phMark;
+        }
+
+        const body = document.createElement('div');
+        body.className = 'smg-feed-card-body';
+
+        // Linha isolada de tags/badges (sem quebrar inline com o título)
+        if (data.labels && data.labels.length) {
+            const badges = document.createElement('div');
+            badges.className = 'smg-feed-card-badges';
+            data.labels.forEach(lb => {
+                const sp = document.createElement('span');
+                sp.className = lb.cls;
+                sp.textContent = lb.text;
+                badges.appendChild(sp);
+            });
+            body.appendChild(badges);
+        }
+
+        // Título limpo com clamp
+        const title = document.createElement('div');
+        title.className = 'smg-feed-card-title';
+        title.textContent = data.titleText;
+        body.appendChild(title);
+
+        // Meta com autor em destaque e data
+        const metaParts = [data.metaUser, data.metaTime].filter(Boolean);
+        if (metaParts.length) {
+            const meta = document.createElement('div');
+            meta.className = 'smg-feed-card-meta';
+            if (data.metaUser && data.metaTime) {
+                const uSpan = document.createElement('span');
+                uSpan.className = 'smg-feed-user';
+                uSpan.textContent = data.metaUser;
+                const dot = document.createElement('span');
+                dot.className = 'smg-feed-dot';
+                dot.textContent = '·';
+                const tSpan = document.createElement('span');
+                tSpan.className = 'smg-feed-time';
+                tSpan.textContent = data.metaTime;
+                meta.append(uSpan, dot, tSpan);
+            } else {
+                meta.textContent = metaParts.join(' · ');
+            }
+            body.appendChild(meta);
+        }
+
         card.append(thumb, body);
         return card;
+    }
+
+    function feedCard(it, phMark) {
+        const data = extractFeedItemData(it);
+        return data ? createFeedCardEl(data, phMark) : null;
     }
     // threads "ruído" p/ um carrossel VISUAL: chat/bate-papo, guias, pedidos de identificação, discussões, perguntas (sem mídia própria).
     // Filtra pelo PREFIXO (chip do título) OU pelo FÓRUM de origem — nunca pelo texto do título (senão tira post legítimo).
@@ -316,27 +693,62 @@
         try { return new URL(href, location.href).href; } catch (e) { return ''; }
     }
     // renderiza UMA página de structItems no painel (dedup por feed._seen, sem chat). append=false limpa antes.
-    // devolve o nº de cards ADICIONADOS nesta página.
     function feedRenderPage(doc, feed, panel, phMark, append) {
         const frag = document.createDocumentFragment();
+        const parsedItems = [];
         let n = 0;
         doc.querySelectorAll('.structItem--thread').forEach(it => {
             const tl = it.querySelector('.structItem-title a[href*="/threads/"]');
             if (!tl) return;
             if (isIgnoredThread(it)) return;   // pula chat/bate-papo, guia, identify, discussão
             const k = feedKeyOf(tl); if (feed._seen.has(k)) return; feed._seen.add(k);
-            const c = feedCard(it, phMark); if (c) { frag.appendChild(c); n++; }
+            const data = extractFeedItemData(it);
+            if (data) {
+                parsedItems.push(data);
+                const c = createFeedCardEl(data, phMark);
+                if (c) { frag.appendChild(c); n++; }
+            }
         });
         if (!append) panel.innerHTML = '';
         if (n) panel.appendChild(frag);
-        return n;
+        return { count: n, items: parsedItems };
     }
-    // 1ª carga da aba: skeletons → página 1 → renderiza + guarda a próxima URL. Idempotente.
+
+    // Cache em sessionStorage (TTL de 2 minutos) para navegações instantâneas (0ms)
+    const FEED_CACHE_KEY_PREFIX = 'smg_feed_cache_v2_';
+    const FEED_CACHE_TTL_MS = 120 * 1000;
+
+    function getCachedFeed(key) {
+        try {
+            const raw = sessionStorage.getItem(FEED_CACHE_KEY_PREFIX + key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.ts || !Array.isArray(parsed.items)) return null;
+            if (Date.now() - parsed.ts > FEED_CACHE_TTL_MS) {
+                sessionStorage.removeItem(FEED_CACHE_KEY_PREFIX + key);
+                return null;
+            }
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function setCachedFeed(key, items, nextUrl) {
+        try {
+            sessionStorage.setItem(FEED_CACHE_KEY_PREFIX + key, JSON.stringify({
+                ts: Date.now(),
+                items: items.slice(0, 36),
+                nextUrl: nextUrl || ''
+            }));
+        } catch (e) {}
+    }
+
+    // 1ª carga da aba: cache imediato se disponível, senão skeletons → rede → salva cache
     function loadFeed(feed, panel, phMark, onDone) {
         if (panel.dataset.loaded) { if (onDone) onDone(); return; }
-        panel.dataset.loaded = '1';
         feed._seen = new Set(); feed._nextUrl = ''; feed._loadingMore = false;
-        panel.innerHTML = FEED_SKEL_CARD.repeat(8);
+
         const loadToken = (feed._loadToken || 0) + 1;
         feed._loadToken = loadToken;
         const isCurrentLoad = () => feed._loadToken === loadToken;
@@ -346,26 +758,61 @@
             markHomeFeedReady();
             if (onDone) onDone();
         };
-        // A failed or stalled endpoint must not leave the whole home behind the
-        // first-paint barrier forever. Turn the local skeleton into an explicit
-        // error state, then let the rest of the composition be revealed.
+
+        // Cache hit (instantâneo sem delay de rede)
+        const cached = getCachedFeed(feed.key);
+        if (cached && cached.items && cached.items.length) {
+            panel.dataset.loaded = '1';
+            panel.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            cached.items.forEach(data => {
+                const k = (data.href || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
+                feed._seen.add(k);
+                const c = createFeedCardEl(data, phMark);
+                if (c) frag.appendChild(c);
+            });
+            panel.appendChild(frag);
+            feed._nextUrl = cached.nextUrl || '';
+            finish();
+
+            // Revalidação em segundo plano se o cache tiver mais de 45 segundos
+            if (Date.now() - cached.ts > 45000) {
+                fetchDoc(feed.url, { credentials: 'same-origin' }).then(doc => {
+                    const parsed = [];
+                    doc.querySelectorAll('.structItem--thread').forEach(it => {
+                        const tl = it.querySelector('.structItem-title a[href*="/threads/"]');
+                        if (!tl || isIgnoredThread(it)) return;
+                        const data = extractFeedItemData(it);
+                        if (data) parsed.push(data);
+                    });
+                    if (parsed.length) setCachedFeed(feed.key, parsed, feedNextUrl(doc));
+                }).catch(() => {});
+            }
+            return;
+        }
+
+        panel.dataset.loaded = '1';
+        panel.innerHTML = FEED_SKEL_CARD.repeat(8);
+
         const timeout = setTimeout(() => {
             if (!isCurrentLoad() || !panel.dataset.loaded) return;
-            // Invalidate the request before exposing the page. A slow response may still
-            // resolve after the timeout; it must not repaint this panel over the settled
-            // composition or call the ready callback a second time.
             feed._loadToken++;
             panel.dataset.loaded = '';
             panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Couldn’t load.') + '</div>';
             finish();
         }, 3200);
         feed._readyTimer = timeout;
+
         fetchDoc(feed.url, { credentials: 'same-origin' })
             .then(doc => {
                 if (!isCurrentLoad()) return;
-                const n = feedRenderPage(doc, feed, panel, phMark, false);
-                feed._nextUrl = n ? feedNextUrl(doc) : '';
-                if (!n) panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Nothing here yet.') + '</div>';
+                const res = feedRenderPage(doc, feed, panel, phMark, false);
+                feed._nextUrl = res.count ? feedNextUrl(doc) : '';
+                if (res.count) {
+                    setCachedFeed(feed.key, res.items, feed._nextUrl);
+                } else {
+                    panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Nothing here yet.') + '</div>';
+                }
                 finish();
             })
             .catch(() => {
@@ -385,8 +832,8 @@
         for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
         fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             skels.forEach(s => s.remove());
-            const n = feedRenderPage(doc, feed, panel, phMark, true);
-            feed._nextUrl = n ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
+            const res = feedRenderPage(doc, feed, panel, phMark, true);
+            feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
             feed._loadingMore = false;
             if (onDone) onDone();
         }, () => { skels.forEach(s => s.remove()); feed._loadingMore = false; if (onDone) onDone(); });
@@ -424,11 +871,15 @@
             navBtns[1].classList.toggle('smg-nav-hidden', p.scrollLeft >= max || max <= 0);
         };
         // scroll do painel: atualiza as setas E, perto da borda direita, pré-busca a próxima página (append).
-        // SÓ aqui (não no updateNav, que roda pós-load) → sem loop: o append cresce o scrollWidth e a condição volta a ser falsa.
+        let scrollRaf = 0;
         const onPanelScroll = () => {
-            updateNav();
-            const p = activePanel(); if (!p || !p._feed) return;
-            if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+            if (scrollRaf) return;
+            scrollRaf = requestAnimationFrame(() => {
+                scrollRaf = 0;
+                updateNav();
+                const p = activePanel(); if (!p || !p._feed) return;
+                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+            });
         };
         [-1, 1].forEach(dir => {
             const b = document.createElement('button'); b.type = 'button';
@@ -448,6 +899,7 @@
 
         feeds.forEach((f, i) => {
             const tab = document.createElement('button'); tab.type = 'button';
+            tab.setAttribute('data-feed', f.key);
             tab.className = 'smg-feed-tab' + (i === 0 ? ' is-active' : '');
             tab.innerHTML = '<span class="smg-feed-tab-ic">' + f.icon + '</span><span>' + f.label + '</span>';
             const panel = document.createElement('div'); panel.className = 'smg-feed-panel' + (i === 0 ? ' is-active' : '');
@@ -549,4 +1001,22 @@
                 if (!done) head.insertBefore(document.createTextNode(i18n('Categories')), head.firstChild);
             }
         }
+    }
+
+    if (typeof window !== 'undefined') {
+        window.__homeExports = {
+            extractFeedItemData,
+            createFeedCardEl,
+            feedCard,
+            getCachedFeed,
+            setCachedFeed,
+            FEED_CACHE_KEY_PREFIX,
+            FEED_CACHE_TTL_MS,
+            enhanceHomeHubSections,
+            homeLayoutSignature,
+            classifyHomeNode,
+            organizeHomeHub,
+            getMainCategoryOrder,
+            MAIN_CATEGORY_PATTERNS,
+        };
     }

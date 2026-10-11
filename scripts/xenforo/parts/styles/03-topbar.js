@@ -4,10 +4,13 @@
             html.smg-topbar-on .p-header,
             html.smg-topbar-on .p-navSticky { display: none !important; }
             .u-scrollButtons, .js-scrollButtons { display: none !important; }   /* esconde os botões de scroll nativos do XF (a dock provê scroll topo/fundo) */
-            html.smg-topbar-on body { padding-top: 62px !important; }   /* reserve space for the fixed topbar */
+            html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
-            html.smg-topbar-on :target { scroll-margin-top: 76px; }
-            @media (max-width: 800px) { html.smg-topbar-on :target { scroll-margin-top: 66px; } }
+            html.smg-topbar-on :target { scroll-margin-top: 86px; }
+            @media (max-width: 800px) {
+                html.smg-topbar-on body { padding-top: 50px !important; }
+                html.smg-topbar-on :target { scroll-margin-top: 66px; }
+            }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -29,33 +32,66 @@
                sobra espaço entre logo/Discover e os ícones → não corta o resto em nenhuma resolução. */
             #smg-tb-inner {
                 display: flex; align-items: center; gap: 16px;
-                height: 62px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
+                height: 72px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
                 position: relative;   /* âncora do overlay de busca (ocupa a topbar) */
-                transition: height .22s ease;
+                transition: height .24s cubic-bezier(0.16, 1, 0.3, 1);
             }
             /* Mobile threads use a dedicated shell, like an app topbar. */
             .smg-mobile-threadbar { display: none; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 50px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
+            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
             @media (max-width: 800px) { #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; } }
             /* SMG: cor da topbar #1a1a1a */
             html.smg-smg #smg-topbar { background: #1a1a1a; }
             .smg-tb-left { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
             .smg-tb-center { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
-            .smg-tb-logo { display: flex; align-items: center; height: 36px; flex: 0 0 auto; margin-right: 6px; text-decoration: none; color: #fff; font-weight: 800; }
-            .smg-tb-logo img { height: 30px; width: auto; max-width: 150px; object-fit: contain; display: block; }
+            .smg-tb-logo {
+                display: flex; align-items: center; height: 48px; flex: 0 0 auto; margin-right: 12px;
+                text-decoration: none; color: #fff; font-weight: 800;
+                transition: transform .18s ease, filter .18s ease, height .22s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .smg-tb-logo:hover {
+                transform: scale(1.02);
+                filter: drop-shadow(0 2px 14px rgba(255,255,255,0.22));
+            }
+            .smg-tb-logo img {
+                height: 42px; width: auto; max-width: 220px; object-fit: contain; display: block;
+                filter: drop-shadow(0 2px 8px rgba(0,0,0,0.45));
+                transition: height .22s cubic-bezier(0.16, 1, 0.3, 1), filter .18s ease;
+            }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
+                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
+            }
+            @media (max-width: 800px) {
+                .smg-tb-logo { height: 36px; margin-right: 6px; }
+                .smg-tb-logo img { height: 30px; max-width: 140px; }
+            }
             /* logo custom do SMG: wordmark "SMG" (G em rosa = acento da marca) */
             .smg-logo { display: inline-flex; align-items: center; }
-            .smg-logo-word { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; color: #fff; line-height: 1; }
-            .smg-logo-accent { color: #ff3d84; }
-            .smg-tb-nav { display: flex; align-items: center; gap: 2px; }
+            .smg-logo-word {
+                font-size: 26px; font-weight: 900; letter-spacing: 0.8px; color: #fff; line-height: 1;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+                transition: font-size .22s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .smg-logo-accent { color: #ff3d84; text-shadow: 0 0 16px rgba(255,61,132,0.5); }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-logo-word { font-size: 23px; }
+            }
+            @media (max-width: 800px) {
+                .smg-logo-word { font-size: 20px; }
+            }
+            .smg-tb-nav { display: flex; align-items: center; gap: 4px; }
             .smg-tb-item {
                 position: relative;
-                display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px;
-                border-radius: 10px; border: none; background: transparent; color: rgba(255,255,255,0.82);
-                font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
-                transition: background .14s ease, color .14s ease;
+                display: flex; align-items: center; gap: 7px; height: 42px; padding: 0 14px;
+                border-radius: 11px; border: none; background: transparent; color: rgba(255,255,255,0.85);
+                font-size: 14.5px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+                transition: background .14s ease, color .14s ease, height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft, rgba(255,255,255,0.09)); color: #fff; }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 12px; font-size: 14px; }
+            }
             /* badge inline (notificações como item do nav) */
             .smg-tb-badge--inline { position: static; top: auto; right: auto; margin-left: 1px; }
             .smg-tb-ico { display: flex; align-items: center; }
@@ -66,12 +102,16 @@
 
             .smg-tb-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
             .smg-tb-act {
-                position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-                border-radius: 10px; border: none; background: transparent; color: rgba(255,255,255,0.85);
-                cursor: pointer; text-decoration: none; transition: background .14s ease, color .14s ease;
+                position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+                border-radius: 11px; border: none; background: transparent; color: rgba(255,255,255,0.85);
+                cursor: pointer; text-decoration: none;
+                transition: background .14s ease, color .14s ease, width .22s cubic-bezier(0.16, 1, 0.3, 1), height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-act:hover { background: var(--smg-link-soft, rgba(255,255,255,0.1)); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
+            }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
                 display: flex; align-items: center; gap: 11px; width: 100%; max-width: 720px; height: 46px; padding: 0 16px; margin: 0;

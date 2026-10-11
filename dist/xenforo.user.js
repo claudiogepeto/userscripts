@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.15.0
+// @version      3.16.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -390,7 +390,7 @@
         'Mark every notification as read?': 'Marcar todas as notificações como lidas?',
         'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
-        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias',
+        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
         'Previous': 'Anterior', 'Next': 'Próximo', 'Go to new': 'Ir para os novos',
         'Watch': 'Seguir', 'Unwatch': 'Deixar de seguir', 'Translate': 'Traduzir', 'More': 'Mais',
@@ -2158,8 +2158,8 @@
             .p-body > * { padding-top: 0 !important; }
             /* respiro abaixo da topbar FIXA: o título não cola na barra (era 10px → colava no desktop, onde
                body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
-            .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
-            @media (max-width: 600px) { .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
+            html:not(.smg-thread) .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
             .p-body-header .p-title { text-align: left !important; }
             .p-body-header .p-title-value { font-size: 30px !important; font-weight: 800 !important; line-height: 1.2 !important; }
 
@@ -2227,10 +2227,10 @@
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
             .smg-home-skeleton-topbar {
                 display: flex; align-items: center; justify-content: space-between; gap: 24px;
-                height: 62px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
+                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
                 border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
             }
-            .smg-home-skeleton-topbar-logo { width: 142px; height: 28px; border-radius: 7px; }
+            .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: 8px; }
             .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: 30px; margin-left: auto; }
             .smg-home-skeleton-topbar-logo,
             .smg-home-skeleton-topbar-nav i,
@@ -2378,86 +2378,145 @@
                 padding: 12px 16px !important; font-size: 14px !important; font-weight: 700 !important;
             }
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
-            /* hero shelf: surface elevada NEUTRA (sem tingir de rosa) → destaca das sections (transparentes) só pela elevação */
-            html.smg-home .smg-feed-block { margin: 8px 0 40px !important; padding: 14px 18px 20px; background: var(--smg-s1, #16171b); border: 1px solid var(--smg-bd); border-radius: 20px; box-shadow: 0 10px 34px rgba(0,0,0,0.34); overflow: visible; }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: 10px 12px 14px; border-radius: 16px; margin-bottom: 30px !important; } }
-            /* tabbar = "header" da section (pills + borda inferior, igual às outras sections) */
-            html.smg-home .smg-feed-tabs { display: flex; align-items: center; gap: 8px; padding: 0 2px; margin: 0 0 18px; background: transparent; border-bottom: 1px solid var(--smg-bd); }
-            /* tabs scrollam aqui; o "See all" + notices ficam fora desse scroll, à direita */
-            html.smg-home .smg-feed-tablist { display: flex; gap: 2px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+            /* hero shelf: surface elevada com gradiente sutil e highlight superior */
+            html.smg-home .smg-feed-block {
+                margin: 28px 0 46px !important; padding: 20px 22px 24px;
+                background: linear-gradient(180deg, rgba(255,255,255,0.038) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a);
+                border: 1px solid rgba(255,255,255,0.08); border-radius: 22px;
+                box-shadow: 0 20px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+                overflow: visible;
+            }
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: 14px 14px 18px; border-radius: 18px; margin-top: 16px !important; margin-bottom: 30px !important; } }
+            /* tabbar = header da section com segmented control moderno */
+            html.smg-home .smg-feed-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; margin: 0 0 20px; background: transparent; border-bottom: 0 !important; }
+            /* tabs scrollam aqui; o "See all" fica fixo à direita */
+            html.smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+            html.smg-home .smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
             html.smg-home .smg-feed-tablist::-webkit-scrollbar { display: none; }
-            /* abas = sublinhado-accent (mesma linguagem do header do Feed): chrome neutro, rosa SÓ no item ativo */
+            /* abas em cápsula moderna com realce no item ativo */
             html.smg-home .smg-feed-tab {
                 position: relative;
-                display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; height: 44px; padding: 0 13px;
-                border: 0; background: transparent; color: rgba(255,255,255,0.5);
-                font-size: 14px; font-weight: 700; letter-spacing: .005em; cursor: pointer; white-space: nowrap; transition: color .15s ease;
+                display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; height: 36px; padding: 0 16px;
+                border: 0; border-radius: 10px; background: transparent; color: rgba(255,255,255,0.55);
+                font-size: 13.5px; font-weight: 700; letter-spacing: .01em; cursor: pointer; white-space: nowrap;
+                transition: color .18s ease, background .18s ease, box-shadow .18s ease;
             }
-            html.smg-home .smg-feed-tab:hover { color: rgba(255,255,255,0.86); }
-            html.smg-home .smg-feed-tab.is-active { color: #fff; }
-            html.smg-home .smg-feed-tab::after { content: ""; position: absolute; left: 11px; right: 11px; bottom: -1px; height: 2.5px; border-radius: 3px 3px 0 0; background: var(--smg-link, #ff77b2); transform: scaleX(0); transition: transform .2s ease; }
-            html.smg-home .smg-feed-tab.is-active::after { transform: scaleX(1); }
+            html.smg-home .smg-feed-tab:hover { color: #fff; background: rgba(255,255,255,0.06); }
+            html.smg-home .smg-feed-tab.is-active {
+                color: #fff;
+                background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+            }
+            html.smg-home .smg-feed-tab::after { display: none !important; }
             html.smg-home .smg-feed-tab-ic { display: inline-flex; }
-            html.smg-home .smg-feed-tab-ic svg { width: 16px; height: 16px; fill: none !important; }
-            /* "See all" → empurrado pra direita da tabbar; vai pra página da aba ativa */
-            html.smg-home .smg-feed-seeall { flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 5px; padding: 0 2px 0 8px; color: rgba(255,255,255,0.6); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: color .14s ease; }
-            html.smg-home .smg-feed-seeall:hover { color: #fff; }
+            html.smg-home .smg-feed-tab-ic svg { width: 15px; height: 15px; fill: none !important; }
+            html.smg-home .smg-feed-tab[data-feed="trending"] .smg-feed-tab-ic { color: #ff8a3d; }
+            /* "See all" pill moderno */
+            html.smg-home .smg-feed-seeall {
+                flex: 0 0 auto; align-self: center; display: inline-flex; align-items: center; gap: 6px;
+                height: 36px; padding: 0 14px; border-radius: 11px; background: rgba(255,255,255,0.045);
+                border: 1px solid rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.72); font-size: 12.5px; font-weight: 600; text-decoration: none;
+                white-space: nowrap; transition: all .16s ease;
+            }
+            html.smg-home .smg-feed-seeall:hover {
+                background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.16); color: #fff; transform: translateY(-1px);
+            }
             html.smg-home .smg-feed-seeall svg { display: block; }
-            /* corpo: scroll horizontal de cards (mobile-friendly), com setas ‹ › no desktop */
+            /* corpo: scroll horizontal de cards, com setas flutuantes no desktop */
             html.smg-home .smg-feed-scroll { position: relative; }
             html.smg-home .smg-feed-panel { display: none; }
             html.smg-home .smg-feed-panel.is-active { display: flex; gap: 14px; padding: 2px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none; }
             html.smg-home .smg-feed-panel::-webkit-scrollbar { display: none; }
-            /* CARD IMERSIVO: a imagem preenche o tile (3:4); título/meta flutuam no rodapé sobre um scrim. Imagem em 1º plano, menos chrome. */
+            /* CARD IMERSIVO AMPLIADO (largura & altura expandidas, presença visual nobre) */
             html.smg-home .smg-feed-card {
-                position: relative; flex: 0 0 230px; width: 230px; aspect-ratio: 3 / 4; scroll-snap-align: start;
-                display: block; border-radius: 16px; overflow: hidden;
-                background: var(--smg-s2); border: 1px solid var(--smg-bd); text-decoration: none;
-                transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+                position: relative; flex: 0 0 295px; width: 295px; height: 395px; aspect-ratio: 3 / 4.02; scroll-snap-align: start;
+                display: block; border-radius: 18px; overflow: hidden;
+                background: var(--smg-s2, #18191f); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
+                box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
+                transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), border-color .2s ease, box-shadow .2s ease;
             }
-            html.smg-home .smg-feed-card:hover { transform: translateY(-4px); border-color: var(--smg-bd2); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
-            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
+            html.smg-home .smg-feed-card:hover {
+                transform: translateY(-6px); border-color: rgba(255,255,255,0.22);
+                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft, rgba(255,119,178,0.22));
+            }
+            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2, #18191f); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
-            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.07); }   /* zoom suave da mídia no hover */
+            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg .smg-ph-word { font-size: 32px; opacity: .5; }
-            html.smg-home .smg-feed-card-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 28px 13px 13px; display: flex; flex-direction: column; gap: 5px; min-width: 0; background: linear-gradient(to top, rgba(0,0,0,0.94) 6%, rgba(0,0,0,0.7) 38%, rgba(0,0,0,0.18) 78%, transparent 100%); }
+            /* Scrim gradiente cinematográfico */
+            html.smg-home .smg-feed-card-body {
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 56px 16px 15px;
+                display: flex; flex-direction: column; gap: 5px; min-width: 0;
+                background: linear-gradient(to top, rgba(8,9,12,0.96) 0%, rgba(8,9,12,0.85) 45%, rgba(8,9,12,0.3) 78%, transparent 100%);
+            }
             html.smg-home .smg-feed-skel .smg-feed-card-body { background: none; }
-            html.smg-home .smg-feed-card-title { font-size: 13.5px; font-weight: 600; color: #fff; line-height: 1.32; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 3px rgba(0,0,0,0.55); }
+            /* Linha de badges/tags */
+            html.smg-home .smg-feed-card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+            html.smg-home .smg-feed-card-badges .label,
+            html.smg-home .smg-feed-card-badges .prefix,
             html.smg-home .smg-feed-card-title .label,
             html.smg-home .smg-feed-card-title .prefix {
-                margin-right: 3px !important;
-                font-size: 9px !important;
-                padding: 1px 4.5px !important;
-                border-radius: 3.5px !important;
+                margin: 0 !important;
+                font-size: 9.5px !important;
+                font-weight: 700 !important;
+                letter-spacing: .02em !important;
+                text-transform: uppercase !important;
+                padding: 2.5px 6.5px !important;
+                border-radius: 5px !important;
                 line-height: 1.2 !important;
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255,255,255,0.12);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             }
-            html.smg-home .smg-feed-card-meta { font-size: 11.5px; color: rgba(255,255,255,0.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+            html.smg-home .smg-feed-card-title {
+                font-size: 15.5px; font-weight: 750; color: #fff; line-height: 1.3; letter-spacing: -0.015em;
+                display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            }
+            html.smg-home .smg-feed-card-meta {
+                font-size: 12px; color: rgba(255,255,255,0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 6px; margin-top: 4px;
+            }
+            html.smg-home .smg-feed-card-meta .smg-feed-user { color: rgba(255,255,255,0.92); font-weight: 600; }
+            html.smg-home .smg-feed-card-meta .smg-feed-dot { opacity: 0.5; }
+            html.smg-home .smg-feed-card-meta .smg-feed-time { opacity: 0.75; }
             html.smg-home .smg-feed-loading { width: 100%; padding: 40px; text-align: center; color: rgba(255,255,255,0.45); font-size: 13px; }
-            /* skeletons de loading (cards-fantasma com shimmer) */
+            /* skeletons de loading */
             html.smg-home .smg-feed-skel { pointer-events: none; }
-            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2); }
-            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2); }
+            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2, #18191f); }
+            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2, #18191f); }
             html.smg-home .smg-skel-line { height: 11px; border-radius: 5px; margin-bottom: 7px; }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: 5px; margin-bottom: 0; }
             html.smg-home .smg-skel-box::after, html.smg-home .smg-skel-line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
-            html.smg-home .smg-feed-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #fff; line-height: 0; border: 1px solid var(--smg-bd2); background: rgba(20,20,20,0.94); box-shadow: 0 6px 18px rgba(0,0,0,0.5); transition: background .15s ease, transform .12s ease, opacity .18s ease, visibility .18s; }   /* PERF: removido backdrop-filter blur(8px) — botão flutua sobre o carrossel que rola; bg 0.94 já é legível sem o blur */
-            html.smg-home .smg-feed-nav:hover { background: rgba(46,46,46,0.96); }
-            html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.9); }
-            html.smg-home .smg-feed-nav svg { width: 18px; height: 18px; fill: none !important; }
-            html.smg-home .smg-feed-prev { left: -7px; }
-            html.smg-home .smg-feed-next { right: -7px; }
+            /* Setas flutuantes glass */
+            html.smg-home .smg-feed-nav {
+                position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+                width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+                border-radius: 50%; cursor: pointer; color: #fff; line-height: 0;
+                border: 1px solid rgba(255,255,255,0.16); background: rgba(20,21,26,0.88);
+                backdrop-filter: blur(12px);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+                transition: background .15s ease, transform .16s ease, border-color .15s ease, opacity .18s ease, visibility .18s;
+            }
+            html.smg-home .smg-feed-nav:hover { background: rgba(35,37,45,0.96); border-color: rgba(255,255,255,0.3); transform: translateY(-50%) scale(1.08); }
+            html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.95); }
+            html.smg-home .smg-feed-nav svg { width: 20px; height: 20px; fill: none !important; }
+            html.smg-home .smg-feed-prev { left: -10px; }
+            html.smg-home .smg-feed-next { right: -10px; }
             html.smg-home .smg-feed-nav.smg-nav-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
             @media (max-width: 600px) {
                 html.smg-home .smg-feed-card { flex-basis: 210px; width: 210px; }
                 html.smg-home .smg-feed-nav { display: none; }
             }
 
-            /* sections: minimalistas — grupo transparente, sem caixa pesada (cards é que têm presença) */
+            /* ================= CATEGORY HUB ================= */
+            /* sections: Grupo Hub limpo e moderno */
             html.smg-home .block--category {
-                margin-bottom: 34px !important; border-radius: 0 !important;
+                margin-bottom: 38px !important; border-radius: 0 !important;
                 background: transparent !important;
                 border: 0 !important; box-shadow: none !important; overflow: visible !important;
             }
@@ -2469,92 +2528,213 @@
             html.smg-home .block--category .block-header {
                 display: flex !important; align-items: center; justify-content: flex-start; position: relative;
                 background: transparent !important;
-                padding: 0 2px 12px !important; margin: 0 0 16px !important;
-                font-size: 12.5px !important; font-weight: 700 !important; letter-spacing: .14em; text-transform: uppercase;
-                color: rgba(255,255,255,0.55) !important;
-                border: 0 !important; border-bottom: 1px solid var(--smg-bd) !important;
+                padding: 0 4px 14px !important; margin: 0 0 18px !important;
+                font-size: 13px !important; font-weight: 800 !important; letter-spacing: .12em; text-transform: uppercase;
+                color: rgba(255,255,255,0.65) !important;
+                border: 0 !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important;
             }
             html.smg-home .block--category .block-header a,
             html.smg-home .block--category .uix_categoryTitle { color: #fff !important; }
             html.smg-home .block--category .categoryCollapse--trigger { position: absolute !important; right: 16px; top: 50%; transform: translateY(-50%); margin: 0 !important; }
-            html.smg-home .block--category .block-body {
-                display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
-                gap: 14px !important; padding: 0 !important; background: transparent !important; border: 0 !important;
+
+            /* Badge de contagem de fóruns no header da seção */
+            html.smg-home .smg-hub-badge {
+                display: inline-flex; align-items: center;
+                padding: 2.5px 8px; border-radius: 7px;
+                font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+                background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.5); margin-left: 10px;
             }
-            /* SMG: 5 colunas (igual SimpCity), caindo de 1 em 1 por breakpoint */
-            html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-            @media (max-width: 1180px) { html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
-            @media (max-width: 820px)  { html.smg-smg.smg-home .block--category .block-body { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
-            /* mobile: 2 colunas nas sections (os dois sites) */
+
+            html.smg-home .block--category .block-body,
+            html.smg-smg.smg-home .block--category .block-body {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                padding: 0 !important;
+                background: transparent !important;
+                border: 0 !important;
+            }
             @media (max-width: 600px) {
-                html.smg-home .block--category .block-body,
-                html.smg-smg.smg-home .block--category .block-body {
-                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 9px !important; padding: 10px !important;
-                }
-                /* divider: dá um respiro no texto pra alinhar com os cards (inset de 10px no mobile) */
-                html.smg-home .block--category .block-header { padding-left: 12px !important; }
-                html.smg-home .block--category .node { min-height: 136px !important; }
-                html.smg-home .node-body { padding: 14px 10px !important; gap: 7px !important; }
-                html.smg-home .node-icon { width: 50px !important; height: 50px !important; padding: 7px !important; }
-                html.smg-home .node-title { font-size: 13.5px !important; }
+                html.smg-home .block--category .block-header { padding-left: 6px !important; }
             }
-            /* home: remove a linha do header da página (título + New Posts/Post Thread) — vai pro botão "Novo" da topbar */
+            /* home: remove a linha do header da página (título + New Posts/Post Thread) */
             html.smg-home .p-body-header { display: none !important; }
+
+            /* HUB LIST ITEM: Superfície limpa com feixe lateral interativo */
             html.smg-home .block--category .node {
-                border: 1px solid var(--smg-bd) !important;
+                position: relative !important;
+                display: flex !important; flex-direction: row !important; align-items: center !important;
+                cursor: pointer;
+                border: 1px solid rgba(255,255,255,0.07) !important;
                 border-radius: 14px !important;
-                background: var(--smg-s1) !important;
-                overflow: visible !important;
-                min-height: 180px !important;
-                transition: background .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a) !important;
+                overflow: hidden !important;
+                min-height: 64px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+                transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1), border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
             }
-            /* SMG: cards da home na MESMA cor/rounding do SimpCity (o tema SMG deixava mais claro e o --smg-s1 é 13.5%). Especificidade alta + !important. */
-            /* XADREZ (igual SimpCity): card sim/card não. ímpar = 12.5%, par = 9.5%. 5 colunas (ímpar) → alterna em 2D.
-               node-body transparente → o bg do node aparece; overflow:hidden corta o vazamento do canto arredondado. */
-            html.smg-smg.smg-home .block--category .node { background-color: hsl(0 0% 12.5%) !important; border-radius: 14px !important; overflow: hidden !important; }
-            html.smg-smg.smg-home .block--category .block-body > .node:nth-child(even) { background-color: hsl(0 0% 11%) !important; }
-            html.smg-smg.smg-home .block--category .node-body { background: transparent !important; }
-            html.smg-smg.smg-home .block--category .block-body > .node:hover { background-color: hsl(0 0% 16%) !important; }
-            /* nada de truncar/cortar conteúdo dentro do card */
-            html.smg-home .node-title, html.smg-home .node-title a,
-            html.smg-home .node-description, html.smg-home .node-extra-title {
-                white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
-            }
+            /* Sem feixe lateral no hover */
+            html.smg-home .block--category .node::before { display: none !important; }
+            html.smg-home .block--category .node:hover::before { display: none !important; }
+            /* Hover do Hub Row */
             html.smg-home .block--category .node:hover {
-                background: var(--smg-s2) !important;
-                border-color: var(--smg-bd2) !important; transform: translateY(-3px);
-                box-shadow: 0 12px 28px rgba(0,0,0,0.42) !important;   /* elevação no hover (best-practice dark: profundidade na interação, não só borda) */
+                transform: translateY(-2px) !important;
+                border-color: rgba(255,255,255,0.18) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2, #181920) !important;
+                box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
-            /* card centralizado: ÍCONE / NOME / subtítulo · card inteiro clicável */
-            html.smg-home .block--category .node { display: flex !important; cursor: pointer; }
+
+            /* SMG alternância */
+            html.smg-smg.smg-home .block--category .node {
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #141519 !important;
+            }
+            html.smg-smg.smg-home .block--category .block-body > .node:hover {
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), #181920 !important;
+            }
+
+            /* Node body e alinhamento horizontal */
             html.smg-home .node-body {
+                position: relative !important;
                 flex: 1 1 auto !important;
-                display: flex !important; flex-direction: column !important;
-                align-items: center !important; justify-content: center !important;
-                text-align: center !important; gap: 9px !important; padding: 16px 12px !important;   /* densificado: menos espaço morto, card mais "app tile" */
+                display: flex !important; flex-direction: row !important;
+                align-items: center !important; justify-content: flex-start !important;
+                text-align: left !important; gap: 16px !important; padding: 10px 18px !important;
+                background: transparent !important; box-sizing: border-box !important;
             }
+
+            /* Ícone / Logo puro (sem moldura rounded) */
             html.smg-home .node-icon {
-                width: 60px !important; height: 60px !important; margin: 0 0 2px !important; padding: 8px !important; box-sizing: border-box !important;
+                width: 38px !important; height: 38px !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
+                flex: 0 0 auto !important;
                 display: flex !important; align-items: center; justify-content: center;
-                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
-                transition: transform .18s ease, border-color .18s ease, background .18s ease;
+                background: transparent !important;
+                border: 0 !important; border-radius: 0 !important;
+                box-shadow: none !important;
+                transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
-            html.smg-home .block--category .node:hover .node-icon { transform: scale(1.08) translateY(-1px); background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16); }   /* microinteração: ícone "salta" no hover */
-            html.smg-home .node-icon img { width: auto !important; height: auto !important; max-width: 100% !important; max-height: 100% !important; border-radius: 9px !important; object-fit: contain !important; }
-            html.smg-home .node-icon i { font-size: 28px; display: inline-flex; }
-            html.smg-home .node-icon i svg, html.smg-home .node-icon > svg { width: 28px !important; height: 28px !important; color: rgba(255,255,255,0.75); }
+            html.smg-home .block--category .node:hover .node-icon {
+                transform: scale(1.08) !important;
+                border-color: transparent !important;
+            }
+            html.smg-home .node-icon img {
+                width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important;
+                border-radius: 8px !important; object-fit: contain !important;
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)) !important;
+            }
+            html.smg-home .node-icon i { font-size: 24px; display: inline-flex; }
+            html.smg-home .node-icon i svg, html.smg-home .node-icon > svg {
+                width: 24px !important; height: 24px !important; color: rgba(255,255,255,0.85);
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)) !important;
+            }
             html.smg-home .node-icon .node-icon-fix-verti { width: auto !important; height: auto !important; }
-            html.smg-home .node-icon .node-icon-fix-verti img { width: 46px !important; height: 46px !important; max-width: 46px !important; max-height: 46px !important; }
-            html.smg-home .node-main { min-width: 0 !important; width: 100% !important; }
-            html.smg-home .node-title { font-size: 15px !important; font-weight: 700 !important; justify-content: center !important; line-height: 1.3 !important; }
-            html.smg-home .node-title a { color: #fff !important; }
-            html.smg-home .node-description { font-size: 12.5px !important; color: rgba(255,255,255,0.5) !important; margin-top: 3px; }
-            /* tira último post, estatísticas e a lista de subitems (viram cards próprios) */
+            html.smg-home .node-icon .node-icon-fix-verti img { width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important; }
+            html.smg-home .node-main { min-width: 0 !important; width: auto !important; flex: 1 1 auto !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+            html.smg-home .node-title {
+                font-size: 15px !important; font-weight: 700 !important; letter-spacing: -0.01em !important;
+                justify-content: flex-start !important; text-align: left !important; line-height: 1.3 !important;
+            }
+            html.smg-home .node-title a { color: #fff !important; text-decoration: none !important; transition: color .15s ease; }
+            html.smg-home .block--category .node:hover .node-title a {
+                color: #fff !important; text-shadow: 0 0 10px rgba(255,255,255,0.35);
+            }
+            html.smg-home .node-description {
+                font-size: 12px !important; line-height: 1.4 !important;
+                color: rgba(255,255,255,0.5) !important; margin-top: 1px !important;
+                display: -webkit-box !important; -webkit-line-clamp: 1 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
+                transition: color .15s ease;
+            }
+            html.smg-home .block--category .node:hover .node-description {
+                color: rgba(255,255,255,0.72) !important;
+            }
+
+            /* Divisor entre categorias principais e restantes */
+            html.smg-home .smg-hub-category-divider {
+                display: flex !important; align-items: center !important; gap: 14px !important;
+                margin: 16px 4px 10px !important; width: calc(100% - 8px) !important;
+            }
+            html.smg-home .smg-hub-divider-line {
+                flex: 1 1 auto !important; height: 1px !important;
+                background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) !important;
+            }
+            html.smg-home .smg-hub-divider-text {
+                font-size: 11px !important; font-weight: 750 !important; letter-spacing: 0.08em !important;
+                text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
+            }
+
+            /* Últimos posts (.node-extra) à direita no layout de lista */
+            html.smg-home .node-extra {
+                display: flex !important; flex-direction: column !important;
+                align-items: flex-end !important; justify-content: center !important;
+                flex: 0 0 auto !important; max-width: 380px !important; min-width: 180px !important;
+                text-align: right !important; gap: 3px !important; margin-left: auto !important;
+                padding: 4px 0 !important; border-radius: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                position: relative; z-index: 2;
+            }
+            html.smg-home .node-extra:hover {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            html.smg-home .node-extra-icon { display: none !important; }
+            html.smg-home .node-extra-row {
+                display: block !important; max-width: 100% !important;
+                white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+            }
+            html.smg-home .node-extra-title {
+                display: inline-block !important; max-width: 100% !important;
+                color: rgba(255,255,255,0.9) !important; font-size: 13px !important; font-weight: 600 !important;
+                white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+                text-decoration: none !important; transition: color .15s ease !important;
+            }
+            html.smg-home .node-extra:hover .node-extra-title,
+            html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
+                color: var(--smg-link, #ff77b2) !important;
+                text-decoration: underline !important;
+            }
+            html.smg-home .node-extra .listInline {
+                display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
+                gap: 5px !important; margin: 0 !important; padding: 0 !important;
+                list-style: none !important; font-size: 11.5px !important; color: rgba(255,255,255,0.45) !important;
+            }
+            html.smg-home .node-extra .username {
+                color: rgba(255,255,255,0.7) !important; font-weight: 600 !important;
+            }
+            html.smg-home .node-extra time,
+            html.smg-home .node-extra .node-extra-date {
+                color: rgba(255,255,255,0.45) !important;
+            }
+
+            @media (max-width: 650px) {
+                html.smg-home .block--category .node { min-height: 60px !important; }
+                html.smg-home .block--category .node-body {
+                    flex-wrap: wrap !important; padding: 10px 14px !important; gap: 8px 12px !important;
+                }
+                html.smg-home .node-icon { width: 38px !important; height: 38px !important; }
+                html.smg-home .node-icon img { max-width: 26px !important; max-height: 26px !important; }
+                html.smg-home .node-icon svg { width: 18px !important; height: 18px !important; }
+                html.smg-home .node-main { flex: 1 1 calc(100% - 54px) !important; }
+                html.smg-home .node-title { font-size: 14px !important; }
+                html.smg-home .node-extra {
+                    flex: 0 0 100% !important; max-width: 100% !important; min-width: 0 !important;
+                    align-items: flex-start !important; text-align: left !important;
+                    border-top: 1px solid rgba(255,255,255,0.06) !important; padding-top: 6px !important; margin-left: 0 !important;
+                }
+                html.smg-home .node-extra .listInline { justify-content: flex-start !important; }
+            }
+
+            /* tira estatísticas e a lista de subitems (viram cards próprios) */
             html.smg-home .node-meta,
             html.smg-home .node-stats,
-            html.smg-home .node-extra,
             html.smg-home .node-subNodesFlat { display: none !important; }
+
+            /* controle de truncamento/quebra */
+            html.smg-home .node-title, html.smg-home .node-title a {
+                white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+            }
 
             /* remove ads/links promocionais e blocos de anúncio na home
                PERF: .smg-ad-block é marcado pelo JS (markHomeAdBlocks, 16-home) — substitui o
@@ -2649,10 +2829,13 @@
             html.smg-topbar-on .p-header,
             html.smg-topbar-on .p-navSticky { display: none !important; }
             .u-scrollButtons, .js-scrollButtons { display: none !important; }   /* esconde os botões de scroll nativos do XF (a dock provê scroll topo/fundo) */
-            html.smg-topbar-on body { padding-top: 62px !important; }   /* reserve space for the fixed topbar */
+            html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
-            html.smg-topbar-on :target { scroll-margin-top: 76px; }
-            @media (max-width: 800px) { html.smg-topbar-on :target { scroll-margin-top: 66px; } }
+            html.smg-topbar-on :target { scroll-margin-top: 86px; }
+            @media (max-width: 800px) {
+                html.smg-topbar-on body { padding-top: 50px !important; }
+                html.smg-topbar-on :target { scroll-margin-top: 66px; }
+            }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -2674,33 +2857,66 @@
                sobra espaço entre logo/Discover e os ícones → não corta o resto em nenhuma resolução. */
             #smg-tb-inner {
                 display: flex; align-items: center; gap: 16px;
-                height: 62px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
+                height: 72px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
                 position: relative;   /* âncora do overlay de busca (ocupa a topbar) */
-                transition: height .22s ease;
+                transition: height .24s cubic-bezier(0.16, 1, 0.3, 1);
             }
             /* Mobile threads use a dedicated shell, like an app topbar. */
             .smg-mobile-threadbar { display: none; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 50px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
+            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
             @media (max-width: 800px) { #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; } }
             /* SMG: cor da topbar #1a1a1a */
             html.smg-smg #smg-topbar { background: #1a1a1a; }
             .smg-tb-left { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
             .smg-tb-center { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
-            .smg-tb-logo { display: flex; align-items: center; height: 36px; flex: 0 0 auto; margin-right: 6px; text-decoration: none; color: #fff; font-weight: 800; }
-            .smg-tb-logo img { height: 30px; width: auto; max-width: 150px; object-fit: contain; display: block; }
+            .smg-tb-logo {
+                display: flex; align-items: center; height: 48px; flex: 0 0 auto; margin-right: 12px;
+                text-decoration: none; color: #fff; font-weight: 800;
+                transition: transform .18s ease, filter .18s ease, height .22s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .smg-tb-logo:hover {
+                transform: scale(1.02);
+                filter: drop-shadow(0 2px 14px rgba(255,255,255,0.22));
+            }
+            .smg-tb-logo img {
+                height: 42px; width: auto; max-width: 220px; object-fit: contain; display: block;
+                filter: drop-shadow(0 2px 8px rgba(0,0,0,0.45));
+                transition: height .22s cubic-bezier(0.16, 1, 0.3, 1), filter .18s ease;
+            }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
+                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
+            }
+            @media (max-width: 800px) {
+                .smg-tb-logo { height: 36px; margin-right: 6px; }
+                .smg-tb-logo img { height: 30px; max-width: 140px; }
+            }
             /* logo custom do SMG: wordmark "SMG" (G em rosa = acento da marca) */
             .smg-logo { display: inline-flex; align-items: center; }
-            .smg-logo-word { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; color: #fff; line-height: 1; }
-            .smg-logo-accent { color: #ff3d84; }
-            .smg-tb-nav { display: flex; align-items: center; gap: 2px; }
+            .smg-logo-word {
+                font-size: 26px; font-weight: 900; letter-spacing: 0.8px; color: #fff; line-height: 1;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+                transition: font-size .22s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .smg-logo-accent { color: #ff3d84; text-shadow: 0 0 16px rgba(255,61,132,0.5); }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-logo-word { font-size: 23px; }
+            }
+            @media (max-width: 800px) {
+                .smg-logo-word { font-size: 20px; }
+            }
+            .smg-tb-nav { display: flex; align-items: center; gap: 4px; }
             .smg-tb-item {
                 position: relative;
-                display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px;
-                border-radius: 10px; border: none; background: transparent; color: rgba(255,255,255,0.82);
-                font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
-                transition: background .14s ease, color .14s ease;
+                display: flex; align-items: center; gap: 7px; height: 42px; padding: 0 14px;
+                border-radius: 11px; border: none; background: transparent; color: rgba(255,255,255,0.85);
+                font-size: 14.5px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+                transition: background .14s ease, color .14s ease, height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft, rgba(255,255,255,0.09)); color: #fff; }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 12px; font-size: 14px; }
+            }
             /* badge inline (notificações como item do nav) */
             .smg-tb-badge--inline { position: static; top: auto; right: auto; margin-left: 1px; }
             .smg-tb-ico { display: flex; align-items: center; }
@@ -2711,12 +2927,16 @@
 
             .smg-tb-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
             .smg-tb-act {
-                position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-                border-radius: 10px; border: none; background: transparent; color: rgba(255,255,255,0.85);
-                cursor: pointer; text-decoration: none; transition: background .14s ease, color .14s ease;
+                position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+                border-radius: 11px; border: none; background: transparent; color: rgba(255,255,255,0.85);
+                cursor: pointer; text-decoration: none;
+                transition: background .14s ease, color .14s ease, width .22s cubic-bezier(0.16, 1, 0.3, 1), height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-act:hover { background: var(--smg-link-soft, rgba(255,255,255,0.1)); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
+            @media (min-width: 801px) {
+                #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
+            }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
                 display: flex; align-items: center; gap: 11px; width: 100%; max-width: 720px; height: 46px; padding: 0 16px; margin: 0;
@@ -6577,11 +6797,25 @@
                .block-outer acima dos posts). Agora é um header único e sticky: numa thread de 300 páginas
                dá pra trocar de página, abrir a galeria ou o feed sem voltar ao topo.
                Ao grudar ele COMPACTA (tags somem, título encolhe) — senão ocuparia meia tela. */
+            /* ===== THREAD HEADER: one block, sticky on desktop and in-flow on mobile =====
+               Quando abre a página: Hero amplo, thumbnail 120x120px à esquerda, título + tags
+               alinhados à esquerda ao lado da imagem, e barra de paginação + botões à direita.
+               Ao fazer scroll: vira barra fixa compacta (48px) abaixo da topbar com o nome da
+               thread à esquerda, botões à direita e padding superior/inferior rigorosamente idênticos. */
             html.smg-thread .p-body-header.smg-thead-unified {
-                position: sticky; top: 50px; z-index: 30;
-                background: var(--smg-bg); margin: 0 0 12px !important; padding: 14px 0 0 !important;
-                min-height: 52px; display: flex; align-items: center;   /* conteúdo centralizado na faixa */
+                position: sticky; top: 60px; z-index: 30;
+                background: var(--smg-bg);
+                margin: 0 0 16px !important;
+                padding: 18px 0 !important;
+                min-height: unset !important;
+                height: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                box-sizing: border-box !important;
                 overflow-anchor: none !important;
+                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08);
+                clip-path: inset(0 -100vmax -1px);
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -6589,31 +6823,86 @@
                 border-bottom-color: rgba(255,255,255,0.08) !important;
                 box-shadow: 0 1px 0 rgba(255,255,255,0.02) !important;
             }
-            html.smg-thread .p-body-header.smg-thead-unified > * { width: 100%; }
-            /* FUNDO DE PONTA A PONTA sem 100vw: o header é capado na largura do conteúdo, mas o fundo
-               precisa cobrir a janela inteira (senão os posts aparecem passando por baixo nas laterais).
-               A versão anterior usava um ::before de 100vw — e 100vw INCLUI a barra de rolagem, o que
-               criava ~8px de scroll horizontal na thread. box-shadow com spread pinta além das bordas
-               SEM ocupar espaço no layout; o clip-path corta o vazamento vertical.
-               A 2ª sombra (atrás da 1ª) sobra 1px embaixo = a linha divisória, também de ponta a ponta. */
-            html.smg-thread .p-body-header.smg-thead-unified {
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08);
-                clip-path: inset(0 -100vmax -1px);
+            html.smg-thread .p-body-header.smg-thead-unified > *,
+            html.smg-thread .p-body-header.smg-thead-unified .pageContent,
+            html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner {
+                width: 100% !important;
+                height: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
             }
             html.smg-thread .p-body-header.smg-thead-unified.is-stuck {
-                padding: 0 !important;
-                /* sombra CURTA: 22px de desfoque sobre fundo escuro viravam uma faixa cinza grossa,
-                   que lia como uma borda enorme embaixo da barra. 6px só destacam a barra do conteúdo. */
+                top: 60px;
+                margin: 0 !important;
+                padding: 8px 0 !important;   /* PADDING SIMÉTRICO: 8px no topo e 8px na base */
+                min-height: 48px !important;
+                height: 48px !important;
+                max-height: 48px !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
                 clip-path: inset(0 -100vmax -8px);
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08), 0 3px 6px rgba(0,0,0,0.35);
             }
-            @media (max-width: 800px) { html.smg-thread .p-body-header.smg-thead-unified { top: 48px; } }
-            /* LINHA ÚNICA: hero (thumb + badges/título) à esquerda; controles (.smg-thead-controls) à direita */
+            @media (max-width: 800px) {
+                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
+                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
+            }
+            /* Lado ESQUERDO: hero (thumb + info [badges + título + tags]) */
+            html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
+                display: flex !important;
+                align-items: center !important;
+                gap: 18px !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+            html.smg-thread .p-body-header.smg-thead-unified .smg-thead-info {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                gap: 7px !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+            html.smg-thread .p-body-header.smg-thead-unified .smg-thead-titleline {
+                display: flex !important;
+                align-items: center !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+            html.smg-thread .p-body-header.smg-thead-unified:not(.is-stuck) .p-title-value {
+                font-size: 26px !important;
+                font-weight: 800 !important;
+                line-height: 1.25 !important;
+                letter-spacing: -0.01em !important;
+                color: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            /* Lado DIREITO: controles (.smg-thead-controls) alinhados à direita */
             html.smg-thread .smg-thead-controls {
                 display: flex !important;
                 align-items: center !important;
                 gap: 10px !important;
                 margin-left: auto !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding: 0 !important;
                 flex: 0 0 auto !important;
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
@@ -6621,30 +6910,80 @@
             html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 32px; padding: 0; }
-            /* COMPACTO (header grudado): a faixa de tags some, título e botões encolhem — a barra fica
-               fina o bastante pra não comer a leitura, mantendo pager e ações sempre à mão. */
-            .smg-thead-unified.is-stuck { min-height: 48px; }
+            /* COMPACTO (barra fixa ao rolar a página):
+               Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
+               e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
             .smg-thead-unified.is-stuck .smg-thead-thumb { display: none !important; }
             .smg-thead-unified.is-stuck .smg-thead-badges-row { display: none !important; }
+            .smg-thead-unified.is-stuck .smg-thead-tags,
+            .smg-thead-unified.is-stuck .p-description,
+            .smg-thead-unified.is-stuck .smg-thead-tags-bar { display: none !important; }
+            .smg-thead-unified.is-stuck .smg-thead-hero {
+                display: flex !important;
+                align-items: center !important;
+                gap: 0 !important;
+                height: 32px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .smg-thead-unified.is-stuck .smg-thead-info {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 0 !important;
+                height: 32px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .smg-thead-unified.is-stuck .smg-thead-titleline {
+                display: flex !important;
+                align-items: center !important;
+                height: 32px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
             .smg-thead-unified.is-stuck .p-title-value {
-                font-size: 13.5px !important;
-                font-weight: 600 !important;
-                line-height: 1.2 !important;
+                font-size: 14.5px !important;
+                font-weight: 700 !important;
+                line-height: 32px !important;
+                height: 32px !important;
+                display: flex !important;
+                align-items: center !important;
                 -webkit-line-clamp: 1 !important;
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             .smg-thead-unified.is-stuck .smg-thead-titleline .smg-thead-title-text {
                 white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                display: block !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-controls { height: 32px; }
             .smg-thead-unified.is-stuck .p-title-value .label,
             .smg-thead-unified.is-stuck .p-title-value .prefix {
-                display: inline-block !important;
-                font-size: 9px !important;
-                padding: 1px 5px !important;
-                border-radius: 4px !important;
-                vertical-align: middle;
+                display: none !important;
             }
+            .smg-thead-unified.is-stuck .smg-thead-controls {
+                height: 32px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                margin-left: auto !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding: 0 !important;
+                flex: 0 0 auto !important;
+                flex-shrink: 0 !important;
+            }
+            .smg-thead-unified.is-stuck .smg-bar { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
+            .smg-thead-unified.is-stuck .smg-bar-pager { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
+            .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+            .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
+            .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
             .smg-thead-spacer {
                 display: none;
@@ -6767,19 +7106,21 @@
                 margin-left: 0 !important;
             }
             .smg-thead-thumb {
-                flex: 0 0 auto;
-                width: 108px;
-                height: 108px;
-                border-radius: 18px;
-                overflow: hidden;
-                background: rgba(255,255,255,0.06);
-                box-shadow: 0 6px 20px rgba(0,0,0,0.38);
+                flex: 0 0 120px !important;
+                width: 120px !important;
+                height: 120px !important;
+                border-radius: 16px !important;
+                overflow: hidden !important;
+                background: rgba(255,255,255,0.06) !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+                display: block !important;
             }
             .smg-thead-thumb img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                display: block !important;
             }
             .smg-thead-unified.is-stuck .smg-thead-hero {
                 align-items: center;
@@ -6839,8 +7180,19 @@
             }
             html.smg-thread .smg-thead-tags-row .tagItem {
                 font-size: 12px !important;
+                font-weight: 500 !important;
                 padding: 3px 10px !important;
                 border-radius: 8px !important;
+                background: rgba(255,255,255,0.06) !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
+                color: rgba(255,255,255,0.85) !important;
+                text-decoration: none !important;
+                transition: background .14s ease, color .14s ease, border-color .14s ease;
+            }
+            html.smg-thread .smg-thead-tags-row .tagItem:hover {
+                background: rgba(255,255,255,0.12) !important;
+                border-color: rgba(255,255,255,0.18) !important;
+                color: #fff !important;
             }
             html.smg-thread .smg-thead-tags-row > .listInline,
             html.smg-thread .smg-thead-tags-row > .tagList,
@@ -7076,7 +7428,7 @@
                 flex-wrap: wrap !important; gap: 0 !important; margin: 0 !important; padding-bottom: 0 !important;
             }
             /* espaçamento vertical enxuto: cola título→barra→posts */
-            html.smg-thread .p-body-header { padding-top: 26px !important; padding-bottom: 4px !important; margin-bottom: 0 !important; }
+            html.smg-thread .p-body-header:not(.smg-thead-unified) { padding-top: 26px !important; padding-bottom: 4px !important; margin-bottom: 0 !important; }
             html.smg-thread .p-body-header .p-description { margin-bottom: 0 !important; }
             html.smg-thread .block-outer + * { margin-top: 4px !important; }
             html.smg-thread .block.block--messages,
@@ -18837,7 +19189,13 @@
     // não reexecutam a organização da home.
     function homeLayoutSignature() {
         return Array.from(document.querySelectorAll('.p-body-content .block--category')).map(category => {
-            const title = (category.querySelector('.block-header') || {}).textContent || '';
+            const header = category.querySelector('.block-header');
+            let title = '';
+            if (header) {
+                const hClone = header.cloneNode(true);
+                hClone.querySelectorAll('.smg-hub-badge, .categoryCollapse--trigger').forEach(el => el.remove());
+                title = hClone.textContent || '';
+            }
             const nodes = Array.from(category.querySelectorAll(':scope > .block-container > .block-body > .node')).map(node => {
                 const link = node.querySelector('.node-title a, a[href]');
                 const subLinks = Array.from(node.querySelectorAll('.node-subNodesFlat .subNodeLink')).map(sub => (sub.getAttribute('href') || '') + ':' + sub.textContent.trim()).join(',');
@@ -18845,6 +19203,295 @@
             });
             return title.replace(/\s+/g, ' ').trim() + '[' + nodes.join('|') + ']';
         }).join('||');
+    }
+
+    const MAIN_CATEGORY_PATTERNS = [
+        /^3d\b/i,
+        /^animated\b/i,
+        /^asians?\b/i,
+        /^asmr\b/i,
+        /^cam\s*girls?\b/i,
+        /^celebrit(y|ies)\b/i,
+        /^hentai\b/i,
+        /^hotwives?\b/i,
+        /^trans(?:gender)?\b/i,
+        /^v[- ]?tubers?\b/i,
+        /^(?:xxx|porn|pornstars?)\b/i
+    ];
+
+    function getMainCategoryOrder(title) {
+        const clean = (title || '').trim();
+        for (let i = 0; i < MAIN_CATEGORY_PATTERNS.length; i++) {
+            if (MAIN_CATEGORY_PATTERNS[i].test(clean)) return i;
+        }
+        return 999;
+    }
+
+    // Classifica um nó da home em:
+    // 'sites', 'categories', 'discussions', 'requests', 'nav', ou null (se deve ser removido),
+    // renomeando nós de subfóruns do Brasil (ex.: Animated -> Brasil - Animated)
+    function classifyHomeNode(node) {
+        if (!node) return 'categories';
+        const origCat = (node.dataset.smgOrigCategory || '').trim();
+        const parentTitle = (node.dataset.smgParentTitle || '').trim();
+        const titleEl = node.querySelector('.node-title');
+        const linkEl = titleEl ? (titleEl.querySelector('a') || titleEl) : null;
+        let title = (titleEl ? titleEl.textContent : '').trim();
+        const href = (linkEl ? (linkEl.getAttribute('href') || '') : '').toLowerCase();
+
+        // 1. Remover container de "Brasileiras | Brazilian Girls"
+        if (/brasileiras?\s*(?:\||\/|-)?\s*brazilian\s*girls/i.test(title) || /brazilian\s*girls/i.test(title)) {
+            node.remove();
+            return null;
+        }
+
+        // 2. Trans Reviews e Reviews em geral vão para Discussions:
+        if (/\btrans\s*reviews?\b/i.test(title) || /\btrans\s*reviews?\b/i.test(href) || /^(?:reviews?|model\s*reviews?)$/i.test(title)) {
+            return 'discussions';
+        }
+
+        // 3. Brasil detection & rename (vai para outras categorias):
+        const isBrasil = /brasil|brasileir/i.test(parentTitle)
+            || /brasil|brasileir/i.test(origCat)
+            || /brasil|brasileir/i.test(href)
+            || /^(?:brasil|brasileiras)$/i.test(title);
+
+        if (isBrasil) {
+            if (!/^(?:brasil|brasileir)/i.test(title)) {
+                const newTitle = 'Brasil - ' + title;
+                if (linkEl && linkEl !== titleEl) linkEl.textContent = newTitle;
+                if (titleEl) {
+                    if (linkEl && linkEl !== titleEl) {
+                        // linkEl já atualizado
+                    } else {
+                        titleEl.textContent = newTitle;
+                    }
+                }
+                title = newTitle;
+            }
+            return 'categories';
+        }
+
+        // 3. ASMR exception (SMG):
+        if (/\basmr\b/i.test(title) || /\basmr\b/i.test(href)) {
+            return 'categories';
+        }
+
+        // 4. Celebridades e XXX / Porn vão para Categorias:
+        if (/\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(title) || /\b(celebrit(y|ies)|xxx|porn|pornstars?)\b/i.test(href)) {
+            return 'categories';
+        }
+
+        // 5. Workflows e Guides vão para Site Navigation:
+        const isGuidesOrWorkflows = /\b(workflows?|guides?)\b/i.test(title) || /\b(workflows?|guides?)\b/i.test(href) || /\b(workflows?|guides?)\b/i.test(origCat);
+        if (isGuidesOrWorkflows) {
+            return 'nav';
+        }
+
+        // 6. Navigation explícita por título/link (Rules, Announcements, Help, Lounge, etc.):
+        const navTitleRe = /^(?:announcements?|rules|site rules|help|faq|feedback|introductions?|the lounge|community|info and links|informações e links|anúncios|regras)$/i;
+        const navHrefRe = /\b(announcements|rules|lounge|introductions|help|feedback|info-and-links)\b/i;
+        if (navTitleRe.test(title) || navHrefRe.test(href)) {
+            return 'nav';
+        }
+
+        const sitesPlatformRe = /\b(onlyfans|patreon|fansly|manyvids|loyalfans|fanvue|ifans|my\.club|admireme|pocketstars|instagram|tiktok|reddit|twitter|twitch|youtube|snapchat|facebook|discord|threads|kick|chaturbate|stripchat|cam4|myfreecams|bongacams|livejasmin|camsoda|pornhub|xvideos|spankbang|redtube|tube8|brazzers|realitykings|naughtyamerica|slushy|passes|sextpanther)\b/i;
+
+        // 7. Requests (pedidos):
+        const reqRe = /\b(requests?|pedidos?)\b/i;
+        if (reqRe.test(title) || reqRe.test(href) || (reqRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+            return 'requests';
+        }
+
+        // 8. Discussions (inclui Megathreads, Debates, Discussões):
+        const discRe = /\b(megathreads?|discussions?|debates?)\b/i;
+        if (discRe.test(title) || discRe.test(href) || (discRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href))) {
+            return 'discussions';
+        }
+
+        // 9. Categorias de navegação geral (Info and Links, Announcements, Community):
+        const navCatRe = /info(\s*and\s*|\s*&\s*)links|announcements|community|the\s*lounge|rules|regras|avisos|informações|anúncios|feedback|help|suporte|introductions|apresentações/i;
+        if (navCatRe.test(origCat) && !sitesPlatformRe.test(title) && !sitesPlatformRe.test(href)) {
+            return 'nav';
+        }
+
+        // 10. Sites:
+        const sitesCatRe = /social\s*media|fan\s*sites?|premium\s*fan\s*sites?|professional\s*sites?|paid\s*sites?|adult\s*sites?|cam\s*sites?|tube\s*sites?|creators?|websites?|^sites$/i;
+
+        if (sitesCatRe.test(origCat) || sitesPlatformRe.test(href) || sitesPlatformRe.test(title)) {
+            return 'sites';
+        }
+
+        // 11. Categorias (default):
+        return 'categories';
+    }
+
+    // Organiza a home nas 5 seções consolidadas:
+    // 1. Sites (ordem alfabética)
+    // 2. Categories (9 principais no topo na ordem definida, seguidas pelo restante em A-Z)
+    // 3. Discussions (ordem alfabética, incluindo Megathreads)
+    // 4. Requests (ordem alfabética)
+    // 5. Site Navigation (ordem alfabética, incluindo Workflows e Guides)
+    function organizeHomeHub(roots) {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+
+        const scope = (roots && Array.isArray(roots) && roots[0] && roots[0].nodeType === 1 && !roots[0].matches('body'))
+            ? roots[0]
+            : document;
+
+        // Anota a categoria original antes de qualquer movimentação
+        const nativeCats = Array.from(scope.querySelectorAll('.block--category:not([data-smg-home-hub])'));
+        nativeCats.forEach(cat => {
+            const header = cat.querySelector('.block-header');
+            let origTitle = '';
+            if (header) {
+                const hClone = header.cloneNode(true);
+                hClone.querySelectorAll('.smg-hub-badge, .categoryCollapse--trigger').forEach(el => el.remove());
+                origTitle = (hClone.textContent || '').trim();
+            }
+            cat.querySelectorAll('.node:not(.node--link)').forEach(node => {
+                if (!node.dataset.smgOrigCategory && origTitle) {
+                    node.dataset.smgOrigCategory = origTitle;
+                }
+            });
+        });
+
+        const allNodes = Array.from(scope.querySelectorAll('.block--category .node:not(.node--link)'));
+        if (!allNodes.length) return;
+
+        const existingHubSections = scope.querySelectorAll('[data-smg-home-hub]');
+        if (nativeCats.length === 0 && existingHubSections.length > 0) {
+            return;
+        }
+
+        const sitesNodes = [];
+        const categoriesNodes = [];
+        const discussionsNodes = [];
+        const requestsNodes = [];
+        const navNodes = [];
+
+        allNodes.forEach(node => {
+            const bucket = classifyHomeNode(node);
+            if (!bucket) return;
+            if (bucket === 'sites') sitesNodes.push(node);
+            else if (bucket === 'nav') navNodes.push(node);
+            else if (bucket === 'requests') requestsNodes.push(node);
+            else if (bucket === 'discussions') discussionsNodes.push(node);
+            else categoriesNodes.push(node);
+        });
+
+        const keyOf = n => ((n.querySelector('.node-title') || {}).textContent || '').trim().toLowerCase();
+        const sortAlpha = arr => arr.sort((a, b) => keyOf(a).localeCompare(keyOf(b), 'pt', { numeric: true, sensitivity: 'base' }));
+        sortAlpha(sitesNodes);
+        sortAlpha(discussionsNodes);
+        sortAlpha(requestsNodes);
+        sortAlpha(navNodes);
+
+        // Categorias: 9 principais no topo na ordem definida, seguidas pelo restante em A-Z
+        categoriesNodes.sort((a, b) => {
+            const titleA = ((a.querySelector('.node-title') || {}).textContent || '').trim();
+            const titleB = ((b.querySelector('.node-title') || {}).textContent || '').trim();
+            const orderA = getMainCategoryOrder(titleA);
+            const orderB = getMainCategoryOrder(titleB);
+
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return titleA.localeCompare(titleB, 'pt', { numeric: true, sensitivity: 'base' });
+        });
+
+        const getOrCreateHubSection = (key, label) => {
+            let section = scope.querySelector(`.block--category[data-smg-home-hub="${key}"]`)
+                || document.querySelector(`.block--category[data-smg-home-hub="${key}"]`);
+            if (!section) {
+                section = document.createElement('div');
+                section.className = `block block--category smg-home-section-${key}`;
+                section.dataset.smgHomeHub = key;
+                section.innerHTML = `<h2 class="block-header"><div class="uix_categoryStrip-content"><span class="uix_categoryTitle">${label}</span></div></h2>`
+                    + `<div class="block-container"><div class="block-body"></div></div>`;
+            }
+            return section;
+        };
+
+        const sitesSec = getOrCreateHubSection('sites', i18n('Sites'));
+        const catSec = getOrCreateHubSection('categories', i18n('Categories'));
+        const discSec = getOrCreateHubSection('discussions', i18n('Discussions'));
+        const reqSec = getOrCreateHubSection('requests', i18n('Requests'));
+        const navSec = getOrCreateHubSection('nav', i18n('Site Navigation'));
+
+        const fillBody = (sec, nodes) => {
+            const body = sec.querySelector('.block-body');
+            if (!body) return;
+            const frag = document.createDocumentFragment();
+            nodes.forEach(n => frag.appendChild(n));
+            body.innerHTML = '';
+            body.appendChild(frag);
+        };
+
+        const fillCategoryBody = (sec, nodes) => {
+            const body = sec.querySelector('.block-body');
+            if (!body) return;
+            const frag = document.createDocumentFragment();
+            let dividerInserted = false;
+            const hasMain = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
+            const hasOthers = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
+
+            nodes.forEach(n => {
+                const title = ((n.querySelector('.node-title') || {}).textContent || '').trim();
+                const isMain = getMainCategoryOrder(title) !== 999;
+                if (!isMain && !dividerInserted && hasMain && hasOthers) {
+                    const divider = document.createElement('div');
+                    divider.className = 'smg-hub-category-divider';
+                    divider.setAttribute('role', 'separator');
+                    divider.innerHTML = '<span class="smg-hub-divider-line"></span>'
+                        + `<span class="smg-hub-divider-text">${i18n('More categories')}</span>`
+                        + '<span class="smg-hub-divider-line"></span>';
+                    frag.appendChild(divider);
+                    dividerInserted = true;
+                }
+                frag.appendChild(n);
+            });
+            body.innerHTML = '';
+            body.appendChild(frag);
+        };
+
+        fillBody(sitesSec, sitesNodes);
+        fillCategoryBody(catSec, categoriesNodes);
+        fillBody(discSec, discussionsNodes);
+        fillBody(reqSec, requestsNodes);
+        fillBody(navSec, navNodes);
+
+        // Monta as seções no DOM
+        const toMount = [];
+        if (sitesNodes.length) toMount.push(sitesSec);
+        if (categoriesNodes.length) toMount.push(catSec);
+        if (discussionsNodes.length) toMount.push(discSec);
+        if (requestsNodes.length) toMount.push(reqSec);
+        if (navNodes.length) toMount.push(navSec);
+
+        const feedBlock = scope.querySelector('.smg-feed-block') || document.querySelector('.smg-feed-block');
+        if (feedBlock && feedBlock.parentNode) {
+            let prev = feedBlock;
+            toMount.forEach(sec => {
+                prev.insertAdjacentElement('afterend', sec);
+                prev = sec;
+            });
+        } else {
+            const targetParent = (nativeCats[0] && nativeCats[0].parentElement)
+                || scope.querySelector('.p-body-content .p-body-pageContent')
+                || scope.querySelector('.p-body-content')
+                || (scope !== document ? scope : document.querySelector('.p-body-content'));
+            if (targetParent) {
+                const hubFrag = document.createDocumentFragment();
+                toMount.forEach(sec => hubFrag.appendChild(sec));
+                targetParent.appendChild(hubFrag);
+            }
+        }
+
+        // Remove categorias nativas esvaziadas SOMENTE após as novas estarem montadas no DOM
+        nativeCats.forEach(cat => {
+            if (!cat.dataset.smgHomeHub) cat.remove();
+        });
     }
 
     // home: junta sections pequenas (≤3 cards reais) consecutivas numa só
@@ -19055,6 +19702,25 @@
         });
     }
 
+    // home: enriquece os headers de categoria com badge de contagem de fóruns
+    function enhanceHomeHubSections(roots) {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+        document.querySelectorAll('.block--category').forEach(cat => {
+            const header = cat.querySelector('.block-header');
+            if (!header) return;
+            const count = cat.querySelectorAll('.block-body > .node:not(.node--link)').length;
+            if (!count) return;
+            let badge = header.querySelector('.smg-hub-badge');
+            const badgeText = count + ' ' + (count === 1 ? i18n('forum') : i18n('forums'));
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'smg-hub-badge';
+                header.appendChild(badge);
+            }
+            if (badge.textContent !== badgeText) badge.textContent = badgeText;
+        });
+    }
+
     let homeSidebarDone = false;
 
     // home: FEED com abas (Latest posts · Trending). Cada aba busca sua fonte
@@ -19080,38 +19746,101 @@
         const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
         return /^data:/.test(u) ? '' : u;
     }
-    // monta 1 card vertical a partir de um .structItem--thread
-    function feedCard(it, phMark) {
+    // monta dados serializáveis de 1 card a partir de um .structItem--thread
+    function extractFeedItemData(it) {
         const titleCell = it.querySelector('.structItem-title');
         const titleLink = titleCell && titleCell.querySelector('a[href*="/threads/"]');
         if (!titleLink) return null;
-        const card = document.createElement('a');
-        card.className = 'smg-feed-card';
-        // href → último post (newest) p/ cair na última página da thread; cai pro /latest se não achar o link da data
         const lastA = it.querySelector('a.structItem-latestDate[href], .structItem-cell--latest a[href*="/post-"]');
-        card.href = safeHref((lastA && lastA.getAttribute('href'))
+        const href = safeHref((lastA && lastA.getAttribute('href'))
             || (titleLink.getAttribute('href').replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '') + '/latest'));
-        // thumb: imagem real (com onerror → placeholder da marca, p/ cobrir .su morto)
-        const thumb = document.createElement('div'); thumb.className = 'smg-feed-card-thumb';
-        const url = feedThumbUrl(it);
-        if (url) {
-            const im = document.createElement('img'); im.loading = 'lazy'; im.src = url;
-            im.addEventListener('error', () => { thumb.classList.add('smg-feed-noimg'); thumb.innerHTML = phMark; });
-            thumb.appendChild(im);
-        } else { thumb.classList.add('smg-feed-noimg'); thumb.innerHTML = phMark; }
-        // título: prefixos (spans) + texto
-        const body = document.createElement('div'); body.className = 'smg-feed-card-body';
-        const title = document.createElement('div'); title.className = 'smg-feed-card-title';
-        titleCell.querySelectorAll('.label, .prefix').forEach(s => { title.appendChild(s.cloneNode(true)); title.appendChild(document.createTextNode(' ')); });
-        title.appendChild(document.createTextNode(titleLink.textContent.trim()));
-        body.appendChild(title);
-        // meta: último autor · data (.structItem-latestDate mantém o texto PT do site)
+        const thumbUrl = feedThumbUrl(it);
+        const labels = [];
+        titleCell.querySelectorAll('.label, .prefix').forEach(s => {
+            labels.push({ cls: s.getAttribute('class') || 'label', text: s.textContent.trim() });
+        });
+        const titleText = titleLink.textContent.trim();
         const lastUser = it.querySelector('.structItem-cell--latest .username');
         const time = it.querySelector('.structItem-latestDate') || it.querySelector('.structItem-cell--latest time');
-        const metaTxt = [lastUser && lastUser.textContent.trim(), time && time.textContent.trim()].filter(Boolean).join(' · ');
-        if (metaTxt) { const meta = document.createElement('div'); meta.className = 'smg-feed-card-meta'; meta.textContent = metaTxt; body.appendChild(meta); }
+        const metaUser = lastUser ? lastUser.textContent.trim() : '';
+        const metaTime = time ? time.textContent.trim() : '';
+        return { href, thumbUrl, labels, titleText, metaUser, metaTime };
+    }
+
+    // renderiza 1 card vertical refinado a partir dos dados do item
+    function createFeedCardEl(data, phMark) {
+        if (!data) return null;
+        const card = document.createElement('a');
+        card.className = 'smg-feed-card';
+        card.href = safeHref(data.href);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'smg-feed-card-thumb';
+        if (data.thumbUrl) {
+            const im = document.createElement('img');
+            im.loading = 'lazy';
+            im.src = data.thumbUrl;
+            im.addEventListener('error', () => {
+                thumb.classList.add('smg-feed-noimg');
+                thumb.innerHTML = phMark;
+            });
+            thumb.appendChild(im);
+        } else {
+            thumb.classList.add('smg-feed-noimg');
+            thumb.innerHTML = phMark;
+        }
+
+        const body = document.createElement('div');
+        body.className = 'smg-feed-card-body';
+
+        // Linha isolada de tags/badges (sem quebrar inline com o título)
+        if (data.labels && data.labels.length) {
+            const badges = document.createElement('div');
+            badges.className = 'smg-feed-card-badges';
+            data.labels.forEach(lb => {
+                const sp = document.createElement('span');
+                sp.className = lb.cls;
+                sp.textContent = lb.text;
+                badges.appendChild(sp);
+            });
+            body.appendChild(badges);
+        }
+
+        // Título limpo com clamp
+        const title = document.createElement('div');
+        title.className = 'smg-feed-card-title';
+        title.textContent = data.titleText;
+        body.appendChild(title);
+
+        // Meta com autor em destaque e data
+        const metaParts = [data.metaUser, data.metaTime].filter(Boolean);
+        if (metaParts.length) {
+            const meta = document.createElement('div');
+            meta.className = 'smg-feed-card-meta';
+            if (data.metaUser && data.metaTime) {
+                const uSpan = document.createElement('span');
+                uSpan.className = 'smg-feed-user';
+                uSpan.textContent = data.metaUser;
+                const dot = document.createElement('span');
+                dot.className = 'smg-feed-dot';
+                dot.textContent = '·';
+                const tSpan = document.createElement('span');
+                tSpan.className = 'smg-feed-time';
+                tSpan.textContent = data.metaTime;
+                meta.append(uSpan, dot, tSpan);
+            } else {
+                meta.textContent = metaParts.join(' · ');
+            }
+            body.appendChild(meta);
+        }
+
         card.append(thumb, body);
         return card;
+    }
+
+    function feedCard(it, phMark) {
+        const data = extractFeedItemData(it);
+        return data ? createFeedCardEl(data, phMark) : null;
     }
     // threads "ruído" p/ um carrossel VISUAL: chat/bate-papo, guias, pedidos de identificação, discussões, perguntas (sem mídia própria).
     // Filtra pelo PREFIXO (chip do título) OU pelo FÓRUM de origem — nunca pelo texto do título (senão tira post legítimo).
@@ -19141,27 +19870,62 @@
         try { return new URL(href, location.href).href; } catch (e) { return ''; }
     }
     // renderiza UMA página de structItems no painel (dedup por feed._seen, sem chat). append=false limpa antes.
-    // devolve o nº de cards ADICIONADOS nesta página.
     function feedRenderPage(doc, feed, panel, phMark, append) {
         const frag = document.createDocumentFragment();
+        const parsedItems = [];
         let n = 0;
         doc.querySelectorAll('.structItem--thread').forEach(it => {
             const tl = it.querySelector('.structItem-title a[href*="/threads/"]');
             if (!tl) return;
             if (isIgnoredThread(it)) return;   // pula chat/bate-papo, guia, identify, discussão
             const k = feedKeyOf(tl); if (feed._seen.has(k)) return; feed._seen.add(k);
-            const c = feedCard(it, phMark); if (c) { frag.appendChild(c); n++; }
+            const data = extractFeedItemData(it);
+            if (data) {
+                parsedItems.push(data);
+                const c = createFeedCardEl(data, phMark);
+                if (c) { frag.appendChild(c); n++; }
+            }
         });
         if (!append) panel.innerHTML = '';
         if (n) panel.appendChild(frag);
-        return n;
+        return { count: n, items: parsedItems };
     }
-    // 1ª carga da aba: skeletons → página 1 → renderiza + guarda a próxima URL. Idempotente.
+
+    // Cache em sessionStorage (TTL de 2 minutos) para navegações instantâneas (0ms)
+    const FEED_CACHE_KEY_PREFIX = 'smg_feed_cache_v2_';
+    const FEED_CACHE_TTL_MS = 120 * 1000;
+
+    function getCachedFeed(key) {
+        try {
+            const raw = sessionStorage.getItem(FEED_CACHE_KEY_PREFIX + key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.ts || !Array.isArray(parsed.items)) return null;
+            if (Date.now() - parsed.ts > FEED_CACHE_TTL_MS) {
+                sessionStorage.removeItem(FEED_CACHE_KEY_PREFIX + key);
+                return null;
+            }
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function setCachedFeed(key, items, nextUrl) {
+        try {
+            sessionStorage.setItem(FEED_CACHE_KEY_PREFIX + key, JSON.stringify({
+                ts: Date.now(),
+                items: items.slice(0, 36),
+                nextUrl: nextUrl || ''
+            }));
+        } catch (e) {}
+    }
+
+    // 1ª carga da aba: cache imediato se disponível, senão skeletons → rede → salva cache
     function loadFeed(feed, panel, phMark, onDone) {
         if (panel.dataset.loaded) { if (onDone) onDone(); return; }
-        panel.dataset.loaded = '1';
         feed._seen = new Set(); feed._nextUrl = ''; feed._loadingMore = false;
-        panel.innerHTML = FEED_SKEL_CARD.repeat(8);
+
         const loadToken = (feed._loadToken || 0) + 1;
         feed._loadToken = loadToken;
         const isCurrentLoad = () => feed._loadToken === loadToken;
@@ -19171,26 +19935,61 @@
             markHomeFeedReady();
             if (onDone) onDone();
         };
-        // A failed or stalled endpoint must not leave the whole home behind the
-        // first-paint barrier forever. Turn the local skeleton into an explicit
-        // error state, then let the rest of the composition be revealed.
+
+        // Cache hit (instantâneo sem delay de rede)
+        const cached = getCachedFeed(feed.key);
+        if (cached && cached.items && cached.items.length) {
+            panel.dataset.loaded = '1';
+            panel.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            cached.items.forEach(data => {
+                const k = (data.href || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
+                feed._seen.add(k);
+                const c = createFeedCardEl(data, phMark);
+                if (c) frag.appendChild(c);
+            });
+            panel.appendChild(frag);
+            feed._nextUrl = cached.nextUrl || '';
+            finish();
+
+            // Revalidação em segundo plano se o cache tiver mais de 45 segundos
+            if (Date.now() - cached.ts > 45000) {
+                fetchDoc(feed.url, { credentials: 'same-origin' }).then(doc => {
+                    const parsed = [];
+                    doc.querySelectorAll('.structItem--thread').forEach(it => {
+                        const tl = it.querySelector('.structItem-title a[href*="/threads/"]');
+                        if (!tl || isIgnoredThread(it)) return;
+                        const data = extractFeedItemData(it);
+                        if (data) parsed.push(data);
+                    });
+                    if (parsed.length) setCachedFeed(feed.key, parsed, feedNextUrl(doc));
+                }).catch(() => {});
+            }
+            return;
+        }
+
+        panel.dataset.loaded = '1';
+        panel.innerHTML = FEED_SKEL_CARD.repeat(8);
+
         const timeout = setTimeout(() => {
             if (!isCurrentLoad() || !panel.dataset.loaded) return;
-            // Invalidate the request before exposing the page. A slow response may still
-            // resolve after the timeout; it must not repaint this panel over the settled
-            // composition or call the ready callback a second time.
             feed._loadToken++;
             panel.dataset.loaded = '';
             panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Couldn’t load.') + '</div>';
             finish();
         }, 3200);
         feed._readyTimer = timeout;
+
         fetchDoc(feed.url, { credentials: 'same-origin' })
             .then(doc => {
                 if (!isCurrentLoad()) return;
-                const n = feedRenderPage(doc, feed, panel, phMark, false);
-                feed._nextUrl = n ? feedNextUrl(doc) : '';
-                if (!n) panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Nothing here yet.') + '</div>';
+                const res = feedRenderPage(doc, feed, panel, phMark, false);
+                feed._nextUrl = res.count ? feedNextUrl(doc) : '';
+                if (res.count) {
+                    setCachedFeed(feed.key, res.items, feed._nextUrl);
+                } else {
+                    panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Nothing here yet.') + '</div>';
+                }
                 finish();
             })
             .catch(() => {
@@ -19210,8 +20009,8 @@
         for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
         fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             skels.forEach(s => s.remove());
-            const n = feedRenderPage(doc, feed, panel, phMark, true);
-            feed._nextUrl = n ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
+            const res = feedRenderPage(doc, feed, panel, phMark, true);
+            feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
             feed._loadingMore = false;
             if (onDone) onDone();
         }, () => { skels.forEach(s => s.remove()); feed._loadingMore = false; if (onDone) onDone(); });
@@ -19249,11 +20048,15 @@
             navBtns[1].classList.toggle('smg-nav-hidden', p.scrollLeft >= max || max <= 0);
         };
         // scroll do painel: atualiza as setas E, perto da borda direita, pré-busca a próxima página (append).
-        // SÓ aqui (não no updateNav, que roda pós-load) → sem loop: o append cresce o scrollWidth e a condição volta a ser falsa.
+        let scrollRaf = 0;
         const onPanelScroll = () => {
-            updateNav();
-            const p = activePanel(); if (!p || !p._feed) return;
-            if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+            if (scrollRaf) return;
+            scrollRaf = requestAnimationFrame(() => {
+                scrollRaf = 0;
+                updateNav();
+                const p = activePanel(); if (!p || !p._feed) return;
+                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+            });
         };
         [-1, 1].forEach(dir => {
             const b = document.createElement('button'); b.type = 'button';
@@ -19273,6 +20076,7 @@
 
         feeds.forEach((f, i) => {
             const tab = document.createElement('button'); tab.type = 'button';
+            tab.setAttribute('data-feed', f.key);
             tab.className = 'smg-feed-tab' + (i === 0 ? ' is-active' : '');
             tab.innerHTML = '<span class="smg-feed-tab-ic">' + f.icon + '</span><span>' + f.label + '</span>';
             const panel = document.createElement('div'); panel.className = 'smg-feed-panel' + (i === 0 ? ' is-active' : '');
@@ -19374,6 +20178,24 @@
                 if (!done) head.insertBefore(document.createTextNode(i18n('Categories')), head.firstChild);
             }
         }
+    }
+
+    if (typeof window !== 'undefined') {
+        window.__homeExports = {
+            extractFeedItemData,
+            createFeedCardEl,
+            feedCard,
+            getCachedFeed,
+            setCachedFeed,
+            FEED_CACHE_KEY_PREFIX,
+            FEED_CACHE_TTL_MS,
+            enhanceHomeHubSections,
+            homeLayoutSignature,
+            classifyHomeNode,
+            organizeHomeHub,
+            getMainCategoryOrder,
+            MAIN_CATEGORY_PATTERNS,
+        };
     }
 
     // =========================================================
@@ -19902,23 +20724,21 @@
             if (tv) line.appendChild(tv);
             info.appendChild(line);
 
+            // Tags da thread: inseridas em .smg-thead-info ao lado da imagem e do título
+            const desc = header.querySelector('.p-description');
+            if (desc) {
+                const tagsBox = document.createElement('div');
+                tagsBox.className = 'smg-thead-tags smg-thead-tags-bar';
+                tagsBox.appendChild(desc);
+                info.appendChild(tagsBox);
+            }
+
             hero.appendChild(info);
             title.insertBefore(hero, title.firstChild);
 
-            // Tags da thread: movidas para uma linha própria ABAIXO do header (fora do sticky header)
-            const desc = header.querySelector('.p-description');
-            if (desc) {
-                const tagsBar = document.createElement('div');
-                tagsBar.className = 'smg-thead-tags-bar smg-thead-tags';
-                if (header.querySelector('.pageContent')) {
-                    const inner = document.createElement('div');
-                    inner.className = 'pageContent';
-                    inner.appendChild(desc);
-                    tagsBar.appendChild(inner);
-                } else {
-                    tagsBar.appendChild(desc);
-                }
-                header.parentNode.insertBefore(tagsBar, header.nextSibling);
+            const oldTagsBar = header.parentNode ? header.parentNode.querySelector('.smg-thead-tags-bar') : null;
+            if (oldTagsBar && !header.contains(oldTagsBar)) {
+                oldTagsBar.remove();
             }
         }
 
@@ -19968,8 +20788,8 @@
                 header.classList.remove('is-stuck');
                 if (spacer) spacer.style.display = 'none';
             }
-            naturalHeight = header.offsetHeight || 126;
-            topOff = parseFloat(getComputedStyle(header).top) || 50;
+            naturalHeight = header.offsetHeight || 156;
+            topOff = parseFloat(getComputedStyle(header).top) || 60;
             if (wasStuck) {
                 header.classList.add('is-stuck');
                 if (spacer) {
@@ -27230,16 +28050,12 @@
             && (homePassSignature !== currentHomeSignature || rootTouches(roots, '.node--link, .node-subNodesFlat', true));
         if (homeCandidate && !homeSidebarDone) safe(layoutHomeSidebar, roots);
         if (isHome && homeDirty) {
-            homePassSignature = currentHomeSignature;
             safe(markHomeAdBlocks);
-            safe(relocateSimpcityNodes, roots);
-            safe(mergeSmallHomeSections, roots);
             safe(expandSubForums, roots);
-            safe(relocateSmgNodes, roots);
-            safe(splitTransSection, roots);
-            safe(sortHomeCards, roots);
-            safe(reorderHomeSections, roots);
+            safe(organizeHomeHub, roots);
             safe(makeHomeCardsClickable, roots);
+            safe(enhanceHomeHubSections, roots);
+            homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
         }
 
         // 4. Passes de Páginas Específicas

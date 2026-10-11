@@ -116,7 +116,7 @@
         'Mark every notification as read?': 'Marcar todas as notificações como lidas?',
         'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
-        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias',
+        'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
         'Previous': 'Anterior', 'Next': 'Próximo', 'Go to new': 'Ir para os novos',
         'Watch': 'Seguir', 'Unwatch': 'Deixar de seguir', 'Translate': 'Traduzir', 'More': 'Mais',
