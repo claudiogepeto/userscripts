@@ -329,7 +329,7 @@
             html.smg-tv-grid .smg-watched-grid,
             .smg-watched-grid.smg-watched-view--grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 0 !important;
                 align-items: start !important;

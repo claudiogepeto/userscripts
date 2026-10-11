@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.17.2
+// @version      3.17.4
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -666,7 +666,7 @@
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
-            html.smg-sc, html.smg-smg { --smg-cw: 80%; }
+            html.smg-sc, html.smg-smg { --smg-cw: 80%; --smg-card-min: 230px; }   /* largura mínima de card em QUALQUER grid: nº de colunas segue o espaço do container (auto-fill), nunca o viewport */
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
             @media (max-width: 1400px) and (min-width: 800px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
@@ -7892,37 +7892,34 @@
                 display: none !important;
             }
 
-            /* ---- FIXADOS COMO TABELA: colunas fixas (ícone · prefixo 1 · prefixo 2 · título · update · criado · páginas) ---- */
+            /* ---- FIXADOS COMO TABELA: foto · badges+título (juntos) · atualizado em · paginação ---- */
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread {
                 display: grid !important;
-                grid-template-columns: 30px 74px 96px minmax(0, 1fr) 190px 150px 128px !important;
+                grid-template-columns: 30px minmax(0, 1fr) 230px 128px !important;
                 align-items: center !important;
-                column-gap: 12px !important;
+                column-gap: 14px !important;
             }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-cell--main,
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-title,
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-dates {
-                display: contents !important;
-            }
+            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-dates { display: contents !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread > .structItem-cell--icon { grid-column: 1 !important; grid-row: 1 !important; }
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .labelLink:nth-of-type(1) { grid-column: 2 !important; grid-row: 1 !important; justify-self: start !important; }
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .labelLink:nth-of-type(2) { grid-column: 3 !important; grid-row: 1 !important; justify-self: start !important; }
+            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-title {
+                grid-column: 2 !important; grid-row: 1 !important; min-width: 0 !important;
+                display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 6px !important;
+            }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .label-append { display: none !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-title a:not(.label):not(.labelLink) {
-                grid-column: 4 !important; grid-row: 1 !important; display: block !important; min-width: 0 !important;
+                display: block !important; min-width: 0 !important; margin-left: 2px !important;
             }
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:nth-of-type(1) { grid-column: 5 !important; grid-row: 1 !important; text-align: right !important; white-space: nowrap !important; }
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:nth-of-type(2) { grid-column: 6 !important; grid-row: 1 !important; text-align: right !important; white-space: nowrap !important; }
+            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:nth-of-type(1) { grid-column: 3 !important; grid-row: 1 !important; text-align: right !important; white-space: nowrap !important; }
+            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:not(:first-of-type),
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-sep { display: none !important; }
-            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-pageJump {
-                grid-column: 7 !important; grid-row: 1 !important; justify-self: end !important; margin: 0 !important;
-            }
+            html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-pageJump { grid-column: 4 !important; grid-row: 1 !important; justify-self: end !important; margin: 0 !important; }
 
             /* ---- modo grade (cards, máx 6 colunas) — .smg-tl-grid é marcado via JS no
                container real dos itens (varia entre fórum e watched) ---- */
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 14px !important;
                 align-items: stretch !important;
@@ -8206,7 +8203,7 @@
             /* GRADE (modo grade): gated em smg-tv-grid → o toggle lista/grade da dock vale aqui também */
             html.smg-threadlist.smg-tv-grid .smg-article-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important; padding: 14px !important; background: transparent !important; align-items: start !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-article-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -9129,7 +9126,7 @@
             html.smg-tv-grid .smg-watched-grid,
             .smg-watched-grid.smg-watched-view--grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(170px, calc((100% - 56px) / 5)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 0 !important;
                 align-items: start !important;

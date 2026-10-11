@@ -39,7 +39,7 @@
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
-            html.smg-sc, html.smg-smg { --smg-cw: 80%; }
+            html.smg-sc, html.smg-smg { --smg-cw: 80%; --smg-card-min: 230px; }   /* largura mínima de card em QUALQUER grid: nº de colunas segue o espaço do container (auto-fill), nunca o viewport */
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
             @media (max-width: 1400px) and (min-width: 800px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
