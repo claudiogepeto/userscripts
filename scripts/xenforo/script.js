@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      3.18.0
+// @version      3.18.1
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -25170,7 +25170,7 @@
     // =========================================================
     const LINK_HOST_LABEL = {
         gofile: 'GoFile', bunkr: 'Bunkr', pixeldrain: 'Pixeldrain', cyberdrop: 'Cyberdrop',
-        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
+        cyberfile: 'Cyberfile', filester: 'Filester', fileditch: 'Fileditch', goonbox: 'Goonbox', 'mega.nz': 'MEGA', mediafire: 'MediaFire',
         k2s: 'K2S', keep2share: 'K2S', fikper: 'Fikper', rapidgator: 'Rapidgator',
         saint: 'Saint', 'turbo.cr': 'Turbo', imagebam: 'ImageBam', imgbox: 'imgbox',
         pixhost: 'PixHost', jpg: 'jpg.su', redgifs: 'RedGIFs',
@@ -25178,6 +25178,7 @@
     const FH_PROVIDERS = [
         { key: 'pixeldrain', label: 'Pixeldrain', sub: 'pixeldrain.com', re: /pixeldrain\.com/i, logo: 'https://pixeldrain.com/res/img/pixeldrain_128.png', gallery: /\/(?:l|api\/list)\//i },
         { key: 'bunkr', label: 'Bunkr', sub: 'bunkr', re: /bunkr/i, gallery: /\/a\//i, home: 'bunkr.cr' },   // dezenas de espelhos: o ícone vem do canônico quando o espelho não serve
+        { key: 'goonbox', label: 'Goonbox', sub: 'goonbox', re: /goonbox\./i, gallery: /\/a\//i, home: 'goonbox.cr', logo: 'https://goonbox.cr/apple-touch-icon.png' },   // /a/ = álbum (galeria), /v/ ou /d/ = arquivo
         { key: 'gofile', label: 'GoFile', sub: 'gofile.io', re: /gofile\.io/i, gallery: /\/d\//i, logo: 'https://gofile.io/dist/img/favicon96.png' },   // favicon oficial do gofile (não tem /favicon.ico)
         { key: 'filester', label: 'Filester', sub: 'filester', re: /filester\./i, gallery: /\/f\//i, logo: 'https://filester.me/img/favicon.ico', home: 'filester.me' },   // favicon mora em /img/ (NÃO /favicon.ico); /f/ = galeria, /d/ = arquivo (fhFilester)
         // FILEDITCH = CARD, não player. O host derruba o hotlink (responde 200 com HTML no lugar do vídeo,
@@ -25505,6 +25506,55 @@
             bunkrInflight.delete(albumKey);
             cbs.forEach(cb => { try { cb(res); } catch (e) {} });
         }, onerror: () => bunkrInflight.delete(albumKey), ontimeout: () => bunkrInflight.delete(albumKey) });
+    }
+    // GOONBOX: álbum (/a/) → raspa a página por thumbs + contagem (igual bunkr).
+    // Arquivo único (/v/, /d/) → foto do figure do unfurl.
+    const goonboxCache = new Map();
+    const goonboxInflight = new Map();
+    function fhGoonbox(node, url, prov, unfurlEl) {
+        const logo = fhLogoChain(prov || { key: 'goonbox', home: 'goonbox.cr', logo: 'https://goonbox.cr/apple-touch-icon.png' }, url, unfurlEl);
+        const meta = fhExtractUnfurlMeta(unfurlEl);
+        const isAlbum = /\/a\//i.test(url);
+        const initialThumb = meta.thumb ? [meta.thumb] : [];
+        const initialLabel = meta.title && !/goonbox/i.test(meta.title) ? meta.title : 'Goonbox';
+        const initialSub = meta.snippet ? ('Goonbox · ' + meta.snippet) : (isAlbum ? i18n('Gallery') : i18n('File'));
+
+        const card = fhCard({ key: 'goonbox', platform: 'Goonbox', label: initialLabel, href: url, sub: initialSub, logo: logo, thumbs: initialThumb });
+        pdPlace(node, card);
+
+        if (!isAlbum || !GMX) return;
+        const albumKey = url;
+        const updateCard = data => {
+            if (!data || !card.isConnected) return;
+            if (data.count) {
+                const subEl = card.querySelector('.smg-fhcard-sub');
+                if (subEl) subEl.textContent = fhSub(i18n('Gallery'), data.count);
+            }
+            if (data.thumbs && data.thumbs.length) {
+                fhUpdateCardThumbs(card, data.thumbs.slice(0, 4), data.count, logo, initialLabel, 'goonbox');
+            }
+        };
+
+        if (goonboxCache.has(albumKey)) { updateCard(goonboxCache.get(albumKey)); return; }
+        if (goonboxInflight.has(albumKey)) { goonboxInflight.get(albumKey).push(updateCard); return; }
+        goonboxInflight.set(albumKey, [updateCard]);
+
+        GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+            let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { return; }
+            const seen = new Set(), thumbs = [];
+            doc.querySelectorAll('img[src*="thumb"], img[data-src*="thumb"], [class*="grid"] img, .file-thumb img, .gallery-item img').forEach(im => {
+                let s = im.getAttribute('data-src') || im.getAttribute('src') || '';
+                if (!s || /^data:|\.svg|sprite|logo|fav/i.test(s)) return;
+                try { s = new URL(s, url).href; } catch (e) { return; }
+                if (!seen.has(s)) { seen.add(s); thumbs.push(s); }
+            });
+            const count = doc.querySelectorAll('[class*="grid"] a[href*="/f/"], [class*="grid"] a[href*="/v/"], [class*="grid"] a[href*="/d/"], a[href*="/f/"], a[href*="/i/"], a[href*="/v/"], a[href*="/d/"], .file-row').length || thumbs.length;
+            const res = { count, thumbs };
+            goonboxCache.set(albumKey, res);
+            const cbs = goonboxInflight.get(albumKey) || [];
+            goonboxInflight.delete(albumKey);
+            cbs.forEach(cb => { try { cb(res); } catch (e) {} });
+        }, onerror: () => goonboxInflight.delete(albumKey), ontimeout: () => goonboxInflight.delete(albumKey) });
     }
     // FILESTER: arquivo único (/d/{slug}). A página HTML toma Cloudflare 403, MAS a API pública JSON responde —
     // POST /api/public/view {file_slug} → view_url; mp4 = https://cn1.filester.me{view_url} (mesma engine do site).
@@ -25883,6 +25933,7 @@
         }
         if (prov.key === 'pixeldrain') { fhPixeldrain(node, url, unfurlEl); return; }
         if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
+        if (prov.key === 'goonbox') { fhGoonbox(node, url, prov, unfurlEl); return; }
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
             const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
@@ -26043,6 +26094,7 @@
         window.fhUpdateCardThumbs = fhUpdateCardThumbs;
         window.fhPixeldrain = fhPixeldrain;
         window.fhBunkr = fhBunkr;
+        window.fhGoonbox = fhGoonbox;
         window.pdCache = pdCache;
         window.pdInflight = pdInflight;
         window.bunkrCache = bunkrCache;

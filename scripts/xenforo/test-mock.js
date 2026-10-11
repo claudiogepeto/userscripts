@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.18.0'), 'Userscript deve estar na versão 3.18.0');
+    assert(scriptContent.includes('// @version      3.18.1'), 'Userscript deve estar na versão 3.18.1');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -4762,6 +4762,39 @@ async function runTests() {
     aWrap.remove();
 
     bunkrWrap.remove();
+
+    // 4. fhGoonbox monta o card imediatamente e suporta cache/mosaico
+    const gbWrap = document.createElement('div');
+    gbWrap.className = 'message-userContent';
+    const gbUnfurl = document.createElement('div');
+    gbUnfurl.className = 'bbCodeBlock bbCodeBlock--unfurl';
+    gbUnfurl.setAttribute('data-url', 'https://goonbox.cr/a/ab8XKK');
+    gbUnfurl.setAttribute('data-host', 'goonbox.cr');
+    gbUnfurl.innerHTML = `
+        <div class="contentRow">
+            <div class="contentRow-figure"><img src="https://example.com/gb-prelim.jpg" /></div>
+            <div class="contentRow-main">
+                <div class="contentRow-header js-unfurl-title">Special Photoshoot #1</div>
+                <div class="contentRow-snippet">12 items</div>
+            </div>
+        </div>
+    `;
+    gbWrap.appendChild(gbUnfurl);
+    document.body.appendChild(gbWrap);
+
+    const fhGoonbox = window.fhGoonbox;
+    assert(typeof fhGoonbox === 'function', 'fhGoonbox deve estar exposto em modo de teste');
+    fhGoonbox(gbUnfurl, 'https://goonbox.cr/a/ab8XKK', null, gbUnfurl);
+
+    const gbCard = gbWrap.querySelector('.smg-fhcard[data-key="goonbox"]');
+    assert(gbCard !== null, 'Card Goonbox deve ser montado de forma imediata e síncrona');
+    const gbImg = gbCard ? gbCard.querySelector('.smg-fhcard-thumb img') : null;
+    assert(gbImg && gbImg.getAttribute('src') === 'https://example.com/gb-prelim.jpg', 'Card Goonbox deve ter thumbnail preliminar do unfurl');
+    const gbPlat = gbCard ? gbCard.querySelector('.smg-fhcard-platform') : null;
+    const gbHost = gbCard ? gbCard.querySelector('.smg-fhcard-host') : null;
+    assert(gbPlat && gbPlat.textContent === 'Goonbox', 'Card Goonbox com título customizado deve ter .smg-fhcard-platform com "Goonbox"');
+    assert(gbHost && gbHost.textContent === 'Special Photoshoot #1', 'Card Goonbox com título customizado deve ter .smg-fhcard-host com o título');
+    gbWrap.remove();
 
     // 4. Spoiler com 3 imagens: valida que é criado um .auto-image-grid.smg-true-masonry dentro de .bbCodeSpoiler-content
     const spWrap = document.createElement('div');
