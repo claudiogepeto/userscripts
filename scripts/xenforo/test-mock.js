@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.17.0'), 'Userscript deve estar na versão 3.17.0');
+    assert(scriptContent.includes('// @version      3.17.2'), 'Userscript deve estar na versão 3.17.2');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile

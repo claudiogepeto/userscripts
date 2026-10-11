@@ -561,13 +561,13 @@
                 padding: 8px 12px;
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 border-radius: 12px;
-                background: #181920;
+                background: var(--smg-s1, #1b1b1b);
                 box-shadow: 0 2px 6px rgba(0,0,0,0.25);
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
             }
             .smg-fhcard:hover {
                 border-color: rgba(255, 255, 255, 0.25);
-                background: #1f2029;
+                background: var(--smg-s2, #232323);
                 box-shadow: 0 4px 14px rgba(0,0,0,0.35);
             }
             .smg-fhcard,
@@ -1320,10 +1320,10 @@
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
-                color: var(--smg-link, #ff77b2) !important;
+                color: color-mix(in srgb, var(--smg-link, #ff77b2) 42%, #e9e9ec) !important;
                 font-weight: 500;
                 text-decoration: underline !important;
-                text-decoration-color: var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
+                text-decoration-color: color-mix(in srgb, var(--smg-link, #ff77b2) 55%, transparent) !important;
                 text-underline-offset: 3px !important;
                 text-decoration-thickness: 1px !important;
                 transition: color .15s ease, text-decoration-color .15s ease;

@@ -287,12 +287,12 @@
         fillBody(reqSec, requestsNodes);
         fillBody(navSec, navNodes);
 
-        // Monta as seções no DOM
+        // Monta as seções no DOM: Sites -> Categories -> Requests -> Discussions -> Site Navigation
         const toMount = [];
         if (sitesNodes.length) toMount.push(sitesSec);
         if (categoriesNodes.length) toMount.push(catSec);
-        if (discussionsNodes.length) toMount.push(discSec);
         if (requestsNodes.length) toMount.push(reqSec);
+        if (discussionsNodes.length) toMount.push(discSec);
         if (navNodes.length) toMount.push(navSec);
 
         const feedBlock = scope.querySelector('.smg-feed-block') || document.querySelector('.smg-feed-block');
