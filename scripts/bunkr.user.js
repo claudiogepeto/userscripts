@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bunkr — Theater Player, Gallery, Mirror & Downloader
 // @namespace    bunkr-youtube-player
-// @version      2.12.0
+// @version      2.13.0
 // @description  Camada visual sobre as páginas de arquivo do Bunkr (vídeo · foto · galeria), aproximando do YouTube. (1) PLAYER GRANDE: tira o cap de 1000px e usa o maior 16:9 que cabe na largura E na altura da viewport (theater), centralizado/arredondado. (2) Player, título e header na MESMA coluna → o título alinha com o vídeo (flush-left). (3) Topbar padronizada: logo direcionando para home do Bunkr, botões Search Albums (balbums.st), Upload e Stats na ponta direita. (4) Respiro maior no rodapé. @include por regex (o TLD do Bunkr muda toda hora). v2.0: Player próprio estilo YouTube, zoom/pan em foto, mirror probe. v2.1: Stage overlay. v2.2: Tema AMOLED. v2.3: Força Advanced View (?advanced=1). v2.4: Carregamento do álbum completo e filtro ?q=. v2.7: Playlist em sidebar lateral. v2.8: Refinamentos no player (controles reordenados, arcos de skip circulares, logo na topbar, fix no falso-positivo de mirror). v2.9: Galeria de álbum redesenhada estilo YouTube com Actionbar integrada, cards nítidos e sanitização de links. v2.9.1: Topbar padronizada e grade ampla. v2.9.2: Preservação do master.css, botão Report alinhado ao lado das informações do álbum, topbar com Search Albums/Upload/Stats na ponta direita e logo apontando para a home do Bunkr (/), e revamp AMOLED completo da homepage. v2.10.0: Identificação de datas no título, ordenação por Data de Envio e Data Extraída (⬇/⬆) na Galeria e na Sidebar, títulos limpos sem data com exibição em texto simples abaixo (sem badges/ícones), botões anterior/próximo lado a lado e botão 1x plano no player. v2.10.1: Correção do congelamento/crash em álbuns (eliminação de loop infinito no MutationObserver com observação restrita a childList sem subtree, proteção contra reentrância e renderização idempotente com chave de cache nos cards), decodificação segura e rápida de entidades HTML para títulos duplamente escapados pelo Bunkr. v2.11.0: Agrupamento inteligente por tipo de arquivo com seções dedicadas, visualizador integrado de texto no Stage, e layout mobile responsivo. v2.11.1: Correção do carregamento do leitor de arquivos .txt no Stage com detecção e bypass de CORS via GM_xmlhttpRequest, botão de download direto de arquivos de texto, e placeholders temáticos AMOLED na barra de playlist para arquivos sem thumbnail ou com erro de imagem.
 // @author       claudiogepeto
 // @match        *://bunkr.cr/*
@@ -588,20 +588,20 @@
         .bunkr-playlist-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid transparent; color: #fff; text-decoration: none; transition: background .12s, border-color .12s, transform .1s; position: relative; }
         .bunkr-playlist-item:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); transform: translateX(2px); }
         .bunkr-playlist-item.is-current { background: rgba(167,139,250,.13); border-color: rgba(167,139,250,.38); }
-        .bunkr-playlist-item.is-current::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3.5px; border-radius: 2px; background: var(--bunkr-accent, #a78bfa); }
-        .bunkr-playlist-thumb-wrap { position: relative; flex: 0 0 132px; width: 132px; height: 74px; border-radius: 8px; overflow: hidden; background: #181920; }
-        .bunkr-playlist-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .bunkr-playlist-item.is-current::before { content: none; }
+        .bunkr-playlist-thumb-wrap { position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px; overflow: hidden; background: #181920; }
+        .bunkr-playlist-thumb { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         .bunkr-playlist-thumb-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: linear-gradient(135deg, #13151f 0%, #0d0e14 100%); border: 1px solid rgba(255, 255, 255, 0.06); box-sizing: border-box; }
         .bunkr-playlist-thumb-placeholder svg { width: 22px; height: 22px; color: var(--bunkr-accent, #a78bfa); opacity: 0.9; }
         .bunkr-playlist-ph-ext { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 9.5px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; padding: 2px 5px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .bunkr-playlist-thumb-badge { position: absolute; bottom: 4px; right: 5px; display: flex; align-items: center; gap: 3px; padding: 1.5px 5px; border-radius: 4px; background: rgba(0,0,0,.75); color: #fff; font-size: 10.5px; font-weight: 600; }
-        .bunkr-playlist-thumb-badge svg { width: 11px; height: 11px; color: var(--bunkr-accent, #a78bfa); }
-        .bunkr-playlist-now-playing { position: absolute; top: 5px; left: 5px; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bunkr-accent, #a78bfa); color: #120e1e; }
-        .bunkr-playlist-now-playing svg { width: 12px; height: 12px; }
+        .bunkr-playlist-kind { position: absolute; top: 6px; left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.78); color: #fff; font: 700 10px/1.2 Inter, system-ui, sans-serif; letter-spacing: .02em; }
+        .bunkr-playlist-num { position: absolute; top: 6px; right: 6px; z-index: 1; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.8); color: #fff; font: 700 11px/1 Inter, system-ui, sans-serif; }
+        .bunkr-playlist-dur { position: absolute; bottom: 5px; right: 6px; z-index: 1; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.8); color: #fff; font: 700 11px/1 Inter, system-ui, sans-serif; }
+        .bunkr-playlist-dur[hidden] { display: none !important; }
         .bunkr-playlist-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-        .bunkr-playlist-name { font-size: 13px; font-weight: 500; line-height: 1.35; color: rgba(255,255,255,.9); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+        .bunkr-playlist-name { font-size: 14.5px; font-weight: 500; line-height: 1.35; color: rgba(255,255,255,.9); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
         .bunkr-playlist-item.is-current .bunkr-playlist-name { color: #fff; font-weight: 700; }
-        .bunkr-playlist-meta { font-size: 11.5px; color: rgba(255,255,255,.5); display: flex; align-items: center; gap: 8px; }
+        .bunkr-playlist-meta { font-size: 12.5px; color: rgba(255,255,255,.5); display: flex; align-items: center; gap: 8px; }
         .bunkr-playlist-meta-active { color: var(--bunkr-accent, #a78bfa); font-weight: 600; }
         @media (max-width: 1024px) {
             .bunkr-sidebar { flex: 0 0 340px; width: 340px; }
@@ -813,10 +813,12 @@
                 padding: 8px 10px 48px !important;
             }
             .bunkr-playlist-thumb-wrap {
-                flex: 0 0 110px !important;
-                width: 110px !important;
-                height: 62px !important;
+                flex: 0 0 132px !important;
+                width: 132px !important;
+                height: 74px !important;
             }
+            .bunkr-playlist-name { font-size: 13.5px !important; }
+            .bunkr-playlist-date-lbl, .bunkr-playlist-date-val, .bunkr-playlist-meta { font-size: 12px !important; }
         }
 
         /* ===== v2.9 — GALERIA DO ÁLBUM YOUTUBE STYLE + ACTIONBAR INTEGRADA ===== */
@@ -909,9 +911,12 @@
 
         /* Datas em texto simples nos itens da playlist da sidebar (sem badge, sem ícones) */
         .bunkr-playlist-dates { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
-        .bunkr-playlist-date-row { display: flex; align-items: center; gap: 4px; font-size: 11px; line-height: 1.3; color: rgba(255,255,255,.5); }
-        .bunkr-playlist-date-lbl { color: rgba(255,255,255,.4); font-weight: 500; font-size: 10.5px; }
-        .bunkr-playlist-date-val { color: rgba(255,255,255,.82); font-weight: 500; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+        .bunkr-playlist-dates { min-width: 0; }
+        .bunkr-playlist-date-row { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; line-height: 1.3; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; }
+        .bunkr-playlist-date-lbl { flex: 0 0 auto; white-space: nowrap; }
+        .bunkr-playlist-date-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bunkr-playlist-date-lbl { color: rgba(255,255,255,.55); font-weight: 600; font-size: 12.5px; }
+        .bunkr-playlist-date-val { color: rgba(255,255,255,.9); font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
 
         /* Tooltip sutil e ícone em Data Extraída */
         .bunkr-has-tip { cursor: help !important; display: inline-flex !important; align-items: center !important; gap: 3px !important; }
@@ -1448,6 +1453,14 @@
         const host = el("div", { class: "bunkr-host bunkr-pl" }, video);
         buildPlayerControls(host, video, src, ac);
         mid.appendChild(host);
+        video.addEventListener("loadedmetadata", () => {
+            if (!Number.isFinite(video.duration)) return;
+            const text = fmtT(video.duration);
+            const key = location.pathname;
+            try { sessionStorage.setItem("bunkrdur:" + location.origin + key, text); sessionStorage.setItem("bunkrdur:" + key, text); } catch {}
+            const badge = document.querySelector(".bunkr-playlist-item.is-current .bunkr-playlist-dur");
+            if (badge) { badge.textContent = text; badge.hidden = false; }
+        }, { signal: ac.signal });
         video.src = src; try { video.load(); } catch {}
     }
 
@@ -1840,7 +1853,7 @@
             title: "Ver galeria completa do álbum"
         });
         galleryBtn.insertAdjacentHTML("beforeend", PL_ICONS.grid);
-        galleryBtn.append(el("span", null, "Ver Galeria"));
+        galleryBtn.append(el("span", null, "Galeria"));
         if (!albumA) galleryBtn.style.display = "none";
 
         const sbClose = el("button", {
@@ -1971,7 +1984,41 @@
         const isV = typeof f === "object" ? isVidFile(f) : false;
         const isI = typeof f === "object" ? isImgFile(f) : false;
         const prefix = isV ? "/v/" : (isI ? "/i/" : "/f/");
-        return prefix + slug + (getQ() ? "?q=" + encodeURIComponent(getQ()) : "");
+        const u = prefix + slug + (getQ() ? "?q=" + encodeURIComponent(getQ()) : "");
+        return u;
+    }
+    function readPosition() {
+        try { const n = parseInt(new URL(location.href).searchParams.get("position") || "", 10); return Number.isFinite(n) && n > 0 ? n : 0; } catch { return 0; }
+    }
+    function writePosition(n) {
+        try {
+            const u = new URL(location.href);
+            if (String(u.searchParams.get("position") || "") === String(n)) return;
+            u.searchParams.set("position", String(n));
+            history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+        } catch {}
+    }
+    function hrefWithPosition(href, n) {
+        try { const u = new URL(href, location.origin); u.searchParams.set("position", String(n)); return u.pathname + u.search + u.hash; } catch { return href; }
+    }
+    function sortedAlbumList() {
+        if (!albumFilesCache || !albumFilesCache.length) return [];
+        const q = getQ().toLowerCase();
+        let list = q ? albumFilesCache.filter(f => (f.original || f.name || "").toLowerCase().indexOf(q) !== -1) : albumFilesCache.slice();
+        const activeDir = plSortMode === "upload-date" ? plUploadDateDir : plTitleDateDir;
+        return sortFileList(list, plSortMode, activeDir);
+    }
+    function applyAlbumPosition() {
+        const list = sortedAlbumList();
+        if (!list.length) return;
+        const slug = fileSlug();
+        const i = list.findIndex(f => f.slug === slug);
+        const want = readPosition();
+        if (want && list[want - 1] && list[want - 1].slug !== slug) {
+            location.replace(hrefWithPosition(fileHref(list[want - 1]), want));
+            return;
+        }
+        if (i >= 0) writePosition(i + 1);
     }
 
     /* a página de ARQUIVO só tem o #related-files-grid (poucos). Pra strip INTEIRA: fetch /a/{id}?advanced=1 → extrai window.albumFiles (array literal da própria bunkr). Cache em sessionStorage por álbum (navegação fica rápida). */
@@ -1981,7 +2028,7 @@
         const a = document.querySelector('a[href*="/a/"]'); if (!a) return null;
         const id = (a.href.match(/\/a\/([A-Za-z0-9]+)/) || [])[1]; if (!id) return null;
         const ck = "bunkr_album_" + id;
-        try { const c = sessionStorage.getItem(ck); if (c) { albumFilesCache = JSON.parse(c); return albumFilesCache; } } catch {}
+        try { const c = sessionStorage.getItem(ck); if (c) { albumFilesCache = JSON.parse(c); applyAlbumPosition(); return albumFilesCache; } } catch {}
         try {
             const base = a.href.split("#")[0].split("?")[0];
             const html = await (await fetch(base + "?advanced=1", { credentials: "include" })).text();
@@ -1999,6 +2046,7 @@
                 timestamp: f.timestamp || ""
             }));
             albumFilesCache = slim; try { sessionStorage.setItem(ck, JSON.stringify(slim)); } catch {}
+            applyAlbumPosition();
             return slim;
         } catch { return null; }
     }
@@ -2062,7 +2110,7 @@
         const finfo = getFileInfo(name);
         if (isV) finfo.category = "video";
 
-        const card = el("a", { class: "bunkr-playlist-item" + (current ? " is-current" : ""), href, title: cleanName });
+        const card = el("a", { class: "bunkr-playlist-item" + (current ? " is-current" : ""), href: typeof idx === "number" ? hrefWithPosition(href, idx + 1) : href, title: cleanName });
         const thumbWrap = el("div", { class: "bunkr-playlist-thumb-wrap" });
 
         const isKnownMedia = (finfo.category === "video" || finfo.category === "image") && !!thumb;
@@ -2079,25 +2127,15 @@
             thumbWrap.appendChild(makePlaylistThumbPlaceholder(finfo));
         }
         
-        const badge = el("div", { class: "bunkr-playlist-thumb-badge" });
-        let typeIcon = PL_ICONS.image;
-        if (finfo.category === "video") typeIcon = PL_ICONS.video;
-        else if (finfo.category === "text" || finfo.category === "doc") typeIcon = PL_ICONS.doc;
-        else if (finfo.category === "archive") typeIcon = PL_ICONS.archive;
-        else if (finfo.category === "audio") typeIcon = PL_ICONS.audio;
-        else if (finfo.category === "other") typeIcon = PL_ICONS.file;
-
-        badge.insertAdjacentHTML("beforeend", typeIcon);
-        if (typeof idx === "number") badge.append(el("span", null, "#" + (idx + 1)));
-        thumbWrap.appendChild(badge);
-
-        if (current) {
-            const playing = el("div", {
-                class: "bunkr-playlist-now-playing",
-                title: finfo.category === "video" ? "Em reprodução" : "Item atual"
-            });
-            playing.insertAdjacentHTML("beforeend", finfo.category === "video" ? PL_ICONS.play : typeIcon);
-            thumbWrap.appendChild(playing);
+        const kindLabel = finfo.category === "video" ? "Video" : finfo.category === "image" ? "Imagem" : finfo.category === "audio" ? "Audio" : finfo.category === "archive" ? "Arquivo" : "Arquivo";
+        thumbWrap.appendChild(el("span", { class: "bunkr-playlist-kind" }, kindLabel));
+        if (typeof idx === "number") thumbWrap.appendChild(el("span", { class: "bunkr-playlist-num" }, String(idx + 1)));
+        if (finfo.category === "video") {
+            let known = "";
+            try { known = sessionStorage.getItem("bunkrdur:" + (href || "").split("?")[0]) || ""; } catch {}
+            const durEl = el("span", { class: "bunkr-playlist-dur" }, known);
+            durEl.hidden = !known;
+            thumbWrap.appendChild(durEl);
         }
 
         const info = el("div", { class: "bunkr-playlist-info" });
@@ -2125,19 +2163,11 @@
         }
         if (datesBox.childNodes.length) info.append(datesBox);
 
-        const meta = el("div", { class: "bunkr-playlist-meta" });
         if (current) {
+            const meta = el("div", { class: "bunkr-playlist-meta" });
             meta.append(el("span", { class: "bunkr-playlist-meta-active" }, finfo.category === "video" ? "Reproduzindo agora" : "Visualizando agora"));
-        } else {
-            let catLabel = "Imagem";
-            if (finfo.category === "video") catLabel = "Vídeo";
-            else if (finfo.category === "text") catLabel = "Texto";
-            else if (finfo.category === "archive") catLabel = "Arquivo";
-            else if (finfo.category === "audio") catLabel = "Áudio";
-            else if (finfo.category === "doc") catLabel = "Documento";
-            meta.append(el("span", null, catLabel));
+            info.append(meta);
         }
-        info.append(meta);
         card.append(thumbWrap, info);
         return card;
     }
@@ -2289,8 +2319,9 @@
                 const cur = fileSlug();
                 let i = list.findIndex(f => f.slug === cur);
                 if (i === -1) i = dir > 0 ? -1 : 0;   // atual fora do filtro → começa do vizinho na direção
-                const f = list[((i + dir) % list.length + list.length) % list.length];
-                if (f) { location.href = fileHref(f); return; }
+                const ni = ((i + dir) % list.length + list.length) % list.length;
+                const f = list[ni];
+                if (f) { location.href = hrefWithPosition(fileHref(f), ni + 1); return; }
             }
         }
         // Fallback: se albumFilesCache não tiver carregado ainda, usa os links renderizados na playlist
@@ -2298,8 +2329,9 @@
         if (items.length >= 2) {
             let i = items.findIndex(it => it.classList.contains("is-current"));
             if (i === -1) i = dir > 0 ? -1 : 0;
-            const target = items[((i + dir) % items.length + items.length) % items.length];
-            if (target && target.href) location.href = target.href;
+            const ni = ((i + dir) % items.length + items.length) % items.length;
+            const target = items[ni];
+            if (target && target.href) location.href = hrefWithPosition(target.href, ni + 1);
         }
     }
     /* liga o filtro ?q=: clique em qualquer /f/ leva o ?q= adiante; no ÁLBUM, espelha a busca nativa no ?q= (persiste + reaplica no F5) */
