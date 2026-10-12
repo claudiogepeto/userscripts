@@ -194,11 +194,13 @@
         const mark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         eachIn(roots, '.structItem--thread:not([data-smg-ph])', it => {
             it.setAttribute('data-smg-ph', '1');   // marca ANTES dos guards (REGRA DE OURO): ad/linha sem ícone ficava fora da marca e era re-varrida em todo full-scan
-            if (it.classList.contains('samUnitWrapper')) {
-                it.dataset.smgPhReady = '1';
-                return; // ad: nem mexe (some via CSS)
-            }
             const cell = it.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
+            const hasTitle = !!it.querySelector('.structItem-title a, .structItem-title');
+            if (it.classList.contains('samUnitWrapper') || it.classList.contains('structItem--quickCreate') || (!cell && !hasTitle)) {
+                it.classList.add('smg-card-empty');
+                it.dataset.smgPhReady = '1';
+                return;
+            }
             if (!cell) {
                 it.dataset.smgPhReady = '1';
                 return;

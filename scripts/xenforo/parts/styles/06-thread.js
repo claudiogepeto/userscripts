@@ -1096,11 +1096,17 @@
                 border: 1px solid rgba(127,127,127,0.18) !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
-                background: rgba(127,127,127,0.06) !important;
+                background: var(--smg-s1, #1b1c21) !important;
                 position: relative !important;
                 transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
-                content-visibility: auto;
-                contain-intrinsic-size: auto 320px;
+            }
+            html.smg-threadlist .structItem--thread.samUnitWrapper,
+            html.smg-threadlist .structItem--thread.smg-card-empty,
+            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread.samUnitWrapper,
+            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread.smg-card-empty,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.samUnitWrapper,
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.smg-card-empty {
+                display: none !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
                 border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
@@ -1316,13 +1322,41 @@
                 width: 7px !important;
                 height: 7px !important;
                 border-radius: 50% !important;
-                background: #00d2ff !important;
-                box-shadow: 0 0 6px rgba(0, 210, 255, 0.8) !important;
+                background: var(--smg-link, #ff77b2) !important;
+                box-shadow: 0 0 6px var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
                 margin-left: 6px !important;
                 vertical-align: middle !important;
             }
-            html.smg-threadlist:not(.smg-tv-grid) .structItem--thread { content-visibility: auto; contain-intrinsic-size: auto 112px; }
-            html.smg-threadlist .message--articlePreview { content-visibility: auto; contain-intrinsic-size: auto 360px; }
+            html.smg-threadlist .structItem--thread.smg-card-empty,
+            html.smg-threadlist .structItem--quickCreate,
+            html.smg-threadlist .block-filterBar { display: none !important; }
+            html.smg-threadlist .uix_threadListSeparator {
+                background: transparent !important;
+                color: rgba(255,255,255,0.62) !important;
+                font-size: 12px !important;
+                font-weight: 700 !important;
+                letter-spacing: .08em !important;
+                text-transform: uppercase !important;
+                border: 0 !important;
+                padding: 18px 16px 4px !important;
+                margin: 0 !important;
+            }
+            html.smg-threadlist .uix_threadListSeparator .uix_threadCollapseTrigger { color: rgba(255,255,255,0.45) !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd) {
+                position: relative !important;
+                overflow: hidden !important;
+                background: var(--smg-s2, #2a2a2a) !important;
+                min-height: 160px;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                transform: translateX(-100%);
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
+                pointer-events: none;
+            }
             /* ads injetados na lista (samUnitWrapper) são .structItem--thread → viram célula VAZIA
                no grid. Some de vez (no grid e na lista) — corrige os "buracos" do grid. */
             html.smg-threadlist .structItem--thread.samUnitWrapper { display: none !important; }
@@ -1334,7 +1368,14 @@
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
             .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.06), rgba(255,255,255,0.01)), var(--smg-s1, #16171b) !important; }
+                background: var(--smg-s2, #23242a) !important; color: rgba(255,255,255,0.38) !important; }
+            .smg-thumb-ph .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+            html.smg-smg.smg-threadlist .block-container,
+            html.smg-smg.smg-threadlist .structItemContainer,
+            html.smg-smg.smg-threadlist .uix_stickyContainerOuter {
+                background: var(--smg-bg, #101113) !important;
+                border-color: rgba(255,255,255,0.06) !important;
+            }
             /* GRID: quadrado, ocupa a célula toda */
             html.smg-threadlist.smg-tv-grid .structItem--thread.smg-no-thumb .smg-thumb-ph {
                 display: flex !important; width: 100% !important; aspect-ratio: 1 / 1;

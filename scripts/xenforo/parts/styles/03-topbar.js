@@ -449,9 +449,7 @@
             .smg-notices-collapse {
                 margin: 16px 0 !important;
                 border-radius: 14px !important;
-                background: rgba(22, 24, 29, 0.75) !important;
-                backdrop-filter: blur(12px) !important;
-                -webkit-backdrop-filter: blur(12px) !important;
+                background: var(--smg-s1, #1a1a1a) !important;
                 border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
                 overflow: hidden !important;
@@ -1012,6 +1010,7 @@
                 /* páginas sem ações (sobraria só a engrenagem): esconde a dock inteira no desktop */
                 #smg-post-nav-wrapper.smg-dock-baronly { display: none !important; }
                 #smg-post-nav-wrapper.smg-dock-baronly.smg-dock-show { display: block !important; }   /* reaberta pelo FAB */
+                html.smg-threadlist:not(.smg-thread) #smg-post-nav-wrapper.smg-dock-as-list { display: block !important; }
             }
             /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
                então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
@@ -1027,6 +1026,22 @@
             #smg-settings-fab:active { transform: scale(0.92); }
             #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
             @media (max-width: 600px) { #smg-settings-fab { display: none !important; } }   /* mobile: a navbar inferior já tem a engrenagem */
+            /* filtro/ordem/grade da LISTA existem sempre (a dock nasce uma vez). Só aparecem numa listagem. */
+            html:not(.smg-threadlist) #smg-list-filter,
+            html:not(.smg-threadlist) #smg-list-sort,
+            html:not(.smg-threadlist) #smg-view-toggle,
+            html:not(.smg-threadlist) #smg-list-filter-m,
+            html:not(.smg-threadlist) #smg-list-sort-m,
+            html:not(.smg-threadlist) #smg-view-toggle-m { display: none !important; }
+            html.smg-thread #smg-list-filter,
+            html.smg-thread #smg-list-sort,
+            html.smg-thread #smg-view-toggle,
+            html.smg-thread #smg-list-filter-m,
+            html.smg-thread #smg-list-sort-m,
+            html.smg-thread #smg-view-toggle-m { display: none !important; }
+            html:not(.smg-thread) #smg-post-sort-toggle,
+            html:not(.smg-thread) #smg-thread-watch,
+            html:not(.smg-thread) #smg-thread-view-mode { display: none !important; }
 
             /* ---- dock: container ---- */
             #smg-post-nav-wrapper {

@@ -94,7 +94,7 @@
     // logo do SMG: wordmark "SMG" (G rosa = acento da marca)
     const SMG_LOGO_HTML = '<span class="smg-logo"><span class="smg-logo-word">SM<span class="smg-logo-accent">G</span></span></span>';
     // marca usada no placeholder de cards sem thumb — mesma cara do logo (SM + G rosa), só que apagada
-    const SMG_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="smg-ph-word">SM<span class="smg-ph-g">G</span></span></div>';
+    const SMG_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="m21 15-5-5L5 21"/></svg></div>';
     // favicon SVG (data-URI, nada hospedado): quadrado arredondado rosa + "S" branca (legível a 16px)
     const SMG_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +

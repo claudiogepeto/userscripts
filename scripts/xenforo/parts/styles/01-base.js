@@ -36,6 +36,32 @@
             html.smg-sc  { --smg-link: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%)); --smg-link-soft: hsla(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%), 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), 38%); }
             /* SMG: rosa institucional da marca (#ff3d84 / hue 334) */
             html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 85%, 68%, 0.12); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 75%, 52%); }
+            /* O tema do SMG pinta .block-container de rosa (#ff77b2). A superfície do script é neutra. */
+            html.smg-smg .block-container {
+                background: var(--smg-s1, #222) !important;
+                color: var(--smg-tx, #fff) !important;
+            }
+            /* SMG: o tema pinta a página de cinza-azulado. A superfície do script é cinza neutro. */
+            html.smg-smg body,
+            html.smg-smg .p-pageWrapper,
+            html.smg-smg .p-body,
+            html.smg-smg .p-body-inner,
+            html.smg-smg .p-body-pageContent,
+            html.smg-smg .p-body-main,
+            html.smg-smg .block,
+            html.smg-smg .block-header,
+            html.smg-smg .block-minorHeader,
+            html.smg-smg .block-body,
+            html.smg-smg .block-footer,
+            html.smg-smg .filterBar,
+            html.smg-smg .structItemContainer,
+            html.smg-smg .p-nav,
+            html.smg-smg .p-header,
+            html.smg-smg .p-sectionLinks,
+            html.smg-smg .p-footer {
+                background-color: var(--smg-bg, #1a1a1a) !important;
+                border-color: rgba(255,255,255,0.06) !important;
+            }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
@@ -72,6 +98,7 @@
             img.bbImage[style*="aspect-ratio"] {
                 width: 100% !important;
                 height: auto !important;
+                object-fit: contain;
             }
 
             /* ---- image grids ---- */

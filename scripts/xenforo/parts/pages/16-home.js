@@ -642,8 +642,123 @@
     }
 
     // home: enriquece os headers de categoria com badge de contagem de fóruns
+    const HOME_NODE_BLURBS = {
+        instagram: ['The hottest Instagram models, without the quotes, food pictures, or that cousin you hate.', 'As modelos mais quentes do Instagram, sem frase motivacional, foto de comida ou o primo que você odeia.'],
+        'instagram models': ['Instagram models, kept to the photos worth opening.', 'Modelos do Instagram, só as fotos que valem abrir.'],
+        onlyfans: ['Home of the spicy links — the biggest collection of its kind on the web.', 'A casa dos links picantes — a maior coleção do tipo na web.'],
+        patreon: ['The high rollers of the cosplay world. Hot girls dressed as your favourite character.', 'Os high rollers do cosplay. Garotas vestidas do seu personagem favorito.'],
+        fansly: ['Fansly creators and the sets that never made it to the free feed.', 'Criadoras do Fansly e os sets que não foram para o feed grátis.'],
+        fanvue: ['Fanvue pages, leaks and requests in one place.', 'Páginas, vazados e pedidos do Fanvue num lugar só.'],
+        manyvids: ['Clips, customs and store drops from ManyVids.', 'Clipes, customs e lançamentos da ManyVids.'],
+        loyalfans: ['LoyalFans creators and the posts behind the paywall.', 'Criadoras do LoyalFans e o que fica atrás do paywall.'],
+        tiktok: ['TikTok creators, trends and the clips people keep asking for.', 'Criadoras do TikTok, trends e os clipes que o pessoal pede.'],
+        reddit: ['The Reddit threads, gonewild boards and creator subs worth keeping.', 'Os tópicos do Reddit, boards gonewild e subs que valem guardar.'],
+        twitter: ['Twitter and X creators, before the posts disappear.', 'Criadoras do Twitter e do X, antes do post sumir.'],
+        twitch: ['Twitch streamers, VODs and the clips that left the stream.', 'Streamers da Twitch, VODs e os clipes que saíram da live.'],
+        youtube: ['YouTubers, long sets and the videos that get pulled.', 'YouTubers, sets longos e os vídeos que saem do ar.'],
+        youtubers: ['YouTubers, long sets and the videos that get pulled.', 'YouTubers, sets longos e os vídeos que saem do ar.'],
+        snapchat: ['Snapchat stories and the premium snaps people save here.', 'Stories do Snapchat e os snaps premium que o pessoal guarda aqui.'],
+        '3d': ['3D sets, renders and the models people keep requesting.', 'Sets 3D, renders e as modelos que o pessoal pede.'],
+        'adult comics': ['Adult comics, pages and the series collected here.', 'Comics adultos, páginas e as séries juntadas aqui.'],
+        animated: ['Animated scenes and the loops worth saving.', 'Cenas animadas e os loops que valem guardar.'],
+        'adult productions': ['Studio scenes and full productions.', 'Cenas de estúdio e produções completas.'],
+        amateur: ['Amateur sets, homemade clips and new faces.', 'Sets amadores, clipes caseiros e caras novas.'],
+        amateurs: ['Amateur sets, homemade clips and new faces.', 'Sets amadores, clipes caseiros e caras novas.'],
+        anime: ['Anime, hentai and the doujins filed here.', 'Anime, hentai e os doujins desta seção.'],
+        hentai: ['Hentai, doujinshi and animated scenes.', 'Hentai, doujinshi e cenas animadas.'],
+        asian: ['Asian models, studios and the sets posted here.', 'Modelos asiáticas, estúdios e os sets daqui.'],
+        asians: ['Asian models, studios and the sets posted here.', 'Modelos asiáticas, estúdios e os sets daqui.'],
+        asmr: ['ASMR creators, mouth sounds and the long takes.', 'Criadoras de ASMR, sons e as takes longas.'],
+        'cam girls': ['Cam models, ticket shows and the recordings.', 'Modelos de cam, ticket shows e as gravações.'],
+        celebrities: ['Celebrity photos, leaks and the threads about them.', 'Fotos de celebridades, vazados e os tópicos sobre elas.'],
+        celebrity: ['Celebrity photos, leaks and the threads about them.', 'Fotos de celebridades, vazados e os tópicos sobre elas.'],
+        'foot fetish': ['Feet, soles and the fetish sets posted here.', 'Pés, solas e os sets de fetiche daqui.'],
+        feet: ['Feet, soles and the fetish sets posted here.', 'Pés, solas e os sets de fetiche daqui.'],
+        hotwife: ['Hotwife stories, sets and the couples posted here.', 'Histórias hotwife, sets e os casais daqui.'],
+        male: ['Male models and the boards filed under men.', 'Modelos masculinos e os fóruns de homens.'],
+        transgender: ['Trans models, creators and the boards kept apart from the rest.', 'Modelos trans, criadoras e os fóruns separados do resto.'],
+        trans: ['Trans models, creators and the boards kept apart from the rest.', 'Modelos trans, criadoras e os fóruns separados do resto.'],
+        vtuber: ['VTubers, debut clips and the models behind the avatar.', 'VTubers, debuts e as modelos por trás do avatar.'],
+        vtubers: ['VTubers, debut clips and the models behind the avatar.', 'VTubers, debuts e as modelos por trás do avatar.'],
+        xxx: ['Porn scenes, studios and the full videos people request.', 'Cenas pornô, estúdios e os vídeos completos que o pessoal pede.'],
+        porn: ['Porn scenes, studios and the full videos people request.', 'Cenas pornô, estúdios e os vídeos completos que o pessoal pede.'],
+        pornstars: ['Pornstars, scene lists and the sets under their name.', 'Pornstars, listas de cenas e os sets no nome delas.'],
+        requests: ['Open requests. Say who you want and what is missing.', 'Pedidos abertos. Diga quem você quer e o que falta.'],
+        pedidos: ['Open requests. Say who you want and what is missing.', 'Pedidos abertos. Diga quem você quer e o que falta.'],
+        discussions: ['Talk, recommendations and everything that is not a request.', 'Conversa, indicações e o que não é pedido.'],
+        megathreads: ['The long threads that collect a model or a topic in one place.', 'Os tópicos longos que juntam uma modelo ou um assunto num lugar.'],
+        downloads: ['Download links, packs and the mirrors people repost.', 'Links de download, packs e os espelhos que o pessoal reposta.'],
+        announcements: ['Site news, rules changes and the posts from the staff.', 'Novidades do site, mudanças de regra e os posts da staff.'],
+        rules: ['The rules of the board. Read them before you post.', 'As regras do fórum. Leia antes de postar.'],
+        help: ['Help, tutorials and the answers to the usual questions.', 'Ajuda, tutoriais e as respostas das perguntas de sempre.'],
+        introductions: ['New members say hello here.', 'Membros novos se apresentam aqui.'],
+        feedback: ['Suggestions and complaints about the site.', 'Sugestões e reclamações sobre o site.'],
+        'the lounge': ['Off-topic talk that does not belong in a model thread.', 'Conversa fora de tópico, longe da thread da modelo.'],
+        brasil: ['Brazilian models, sites and the boards in Portuguese.', 'Modelos brasileiras, sites e os fóruns em português.'],
+        brasileiras: ['Brazilian models and the boards in Portuguese.', 'Modelos brasileiras e os fóruns em português.'],
+        discord: ['Discord servers, leaks and creator drops.', 'Servidores do Discord, vazados e drops de criadoras.'],
+        barista: ['Bikini baristas, coffee-shop sets and the clips people save here.', 'Bikini baristas, sets de cafeteria e os clipes que o pessoal guarda aqui.'],
+        cameraprive: ['CameraPrive shows, recordings and the models on cam right now.', 'Shows da CameraPrive, gravações e quem está ao vivo.'],
+        camwhores: ['CamWhores recordings and the shows people reupload.', 'Gravações do CamWhores e os shows que o pessoal sobe de novo.'],
+        'camwhores.tv': ['CamWhores recordings and the shows people reupload.', 'Gravações do CamWhores e os shows que o pessoal sobe de novo.'],
+        facecast: ['Facecast streams and the sets saved after the live ends.', 'Lives do Facecast e os sets salvos depois que a live acaba.'],
+        privacy: ['Privacy creators and the packs that leave the app.', 'Criadoras do Privacy e os packs que saem do app.'],
+        chaturbate: ['Chaturbate shows, recordings and ticket streams.', 'Shows do Chaturbate, gravações e ticket shows.'],
+        stripchat: ['Stripchat models and the private shows that get recorded.', 'Modelos do Stripchat e os privates que são gravados.'],
+        pornhub: ['PornHub scenes, models and the videos people request.', 'Cenas do PornHub, modelos e os vídeos que o pessoal pede.'],
+        xvideos: ['XVideos scenes and the full sets behind the clips.', 'Cenas do XVideos e os sets completos por trás dos clipes.']
+    };
+    const HOME_BUCKET_BLURBS = {
+        sites: ['Creators and uploads from this site.', 'Criadoras e uploads deste site.'],
+        categories: ['Threads filed under this category.', 'Tópicos desta categoria.'],
+        requests: ['Open requests. Post what you are looking for.', 'Pedidos abertos. Publique o que você procura.'],
+        discussions: ['Talk, recommendations and everything that is not a request.', 'Conversa, indicações e o que não é pedido.'],
+        nav: ['Shortcuts and boards gathered in this section.', 'Atalhos e fóruns desta seção.']
+    };
+
+    function homeNodeBlurb(title, bucket) {
+        const clean = cleanHomeNodeTitle(title).toLowerCase();
+        const direct = HOME_NODE_BLURBS[clean];
+        if (direct) return IS_PT ? direct[1] : direct[0];
+        const keys = Object.keys(HOME_NODE_BLURBS).sort((a, b) => b.length - a.length);
+        for (let i = 0; i < keys.length; i++) {
+            const escaped = keys[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+            if (new RegExp('(?:^|\\b)' + escaped + '(?:\\b|$)', 'i').test(clean)) {
+                const hit = HOME_NODE_BLURBS[keys[i]];
+                return IS_PT ? hit[1] : hit[0];
+            }
+        }
+        const name = cleanHomeNodeTitle(title);
+        if (bucket === 'requests') return IS_PT ? 'Pedidos de ' + name + '. Diga o que falta.' : 'Requests for ' + name + '. Say what is missing.';
+        if (bucket === 'discussions') return IS_PT ? 'Conversa e indicações em ' + name + '.' : 'Talk and recommendations in ' + name + '.';
+        if (bucket === 'nav') return IS_PT ? name + '. Atalho e avisos desta seção.' : name + '. Shortcuts and notices for this board.';
+        if (bucket === 'sites') return IS_PT ? 'Modelos, vazados e pedidos de ' + name + '.' : 'Models, leaks and requests from ' + name + '.';
+        return IS_PT ? 'Tópicos e modelos de ' + name + '.' : 'Threads and models filed under ' + name + '.';
+    }
+
+    function fillHomeNodeDescriptions() {
+        if (!document.documentElement.classList.contains('smg-home')) return;
+        document.querySelectorAll('.block--category .node').forEach(node => {
+            const existing = node.querySelector('.node-description');
+            if (existing && (existing.textContent || '').trim()) return;
+            const titleEl = node.querySelector('.node-title');
+            const title = titleEl ? titleEl.textContent.trim() : '';
+            if (!title) return;
+            const hub = node.closest('[data-smg-home-hub]');
+            const bucket = hub ? hub.dataset.smgHomeHub : 'categories';
+            const blurb = homeNodeBlurb(title, bucket);
+            const desc = document.createElement('div');
+            desc.className = 'node-description smg-node-blurb';
+            desc.textContent = blurb;
+            const main = node.querySelector('.node-main') || titleEl.parentElement || node;
+            if (titleEl && titleEl.parentElement === main) main.insertBefore(desc, titleEl.nextSibling);
+            else main.appendChild(desc);
+        });
+    }
+
     function enhanceHomeHubSections(roots) {
         if (!document.documentElement.classList.contains('smg-home')) return;
+        fillHomeNodeDescriptions();
         document.querySelectorAll('.block--category').forEach(cat => {
             const header = cat.querySelector('.block-header');
             if (!header) return;

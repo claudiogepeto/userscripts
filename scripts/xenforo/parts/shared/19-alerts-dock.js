@@ -752,10 +752,47 @@
         });
 
         const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        const dropUnreadAlert = li => {
+            if (!li || !li.classList || !li.classList.contains('is-unread')) return;
+            const href = li.dataset.smgMark || '';
+            const ol = li.parentElement;
+            li.remove();
+            if (ol) {
+                ol.querySelectorAll('.smg-al-section').forEach(header => {
+                    const next = header.nextElementSibling;
+                    if (!next || next.classList.contains('smg-al-section')) header.remove();
+                });
+            }
+            const st = aldockState && aldockState.alerts;
+            if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
+            const nav = document.querySelector('.p-navgroup-link--alerts');
+            if (nav) {
+                const base = nav.hasAttribute('data-badge')
+                    ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0)
+                    : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+                const n = Math.max(0, base - 1);
+                gmSet('smg-alerts-count', String(n));
+                if (n > 0) nav.setAttribute('data-badge', String(n));
+                else nav.removeAttribute('data-badge');
+            }
+            aldockSyncCount();
+            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            if (!href) return;
+            const csrf = document.documentElement.getAttribute('data-csrf')
+                || (document.querySelector('input[name="_xfToken"]') || {}).value
+                || (window.XF && window.XF.config && window.XF.config.csrf) || '';
+            fetch(href, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
+            }).catch(() => {});
+        };
         if (alertsBody) {
             alertsBody.addEventListener('click', e => {
                 const a = e.target.closest('a[href]');
-                if (!a) return;
+                if (!a || a.classList.contains('smg-al-read')) return;
+                dropUnreadAlert(a.closest('li.alert, li'));
                 const href = a.getAttribute('href') || a.href || '';
                 const postMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i)
                     || (href.includes('/goto/') && href.match(/[?&]id=(\d+)/i));

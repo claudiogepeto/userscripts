@@ -57,6 +57,7 @@
     // =========================================================
 
     let infScrollBound = false;
+    let infScrollGen = 0;
 
     // pager-sync do scroll infinito: espelha a página visível na URL + dock + paginadores (nativo e SMG).
     // Fábrica: encapsula shownPage; devolve a função chamada no listener de scroll do setupInfiniteScroll.
@@ -123,6 +124,7 @@
 
     function setupInfiniteScroll() {
         if (infScrollBound) return;
+        const gen = ++infScrollGen;
         // página SEM paginação não ganha uma depois do load: marca como "resolvido" senão a detecção
         // inteira (querySelectors + readPageJump) re-roda TODO frame de processAll, pra sempre
         const settle = () => { if (document.readyState === 'complete') infScrollBound = true; };
@@ -213,6 +215,7 @@
         };
 
         const check = () => {
+            if (gen !== infScrollGen || !container.isConnected) return;
             if (!FEATURES.infiniteScroll) return;   // desligar no settings para na hora (o observer fica, mas não carrega mais)
 
             const isFeed = document.documentElement.classList.contains('smg-watched-feed')

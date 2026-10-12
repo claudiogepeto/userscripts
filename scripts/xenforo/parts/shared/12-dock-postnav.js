@@ -66,6 +66,7 @@
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
+            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
             if (typeof markNavbarReady === 'function') markNavbarReady();
             return;
         }
@@ -125,7 +126,7 @@
         let sortIsDate = !/reaction/i.test(window.location.search || '');
 
         // ---- page jump (goto): página atual (URL) + total, via readPageJump ----
-        const pageJump = (() => {
+        let pageJump = (() => {
             const pj = readPageJump();
             return pj ? { tpl: pj.tpl, current: pj.cur, max: pj.max } : null;
         })();
@@ -216,7 +217,7 @@
                 document.documentElement.classList.add('smg-page-pending');
                 document.documentElement.classList.remove('smg-page-ready');
                 if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
-                window.location.href = url;
+                dockGo(url);
             };
 
             if (mpGo) mpGo.addEventListener('click', doMpNav);
@@ -239,8 +240,46 @@
             }
         }
 
+        // troca de página (navegação interna) e scroll infinito: relê o paginador
+        // DESTA página. O objeto da página anterior não pode continuar na dock.
+        function dockGo(url) {
+            if (!url) return;
+            if (typeof window.smgSoftNavigate === 'function') window.smgSoftNavigate(url);
+            else {
+                try { window.location.href = url; } catch (e) {}
+            }
+        }
+        function syncDockListMode() {
+            const root = document.documentElement;
+            const thread = root.classList.contains('smg-thread');
+            const list = root.classList.contains('smg-threadlist') && !thread;
+            if (!navWrapper) return;
+            navWrapper.classList.toggle('smg-dock-as-list', list);
+            navWrapper.classList.toggle('smg-dock-baronly', !list && !thread);
+        }
+        window.smgRefreshDockPage = () => {
+            syncDockListMode();
+            const pj = typeof readPageJump === 'function' ? readPageJump() : null;
+            if (!pj) {
+                if (pageJump) { pageJump.current = 1; pageJump.max = 1; }
+                setBtnIcon(btnGoto, ICONS.goto);
+                btnGoto.disabled = true;
+                btnPageFirst.disabled = true;
+                btnPagePrev.disabled = true;
+                btnPageNext.disabled = true;
+                btnPageLast.disabled = true;
+                return;
+            }
+            if (!pageJump) pageJump = { tpl: pj.tpl, current: pj.cur, max: pj.max };
+            else { pageJump.tpl = pj.tpl; pageJump.current = pj.cur; pageJump.max = pj.max; }
+            btnGoto.disabled = false;
+            if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(pj.cur);
+            else setBtnIcon(btnGoto, `${pj.cur} / ${pj.max}`);
+        };
+
         // o scroll infinito chama isto pra refletir a página que está na tela
-        if (pageJump) smgUpdateDockPage = n => {
+        smgUpdateDockPage = n => {
+            if (!pageJump) return;
             pageJump.current = n;
             setBtnIcon(btnGoto, `${n} / ${pageJump.max}`);
             if (btnMobilePageBtn) {
@@ -259,8 +298,8 @@
             if (mpLast) mpLast.toggleAttribute('disabled', n >= pageJump.max);
 
             btnPageFirst.disabled = n <= 1;
-            btnPagePrev.disabled = !prevPageLink || n <= 1;
-            btnPageNext.disabled = !nextPageLink || n >= pageJump.max;
+            btnPagePrev.disabled = n <= 1;
+            btnPageNext.disabled = n >= pageJump.max;
             btnPageLast.disabled = n >= pageJump.max;
         };
 
@@ -344,12 +383,11 @@
             || /^forum_view/.test(document.documentElement.getAttribute('data-template') || '')
             || document.documentElement.getAttribute('data-template') === 'search_results'
             || /\/search\//.test(location.pathname);
-        const btnListFilter = onListUrl
-            ? makeDockButton({ id: 'smg-list-filter', icon: ICONS.filter, label: IS_PT ? 'Filtrar tópicos (tags, autor, status)' : 'Filter threads' })
-            : null;
-        const btnListSort = onListUrl
-            ? makeDockButton({ id: 'smg-list-sort', icon: ICONS.sort, label: getListSortTip() })
-            : null;
+        // A dock nasce uma vez. Se a primeira página não for lista, o filtro nunca
+        // existiria depois de uma navegação interna. Os botões ficam no DOM e o CSS
+        // só os mostra em html.smg-threadlist.
+        const btnListFilter = makeDockButton({ id: 'smg-list-filter', icon: ICONS.filter, label: IS_PT ? 'Filtrar tópicos (tags, autor, status)' : 'Filter threads' });
+        const btnListSort = makeDockButton({ id: 'smg-list-sort', icon: ICONS.sort, label: getListSortTip() });
         if (btnListSort) {
             btnListSort.classList.add('smg-nav-labeled', 'smg-sort-pill');
             listSortTxt = Object.assign(document.createElement('span'), {
@@ -364,9 +402,7 @@
         const getViewToggleLabel = m => m === 'grid'
             ? (IS_PT ? 'Visualização atual: Grade. Clique para alternar para Lista' : 'Current view: Grid. Click to switch to List')
             : (IS_PT ? 'Visualização atual: Lista. Clique para alternar para Grade' : 'Current view: List. Click to switch to Grid');
-        const btnViewToggle = (onListUrl && (document.querySelector('.structItem--thread, .structItem--bookmark, .smg-watched-card, #smg-watched-local-root') || document.querySelector('.message--articlePreview')))
-            ? makeDockButton({ id: 'smg-view-toggle', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) })
-            : null;
+        const btnViewToggle = makeDockButton({ id: 'smg-view-toggle', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) });
         if (btnViewToggle) btnViewToggle.addEventListener('click', () => {
             viewMode = viewMode === 'grid' ? 'list' : 'grid';
             gmSet('smg-threadview', viewMode);
@@ -470,6 +506,25 @@
         // botão que abre o bottom sheet de opções (só aparece no mobile)
         const btnSheet = makeDockButton({ id: 'smg-dock-sheet-btn', icon: ICONS.sliders, label: 'Options' });
 
+        btnListFilterM = makeDockButton({ id: 'smg-list-filter-m', icon: ICONS.filter, label: IS_PT ? 'Filtrar tópicos (tags, autor, status)' : 'Filter threads' });
+        btnListFilterM.addEventListener('click', e => {
+            e.stopPropagation();
+            btnListFilter.click();
+        });
+        btnListSortM = makeDockButton({ id: 'smg-list-sort-m', icon: ICONS.sort, label: getListSortTip() });
+        btnListSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
+        listSortTxtM = Object.assign(document.createElement('span'), {
+            className: 'smg-nav-btn-text',
+            textContent: getListSortLabel(currentSortOrder)
+        });
+        btnListSortM.appendChild(listSortTxtM);
+        btnListSortM.addEventListener('click', e => {
+            e.stopPropagation();
+            btnListSort.click();
+        });
+        btnViewToggleM = makeDockButton({ id: 'smg-view-toggle-m', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) });
+        btnViewToggleM.addEventListener('click', () => btnViewToggle.click());
+
         if (isThread) {
             // Barra de controles de thread para mobile
             btnWatchM = makeDockButton({
@@ -502,12 +557,13 @@
             const threadBar = document.createElement('div');
             threadBar.className = 'smg-dock-thread-bar';
             const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM].filter(Boolean);
-            threadBar.append(...threadBtns);
+            threadBtns.push(btnListSortM, btnListFilterM, btnViewToggleM);
+            threadBar.append(...threadBtns.filter(Boolean));
 
             // Grupos para Desktop
             const actionsGroup = makeGroup(btnWatch);
             actionsGroup.className = 'smg-nav-group smg-side smg-side--acts smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnViewMode);
+            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnViewMode);
             pagenavGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
             scrollGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
@@ -522,35 +578,6 @@
                 btnSheet
             );
         } else if (isList) {
-            btnListFilterM = btnListFilter ? makeDockButton({ id: 'smg-list-filter-m', icon: ICONS.filter, label: IS_PT ? 'Filtrar tópicos (tags, autor, status)' : 'Filter threads' }) : null;
-            if (btnListFilter && btnListFilterM) {
-                btnListFilterM.addEventListener('click', e => {
-                    e.stopPropagation();
-                    btnListFilter.click();
-                });
-            }
-
-            btnListSortM = btnListSort ? makeDockButton({ id: 'smg-list-sort-m', icon: ICONS.sort, label: getListSortTip() }) : null;
-            if (btnListSortM) {
-                btnListSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
-                listSortTxtM = Object.assign(document.createElement('span'), {
-                    className: 'smg-nav-btn-text',
-                    textContent: getListSortLabel(currentSortOrder)
-                });
-                btnListSortM.appendChild(listSortTxtM);
-            }
-            if (btnListSort && btnListSortM) {
-                btnListSortM.addEventListener('click', e => {
-                    e.stopPropagation();
-                    btnListSort.click();
-                });
-            }
-
-            btnViewToggleM = btnViewToggle ? makeDockButton({ id: 'smg-view-toggle', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) }) : null;
-            if (btnViewToggle && btnViewToggleM) {
-                btnViewToggleM.addEventListener('click', () => btnViewToggle.click());
-            }
-
             const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
             btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
@@ -559,10 +586,10 @@
 
             const listBar = document.createElement('div');
             listBar.className = 'smg-dock-thread-bar';
-            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
+            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
             listBar.append(...listMobileBtns);
 
-            const listBtns = [];
+            const listBtns = [btnSort, btnWatch];
             if (pageJump) listBtns.push(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
             if (btnListFilter) listBtns.push(btnListFilter);
             if (btnListSort) listBtns.push(btnListSort);
@@ -578,7 +605,17 @@
                 btnSheet
             );
         } else {
-            panel.append(centralGroup, btnSheet);
+            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
+            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
+            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
+            const listBar = document.createElement('div');
+            listBar.className = 'smg-dock-thread-bar';
+            listBar.append(...[btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean));
+            const listBtns = [btnSort, btnWatch, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnListFilter, btnListSort, btnViewToggle];
+            const listGroup = makeGroup(...listBtns.filter(Boolean));
+            listGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            panel.append(btnSettings, makeDivider(), listBar, centralGroup, makeDivider(), listGroup, btnSheet);
         }
 
         const navWrapper = document.createElement('div');
@@ -719,7 +756,7 @@
             '</div>';
 
         // popovers de filtro e ordenação da listagem (fórum) — conteúdo carregado sob demanda
-        const listFilterPop = (isList && btnListFilter) ? document.createElement('div') : null;
+        const listFilterPop = btnListFilter ? document.createElement('div') : null;
         if (listFilterPop) {
             listFilterPop.id = 'smg-listfilter-pop';
             listFilterPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Filtro' : 'Filter') + '</span><div class="smg-lf-body">' + (IS_PT ? 'Carregando…' : 'Loading…') + '</div>';
@@ -923,7 +960,7 @@
 
         function doGoto() {
             if (!pageJump) return;
-            window.location.href = pageJump.tpl.replace('%page%', clampPage(parseInt(gotoInput.value, 10)));
+            dockGo(pageJump.tpl.replace('%page%', clampPage(parseInt(gotoInput.value, 10))));
         }
 
         btnGoto.addEventListener('click', e => {
@@ -2547,7 +2584,7 @@
                 const sv = starterInput ? starterInput.value.trim() : '';
                 if (sv) url.searchParams.set('starter', sv);
 
-                location.href = url.toString();
+                dockGo(url.toString());
             }
 
             function sortListItems(order, direction) {
@@ -3198,10 +3235,18 @@
         updateWatchIcon();
 
         // ---- paginação ----
-        btnPageFirst.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1'); window.location.href = url; } });
-        btnPagePrev.addEventListener('click', () => prevPageLink?.click());
-        btnPageNext.addEventListener('click', () => nextPageLink?.click());
-        btnPageLast.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace('%page%', String(pageJump.max)); window.location.href = url; } });
+        btnPageFirst.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1'); dockGo(url); } });
+        btnPagePrev.addEventListener('click', () => {
+            const href = prevPageLink && prevPageLink.getAttribute('href');
+            if (href) dockGo(href);
+            else if (pageJump && pageJump.current > 1) dockGo(pageJump.current - 1 === 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(pageJump.current - 1)));
+        });
+        btnPageNext.addEventListener('click', () => {
+            const href = nextPageLink && nextPageLink.getAttribute('href');
+            if (href) dockGo(href);
+            else if (pageJump && pageJump.current < pageJump.max) dockGo(pageJump.tpl.replace('%page%', String(pageJump.current + 1)));
+        });
+        btnPageLast.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace('%page%', String(pageJump.max)); dockGo(url); } });
 
         // ---- sort ----
         function updateSortIcon() {
@@ -3222,7 +3267,7 @@
             updateSortIcon();
             const targetUrl = getSortHref(sortIsDate);
             if (targetUrl) {
-                window.location.href = targetUrl;
+                dockGo(targetUrl);
             }
         });
 

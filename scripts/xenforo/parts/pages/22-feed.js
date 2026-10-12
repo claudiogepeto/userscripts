@@ -27,7 +27,7 @@
     // versão da LÓGICA DE SYNC: bumpar aqui re-varre tudo (zera os marcadores de "thread coberta") SEM apagar
     // os posts já guardados. Use este quando mudar como/até onde buscamos; o DATA_VERSION só quando o FORMATO
     // do post serializado mudar (aí não tem jeito, o cache velho é ilegível).
-    const FEED_SYNC_VERSION = 7;
+    const FEED_SYNC_VERSION = 8;
 
     // fila throttled p/ as buscas (não estoura o flood control do fórum) — usada pelo sync
     const RIVER_CONCURRENCY = 2;
@@ -204,6 +204,7 @@
         if (!p) return null;
         const postId = p.post_id || p.postId || '';
         if (!postId || (!p.content_html && !p.contentHtml)) return null;
+        if (typeof timelineContentSkip === 'function' && timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').trim();

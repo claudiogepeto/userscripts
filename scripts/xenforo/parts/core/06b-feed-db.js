@@ -385,7 +385,7 @@
     function fdbEnsureSyncVersion(version) {
         return dbMetaGet('syncVersion').then(v => {
             if (v === version) return false;
-            return fdbResetSyncMarks().then(() => dbMetaSet('syncVersion', version)).then(() => true);
+            return dbClearTimeline().then(() => fdbResetSyncMarks()).then(() => dbMetaSet('syncVersion', version)).then(() => true);
         }).catch(() => false);
     }
 

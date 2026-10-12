@@ -195,10 +195,10 @@
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
             html.smg-home .smg-feed-block {
-                margin: 28px 0 46px !important; padding: 20px 22px 24px;
-                background: linear-gradient(180deg, rgba(255,255,255,0.038) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a);
+                margin: 28px 0 46px !important; padding: 18px 18px 20px;
+                background: var(--smg-s1, #16171c);
                 border: 1px solid rgba(255,255,255,0.08); border-radius: 22px;
-                box-shadow: 0 20px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 44px -18px rgba(0,0,0,0.6);
                 overflow: visible;
             }
             @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: 14px 14px 18px; border-radius: 18px; margin-top: 16px !important; margin-bottom: 30px !important; } }
@@ -241,11 +241,18 @@
             /* corpo: scroll horizontal de cards, com setas flutuantes no desktop */
             html.smg-home .smg-feed-scroll { position: relative; }
             html.smg-home .smg-feed-panel { display: none; }
-            html.smg-home .smg-feed-panel.is-active { display: flex; gap: 14px; padding: 2px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none; }
+            html.smg-home .smg-feed-panel.is-active {
+                --smg-feed-card-w: calc((100% - 42px) / 4);
+                display: flex; align-items: stretch; gap: 14px; padding: 2px;
+                overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none;
+            }
             html.smg-home .smg-feed-panel::-webkit-scrollbar { display: none; }
             /* CARD IMERSIVO AMPLIADO (largura & altura expandidas, presença visual nobre) */
-            html.smg-home .smg-feed-card {
-                position: relative; flex: 0 0 295px; width: 295px; height: 395px; aspect-ratio: 3 / 4.02; scroll-snap-align: start;
+            html.smg-home .smg-feed-card,
+            html.smg-home .smg-feed-skel {
+                position: relative; flex: 0 0 var(--smg-feed-card-w) !important;
+                width: var(--smg-feed-card-w) !important; min-width: var(--smg-feed-card-w) !important; max-width: var(--smg-feed-card-w) !important;
+                height: auto !important; aspect-ratio: 3 / 4 !important; scroll-snap-align: start;
                 display: block; border-radius: 18px; overflow: hidden;
                 background: var(--smg-s2, #18191f); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
                 box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
@@ -323,8 +330,12 @@
             html.smg-home .smg-feed-prev { left: -10px; }
             html.smg-home .smg-feed-next { right: -10px; }
             html.smg-home .smg-feed-nav.smg-nav-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-            @media (max-width: 600px) {
-                html.smg-home .smg-feed-card { flex-basis: 210px; width: 210px; }
+            @media (max-width: 1100px) {
+                html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: calc((100% - 14px) / 2); }
+            }
+            @media (max-width: 700px) {
+                html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: 92%; scroll-snap-type: x mandatory; gap: 10px; }
+                html.smg-home .smg-feed-card { scroll-snap-align: center; }
                 html.smg-home .smg-feed-nav { display: none; }
             }
 
@@ -405,15 +416,8 @@
                 box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
 
-            /* SMG alternância & destaque dos cards com a cor da marca (#ff3d84) */
             html.smg-smg.smg-home .block--category .node {
-                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #141519 !important;
                 border: 1px solid rgba(255,255,255,0.08) !important;
-            }
-            html.smg-smg.smg-home .block--category .block-body > .node:hover {
-                border-color: var(--smg-link, #ff3d84) !important;
-                background: linear-gradient(160deg, rgba(255, 61, 132, 0.08) 0%, rgba(255, 61, 132, 0.02) 100%), #181920 !important;
-                box-shadow: 0 10px 24px -4px rgba(0,0,0,0.65), 0 0 20px -2px var(--smg-link-soft, rgba(255, 61, 132, 0.25)) !important;
             }
 
             /* Node body e alinhamento horizontal */
@@ -462,9 +466,10 @@
                 color: #fff !important; text-shadow: 0 0 10px rgba(255,255,255,0.35);
             }
             html.smg-home .node-description {
-                font-size: 12px !important; line-height: 1.4 !important;
-                color: rgba(255,255,255,0.5) !important; margin-top: 1px !important;
-                display: -webkit-box !important; -webkit-line-clamp: 1 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
+                font-size: 12.5px !important; line-height: 1.4 !important;
+                color: rgba(255,255,255,0.55) !important; margin-top: 2px !important;
+                display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
+                white-space: normal !important;
                 transition: color .15s ease;
             }
             html.smg-home .block--category .node:hover .node-description {

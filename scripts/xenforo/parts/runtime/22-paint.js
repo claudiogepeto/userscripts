@@ -28,7 +28,8 @@
             : source.template;
         const tpl = String(template).toLowerCase();
         const homePath = pathname === '/' || pathname === '';
-        const home = homePath || tpl === 'forum_list';
+        const innerPage = /\/(?:watched|forums|threads|posts|goto|whats-new|search|tags|members|account|conversations|categories|pages)(?:\/|$)/i.test(pathname);
+        const home = !innerPage && (homePath || tpl === 'forum_list');
         const feed = new URLSearchParams(search || '').get('view') === 'feed';
         let kind = PAINT_PAGE_KINDS.NONE;
 
@@ -474,7 +475,7 @@
 
     // O skeleton aguarda as mídias da viewport inicial e do post alvo terem proporção e dimensões reais
     // estabelecidas antes de liberar a tela, impedindo que a página 'dance' ou mude de scroll.
-    const PAINT_MEDIA_MAX_WAIT_MS = 1000;
+    const PAINT_MEDIA_MAX_WAIT_MS = 4000;
     let paintMediaDeadline = 0;
     function threadMediaTreeIsReady(content) {
         // O prazo de tolerância de mídia só começa a correr depois que o documento terminou o parsing inicial
@@ -489,28 +490,44 @@
         } else if (!paintMediaDeadline) {
             paintMediaDeadline = Date.now() + PAINT_MEDIA_MAX_WAIT_MS;
         }
-        if (paintMediaDeadline && Date.now() >= paintMediaDeadline) return true;
         if (!content) return true;
 
         const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
 
         // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
         const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
+        const posts = Array.from(content.querySelectorAll('article.message'));
+        const aboveFold = new Set(posts.slice(0, 2));
+        if (targetPost) aboveFold.add(targetPost);
         for (const img of imgs) {
             if (img.dataset.smgFailed || img.classList.contains('smg-img-ready')) continue;
             const ar = img.style.aspectRatio;
             if (ar && ar !== '100 / 100') continue;
-            if (img.complete && img.naturalWidth && img.naturalHeight) continue;
+            if (img.complete && img.naturalWidth && img.naturalHeight) {
+                img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                continue;
+            }
+            const w = parseInt(img.getAttribute('width') || img.dataset.width || '', 10);
+            const h = parseInt(img.getAttribute('height') || img.dataset.height || '', 10);
+            if (w > 0 && h > 0) {
+                img.style.aspectRatio = w + ' / ' + h;
+                continue;
+            }
 
-            // Se a imagem já pertence a uma grade estruturada com colunas e relayout prontos:
-            // fora do post alvo, pré-atribui o aspect-ratio do placeholder da grade para não bloquear o first paint
+            const post = img.closest('article.message');
+            const onScreen = post && aboveFold.has(post);
             const grid = img.closest('.auto-image-grid');
-            if (grid && (grid.dataset.smgRelayoutDone === '1' || grid.style.getPropertyValue('--smg-mcols'))) {
-                const post = img.closest('article.message');
-                if (post && post !== targetPost && (!img.style.aspectRatio || img.style.aspectRatio === '100 / 100')) {
-                    img.style.aspectRatio = grid.style.getPropertyValue('--smg-grid-img-ph') || '4 / 3';
-                    continue;
-                }
+            if (!onScreen) {
+                img.style.aspectRatio = (grid && grid.style.getPropertyValue('--smg-grid-img-ph')) || '4 / 3';
+                continue;
+            }
+            if (grid && (grid.dataset.smgRelayoutDone === '1' || grid.style.getPropertyValue('--smg-mcols')) && post !== targetPost) {
+                img.style.aspectRatio = grid.style.getPropertyValue('--smg-grid-img-ph') || '4 / 3';
+                continue;
+            }
+            if (paintMediaDeadline && Date.now() >= paintMediaDeadline) {
+                img.style.aspectRatio = '4 / 3';
+                continue;
             }
             return false;
         }
@@ -714,29 +731,27 @@
             if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
             const xfClick = a.getAttribute('data-xf-click') || '';
             if (xfClick && xfClick !== 'scroll-to' && xfClick !== 'preview-click') return;
-            if (a.closest('#smg-feed, .smg-feed, .smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
+            if (a.closest('.smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
 
-            const isThreadNav = /\/(?:threads|posts|goto)\//i.test(href) || /[?&](?:threads|posts|goto)=/i.test(href);
-            const isPageNav = /(?:\/page-\d+|[?&]page=\d+)/i.test(href);
-            const isListingNav = /\/(?:forums|whats-new|watched|categories|account\/alerts)\//i.test(href);
+            let url;
+            try { url = new URL(a.href, location.href); } catch (err) { return; }
+            if (url.origin !== location.origin) return;
+            if (/\/(?:logout|login|register)(?:\/|$)/i.test(url.pathname)) return;
+            if (/\/attachments\//i.test(url.pathname)) return;
+            if (/\/(?:edit|react|bookmark)(?:\/|$)/i.test(url.pathname)) return;
+            if (url.pathname + url.search === location.pathname + location.search) return;
 
-            if (isThreadNav || isPageNav || isListingNav) {
-                // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
-                if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
-                    const pid = resolvePostIdFromHref(href);
-                    if (pid && findPostElementById(pid)) return;
-                }
-
-                setNavigatingOut();
-                const root = document.documentElement;
-                root.classList.add('smg-page-pending');
-                root.classList.remove('smg-page-ready');
-                root.classList.add('smg-content-pending');
-                root.classList.remove('smg-content-ready');
-                const targetKind = isThreadNav ? PAINT_PAGE_KINDS.THREAD : (isListingNav ? PAINT_PAGE_KINDS.LISTING : classifyPaintPage().kind);
-                ensurePageSkeleton(targetKind);
+            // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
+            if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+                const pid = resolvePostIdFromHref(href);
+                if (pid && findPostElementById(pid)) return;
             }
-        }, { capture: true, passive: true });
+
+            if (typeof softNavigate === 'function') {
+                e.preventDefault();
+                softNavigate(url.href);
+            }
+        }, { capture: true });
 
         window.addEventListener('pageshow', e => {
             isNavigatingOut = false;

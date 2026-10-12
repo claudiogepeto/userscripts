@@ -913,6 +913,9 @@
                 // tags / badges
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(it) : [];
                 const tags = badges.map(b => ({ name: b.name, className: b.className }));
+                const forumLink = it.querySelector('.structItem-parts a[href*="/forums/"], a[href*="/forums/"]');
+                const forumName = forumLink ? (forumLink.textContent || '').replace(/\s+/g, ' ').trim() : '';
+                const timeline_skip = typeof timelineContentSkip === 'function' && timelineContentSkip(tags.map(t => t.name).concat(forumName));
 
                 // forum_activity_ts
                 const forum_activity_ts = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
@@ -956,7 +959,8 @@
                     last_page: Math.max((prev && prev.last_page) || 1, last_page),
                     saved_pages: (prev && prev.saved_pages) || [],
                     last_sync_at: (prev && prev.last_sync_at) || 0,
-                    unread: domUnread
+                    unread: domUnread,
+                    timeline_skip: timeline_skip
                 };
 
                 existingMap.set(path, item);
@@ -972,15 +976,16 @@
                     || prev.last_page !== item.last_page
                     || JSON.stringify(prev.saved_pages || []) !== JSON.stringify(item.saved_pages || [])
                     || prev.last_sync_at !== item.last_sync_at
-                    || prev.unread !== item.unread;
+                    || prev.unread !== item.unread
+                    || prev.timeline_skip !== item.timeline_skip;
                 if (changed) itemsToUpsert.push(item);
                 if (typeof followedSet !== 'undefined' && followedSet) {
                     followedSet.add(path);
                 }
 
                 if (syncPages) {
-                    if (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at)) {
-                        syncCandidates.push({ thread: item, page: last_page });
+                    if (!timeline_skip && (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at))) {
+                        syncCandidates.push({ thread: item, page: 1 });
                     }
                 }
             });

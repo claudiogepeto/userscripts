@@ -4,6 +4,22 @@
     // following the 3 strict rules.
     // =========================================================
     let timelineSyncRunning = false;
+
+    function timelineContentSkip(parts) {
+        const bag = (parts || []).filter(Boolean).join(' ');
+        return /\b(discussions?|off[\s-]*topic|requests?|megathreads?|self[\s-]*promotion|bate[\s-]*papo|tutoriais|ajuda|forum guides|debates?)\b/i.test(bag);
+    }
+
+    function timelineForumBag(doc) {
+        if (!doc || !doc.querySelectorAll) return [];
+        return Array.from(doc.querySelectorAll('.p-breadcrumbs a, .p-breadcrumb a, .p-title-value .label, .p-title .label')).map(el => (el.textContent || '').replace(/\s+/g, ' ').trim());
+    }
+
+    function timelineMainElements(postEls) {
+        const list = (postEls || []).filter(p => isThreadPostElement(p)
+            && !(p.closest && p.closest('.message-responses, .js-messageResponses, .js-commentsList, .comment, .message-responseRow')));
+        return list.length ? [list[0]] : [];
+    }
     const currentThreadIngestInflight = new Map();
     const currentThreadIngestSignatures = new Map();
 
@@ -112,8 +128,10 @@
 
             const meta = { title: threadTitle, prefixesHtml: prefixesHtml, thumb: thumb, lastTs: Math.floor(Date.now() / 1000) };
 
-            const postEls = Array.from(document.querySelectorAll('article.message--post, .message--post'))
-                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            if (currentPage !== 1) return 0;
+            if (timelineContentSkip(timelineForumBag(document).concat(prefixesHtml))) return 0;
+            const postEls = timelineMainElements(Array.from(document.querySelectorAll('article.message--post, .message--post')))
+                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, location.href)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -130,6 +148,7 @@
 
                 let finalTs = Math.floor(Number(p.ts));
                 if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = now;
+                finalTs = Math.max(finalTs, (stored && stored.forum_activity_ts) || 0);
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -166,7 +185,8 @@
                 last_page: nextLastPage,
                 saved_pages: nextSavedPages,
                 last_sync_at: now,
-                unread: false
+                unread: false,
+                timeline_skip: false
             };
 
             return dbTimelinePutPosts(timelinePosts)
@@ -188,8 +208,14 @@
         return fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
-            const postEls = Array.from(doc.querySelectorAll('article.message--post, .message--post'))
-                .filter(p => isThreadPostElement(p) && p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+            if (thread.timeline_skip || timelineContentSkip(timelineForumBag(doc).concat((thread.tags || []).map(t => t && (t.name || t))))) {
+                thread.timeline_skip = true;
+                thread.last_sync_at = Math.floor(Date.now() / 1000);
+                return dbFollowedUpsert(thread).then(() => 0);
+            }
+            if (pageNum !== 1) return 0;
+            const postEls = timelineMainElements(Array.from(doc.querySelectorAll('article.message--post, .message--post')))
+                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
             const parsed = postEls.map(p => riverParsePost(p, meta, url)).filter(Boolean);
             if (!parsed.length) return 0;
@@ -207,6 +233,7 @@
 
                 let finalTs = Math.floor(Number(p.ts));
                 if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = thread.updated_at || now;
+                finalTs = Math.max(finalTs, thread.forum_activity_ts || 0);
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -254,7 +281,7 @@
     }
 
     function decideThreadFetch(thread, lastTimelineRunTs) {
-        if (!thread) return null;
+        if (!thread || thread.timeline_skip) return null;
         const saved = Array.isArray(thread.saved_pages) ? thread.saved_pages : [];
         const maxSaved = saved.length ? Math.max(...saved) : 0;
         const lastPage = thread.last_page || 1;
@@ -269,7 +296,7 @@
         if (isNew || hasNewPage || hasSamePageUpdates) {
             return {
                 thread: thread,
-                targetPage: lastPage,
+                targetPage: 1,
                 reason: isNew ? 'new' : (hasNewPage ? 'newPage' : (isUnread ? 'unread' : 'updatedPage'))
             };
         }

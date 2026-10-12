@@ -186,8 +186,9 @@
         const path = location.pathname;
         const isHomePath = path === '/' || path === '';
         const isFeedView = isHomePath && new URLSearchParams(location.search).get('view') === 'feed';
-        const isForumHome = tpl === 'forum_list' || isHomePath;
-        if (isForumHome) cls.add('smg-home-page'); // a URL identifica a home antes do data-template
+        const innerPage = /\/(?:watched|forums|threads|posts|goto|whats-new|search|tags|members|account|conversations|categories|pages)(?:\/|$)/i.test(path);
+        const isForumHome = !innerPage && (tpl === 'forum_list' || isHomePath);
+        cls.toggle('smg-home-page', isForumHome); // a URL identifica a home antes do data-template
         const paintContext = classifyPaintPage({ pathname: path, search: location.search, template: tpl });
         ['home', 'thread', 'listing', 'following', 'timeline', 'bookmarks'].forEach(kind => cls.toggle('smg-page-' + kind, paintContext.kind === kind));
         const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (typeof isContentReady === 'function' && isContentReady());
@@ -210,26 +211,28 @@
         } else if (typeof markNavbarReady === 'function') {
             markNavbarReady();
         }
-        if (isForumHome && !isFeedView && FEATURES.homeRemake) {
-            cls.add('smg-home');
+        const showHome = isForumHome && !isFeedView && FEATURES.homeRemake;
+        cls.toggle('smg-home', showHome);
+        if (showHome) {
             const isHomeAlreadyReady = cls.contains('smg-home-ready') || cls.contains('smg-page-ready');
-            if (!isHomeAlreadyReady) {
-                cls.add('smg-home-pending');
-            }
+            if (!isHomeAlreadyReady) cls.add('smg-home-pending');
+        } else {
+            cls.remove('smg-home-pending', 'smg-home-ready');
         }
         const isThreadRoute = !/\/watched\//.test(path)
             && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
-        if (/^thread_view/i.test(tpl) || isThreadRoute) cls.add('smg-thread');
-        const isList = /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
+        const isThread = /^thread_view/i.test(tpl) || isThreadRoute;
+        cls.toggle('smg-thread', isThread);
+        const isList = !isThread && (
+            /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
             || /^(?:forum_view|watched_threads_list|search_results)$/i.test(tpl)
-            || !!document.querySelector('.structItem--thread');
-        if (isList) cls.add('smg-threadlist');
-        if (tpl === 'search_results') cls.add('smg-search-page');   // página de resultados: painel inline + lista re-tematizada (CSS)
-        if (tpl === 'search_form') cls.add('smg-search-form');      // form de busca avançada: re-tematizado (CSS; widgets do XF intactos)
-        if (cls.contains('smg-threadlist') && gmGet('smg-threadview', 'grid') === 'grid') cls.add('smg-tv-grid');
-        // página com menu lateral legítimo (conta/settings) → flag estática p/ o CSS (substitui o
-        // :not(:has(.p-body-sideNav)) ancorado no .p-body-main, que re-validava a cada mutação da thread)
-        if (/^account/i.test(tpl) || document.querySelector('.p-body-sideNav')) cls.add('smg-has-sidenav');
+            || !!document.querySelector('.structItem--thread')
+        );
+        cls.toggle('smg-threadlist', isList);
+        cls.toggle('smg-search-page', tpl === 'search_results');
+        cls.toggle('smg-search-form', tpl === 'search_form');
+        cls.toggle('smg-tv-grid', isList && gmGet('smg-threadview', 'grid') === 'grid');
+        cls.toggle('smg-has-sidenav', /^account/i.test(tpl) || !!document.querySelector('.p-body-sideNav'));
     }
 
     // ===== FASE 1 (document-start): tematiza ANTES da 1ª pintura → mata o flash do site antigo =====
@@ -262,9 +265,18 @@
     releaseCriticalPaintGate();
 
     // Inicia o observador de mutações progressivo JÁ no document-start
-    // Conforme o HTML do streaming chega, os nós são processados no próximo rAF sem esperar DOMContentLoaded
+    // Conforme o HTML do streaming chega, os nós são processados no próximo rAF sem esperar DOMContentLoaded.
+    // Depois do boot ele passa a olhar só o miolo (.p-body): topbar, dock e skeleton não disparam processAll.
     const earlyObs = new MutationObserver(scheduleRun);
     earlyObs.observe(document.documentElement, { childList: true, subtree: true });
+    let earlyObsRoot = document.documentElement;
+    function observePageContent() {
+        const next = document.querySelector('.p-body');
+        if (!next || next === earlyObsRoot) return;
+        earlyObs.disconnect();
+        earlyObs.observe(next, { childList: true, subtree: true });
+        earlyObsRoot = next;
+    }
 
     // SCROLL STABILIZER: media, embeds, post cards and galleries finish sizing AFTER the first paint, and
     // everything above the viewport growing pushes the reading position down (opening on the last post ended
@@ -469,7 +481,124 @@
         safe(startTimelineCron);
 
         processAll([document.body]);
+        observePageContent();
+        schedulePagePaintRelease();
     }
+
+    // Navegação interna: troca só o .p-body. Topbar, dock de notificações e navbar ficam no documento.
+    // Logout, login, editor e anexos continuam como carregamento inteiro.
+    let softNavToken = 0;
+    let softNavUsed = false;
+    let softNavUrl = location.pathname + location.search;
+    const SOFT_PAGE_CLASSES = [
+        'smg-home', 'smg-home-page', 'smg-home-pending', 'smg-home-ready',
+        'smg-thread', 'smg-threadlist', 'smg-tv-grid', 'smg-search-page', 'smg-search-form',
+        'smg-has-sidenav', 'smg-watched-feed', 'smg-bm-feed-on',
+        'smg-page-home', 'smg-page-thread', 'smg-page-listing', 'smg-page-following',
+        'smg-page-timeline', 'smg-page-bookmarks'
+    ];
+
+    function copyNativeBadge(selector, doc) {
+        const next = doc.querySelector(selector);
+        const live = document.querySelector(selector);
+        if (!next || !live) return;
+        if (next.hasAttribute('data-badge')) live.setAttribute('data-badge', next.getAttribute('data-badge') || '');
+        else live.removeAttribute('data-badge');
+    }
+
+    function resetSwappedPage() {
+        SOFT_PAGE_CLASSES.forEach(name => cls.remove(name));
+        homeSidebarDone = false;
+        homeFeedDone = false;
+        homeFeedReady = false;
+        homePassSignature = null;
+        riverSetupDone = false;
+        riverBuilt = false;
+        riverList = null;
+        if (typeof riverHost !== 'undefined') riverHost = null;
+        const staleRiver = document.getElementById('smg-river');
+        if (staleRiver) staleRiver.remove();
+        bmBuilt = false;
+        infScrollBound = false;
+        contentIsReady = false;
+        if (typeof feedStopPoll === 'function' && !feedViewWanted()) feedStopPoll();
+    }
+
+    function softNavigate(url, opts) {
+        opts = opts || {};
+        let abs;
+        try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
+        if (abs.origin !== location.origin) { location.href = abs.href; return; }
+        const token = ++softNavToken;
+        const root = document.documentElement;
+        cancelPagePaintRelease();
+        isNavigatingOut = false;
+        root.classList.add('smg-page-pending', 'smg-content-pending');
+        root.classList.remove('smg-page-ready', 'smg-content-ready', 'smg-home-ready');
+        contentIsReady = false;
+        ensurePageSkeleton();
+        try { history.scrollRestoration = 'manual'; } catch (e) {}
+        try { window.scrollTo(0, 0); } catch (e) {}
+        fetchDoc(abs.href, { credentials: 'same-origin' }).then(doc => {
+            if (token !== softNavToken) return;
+            const nextBodies = doc ? Array.from(doc.querySelectorAll('.p-body')) : [];
+            const curBodies = Array.from(document.querySelectorAll('.p-body'));
+            if (!doc || !nextBodies.length || !curBodies.length) {
+                try { location.href = abs.href; } catch (e) {}
+                return;
+            }
+            const bodySize = el => (el.innerHTML || '').length;
+            const nextBody = nextBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
+            const curBody = curBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
+            const freshBody = document.importNode(nextBody, true);
+            curBody.replaceWith(freshBody);
+            curBodies.forEach(el => { if (el.isConnected) el.remove(); });
+            document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river, #smg-home-skeleton').forEach(el => {
+                if (!freshBody.contains(el)) el.remove();
+            });
+            if (doc.body && doc.body.className) document.body.className = doc.body.className;
+            ['data-template', 'data-csrf', 'data-app', 'data-cookie-prefix', 'data-container-key', 'data-content-key'].forEach(attr => {
+                const value = doc.documentElement.getAttribute(attr);
+                if (value != null) root.setAttribute(attr, value);
+            });
+            const csrf = doc.documentElement.getAttribute('data-csrf');
+            if (csrf && window.XF && window.XF.config) window.XF.config.csrf = csrf;
+            const title = doc.querySelector('title');
+            if (title && title.textContent) document.title = title.textContent;
+            copyNativeBadge('.p-navgroup-link--alerts', doc);
+            copyNativeBadge('.p-navgroup-link--conversations', doc);
+            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            const nextUrl = abs.pathname + abs.search;
+            softNavUrl = nextUrl;
+            if (opts.push !== false) {
+                softNavUsed = true;
+                try { history.pushState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash); } catch (e) {}
+            }
+            resetSwappedPage();
+            detectPageClasses();
+            if (feedViewWanted()) cls.add('smg-watched-feed');
+            const staleSkeleton = document.getElementById('smg-page-skeleton');
+            const staleHomeSkeleton = document.getElementById('smg-home-skeleton');
+            if (staleSkeleton) staleSkeleton.remove();
+            if (staleHomeSkeleton) staleHomeSkeleton.remove();
+            ensurePageSkeleton();
+            if (window.XF && typeof window.XF.activate === 'function') {
+                try { window.XF.activate(document.querySelector('.p-body')); } catch (e) {}
+            }
+            if (feedContext()) safe(setupFeedView);
+            if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
+            if (FEATURES.headerNotices) safe(setupHeaderNotices);
+            if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
+            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
+            safe(pinDeepLinkPost);
+            safe(syncMobileThreadbar);
+            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
+            processAll([document.body]);
+            observePageContent();
+            schedulePagePaintRelease();
+        });
+    }
+    window.smgSoftNavigate = softNavigate;
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__processAll = processAll;
@@ -486,4 +615,11 @@
     } else {
         boot();
     }
+
+    window.addEventListener('popstate', () => {
+        if (!softNavUsed) return;
+        const now = location.pathname + location.search;
+        if (now === softNavUrl) return;
+        softNavigate(location.href, { push: false });
+    });
 })();

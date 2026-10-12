@@ -166,6 +166,7 @@
 
         // botão "marcar como lido" SEMPRE visível nas não-lidas — persiste no servidor + atualiza o estado
         const li = main.closest('li.alert') || main.closest('li');
+        if (markHref && li) li.dataset.smgMark = markHref;
         if (markHref && li && li.classList && li.classList.contains('is-unread')) {
             const btn = document.createElement('button');
             btn.type = 'button';

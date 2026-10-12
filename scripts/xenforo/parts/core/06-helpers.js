@@ -692,11 +692,12 @@
     // vazio/errado no document-end, o que bagunçava a dock e o ponto de partida do scroll.
     // Retorna null em thread de página única.
     function readPageJump() {
-        const row = document.querySelector('[data-xf-init="page-jump"][data-page-url]');
+        const scope = document.querySelector('.p-body-content') || document.querySelector('.p-body') || document;
+        const row = scope.querySelector('[data-xf-init="page-jump"][data-page-url]');
         let tpl = row ? row.getAttribute('data-page-url') : null; // .../page-%page%
         if (!tpl) {
             // tema sem o menu page-jump: deriva o template de um link de paginação
-            const href = Array.from(document.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]'))
+            const href = Array.from(scope.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]'))
                 .map(a => a.getAttribute('href') || '')
                 .find(h => /\/page-\d+/.test(h));
             if (href) tpl = href.replace(/\/page-\d+/, '/page-%page%');
@@ -706,11 +707,12 @@
         const um = location.pathname.match(/\/page-(\d+)/) || location.search.match(/[?&]page=(\d+)/);
         let cur = um ? parseInt(um[1], 10) : 1;
 
-        // total: a maior página vista (links de paginação + "X of Y" + atributo max do input)
+        // total só do paginador desta página. Link de "última página" dentro de um post,
+        // da sidebar ou de outra thread na lista não entra — era isso que virava "página 1500".
         let max = cur;
-        document.querySelectorAll('.pageNav a[href], .pageNavSimple a[href], a[href*="page-"], a[href*="page="]').forEach(a => {
+        scope.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
             const h = a.getAttribute('href') || '';
-            const m = h.match(/(?:page-|[?&]page=)(\d+)/);
+            const m = h.match(/(?:\/page-|[?&]page=)(\d+)/);
             if (m) max = Math.max(max, parseInt(m[1], 10));
         });
         const simple = document.querySelector('.pageNavSimple-el--current')?.textContent.match(/(\d+)\s*of\s*(\d+)/i);

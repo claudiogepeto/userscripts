@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      3.18.1'), 'Userscript deve estar na versão 3.18.1');
+    assert(scriptContent.includes('// @version      4.0.0'), 'Userscript deve estar na versão 4.0.0');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -431,7 +431,7 @@ async function runTests() {
     console.log('--- TESTE 1: feedSyncRunning & River Loading ---');
     assert(window.__feedExports !== undefined, 'window.__feedExports deve estar exposto');
     assert(window.__feedExports.FEED_DATA_VERSION === 12, 'FEED_DATA_VERSION deve ser 12');
-    assert(window.__feedExports.FEED_SYNC_VERSION === 7, 'FEED_SYNC_VERSION deve ser 7');
+    assert(window.__feedExports.FEED_SYNC_VERSION === 8, 'FEED_SYNC_VERSION deve ser 8');
     assert(typeof window.__feedExports.feedSyncRunning === 'boolean', 'feedSyncRunning deve ser booleano');
     assert(window.__feedExports.feedSyncRunning === false, 'feedSyncRunning deve iniciar como false');
 
@@ -1061,7 +1061,7 @@ async function runTests() {
     };
     const decisionA = decideThreadFetch(threadA, 2000);
     assert(decisionA !== null, 'Regra A: Tópico com maxSaved === 0 deve ser marcado para busca');
-    assert(decisionA.targetPage === 5, 'Regra A: targetPage deve ser last_page (5)');
+    assert(decisionA.targetPage === 1, 'Regra A: targetPage deve ser a página do post principal (1)');
     assert(decisionA.reason === 'new', 'Regra A: reason deve ser "new"');
 
     // 7.2 Regra B: Nova página criada (lastPage > maxSaved) -> marcado para busca
@@ -1075,7 +1075,7 @@ async function runTests() {
     };
     const decisionB = decideThreadFetch(threadB, 2000);
     assert(decisionB !== null, 'Regra B: Tópico com lastPage > maxSaved deve ser marcado para busca');
-    assert(decisionB.targetPage === 4, 'Regra B: targetPage deve ser last_page (4)');
+    assert(decisionB.targetPage === 1, 'Regra B: targetPage deve ser a página do post principal (1)');
     assert(decisionB.reason === 'newPage', 'Regra B: reason deve ser "newPage"');
 
     // 7.3 Regra C: Última página coincide mas há novos posts (updated_at > lastTimelineRunTs) -> re-busca da última página
@@ -1089,7 +1089,7 @@ async function runTests() {
     };
     const decisionC1 = decideThreadFetch(threadC1, 2000);
     assert(decisionC1 !== null, 'Regra C: Tópico com lastPage === maxSaved e updated_at > lastTimelineRunTs deve ser marcado para re-busca');
-    assert(decisionC1.targetPage === 3, 'Regra C: targetPage deve ser a última página (3)');
+    assert(decisionC1.targetPage === 1, 'Regra C: targetPage deve ser a página do post principal (1)');
     assert(decisionC1.reason === 'updatedPage', 'Regra C: reason deve ser "updatedPage"');
 
     // 7.3.1 Regra C (variante): updated_at > last_sync_at
@@ -1103,7 +1103,7 @@ async function runTests() {
     };
     const decisionC2 = decideThreadFetch(threadC2, 2000);
     assert(decisionC2 !== null, 'Regra C: Tópico com updated_at > last_sync_at deve ser marcado para re-busca');
-    assert(decisionC2.targetPage === 2, 'Regra C: targetPage deve ser a última página (2)');
+    assert(decisionC2.targetPage === 1, 'Regra C: targetPage deve ser a página do post principal (1)');
     assert(decisionC2.reason === 'updatedPage', 'Regra C: reason deve ser "updatedPage"');
 
     // 7.4 Regra D: Sem novidades (lastPage === maxSaved e updated_at <= lastTimelineRunTs && <= last_sync_at) -> PULA
@@ -1130,7 +1130,7 @@ async function runTests() {
     };
     const decisionUnread = decideThreadFetch(threadUnread, 2000);
     assert(decisionUnread !== null, 'Tópico com unread === true deve ser marcado para busca');
-    assert(decisionUnread.targetPage === 2, 'Tópico unread targetPage deve ser last_page (2)');
+    assert(decisionUnread.targetPage === 1, 'Tópico unread targetPage deve ser a página do post principal (1)');
     assert(decisionUnread.reason === 'unread', 'Tópico unread reason deve ser "unread"');
 
     // 7.5 Deduplicação de posts no DOM e riverSeen
@@ -8122,7 +8122,8 @@ async function runTests() {
         assert(allStyles.includes('html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%);'), 'SMG deve definir --smg-link com rosa institucional (#ff3d84 / 334deg)');
         assert(allStyles.includes('.node-title .uix_newIndicator'), 'CSS da home deve estilizar .uix_newIndicator');
         assert(allStyles.includes('.node-extra-title .prefix'), 'CSS da home deve estilizar .prefix nos últimos tópicos');
-        assert(allStyles.includes('html.smg-smg.smg-home .block--category .block-body > .node:hover'), 'CSS da home deve ter hover temático rosa no SMG');
+        assert(!allStyles.includes('html.smg-smg.smg-home .block--category .block-body > .node:hover'), 'Hover dos cards da home no SMG deve usar a mesma cor do Simp');
+        assert(allStyles.includes('html.smg-home .block--category .node:hover'), 'CSS da home deve ter hover neutro compartilhado');
         assert(allStyles.includes('html.smg-smg.smg-home .smg-hub-badge'), 'CSS da home deve ter badges de contagem com rosa no SMG');
 
         // 2. Remoção de wrappers no SMG (Video Sharing & Streaming Apps e More Social Media Sites)
