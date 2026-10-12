@@ -628,6 +628,14 @@
     // =========================================================
     function processTurboEmbeds(roots) {
         // 1. IFRAMES nativos com domínios saint
+        // Troca só o HOST saint (com borda). Sem isso, "esaint2.cr" vira "eturbo.cr"
+        // ou "esaint2.creturbo.cr" porque "saint2.cr" casa no meio do nome.
+        function rewriteSaintHost(value) {
+            return String(value || '').replace(/(^|[^a-z0-9-])(?:https?:\/\/)?(?:[a-z0-9-]+\.)*saint2?\.(?:su|to|cr)(?![a-z0-9.-])/gi, (m, pre) => {
+                const proto = /https?:\/\//i.test(m) ? m.match(/https?:\/\//i)[0] : '';
+                return pre + proto + 'turbo.cr';
+            });
+        }
         eachIn(roots, 'iframe[src*="saint2.su"], iframe[src*="saint.su"], iframe[src*="saint2.cr"], iframe[src*="saint.cr"], iframe[src*="saint.to"], iframe[src*="saint2.to"]', ifr => {
             const src = ifr.getAttribute('src') || ifr.src || '';
             const newSrc = src.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
@@ -676,14 +684,12 @@
         // 4. Demais links saint -> turbo.cr
         eachIn(roots, 'a[href*="saint2.su"], a[href*="saint.su"], a[href*="saint2.cr"], a[href*="saint.cr"], a[href*="saint.to"], a[href*="saint2.to"]', a => {
             const raw = a.getAttribute('href') || a.href || '';
-            const replaced = raw.replace(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:saint2?\.(?:su|to|cr))\b/gi, 'https://turbo.cr');
+            const replaced = rewriteSaintHost(raw);
             if (replaced !== raw) {
                 a.setAttribute('href', replaced);
             }
-            if (a.textContent && /saint2?\.(?:su|to|cr)/i.test(a.textContent)) {
-                a.textContent = a.textContent.replace(/(https?:\/\/)?(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/gi, (match, proto) => {
-                    return (proto || '') + 'turbo.cr';
-                });
+            if (a.textContent && /(?:^|[^a-z0-9-])saint2?\.(?:su|to|cr)(?![a-z0-9.-])/i.test(a.textContent)) {
+                a.textContent = rewriteSaintHost(a.textContent);
             }
         });
     }

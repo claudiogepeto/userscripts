@@ -1106,6 +1106,41 @@
                 width: auto !important;
                 max-width: 100% !important;
             }
+            /* Preview de link: a regra .smg-wide (100% / height auto) vinha depois e
+               estourava a thumb do unfurl. A figura fica 88px e o texto ao lado. */
+            .bbCodeBlock--unfurl {
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .contentRow {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+                min-width: 0 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure {
+                flex: 0 0 88px !important;
+                width: 88px !important;
+                height: 88px !important;
+                overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure img,
+            .bbCodeBlock--unfurl img,
+            .bbCodeBlock--unfurl img.bbImage,
+            .bbCodeBlock--unfurl img.bbImage.smg-wide {
+                width: 88px !important;
+                height: 88px !important;
+                max-width: 88px !important;
+                max-height: 88px !important;
+                object-fit: cover !important;
+                margin: 0 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-main {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+            }
             /* Vertical standalone images: wrapper is a full-width block so the img width (a % of it) resolves from
                the column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
             a.smg-imglink.smg-vert-link:not(.auto-image-grid *),
