@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.0
+// @version      4.1.1
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -974,10 +974,13 @@
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-rg) {
                 aspect-ratio: auto !important;
+                height: auto !important;
                 min-height: 0 !important;
+                max-height: none !important;
                 overflow: visible !important;
                 background: transparent !important;
                 max-width: 100% !important;
+                display: block !important;
             }
             .smg-fp-content iframe,
             .smg-fp-content .auto-image-grid iframe,
@@ -1607,13 +1610,12 @@
                 overflow: visible !important;
                 background: transparent !important;
                 border-radius: 0 !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                text-align: center !important;
+                display: block !important;
                 max-width: 100% !important;
+                max-height: none !important;
                 height: auto !important;
             }
+            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1, #16171b); }
             /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
             html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
