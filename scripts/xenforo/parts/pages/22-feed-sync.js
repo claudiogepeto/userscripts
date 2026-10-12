@@ -7,7 +7,7 @@
 
     function timelineContentSkip(parts) {
         const bag = (parts || []).filter(Boolean).join(' ');
-        return /\b(discussions?|off[\s-]*topic|requests?|megathreads?|self[\s-]*promotion|bate[\s-]*papo|tutoriais|ajuda|forum guides|debates?)\b/i.test(bag);
+        return /\b(discussions?|off[\s-]*topic|megathreads?|bate[\s-]*papo|tutoriais|ajuda|forum guides|debates?)\b/i.test(bag);
     }
 
     function timelineForumBag(doc) {
@@ -18,7 +18,15 @@
     function timelineMainElements(postEls) {
         const list = (postEls || []).filter(p => isThreadPostElement(p)
             && !(p.closest && p.closest('.message-responses, .js-messageResponses, .js-commentsList, .comment, .message-responseRow')));
-        return list.length ? [list[0]] : [];
+        return list;
+    }
+
+    const TIMELINE_PAGE_CAP = 5;
+
+    function timelineKeepPages(lastPage, saved) {
+        const last = Math.max(1, lastPage || 1);
+        const floor = Math.max(1, last - TIMELINE_PAGE_CAP + 1);
+        return Array.from(new Set(saved || [])).filter(n => n >= floor && n <= last).sort((a, b) => a - b);
     }
     const currentThreadIngestInflight = new Map();
     const currentThreadIngestSignatures = new Map();
@@ -60,10 +68,6 @@
         let rawHref = (canon && canon.getAttribute('href')) || location.href;
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
-
-        if (typeof dbFollowedMarkSeen === 'function') {
-            dbFollowedMarkSeen(path).catch(() => {});
-        }
 
         // Check date order: skip if user is sorting by reactions
         const isDateOrder = !/[?&]order=reaction/i.test(location.search);
@@ -128,7 +132,8 @@
 
             const meta = { title: threadTitle, prefixesHtml: prefixesHtml, thumb: thumb, lastTs: Math.floor(Date.now() / 1000) };
 
-            if (currentPage !== 1) return 0;
+            const knownLast = Math.max(lastPage, currentPage, maxPageOnDom);
+            if (currentPage < Math.max(1, knownLast - TIMELINE_PAGE_CAP + 1)) return 0;
             if (timelineContentSkip(timelineForumBag(document).concat(prefixesHtml))) return 0;
             const postEls = timelineMainElements(Array.from(document.querySelectorAll('article.message--post, .message--post')))
                 .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
@@ -147,8 +152,7 @@
                 seenPostIds.add(pid);
 
                 let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = now;
-                finalTs = Math.max(finalTs, (stored && stored.forum_activity_ts) || 0);
+                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -160,6 +164,7 @@
                     author: p.author || '',
                     author_href: p.authorHref || '',
                     created_at: finalTs,
+                    page_num: currentPage,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (path + '#post-' + p.postId),
                     media_urls: mediaUrls,
@@ -169,8 +174,8 @@
             });
 
             // Update saved_pages
-            const nextSavedPages = Array.from(new Set([...savedPages, currentPage])).sort((a, b) => a - b);
             const nextLastPage = Math.max(lastPage, currentPage, maxPageOnDom);
+            const nextSavedPages = timelineKeepPages(nextLastPage, [...savedPages, currentPage]);
 
             const followedRec = {
                 path: path,
@@ -185,7 +190,7 @@
                 last_page: nextLastPage,
                 saved_pages: nextSavedPages,
                 last_sync_at: now,
-                unread: false,
+                unread: !!(stored && stored.unread),
                 timeline_skip: false
             };
 
@@ -213,7 +218,6 @@
                 thread.last_sync_at = Math.floor(Date.now() / 1000);
                 return dbFollowedUpsert(thread).then(() => 0);
             }
-            if (pageNum !== 1) return 0;
             const postEls = timelineMainElements(Array.from(doc.querySelectorAll('article.message--post, .message--post')))
                 .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
@@ -232,8 +236,7 @@
                 seenPostIds.add(pid);
 
                 let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = thread.updated_at || now;
-                finalTs = Math.max(finalTs, thread.forum_activity_ts || 0);
+                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -245,6 +248,7 @@
                     author: p.author || '',
                     author_href: p.authorHref || '',
                     created_at: finalTs,
+                    page_num: pageNum,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (thread.path + '#post-' + p.postId),
                     media_urls: mediaUrls,
@@ -260,19 +264,16 @@
                 if (m) docMaxPage = Math.max(docMaxPage, parseInt(m[1], 10) || 1);
             });
 
-            const nextSavedPages = Array.from(new Set([...(thread.saved_pages || []), pageNum])).sort((a, b) => a - b);
             const nextLastPage = Math.max(thread.last_page || 1, pageNum, docMaxPage);
+            const nextSavedPages = timelineKeepPages(nextLastPage, [...(thread.saved_pages || []), pageNum]);
 
             const prevUpdatedAt = thread.updated_at || 0;
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
             thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) {
-                thread.unread = true;
-            } else if (!prevUpdatedAt) {
-                thread.unread = false;
-            }
+            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) thread.unread = true;
+            else if (thread.unread == null) thread.unread = false;
 
             return dbTimelinePutPosts(timelinePosts)
                 .then(() => dbFollowedUpsert(thread))
@@ -282,23 +283,33 @@
 
     function decideThreadFetch(thread, lastTimelineRunTs) {
         if (!thread || thread.timeline_skip) return null;
-        const saved = Array.isArray(thread.saved_pages) ? thread.saved_pages : [];
-        const maxSaved = saved.length ? Math.max(...saved) : 0;
-        const lastPage = thread.last_page || 1;
+        const lastPage = Math.max(1, thread.last_page || 1);
+        const saved = timelineKeepPages(lastPage, thread.saved_pages);
+        const freshFloor = Math.max(1, lastPage - 1);
+        const capFloor = Math.max(1, lastPage - TIMELINE_PAGE_CAP + 1);
+        const missingFresh = [];
+        for (let p = lastPage; p >= freshFloor; p--) {
+            if (saved.indexOf(p) === -1) missingFresh.push(p);
+        }
         const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
         const isUnread = Boolean(thread.unread);
-
-        const isNew = maxSaved === 0;
-        const hasNewPage = lastPage > maxSaved;
         const hasSamePageUpdates = isUnread || (lastActivity > lastSync) || (lastActivity > (lastTimelineRunTs || 0));
+        const maxSaved = saved.length ? Math.max.apply(null, saved) : 0;
 
-        if (isNew || hasNewPage || hasSamePageUpdates) {
+        if (!saved.length) return { thread: thread, targetPage: lastPage, reason: 'new' };
+        if (missingFresh.length) {
             return {
                 thread: thread,
-                targetPage: 1,
-                reason: isNew ? 'new' : (hasNewPage ? 'newPage' : (isUnread ? 'unread' : 'updatedPage'))
+                targetPage: missingFresh[0],
+                reason: lastPage > maxSaved ? 'newPage' : 'backfill'
             };
+        }
+        if (hasSamePageUpdates) {
+            return { thread: thread, targetPage: lastPage, reason: isUnread ? 'unread' : 'updatedPage' };
+        }
+        for (let p = freshFloor - 1; p >= capFloor; p--) {
+            if (saved.indexOf(p) === -1) return { thread: thread, targetPage: p, reason: 'backfill' };
         }
         return null;
     }
@@ -427,7 +438,7 @@
                     }
                 });
 
-                const queue = threadsToFetch.slice(0, 8);
+                const queue = opts.force ? threadsToFetch : threadsToFetch.slice(0, 8);
                 console.log('[SMG Timeline] ' + allFollowed.length + ' seguidos no banco | ' + queue.length + ' tópicos com atualizações para buscar');
                 if (!queue.length) {
                     return dbMetaSet('lastTimelineRunTs', now).then(() => 0);
@@ -447,7 +458,31 @@
                 queue.forEach((item, idx) => {
                     p = p.then(() => {
                         if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
-                        return syncThreadPage(item.thread, item.targetPage).then(n => {
+                        const pages = [item.targetPage];
+                        if (item.reason === 'new' && item.targetPage > 1) pages.push(item.targetPage - 1);
+                        let chain = Promise.resolve(0);
+                        pages.forEach((pageNum, pageIdx) => {
+                            chain = chain.then(prev => {
+                                if (opts.onProgress) {
+                                    try {
+                                        opts.onProgress({
+                                            step: 'posts',
+                                            added: added,
+                                            done: done,
+                                            total: total,
+                                            thread: item.thread.thread_name || item.thread.path || '',
+                                            page: pageNum,
+                                            reason: item.reason || ''
+                                        });
+                                    } catch (e) {}
+                                }
+                                return syncThreadPage(item.thread, pageNum).then(n => {
+                                    if (pageIdx < pages.length - 1) return new Promise(res => setTimeout(() => res((prev || 0) + (n || 0)), delayMs));
+                                    return (prev || 0) + (n || 0);
+                                });
+                            });
+                        });
+                        return chain.then(n => {
                             if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
                             added += (n || 0);
                             done++;

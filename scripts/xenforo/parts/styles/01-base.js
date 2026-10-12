@@ -949,13 +949,27 @@
             .generic2wide-iframe-div {
                 position: relative;
                 width: 100% !important;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;
+                max-width: min(920px, calc(min(42vh, 420px) * 16 / 9)) !important;
+                max-height: min(42vh, 420px) !important;
                 margin: 16px auto !important;
                 display: block !important;
                 aspect-ratio: 16 / 9;
                 overflow: hidden;
                 border-radius: 10px;
                 background: #000;
+            }
+            .bbCodeBlock--unfurl {
+                max-width: 720px;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure,
+            .bbCodeBlock--unfurl .contentRow-figure img,
+            .bbCodeBlock--unfurl img.bbImage {
+                width: 88px !important;
+                height: 88px !important;
+                max-width: 88px !important;
+                max-height: 88px !important;
+                aspect-ratio: 1 !important;
+                object-fit: cover !important;
             }
             .generic2wide-iframe-div.smg-player-loaded,
             span[data-s9e-mediaembed].smg-player-loaded,

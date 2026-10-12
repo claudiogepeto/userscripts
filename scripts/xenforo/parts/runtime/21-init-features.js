@@ -639,38 +639,38 @@
             }
         });
 
-        // 2. UNFURL CARDS com /embed/
-        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="/embed/"]:not([data-tb-done])', unfurl => {
-            unfurl.dataset.tbDone = '1';
-            const dataUrl = unfurl.getAttribute('data-url') || '';
-            const m = dataUrl.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
-            if (!m) return;
-            const id = m[1];
+        // Página /v/ID e embed /embed/ID são o mesmo vídeo. O player é sempre o iframe /embed/.
+        const TB_MEDIA_RE = /(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:embed|v)\/([a-zA-Z0-9_-]+)/i;
+        const turboPlayer = id => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
+            wrapper.className = 'generic2wide-iframe-div';
             wrapper.dataset.tbDone = '1';
-            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
-            unfurl.replaceWith(wrapper);
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;"></iframe>';
+            return wrapper;
+        };
+
+        // 2. UNFURL CARDS com /embed/ ou /v/
+        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="turbo.cr/"]:not([data-tb-done]), .bbCodeBlock--unfurl[data-url*="saint"]:not([data-tb-done])', unfurl => {
+            const dataUrl = unfurl.getAttribute('data-url') || '';
+            const m = dataUrl.match(TB_MEDIA_RE);
+            if (!m) return;
+            unfurl.dataset.tbDone = '1';
+            unfurl.replaceWith(turboPlayer(m[1]));
         });
 
-        // 3. BARE LINKS com /embed/
-        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done])', link => {
-            link.dataset.tbDone = '1';
+        // 3. LINKS crus com /embed/ ou /v/
+        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done]), a[href*="turbo.cr/v/"]:not([data-tb-done]), a[href*="saint2.su/v/"]:not([data-tb-done]), a[href*="saint.su/v/"]:not([data-tb-done]), a[href*="saint2.cr/v/"]:not([data-tb-done]), a[href*="saint.cr/v/"]:not([data-tb-done]), a[href*="saint.to/v/"]:not([data-tb-done]), a[href*="saint2.to/v/"]:not([data-tb-done])', link => {
             if (link.closest('.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-fhcard, .smg-turbo-fallback, .generic2wide-iframe-div, .smg-rg')) return;
             if (link.querySelector('img')) return;
             const unfurl = link.closest('.bbCodeBlock--unfurl');
             if (unfurl && unfurl.dataset.tbDone === '1') return;
             const href = resolveProxyHref(link.getAttribute('href') || link.href || '');
-            const m = href.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            const m = href.match(TB_MEDIA_RE);
             if (!m) return;
-            const id = m[1];
-            const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
-            wrapper.dataset.tbDone = '1';
-            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            link.dataset.tbDone = '1';
             const target = unfurl || link;
             target.dataset.tbDone = '1';
-            target.replaceWith(wrapper);
+            target.replaceWith(turboPlayer(m[1]));
         });
 
         // 4. Demais links saint -> turbo.cr

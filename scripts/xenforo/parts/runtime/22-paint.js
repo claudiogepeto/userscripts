@@ -677,9 +677,6 @@
                 try {
                     target.scrollIntoView({ block: 'start', behavior: 'instant' });
                 } catch (e) {}
-                if (typeof armScrollStabilizer === 'function') {
-                    armScrollStabilizer(target);
-                }
             }
         };
         const waitForStableFrames = framesLeft => {
@@ -742,7 +739,7 @@
             if (url.pathname + url.search === location.pathname + location.search) return;
 
             // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
-            if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+            if (document.documentElement.classList.contains('smg-thread') && typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
                 const pid = resolvePostIdFromHref(href);
                 if (pid && findPostElementById(pid)) return;
             }

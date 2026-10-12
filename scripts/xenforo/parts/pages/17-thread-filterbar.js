@@ -985,7 +985,7 @@
 
                 if (syncPages) {
                     if (!timeline_skip && (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at))) {
-                        syncCandidates.push({ thread: item, page: 1 });
+                        syncCandidates.push({ thread: item, page: last_page });
                     }
                 }
             });

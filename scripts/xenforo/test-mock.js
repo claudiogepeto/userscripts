@@ -334,7 +334,7 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      4.0.0'), 'Userscript deve estar na versão 4.0.0');
+    assert(scriptContent.includes('// @version      4.0.1'), 'Userscript deve estar na versão 4.0.1');
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
@@ -431,7 +431,7 @@ async function runTests() {
     console.log('--- TESTE 1: feedSyncRunning & River Loading ---');
     assert(window.__feedExports !== undefined, 'window.__feedExports deve estar exposto');
     assert(window.__feedExports.FEED_DATA_VERSION === 12, 'FEED_DATA_VERSION deve ser 12');
-    assert(window.__feedExports.FEED_SYNC_VERSION === 8, 'FEED_SYNC_VERSION deve ser 8');
+    assert(window.__feedExports.FEED_SYNC_VERSION === 10, 'FEED_SYNC_VERSION deve ser 10');
     assert(typeof window.__feedExports.feedSyncRunning === 'boolean', 'feedSyncRunning deve ser booleano');
     assert(window.__feedExports.feedSyncRunning === false, 'feedSyncRunning deve iniciar como false');
 
@@ -1061,7 +1061,7 @@ async function runTests() {
     };
     const decisionA = decideThreadFetch(threadA, 2000);
     assert(decisionA !== null, 'Regra A: Tópico com maxSaved === 0 deve ser marcado para busca');
-    assert(decisionA.targetPage === 1, 'Regra A: targetPage deve ser a página do post principal (1)');
+    assert(decisionA.targetPage === 5, 'Regra A: targetPage deve ser a última página (5)');
     assert(decisionA.reason === 'new', 'Regra A: reason deve ser "new"');
 
     // 7.2 Regra B: Nova página criada (lastPage > maxSaved) -> marcado para busca
@@ -1075,7 +1075,7 @@ async function runTests() {
     };
     const decisionB = decideThreadFetch(threadB, 2000);
     assert(decisionB !== null, 'Regra B: Tópico com lastPage > maxSaved deve ser marcado para busca');
-    assert(decisionB.targetPage === 1, 'Regra B: targetPage deve ser a página do post principal (1)');
+    assert(decisionB.targetPage === 4, 'Regra B: targetPage deve ser a última página (4)');
     assert(decisionB.reason === 'newPage', 'Regra B: reason deve ser "newPage"');
 
     // 7.3 Regra C: Última página coincide mas há novos posts (updated_at > lastTimelineRunTs) -> re-busca da última página
@@ -1089,7 +1089,7 @@ async function runTests() {
     };
     const decisionC1 = decideThreadFetch(threadC1, 2000);
     assert(decisionC1 !== null, 'Regra C: Tópico com lastPage === maxSaved e updated_at > lastTimelineRunTs deve ser marcado para re-busca');
-    assert(decisionC1.targetPage === 1, 'Regra C: targetPage deve ser a página do post principal (1)');
+    assert(decisionC1.targetPage === 3, 'Regra C: targetPage deve ser a última página (3)');
     assert(decisionC1.reason === 'updatedPage', 'Regra C: reason deve ser "updatedPage"');
 
     // 7.3.1 Regra C (variante): updated_at > last_sync_at
@@ -1103,7 +1103,7 @@ async function runTests() {
     };
     const decisionC2 = decideThreadFetch(threadC2, 2000);
     assert(decisionC2 !== null, 'Regra C: Tópico com updated_at > last_sync_at deve ser marcado para re-busca');
-    assert(decisionC2.targetPage === 1, 'Regra C: targetPage deve ser a página do post principal (1)');
+    assert(decisionC2.targetPage === 2, 'Regra C: targetPage deve ser a última página (2)');
     assert(decisionC2.reason === 'updatedPage', 'Regra C: reason deve ser "updatedPage"');
 
     // 7.4 Regra D: Sem novidades (lastPage === maxSaved e updated_at <= lastTimelineRunTs && <= last_sync_at) -> PULA
@@ -1130,7 +1130,7 @@ async function runTests() {
     };
     const decisionUnread = decideThreadFetch(threadUnread, 2000);
     assert(decisionUnread !== null, 'Tópico com unread === true deve ser marcado para busca');
-    assert(decisionUnread.targetPage === 1, 'Tópico unread targetPage deve ser a página do post principal (1)');
+    assert(decisionUnread.targetPage === 2, 'Tópico unread targetPage deve ser a última página (2)');
     assert(decisionUnread.reason === 'unread', 'Tópico unread reason deve ser "unread"');
 
     // 7.5 Deduplicação de posts no DOM e riverSeen
@@ -6156,6 +6156,7 @@ async function runTests() {
         <p id="bareP">
             <a id="bareSaint" href="https://saint2.su/embed/bareTest4">https://saint2.su/embed/bareTest4</a>
             <a id="bareTurbo" href="https://turbo.cr/embed/bareTest5">https://turbo.cr/embed/bareTest5</a>
+            <a id="bareVideo" href="https://turbo.cr/v/mXZR1rnLc_yA2">https://turbo.cr/v/mXZR1rnLc_yA2</a>
             <a id="plainSaint" href="https://saint2.su/d/fileTest6">Download saint2.su file</a>
         </p>
         <div class="bbCodeBlock bbCodeBlock--quote">
@@ -6194,6 +6195,10 @@ async function runTests() {
     assert(container50.querySelector('#bareTurbo') === null, 'Link bare turbo /embed/ deve ter sido substituído por wrapper');
     const ifrFromBareTurbo = container50.querySelector('iframe[src="https://turbo.cr/embed/bareTest5"]');
     assert(ifrFromBareTurbo !== null, 'Iframe deve ser criado para bare turbo link');
+
+    assert(container50.querySelector('#bareVideo') === null, 'Link turbo /v/ deve ter sido substituído por player');
+    const ifrFromVideo = container50.querySelector('iframe[src="https://turbo.cr/embed/mXZR1rnLc_yA2"]');
+    assert(ifrFromVideo !== null, 'Link /v/ deve virar iframe /embed/ do mesmo id');
 
     // Validar link plain saint (sem /embed/) reescrito para turbo.cr sem virar iframe
     const plainSaint = container50.querySelector('#plainSaint');

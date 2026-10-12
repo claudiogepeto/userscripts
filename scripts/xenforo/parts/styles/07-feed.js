@@ -73,11 +73,14 @@
             .smg-fp-loading { position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 60px 0; }   /* position:relative → o .smg-loading (absolute/inset:0) centraliza AQUI, não na viewport */
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
-            .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 76px 24px; text-align: center; }
-            .smg-fp-setup-spin { width: 42px; height: 42px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.13); border-top-color: var(--smg-link, #ff77b2); animation: smg-spin 0.8s linear infinite; }
-            .smg-fp-setup-title { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
-            .smg-fp-setup-sub { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.5); max-width: 340px; font-variant-numeric: tabular-nums; }
-            .smg-fp-setup-bar { width: 220px; max-width: 70vw; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+            .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }
+            .smg-fp-setup-spin { width: 64px; height: 64px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.12); border-top-color: rgba(255,255,255,0.72); animation: smg-spin 0.8s linear infinite; }
+            .smg-fp-setup-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
+            .smg-fp-setup-sub { font-size: 16px; line-height: 1.45; color: rgba(255,255,255,0.62); max-width: 520px; font-variant-numeric: tabular-nums; }
+            .smg-fp-setup-detail { min-height: 1.4em; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,0.42); max-width: 560px; }
+            .smg-fp-setup-bar { width: min(460px, 78vw); height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+            .smg-fp-list { display: flex; flex-direction: column; gap: 22px; }
+            .smg-fp-card { margin: 0; }
             .smg-fp-setup-barfill { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--smg-link, #ff77b2); transition: width .3s ease; }
             /* BOOKMARKS como feed (replace total da lista nativa): some a sidebar da conta + conteúdo a 100% (mata o layout de 2 colunas) */
             html.smg-bm-feed-on .p-body-sideNav,
@@ -147,7 +150,7 @@
             @media (prefers-reduced-motion: reduce) { .smg-fp-card.smg-fp-enter { animation: none; } }
             html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície do SimpCity (igual o post card) */
             /* HEADER: [foto da thread]  ·  tags / nome do tópico / postado por — divisor border-b */
-            .smg-fp-head { display: flex; align-items: flex-start; gap: 14px; padding: 16px 22px 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
+            .smg-fp-head { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
             .smg-fp-thumb--letter { display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c5cff, #c54b8c); }   /* sem thumb / .su morto → inicial do tópico */
@@ -167,7 +170,7 @@
             .smg-fp-dot { color: rgba(255,255,255,0.3); }
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
-            .smg-fp-content { padding: 16px 22px 10px; font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.9); word-break: break-word; }
+            .smg-fp-content { padding: 20px 24px 14px; font-size: 15.5px; line-height: 1.6; color: rgba(255,255,255,0.9); word-break: break-word; }
             .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {

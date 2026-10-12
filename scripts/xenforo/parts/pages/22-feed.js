@@ -27,7 +27,7 @@
     // versão da LÓGICA DE SYNC: bumpar aqui re-varre tudo (zera os marcadores de "thread coberta") SEM apagar
     // os posts já guardados. Use este quando mudar como/até onde buscamos; o DATA_VERSION só quando o FORMATO
     // do post serializado mudar (aí não tem jeito, o cache velho é ilegível).
-    const FEED_SYNC_VERSION = 8;
+    const FEED_SYNC_VERSION = 10;
 
     // fila throttled p/ as buscas (não estoura o flood control do fórum) — usada pelo sync
     const RIVER_CONCURRENCY = 2;
@@ -175,7 +175,7 @@
         }
         let finalTs = Math.floor(Number(ts));
         if (!finalTs || isNaN(finalTs) || finalTs <= 0) {
-            finalTs = Math.floor(Number(meta && meta.lastTs)) || Math.floor(Date.now() / 1000);
+            finalTs = Math.floor(Number(meta && meta.lastTs)) || 0;
         }
         const author = (post.getAttribute('data-author') || '').trim()
             || (((post.querySelector('.message-name .username, .message-name') || {}).textContent) || '').trim();
@@ -207,7 +207,7 @@
         if (typeof timelineContentSkip === 'function' && timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
-        threadTitle = threadTitle.replace(/Avisos.*$/i, '').trim();
+        threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
         if (/^Editar$/i.test(threadTitle) || !threadTitle) {
             const slug = (p.thread_path || p.permalink || '').match(/\/threads\/([^/]+)\./);
             threadTitle = (slug ? slug[1].replace(/[-_]/g, ' ') : '') || i18n('Thread');
@@ -227,11 +227,14 @@
         const head = document.createElement('div'); head.className = 'smg-fp-head';
         const thumbA = document.createElement('a'); thumbA.className = 'smg-fp-thumb'; thumbA.href = permalink;
         const tLetter = ((threadTitle || '?').trim().charAt(0) || '?').toUpperCase();
-        if (threadThumb) {
+        const useLetter = () => { thumbA.replaceChildren(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; };
+        if (threadThumb && !/^data:/i.test(threadThumb)) {
             const im = document.createElement('img'); im.src = threadThumb; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = '';
-            im.addEventListener('error', () => { im.remove(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; });
+            const fail = () => useLetter();
+            im.addEventListener('error', fail);
+            im.addEventListener('load', () => { if (!im.naturalWidth) fail(); });
             thumbA.appendChild(im);
-        } else { thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; }
+        } else useLetter();
         head.appendChild(thumbA);
 
         const meta = document.createElement('div'); meta.className = 'smg-fp-meta';
@@ -466,6 +469,7 @@
                 '<span class="smg-fp-setup-spin"></span>' +
                 '<div class="smg-fp-setup-title">' + i18n('Setting up your feed') + '</div>' +
                 '<div class="smg-fp-setup-sub">' + i18n('Reading the threads you follow…') + '</div>' +
+                '<div class="smg-fp-setup-detail"></div>' +
                 '<div class="smg-fp-setup-bar"><span class="smg-fp-setup-barfill"></span></div>' +
             '</div>';
         markRiverPaintReady();
@@ -474,19 +478,34 @@
     function setupProgress(p) {
         if (!riverList || riverFirstPainted || !p) return;
         const sub = riverList.querySelector('.smg-fp-setup-sub');
+        const detail = riverList.querySelector('.smg-fp-setup-detail');
         const fill = riverList.querySelector('.smg-fp-setup-barfill');
         if (!sub) return;
-        if (p.step === 'following' || (!p.total && p.page)) {
+        if (p.step === 'following' || (!p.total && p.page && !p.thread)) {
             sub.textContent = (IS_PT
-                ? 'Sincronizando tópicos seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
-                : 'Syncing followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (fill) fill.style.width = '20%';
+                ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
+                : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
+            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e timeline ficam separados.' : 'Nothing is marked read. Alerts and the timeline stay separate.';
+            if (fill) fill.style.width = '12%';
             return;
         }
         if (p.total) {
-            sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' ' + (IS_PT ? 'posts' : 'posts');
-            if (fill) fill.style.width = Math.round((p.done / p.total) * 100) + '%';
+            sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' posts';
+            if (detail) {
+                const name = (p.thread || '').replace(/\s+/g, ' ').trim();
+                const pageLabel = p.page ? (IS_PT ? 'página ' + p.page : 'page ' + p.page) : '';
+                detail.textContent = [name, pageLabel].filter(Boolean).join(' · ');
+            }
+            if (fill) fill.style.width = Math.max(8, Math.round((p.done / p.total) * 100)) + '%';
+            if ((p.done >= p.total) || (p.done >= 16 && (p.added || 0) >= 24)) dismissSetup();
         }
+    }
+    function dismissSetup() {
+        if (!riverList || riverFirstPainted) return;
+        const setup = riverList.querySelector('.smg-fp-setup');
+        if (setup) setup.remove();
+        riverFirstPainted = true;
+        renderMore();
     }
     function buildRiver() {
         if (riverBuilt || document.getElementById('smg-river')) return;
@@ -569,6 +588,7 @@
     function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || top[0].ts || 0); }); }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
     function afterSync() {
+        dismissSetup();
         return dbTimelineCount().catch(() => 0).then(count => {
             const emptyMsg = IS_PT
                 ? 'Nenhum post recente encontrado nos seus tópicos seguidos'
@@ -643,12 +663,9 @@
             force: cold,
             onProgress: cold ? setupProgress : null,
             onBatch: addedCount => {
-                if (riverList && addedCount > 0 && riverList.querySelector('.smg-fp-setup')) {
-                    firstPaint();
+                if (riverList && riverFirstPainted && (!riverSeen || !riverSeen.size)) {
                     renderMore();
-                } else if (riverList && (!riverSeen || !riverSeen.size)) {
-                    renderMore();
-                } else if (riverList && addedCount) {
+                } else if (riverList && riverFirstPainted && addedCount) {
                     fetchFreshPosts().then(fresh => {
                         if (fresh.length && riverNearTop()) insertFreshPosts(fresh);
                     });

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.0.0
+// @version      4.0.1
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -1576,13 +1576,27 @@
             .generic2wide-iframe-div {
                 position: relative;
                 width: 100% !important;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;
+                max-width: min(920px, calc(min(42vh, 420px) * 16 / 9)) !important;
+                max-height: min(42vh, 420px) !important;
                 margin: 16px auto !important;
                 display: block !important;
                 aspect-ratio: 16 / 9;
                 overflow: hidden;
                 border-radius: 10px;
                 background: #000;
+            }
+            .bbCodeBlock--unfurl {
+                max-width: 720px;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure,
+            .bbCodeBlock--unfurl .contentRow-figure img,
+            .bbCodeBlock--unfurl img.bbImage {
+                width: 88px !important;
+                height: 88px !important;
+                max-width: 88px !important;
+                max-height: 88px !important;
+                aspect-ratio: 1 !important;
+                object-fit: cover !important;
             }
             .generic2wide-iframe-div.smg-player-loaded,
             span[data-s9e-mediaembed].smg-player-loaded,
@@ -8993,11 +9007,14 @@
             .smg-fp-loading { position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 60px 0; }   /* position:relative → o .smg-loading (absolute/inset:0) centraliza AQUI, não na viewport */
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
-            .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 76px 24px; text-align: center; }
-            .smg-fp-setup-spin { width: 42px; height: 42px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.13); border-top-color: var(--smg-link, #ff77b2); animation: smg-spin 0.8s linear infinite; }
-            .smg-fp-setup-title { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
-            .smg-fp-setup-sub { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.5); max-width: 340px; font-variant-numeric: tabular-nums; }
-            .smg-fp-setup-bar { width: 220px; max-width: 70vw; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+            .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }
+            .smg-fp-setup-spin { width: 64px; height: 64px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.12); border-top-color: rgba(255,255,255,0.72); animation: smg-spin 0.8s linear infinite; }
+            .smg-fp-setup-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
+            .smg-fp-setup-sub { font-size: 16px; line-height: 1.45; color: rgba(255,255,255,0.62); max-width: 520px; font-variant-numeric: tabular-nums; }
+            .smg-fp-setup-detail { min-height: 1.4em; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,0.42); max-width: 560px; }
+            .smg-fp-setup-bar { width: min(460px, 78vw); height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+            .smg-fp-list { display: flex; flex-direction: column; gap: 22px; }
+            .smg-fp-card { margin: 0; }
             .smg-fp-setup-barfill { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--smg-link, #ff77b2); transition: width .3s ease; }
             /* BOOKMARKS como feed (replace total da lista nativa): some a sidebar da conta + conteúdo a 100% (mata o layout de 2 colunas) */
             html.smg-bm-feed-on .p-body-sideNav,
@@ -9067,7 +9084,7 @@
             @media (prefers-reduced-motion: reduce) { .smg-fp-card.smg-fp-enter { animation: none; } }
             html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície do SimpCity (igual o post card) */
             /* HEADER: [foto da thread]  ·  tags / nome do tópico / postado por — divisor border-b */
-            .smg-fp-head { display: flex; align-items: flex-start; gap: 14px; padding: 16px 22px 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
+            .smg-fp-head { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
             .smg-fp-thumb--letter { display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c5cff, #c54b8c); }   /* sem thumb / .su morto → inicial do tópico */
@@ -9087,7 +9104,7 @@
             .smg-fp-dot { color: rgba(255,255,255,0.3); }
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
-            .smg-fp-content { padding: 16px 22px 10px; font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.9); word-break: break-word; }
+            .smg-fp-content { padding: 20px 24px 14px; font-size: 15.5px; line-height: 1.6; color: rgba(255,255,255,0.9); word-break: break-word; }
             .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {
@@ -10257,7 +10274,7 @@
         if (!rootEl) return { title: fallbackTitle || '', prefixesHtml: '' };
         const clone = rootEl.cloneNode(true);
         // Remove avisos injetados, botões de ação e scripts
-        clone.querySelectorAll('.smg-notices, .smg-notices-collapse, .p-title-pageAction, .button, .action, .menu, .contentRow-badge, .contentRow-extra, .contentRow-actions, script, style, noscript').forEach(el => el.remove());
+        clone.querySelectorAll('.smg-notices, .smg-notices-collapse, .p-title-pageAction, .button, .action, .menu, .contentRow-badge, .contentRow-extra, .contentRow-actions, .tagList, .js-tagList, .p-title-tagList, .tagList-icon, .structItem-tags, script, style, noscript').forEach(el => el.remove());
 
         const PREFIX_SEL = 'a.labelLink, .label, .prefix, [class*="label--"], [class*="prefix"]';
         const seenTexts = new Set();
@@ -10279,6 +10296,7 @@
         // Remove prefixos acidentais ou ações vazadas
         title = title.replace(/^(?:Post in thread\s*|Mensagem no tópico\s*|Post no tópico\s*|Mensagem\s*|Tópico\s*|Thread\s*|Edit\s*|Editar\s*)+/i, '')
                      .replace(/Avisos.*$/i, '')
+                     .replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '')
                      .replace(/^['"‘’“”]+|['"‘’“”]+$/g, '')
                      .trim();
         return { title: title || fallbackTitle || '', prefixesHtml: prefixesHtml };
@@ -21964,7 +21982,7 @@
 
                 if (syncPages) {
                     if (!timeline_skip && (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at))) {
-                        syncCandidates.push({ thread: item, page: 1 });
+                        syncCandidates.push({ thread: item, page: last_page });
                     }
                 }
             });
@@ -23577,32 +23595,21 @@
         });
 
         const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        const refreshAlertsRail = () => {
+            const st = aldockState && aldockState.alerts;
+            if (st) {
+                st.busy = false;
+                st.lastFetch = 0;
+            }
+            railRefresh('alerts', true);
+        };
         const dropUnreadAlert = li => {
             if (!li || !li.classList || !li.classList.contains('is-unread')) return;
             const href = li.dataset.smgMark || '';
-            const ol = li.parentElement;
-            li.remove();
-            if (ol) {
-                ol.querySelectorAll('.smg-al-section').forEach(header => {
-                    const next = header.nextElementSibling;
-                    if (!next || next.classList.contains('smg-al-section')) header.remove();
-                });
+            if (!href || (typeof window !== 'undefined' && window.__TEST_MODE__)) {
+                refreshAlertsRail();
+                return;
             }
-            const st = aldockState && aldockState.alerts;
-            if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-            const nav = document.querySelector('.p-navgroup-link--alerts');
-            if (nav) {
-                const base = nav.hasAttribute('data-badge')
-                    ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0)
-                    : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
-                const n = Math.max(0, base - 1);
-                gmSet('smg-alerts-count', String(n));
-                if (n > 0) nav.setAttribute('data-badge', String(n));
-                else nav.removeAttribute('data-badge');
-            }
-            aldockSyncCount();
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
-            if (!href) return;
             const csrf = document.documentElement.getAttribute('data-csrf')
                 || (document.querySelector('input[name="_xfToken"]') || {}).value
                 || (window.XF && window.XF.config && window.XF.config.csrf) || '';
@@ -23611,7 +23618,7 @@
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                 body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
-            }).catch(() => {});
+            }).catch(() => {}).finally(refreshAlertsRail);
         };
         if (alertsBody) {
             alertsBody.addEventListener('click', e => {
@@ -23633,9 +23640,6 @@
                         try {
                             inPagePost.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         } catch (err) {}
-                        if (typeof armScrollStabilizer === 'function') {
-                            armScrollStabilizer(inPagePost);
-                        }
                         try {
                             history.replaceState(null, '', '#post-' + pid);
                         } catch (err) {}
@@ -25409,38 +25413,38 @@
             }
         });
 
-        // 2. UNFURL CARDS com /embed/
-        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="/embed/"]:not([data-tb-done])', unfurl => {
-            unfurl.dataset.tbDone = '1';
-            const dataUrl = unfurl.getAttribute('data-url') || '';
-            const m = dataUrl.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
-            if (!m) return;
-            const id = m[1];
+        // Página /v/ID e embed /embed/ID são o mesmo vídeo. O player é sempre o iframe /embed/.
+        const TB_MEDIA_RE = /(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:embed|v)\/([a-zA-Z0-9_-]+)/i;
+        const turboPlayer = id => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
+            wrapper.className = 'generic2wide-iframe-div';
             wrapper.dataset.tbDone = '1';
-            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
-            unfurl.replaceWith(wrapper);
+            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;"></iframe>';
+            return wrapper;
+        };
+
+        // 2. UNFURL CARDS com /embed/ ou /v/
+        eachIn(roots, '.bbCodeBlock--unfurl[data-url*="turbo.cr/"]:not([data-tb-done]), .bbCodeBlock--unfurl[data-url*="saint"]:not([data-tb-done])', unfurl => {
+            const dataUrl = unfurl.getAttribute('data-url') || '';
+            const m = dataUrl.match(TB_MEDIA_RE);
+            if (!m) return;
+            unfurl.dataset.tbDone = '1';
+            unfurl.replaceWith(turboPlayer(m[1]));
         });
 
-        // 3. BARE LINKS com /embed/
-        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done])', link => {
-            link.dataset.tbDone = '1';
+        // 3. LINKS crus com /embed/ ou /v/
+        eachIn(roots, 'a[href*="/embed/"]:not([data-tb-done]), a[href*="turbo.cr/v/"]:not([data-tb-done]), a[href*="saint2.su/v/"]:not([data-tb-done]), a[href*="saint.su/v/"]:not([data-tb-done]), a[href*="saint2.cr/v/"]:not([data-tb-done]), a[href*="saint.cr/v/"]:not([data-tb-done]), a[href*="saint.to/v/"]:not([data-tb-done]), a[href*="saint2.to/v/"]:not([data-tb-done])', link => {
             if (link.closest('.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-fhcard, .smg-turbo-fallback, .generic2wide-iframe-div, .smg-rg')) return;
             if (link.querySelector('img')) return;
             const unfurl = link.closest('.bbCodeBlock--unfurl');
             if (unfurl && unfurl.dataset.tbDone === '1') return;
             const href = resolveProxyHref(link.getAttribute('href') || link.href || '');
-            const m = href.match(/(?:https?:)?\/\/(?:[a-z0-9-]+\.)?(?:turbo\.cr|saint2?\.(?:su|to|cr))\/embed\/([a-zA-Z0-9_-]+)/i);
+            const m = href.match(TB_MEDIA_RE);
             if (!m) return;
-            const id = m[1];
-            const wrapper = document.createElement('div');
-            wrapper.className = 'generic2wide-iframe-div smg-player-loaded';
-            wrapper.dataset.tbDone = '1';
-            wrapper.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '" loading="lazy" allow="fullscreen;" style="border:none;" height="auto" width="auto"></iframe>';
+            link.dataset.tbDone = '1';
             const target = unfurl || link;
             target.dataset.tbDone = '1';
-            target.replaceWith(wrapper);
+            target.replaceWith(turboPlayer(m[1]));
         });
 
         // 4. Demais links saint -> turbo.cr
@@ -26712,7 +26716,7 @@
 
     function timelineContentSkip(parts) {
         const bag = (parts || []).filter(Boolean).join(' ');
-        return /\b(discussions?|off[\s-]*topic|requests?|megathreads?|self[\s-]*promotion|bate[\s-]*papo|tutoriais|ajuda|forum guides|debates?)\b/i.test(bag);
+        return /\b(discussions?|off[\s-]*topic|megathreads?|bate[\s-]*papo|tutoriais|ajuda|forum guides|debates?)\b/i.test(bag);
     }
 
     function timelineForumBag(doc) {
@@ -26723,7 +26727,15 @@
     function timelineMainElements(postEls) {
         const list = (postEls || []).filter(p => isThreadPostElement(p)
             && !(p.closest && p.closest('.message-responses, .js-messageResponses, .js-commentsList, .comment, .message-responseRow')));
-        return list.length ? [list[0]] : [];
+        return list;
+    }
+
+    const TIMELINE_PAGE_CAP = 5;
+
+    function timelineKeepPages(lastPage, saved) {
+        const last = Math.max(1, lastPage || 1);
+        const floor = Math.max(1, last - TIMELINE_PAGE_CAP + 1);
+        return Array.from(new Set(saved || [])).filter(n => n >= floor && n <= last).sort((a, b) => a - b);
     }
     const currentThreadIngestInflight = new Map();
     const currentThreadIngestSignatures = new Map();
@@ -26765,10 +26777,6 @@
         let rawHref = (canon && canon.getAttribute('href')) || location.href;
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
-
-        if (typeof dbFollowedMarkSeen === 'function') {
-            dbFollowedMarkSeen(path).catch(() => {});
-        }
 
         // Check date order: skip if user is sorting by reactions
         const isDateOrder = !/[?&]order=reaction/i.test(location.search);
@@ -26833,7 +26841,8 @@
 
             const meta = { title: threadTitle, prefixesHtml: prefixesHtml, thumb: thumb, lastTs: Math.floor(Date.now() / 1000) };
 
-            if (currentPage !== 1) return 0;
+            const knownLast = Math.max(lastPage, currentPage, maxPageOnDom);
+            if (currentPage < Math.max(1, knownLast - TIMELINE_PAGE_CAP + 1)) return 0;
             if (timelineContentSkip(timelineForumBag(document).concat(prefixesHtml))) return 0;
             const postEls = timelineMainElements(Array.from(document.querySelectorAll('article.message--post, .message--post')))
                 .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
@@ -26852,8 +26861,7 @@
                 seenPostIds.add(pid);
 
                 let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = now;
-                finalTs = Math.max(finalTs, (stored && stored.forum_activity_ts) || 0);
+                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -26865,6 +26873,7 @@
                     author: p.author || '',
                     author_href: p.authorHref || '',
                     created_at: finalTs,
+                    page_num: currentPage,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (path + '#post-' + p.postId),
                     media_urls: mediaUrls,
@@ -26874,8 +26883,8 @@
             });
 
             // Update saved_pages
-            const nextSavedPages = Array.from(new Set([...savedPages, currentPage])).sort((a, b) => a - b);
             const nextLastPage = Math.max(lastPage, currentPage, maxPageOnDom);
+            const nextSavedPages = timelineKeepPages(nextLastPage, [...savedPages, currentPage]);
 
             const followedRec = {
                 path: path,
@@ -26890,7 +26899,7 @@
                 last_page: nextLastPage,
                 saved_pages: nextSavedPages,
                 last_sync_at: now,
-                unread: false,
+                unread: !!(stored && stored.unread),
                 timeline_skip: false
             };
 
@@ -26918,7 +26927,6 @@
                 thread.last_sync_at = Math.floor(Date.now() / 1000);
                 return dbFollowedUpsert(thread).then(() => 0);
             }
-            if (pageNum !== 1) return 0;
             const postEls = timelineMainElements(Array.from(doc.querySelectorAll('article.message--post, .message--post')))
                 .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
 
@@ -26937,8 +26945,7 @@
                 seenPostIds.add(pid);
 
                 let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) finalTs = thread.updated_at || now;
-                finalTs = Math.max(finalTs, thread.forum_activity_ts || 0);
+                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
                 const mediaUrls = p.mediaUrls || [];
@@ -26950,6 +26957,7 @@
                     author: p.author || '',
                     author_href: p.authorHref || '',
                     created_at: finalTs,
+                    page_num: pageNum,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (thread.path + '#post-' + p.postId),
                     media_urls: mediaUrls,
@@ -26965,19 +26973,16 @@
                 if (m) docMaxPage = Math.max(docMaxPage, parseInt(m[1], 10) || 1);
             });
 
-            const nextSavedPages = Array.from(new Set([...(thread.saved_pages || []), pageNum])).sort((a, b) => a - b);
             const nextLastPage = Math.max(thread.last_page || 1, pageNum, docMaxPage);
+            const nextSavedPages = timelineKeepPages(nextLastPage, [...(thread.saved_pages || []), pageNum]);
 
             const prevUpdatedAt = thread.updated_at || 0;
             thread.saved_pages = nextSavedPages;
             thread.last_page = nextLastPage;
             thread.last_sync_at = Math.max(thread.last_sync_at || 0, maxPostTs, thread.forum_activity_ts || 0, thread.updated_at || 0);
             thread.updated_at = Math.max(thread.updated_at || 0, maxPostTs);
-            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) {
-                thread.unread = true;
-            } else if (!prevUpdatedAt) {
-                thread.unread = false;
-            }
+            if (prevUpdatedAt > 0 && maxPostTs > prevUpdatedAt) thread.unread = true;
+            else if (thread.unread == null) thread.unread = false;
 
             return dbTimelinePutPosts(timelinePosts)
                 .then(() => dbFollowedUpsert(thread))
@@ -26987,23 +26992,33 @@
 
     function decideThreadFetch(thread, lastTimelineRunTs) {
         if (!thread || thread.timeline_skip) return null;
-        const saved = Array.isArray(thread.saved_pages) ? thread.saved_pages : [];
-        const maxSaved = saved.length ? Math.max(...saved) : 0;
-        const lastPage = thread.last_page || 1;
+        const lastPage = Math.max(1, thread.last_page || 1);
+        const saved = timelineKeepPages(lastPage, thread.saved_pages);
+        const freshFloor = Math.max(1, lastPage - 1);
+        const capFloor = Math.max(1, lastPage - TIMELINE_PAGE_CAP + 1);
+        const missingFresh = [];
+        for (let p = lastPage; p >= freshFloor; p--) {
+            if (saved.indexOf(p) === -1) missingFresh.push(p);
+        }
         const lastActivity = thread.forum_activity_ts || thread.updated_at || 0;
         const lastSync = thread.last_sync_at || 0;
         const isUnread = Boolean(thread.unread);
-
-        const isNew = maxSaved === 0;
-        const hasNewPage = lastPage > maxSaved;
         const hasSamePageUpdates = isUnread || (lastActivity > lastSync) || (lastActivity > (lastTimelineRunTs || 0));
+        const maxSaved = saved.length ? Math.max.apply(null, saved) : 0;
 
-        if (isNew || hasNewPage || hasSamePageUpdates) {
+        if (!saved.length) return { thread: thread, targetPage: lastPage, reason: 'new' };
+        if (missingFresh.length) {
             return {
                 thread: thread,
-                targetPage: 1,
-                reason: isNew ? 'new' : (hasNewPage ? 'newPage' : (isUnread ? 'unread' : 'updatedPage'))
+                targetPage: missingFresh[0],
+                reason: lastPage > maxSaved ? 'newPage' : 'backfill'
             };
+        }
+        if (hasSamePageUpdates) {
+            return { thread: thread, targetPage: lastPage, reason: isUnread ? 'unread' : 'updatedPage' };
+        }
+        for (let p = freshFloor - 1; p >= capFloor; p--) {
+            if (saved.indexOf(p) === -1) return { thread: thread, targetPage: p, reason: 'backfill' };
         }
         return null;
     }
@@ -27132,7 +27147,7 @@
                     }
                 });
 
-                const queue = threadsToFetch.slice(0, 8);
+                const queue = opts.force ? threadsToFetch : threadsToFetch.slice(0, 8);
                 console.log('[SMG Timeline] ' + allFollowed.length + ' seguidos no banco | ' + queue.length + ' tópicos com atualizações para buscar');
                 if (!queue.length) {
                     return dbMetaSet('lastTimelineRunTs', now).then(() => 0);
@@ -27152,7 +27167,31 @@
                 queue.forEach((item, idx) => {
                     p = p.then(() => {
                         if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
-                        return syncThreadPage(item.thread, item.targetPage).then(n => {
+                        const pages = [item.targetPage];
+                        if (item.reason === 'new' && item.targetPage > 1) pages.push(item.targetPage - 1);
+                        let chain = Promise.resolve(0);
+                        pages.forEach((pageNum, pageIdx) => {
+                            chain = chain.then(prev => {
+                                if (opts.onProgress) {
+                                    try {
+                                        opts.onProgress({
+                                            step: 'posts',
+                                            added: added,
+                                            done: done,
+                                            total: total,
+                                            thread: item.thread.thread_name || item.thread.path || '',
+                                            page: pageNum,
+                                            reason: item.reason || ''
+                                        });
+                                    } catch (e) {}
+                                }
+                                return syncThreadPage(item.thread, pageNum).then(n => {
+                                    if (pageIdx < pages.length - 1) return new Promise(res => setTimeout(() => res((prev || 0) + (n || 0)), delayMs));
+                                    return (prev || 0) + (n || 0);
+                                });
+                            });
+                        });
+                        return chain.then(n => {
                             if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
                             added += (n || 0);
                             done++;
@@ -27248,7 +27287,7 @@
     // versão da LÓGICA DE SYNC: bumpar aqui re-varre tudo (zera os marcadores de "thread coberta") SEM apagar
     // os posts já guardados. Use este quando mudar como/até onde buscamos; o DATA_VERSION só quando o FORMATO
     // do post serializado mudar (aí não tem jeito, o cache velho é ilegível).
-    const FEED_SYNC_VERSION = 8;
+    const FEED_SYNC_VERSION = 10;
 
     // fila throttled p/ as buscas (não estoura o flood control do fórum) — usada pelo sync
     const RIVER_CONCURRENCY = 2;
@@ -27396,7 +27435,7 @@
         }
         let finalTs = Math.floor(Number(ts));
         if (!finalTs || isNaN(finalTs) || finalTs <= 0) {
-            finalTs = Math.floor(Number(meta && meta.lastTs)) || Math.floor(Date.now() / 1000);
+            finalTs = Math.floor(Number(meta && meta.lastTs)) || 0;
         }
         const author = (post.getAttribute('data-author') || '').trim()
             || (((post.querySelector('.message-name .username, .message-name') || {}).textContent) || '').trim();
@@ -27428,7 +27467,7 @@
         if (typeof timelineContentSkip === 'function' && timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
-        threadTitle = threadTitle.replace(/Avisos.*$/i, '').trim();
+        threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
         if (/^Editar$/i.test(threadTitle) || !threadTitle) {
             const slug = (p.thread_path || p.permalink || '').match(/\/threads\/([^/]+)\./);
             threadTitle = (slug ? slug[1].replace(/[-_]/g, ' ') : '') || i18n('Thread');
@@ -27448,11 +27487,14 @@
         const head = document.createElement('div'); head.className = 'smg-fp-head';
         const thumbA = document.createElement('a'); thumbA.className = 'smg-fp-thumb'; thumbA.href = permalink;
         const tLetter = ((threadTitle || '?').trim().charAt(0) || '?').toUpperCase();
-        if (threadThumb) {
+        const useLetter = () => { thumbA.replaceChildren(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; };
+        if (threadThumb && !/^data:/i.test(threadThumb)) {
             const im = document.createElement('img'); im.src = threadThumb; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = '';
-            im.addEventListener('error', () => { im.remove(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; });
+            const fail = () => useLetter();
+            im.addEventListener('error', fail);
+            im.addEventListener('load', () => { if (!im.naturalWidth) fail(); });
             thumbA.appendChild(im);
-        } else { thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; }
+        } else useLetter();
         head.appendChild(thumbA);
 
         const meta = document.createElement('div'); meta.className = 'smg-fp-meta';
@@ -27687,6 +27729,7 @@
                 '<span class="smg-fp-setup-spin"></span>' +
                 '<div class="smg-fp-setup-title">' + i18n('Setting up your feed') + '</div>' +
                 '<div class="smg-fp-setup-sub">' + i18n('Reading the threads you follow…') + '</div>' +
+                '<div class="smg-fp-setup-detail"></div>' +
                 '<div class="smg-fp-setup-bar"><span class="smg-fp-setup-barfill"></span></div>' +
             '</div>';
         markRiverPaintReady();
@@ -27695,19 +27738,34 @@
     function setupProgress(p) {
         if (!riverList || riverFirstPainted || !p) return;
         const sub = riverList.querySelector('.smg-fp-setup-sub');
+        const detail = riverList.querySelector('.smg-fp-setup-detail');
         const fill = riverList.querySelector('.smg-fp-setup-barfill');
         if (!sub) return;
-        if (p.step === 'following' || (!p.total && p.page)) {
+        if (p.step === 'following' || (!p.total && p.page && !p.thread)) {
             sub.textContent = (IS_PT
-                ? 'Sincronizando tópicos seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
-                : 'Syncing followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (fill) fill.style.width = '20%';
+                ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
+                : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
+            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e timeline ficam separados.' : 'Nothing is marked read. Alerts and the timeline stay separate.';
+            if (fill) fill.style.width = '12%';
             return;
         }
         if (p.total) {
-            sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' ' + (IS_PT ? 'posts' : 'posts');
-            if (fill) fill.style.width = Math.round((p.done / p.total) * 100) + '%';
+            sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' posts';
+            if (detail) {
+                const name = (p.thread || '').replace(/\s+/g, ' ').trim();
+                const pageLabel = p.page ? (IS_PT ? 'página ' + p.page : 'page ' + p.page) : '';
+                detail.textContent = [name, pageLabel].filter(Boolean).join(' · ');
+            }
+            if (fill) fill.style.width = Math.max(8, Math.round((p.done / p.total) * 100)) + '%';
+            if ((p.done >= p.total) || (p.done >= 16 && (p.added || 0) >= 24)) dismissSetup();
         }
+    }
+    function dismissSetup() {
+        if (!riverList || riverFirstPainted) return;
+        const setup = riverList.querySelector('.smg-fp-setup');
+        if (setup) setup.remove();
+        riverFirstPainted = true;
+        renderMore();
     }
     function buildRiver() {
         if (riverBuilt || document.getElementById('smg-river')) return;
@@ -27790,6 +27848,7 @@
     function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || top[0].ts || 0); }); }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
     function afterSync() {
+        dismissSetup();
         return dbTimelineCount().catch(() => 0).then(count => {
             const emptyMsg = IS_PT
                 ? 'Nenhum post recente encontrado nos seus tópicos seguidos'
@@ -27864,12 +27923,9 @@
             force: cold,
             onProgress: cold ? setupProgress : null,
             onBatch: addedCount => {
-                if (riverList && addedCount > 0 && riverList.querySelector('.smg-fp-setup')) {
-                    firstPaint();
+                if (riverList && riverFirstPainted && (!riverSeen || !riverSeen.size)) {
                     renderMore();
-                } else if (riverList && (!riverSeen || !riverSeen.size)) {
-                    renderMore();
-                } else if (riverList && addedCount) {
+                } else if (riverList && riverFirstPainted && addedCount) {
                     fetchFreshPosts().then(fresh => {
                         if (fresh.length && riverNearTop()) insertFreshPosts(fresh);
                     });
@@ -28755,9 +28811,6 @@
                 try {
                     target.scrollIntoView({ block: 'start', behavior: 'instant' });
                 } catch (e) {}
-                if (typeof armScrollStabilizer === 'function') {
-                    armScrollStabilizer(target);
-                }
             }
         };
         const waitForStableFrames = framesLeft => {
@@ -28820,7 +28873,7 @@
             if (url.pathname + url.search === location.pathname + location.search) return;
 
             // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
-            if (typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+            if (document.documentElement.classList.contains('smg-thread') && typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
                 const pid = resolvePostIdFromHref(href);
                 if (pid && findPostElementById(pid)) return;
             }
@@ -29261,19 +29314,14 @@
         const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
         if (!post) return;
         safe(processAll, [post]);   // a mídia do post VISÍVEL monta antes do scan completo
+        if (document.documentElement.classList.contains('smg-page-pending')) return;
         try {
             post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
-        safe(armScrollStabilizer, post);
     }
     // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
     function pinRestoredPost() {
-        if (!cls.contains('smg-thread') || (location.hash || '').length > 1 || window.scrollY < 80) return;
-        const posts = document.querySelectorAll('article.message');
-        for (const post of posts) {
-            const r = post.getBoundingClientRect();
-            if (r.bottom > 70) { safe(armScrollStabilizer, post); return; }
-        }
+        // O loading da página segura o layout. Não prender o scroll num observer.
     }
 
     function resolvePostIdFromHref(href) {
@@ -29310,6 +29358,7 @@
         const a = e.target && e.target.closest && e.target.closest('a[href]');
         if (!a) return;
         const href = a.getAttribute('href') || a.href || '';
+        if (!document.documentElement.classList.contains('smg-thread')) return;
         const pid = resolvePostIdFromHref(href);
         if (!pid) return;
         const postEl = findPostElementById(pid);
@@ -29321,9 +29370,6 @@
             try {
                 postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (err) {}
-            if (typeof armScrollStabilizer === 'function') {
-                armScrollStabilizer(postEl);
-            }
             try {
                 history.replaceState(null, '', '#post-' + pid);
             } catch (err) {}
@@ -29335,8 +29381,8 @@
     document.addEventListener('click', handleInPagePostClick);
     window.addEventListener('hashchange', () => {
         const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
-        if (target && typeof armScrollStabilizer === 'function') {
-            armScrollStabilizer(target);
+        if (target && !document.documentElement.classList.contains('smg-page-pending')) {
+            try { target.scrollIntoView({ block: 'start', behavior: 'instant' }); } catch (err) {}
         }
     });
     // ===== FASE 2 (DOM pronto): re-detecta (DOM) + monta os componentes (topbar/dock/filter bar) =====
@@ -29461,7 +29507,10 @@
             }
             resetSwappedPage();
             detectPageClasses();
-            if (feedViewWanted()) cls.add('smg-watched-feed');
+            cls.toggle('smg-watched-feed', feedViewWanted());
+            if (!feedViewWanted()) {
+                document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
+            }
             const staleSkeleton = document.getElementById('smg-page-skeleton');
             const staleHomeSkeleton = document.getElementById('smg-home-skeleton');
             if (staleSkeleton) staleSkeleton.remove();

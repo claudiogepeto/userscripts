@@ -752,32 +752,21 @@
         });
 
         const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        const refreshAlertsRail = () => {
+            const st = aldockState && aldockState.alerts;
+            if (st) {
+                st.busy = false;
+                st.lastFetch = 0;
+            }
+            railRefresh('alerts', true);
+        };
         const dropUnreadAlert = li => {
             if (!li || !li.classList || !li.classList.contains('is-unread')) return;
             const href = li.dataset.smgMark || '';
-            const ol = li.parentElement;
-            li.remove();
-            if (ol) {
-                ol.querySelectorAll('.smg-al-section').forEach(header => {
-                    const next = header.nextElementSibling;
-                    if (!next || next.classList.contains('smg-al-section')) header.remove();
-                });
+            if (!href || (typeof window !== 'undefined' && window.__TEST_MODE__)) {
+                refreshAlertsRail();
+                return;
             }
-            const st = aldockState && aldockState.alerts;
-            if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-            const nav = document.querySelector('.p-navgroup-link--alerts');
-            if (nav) {
-                const base = nav.hasAttribute('data-badge')
-                    ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0)
-                    : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
-                const n = Math.max(0, base - 1);
-                gmSet('smg-alerts-count', String(n));
-                if (n > 0) nav.setAttribute('data-badge', String(n));
-                else nav.removeAttribute('data-badge');
-            }
-            aldockSyncCount();
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
-            if (!href) return;
             const csrf = document.documentElement.getAttribute('data-csrf')
                 || (document.querySelector('input[name="_xfToken"]') || {}).value
                 || (window.XF && window.XF.config && window.XF.config.csrf) || '';
@@ -786,7 +775,7 @@
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                 body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
-            }).catch(() => {});
+            }).catch(() => {}).finally(refreshAlertsRail);
         };
         if (alertsBody) {
             alertsBody.addEventListener('click', e => {
@@ -808,9 +797,6 @@
                         try {
                             inPagePost.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         } catch (err) {}
-                        if (typeof armScrollStabilizer === 'function') {
-                            armScrollStabilizer(inPagePost);
-                        }
                         try {
                             history.replaceState(null, '', '#post-' + pid);
                         } catch (err) {}

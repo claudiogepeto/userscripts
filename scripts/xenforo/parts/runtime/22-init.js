@@ -376,19 +376,14 @@
         const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
         if (!post) return;
         safe(processAll, [post]);   // a mídia do post VISÍVEL monta antes do scan completo
+        if (document.documentElement.classList.contains('smg-page-pending')) return;
         try {
             post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
-        safe(armScrollStabilizer, post);
     }
     // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
     function pinRestoredPost() {
-        if (!cls.contains('smg-thread') || (location.hash || '').length > 1 || window.scrollY < 80) return;
-        const posts = document.querySelectorAll('article.message');
-        for (const post of posts) {
-            const r = post.getBoundingClientRect();
-            if (r.bottom > 70) { safe(armScrollStabilizer, post); return; }
-        }
+        // O loading da página segura o layout. Não prender o scroll num observer.
     }
 
     function resolvePostIdFromHref(href) {
@@ -425,6 +420,7 @@
         const a = e.target && e.target.closest && e.target.closest('a[href]');
         if (!a) return;
         const href = a.getAttribute('href') || a.href || '';
+        if (!document.documentElement.classList.contains('smg-thread')) return;
         const pid = resolvePostIdFromHref(href);
         if (!pid) return;
         const postEl = findPostElementById(pid);
@@ -436,9 +432,6 @@
             try {
                 postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (err) {}
-            if (typeof armScrollStabilizer === 'function') {
-                armScrollStabilizer(postEl);
-            }
             try {
                 history.replaceState(null, '', '#post-' + pid);
             } catch (err) {}
@@ -450,8 +443,8 @@
     document.addEventListener('click', handleInPagePostClick);
     window.addEventListener('hashchange', () => {
         const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
-        if (target && typeof armScrollStabilizer === 'function') {
-            armScrollStabilizer(target);
+        if (target && !document.documentElement.classList.contains('smg-page-pending')) {
+            try { target.scrollIntoView({ block: 'start', behavior: 'instant' }); } catch (err) {}
         }
     });
     // ===== FASE 2 (DOM pronto): re-detecta (DOM) + monta os componentes (topbar/dock/filter bar) =====
@@ -576,7 +569,10 @@
             }
             resetSwappedPage();
             detectPageClasses();
-            if (feedViewWanted()) cls.add('smg-watched-feed');
+            cls.toggle('smg-watched-feed', feedViewWanted());
+            if (!feedViewWanted()) {
+                document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
+            }
             const staleSkeleton = document.getElementById('smg-page-skeleton');
             const staleHomeSkeleton = document.getElementById('smg-home-skeleton');
             if (staleSkeleton) staleSkeleton.remove();
