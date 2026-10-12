@@ -35,10 +35,12 @@
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
                 #smg-search-pop {
-                    position: fixed !important; inset: 0 !important;
-                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+                    position: fixed !important; inset: auto !important;
+                    top: var(--smg-kb-top, 0px) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
                     width: 100vw !important; max-width: 100vw !important;
-                    height: 100dvh !important; max-height: 100dvh !important;
+                    /* --smg-kb-h vem do visualViewport: com o teclado aberto o sheet encolhe
+                       até a área visível e o input (order 3) fica acima do teclado */
+                    height: var(--smg-kb-h, 100dvh) !important; max-height: var(--smg-kb-h, 100dvh) !important;
                     padding: calc(10px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom)) 16px !important;
                     border: none !important; border-radius: 0 !important;
                     box-sizing: border-box !important;
@@ -47,6 +49,7 @@
                     transition: transform .32s cubic-bezier(.2,.85,.25,1), opacity .2s ease;
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
+                #smg-search-pop.is-kb { padding-bottom: 12px !important; }
                 #smg-search-pop::before { display: none !important; }
 
                 /* Barra de busca na BASE (thumb-friendly) colada aos filtros */

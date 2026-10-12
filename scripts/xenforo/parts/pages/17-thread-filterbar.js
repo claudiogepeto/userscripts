@@ -1239,7 +1239,7 @@
         const w = IS_PT ? (n === 1 ? 'reação' : 'reações') : (n === 1 ? 'reaction' : 'reactions');
         el.textContent = '';
         const num = document.createElement('span'); num.className = 'smg-react-num'; num.textContent = smgKNum(n);
-        const word = document.createElement('span'); word.className = 'smg-react-w'; word.textContent = ' ' + w;
+        const word = document.createElement('span'); word.className = 'smg-react-w'; word.textContent = w;
         el.append(num, word);
     }
     function smgPostReactionCount(post) {   // SÓ as reações do POST: a .reactionsBar dele. NÃO somar comentários (usam .comment-reactions) — era o "React 6"
@@ -1385,8 +1385,12 @@
 
         // ---------- ACTION BAR ----------
         const bar = document.createElement('div'); bar.className = 'smg-pc-actions';
-        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]');
-        if (react) {
+        const react = (footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]'))
+            || post.querySelector('.message-footer .actionBar-action--reaction, .message-actionBar [data-xf-click="reaction"], a[href*="/react"]');
+        if (react && !react.closest('.bbWrapper, .comment, .message-responses')) {
+            react.classList.remove('u-hidden', 'is-hidden');
+            react.hidden = false;
+            react.style.removeProperty('display');
             react.classList.add('smg-pc-act', 'smg-pc-act--react');
             // CONTADOR: ícone limpo (thumbs-up) + "N reações". O visual nativo (sprite/<i>/emoji/"React" = a "asa" torta) fica escondido via CSS.
             const ic = document.createElement('span'); ic.className = 'smg-pc-react-ic'; ic.innerHTML = svgIcon(SMG_ICO.thumb);
@@ -1403,13 +1407,36 @@
             smgWrapNativeLabel(commentBtn);         // texto solto → span, pra virar icon-only no celular
             bar.appendChild(commentBtn);
         }
-        const save = attribution && attribution.querySelector('a.bookmarkLink');
+        // XF 2.2+ coloca o bookmark na action bar (.actionBar-action--bookmark). A action bar
+        // inteira é escondida depois, então procurar só em .message-attribution deixa o botão
+        // invisível. UI.X antigo ainda usa a.bookmarkLink na atribuição — os dois entram.
+        const saveSel = 'a.bookmarkLink, .actionBar-action--bookmark, [data-xf-click="bookmark-click"]';
+        let save = (footerBar && footerBar.querySelector(saveSel))
+            || (attribution && attribution.querySelector(saveSel));
+        if (!save) {
+            const extra = post.querySelector(saveSel);
+            if (extra && !extra.closest('.bbWrapper, .menu, .overlay')) save = extra;
+        }
         if (save) {
             save.classList.add('smg-pc-act', 'smg-pc-act--save');
             smgSwapIcon(save, ICONS.save);
             smgActLabel(save, 'Save');
             save.title = IS_PT ? 'Salvar post nos favoritos' : 'Bookmark this post';
             save.setAttribute('aria-label', save.title);
+            const paintSaved = () => {
+                const on = save.classList.contains('is-bookmarked');
+                const svg = save.querySelector('svg');
+                if (svg) svg.style.setProperty('fill', on ? 'currentColor' : 'none', 'important');
+                const lbl = save.querySelector('.smg-pc-act-lbl');
+                if (lbl) lbl.textContent = i18n(on ? 'Saved state' : 'Save');
+                const tip = on
+                    ? (IS_PT ? 'Post salvo' : 'Post saved')
+                    : (IS_PT ? 'Salvar post nos favoritos' : 'Bookmark this post');
+                save.title = tip;
+                save.setAttribute('aria-label', tip);
+            };
+            paintSaved();
+            new MutationObserver(paintSaved).observe(save, { attributes: true, attributeFilter: ['class'] });
             bar.appendChild(save);
         }
         const translate = footerBar && footerBar.querySelector('.smgTranslator-btn');

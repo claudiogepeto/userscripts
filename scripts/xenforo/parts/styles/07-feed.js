@@ -93,6 +93,19 @@
                 grid-template-columns: none !important;
                 gap: 0 !important;
             }
+            html.smg-bm-feed-on .p-body-header,
+            html.smg-bm-feed-on .p-breadcrumbs,
+            html.smg-bm-feed-on .p-title,
+            html.smg-bm-feed-on .p-description,
+            html.smg-bm-feed-on .notices,
+            html.smg-bm-feed-on .notices--block,
+            html.smg-bm-feed-on .block:not(#smg-bm-feed) {
+                display: none !important;
+            }
+            html.smg-bm-feed-on .p-body-pageContent > *:not(#smg-bm-feed),
+            html.smg-bm-feed-on .p-body-content > *:not(.p-body-pageContent):not(#smg-bm-feed) {
+                display: none !important;
+            }
             html.smg-bm-feed-on .p-body-content,
             html.smg-bm-feed-on .p-body-contentCol,
             html.smg-bm-feed-on .p-body-pageContent {
@@ -102,13 +115,14 @@
                 min-width: 0 !important;
                 float: none !important;
                 padding-left: 0 !important;
+                padding-right: 0 !important;
                 margin: 0 !important;
             }
             #smg-bm-feed {
+                display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
-                margin-top: 14px !important;
             }
             #smg-bm-feed .smg-fp-list {
                 width: 100% !important;
@@ -171,6 +185,30 @@
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
             .smg-fp-content { padding: 20px 24px 14px; font-size: 15.5px; line-height: 1.6; color: rgba(255,255,255,0.9); word-break: break-word; }
+            /* Não forçar display: o card de file-host esconde o unfurl nativo
+               com style inline. display:block !important trazia a URL e o preview
+               de volta, duplicados em cima do nosso card. */
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow {
+                display: flex !important;
+                align-items: flex-start !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                white-space: normal !important;
+            }
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-main,
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-header,
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-snippet {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                white-space: normal !important;
+            }
+            .smg-fp-content .bbCodeBlock--unfurl:has(~ .smg-fhcard),
+            .smg-fp-content a.link--external:has(+ .smg-fhcard),
+            .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {
+                display: none !important;
+            }
             .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {

@@ -1806,6 +1806,15 @@
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
             html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
+            html.smg-thread .smg-pc-actions .smg-pc-act--react,
+            html.smg-thread .smg-cc-actions .smg-cc-act--react {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            html.smg-thread .smg-pc-react-n,
+            html.smg-thread .smg-cc-react-n { display: inline-flex !important; align-items: baseline; gap: 4px; visibility: visible !important; }
             /* Compartilhar copiou o link: confirmação de ~1,2s no próprio botão (não abre menu nenhum) */
             html.smg-thread .smg-pc-act--copied { color: #46d369 !important; background: rgba(70,211,105,0.12); }
             html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }

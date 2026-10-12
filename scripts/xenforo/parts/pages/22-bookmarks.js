@@ -206,7 +206,7 @@
                 cached.slice().sort((a, b) => (b.bmTs || 0) - (a.bmTs || 0)).forEach(rec => { try { list.appendChild(bmCardFromRec(rec)); } catch (e) {} });
                 markBookmarksPaintReady(list);
             } else {
-                list.innerHTML = '<div class="smg-fp-setup"><span class="smg-fp-setup-spin"></span><div class="smg-fp-setup-title">' + i18n('Setting up your feed') + '</div><div class="smg-fp-setup-sub">' + i18n('Gathering posts…') + '</div></div>';
+                list.innerHTML = '<div class="smg-fp-setup"><span class="smg-fp-setup-spin"></span><div class="smg-fp-setup-title">' + i18n('Saved') + '</div><div class="smg-fp-setup-sub">' + i18n('Loading saved posts…') + '</div></div>';
             }
             bmFetchAllRows().then(rows => {
                 if (!list.isConnected) return;
@@ -234,8 +234,8 @@
                     }
                     return false;
                 });
-                if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
-                if (!hadCache && !fresh.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>'; markBookmarksPaintReady(list); return; }
+                if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
+                if (!hadCache && !fresh.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; }
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
@@ -252,7 +252,7 @@
                 });
                 Promise.all(jobs).finally(() => markBookmarksPaintReady(list));
             }, () => {
-                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>';
+                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>';
                 markBookmarksPaintReady(list);
             });
         });
@@ -273,6 +273,10 @@
         });
         bmBuilt = true;
         const feed = document.createElement('div'); feed.id = 'smg-bm-feed'; feed.dataset.smgPaintReady = '0';
+        const fhead = document.createElement('div'); fhead.className = 'smg-river-head';
+        const title = document.createElement('h1'); title.className = 'smg-river-title'; title.textContent = i18n('Saved');
+        fhead.appendChild(title);
+        feed.appendChild(fhead);
         const list = document.createElement('div'); list.className = 'smg-fp-list'; feed.appendChild(list);
         contentCol.appendChild(feed);
         renderBookmarksFeed(list);

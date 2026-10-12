@@ -168,77 +168,101 @@
             icon: pageJump ? `${pageJump.current} / ${pageJump.max}` : ICONS.goto,
             label: IS_PT ? 'Pular para página específica' : 'Jump to specific page',
         });
-        const btnMobilePageBtn = pageJump ? makeDockButton({
+        const btnMobilePageBtn = makeDockButton({
             id: 'smg-mobile-page-btn',
             icon: ICONS.layers,
             label: 'Page navigation',
-        }) : null;
-        if (btnMobilePageBtn) {
-            btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
-            const txt = document.createElement('span');
-            txt.className = 'smg-nav-btn-text';
-            txt.textContent = `${pageJump.current} / ${pageJump.max}`;
-            btnMobilePageBtn.appendChild(txt);
-        }
+        });
+        btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
+        const mobilePageTxt = document.createElement('span');
+        mobilePageTxt.className = 'smg-nav-btn-text';
+        mobilePageTxt.textContent = pageJump ? `${pageJump.current} / ${pageJump.max}` : '';
+        btnMobilePageBtn.appendChild(mobilePageTxt);
+        btnMobilePageBtn.classList.toggle('is-off', !pageJump);
 
-        // Popover flutuante de paginação mobile (#smg-mobile-page-pop)
+        // Popover flutuante de paginação mobile. Os hrefs são reescritos a cada página
+        // (paintMobilePager): o HTML do mount não pode continuar apontando pra thread anterior.
         const mobilePagePop = document.createElement('div');
         mobilePagePop.id = 'smg-mobile-page-pop';
         mobilePagePop.className = 'smg-mobile-page-pop';
-        if (pageJump) {
-            const firstHref = pageJump.tpl ? pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : null;
-            const prevHref = prevPageLink ? prevPageLink.getAttribute('href') : (pageJump.tpl && pageJump.current > 1 ? (pageJump.current - 1 === 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(pageJump.current - 1))) : null);
-            const nextHref = nextPageLink ? nextPageLink.getAttribute('href') : (pageJump.tpl && pageJump.current < pageJump.max ? pageJump.tpl.replace('%page%', String(pageJump.current + 1)) : null);
-            const lastHref = pageJump.tpl ? pageJump.tpl.replace('%page%', String(pageJump.max)) : null;
+        mobilePagePop.innerHTML =
+            `<a class="smg-mp-btn smg-mp-first" href="#" title="${i18n('First page')}">${ICONS.pageFirst}</a>` +
+            `<a class="smg-mp-btn smg-mp-prev" href="#" title="${i18n('Prev page')}">${ICONS.pagePrev}</a>` +
+            `<div class="smg-mp-goto">` +
+                `<input type="number" class="smg-mobile-page-input" min="1" value="1" aria-label="${i18n('Go to page')}">` +
+                `<span class="smg-mp-sep">/</span>` +
+                `<span class="smg-mp-max">1</span>` +
+                `<button type="button" class="smg-mp-go">${i18n('Go')}</button>` +
+            `</div>` +
+            `<a class="smg-mp-btn smg-mp-next" href="#" title="${i18n('Next page')}">${ICONS.pageNext}</a>` +
+            `<a class="smg-mp-btn smg-mp-last" href="#" title="${i18n('Last page')}">${ICONS.pageLast}</a>` +
+            `<button type="button" class="smg-mp-close" aria-label="${i18n('Close')}">${ICONS.close}</button>`;
 
-            mobilePagePop.innerHTML =
-                `<a class="smg-mp-btn smg-mp-first" href="${firstHref || '#'}" title="${i18n('First page')}" ${pageJump.current <= 1 ? 'disabled' : ''}>${ICONS.pageFirst}</a>` +
-                `<a class="smg-mp-btn smg-mp-prev" href="${prevHref || '#'}" title="${i18n('Prev page')}" ${pageJump.current <= 1 ? 'disabled' : ''}>${ICONS.pagePrev}</a>` +
-                `<div class="smg-mp-goto">` +
-                    `<input type="number" class="smg-mobile-page-input" min="1" max="${pageJump.max || ''}" value="${pageJump.current}" aria-label="${i18n('Go to page')}">` +
-                    `<span class="smg-mp-sep">/</span>` +
-                    `<span class="smg-mp-max">${pageJump.max || 1}</span>` +
-                    `<button type="button" class="smg-mp-go">${i18n('Go')}</button>` +
-                `</div>` +
-                `<a class="smg-mp-btn smg-mp-next" href="${nextHref || '#'}" title="${i18n('Next page')}" ${pageJump.current >= pageJump.max ? 'disabled' : ''}>${ICONS.pageNext}</a>` +
-                `<a class="smg-mp-btn smg-mp-last" href="${lastHref || '#'}" title="${i18n('Last page')}" ${pageJump.current >= pageJump.max ? 'disabled' : ''}>${ICONS.pageLast}</a>` +
-                `<button type="button" class="smg-mp-close" aria-label="${i18n('Close')}">${ICONS.close}</button>`;
-
-            const mpInput = mobilePagePop.querySelector('.smg-mobile-page-input');
-            const mpGo = mobilePagePop.querySelector('.smg-mp-go');
-            const mpClose = mobilePagePop.querySelector('.smg-mp-close');
-
-            const doMpNav = () => {
-                const n = clampPage(parseInt(mpInput.value, 10));
-                if (!n || !pageJump.tpl) return;
-                let url = (n === 1) ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
-                if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
-                if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
-                document.documentElement.classList.add('smg-page-pending');
-                document.documentElement.classList.remove('smg-page-ready');
-                if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
-                dockGo(url);
+        function jumpUrl(n) {
+            if (!pageJump || !pageJump.tpl || !n) return '';
+            let url = n <= 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
+            url = url.replace('%page%', String(n));
+            if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
+            return url;
+        }
+        function paintMobilePager() {
+            const pj = pageJump;
+            btnMobilePageBtn.classList.toggle('is-off', !pj);
+            mobilePageTxt.textContent = pj ? `${pj.current} / ${pj.max}` : '';
+            const setA = (sel, n, off) => {
+                const a = mobilePagePop.querySelector(sel);
+                if (!a) return;
+                a.setAttribute('href', (pj && !off) ? (jumpUrl(n) || '#') : '#');
+                a.toggleAttribute('disabled', !pj || off);
             };
-
-            if (mpGo) mpGo.addEventListener('click', doMpNav);
-            if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doMpNav(); } });
-            if (mpClose) mpClose.addEventListener('click', () => {
+            setA('.smg-mp-first', 1, !pj || pj.current <= 1);
+            setA('.smg-mp-prev', pj ? Math.max(1, pj.current - 1) : 1, !pj || pj.current <= 1);
+            setA('.smg-mp-next', pj ? pj.current + 1 : 1, !pj || pj.current >= pj.max);
+            setA('.smg-mp-last', pj ? pj.max : 1, !pj || pj.current >= pj.max);
+            const mx = mobilePagePop.querySelector('.smg-mp-max');
+            if (mx) mx.textContent = pj ? String(pj.max || 1) : '1';
+            const inp = mobilePagePop.querySelector('.smg-mobile-page-input');
+            if (inp) {
+                inp.max = pj ? String(pj.max || '') : '';
+                if (pj) inp.value = pj.current;
+            }
+            if (!pj) {
                 mobilePagePop.classList.remove('open');
-                if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-            });
-
-            if (btnMobilePageBtn) {
-                btnMobilePageBtn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const isOpen = mobilePagePop.classList.toggle('open');
-                    btnMobilePageBtn.classList.toggle('smg-active', isOpen);
-                    if (isOpen) {
-                        mpInput.value = pageJump.current;
-                        setTimeout(() => { mpInput.focus(); mpInput.select(); }, 50);
-                    }
-                });
+                btnMobilePageBtn.classList.remove('smg-active');
             }
         }
+        paintMobilePager();
+
+        const mpInput = mobilePagePop.querySelector('.smg-mobile-page-input');
+        const mpGo = mobilePagePop.querySelector('.smg-mp-go');
+        const mpClose = mobilePagePop.querySelector('.smg-mp-close');
+        const doMpNav = () => {
+            const n = clampPage(parseInt(mpInput.value, 10));
+            if (!n || !pageJump || !pageJump.tpl) return;
+            if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
+            document.documentElement.classList.add('smg-page-pending');
+            document.documentElement.classList.remove('smg-page-ready');
+            if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+            dockGo(jumpUrl(n));
+        };
+        if (mpGo) mpGo.addEventListener('click', doMpNav);
+        if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doMpNav(); } });
+        if (mpClose) mpClose.addEventListener('click', () => {
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+        });
+        btnMobilePageBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (!pageJump) return;
+            const isOpen = mobilePagePop.classList.toggle('open');
+            btnMobilePageBtn.classList.toggle('smg-active', isOpen);
+            if (isOpen) {
+                mpInput.value = pageJump.current;
+                setTimeout(() => { mpInput.focus(); mpInput.select(); }, 50);
+            }
+        });
 
         // troca de página (navegação interna) e scroll infinito: relê o paginador
         // DESTA página. O objeto da página anterior não pode continuar na dock.
@@ -259,15 +283,26 @@
         }
         window.smgRefreshDockPage = () => {
             syncDockListMode();
+            if (typeof closePopovers === 'function') closePopovers();
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+            sortIsDate = !/reaction/i.test(location.search || '');
+            if (typeof updateSortIcon === 'function') updateSortIcon();
+            currentSortOrder = (new URLSearchParams(location.search).get('order')) || 'last_post_date';
+            if (listSortTxt) listSortTxt.textContent = getListSortLabel(currentSortOrder);
+            if (listSortTxtM) listSortTxtM.textContent = getListSortLabel(currentSortOrder);
+            if (typeof updateWatchIcon === 'function') updateWatchIcon();
+            if (typeof markActiveNav === 'function') markActiveNav();
             const pj = typeof readPageJump === 'function' ? readPageJump() : null;
             if (!pj) {
-                if (pageJump) { pageJump.current = 1; pageJump.max = 1; }
+                pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
                 btnGoto.disabled = true;
                 btnPageFirst.disabled = true;
                 btnPagePrev.disabled = true;
                 btnPageNext.disabled = true;
                 btnPageLast.disabled = true;
+                paintMobilePager();
                 return;
             }
             if (!pageJump) pageJump = { tpl: pj.tpl, current: pj.cur, max: pj.max };
@@ -275,6 +310,7 @@
             btnGoto.disabled = false;
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(pj.cur);
             else setBtnIcon(btnGoto, `${pj.cur} / ${pj.max}`);
+            paintMobilePager();
         };
 
         // o scroll infinito chama isto pra refletir a página que está na tela
@@ -301,6 +337,7 @@
             btnPagePrev.disabled = n <= 1;
             btnPageNext.disabled = n >= pageJump.max;
             btnPageLast.disabled = n >= pageJump.max;
+            paintMobilePager();
         };
 
         // Botão de View Mode na Thread (Feed / Galeria / Normal)
@@ -478,18 +515,18 @@
                 }
             });
         }
-        (function markActiveNav() {
+        function markActiveNav() {
             const path = location.pathname;
-            // só MARCA a classe — o "preenchido" é feito via CSS no próprio ícone de contorno (que já renderiza).
-            // (trocar innerHTML por um <svg fill> separado falhava no render → o ícone sumia)
-            const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };   // visitante não tem os botões de membro
-            if (/[?&]view=feed/.test(location.search)) on(btnTimeline);   // ANTES do home: o feed mora NA home (?view=feed)
+            [btnHome, btnTimeline, btnWatched, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
+            const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };
+            if (/[?&]view=feed/.test(location.search)) on(btnTimeline);
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
             else if (/\/watched\//.test(path)) on(btnWatched);
             else if (/\/account\/alerts/.test(path)) on(btnBell);
-            else if (/\/account(\/|$)/.test(path)) on(btnUser);                 // avatar ganha o anel
+            else if (/\/account(\/|$)/.test(path)) on(btnUser);
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
-        })();
+        }
+        markActiveNav();
 
         // ---- montagem (esquerda: navegação · centro: global · direita: ações) ----
         const panel = document.createElement('div');
@@ -1495,10 +1532,19 @@
             const vv = window.visualViewport;
             function syncSearchKeyboard() {
                 if (!vv || !searchOverlay.classList.contains('open')) return;
-                if (window.innerWidth > 600) { searchPop.style.bottom = ''; searchPop.style.maxHeight = ''; return; }
-                const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));  // altura do teclado
-                searchPop.style.bottom = kb + 'px';                            // encosta acima do teclado
-                searchPop.style.maxHeight = Math.round(vv.height - 8) + 'px';  // nunca ultrapassa o topo visível
+                if (window.innerWidth > 600) {
+                    searchPop.style.bottom = ''; searchPop.style.maxHeight = '';
+                    searchPop.style.removeProperty('--smg-kb-top');
+                    searchPop.style.removeProperty('--smg-kb-h');
+                    searchPop.classList.remove('is-kb');
+                    return;
+                }
+                const top = Math.max(0, Math.round(vv.offsetTop));
+                const h = Math.max(120, Math.round(vv.height));
+                const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+                searchPop.style.setProperty('--smg-kb-top', top + 'px');
+                searchPop.style.setProperty('--smg-kb-h', h + 'px');
+                searchPop.classList.toggle('is-kb', kb > 40);
             }
             if (vv) { vv.addEventListener('resize', syncSearchKeyboard); vv.addEventListener('scroll', syncSearchKeyboard); }
 
@@ -1587,6 +1633,8 @@
                 if (searchLocked) { searchLocked = false; smgUnlockScroll(); }
                 document.documentElement.classList.remove('smg-search-open');
                 searchPop.style.bottom = ''; searchPop.style.maxHeight = '';   // limpa pra animação de saída
+                searchPop.style.removeProperty('--smg-kb-top'); searchPop.style.removeProperty('--smg-kb-h');
+                searchPop.classList.remove('is-kb');
                 searchPop.style.top = ''; searchPop.style.left = ''; searchPop.style.width = '';   // limpa o posicionamento do dropdown
             }
 
@@ -1665,7 +1713,7 @@
                 if (r.snippet) { const s = document.createElement('span'); s.className = 'smg-search-result-snippet'; setHL(s, r.snippet, terms); main.appendChild(s); }
                 if (r.meta) { const m = document.createElement('span'); m.className = 'smg-search-result-meta'; m.textContent = r.meta; main.appendChild(m); }
                 a.appendChild(main);
-                a.addEventListener('click', commitCurrentSearch);
+                a.addEventListener('click', () => { commitCurrentSearch(); closeSearch(); });
                 return a;
             }
 
@@ -3176,8 +3224,8 @@
         // estado dos botões prev/next/goto: depende só de constantes capturadas no mount → seta 1× (não no scroll)
         function updatePostButtonsState() {
             btnPageFirst.disabled = !pageJump || pageJump.current <= 1;
-            btnPagePrev.disabled = !prevPageLink || (pageJump && pageJump.current <= 1);
-            btnPageNext.disabled = !nextPageLink || (pageJump && pageJump.current >= pageJump.max);
+            btnPagePrev.disabled = !pageJump || pageJump.current <= 1;
+            btnPageNext.disabled = !pageJump || pageJump.current >= pageJump.max;
             btnPageLast.disabled = !pageJump || pageJump.current >= pageJump.max;
             btnGoto.disabled = !pageJump;
         }
@@ -3235,18 +3283,10 @@
         updateWatchIcon();
 
         // ---- paginação ----
-        btnPageFirst.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1'); dockGo(url); } });
-        btnPagePrev.addEventListener('click', () => {
-            const href = prevPageLink && prevPageLink.getAttribute('href');
-            if (href) dockGo(href);
-            else if (pageJump && pageJump.current > 1) dockGo(pageJump.current - 1 === 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(pageJump.current - 1)));
-        });
-        btnPageNext.addEventListener('click', () => {
-            const href = nextPageLink && nextPageLink.getAttribute('href');
-            if (href) dockGo(href);
-            else if (pageJump && pageJump.current < pageJump.max) dockGo(pageJump.tpl.replace('%page%', String(pageJump.current + 1)));
-        });
-        btnPageLast.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace('%page%', String(pageJump.max)); dockGo(url); } });
+        btnPageFirst.addEventListener('click', () => { if (pageJump) dockGo(jumpUrl(1)); });
+        btnPagePrev.addEventListener('click', () => { if (pageJump && pageJump.current > 1) dockGo(jumpUrl(pageJump.current - 1)); });
+        btnPageNext.addEventListener('click', () => { if (pageJump && pageJump.current < pageJump.max) dockGo(jumpUrl(pageJump.current + 1)); });
+        btnPageLast.addEventListener('click', () => { if (pageJump) dockGo(jumpUrl(pageJump.max)); });
 
         // ---- sort ----
         function updateSortIcon() {

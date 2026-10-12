@@ -773,7 +773,13 @@
         }
         // Encaixa o card exatamente onde o host (unfurl ou link) estava no DOM
         host.insertAdjacentElement('afterend', card);
-        host.style.display = 'none';   // some o cru → groupPostLinks pula
+        host.style.setProperty('display', 'none', 'important');
+        const prev = host.previousElementSibling;
+        if (prev) {
+            const raw = (prev.textContent || '').replace(/\s+/g, ' ').trim();
+            const bare = prev.matches && prev.matches('a, .bbCodeBlock, .bbCodeBlock--unfurl');
+            if (bare && /^https?:\/\/\S+$/i.test(raw)) prev.style.setProperty('display', 'none', 'important');
+        }
     }
     // CADEIA de logo: tenta cada URL e, no erro, vai pra próxima → NUNCA fica sem ícone. (favicon do host falha às vezes;
     // o serviço DDG/Google quase sempre devolve algo.) O serviço some o host (não o arquivo) — leak mínimo.

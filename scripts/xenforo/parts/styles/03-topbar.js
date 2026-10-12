@@ -15,7 +15,7 @@
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
             #smg-topbar-wrap {
-                position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 100;  /* nível de header (XF/UIX) → toasts/overlays ficam ACIMA */
+                position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1000;  /* acima do feed; toasts e overlays ficam mais altos */
             }
             #smg-topbar {
                 position: relative; width: 100%; box-sizing: border-box;
@@ -270,9 +270,9 @@
                 box-shadow: 0 22px 55px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.06);
                 opacity: 0; visibility: hidden; transform: translateY(6px);
                 transition: opacity .16s ease, transform .16s ease, visibility .16s;
-                z-index: 5;
+                z-index: 40;
             }
-            .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); }
+            .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); z-index: 40; }
             .smg-tb-pop--account { min-width: 230px; max-width: 280px; }
             .smg-tb-acchead { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px; font-size: 13px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 4px; }
             /* pílula com quantas NÃO-LIDAS vieram nesta busca (some quando zera) */
@@ -344,6 +344,73 @@
             .smg-tb-listbody .fauxBlockLink-blockLink { color: #fff; font-weight: 600; }
             /* notificações/mensagens no DESKTOP (dropdown): itens maiores e mais espaçados */
             /* avisos nativos (.notices, .notices--block) inline com design moderno, compacto e tematizado */
+            /* Flash do XF vira toast no canto inferior direito. */
+            .flashMessage {
+                position: fixed !important;
+                top: auto !important;
+                left: auto !important;
+                right: 18px !important;
+                bottom: 22px !important;
+                z-index: 1000004 !important;
+                width: auto !important;
+                max-width: min(380px, calc(100vw - 32px)) !important;
+                margin: 0 !important;
+                padding: 12px 16px !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 14px !important;
+                background: var(--smg-s1, #1c1d22) !important;
+                color: #fff !important;
+                box-shadow: 0 14px 36px rgba(0,0,0,0.5) !important;
+                font-size: 14px !important;
+                line-height: 1.4 !important;
+            }
+            .flashMessage .flashMessage-content { color: inherit !important; }
+            @media (max-width: 600px) {
+                .flashMessage { right: 12px !important; left: 12px !important; bottom: 76px !important; max-width: none !important; }
+            }
+            /* Tooltip de bookmark: cartão, não a caixa nativa estreita. */
+            .tooltip--bookmark { z-index: 1000005 !important; max-width: min(380px, calc(100vw - 24px)) !important; }
+            .tooltip--bookmark .tooltip-content {
+                background: var(--smg-s1, #1c1d22) !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 16px !important;
+                box-shadow: 0 18px 48px rgba(0,0,0,0.55) !important;
+                color: #fff !important;
+                overflow: hidden;
+            }
+            .tooltip--bookmark .tooltip-content-inner { padding: 4px 4px 8px !important; }
+            .tooltip--bookmark .block-minorHeader {
+                background: transparent !important;
+                border: 0 !important;
+                color: #fff !important;
+                font-size: 15px !important;
+                font-weight: 750 !important;
+                padding: 14px 14px 4px !important;
+            }
+            .tooltip--bookmark .block-body { background: transparent !important; }
+            .tooltip--bookmark .block-row { padding: 8px 14px !important; }
+            .tooltip--bookmark .formRow-label { color: rgba(255,255,255,0.88) !important; font-weight: 650 !important; }
+            .tooltip--bookmark .formRow-hint { color: rgba(255,255,255,0.42) !important; }
+            .tooltip--bookmark .formRow-explain { color: rgba(255,255,255,0.4) !important; font-size: 12px !important; }
+            .tooltip--bookmark textarea.input,
+            .tooltip--bookmark .tagify,
+            .tooltip--bookmark input.input {
+                background: rgba(255,255,255,0.04) !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 10px !important;
+                color: #fff !important;
+            }
+            .tooltip--bookmark .formButtonGroup { margin: 0 !important; }
+            .tooltip--bookmark .button {
+                border-radius: 10px !important;
+                min-height: 36px;
+            }
+            .tooltip--bookmark .button--primary {
+                background: var(--smg-link, #ff77b2) !important;
+                border-color: transparent !important;
+                color: #fff !important;
+            }
+            .tooltip--bookmark .tooltip-arrow { display: none !important; }
             .notices, .notices--block {
                 list-style: none !important;
                 padding: 0 !important;
@@ -1042,6 +1109,7 @@
             html:not(.smg-thread) #smg-post-sort-toggle,
             html:not(.smg-thread) #smg-thread-watch,
             html:not(.smg-thread) #smg-thread-view-mode { display: none !important; }
+            #smg-mobile-page-btn.is-off { display: none !important; }
 
             /* ---- dock: container ---- */
             #smg-post-nav-wrapper {
@@ -1443,8 +1511,10 @@
             #smg-search-pop .smg-search-results,
             #smg-search-pop .smg-search-history {
                 flex: 1 1 auto !important;
-                min-height: 0 !important;
-                max-height: calc(90vh - 160px) !important;
+                /* min-height:0 fazia o flex item colapsar com overflow:auto e a 1ª linha
+                   (chips + prefixos do resultado) nascia cortada na base */
+                min-height: min(240px, 36vh) !important;
+                max-height: min(62vh, 560px) !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
                 overscroll-behavior: contain !important;
@@ -2087,7 +2157,10 @@
             html.smg-search-page .block-row .contentRow-figure { flex: 0 0 auto; }
             html.smg-search-page .block-row .contentRow-main { min-width: 0 !important; }
             /* título: branco + bold; o termo buscado (em.textHighlight) ganha o ACENTO do tema */
-            html.smg-search-page .block-row .contentRow-title { font-size: 15.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 1px 0 3px !important; }
+            html.smg-search-page .block-row .contentRow-title { font-size: 15.5px !important; font-weight: 700 !important; line-height: 1.5 !important; margin: 1px 0 3px !important; overflow: visible !important; }
+            html.smg-search-page .block-row .contentRow-title .label,
+            html.smg-search-page .block-row .contentRow-title .prefix,
+            html.smg-search-page .block-row .contentRow-title .labelLink { overflow: visible !important; vertical-align: middle !important; }
             html.smg-search-page .block-row .contentRow-title a { color: #fff !important; text-decoration: none !important; }
             html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link, #ff77b2) !important; }
             html.smg-search-page .block-row .textHighlight { color: var(--smg-link, #ff77b2) !important; font-style: normal !important; background: none !important; }
@@ -2301,8 +2374,10 @@
             .smg-search-results { display: flex; flex-direction: column; gap: 2px; }
             .smg-search-results-list { display: flex; flex-direction: column; gap: 2px; width: 100%; }
             .smg-search-chips-row {
-                display: flex; flex-wrap: nowrap; gap: 6px;
-                overflow-x: auto; padding: 4px 6px 10px; margin-bottom: 4px;
+                display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
+                flex: 0 0 auto; min-height: 44px; box-sizing: border-box;
+                overflow-x: auto; overflow-y: hidden; padding: 8px 6px;
+                margin-bottom: 4px;
                 border-bottom: 1px solid rgba(255,255,255,0.06);
                 scrollbar-width: none; -webkit-overflow-scrolling: touch;
             }
@@ -2341,7 +2416,10 @@
             .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; transition: transform .3s cubic-bezier(.2,.7,.3,1); }
             .smg-search-result:hover .smg-search-result-fig img { transform: scale(1.06); }   /* zoom sutil da thumb no hover (igual aos cards da home) */
             .smg-search-result-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-            .smg-search-result-titlerow { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+            .smg-search-result-titlerow { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; overflow: visible; padding: 1px 0 2px; }
+            .smg-search-result-titlerow .label,
+            .smg-search-result-titlerow .prefix,
+            .smg-search-result-titlerow .labelLink { flex: 0 0 auto; overflow: visible !important; line-height: 1.25 !important; }
             .smg-search-result-title { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
             .smg-search-result-snippet { font-size: 14px; line-height: 1.45; color: rgba(255,255,255,0.72); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
             .smg-search-result-meta { font-size: 12.5px; color: rgba(255,255,255,0.42); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

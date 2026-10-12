@@ -70,6 +70,7 @@
         // feed (river de posts na /watched/threads)
         'Feed': 'Feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
         'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
+        'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Gathering posts…': 'Reunindo posts…', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
         'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início', 'Download': 'Baixar',

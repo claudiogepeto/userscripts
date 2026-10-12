@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.0.1
+// @version      4.1.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -344,6 +344,7 @@
         // feed (river de posts na /watched/threads)
         'Feed': 'Feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
         'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
+        'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Gathering posts…': 'Reunindo posts…', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
         'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início', 'Download': 'Baixar',
@@ -3030,7 +3031,7 @@
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
             #smg-topbar-wrap {
-                position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 100;  /* nível de header (XF/UIX) → toasts/overlays ficam ACIMA */
+                position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1000;  /* acima do feed; toasts e overlays ficam mais altos */
             }
             #smg-topbar {
                 position: relative; width: 100%; box-sizing: border-box;
@@ -3285,9 +3286,9 @@
                 box-shadow: 0 22px 55px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.06);
                 opacity: 0; visibility: hidden; transform: translateY(6px);
                 transition: opacity .16s ease, transform .16s ease, visibility .16s;
-                z-index: 5;
+                z-index: 40;
             }
-            .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); }
+            .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); z-index: 40; }
             .smg-tb-pop--account { min-width: 230px; max-width: 280px; }
             .smg-tb-acchead { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px; font-size: 13px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 4px; }
             /* pílula com quantas NÃO-LIDAS vieram nesta busca (some quando zera) */
@@ -3359,6 +3360,73 @@
             .smg-tb-listbody .fauxBlockLink-blockLink { color: #fff; font-weight: 600; }
             /* notificações/mensagens no DESKTOP (dropdown): itens maiores e mais espaçados */
             /* avisos nativos (.notices, .notices--block) inline com design moderno, compacto e tematizado */
+            /* Flash do XF vira toast no canto inferior direito. */
+            .flashMessage {
+                position: fixed !important;
+                top: auto !important;
+                left: auto !important;
+                right: 18px !important;
+                bottom: 22px !important;
+                z-index: 1000004 !important;
+                width: auto !important;
+                max-width: min(380px, calc(100vw - 32px)) !important;
+                margin: 0 !important;
+                padding: 12px 16px !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 14px !important;
+                background: var(--smg-s1, #1c1d22) !important;
+                color: #fff !important;
+                box-shadow: 0 14px 36px rgba(0,0,0,0.5) !important;
+                font-size: 14px !important;
+                line-height: 1.4 !important;
+            }
+            .flashMessage .flashMessage-content { color: inherit !important; }
+            @media (max-width: 600px) {
+                .flashMessage { right: 12px !important; left: 12px !important; bottom: 76px !important; max-width: none !important; }
+            }
+            /* Tooltip de bookmark: cartão, não a caixa nativa estreita. */
+            .tooltip--bookmark { z-index: 1000005 !important; max-width: min(380px, calc(100vw - 24px)) !important; }
+            .tooltip--bookmark .tooltip-content {
+                background: var(--smg-s1, #1c1d22) !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 16px !important;
+                box-shadow: 0 18px 48px rgba(0,0,0,0.55) !important;
+                color: #fff !important;
+                overflow: hidden;
+            }
+            .tooltip--bookmark .tooltip-content-inner { padding: 4px 4px 8px !important; }
+            .tooltip--bookmark .block-minorHeader {
+                background: transparent !important;
+                border: 0 !important;
+                color: #fff !important;
+                font-size: 15px !important;
+                font-weight: 750 !important;
+                padding: 14px 14px 4px !important;
+            }
+            .tooltip--bookmark .block-body { background: transparent !important; }
+            .tooltip--bookmark .block-row { padding: 8px 14px !important; }
+            .tooltip--bookmark .formRow-label { color: rgba(255,255,255,0.88) !important; font-weight: 650 !important; }
+            .tooltip--bookmark .formRow-hint { color: rgba(255,255,255,0.42) !important; }
+            .tooltip--bookmark .formRow-explain { color: rgba(255,255,255,0.4) !important; font-size: 12px !important; }
+            .tooltip--bookmark textarea.input,
+            .tooltip--bookmark .tagify,
+            .tooltip--bookmark input.input {
+                background: rgba(255,255,255,0.04) !important;
+                border: 1px solid rgba(255,255,255,0.12) !important;
+                border-radius: 10px !important;
+                color: #fff !important;
+            }
+            .tooltip--bookmark .formButtonGroup { margin: 0 !important; }
+            .tooltip--bookmark .button {
+                border-radius: 10px !important;
+                min-height: 36px;
+            }
+            .tooltip--bookmark .button--primary {
+                background: var(--smg-link, #ff77b2) !important;
+                border-color: transparent !important;
+                color: #fff !important;
+            }
+            .tooltip--bookmark .tooltip-arrow { display: none !important; }
             .notices, .notices--block {
                 list-style: none !important;
                 padding: 0 !important;
@@ -4057,6 +4125,7 @@
             html:not(.smg-thread) #smg-post-sort-toggle,
             html:not(.smg-thread) #smg-thread-watch,
             html:not(.smg-thread) #smg-thread-view-mode { display: none !important; }
+            #smg-mobile-page-btn.is-off { display: none !important; }
 
             /* ---- dock: container ---- */
             #smg-post-nav-wrapper {
@@ -4458,8 +4527,10 @@
             #smg-search-pop .smg-search-results,
             #smg-search-pop .smg-search-history {
                 flex: 1 1 auto !important;
-                min-height: 0 !important;
-                max-height: calc(90vh - 160px) !important;
+                /* min-height:0 fazia o flex item colapsar com overflow:auto e a 1ª linha
+                   (chips + prefixos do resultado) nascia cortada na base */
+                min-height: min(240px, 36vh) !important;
+                max-height: min(62vh, 560px) !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
                 overscroll-behavior: contain !important;
@@ -5102,7 +5173,10 @@
             html.smg-search-page .block-row .contentRow-figure { flex: 0 0 auto; }
             html.smg-search-page .block-row .contentRow-main { min-width: 0 !important; }
             /* título: branco + bold; o termo buscado (em.textHighlight) ganha o ACENTO do tema */
-            html.smg-search-page .block-row .contentRow-title { font-size: 15.5px !important; font-weight: 700 !important; line-height: 1.35 !important; margin: 1px 0 3px !important; }
+            html.smg-search-page .block-row .contentRow-title { font-size: 15.5px !important; font-weight: 700 !important; line-height: 1.5 !important; margin: 1px 0 3px !important; overflow: visible !important; }
+            html.smg-search-page .block-row .contentRow-title .label,
+            html.smg-search-page .block-row .contentRow-title .prefix,
+            html.smg-search-page .block-row .contentRow-title .labelLink { overflow: visible !important; vertical-align: middle !important; }
             html.smg-search-page .block-row .contentRow-title a { color: #fff !important; text-decoration: none !important; }
             html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link, #ff77b2) !important; }
             html.smg-search-page .block-row .textHighlight { color: var(--smg-link, #ff77b2) !important; font-style: normal !important; background: none !important; }
@@ -5316,8 +5390,10 @@
             .smg-search-results { display: flex; flex-direction: column; gap: 2px; }
             .smg-search-results-list { display: flex; flex-direction: column; gap: 2px; width: 100%; }
             .smg-search-chips-row {
-                display: flex; flex-wrap: nowrap; gap: 6px;
-                overflow-x: auto; padding: 4px 6px 10px; margin-bottom: 4px;
+                display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
+                flex: 0 0 auto; min-height: 44px; box-sizing: border-box;
+                overflow-x: auto; overflow-y: hidden; padding: 8px 6px;
+                margin-bottom: 4px;
                 border-bottom: 1px solid rgba(255,255,255,0.06);
                 scrollbar-width: none; -webkit-overflow-scrolling: touch;
             }
@@ -5356,7 +5432,10 @@
             .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; transition: transform .3s cubic-bezier(.2,.7,.3,1); }
             .smg-search-result:hover .smg-search-result-fig img { transform: scale(1.06); }   /* zoom sutil da thumb no hover (igual aos cards da home) */
             .smg-search-result-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-            .smg-search-result-titlerow { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+            .smg-search-result-titlerow { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; overflow: visible; padding: 1px 0 2px; }
+            .smg-search-result-titlerow .label,
+            .smg-search-result-titlerow .prefix,
+            .smg-search-result-titlerow .labelLink { flex: 0 0 auto; overflow: visible !important; line-height: 1.25 !important; }
             .smg-search-result-title { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
             .smg-search-result-snippet { font-size: 14px; line-height: 1.45; color: rgba(255,255,255,0.72); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
             .smg-search-result-meta { font-size: 12.5px; color: rgba(255,255,255,0.42); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -6421,10 +6500,12 @@
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
                 #smg-search-pop {
-                    position: fixed !important; inset: 0 !important;
-                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+                    position: fixed !important; inset: auto !important;
+                    top: var(--smg-kb-top, 0px) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
                     width: 100vw !important; max-width: 100vw !important;
-                    height: 100dvh !important; max-height: 100dvh !important;
+                    /* --smg-kb-h vem do visualViewport: com o teclado aberto o sheet encolhe
+                       até a área visível e o input (order 3) fica acima do teclado */
+                    height: var(--smg-kb-h, 100dvh) !important; max-height: var(--smg-kb-h, 100dvh) !important;
                     padding: calc(10px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom)) 16px !important;
                     border: none !important; border-radius: 0 !important;
                     box-sizing: border-box !important;
@@ -6433,6 +6514,7 @@
                     transition: transform .32s cubic-bezier(.2,.85,.25,1), opacity .2s ease;
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
+                #smg-search-pop.is-kb { padding-bottom: 12px !important; }
                 #smg-search-pop::before { display: none !important; }
 
                 /* Barra de busca na BASE (thumb-friendly) colada aos filtros */
@@ -8747,6 +8829,15 @@
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
             html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
+            html.smg-thread .smg-pc-actions .smg-pc-act--react,
+            html.smg-thread .smg-cc-actions .smg-cc-act--react {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            html.smg-thread .smg-pc-react-n,
+            html.smg-thread .smg-cc-react-n { display: inline-flex !important; align-items: baseline; gap: 4px; visibility: visible !important; }
             /* Compartilhar copiou o link: confirmação de ~1,2s no próprio botão (não abre menu nenhum) */
             html.smg-thread .smg-pc-act--copied { color: #46d369 !important; background: rgba(70,211,105,0.12); }
             html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
@@ -9028,6 +9119,19 @@
                 grid-template-columns: none !important;
                 gap: 0 !important;
             }
+            html.smg-bm-feed-on .p-body-header,
+            html.smg-bm-feed-on .p-breadcrumbs,
+            html.smg-bm-feed-on .p-title,
+            html.smg-bm-feed-on .p-description,
+            html.smg-bm-feed-on .notices,
+            html.smg-bm-feed-on .notices--block,
+            html.smg-bm-feed-on .block:not(#smg-bm-feed) {
+                display: none !important;
+            }
+            html.smg-bm-feed-on .p-body-pageContent > *:not(#smg-bm-feed),
+            html.smg-bm-feed-on .p-body-content > *:not(.p-body-pageContent):not(#smg-bm-feed) {
+                display: none !important;
+            }
             html.smg-bm-feed-on .p-body-content,
             html.smg-bm-feed-on .p-body-contentCol,
             html.smg-bm-feed-on .p-body-pageContent {
@@ -9037,13 +9141,14 @@
                 min-width: 0 !important;
                 float: none !important;
                 padding-left: 0 !important;
+                padding-right: 0 !important;
                 margin: 0 !important;
             }
             #smg-bm-feed {
+                display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
-                margin-top: 14px !important;
             }
             #smg-bm-feed .smg-fp-list {
                 width: 100% !important;
@@ -9106,6 +9211,30 @@
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
             .smg-fp-content { padding: 20px 24px 14px; font-size: 15.5px; line-height: 1.6; color: rgba(255,255,255,0.9); word-break: break-word; }
+            /* Não forçar display: o card de file-host esconde o unfurl nativo
+               com style inline. display:block !important trazia a URL e o preview
+               de volta, duplicados em cima do nosso card. */
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow {
+                display: flex !important;
+                align-items: flex-start !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                white-space: normal !important;
+            }
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-main,
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-header,
+            .smg-fp-content .bbCodeBlock--unfurl .contentRow-snippet {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                white-space: normal !important;
+            }
+            .smg-fp-content .bbCodeBlock--unfurl:has(~ .smg-fhcard),
+            .smg-fp-content a.link--external:has(+ .smg-fhcard),
+            .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {
+                display: none !important;
+            }
             .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {
@@ -15024,77 +15153,101 @@
             icon: pageJump ? `${pageJump.current} / ${pageJump.max}` : ICONS.goto,
             label: IS_PT ? 'Pular para página específica' : 'Jump to specific page',
         });
-        const btnMobilePageBtn = pageJump ? makeDockButton({
+        const btnMobilePageBtn = makeDockButton({
             id: 'smg-mobile-page-btn',
             icon: ICONS.layers,
             label: 'Page navigation',
-        }) : null;
-        if (btnMobilePageBtn) {
-            btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
-            const txt = document.createElement('span');
-            txt.className = 'smg-nav-btn-text';
-            txt.textContent = `${pageJump.current} / ${pageJump.max}`;
-            btnMobilePageBtn.appendChild(txt);
-        }
+        });
+        btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
+        const mobilePageTxt = document.createElement('span');
+        mobilePageTxt.className = 'smg-nav-btn-text';
+        mobilePageTxt.textContent = pageJump ? `${pageJump.current} / ${pageJump.max}` : '';
+        btnMobilePageBtn.appendChild(mobilePageTxt);
+        btnMobilePageBtn.classList.toggle('is-off', !pageJump);
 
-        // Popover flutuante de paginação mobile (#smg-mobile-page-pop)
+        // Popover flutuante de paginação mobile. Os hrefs são reescritos a cada página
+        // (paintMobilePager): o HTML do mount não pode continuar apontando pra thread anterior.
         const mobilePagePop = document.createElement('div');
         mobilePagePop.id = 'smg-mobile-page-pop';
         mobilePagePop.className = 'smg-mobile-page-pop';
-        if (pageJump) {
-            const firstHref = pageJump.tpl ? pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : null;
-            const prevHref = prevPageLink ? prevPageLink.getAttribute('href') : (pageJump.tpl && pageJump.current > 1 ? (pageJump.current - 1 === 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(pageJump.current - 1))) : null);
-            const nextHref = nextPageLink ? nextPageLink.getAttribute('href') : (pageJump.tpl && pageJump.current < pageJump.max ? pageJump.tpl.replace('%page%', String(pageJump.current + 1)) : null);
-            const lastHref = pageJump.tpl ? pageJump.tpl.replace('%page%', String(pageJump.max)) : null;
+        mobilePagePop.innerHTML =
+            `<a class="smg-mp-btn smg-mp-first" href="#" title="${i18n('First page')}">${ICONS.pageFirst}</a>` +
+            `<a class="smg-mp-btn smg-mp-prev" href="#" title="${i18n('Prev page')}">${ICONS.pagePrev}</a>` +
+            `<div class="smg-mp-goto">` +
+                `<input type="number" class="smg-mobile-page-input" min="1" value="1" aria-label="${i18n('Go to page')}">` +
+                `<span class="smg-mp-sep">/</span>` +
+                `<span class="smg-mp-max">1</span>` +
+                `<button type="button" class="smg-mp-go">${i18n('Go')}</button>` +
+            `</div>` +
+            `<a class="smg-mp-btn smg-mp-next" href="#" title="${i18n('Next page')}">${ICONS.pageNext}</a>` +
+            `<a class="smg-mp-btn smg-mp-last" href="#" title="${i18n('Last page')}">${ICONS.pageLast}</a>` +
+            `<button type="button" class="smg-mp-close" aria-label="${i18n('Close')}">${ICONS.close}</button>`;
 
-            mobilePagePop.innerHTML =
-                `<a class="smg-mp-btn smg-mp-first" href="${firstHref || '#'}" title="${i18n('First page')}" ${pageJump.current <= 1 ? 'disabled' : ''}>${ICONS.pageFirst}</a>` +
-                `<a class="smg-mp-btn smg-mp-prev" href="${prevHref || '#'}" title="${i18n('Prev page')}" ${pageJump.current <= 1 ? 'disabled' : ''}>${ICONS.pagePrev}</a>` +
-                `<div class="smg-mp-goto">` +
-                    `<input type="number" class="smg-mobile-page-input" min="1" max="${pageJump.max || ''}" value="${pageJump.current}" aria-label="${i18n('Go to page')}">` +
-                    `<span class="smg-mp-sep">/</span>` +
-                    `<span class="smg-mp-max">${pageJump.max || 1}</span>` +
-                    `<button type="button" class="smg-mp-go">${i18n('Go')}</button>` +
-                `</div>` +
-                `<a class="smg-mp-btn smg-mp-next" href="${nextHref || '#'}" title="${i18n('Next page')}" ${pageJump.current >= pageJump.max ? 'disabled' : ''}>${ICONS.pageNext}</a>` +
-                `<a class="smg-mp-btn smg-mp-last" href="${lastHref || '#'}" title="${i18n('Last page')}" ${pageJump.current >= pageJump.max ? 'disabled' : ''}>${ICONS.pageLast}</a>` +
-                `<button type="button" class="smg-mp-close" aria-label="${i18n('Close')}">${ICONS.close}</button>`;
-
-            const mpInput = mobilePagePop.querySelector('.smg-mobile-page-input');
-            const mpGo = mobilePagePop.querySelector('.smg-mp-go');
-            const mpClose = mobilePagePop.querySelector('.smg-mp-close');
-
-            const doMpNav = () => {
-                const n = clampPage(parseInt(mpInput.value, 10));
-                if (!n || !pageJump.tpl) return;
-                let url = (n === 1) ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
-                if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
-                if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
-                document.documentElement.classList.add('smg-page-pending');
-                document.documentElement.classList.remove('smg-page-ready');
-                if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
-                dockGo(url);
+        function jumpUrl(n) {
+            if (!pageJump || !pageJump.tpl || !n) return '';
+            let url = n <= 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(n));
+            url = url.replace('%page%', String(n));
+            if (location.search && url.indexOf('?') < 0 && /[?&]order=/.test(location.search)) url += location.search;
+            return url;
+        }
+        function paintMobilePager() {
+            const pj = pageJump;
+            btnMobilePageBtn.classList.toggle('is-off', !pj);
+            mobilePageTxt.textContent = pj ? `${pj.current} / ${pj.max}` : '';
+            const setA = (sel, n, off) => {
+                const a = mobilePagePop.querySelector(sel);
+                if (!a) return;
+                a.setAttribute('href', (pj && !off) ? (jumpUrl(n) || '#') : '#');
+                a.toggleAttribute('disabled', !pj || off);
             };
-
-            if (mpGo) mpGo.addEventListener('click', doMpNav);
-            if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doMpNav(); } });
-            if (mpClose) mpClose.addEventListener('click', () => {
+            setA('.smg-mp-first', 1, !pj || pj.current <= 1);
+            setA('.smg-mp-prev', pj ? Math.max(1, pj.current - 1) : 1, !pj || pj.current <= 1);
+            setA('.smg-mp-next', pj ? pj.current + 1 : 1, !pj || pj.current >= pj.max);
+            setA('.smg-mp-last', pj ? pj.max : 1, !pj || pj.current >= pj.max);
+            const mx = mobilePagePop.querySelector('.smg-mp-max');
+            if (mx) mx.textContent = pj ? String(pj.max || 1) : '1';
+            const inp = mobilePagePop.querySelector('.smg-mobile-page-input');
+            if (inp) {
+                inp.max = pj ? String(pj.max || '') : '';
+                if (pj) inp.value = pj.current;
+            }
+            if (!pj) {
                 mobilePagePop.classList.remove('open');
-                if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-            });
-
-            if (btnMobilePageBtn) {
-                btnMobilePageBtn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const isOpen = mobilePagePop.classList.toggle('open');
-                    btnMobilePageBtn.classList.toggle('smg-active', isOpen);
-                    if (isOpen) {
-                        mpInput.value = pageJump.current;
-                        setTimeout(() => { mpInput.focus(); mpInput.select(); }, 50);
-                    }
-                });
+                btnMobilePageBtn.classList.remove('smg-active');
             }
         }
+        paintMobilePager();
+
+        const mpInput = mobilePagePop.querySelector('.smg-mobile-page-input');
+        const mpGo = mobilePagePop.querySelector('.smg-mp-go');
+        const mpClose = mobilePagePop.querySelector('.smg-mp-close');
+        const doMpNav = () => {
+            const n = clampPage(parseInt(mpInput.value, 10));
+            if (!n || !pageJump || !pageJump.tpl) return;
+            if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
+            document.documentElement.classList.add('smg-page-pending');
+            document.documentElement.classList.remove('smg-page-ready');
+            if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+            dockGo(jumpUrl(n));
+        };
+        if (mpGo) mpGo.addEventListener('click', doMpNav);
+        if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doMpNav(); } });
+        if (mpClose) mpClose.addEventListener('click', () => {
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+        });
+        btnMobilePageBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (!pageJump) return;
+            const isOpen = mobilePagePop.classList.toggle('open');
+            btnMobilePageBtn.classList.toggle('smg-active', isOpen);
+            if (isOpen) {
+                mpInput.value = pageJump.current;
+                setTimeout(() => { mpInput.focus(); mpInput.select(); }, 50);
+            }
+        });
 
         // troca de página (navegação interna) e scroll infinito: relê o paginador
         // DESTA página. O objeto da página anterior não pode continuar na dock.
@@ -15115,15 +15268,26 @@
         }
         window.smgRefreshDockPage = () => {
             syncDockListMode();
+            if (typeof closePopovers === 'function') closePopovers();
+            mobilePagePop.classList.remove('open');
+            btnMobilePageBtn.classList.remove('smg-active');
+            sortIsDate = !/reaction/i.test(location.search || '');
+            if (typeof updateSortIcon === 'function') updateSortIcon();
+            currentSortOrder = (new URLSearchParams(location.search).get('order')) || 'last_post_date';
+            if (listSortTxt) listSortTxt.textContent = getListSortLabel(currentSortOrder);
+            if (listSortTxtM) listSortTxtM.textContent = getListSortLabel(currentSortOrder);
+            if (typeof updateWatchIcon === 'function') updateWatchIcon();
+            if (typeof markActiveNav === 'function') markActiveNav();
             const pj = typeof readPageJump === 'function' ? readPageJump() : null;
             if (!pj) {
-                if (pageJump) { pageJump.current = 1; pageJump.max = 1; }
+                pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
                 btnGoto.disabled = true;
                 btnPageFirst.disabled = true;
                 btnPagePrev.disabled = true;
                 btnPageNext.disabled = true;
                 btnPageLast.disabled = true;
+                paintMobilePager();
                 return;
             }
             if (!pageJump) pageJump = { tpl: pj.tpl, current: pj.cur, max: pj.max };
@@ -15131,6 +15295,7 @@
             btnGoto.disabled = false;
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(pj.cur);
             else setBtnIcon(btnGoto, `${pj.cur} / ${pj.max}`);
+            paintMobilePager();
         };
 
         // o scroll infinito chama isto pra refletir a página que está na tela
@@ -15157,6 +15322,7 @@
             btnPagePrev.disabled = n <= 1;
             btnPageNext.disabled = n >= pageJump.max;
             btnPageLast.disabled = n >= pageJump.max;
+            paintMobilePager();
         };
 
         // Botão de View Mode na Thread (Feed / Galeria / Normal)
@@ -15334,18 +15500,18 @@
                 }
             });
         }
-        (function markActiveNav() {
+        function markActiveNav() {
             const path = location.pathname;
-            // só MARCA a classe — o "preenchido" é feito via CSS no próprio ícone de contorno (que já renderiza).
-            // (trocar innerHTML por um <svg fill> separado falhava no render → o ícone sumia)
-            const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };   // visitante não tem os botões de membro
-            if (/[?&]view=feed/.test(location.search)) on(btnTimeline);   // ANTES do home: o feed mora NA home (?view=feed)
+            [btnHome, btnTimeline, btnWatched, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
+            const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };
+            if (/[?&]view=feed/.test(location.search)) on(btnTimeline);
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
             else if (/\/watched\//.test(path)) on(btnWatched);
             else if (/\/account\/alerts/.test(path)) on(btnBell);
-            else if (/\/account(\/|$)/.test(path)) on(btnUser);                 // avatar ganha o anel
+            else if (/\/account(\/|$)/.test(path)) on(btnUser);
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
-        })();
+        }
+        markActiveNav();
 
         // ---- montagem (esquerda: navegação · centro: global · direita: ações) ----
         const panel = document.createElement('div');
@@ -16351,10 +16517,19 @@
             const vv = window.visualViewport;
             function syncSearchKeyboard() {
                 if (!vv || !searchOverlay.classList.contains('open')) return;
-                if (window.innerWidth > 600) { searchPop.style.bottom = ''; searchPop.style.maxHeight = ''; return; }
-                const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));  // altura do teclado
-                searchPop.style.bottom = kb + 'px';                            // encosta acima do teclado
-                searchPop.style.maxHeight = Math.round(vv.height - 8) + 'px';  // nunca ultrapassa o topo visível
+                if (window.innerWidth > 600) {
+                    searchPop.style.bottom = ''; searchPop.style.maxHeight = '';
+                    searchPop.style.removeProperty('--smg-kb-top');
+                    searchPop.style.removeProperty('--smg-kb-h');
+                    searchPop.classList.remove('is-kb');
+                    return;
+                }
+                const top = Math.max(0, Math.round(vv.offsetTop));
+                const h = Math.max(120, Math.round(vv.height));
+                const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+                searchPop.style.setProperty('--smg-kb-top', top + 'px');
+                searchPop.style.setProperty('--smg-kb-h', h + 'px');
+                searchPop.classList.toggle('is-kb', kb > 40);
             }
             if (vv) { vv.addEventListener('resize', syncSearchKeyboard); vv.addEventListener('scroll', syncSearchKeyboard); }
 
@@ -16443,6 +16618,8 @@
                 if (searchLocked) { searchLocked = false; smgUnlockScroll(); }
                 document.documentElement.classList.remove('smg-search-open');
                 searchPop.style.bottom = ''; searchPop.style.maxHeight = '';   // limpa pra animação de saída
+                searchPop.style.removeProperty('--smg-kb-top'); searchPop.style.removeProperty('--smg-kb-h');
+                searchPop.classList.remove('is-kb');
                 searchPop.style.top = ''; searchPop.style.left = ''; searchPop.style.width = '';   // limpa o posicionamento do dropdown
             }
 
@@ -16521,7 +16698,7 @@
                 if (r.snippet) { const s = document.createElement('span'); s.className = 'smg-search-result-snippet'; setHL(s, r.snippet, terms); main.appendChild(s); }
                 if (r.meta) { const m = document.createElement('span'); m.className = 'smg-search-result-meta'; m.textContent = r.meta; main.appendChild(m); }
                 a.appendChild(main);
-                a.addEventListener('click', commitCurrentSearch);
+                a.addEventListener('click', () => { commitCurrentSearch(); closeSearch(); });
                 return a;
             }
 
@@ -18032,8 +18209,8 @@
         // estado dos botões prev/next/goto: depende só de constantes capturadas no mount → seta 1× (não no scroll)
         function updatePostButtonsState() {
             btnPageFirst.disabled = !pageJump || pageJump.current <= 1;
-            btnPagePrev.disabled = !prevPageLink || (pageJump && pageJump.current <= 1);
-            btnPageNext.disabled = !nextPageLink || (pageJump && pageJump.current >= pageJump.max);
+            btnPagePrev.disabled = !pageJump || pageJump.current <= 1;
+            btnPageNext.disabled = !pageJump || pageJump.current >= pageJump.max;
             btnPageLast.disabled = !pageJump || pageJump.current >= pageJump.max;
             btnGoto.disabled = !pageJump;
         }
@@ -18091,18 +18268,10 @@
         updateWatchIcon();
 
         // ---- paginação ----
-        btnPageFirst.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace(/\/page-%page%/, '/').replace('%page%', '1'); dockGo(url); } });
-        btnPagePrev.addEventListener('click', () => {
-            const href = prevPageLink && prevPageLink.getAttribute('href');
-            if (href) dockGo(href);
-            else if (pageJump && pageJump.current > 1) dockGo(pageJump.current - 1 === 1 ? pageJump.tpl.replace(/\/page-%page%/, '/') : pageJump.tpl.replace('%page%', String(pageJump.current - 1)));
-        });
-        btnPageNext.addEventListener('click', () => {
-            const href = nextPageLink && nextPageLink.getAttribute('href');
-            if (href) dockGo(href);
-            else if (pageJump && pageJump.current < pageJump.max) dockGo(pageJump.tpl.replace('%page%', String(pageJump.current + 1)));
-        });
-        btnPageLast.addEventListener('click', () => { if (pageJump) { const url = pageJump.tpl.replace('%page%', String(pageJump.max)); dockGo(url); } });
+        btnPageFirst.addEventListener('click', () => { if (pageJump) dockGo(jumpUrl(1)); });
+        btnPagePrev.addEventListener('click', () => { if (pageJump && pageJump.current > 1) dockGo(jumpUrl(pageJump.current - 1)); });
+        btnPageNext.addEventListener('click', () => { if (pageJump && pageJump.current < pageJump.max) dockGo(jumpUrl(pageJump.current + 1)); });
+        btnPageLast.addEventListener('click', () => { if (pageJump) dockGo(jumpUrl(pageJump.max)); });
 
         // ---- sort ----
         function updateSortIcon() {
@@ -22237,7 +22406,7 @@
         const w = IS_PT ? (n === 1 ? 'reação' : 'reações') : (n === 1 ? 'reaction' : 'reactions');
         el.textContent = '';
         const num = document.createElement('span'); num.className = 'smg-react-num'; num.textContent = smgKNum(n);
-        const word = document.createElement('span'); word.className = 'smg-react-w'; word.textContent = ' ' + w;
+        const word = document.createElement('span'); word.className = 'smg-react-w'; word.textContent = w;
         el.append(num, word);
     }
     function smgPostReactionCount(post) {   // SÓ as reações do POST: a .reactionsBar dele. NÃO somar comentários (usam .comment-reactions) — era o "React 6"
@@ -22383,8 +22552,12 @@
 
         // ---------- ACTION BAR ----------
         const bar = document.createElement('div'); bar.className = 'smg-pc-actions';
-        const react = footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]');
-        if (react) {
+        const react = (footerBar && footerBar.querySelector('.actionBar-action--reaction, .actionBar-action--like, [data-xf-click="reaction"], a.reaction, a[href*="/react"]'))
+            || post.querySelector('.message-footer .actionBar-action--reaction, .message-actionBar [data-xf-click="reaction"], a[href*="/react"]');
+        if (react && !react.closest('.bbWrapper, .comment, .message-responses')) {
+            react.classList.remove('u-hidden', 'is-hidden');
+            react.hidden = false;
+            react.style.removeProperty('display');
             react.classList.add('smg-pc-act', 'smg-pc-act--react');
             // CONTADOR: ícone limpo (thumbs-up) + "N reações". O visual nativo (sprite/<i>/emoji/"React" = a "asa" torta) fica escondido via CSS.
             const ic = document.createElement('span'); ic.className = 'smg-pc-react-ic'; ic.innerHTML = svgIcon(SMG_ICO.thumb);
@@ -22401,13 +22574,36 @@
             smgWrapNativeLabel(commentBtn);         // texto solto → span, pra virar icon-only no celular
             bar.appendChild(commentBtn);
         }
-        const save = attribution && attribution.querySelector('a.bookmarkLink');
+        // XF 2.2+ coloca o bookmark na action bar (.actionBar-action--bookmark). A action bar
+        // inteira é escondida depois, então procurar só em .message-attribution deixa o botão
+        // invisível. UI.X antigo ainda usa a.bookmarkLink na atribuição — os dois entram.
+        const saveSel = 'a.bookmarkLink, .actionBar-action--bookmark, [data-xf-click="bookmark-click"]';
+        let save = (footerBar && footerBar.querySelector(saveSel))
+            || (attribution && attribution.querySelector(saveSel));
+        if (!save) {
+            const extra = post.querySelector(saveSel);
+            if (extra && !extra.closest('.bbWrapper, .menu, .overlay')) save = extra;
+        }
         if (save) {
             save.classList.add('smg-pc-act', 'smg-pc-act--save');
             smgSwapIcon(save, ICONS.save);
             smgActLabel(save, 'Save');
             save.title = IS_PT ? 'Salvar post nos favoritos' : 'Bookmark this post';
             save.setAttribute('aria-label', save.title);
+            const paintSaved = () => {
+                const on = save.classList.contains('is-bookmarked');
+                const svg = save.querySelector('svg');
+                if (svg) svg.style.setProperty('fill', on ? 'currentColor' : 'none', 'important');
+                const lbl = save.querySelector('.smg-pc-act-lbl');
+                if (lbl) lbl.textContent = i18n(on ? 'Saved state' : 'Save');
+                const tip = on
+                    ? (IS_PT ? 'Post salvo' : 'Post saved')
+                    : (IS_PT ? 'Salvar post nos favoritos' : 'Bookmark this post');
+                save.title = tip;
+                save.setAttribute('aria-label', tip);
+            };
+            paintSaved();
+            new MutationObserver(paintSaved).observe(save, { attributes: true, attributeFilter: ['class'] });
             bar.appendChild(save);
         }
         const translate = footerBar && footerBar.querySelector('.smgTranslator-btn');
@@ -25548,7 +25744,13 @@
         }
         // Encaixa o card exatamente onde o host (unfurl ou link) estava no DOM
         host.insertAdjacentElement('afterend', card);
-        host.style.display = 'none';   // some o cru → groupPostLinks pula
+        host.style.setProperty('display', 'none', 'important');
+        const prev = host.previousElementSibling;
+        if (prev) {
+            const raw = (prev.textContent || '').replace(/\s+/g, ' ').trim();
+            const bare = prev.matches && prev.matches('a, .bbCodeBlock, .bbCodeBlock--unfurl');
+            if (bare && /^https?:\/\/\S+$/i.test(raw)) prev.style.setProperty('display', 'none', 'important');
+        }
     }
     // CADEIA de logo: tenta cada URL e, no erro, vai pra próxima → NUNCA fica sem ícone. (favicon do host falha às vezes;
     // o serviço DDG/Google quase sempre devolve algo.) O serviço some o host (não o arquivo) — leak mínimo.
@@ -26621,7 +26823,7 @@
                 cached.slice().sort((a, b) => (b.bmTs || 0) - (a.bmTs || 0)).forEach(rec => { try { list.appendChild(bmCardFromRec(rec)); } catch (e) {} });
                 markBookmarksPaintReady(list);
             } else {
-                list.innerHTML = '<div class="smg-fp-setup"><span class="smg-fp-setup-spin"></span><div class="smg-fp-setup-title">' + i18n('Setting up your feed') + '</div><div class="smg-fp-setup-sub">' + i18n('Gathering posts…') + '</div></div>';
+                list.innerHTML = '<div class="smg-fp-setup"><span class="smg-fp-setup-spin"></span><div class="smg-fp-setup-title">' + i18n('Saved') + '</div><div class="smg-fp-setup-sub">' + i18n('Loading saved posts…') + '</div></div>';
             }
             bmFetchAllRows().then(rows => {
                 if (!list.isConnected) return;
@@ -26649,8 +26851,8 @@
                     }
                     return false;
                 });
-                if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
-                if (!hadCache && !fresh.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>'; markBookmarksPaintReady(list); return; }
+                if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
+                if (!hadCache && !fresh.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; }
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
@@ -26667,7 +26869,7 @@
                 });
                 Promise.all(jobs).finally(() => markBookmarksPaintReady(list));
             }, () => {
-                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('No recent posts') + '</div>';
+                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>';
                 markBookmarksPaintReady(list);
             });
         });
@@ -26688,6 +26890,10 @@
         });
         bmBuilt = true;
         const feed = document.createElement('div'); feed.id = 'smg-bm-feed'; feed.dataset.smgPaintReady = '0';
+        const fhead = document.createElement('div'); fhead.className = 'smg-river-head';
+        const title = document.createElement('h1'); title.className = 'smg-river-title'; title.textContent = i18n('Saved');
+        fhead.appendChild(title);
+        feed.appendChild(fhead);
         const list = document.createElement('div'); list.className = 'smg-fp-list'; feed.appendChild(list);
         contentCol.appendChild(feed);
         renderBookmarksFeed(list);
@@ -29462,6 +29668,7 @@
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
         const token = ++softNavToken;
+        document.dispatchEvent(new Event('smg-search-close'));
         const root = document.documentElement;
         cancelPagePaintRelease();
         isNavigatingOut = false;
