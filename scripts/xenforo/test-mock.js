@@ -5958,6 +5958,30 @@ async function runTests() {
     assert(collectedUrls.includes('https://turbo.cr/embed/unfurl456'), 'collectMediaFrom deve extrair embed de unfurl turbo');
     assert(collectedUrls.includes('https://turbo.cr/embed/ifr789'), 'collectMediaFrom deve extrair iframe reescrito para turbo.cr');
 
+    // 2b. Álbum do turbo (turbo.cr/a/ID) não é vídeo: não vira o embed falso turbo.cr/embed/a
+    const albumRoot50 = document.createElement('div');
+    albumRoot50.innerHTML = `
+        <div class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://turbo.cr/a/AlbumXYZ"></div>
+        <a href="https://turbo.cr/a/AlbumLink1">album link</a>
+        <a href="https://turbo.cr/v/vidpage9">video page</a>
+    `;
+    const albumUrls50 = collectMediaFn(albumRoot50).map(i => i.url);
+    assert(!albumUrls50.includes('https://turbo.cr/embed/a'), `Álbum do turbo não deve virar embed /embed/a (obtido: ${albumUrls50.join(', ')})`);
+    assert(albumUrls50.includes('https://turbo.cr/embed/vidpage9'), 'Página /v/ID do turbo continua virando embed');
+
+    // 2c. Total de páginas da dock lê "X de Y" (fórum em PT) igual a "X of Y"
+    assert(typeof window.__readPageJump === 'function', 'readPageJump deve estar exposta para regressão');
+    const prevUrl50 = window.location.href;
+    window.history.pushState({}, '', '/threads/pt-pages.50/page-2');
+    const pagerHost50 = document.createElement('div');
+    pagerHost50.className = 'p-body-content';
+    pagerHost50.innerHTML = '<div class="pageNavSimple"><a href="/threads/pt-pages.50/page-1">‹</a><span class="pageNavSimple-el pageNavSimple-el--current">2 de 30</span><a href="/threads/pt-pages.50/page-3">›</a></div>';
+    document.body.prepend(pagerHost50);
+    const pj50 = window.__readPageJump();
+    pagerHost50.remove();
+    window.history.pushState({}, '', prevUrl50);
+    assert(pj50 && pj50.max === 30, `readPageJump deve ler o total de "2 de 30" (obtido: ${pj50 && pj50.max})`);
+
     // 3. Validar processTurboEmbeds em DOM vivo
     const procTurboFn = window.__processTurboEmbeds || window.processTurboEmbeds;
     assert(typeof procTurboFn === 'function', 'processTurboEmbeds deve estar disponível');
