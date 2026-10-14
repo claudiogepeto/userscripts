@@ -8348,6 +8348,17 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SCROLL: overlay de erro do RedGifs sem backdrop-filter
+    // =========================================================================
+    {
+        console.log('\n--- Scroll: overlay de erro do RedGifs ---');
+        const rgCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        const rule = (rgCss.match(/\.smg-rg-error \{[^}]*\}/) || [''])[0];
+        assert(rule.length > 0, 'CSS deve definir o overlay .smg-rg-error');
+        assert(!/backdrop-filter/.test(rule), 'Overlay .smg-rg-error não pode usar backdrop-filter (repinta a cada frame de scroll)');
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
