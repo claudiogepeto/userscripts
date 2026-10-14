@@ -7521,6 +7521,184 @@ async function runTests() {
     }
 
     // =========================================================================
+    // PAGER: o motor comum de "carregar mais" (thread, listagens, Feed, Salvos, carrossel, busca, rail)
+    // =========================================================================
+    {
+        console.log('\n--- Pager: motor comum de carregar mais ---');
+        const px = window.__pagerExports;
+        assert(px && typeof px.createPager === 'function', 'O motor de paginação deve estar exposto em __TEST_MODE__ (window.__pagerExports.createPager)');
+        const { createPager } = px;
+        const flush = async () => { for (let i = 0; i < 6; i++) await new Promise(r => setTimeout(r, 0)); };
+        // caixa rolável com métricas controladas (o jsdom não faz layout)
+        const scroller = (m) => {
+            const el = document.createElement('div');
+            ['scrollHeight', 'clientHeight', 'scrollTop', 'scrollWidth', 'clientWidth', 'scrollLeft'].forEach(k => {
+                Object.defineProperty(el, k, { configurable: true, get: () => m[k] || 0, set: v => { m[k] = v; } });
+            });
+            return el;
+        };
+        // fonte controlada: cada load devolve uma promessa resolvida à mão
+        const source = () => {
+            const calls = [];
+            const load = (cursor, signal) => new Promise((res, rej) => calls.push({ cursor, signal, res, rej }));
+            return { calls, load };
+        };
+
+        // (a) more() carrega o cursor, apply recebe a página e devolve o próximo; next null = fim
+        {
+            const s = source(); const applied = [];
+            const p = createPager({ cursor: 'p2', load: s.load, listen: false, apply: (page, cur) => { applied.push(cur + ':' + page); return { next: page === 'last' ? null : 'p3', added: 1 }; } });
+            const pr = p.more();
+            assert(s.calls.length === 1 && s.calls[0].cursor === 'p2', 'more() carrega o cursor atual');
+            assert(p.busy === true, 'Enquanto carrega, o pager está ocupado');
+            p.more();
+            assert(s.calls.length === 1, 'Uma carga por vez: more() com uma carga no ar não dispara outra');
+            s.calls[0].res('page2'); await pr;
+            assert(applied.join(',') === 'p2:page2' && p.cursor === 'p3' && !p.busy, 'apply recebe a página e o cursor; o próximo cursor fica guardado');
+            const pr2 = p.more(); s.calls[1].res('last'); await pr2;
+            assert(p.ended === true && p.cursor === null, 'apply devolvendo next null encerra a lista');
+            p.more();
+            assert(s.calls.length === 2, 'Lista encerrada não carrega mais nada');
+        }
+
+        // (b) gatilho por distância da borda: vertical num elemento e horizontal (carrossel)
+        {
+            const s = source();
+            const m = { scrollHeight: 2000, clientHeight: 500, scrollTop: 0 };
+            const el = scroller(m);
+            const p = createPager({ cursor: 'n', load: s.load, apply: () => ({ next: 'n', added: 1 }), root: el, near: 400, listen: false });
+            p.check();
+            assert(s.calls.length === 0, 'Longe do fim (1500px) não carrega');
+            m.scrollTop = 1150; p.check();
+            assert(s.calls.length === 1, 'A 350px do fim (limite 400) carrega');
+            s.calls[0].res('x'); await flush();
+            const mx2 = { scrollWidth: 3000, clientWidth: 1000, scrollLeft: 0 };
+            const row = scroller(mx2);
+            const s2 = source();
+            const ph = createPager({ cursor: 'n', load: s2.load, apply: () => ({ next: 'n', added: 1 }), root: row, axis: 'x', near: 700, listen: false });
+            ph.check();
+            assert(s2.calls.length === 0, 'Eixo x: longe da borda direita não carrega');
+            mx2.scrollLeft = 1400; ph.check();
+            assert(s2.calls.length === 1, 'Eixo x: a 600px da borda direita (limite 700) carrega');
+        }
+
+        // (c) enabled() barra o gatilho de scroll mas não o pedido explícito (botão, auto-preenchimento)
+        {
+            const s = source(); let on = false;
+            const el = scroller({ scrollHeight: 100, clientHeight: 100, scrollTop: 0 });
+            const p = createPager({ cursor: 'n', load: s.load, apply: () => ({ next: null, added: 1 }), root: el, near: 400, enabled: () => on, listen: false });
+            p.check();
+            assert(s.calls.length === 0, 'enabled() falso: o scroll não carrega');
+            p.more();
+            assert(s.calls.length === 1, 'enabled() falso não barra more() explícito');
+        }
+
+        // (d) falhas: padrão = tenta de novo no próximo pedido e para depois de 3 seguidas
+        {
+            const s = source();
+            const p = createPager({ cursor: 'n', load: s.load, apply: () => ({ next: 'n', added: 1 }), listen: false });
+            let pr = p.more(); s.calls[0].res(null); await pr;
+            assert(p.cursor === 'n' && !p.ended, 'Carga que devolve null é falha: o cursor fica pra tentar de novo');
+            pr = p.more(); s.calls[1].rej(new Error('net')); await pr;
+            pr = p.more(); s.calls[2].res(null); await pr;
+            assert(p.ended && p.failed, 'Três falhas seguidas encerram a lista (failed = true)');
+            const s2 = source();
+            const p2 = createPager({ cursor: 'n', load: s2.load, apply: () => ({ next: 'n', added: 1 }), onFail: () => 'stop', listen: false });
+            pr = p2.more(); s2.calls[0].res(null); await pr;
+            assert(p2.ended && p2.failed, "onFail 'stop': a primeira falha encerra");
+            const s3 = source();
+            const p3 = createPager({ cursor: 'n', load: s3.load, apply: () => ({ next: 'n', added: 1 }), onFail: () => 'retry', listen: false });
+            for (let i = 0; i < 5; i++) { pr = p3.more(); s3.calls[i].res(null); await pr; }
+            assert(!p3.ended && p3.cursor === 'n', "onFail 'retry': nunca encerra por falha (carrossel)");
+            pr = p3.more(); s3.calls[5].res('ok'); await pr;
+            assert(!p3.busy && p3.cursor === 'n', 'Depois de falhar, a próxima carga funciona normalmente');
+        }
+
+        // (e) reset(): troca de lista no meio de uma carga descarta o resultado velho e aborta a request
+        {
+            const s = source(); const applied = [];
+            const p = createPager({ cursor: 'old', load: s.load, apply: (pg) => { applied.push(pg); return { next: 'after-' + pg, added: 1 }; }, listen: false });
+            const pr = p.more();
+            p.reset('new');
+            assert(s.calls[0].signal && s.calls[0].signal.aborted === true, 'reset() aborta a carga que estava no ar');
+            assert(!p.busy && p.cursor === 'new', 'reset() libera o pager com o cursor novo');
+            s.calls[0].res('stale'); await pr;
+            assert(applied.length === 0 && p.cursor === 'new', 'O resultado da carga anterior ao reset é descartado (guard de sequência)');
+            const pr2 = p.more(); s.calls[1].res('fresh'); await pr2;
+            assert(applied.join(',') === 'fresh' && p.cursor === 'after-fresh', 'Depois do reset, a lista nova carrega normalmente');
+            p.reset(null);
+            assert(p.ended, 'reset(null) encerra (busca limpa)');
+        }
+
+        // (f) pré-busca: entre near e prefetch só adianta o download; o append reaproveita a mesma carga
+        {
+            const s = source(); const applied = [];
+            const m = { scrollHeight: 10000, clientHeight: 1000, scrollTop: 5500 };   // resta 3500
+            const el = scroller(m);
+            const p = createPager({ cursor: 'n', load: s.load, apply: pg => { applied.push(pg); return { next: null, added: 1 }; }, root: el, near: 1400, prefetch: 4000, listen: false });
+            p.check();
+            assert(s.calls.length === 1 && applied.length === 0 && !p.busy, 'Na faixa de pré-busca o download começa, sem anexar');
+            s.calls[0].res('pre');
+            await flush();
+            m.scrollTop = 7700; p.check();   // resta 1300
+            await flush();
+            assert(s.calls.length === 1 && applied.join(',') === 'pre', 'No gatilho de append a página pré-buscada entra sem novo download');
+        }
+
+        // (g) fill: página que acrescentou algo e ainda está perto do fim puxa a próxima; página vazia não
+        {
+            const s = source();
+            const el = scroller({ scrollHeight: 100, clientHeight: 100, scrollTop: 0 });
+            let add = 1;
+            const p = createPager({ cursor: 'n', load: s.load, apply: () => ({ next: 'n', added: add }), root: el, near: 400, fill: true, listen: false });
+            let pr = p.more(); s.calls[0].res('a'); await pr; await flush();
+            assert(s.calls.length === 2, 'fill: com espaço sobrando, a próxima página vem sozinha');
+            add = 0; s.calls[1].res('b'); await flush();
+            assert(s.calls.length === 2, 'fill: página que não acrescentou nada não puxa outra (sem loop)');
+            const s2 = source();
+            const p2 = createPager({ cursor: 'n', load: s2.load, apply: () => ({ next: 'n', added: 1 }), root: el, near: 400, listen: false });
+            pr = p2.more(); s2.calls[0].res('a'); await pr; await flush();
+            assert(s2.calls.length === 1, 'Sem fill, só o scroll seguinte pede outra página');
+        }
+
+        // (h) drain(max): percorre a lista inteira em sequência (Salvos) e diz se ficou completa
+        {
+            let n = 0;
+            const p = createPager({ cursor: 1, load: c => Promise.resolve('pg' + c), apply: (pg, c) => { n++; return { next: c < 4 ? c + 1 : null, added: 1 }; }, onFail: () => 'stop', listen: false });
+            const r = await p.drain(40);
+            assert(n === 4 && r.complete === true, 'drain lê todas as páginas até o fim (obtido: ' + n + ')');
+            let m2 = 0;
+            const p2 = createPager({ cursor: 1, load: c => Promise.resolve(c === 3 ? null : 'pg'), apply: (pg, c) => { m2++; return { next: c + 1, added: 1 }; }, onFail: () => 'stop', listen: false });
+            const r2 = await p2.drain(40);
+            assert(m2 === 2 && r2.complete === false, 'drain: página que falha encerra e marca a lista como incompleta');
+            let k = 0;
+            const p3 = createPager({ cursor: 1, load: () => Promise.resolve('pg'), apply: (pg, c) => { k++; return { next: c + 1, added: 1 }; }, listen: false });
+            const r3 = await p3.drain(5);
+            assert(k === 5 && r3.complete === true, 'drain respeita o teto de páginas');
+        }
+
+        // (i) onState: loading → idle / end, error na falha que ainda vai tentar de novo
+        {
+            const s = source(); const states = [];
+            const p = createPager({ cursor: 'n', load: s.load, apply: (pg) => ({ next: pg === 'end' ? null : 'n', added: 1 }), onState: k => states.push(k), listen: false });
+            let pr = p.more(); s.calls[0].res('x'); await pr;
+            pr = p.more(); s.calls[1].res(null); await pr;
+            pr = p.more(); s.calls[2].res('end'); await pr;
+            assert(states.join(',') === 'loading,idle,loading,error,loading,end', 'onState: loading → idle, falha → error, fim → end (obtido: ' + states.join(',') + ')');
+        }
+
+        // (j) dispose(): solta os listeners e ignora o que ainda estava no ar
+        {
+            const s = source(); const applied = [];
+            const p = createPager({ cursor: 'n', load: s.load, apply: pg => { applied.push(pg); return { next: 'n', added: 1 }; } });
+            const pr = p.more(); p.dispose();
+            s.calls[0].res('late'); await pr;
+            p.more();
+            assert(applied.length === 0 && s.calls.length === 1, 'Depois do dispose nada é anexado nem carregado');
+        }
+    }
+
+    // =========================================================================
     // HOVER: cards de conteúdo não reagem ao hover (só controles reagem)
     // =========================================================================
     {
