@@ -24925,6 +24925,49 @@
         const floor = Math.max(1, last - TIMELINE_PAGE_CAP + 1);
         return Array.from(new Set(saved || [])).filter(n => n >= floor && n <= last).sort((a, b) => a - b);
     }
+    // maior /page-N linkado no documento (piso = a página atual)
+    function linkedMaxPage(doc, floor) {
+        let max = floor;
+        doc.querySelectorAll('a[href*="/page-"]').forEach(a => {
+            const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
+            if (m) max = Math.max(max, parseInt(m[1], 10) || 1);
+        });
+        return max;
+    }
+
+    // posts de UMA página de thread (a aberta ou uma buscada) → linhas da timeline. maxPostTs parte de baseTs;
+    // parsed = quantos posts o parser reconheceu (0 → nada a gravar, nem o registro da thread).
+    function threadPagePosts(doc, url, pageNum, path, meta, fallbackName, baseTs) {
+        const postEls = timelineMainElements(Array.from(doc.querySelectorAll('article.message--post, .message--post')))
+            .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
+        const parsed = postEls.map(p => riverParsePost(p, meta, url)).filter(Boolean);
+        let maxPostTs = baseTs || 0;
+        const seenPostIds = new Set();
+        const rows = [];
+        parsed.forEach(p => {
+            const pid = String(p.postId);
+            if (!pid || seenPostIds.has(pid)) return;
+            seenPostIds.add(pid);
+            const finalTs = Math.floor(Number(p.ts));
+            if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
+            if (finalTs > maxPostTs) maxPostTs = finalTs;
+            rows.push({
+                post_id: pid,
+                thread_path: path,
+                thread_name: p.threadTitle || fallbackName,
+                author: p.author || '',
+                author_href: p.authorHref || '',
+                created_at: finalTs,
+                page_num: pageNum,
+                content_html: p.contentHtml || '',
+                permalink: p.permalink || (path + '#post-' + p.postId),
+                prefixes_html: p.prefixesHtml || '',
+                thread_thumb: p.threadThumb || ''
+            });
+        });
+        return { rows: rows, maxPostTs: maxPostTs, parsed: parsed.length };
+    }
+
     const currentThreadIngestInflight = new Map();
     const currentThreadIngestSignatures = new Map();
 
@@ -24980,12 +25023,7 @@
             if (pj && pj.cur) currentPage = pj.cur;
         }
 
-        // Max page on DOM
-        let maxPageOnDom = currentPage;
-        document.querySelectorAll('a[href*="/page-"]').forEach(a => {
-            const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-            if (m) maxPageOnDom = Math.max(maxPageOnDom, parseInt(m[1], 10) || 1);
-        });
+        const maxPageOnDom = linkedMaxPage(document, currentPage);
 
         const ingestKey = path + '|page:' + currentPage;
         if (currentThreadIngestInflight.has(ingestKey)) return currentThreadIngestInflight.get(ingestKey);
@@ -25003,9 +25041,7 @@
             }
 
             // Extract thread title and prefixes
-            const titleEl = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
-            const fallbackTitle = (stored && stored.thread_name) || '';
-            const titleMeta = extractCleanTitleAndPrefixes(titleEl, fallbackTitle);
+            const titleMeta = riverThreadMeta(document, { fallbackTitle: (stored && stored.thread_name) || '' });
             const threadTitle = titleMeta.title;
             const prefixesHtml = titleMeta.prefixesHtml;
 
@@ -25027,40 +25063,11 @@
             const knownLast = Math.max(lastPage, currentPage, maxPageOnDom);
             if (currentPage < Math.max(1, knownLast - TIMELINE_PAGE_CAP + 1)) return 0;
             if (timelineContentSkip(timelineForumBag(document).concat(prefixesHtml))) return 0;
-            const postEls = timelineMainElements(Array.from(document.querySelectorAll('article.message--post, .message--post')))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
-
-            const parsed = postEls.map(p => riverParsePost(p, meta, location.href)).filter(Boolean);
-            if (!parsed.length) return 0;
-
             const now = Math.floor(Date.now() / 1000);
-            let maxPostTs = (stored && stored.updated_at) || 0;
-
-            const seenPostIds = new Set();
-            const timelinePosts = [];
-            parsed.forEach(p => {
-                const pid = String(p.postId);
-                if (!pid || seenPostIds.has(pid)) return;
-                seenPostIds.add(pid);
-
-                let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
-                if (finalTs > maxPostTs) maxPostTs = finalTs;
-
-                timelinePosts.push({
-                    post_id: pid,
-                    thread_path: path,
-                    thread_name: p.threadTitle || threadTitle,
-                    author: p.author || '',
-                    author_href: p.authorHref || '',
-                    created_at: finalTs,
-                    page_num: currentPage,
-                    content_html: p.contentHtml || '',
-                    permalink: p.permalink || (path + '#post-' + p.postId),
-                    prefixes_html: p.prefixesHtml || prefixesHtml,
-                    thread_thumb: p.threadThumb || thumb
-                });
-            });
+            const page = threadPagePosts(document, location.href, currentPage, path, meta, threadTitle, (stored && stored.updated_at) || 0);
+            if (!page.parsed) return 0;
+            const timelinePosts = page.rows;
+            const maxPostTs = page.maxPostTs;
 
             // Update saved_pages
             const nextLastPage = Math.max(lastPage, currentPage, maxPageOnDom);
@@ -25112,48 +25119,11 @@
                 thread.last_sync_at = Math.floor(Date.now() / 1000);
                 return dbFollowedUpsert(thread).then(() => 0);
             }
-            const postEls = timelineMainElements(Array.from(doc.querySelectorAll('article.message--post, .message--post')))
-                .filter(p => p.querySelector && (p.querySelector('.message-userContent') || p.querySelector('.bbWrapper') || p.querySelector('.message-body')));
-
-            const parsed = postEls.map(p => riverParsePost(p, meta, url)).filter(Boolean);
-            if (!parsed.length) return 0;
-
-            const now = Math.floor(Date.now() / 1000);
-            let maxPostTs = thread.updated_at || 0;
-
-            const seenPostIds = new Set();
-            const timelinePosts = [];
-
-            parsed.forEach(p => {
-                const pid = String(p.postId);
-                if (!pid || seenPostIds.has(pid)) return;
-                seenPostIds.add(pid);
-
-                let finalTs = Math.floor(Number(p.ts));
-                if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
-                if (finalTs > maxPostTs) maxPostTs = finalTs;
-
-                timelinePosts.push({
-                    post_id: pid,
-                    thread_path: thread.path,
-                    thread_name: p.threadTitle || thread.thread_name,
-                    author: p.author || '',
-                    author_href: p.authorHref || '',
-                    created_at: finalTs,
-                    page_num: pageNum,
-                    content_html: p.contentHtml || '',
-                    permalink: p.permalink || (thread.path + '#post-' + p.postId),
-                    prefixes_html: p.prefixesHtml || '',
-                    thread_thumb: p.threadThumb || thread.thumbnail_url || ''
-                });
-            });
-
-            // Detect max page
-            let docMaxPage = pageNum;
-            doc.querySelectorAll('a[href*="/page-"]').forEach(a => {
-                const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-                if (m) docMaxPage = Math.max(docMaxPage, parseInt(m[1], 10) || 1);
-            });
+            const page = threadPagePosts(doc, url, pageNum, thread.path, meta, thread.thread_name, thread.updated_at || 0);
+            if (!page.parsed) return 0;
+            const timelinePosts = page.rows;
+            const maxPostTs = page.maxPostTs;
+            const docMaxPage = linkedMaxPage(doc, pageNum);
 
             const nextLastPage = Math.max(thread.last_page || 1, pageNum, docMaxPage);
             const nextSavedPages = timelineKeepPages(nextLastPage, [...(thread.saved_pages || []), pageNum]);
