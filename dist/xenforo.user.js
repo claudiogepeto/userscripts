@@ -12393,6 +12393,12 @@
             parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
             parentBox.style.setProperty('overflow', 'visible', 'important');
         }
+        // tile da galeria: guarda a proporção (API do redgifs já no poster, antes do play) → o tile é re-colocado
+        const galTile = wrap.closest && wrap.closest('.smg-gallery-tile');
+        if (galTile) {
+            const relh = (h / w).toFixed(4);
+            if (galTile.dataset.relh !== relh) { galTile.dataset.relh = relh; masonrySchedule(galTile.parentElement); }
+        }
         relayoutPostGroupOf(wrap);   // vídeo num grupo do post: a proporção real decide o span (2 colunas se deitado) — só estilo, o player não sai do lugar
         return true;
     }
@@ -17340,6 +17346,10 @@
         if (tile.classList.contains('smg-gallery-tile--image')) return masonryImgRatio(tile.querySelector('img'));
         return 9 / 16;
     }
+    // colunas do tile: vídeo deitado (ou ainda sem proporção = 16:9) 2, em pé/quadrado 1; imagem e fantasma 1
+    function galTileSpan(tile, relH) {
+        return tile.classList.contains('smg-gallery-tile--embed') ? masonryVideoSpan(relH) : 1;
+    }
     // esvazia o scroller soltando cada seção do ResizeObserver do motor
     function galClearScroller(sc) {
         sc.querySelectorAll('.smg-gallery-cols').forEach(masonryUnmount);
@@ -17353,7 +17363,7 @@
         const cols = document.createElement('div');
         cols.className = 'smg-gallery-cols';
         sec.appendChild(cols);
-        masonryMount(cols, { getRatio: galTileRatio });   // mosaico: o mesmo motor do post
+        masonryMount(cols, { getRatio: galTileRatio, getSpan: galTileSpan });   // mosaico: o mesmo motor do post
         return sec;
     }
     // muta o scroller mantendo `keep` visualmente fixo (corrige scrollTop pela variação de altura acima dele) → sem "pulo"
@@ -18124,7 +18134,7 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.collectMediaFrom = collectMediaFrom;
-        window.__galleryExports = { galMakeSection, galTileRatio, galSkelTile };
+        window.__galleryExports = { galMakeSection, galTileRatio, galTileSpan, galSkelTile };
     }
 
     // =========================================================

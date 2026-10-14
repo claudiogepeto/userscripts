@@ -219,6 +219,10 @@
         if (tile.classList.contains('smg-gallery-tile--image')) return masonryImgRatio(tile.querySelector('img'));
         return 9 / 16;
     }
+    // colunas do tile: vídeo deitado (ou ainda sem proporção = 16:9) 2, em pé/quadrado 1; imagem e fantasma 1
+    function galTileSpan(tile, relH) {
+        return tile.classList.contains('smg-gallery-tile--embed') ? masonryVideoSpan(relH) : 1;
+    }
     // esvazia o scroller soltando cada seção do ResizeObserver do motor
     function galClearScroller(sc) {
         sc.querySelectorAll('.smg-gallery-cols').forEach(masonryUnmount);
@@ -232,7 +236,7 @@
         const cols = document.createElement('div');
         cols.className = 'smg-gallery-cols';
         sec.appendChild(cols);
-        masonryMount(cols, { getRatio: galTileRatio });   // mosaico: o mesmo motor do post
+        masonryMount(cols, { getRatio: galTileRatio, getSpan: galTileSpan });   // mosaico: o mesmo motor do post
         return sec;
     }
     // muta o scroller mantendo `keep` visualmente fixo (corrige scrollTop pela variação de altura acima dele) → sem "pulo"
@@ -1003,5 +1007,5 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.collectMediaFrom = collectMediaFrom;
-        window.__galleryExports = { galMakeSection, galTileRatio, galSkelTile };
+        window.__galleryExports = { galMakeSection, galTileRatio, galTileSpan, galSkelTile };
     }
