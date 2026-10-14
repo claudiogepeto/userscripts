@@ -118,6 +118,7 @@ const README_DESCRIPTIONS = {
   ehentai: "Dark theme, responsive gallery, infinite scroll, fullscreen viewer, and high-quality downloads for E-Hentai and ExHentai.",
   filester: "Theater stage, custom player, album strip, gallery grid, zoomable images, and AMOLED styling for Filester.",
   gofile: "Card grid, search, custom player, theater stage, gallery strip, and AMOLED styling for GoFile.",
+  goonbox: "AMOLED gallery, full-album load, search, sort, and a zoomable theater stage for Goonbox albums and images.",
   nhentai: "Dark gallery theme, command search, responsive reader, language filter, and infinite scroll for NHentai.",
   pixeldrain: "AMOLED theater player for Pixeldrain with mirror fallback, custom image zoom, album navigation, and direct media failover.",
   rule34: "Dark theme, responsive media grid, infinite scroll, tag search, and fullscreen viewer for Rule34.",
