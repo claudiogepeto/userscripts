@@ -172,7 +172,6 @@
         autoLoadRedgifs: true,      // auto-click nos placeholders de redgifs
         redgifsPlayer: true,        // troca o iframe do redgifs por <video> nativo (mp4 da API); à prova de falha (restaura o iframe)
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
-        sidebarNavigation: true,    // dock de navegação (desligar esconde a barra inteira)
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
@@ -28716,7 +28715,7 @@
                 // instead of waiting for DOMContentLoaded behind the home paint.
                 safe(setupAlertsDock);
             }
-            if (FEATURES.sidebarNavigation && !document.getElementById('smg-post-nav-wrapper') && document.body) {
+            if (!document.getElementById('smg-post-nav-wrapper') && document.body) {
                 safe(setupPostNavigation);
             }
             const full = (++runCount % FULL_SCAN_EVERY === 0) || fullPending;
@@ -28768,7 +28767,7 @@
             markTopbarReady();
         }
         const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (typeof isNavbarReady === 'function' && isNavbarReady());
-        if (FEATURES.sidebarNavigation && !isNavbarAlreadyReady) {
+        if (!isNavbarAlreadyReady) {
             cls.add('smg-navbar-loading');
             cls.add('smg-navbar-pending');
         } else if (typeof markNavbarReady === 'function') {
@@ -29019,7 +29018,7 @@
 
         // Componentes Estáticos Globais (1x)
         if (FEATURES.topBar) safe(buildTopbar);
-        if (FEATURES.sidebarNavigation) safe(setupPostNavigation);
+        safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
         safe(setupImageClickFeed);
         if (FEATURES.alertsDock) safe(setupAlertsDock);

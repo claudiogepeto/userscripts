@@ -7,7 +7,6 @@
         autoLoadRedgifs: true,      // auto-click nos placeholders de redgifs
         redgifsPlayer: true,        // troca o iframe do redgifs por <video> nativo (mp4 da API); à prova de falha (restaura o iframe)
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
-        sidebarNavigation: true,    // dock de navegação (desligar esconde a barra inteira)
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
