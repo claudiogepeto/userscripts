@@ -920,10 +920,10 @@ async function runTests() {
         postUrl: 'https://example.com/posts/555/'
     };
     const fallbackObj1 = bmFallbackPost(rowWithNote);
-    assert(fallbackObj1.postId === '555', 'Fallback possui postId correto');
-    assert(fallbackObj1.ts === 1710000000, 'Fallback possui timestamp correto');
-    assert(fallbackObj1.threadTitle === 'Bookmark Title', 'Fallback possui threadTitle');
-    assert(fallbackObj1.contentHtml.includes('smg-bm-fallback-text') && !fallbackObj1.contentHtml.includes('smg-bm-note-body'), 'Fallback NÃO duplica a nota dentro de contentHtml');
+    assert(fallbackObj1.post_id === '555', 'Fallback possui post_id correto');
+    assert(fallbackObj1.created_at === 1710000000, 'Fallback possui timestamp correto');
+    assert(fallbackObj1.thread_name === 'Bookmark Title', 'Fallback possui thread_name');
+    assert(fallbackObj1.content_html.includes('smg-bm-fallback-text') && !fallbackObj1.content_html.includes('smg-bm-note-body'), 'Fallback NÃO duplica a nota dentro de content_html');
 
     const rowWithoutNote = {
         postId: '666',
@@ -931,12 +931,18 @@ async function runTests() {
         postUrl: 'https://example.com/threads/666/'
     };
     const fallbackObj2 = bmFallbackPost(rowWithoutNote);
-    assert(fallbackObj2.contentHtml.includes('smg-bm-fallback-text') && fallbackObj2.contentHtml.includes('https://example.com/threads/666/'), 'Fallback sem nota contém link em .smg-bm-fallback-text');
+    assert(fallbackObj2.content_html.includes('smg-bm-fallback-text') && fallbackObj2.content_html.includes('https://example.com/threads/666/'), 'Fallback sem nota contém link em .smg-bm-fallback-text');
 
     // bmFetchPost retorna fallback ao invés de null quando post não existe no doc
     const fetchResult = await bmFetchPost({ postId: '99999', postUrl: 'https://example.com/posts/99999/', title: 'Missing Post', note: 'Nota existente' });
     assert(fetchResult !== null && typeof fetchResult === 'object', 'bmFetchPost deve retornar objeto de fallback em caso de erro/post ausente (nunca null)');
-    assert(fetchResult.postId === '99999', 'Objeto de fallback retornado por bmFetchPost contém postId');
+    assert(fetchResult.post_id === '99999', 'Objeto de fallback retornado por bmFetchPost contém post_id');
+
+    // 5.4 Salvo em cache no formato antigo (camelCase) continua renderizando sem refetch
+    const { bmCardFromRec } = window.__bookmarkExports;
+    const legacyCard = bmCardFromRec({ postId: '4242', note: '', bmTs: 1, obj: { postId: '4242', ts: 1700000000, author: 'Old', authorHref: '', threadTitle: 'Legacy Thread', prefixesHtml: '', threadThumb: '', permalink: 'https://example.com/posts/4242/', contentHtml: '<div class="bbWrapper">legacy body</div>' } });
+    assert(legacyCard && legacyCard.querySelector('.smg-fp-tname').textContent === 'Legacy Thread', 'Salvo no formato antigo deve renderizar o título do tópico');
+    assert(legacyCard.querySelector('.smg-fp-content').textContent.includes('legacy body'), 'Salvo no formato antigo deve renderizar o conteúdo');
 
     // 5.4 Testar as propriedades de largura 100% do #smg-bm-feed no CSS injetado
     const styleEls = Array.from(document.querySelectorAll('style'));
@@ -1136,9 +1142,9 @@ async function runTests() {
     riverList.innerHTML = '';
 
     const testPosts = [
-        { post_id: '8001', created_at: 1000, contentHtml: 'Post 1' },
-        { post_id: '8001', created_at: 1000, contentHtml: 'Post 1 Duplicado' },
-        { post_id: '8002', created_at: 2000, contentHtml: 'Post 2' }
+        { post_id: '8001', created_at: 1000, content_html: 'Post 1' },
+        { post_id: '8001', created_at: 1000, content_html: 'Post 1 Duplicado' },
+        { post_id: '8002', created_at: 2000, content_html: 'Post 2' }
     ];
     insertFreshPosts(testPosts);
     let cardsInDom = riverList.querySelectorAll('.smg-fp-card');
@@ -2909,8 +2915,8 @@ async function runTests() {
         </div>`;
     const parsedPost = riverParsePost(postWithInternalLink, metaDummy, 'https://forums.socialmediagirls.com/threads/test.123/');
     assert(parsedPost !== null, 'riverParsePost deve parsear post legítimo');
-    assert(parsedPost.postId === '77777', `riverParsePost deve extrair o postId real do post (esperado: "77777", obtido: "${parsedPost ? parsedPost.postId : ''}") e NÃO o link interno (/post-99999)`);
-    assert(!parsedPost.contentHtml.includes('nested comment text'), 'riverParsePost deve remover nós de comentários residuais do contentHtml');
+    assert(parsedPost.post_id === '77777', `riverParsePost deve extrair o post_id real do post (esperado: "77777", obtido: "${parsedPost ? parsedPost.post_id : ''}") e NÃO o link interno (/post-99999)`);
+    assert(!parsedPost.content_html.includes('nested comment text'), 'riverParsePost deve remover nós de comentários residuais do content_html');
 
     // =========================================================================
     // TESTE 22: Controle de Visualização/Notificação (last_seen_at) e Sincronização Unificada
