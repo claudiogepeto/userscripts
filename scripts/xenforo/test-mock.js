@@ -8304,6 +8304,61 @@ async function runTests() {
     }
 
     // =========================================================================
+    // TESTE SPOILERS: configuração "Auto-expand spoilers"
+    // =========================================================================
+    console.log('--- TESTE SPOILERS: configuração de abrir spoilers automaticamente ---');
+    {
+        const { FEATURES: spFeat, SETTINGS_META: spMeta } = window.__configExports || {};
+        const spExpand = window.__autoExpandSpoilers;
+        assert(!!spFeat && Array.isArray(spMeta), '__configExports deve expor FEATURES e SETTINGS_META');
+        const threadSection = spMeta.find(s => s.section === 'Thread & reading');
+        const spItem = threadSection && threadSection.items.find(it => it.key === 'autoExpandSpoilers');
+        assert(!!spItem, 'Seção Thread & reading deve conter a chave autoExpandSpoilers');
+        assert(spItem && spItem.label === 'Auto-expand spoilers', `Label em inglês deve ser "Auto-expand spoilers" (obtido: ${spItem && spItem.label})`);
+        assert(spItem && spItem.desc && spItem.desc.en && spItem.desc.pt, 'autoExpandSpoilers deve ter descrição em en e pt');
+        assert(scriptContent.includes("'Auto-expand spoilers': 'Abrir spoilers automaticamente'"), 'Label em pt deve ser "Abrir spoilers automaticamente"');
+
+        const makeSpoiler = () => {
+            const box = document.createElement('div');
+            box.className = 'bbCodeSpoiler';
+            const btn = document.createElement('button');
+            btn.className = 'bbCodeSpoiler-button';
+            btn.textContent = 'Spoiler';
+            const content = document.createElement('div');
+            content.className = 'bbCodeSpoiler-content';
+            content.style.display = 'none';
+            btn.addEventListener('click', () => {   // o XF abre o spoiler no clique do botão
+                box.classList.toggle('is-open');
+                content.style.display = box.classList.contains('is-open') ? '' : 'none';
+            });
+            box.append(btn, content);
+            document.body.appendChild(box);
+            return { box, btn, content };
+        };
+        const spPrev = spFeat.autoExpandSpoilers;
+
+        // ligado: o spoiler abre sozinho
+        spFeat.autoExpandSpoilers = true;
+        const on = makeSpoiler();
+        spExpand([on.box]);
+        assert(on.box.classList.contains('is-open') && on.content.style.display !== 'none', 'Com a opção ligada o spoiler deve abrir sozinho');
+
+        // desligado: continua fechado, mas abre no clique
+        spFeat.autoExpandSpoilers = false;
+        const off = makeSpoiler();
+        spExpand([off.box]);
+        await new Promise(r => setTimeout(r, 250));
+        assert(!off.box.classList.contains('is-open') && off.content.style.display === 'none', 'Com a opção desligada o spoiler deve continuar fechado');
+        assert(off.btn.dataset.smgArrow === '1', 'Com a opção desligada o botão do spoiler ainda recebe a seta');
+        off.btn.click();
+        assert(off.box.classList.contains('is-open') && off.content.style.display !== 'none', 'Com a opção desligada o spoiler ainda abre no clique');
+
+        spFeat.autoExpandSpoilers = spPrev;
+        on.box.remove();
+        off.box.remove();
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
