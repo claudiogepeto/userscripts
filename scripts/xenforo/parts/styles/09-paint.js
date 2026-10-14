@@ -1,3 +1,7 @@
+    // styles/09-paint.js
+    // Owns: CSS for the paint gate and every non-home skeleton.
+    // Exposes: CSS_PAINT.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: shared page paint gate and non-home page skeletons
     const CSS_PAINT = `/* ================= SHARED PAINT GATE ================= */
             /* The native XF tree remains in the DOM for compatibility, but it is never visible

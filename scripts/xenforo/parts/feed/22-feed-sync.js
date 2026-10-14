@@ -1,3 +1,7 @@
+    // feed/22-feed-sync.js
+    // Owns: feed synchronisation: ingest of followed thread pages, the single-tab cron and its 429 backoff.
+    // Exposes: ingestCurrentThreadPageIfFollowed, syncThreadPage, startTimelineCron, applyCronBackoff, resetCronBackoff.
+    // Depends on: feed/06b-feed-db, feed/22-feed (riverParsePost), following/17b-watched-list.
     // =========================================================
     // FEED SYNC — modern, relational & anti-rate-limit sync engine.
     // Reads `followed` table and feeds `timeline`

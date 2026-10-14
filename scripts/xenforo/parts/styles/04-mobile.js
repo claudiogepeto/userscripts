@@ -1,3 +1,7 @@
+    // styles/04-mobile.js
+    // Owns: CSS for mobile navigation and search.
+    // Exposes: CSS_MOBILE.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Mobile navigation, search and responsive controls
     const CSS_MOBILE = `/* ============================================================
                MOBILE: search + filtros viram BOTTOM SHEETS (modernos)

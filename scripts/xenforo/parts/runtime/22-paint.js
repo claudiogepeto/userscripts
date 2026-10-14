@@ -1,3 +1,7 @@
+    // runtime/22-paint.js
+    // Owns: THE paint gate: page kind detection, per-kind skeletons, readiness checks and release, navigation transition.
+    // Exposes: classifyPaintPage, ensurePageSkeleton, releasePageSkeleton, mark*Ready, setNavigatingOut, setupNavigationTransition.
+    // Depends on: home/16-home (homeComponentsReady), alerts/19-alerts-dock; styles in styles/09-paint.js.
     // =========================================================
     // PAINT RUNTIME: page context, skeletons and stable handoff.
     // The native XenForo tree stays mounted for compatibility, but remains hidden

@@ -1,3 +1,7 @@
+    // media/13-search-imageclick.js
+    // Owns: the search results panel and the image-click feed (click a post image to open the media overlay).
+    // Exposes: buildSearchResultsPanel, setupImageClickFeed, imageUrlOf.
+    // Depends on: media/14-feed-lightbox, core/06-helpers.
     // ── part 13: painel inline na página de resultados (buildSearchResultsPanel) + clique na imagem abre o feed (setupImageClickFeed) ──
     // =========================================================
     // FEATURE: painel de busca INLINE na página de RESULTADOS (search_results)

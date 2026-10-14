@@ -1,3 +1,7 @@
+    // media/10-redgifs-player.js
+    // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
+    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
+    // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
     // À PROVA DE FALHA: qualquer erro (sem GM / API / blob) RESTAURA o embed nativo (iframe). Nunca deixa buraco.

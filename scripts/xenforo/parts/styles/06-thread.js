@@ -1,3 +1,7 @@
+    // styles/06-thread.js
+    // Owns: CSS for thread header, filter bar and thread page chrome.
+    // Exposes: CSS_THREAD.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Thread header, posts and comments
     const CSS_THREAD = `/* ============================================================
                THREAD: header no nosso modelo (sem breadcrumb · botões de ação)

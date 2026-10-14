@@ -1,3 +1,7 @@
+    // media/css-media-feed.js
+    // Owns: CSS for feed view of the media overlay.
+    // Exposes: CSS_MEDIA_FEED.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: media feed (tiktok mode) ──
     const CSS_MEDIA_FEED = `
             /* ---- vista Feed do overlay de mídia (tiktok): aparece com #smg-media[data-view="feed"] ---- */

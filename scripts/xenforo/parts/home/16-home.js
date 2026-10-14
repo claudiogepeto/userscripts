@@ -1,3 +1,7 @@
+    // home/16-home.js
+    // Owns: the forum home: node layout, category cards, sidebar, and the What's new carousel (createPager, x axis).
+    // Exposes: organizeHomeHub, buildHomeFeed, layoutHomeSidebar, homeComponentsReady, FEED_CACHE_KEY_PREFIX.
+    // Depends on: thread/07-posts-misc (createPager), core/06-helpers, core/04-icons.
     // =========================================================
     // HOME (forum_list): cards · sections · sub-fóruns · atalhos · sidebar
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)

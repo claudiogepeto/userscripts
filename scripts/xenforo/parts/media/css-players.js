@@ -1,3 +1,7 @@
+    // media/css-players.js
+    // Owns: CSS for embeds, the native video player, dead media and post links.
+    // Exposes: CSS_MEDIA_PLAYERS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: embeds, native video player, dead media and post links ──
     const CSS_MEDIA_PLAYERS = `
             /* ---- turbo/saint embeds (iframe nativo) ---- */

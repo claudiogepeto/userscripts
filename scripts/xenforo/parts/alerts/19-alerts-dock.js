@@ -1,3 +1,7 @@
+    // alerts/19-alerts-dock.js
+    // Owns: the alerts rail (desktop side rail, phone full-screen sheet): paging, polling, mark all read, width.
+    // Exposes: buildAlertsDock, openAlertsDock, closeAlertsDock, toggleAlertsDock, updateAlertsUnreadBadge, ALDOCK_KEY.
+    // Depends on: thread/07-posts-misc (createPager), alerts/18-alerts, core/06-helpers (sheets), runtime/22-paint.
     // =========================================================
     // FEATURE: painel lateral DOCKED (rail fixo à direita) — ALERTAS
     // O popover do sino serve pra espiar; ele fecha no primeiro clique e só traz as ~N mais

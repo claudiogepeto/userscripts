@@ -1,3 +1,7 @@
+    // navigation/19-topbar.js
+    // Owns: the rebuilt topbar, Discover mega-menu, account popover, mobile sheets and header notices.
+    // Exposes: buildTopbar, setupHeaderNotices, syncMobileThreadbar.
+    // Depends on: core/06-helpers (popovers, sheets), alerts/19-alerts-dock, listing/15-listing.
     // =========================================================
     // FEATURE: topbar reformulada (ícones + popovers agrupados)
     // lê os links REAIS da nav nativa via data-nav-id → funciona no simpcity e no smg

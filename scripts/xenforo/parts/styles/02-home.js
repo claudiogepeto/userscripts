@@ -1,3 +1,7 @@
+    // styles/02-home.js
+    // Owns: CSS for home layout and home feed carousel.
+    // Exposes: CSS_HOME.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Home layout and home-specific components
     const CSS_HOME = `/* ================= HOME (forum_list) reformulada ================= */
             /* sidebar vai pro topo · conteúdo em coluna única, FULL WIDTH (nada na lateral) */

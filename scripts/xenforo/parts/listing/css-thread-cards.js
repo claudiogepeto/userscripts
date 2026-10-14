@@ -1,3 +1,7 @@
+    // listing/css-thread-cards.js
+    // Owns: CSS for thread list placeholders and article view.
+    // Exposes: CSS_THREAD_CARDS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: thread list placeholders and article view ──
     const CSS_THREAD_CARDS = `
             /* FALLBACK DE THUMB (smgThumbPh, .smg-ph): o MESMO em todo card de thread, feed e salvos —

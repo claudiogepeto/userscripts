@@ -1,3 +1,7 @@
+    // navigation/css-settings.js
+    // Owns: CSS for settings panel.
+    // Exposes: CSS_SETTINGS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: settings panel ──
     const CSS_SETTINGS = `
             /* ===== painel de settings (estilo painel do Twitter): header + busca + rail de categorias + seções + footer ===== */

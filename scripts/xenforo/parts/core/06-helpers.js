@@ -1,3 +1,8 @@
+    // core/06-helpers.js
+    // Owns: shared helpers: URL/proxy decoding, text and title cleanup, fetchDoc/postForm, toast, sheet/modal/popover
+    // registries (smgSheetOpen, smgModalOpen, smgPopover, wireSheetClose), dock buttons, pagination helpers, thumbnail cache.
+    // Exposes: toast, smgPopover, smgSheetOpen/Close, smgModalOpen/Close, fetchDoc, postForm, absUrl, eachIn, onScrollRaf, pagerMax, ...
+    // Depends on: core/02-config, core/03-i18n, core/04-icons.
     // =========================================================
     // HELPERS: text / url
     // =========================================================

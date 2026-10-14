@@ -1,3 +1,7 @@
+    // listing/css-listing-controls.js
+    // Owns: CSS for listing filter and sort popovers.
+    // Exposes: CSS_LISTING_CONTROLS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: listing filter and sort popovers ──
     const CSS_LISTING_CONTROLS = `
             /* ---- settings / filtro por autor / filtro da listagem: popovers (padrão do search) ---- */

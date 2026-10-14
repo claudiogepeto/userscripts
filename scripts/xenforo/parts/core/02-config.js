@@ -1,3 +1,7 @@
+    // core/02-config.js
+    // Owns: feature toggles (DEFAULT_FEATURES, SETTINGS_META), GM storage helpers and the smg-off kill switch.
+    // Exposes: FEATURES, saveFeatures, gmGet, gmSet, smgDisabled, SETTINGS_META, FEATURES_KEY.
+    // Depends on: GM_getValue/GM_setValue (localStorage fallback).
     // =========================================================
     // CONFIG
     // =========================================================

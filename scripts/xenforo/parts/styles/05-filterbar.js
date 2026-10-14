@@ -1,3 +1,7 @@
+    // styles/05-filterbar.js
+    // Owns: CSS for listing/thread filter bar.
+    // Exposes: CSS_FILTERBAR.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Listing and thread filter bars
     const CSS_FILTERBAR = `/* ============================================================
                BARRA ÚNICA SEGMENTADA (filter bar) — SMG · thread + fórum

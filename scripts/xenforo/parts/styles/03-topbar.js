@@ -1,3 +1,7 @@
+    // styles/03-topbar.js
+    // Owns: CSS for topbar, central nav and Discover mega-menu.
+    // Exposes: CSS_TOPBAR.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Topbar, sheets and desktop navigation
     const CSS_TOPBAR = `/* ================= TOPBAR REFORMULADA ================= */
             /* esconde a nav/header nativos e abre espaço pra nossa barra fixa */

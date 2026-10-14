@@ -1,3 +1,7 @@
+    // navigation/css-dock.js
+    // Owns: CSS for dock, bottom sheet and go-to popover.
+    // Exposes: CSS_DOCK.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: mobile bar, dock, bottom sheet and goto popover ──
     const CSS_DOCK = `
             /* Mobile: fixed topbar with one height (matching the bottom navbar). Threads swap

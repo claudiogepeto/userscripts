@@ -1,3 +1,8 @@
+    // media/08-images-masonry.js
+    // Owns: post images (full-size swap, lazy observers, dead-image watchdog), host viewers (GoonBox, Chevereto)
+    // and the post block model: runs of images and players become one masonry group.
+    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks.
+    // Depends on: media/08a-masonry-engine, media/10-redgifs-player, core/06-helpers, core/02-config.
     // =========================================================
     // FEATURE: auto full images + portrait grid
     // =========================================================

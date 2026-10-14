@@ -1,3 +1,7 @@
+    // thread/css-comments.js
+    // Owns: CSS for comments, editor and quick reply.
+    // Exposes: CSS_COMMENTS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: comments, editor and quick reply ──
     const CSS_COMMENTS = `
             /* ============================================================

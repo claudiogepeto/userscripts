@@ -1,3 +1,7 @@
+    // listing/15-listing.js
+    // Owns: forum listing grid marks, native alert/inbox badges and thumbnail placeholders.
+    // Exposes: markThreadGridContainer, markGridPlaceholders, syncReactiveBadges, alertsBadgeCount, ALERTS_COUNT_KEY.
+    // Depends on: core/06-helpers, core/04-icons, thread/17a-filterbar.
     // =========================================================
     // LISTAGEM (modo lista/grade): marca o container REAL dos itens (.structItem--thread)
     // que o modo grade transforma em grid (o toggle lista/grade vive no dock)

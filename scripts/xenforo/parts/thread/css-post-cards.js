@@ -1,3 +1,7 @@
+    // thread/css-post-cards.js
+    // Owns: CSS for post cards.
+    // Exposes: CSS_POST_CARDS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: post cards ──
     const CSS_POST_CARDS = `
             /* ============================================================

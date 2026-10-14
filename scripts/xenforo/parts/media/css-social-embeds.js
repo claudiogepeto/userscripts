@@ -1,3 +1,7 @@
+    // media/css-social-embeds.js
+    // Owns: CSS for Twitter/X and Instagram embeds.
+    // Exposes: CSS_SOCIAL_EMBEDS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: Twitter/X and Instagram embeds ──
     const CSS_SOCIAL_EMBEDS = `
             /* ---- Embeds Oficiais (Twitter / X e Instagram) ---- */

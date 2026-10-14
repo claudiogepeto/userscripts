@@ -1,3 +1,7 @@
+    // thread/17c-post-cards.js
+    // Owns: THE post card and comment card (buildPostCard, buildCommentCard), reactions, share and the more menu.
+    // Exposes: buildPostCards, buildCommentCards, smgRelTime, smgKNum.
+    // Depends on: core/06-helpers, thread/17a-filterbar, following/17b-watched-list.
     // =========================================================
     // POST estilo REDDIT: card de 1 coluna — header (avatar · nome · tempo · #N + título/banners/stats),
     // conteúdo (inalterado) e action bar (React · Comentar · Compartilhar · Salvar · Traduzir · ⋯).

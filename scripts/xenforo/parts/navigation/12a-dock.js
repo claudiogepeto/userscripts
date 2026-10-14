@@ -1,3 +1,8 @@
+    // navigation/12a-dock.js
+    // Owns: the dock (prev/next/go-to page, options sheet, global links) and the prefix map; opens setupPostNavigation,
+    // which 12b and 12c continue (one function across three files: keep them adjacent in the manifest).
+    // Exposes: setupPostNavigation, harvestPrefixesFromDoc, refreshPrefixHarvest, globalPrefixMap.
+    // Depends on: core/06-helpers (dock buttons, sheets, popovers), thread/07-posts-misc, runtime/22-paint.
     // =========================================================
     // DOCK — navegação (setupPostNavigation): a barra flutuante + busca + filtros + sheet mobile.
     // É a MAIOR função do arquivo. Mapa interno (Cmd+F no texto "// ----"):

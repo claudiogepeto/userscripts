@@ -1,3 +1,7 @@
+    // styles/07-feed.js
+    // Owns: CSS for Feed and bookmarks feed.
+    // Exposes: CSS_FEED.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Timeline and bookmark feed
     const CSS_FEED = `/* ============ river de posts (modo Feed da /watched/threads) ============ */
             /* modo feed: o JS marca .smg-river-hide nos irmãos do river (lista nativa + filtro + paginação) → robusto, independe da classe do bloco do tema */

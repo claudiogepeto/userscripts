@@ -1,3 +1,7 @@
+    // thread/17a-filterbar.js
+    // Owns: the filter bar (pager, sort, actions), thread header, sticky sync, follow button and THE thread card (decorateThreadCard).
+    // Exposes: buildThreadHeader, unifyThreadHeader, createStickySync, threadFollowButton, decorateThreadCard, smgPopHost.
+    // Depends on: core/06-helpers, feed/06b-feed-db, feed/22-feed-sync, following/17b-watched-list.
     // =========================================================
     // BARRA ÚNICA SEGMENTADA (filter bar) — SMG · thread + fórum
     // Um componente só (pager · ordenar · ações). Espelha os links do XF e

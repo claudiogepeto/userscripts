@@ -1,3 +1,7 @@
+    // media/css-grids.js
+    // Owns: CSS for masonry items (in-post groups), the media overlay and its gallery view.
+    // Exposes: CSS_MEDIA_GRIDS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: masonry mosaic (in-post groups) and the gallery overlay ──
     const CSS_MEDIA_GRIDS = `
             /* ---- MOSAICO (motor masonry, 08a): grupo de imagens no post + overlay da galeria ----

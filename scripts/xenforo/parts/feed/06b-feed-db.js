@@ -1,3 +1,7 @@
+    // feed/06b-feed-db.js
+    // Owns: THE IndexedDB schema (db smg-feed, stores followed, timeline, meta, bookmarks) and every read/write to it.
+    // Exposes: fdbOpen, dbFollowed*, dbTimeline*, dbMeta*, dbBookmarks*, dbClear*.
+    // Depends on: window.indexedDB only.
 // =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:

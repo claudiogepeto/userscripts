@@ -1,3 +1,8 @@
+    // navigation/12c-dock-settings.js
+    // Owns: the settings panel (one switch per SETTINGS_META entry), listing filter/sort popovers and dock wiring;
+    // closes setupPostNavigation opened in 12a.
+    // Exposes: nothing top-level (local to setupPostNavigation).
+    // Depends on: core/02-config (SETTINGS_META, FEATURES), feed/06b-feed-db, feed/22-feed-sync, navigation/12a-dock locals.
         // ---- settings (engrenagem) ----
         const setupSettings = () => {
             btnSettings.addEventListener('click', e => {

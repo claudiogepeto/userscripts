@@ -1,3 +1,8 @@
+    // runtime/22-init.js
+    // Owns: page classes, the processAll scheduler, boot, soft navigation (body swap, XF asset loading and activation)
+    // and the one test hook (window.__smgTest, only when window.__SMG_TEST__ is set). Closes the IIFE: must stay last.
+    // Exposes: boot, softNavigate (window.smgSoftNavigate), detectPageClasses, processAll.
+    // Depends on: nearly every part (it calls their setup functions).
     function rootTouches(roots, selector, alreadyNormalized) {
         const scope = alreadyNormalized ? roots : normalizeRoots(roots);
         return scope.some(root => root === document.body

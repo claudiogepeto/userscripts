@@ -1,3 +1,7 @@
+    // following/17b-watched-list.js
+    // Owns: the followed-threads list (/watched/threads): rows, streaming of every page, ingest into the followed store.
+    // Exposes: followedSet, fetchWatchedDoc, fetchAndIngestFollowed, streamAllWatchedPages, buildFilterBars.
+    // Depends on: feed/06b-feed-db, thread/17a-filterbar, core/06-helpers.
     let followedSet = new Set();
     dbFollowedGetAll().then(list => {
         if (Array.isArray(list)) {

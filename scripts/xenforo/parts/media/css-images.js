@@ -1,3 +1,7 @@
+    // media/css-images.js
+    // Owns: CSS for post images, link chips and file-host cards.
+    // Exposes: CSS_MEDIA_IMAGES.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: post images, link chips and file-host cards ──
     const CSS_MEDIA_IMAGES = `
             /* ---- images ---- */

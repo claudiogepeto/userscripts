@@ -1,3 +1,7 @@
+    // alerts/css-alerts.js
+    // Owns: CSS for alert list cards.
+    // Exposes: CSS_ALERTS.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: alert list cards ──
     const CSS_ALERTS = `
             /* ===== alertas "Limpo" (estilo FB): seções Novas/Anteriores · nome · tags · autor+data · dot ===== */

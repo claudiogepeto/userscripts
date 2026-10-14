@@ -1,3 +1,7 @@
+    // alerts/18-alerts.js
+    // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page, popup and rail).
+    // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs.
+    // Depends on: core/06-helpers, alerts/19-alerts-dock.
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
     // nativo: "<autor> postou no/replied to <chips> <título>. Podem haver/There may be… · hora · marcar-lido"

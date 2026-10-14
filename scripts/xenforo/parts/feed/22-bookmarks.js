@@ -1,3 +1,7 @@
+    // feed/22-bookmarks.js
+    // Owns: /account/bookmarks as a feed (every page newest first, cached in the bookmarks store).
+    // Exposes: setupBookmarksFeed, isBookmarksPage.
+    // Depends on: feed/06b-feed-db, feed/22-feed (cards), thread/07-posts-misc (createPager).
     // =========================================================
     // BOOKMARKS como FEED — a página /account/bookmarks lista POSTS salvos (.contentRow → /posts/{id}/).
     // REPLACE TOTAL: esconde a visão nativa e mostra um feed com EXATAMENTE esses posts — parseia a lista (todas as

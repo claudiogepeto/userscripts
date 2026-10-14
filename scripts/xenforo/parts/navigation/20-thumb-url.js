@@ -1,3 +1,7 @@
+    // navigation/20-thumb-url.js
+    // Owns: the large thumbnail URL rule.
+    // Exposes: dcThumbUrl.
+    // Depends on: core/06-helpers.
     // =========================================================
     // HOVER preview: dcThumbUrl (URL grande da thumb de uma lista/grade; usado pela navegação)
     // =========================================================

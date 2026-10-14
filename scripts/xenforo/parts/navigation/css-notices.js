@@ -1,3 +1,7 @@
+    // navigation/css-notices.js
+    // Owns: CSS for header notices and the account dialog.
+    // Exposes: CSS_NOTICES.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: header notices and the account dialog ──
     const CSS_NOTICES = `
             /* ========================================================= */

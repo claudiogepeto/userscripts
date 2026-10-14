@@ -1,3 +1,7 @@
+    // media/08a-masonry-engine.js
+    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2, one ResizeObserver, one rAF.
+    // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
+    // Depends on: nothing.
     // =========================================================
     // MASONRY ENGINE: one layout for every media mosaic (in-post groups, gallery overlay)
     //

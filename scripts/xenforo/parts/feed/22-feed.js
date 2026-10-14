@@ -1,3 +1,7 @@
+    // feed/22-feed.js
+    // Owns: the Feed page (home timeline of followed threads): parsing posts, the fetch queue, cards, retention.
+    // Exposes: feedContext, setupFeedView, riverParsePost, riverEnqueue, riverHandle429, riverAbortSync.
+    // Depends on: feed/06b-feed-db, feed/22-feed-sync, thread/17c-post-cards, thread/07-posts-misc.
     // =========================================================
     // FEED (river de posts) — modo "feed" da /watched/threads (?view=feed).
     // Arquitetura em 3 camadas: 21-feed-db.js (IndexedDB) · 22-feed-sync.js (busca/escreve) ·

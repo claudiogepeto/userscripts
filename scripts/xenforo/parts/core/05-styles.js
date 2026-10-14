@@ -1,3 +1,7 @@
+    // core/05-styles.js
+    // Owns: the one <style id="smg-styles"> node, composed from the CSS_* fragments in a fixed order.
+    // Exposes: injectStyles.
+    // Depends on: every CSS_* constant (styles/*.js and */css-*.js).
     // =========================================================
     // STYLES: compose context-owned CSS fragments in one deterministic style node.
     // Shared contexts live in parts/styles/, feature-owned ones in parts/<feature>/css-*.js,

@@ -1,3 +1,7 @@
+    // styles/08-alertdock.js
+    // Owns: CSS for alerts rail.
+    // Exposes: CSS_ALERTDOCK.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // STYLE CONTEXT: Alerts dock
     const CSS_ALERTDOCK = `/* ============ NOTIFICAÇÕES DOCKED (rail fixo à direita) ============ */
             /* o painel EMPURRA a página: body ganha padding, a topbar termina onde o rail começa e a

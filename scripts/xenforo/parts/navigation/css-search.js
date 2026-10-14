@@ -1,3 +1,7 @@
+    // navigation/css-search.js
+    // Owns: CSS for search dialog, results page, advanced search and dropdown.
+    // Exposes: CSS_SEARCH.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: search dialog, results page, advanced search and dropdown ──
     const CSS_SEARCH = `
             /* ---- search: dialog modal (command palette) + backdrop escuro ---- */

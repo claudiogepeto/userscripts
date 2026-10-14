@@ -1,3 +1,7 @@
+    // styles/01-base.js
+    // Owns: THE token palette (--smg-* colours, alpha ladders, radius, font, spacing, shadow, z-index), reset and anti-CLS rules.
+    // Exposes: CSS_BASE. The only CSS part allowed raw colour literals (build.js check).
+    // Depends on: composed first by core/05-styles.js.
     // STYLE CONTEXT: Global tokens, reset, media and shared components
     const CSS_BASE = `
             /* ===== ÍNDICE DO CSS (grep os rótulos abaixo) =====

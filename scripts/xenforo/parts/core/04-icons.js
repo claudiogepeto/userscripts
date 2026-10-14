@@ -1,3 +1,7 @@
+    // core/04-icons.js
+    // Owns: every inline SVG icon, the logo, thumbnail placeholders and the favicon.
+    // Exposes: svgIcon, ICONS, SMG_LOGO_HTML, smgThumbPh, smgPostKind, smgThreadKind, SMG_FAVICON.
+    // Depends on: nothing.
     // =========================================================
     // ÍCONES: svgIcon() (wrapper SVG) + ICONS{} (todos os ícones inline)
     // =========================================================

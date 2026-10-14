@@ -1,3 +1,7 @@
+    // media/14-feed-lightbox.js
+    // Owns: the media overlay: one media list per thread, gallery and feed views, gestures, ?view= URL state.
+    // Exposes: openMedia, openMediaFeed, closeMedia, setMediaView, collectMediaFrom, restoreNavMode, smgSetNavParam.
+    // Depends on: media/08a-masonry-engine (gallery), media/10-redgifs-player, core/06-helpers.
     // =========================================================
     // FEATURE: modo mídia — a mídia da thread num overlay com DUAS vistas sobre UMA lista
     //

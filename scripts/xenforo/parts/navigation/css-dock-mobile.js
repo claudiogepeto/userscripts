@@ -1,3 +1,7 @@
+    // navigation/css-dock-mobile.js
+    // Owns: CSS for mobile navbar dock.
+    // Exposes: CSS_DOCK_MOBILE.
+    // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: mobile navbar dock ──
     const CSS_DOCK_MOBILE = `
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */

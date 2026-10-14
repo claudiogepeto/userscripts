@@ -1,3 +1,7 @@
+    // media/11-autoload-spoiler.js
+    // Owns: RedGifs autoload and spoiler expansion.
+    // Exposes: autoLoadRedgifs, autoExpandSpoilers.
+    // Depends on: core/02-config, core/06-helpers.
     // =========================================================
     // FEATURE: auto-load redgifs
     // =========================================================

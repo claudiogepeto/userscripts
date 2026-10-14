@@ -1,3 +1,7 @@
+    // core/03-i18n.js
+    // Owns: UI translation (English keys, I18N_PT table chosen by <html lang>) and login/register links.
+    // Exposes: i18n, i18nDom, IS_PT, navHref, isLoggedIn, loginHref, registerHref, wireAuthClick.
+    // Depends on: nothing.
     // =========================================================
     // i18n: traduz a UI QUE A GENTE INJETA conforme o idioma do site (<html lang>).
     // Default = inglês (as próprias chaves). PT-BR quando o XF está em pt-*.

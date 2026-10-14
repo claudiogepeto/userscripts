@@ -1,3 +1,7 @@
+    // navigation/12b-dock-search.js
+    // Owns: the search popover/dialog and its result pager, inside setupPostNavigation (continued from 12a).
+    // Exposes: nothing top-level (local to setupPostNavigation).
+    // Depends on: navigation/12a-dock locals, thread/07-posts-misc (createPager), core/06-helpers.
         // ---- search: popover de busca (XenForo /search/search) ----
         const setupSearch = () => {
             harvestPrefixesFromDoc(document);

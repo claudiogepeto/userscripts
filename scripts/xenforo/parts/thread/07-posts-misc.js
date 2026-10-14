@@ -1,3 +1,7 @@
+    // thread/07-posts-misc.js
+    // Owns: keyboard shortcuts, offscreen banner pausing, THE pager engine (createPager) and thread/listing infinite scroll.
+    // Exposes: createPager, setupInfiniteScroll, disposeInfiniteScroll, setupKeyboardShortcuts, smgUpdateDockPage.
+    // Depends on: core/06-helpers (fetchDoc, onScrollRaf), core/03-i18n.
     // ── part 07-posts-misc: atalhos de teclado · scroll infinito ──
     // setado pela dock; o scroll infinito chama pra atualizar o número da página exibido
     let smgUpdateDockPage = null;

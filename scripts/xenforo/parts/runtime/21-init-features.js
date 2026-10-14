@@ -1,3 +1,8 @@
+    // runtime/21-init-features.js
+    // Owns: feature setup run per page: redirects, proxy links, revealed posts, direct media, Turbo embeds,
+    // file-host cards (FH_PROVIDERS), Twitter/Instagram cards and other per-post decorations.
+    // Exposes: safe, unwrapRedirectLinks, processDirectMedia, processTurboEmbeds, processFileHostCards, setFavicon.
+    // Depends on: media/08-images-masonry, media/10-redgifs-player, core/06-helpers.
     // =========================================================
     // FEATURES definidas tarde no arquivo + safe(). O INIT de verdade
     // (processAll / scheduleRun / boot) está logo abaixo, no part 22-init.
