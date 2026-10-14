@@ -63,13 +63,12 @@
         if (!isDateOrder) return Promise.resolve(0);
 
         // Watch status
-        const watchBtn = typeof getWatchButton === 'function' ? getWatchButton() : document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
+        const watchBtn = document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
         const isWatching = (watchBtn) ? smgIsWatching(watchBtn) : false;
-        if (isWatching) return ingestFollowedThreadPage(rawHref, path, isWatching);
-        return dbFollowedHas(path).then(followed => (followed ? ingestFollowedThreadPage(rawHref, path, isWatching) : 0));
+        return dbFollowedGet(path).then(stored => ((stored || isWatching) ? ingestFollowedThreadPage(rawHref, path, isWatching, stored) : 0));
     }
 
-    function ingestFollowedThreadPage(rawHref, path, isWatching) {
+    function ingestFollowedThreadPage(rawHref, path, isWatching, stored) {
         // Determine current page
         let currentPage = 1;
         const pageMatch = location.pathname.match(/\/page-(\d+)/) || rawHref.match(/\/page-(\d+)/);
@@ -92,9 +91,7 @@
         const domSignature = currentThreadDomSignature(path, currentPage) + '|watch:' + (isWatching ? '1' : '0');
         if (currentThreadIngestSignatures.get(ingestKey) === domSignature) return Promise.resolve(0);
 
-        const run = dbFollowedGet(path).then(stored => {
-            if (!stored && !isWatching) return 0;
-
+        const run = Promise.resolve().then(() => {
             const savedPages = (stored && Array.isArray(stored.saved_pages)) ? stored.saved_pages : [];
             const lastPage = (stored && stored.last_page) || 1;
             const isNewPage = !savedPages.includes(currentPage);

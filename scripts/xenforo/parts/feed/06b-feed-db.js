@@ -102,16 +102,6 @@
         return fdbStore('followed', 'readonly').then(st => fdbReq(st.get(path))).catch(() => null);
     }
 
-    // "esta thread está no followed?" com cache por path. Quem pergunta a cada frame (ingest da thread
-    // aberta) paga UMA leitura do IDB por thread; qualquer escrita que cria/remove registros zera o cache.
-    const followedPresence = new Map();
-    function followedPresenceReset() { followedPresence.clear(); }
-    function dbFollowedHas(path) {
-        if (!path) return Promise.resolve(false);
-        if (!followedPresence.has(path)) followedPresence.set(path, dbFollowedGet(path).then(rec => !!rec));
-        return followedPresence.get(path);
-    }
-
     function dbFollowedGetAll() {
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const out = [];
@@ -129,25 +119,22 @@
 
     function dbFollowedUpsert(item) {
         if (!item || !item.path) return Promise.resolve();
-        followedPresenceReset();
-        return fdbStore('followed', 'readwrite').then(st => fdbReq(st.put(item))).catch(() => {}).finally(followedPresenceReset);
+        return fdbStore('followed', 'readwrite').then(st => fdbReq(st.put(item))).catch(() => {});
     }
 
     function dbFollowedBulkUpsert(items) {
         if (!items || !items.length) return Promise.resolve(0);
-        followedPresenceReset();
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction('followed', 'readwrite');
             const st = tx.objectStore('followed');
             items.forEach(it => { if (it && it.path) st.put(it); });
             tx.oncomplete = () => resolve(items.length);
             tx.onerror = () => reject(tx.error);
-        })).catch(() => 0).finally(followedPresenceReset);
+        })).catch(() => 0);
     }
 
     function dbFollowedDelete(path) {
         if (!path) return Promise.resolve();
-        followedPresenceReset();
         return fdbOpen().then(db => new Promise(resolve => {
             const tx = db.transaction(['followed', 'timeline'], 'readwrite');
             tx.objectStore('followed').delete(path);
@@ -160,7 +147,7 @@
             };
             tx.oncomplete = () => resolve();
             tx.onerror = () => resolve();
-        })).catch(() => {}).finally(followedPresenceReset);
+        })).catch(() => {});
     }
 
     function dbFollowedMarkAllSeen() {
@@ -305,14 +292,13 @@
     }
 
     function dbClearFollowed() {
-        followedPresenceReset();
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction(['followed', 'meta'], 'readwrite');
             tx.objectStore('followed').clear();
             tx.objectStore('meta').delete('lastFollowedFullSync');
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
-        })).finally(followedPresenceReset);
+        }));
     }
 
     function dbClearAllData() {
