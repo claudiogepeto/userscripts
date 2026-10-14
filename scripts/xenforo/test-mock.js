@@ -1579,6 +1579,8 @@ async function runTests() {
     const injectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(injectedStyles.includes('padding: var(--smg-sp-2) var(--smg-sp-6) !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
     assert(injectedStyles.includes('font-size: var(--smg-fs-10) !important'), 'CSS deve definir font-size 10px (escala) para .label e .smg-badge-chip');
+    assert(!/li\.alert\.is-unread::before/.test(injectedStyles), 'Alertas não-lidos não devem desenhar faixa vertical na borda esquerda (::before)');
+    assert(injectedStyles.includes('.smg-al-read::before'), 'O dot de não-lida à direita continua definido');
 
     // 9.8 Testar railBtn da topbar (classes e contador de seguidos)
     const railBtnEl = document.querySelector('.smg-tb-railbtn');
