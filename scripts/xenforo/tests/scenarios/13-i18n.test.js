@@ -41,15 +41,13 @@ scenario('a Portuguese forum gets Portuguese UI in the same places', async t => 
     assert.ok(s.descs[0].startsWith('Substitui o cabeçalho original'));
 });
 
-scenario('settings sections, labels and descriptions have Portuguese versions (known gaps listed)', async t => {
+scenario('settings sections, labels and descriptions have Portuguese versions', async t => {
     const en = settingsTexts(await threadIn(t, 'en'));
     const pt = settingsTexts(await threadIn(t, 'pt'));
     assert.equal(pt.labels.length, en.labels.length);
     const same = (a, b) => a.filter((x, i) => x === b[i]);
     assert.deepEqual(same(pt.sections, en.sections).filter(x => x !== 'Feed'), [], 'untranslated sections');
-    // KNOWN gap (reported, not fixed here): five toggle labels have no pt entry in I18N_PT.
-    // The list is a ratchet: a new untranslated label fails this scenario.
-    assert.deepEqual(same(pt.labels, en.labels), ['ImagePond — built-in player', 'Cyberdrop — built-in player', 'File-host link cards', 'Bookmarks as a feed', 'Share copies the direct link'], 'untranslated toggle labels');
+    assert.deepEqual(same(pt.labels, en.labels), [], 'untranslated toggle labels');
     assert.deepEqual(same(pt.descs, en.descs), [], 'untranslated descriptions');
 });
 
