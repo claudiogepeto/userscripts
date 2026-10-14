@@ -708,11 +708,29 @@
             v.src = job.url;
         }
     }
-    function probeDur(key, url) {
+    // Sonda a duração só quando o item fica visível (watchEl = elemento observado).
+    let probeDurIO = null;
+    function probeDurNow(key, url) {
         if (!key || !url || cachedDur(key) || durPending.has(key)) return;
         durPending.add(key);
         durQueue.push({ key, url });
         pumpDur();
+    }
+    function probeDur(key, url, watchEl) {
+        if (!key || !url || cachedDur(key) || durPending.has(key)) return;
+        if (!watchEl || !("IntersectionObserver" in window)) { probeDurNow(key, url); return; }
+        if (!probeDurIO) {
+            probeDurIO = new IntersectionObserver(entries => {
+                for (const e of entries) {
+                    if (!e.isIntersecting) continue;
+                    probeDurIO.unobserve(e.target);
+                    probeDurNow(e.target._durKey, e.target._durUrl);
+                }
+            }, { rootMargin: "200px" });
+        }
+        watchEl._durKey = key;
+        watchEl._durUrl = url;
+        probeDurIO.observe(watchEl);
     }
 
     function buildPlayerControls(wrap, video, ac) {
@@ -1294,7 +1312,7 @@
             durEl.dataset.durKey = f.id;
             if (!known) durEl.hidden = true;
             thumbWrap.appendChild(durEl);
-            probeDur(f.id, M().file(f.id));
+            probeDur(f.id, M().file(f.id), thumbWrap);
         }
 
         // Info: Título Limpo e Datas Formatadas
