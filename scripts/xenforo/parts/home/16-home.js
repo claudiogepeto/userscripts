@@ -706,7 +706,7 @@
         return false;
     }
     // ---- carrossel: 1ª carga + PAGINAÇÃO por scroll (busca a próxima página ao chegar perto da borda direita) ----
-    const FEED_SKEL_CARD = '<div class="smg-feed-card smg-feed-skel"><div class="smg-feed-card-thumb smg-skel-box"></div><div class="smg-feed-card-body"><div class="smg-skel-line"></div><div class="smg-skel-line"></div><div class="smg-skel-line smg-skel-line--short"></div><div class="smg-skel-line smg-skel-line--meta"></div></div></div>';
+    const FEED_SKEL_CARD = '<div class="smg-feed-card smg-feed-skel"><div class="smg-feed-card-thumb smg-skel-box smg-skeleton-shimmer"></div><div class="smg-feed-card-body"><div class="smg-skel-line smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skel-line--short smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skel-line--meta smg-skeleton-shimmer"></div></div></div>';
     const FEED_MAX = 120;   // teto de cards por aba (evita DOM/imagens crescendo sem fim)
     const feedKeyOf = a => (a.getAttribute('href') || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
     // URL da PRÓXIMA página (paginação XF): rel=next no <head> ou o anchor "próxima" do pageNav. Absolutiza.

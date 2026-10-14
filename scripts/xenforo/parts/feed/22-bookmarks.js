@@ -251,7 +251,7 @@
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
-                        ph = document.createElement('div'); ph.className = 'smg-bm-skel'; ph.dataset.bmId = r.postId; ph.dataset.bmTs = String(r.bmTs || 0);
+                        ph = document.createElement('div'); ph.className = 'smg-bm-skel smg-skeleton-shimmer'; ph.dataset.bmId = r.postId; ph.dataset.bmTs = String(r.bmTs || 0);
                         bmPlaceByTs(list, ph);   // posição certa por bmTs (novos salvos = topo)
                     }
                     return riverEnqueue(() => bmFetchPost(r).then(obj => {

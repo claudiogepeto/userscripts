@@ -173,10 +173,14 @@
             .smg-page-skeleton-row-copy .smg-page-skeleton-line + .smg-page-skeleton-line { width: 38%; margin-top: var(--smg-sp-12); }
             .smg-page-skeleton-row-action { flex: 0 0 34px; width: 34px; height: 34px; border-radius: var(--smg-r-10); background: var(--smg-w-08); }
             .smg-page-skeleton-bottom-nav { display: none; }
-            .smg-page-skeleton .smg-skeleton-shimmer,
-            .smg-page-skeleton-rail .smg-skeleton-shimmer { position: relative; overflow: hidden; }
-            .smg-page-skeleton .smg-skeleton-shimmer::after,
-            .smg-page-skeleton-rail .smg-skeleton-shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
+            /* SHIMMER: UMA regra pra todo skeleton (página, home, carrossel, rail, salvos, galeria). Quem é
+               nosso ganha a classe .smg-skeleton-shimmer; os dois estados sem markup próprio (tile da galeria
+               carregando, célula de thumb da grade) entram por seletor. */
+            .smg-skeleton-shimmer, .smg-gallery-tile.is-loading { position: relative; overflow: hidden; }
+            .smg-skeleton-shimmer::after,
+            .smg-gallery-tile.is-loading::after,
+            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; pointer-events: none; }
+            @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
             .smg-page-skeleton-rail-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 62px; padding: 0 var(--smg-sp-16); border-bottom: 1px solid var(--smg-w-08); }
             .smg-page-skeleton-rail-title { display: block; width: 104px; height: 15px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
             .smg-page-skeleton-rail-actions { display: flex; gap: var(--smg-sp-8); margin-left: auto; }
@@ -249,6 +253,6 @@
                 }
             }
             @media (prefers-reduced-motion: reduce) {
-                .smg-page-skeleton .smg-skeleton-shimmer::after { animation: none; }
+                .smg-skeleton-shimmer::after, .smg-gallery-tile.is-loading::after, html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { animation: none; }
             }
         `;

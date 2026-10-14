@@ -1237,13 +1237,4 @@
                 overflow: hidden !important;
                 background: var(--smg-s2) !important;
                 min-height: 160px;
-            }
-            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after {
-                content: "";
-                position: absolute;
-                inset: 0;
-                transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-                pointer-events: none;
             }`;

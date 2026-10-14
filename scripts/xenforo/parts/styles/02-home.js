@@ -64,23 +64,6 @@
             .smg-home-skeleton-card-badges { position: absolute; top: 12px; left: 12px; z-index: var(--smg-z-2); display: flex; gap: var(--smg-sp-6); }
             .smg-home-skeleton-card-badges i { display: block; width: 48px; height: 16px; border-radius: var(--smg-r-4); background: var(--smg-w-12); }
             .smg-home-skeleton-card-badges i:nth-child(2) { width: 38px; }
-            .smg-home-skeleton-card::after,
-            .smg-home-skeleton-tile::after,
-            .smg-home-skeleton-row::after,
-            .smg-home-skeleton-notices-head::after,
-            .smg-home-skeleton-feed-head i::after,
-            .smg-home-skeleton-feed-head span::after,
-            .smg-home-skeleton-section-divider::after,
-            .smg-home-skeleton-section-title::after,
-            .smg-home-skeleton-line::after,
-            .smg-home-skeleton-notices-head i::after,
-            .smg-home-skeleton-notices-title::after,
-            .smg-home-skeleton-notices-badge::after,
-            .smg-home-skeleton-notices-line::after {
-                content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-            }
             .smg-home-skeleton-card-thumb { position: absolute; inset: 0 0 34%; background: var(--smg-w-04); }
             .smg-home-skeleton-card-body { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--smg-sp-28) var(--smg-sp-14) var(--smg-sp-14); background: linear-gradient(to top, var(--smg-k-62), transparent); }
             .smg-home-skeleton-line { position: relative; width: 88%; height: 11px; margin-bottom: var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-10); overflow: hidden; }
@@ -239,8 +222,6 @@
             html.smg-home .smg-skel-line { height: 11px; border-radius: var(--smg-r-6); margin-bottom: var(--smg-sp-8); }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: var(--smg-sp-6); margin-bottom: 0; }
-            html.smg-home .smg-skel-box::after, html.smg-home .smg-skel-line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
-            @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
             /* Setas flutuantes glass */
             html.smg-home .smg-feed-nav {
                 position: absolute; top: 50%; transform: translateY(-50%); z-index: var(--smg-z-4);

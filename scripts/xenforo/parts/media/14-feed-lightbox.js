@@ -204,7 +204,7 @@
     const GAL_SKEL_H = [115, 70, 145, 95, 62, 128, 88, 108, 78];
     function galSkelTile(i) {
         const t = document.createElement('div');
-        t.className = 'smg-gallery-skel';
+        t.className = 'smg-gallery-skel smg-skeleton-shimmer';
         t.style.paddingTop = GAL_SKEL_H[i % GAL_SKEL_H.length] + '%';   // altura via padding-% (relativo à largura da coluna)
         return t;
     }

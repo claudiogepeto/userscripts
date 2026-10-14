@@ -1156,7 +1156,6 @@
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 var(--smg-sp-12); border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-skel::after, .smg-gallery-tile.is-loading::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }
@@ -2328,23 +2327,6 @@
             .smg-home-skeleton-card-badges { position: absolute; top: 12px; left: 12px; z-index: var(--smg-z-2); display: flex; gap: var(--smg-sp-6); }
             .smg-home-skeleton-card-badges i { display: block; width: 48px; height: 16px; border-radius: var(--smg-r-4); background: var(--smg-w-12); }
             .smg-home-skeleton-card-badges i:nth-child(2) { width: 38px; }
-            .smg-home-skeleton-card::after,
-            .smg-home-skeleton-tile::after,
-            .smg-home-skeleton-row::after,
-            .smg-home-skeleton-notices-head::after,
-            .smg-home-skeleton-feed-head i::after,
-            .smg-home-skeleton-feed-head span::after,
-            .smg-home-skeleton-section-divider::after,
-            .smg-home-skeleton-section-title::after,
-            .smg-home-skeleton-line::after,
-            .smg-home-skeleton-notices-head i::after,
-            .smg-home-skeleton-notices-title::after,
-            .smg-home-skeleton-notices-badge::after,
-            .smg-home-skeleton-notices-line::after {
-                content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-            }
             .smg-home-skeleton-card-thumb { position: absolute; inset: 0 0 34%; background: var(--smg-w-04); }
             .smg-home-skeleton-card-body { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--smg-sp-28) var(--smg-sp-14) var(--smg-sp-14); background: linear-gradient(to top, var(--smg-k-62), transparent); }
             .smg-home-skeleton-line { position: relative; width: 88%; height: 11px; margin-bottom: var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-10); overflow: hidden; }
@@ -2503,8 +2485,6 @@
             html.smg-home .smg-skel-line { height: 11px; border-radius: var(--smg-r-6); margin-bottom: var(--smg-sp-8); }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: var(--smg-sp-6); margin-bottom: 0; }
-            html.smg-home .smg-skel-box::after, html.smg-home .smg-skel-line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
-            @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
             /* Setas flutuantes glass */
             html.smg-home .smg-feed-nav {
                 position: absolute; top: 50%; transform: translateY(-50%); z-index: var(--smg-z-4);
@@ -7820,15 +7800,6 @@
                 overflow: hidden !important;
                 background: var(--smg-s2) !important;
                 min-height: 160px;
-            }
-            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after {
-                content: "";
-                position: absolute;
-                inset: 0;
-                transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-                pointer-events: none;
             }`;
     // ── CSS: thread list placeholders and article view ──
     const CSS_THREAD_CARDS = `
@@ -8581,7 +8552,6 @@
             .smg-fp-card.smg-bm-leaving { opacity: 0; transform: scale(0.97); transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease; }
             .smg-bm-note { margin: 0 0 var(--smg-sp-10); padding: var(--smg-sp-8) var(--smg-sp-12); border-left: 3px solid var(--smg-link); background: var(--smg-link-soft); border-radius: var(--smg-r-6); font-size: var(--smg-fs-14); line-height: 1.4; color: var(--smg-tx); }
             .smg-bm-skel { width: 100%; min-height: 180px; margin: 0 0 var(--smg-sp-14); border-radius: var(--smg-r-12); background: var(--smg-s2); position: relative; overflow: hidden; }
-            .smg-bm-skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-06), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             .smg-river-more { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-8); width: 100%; min-height: 22px; margin: var(--smg-sp-6) 0 0; padding: var(--smg-sp-14) 0; border: 1px solid var(--smg-bd); border-radius: var(--smg-r-12); background: var(--smg-s1); color: var(--smg-w-72); font: inherit; font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
             .smg-river-more:hover { color: #fff; background: var(--smg-s2); }
             .smg-river-more .smg-loading { position: static; inset: auto; display: none; }   /* dentro do botão o spinner é INLINE (não overlay), oculto até is-loading */
@@ -8859,27 +8829,13 @@
                 stroke: currentColor !important;
                 stroke-width: 2px !important;
             }
-            /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
             .smg-aldock-list { list-style: none; margin: 0; padding: 0; }
-            .smg-aldock-skel-row {
-                position: relative; display: flex; align-items: center; gap: var(--smg-sp-10); min-height: 74px;
-                padding: var(--smg-sp-10) var(--smg-sp-14); border-bottom: 1px solid var(--smg-w-06); overflow: hidden;
-            }
-            .smg-aldock-skel-thumb { position: relative; flex: 0 0 54px; width: 54px; height: 54px; border-radius: var(--smg-r-12); background: var(--smg-w-08); overflow: hidden; }
-            .smg-aldock-skel-copy { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; gap: var(--smg-sp-8); overflow: hidden; }
-            .smg-aldock-skel-line { position: relative; width: 82%; height: 10px; border-radius: var(--smg-r-6); background: var(--smg-w-10); overflow: hidden; }
-            .smg-aldock-skel-line.short { width: 54%; height: 8px; }
-            .smg-aldock-skel-thumb::after,
-            .smg-aldock-skel-line::after {
-                content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-            }
+            .smg-aldock-skel-row { list-style: none; }   /* a linha é a MESMA do skeleton do rail (paintRailRow, 09-paint) */
             .smg-aldock-status { padding: var(--smg-sp-16) var(--smg-sp-14) var(--smg-sp-24); text-align: center; font-size: var(--smg-fs-13); color: var(--smg-w-40); }
             .smg-aldock-status--busy { color: var(--smg-w-55); }
             .smg-aldock-foot {
@@ -9094,10 +9050,14 @@
             .smg-page-skeleton-row-copy .smg-page-skeleton-line + .smg-page-skeleton-line { width: 38%; margin-top: var(--smg-sp-12); }
             .smg-page-skeleton-row-action { flex: 0 0 34px; width: 34px; height: 34px; border-radius: var(--smg-r-10); background: var(--smg-w-08); }
             .smg-page-skeleton-bottom-nav { display: none; }
-            .smg-page-skeleton .smg-skeleton-shimmer,
-            .smg-page-skeleton-rail .smg-skeleton-shimmer { position: relative; overflow: hidden; }
-            .smg-page-skeleton .smg-skeleton-shimmer::after,
-            .smg-page-skeleton-rail .smg-skeleton-shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
+            /* SHIMMER: UMA regra pra todo skeleton (página, home, carrossel, rail, salvos, galeria). Quem é
+               nosso ganha a classe .smg-skeleton-shimmer; os dois estados sem markup próprio (tile da galeria
+               carregando, célula de thumb da grade) entram por seletor. */
+            .smg-skeleton-shimmer, .smg-gallery-tile.is-loading { position: relative; overflow: hidden; }
+            .smg-skeleton-shimmer::after,
+            .smg-gallery-tile.is-loading::after,
+            html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; pointer-events: none; }
+            @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
             .smg-page-skeleton-rail-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 62px; padding: 0 var(--smg-sp-16); border-bottom: 1px solid var(--smg-w-08); }
             .smg-page-skeleton-rail-title { display: block; width: 104px; height: 15px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
             .smg-page-skeleton-rail-actions { display: flex; gap: var(--smg-sp-8); margin-left: auto; }
@@ -9170,7 +9130,7 @@
                 }
             }
             @media (prefers-reduced-motion: reduce) {
-                .smg-page-skeleton .smg-skeleton-shimmer::after { animation: none; }
+                .smg-skeleton-shimmer::after, .smg-gallery-tile.is-loading::after, html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { animation: none; }
             }
         `;
 
@@ -17860,7 +17820,7 @@
     const GAL_SKEL_H = [115, 70, 145, 95, 62, 128, 88, 108, 78];
     function galSkelTile(i) {
         const t = document.createElement('div');
-        t.className = 'smg-gallery-skel';
+        t.className = 'smg-gallery-skel smg-skeleton-shimmer';
         t.style.paddingTop = GAL_SKEL_H[i % GAL_SKEL_H.length] + '%';   // altura via padding-% (relativo à largura da coluna)
         return t;
     }
@@ -19594,7 +19554,7 @@
         return false;
     }
     // ---- carrossel: 1ª carga + PAGINAÇÃO por scroll (busca a próxima página ao chegar perto da borda direita) ----
-    const FEED_SKEL_CARD = '<div class="smg-feed-card smg-feed-skel"><div class="smg-feed-card-thumb smg-skel-box"></div><div class="smg-feed-card-body"><div class="smg-skel-line"></div><div class="smg-skel-line"></div><div class="smg-skel-line smg-skel-line--short"></div><div class="smg-skel-line smg-skel-line--meta"></div></div></div>';
+    const FEED_SKEL_CARD = '<div class="smg-feed-card smg-feed-skel"><div class="smg-feed-card-thumb smg-skel-box smg-skeleton-shimmer"></div><div class="smg-feed-card-body"><div class="smg-skel-line smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skel-line--short smg-skeleton-shimmer"></div><div class="smg-skel-line smg-skel-line--meta smg-skeleton-shimmer"></div></div></div>';
     const FEED_MAX = 120;   // teto de cards por aba (evita DOM/imagens crescendo sem fim)
     const feedKeyOf = a => (a.getAttribute('href') || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
     // URL da PRÓXIMA página (paginação XF): rel=next no <head> ou o anchor "próxima" do pageNav. Absolutiza.
@@ -22011,7 +21971,7 @@
         const el = document.createElement('aside');
         el.id = 'smg-aldock';
         el.setAttribute('aria-label', i18n('Alerts'));
-        const alertsSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
+        const alertsSkeleton = paintRailRow('li', 'smg-aldock-skel-row').repeat(6);
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
             '<div class="smg-aldock-head">' +
@@ -24642,7 +24602,7 @@
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
-                        ph = document.createElement('div'); ph.className = 'smg-bm-skel'; ph.dataset.bmId = r.postId; ph.dataset.bmTs = String(r.bmTs || 0);
+                        ph = document.createElement('div'); ph.className = 'smg-bm-skel smg-skeleton-shimmer'; ph.dataset.bmId = r.postId; ph.dataset.bmTs = String(r.bmTs || 0);
                         bmPlaceByTs(list, ph);   // posição certa por bmTs (novos salvos = topo)
                     }
                     return riverEnqueue(() => bmFetchPost(r).then(obj => {
@@ -26066,35 +26026,35 @@
         const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
-                '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
+                '<div class="smg-home-skeleton-card smg-skeleton-shimmer"><div class="smg-home-skeleton-card-thumb"></div>'
                 + '<div class="smg-home-skeleton-card-badges"><i></i><i></i></div>'
-                + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div></div>'
+                + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div></div>'
             ).join('');
             const listRows = Array.from({ length: 6 }, () =>
-                '<div class="smg-home-skeleton-row"><i class="smg-home-skeleton-row-icon"></i>'
-                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div>'
+                '<div class="smg-home-skeleton-row smg-skeleton-shimmer"><i class="smg-home-skeleton-row-icon"></i>'
+                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div>'
                 + '<i class="smg-home-skeleton-row-meta"></i></div>'
             ).join('');
             const categoryTiles = Array.from({ length: 10 }, () =>
-                '<div class="smg-home-skeleton-tile"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div>'
+                '<div class="smg-home-skeleton-tile smg-skeleton-shimmer"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div>'
             ).join('');
             const sectionList = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '<i class="smg-home-skeleton-section-title smg-skeleton-shimmer"></i><span class="smg-home-skeleton-section-divider smg-skeleton-shimmer"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-list">' + listRows + '</div></section>';
             const sectionGrid = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '<i class="smg-home-skeleton-section-title smg-skeleton-shimmer"></i><span class="smg-home-skeleton-section-divider smg-skeleton-shimmer"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-grid">' + categoryTiles + '</div></section>';
             const noticesExpanded = gmGet('smg-notices-expanded', '0') === '1';
             const notices = '<div class="smg-home-skeleton-notices' + (noticesExpanded ? ' is-expanded' : '') + '">'
-                + '<div class="smg-home-skeleton-notices-head"><i></i><i class="smg-home-skeleton-notices-title"></i>'
-                + '<i class="smg-home-skeleton-notices-badge"></i><span class="smg-home-skeleton-notices-actions"><i></i><i></i></span></div>'
-                + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line"></i>'
-                + '<i class="smg-home-skeleton-notices-line short"></i></div></div>';
+                + '<div class="smg-home-skeleton-notices-head"><i class="smg-skeleton-shimmer"></i><i class="smg-home-skeleton-notices-title smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-notices-badge smg-skeleton-shimmer"></i><span class="smg-home-skeleton-notices-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></div>'
+                + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-notices-line short smg-skeleton-shimmer"></i></div></div>';
             return chrome + '<main class="smg-home-skeleton-main">' + notices
-                + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
+                + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><span class="smg-skeleton-shimmer"></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
                 + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
                 + bottomNav;
@@ -26129,10 +26089,17 @@
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
-    function paintRailMarkup() {
-        const row = '<div class="smg-page-skeleton-rail-row"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
+    // linha-fantasma do rail: a MESMA no skeleton da página e dentro do rail até o 1º fetch
+    // (antes eram duas geometrias, 86 px → 74 px, e a lista "encolhia" no meio do carregamento)
+    function paintRailRow(tag, extraClass) {
+        tag = tag || 'div';
+        return '<' + tag + ' class="smg-page-skeleton-rail-row' + (extraClass ? ' ' + extraClass : '') + '"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
             + '<div class="smg-page-skeleton-rail-copy"><i class="smg-page-skeleton-rail-line smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></div>';
+            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></' + tag + '>';
+    }
+
+    function paintRailMarkup() {
+        const row = paintRailRow();
         return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
             + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
             + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';

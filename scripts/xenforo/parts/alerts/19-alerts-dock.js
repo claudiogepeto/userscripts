@@ -330,7 +330,7 @@
         const el = document.createElement('aside');
         el.id = 'smg-aldock';
         el.setAttribute('aria-label', i18n('Alerts'));
-        const alertsSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
+        const alertsSkeleton = paintRailRow('li', 'smg-aldock-skel-row').repeat(6);
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
             '<div class="smg-aldock-head">' +

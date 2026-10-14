@@ -66,35 +66,35 @@
         const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
-                '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
+                '<div class="smg-home-skeleton-card smg-skeleton-shimmer"><div class="smg-home-skeleton-card-thumb"></div>'
                 + '<div class="smg-home-skeleton-card-badges"><i></i><i></i></div>'
-                + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div></div>'
+                + '<div class="smg-home-skeleton-card-body"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div></div>'
             ).join('');
             const listRows = Array.from({ length: 6 }, () =>
-                '<div class="smg-home-skeleton-row"><i class="smg-home-skeleton-row-icon"></i>'
-                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div>'
+                '<div class="smg-home-skeleton-row smg-skeleton-shimmer"><i class="smg-home-skeleton-row-icon"></i>'
+                + '<div class="smg-home-skeleton-row-copy"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div>'
                 + '<i class="smg-home-skeleton-row-meta"></i></div>'
             ).join('');
             const categoryTiles = Array.from({ length: 10 }, () =>
-                '<div class="smg-home-skeleton-tile"><i class="smg-home-skeleton-line"></i>'
-                + '<i class="smg-home-skeleton-line short"></i></div>'
+                '<div class="smg-home-skeleton-tile smg-skeleton-shimmer"><i class="smg-home-skeleton-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-line short smg-skeleton-shimmer"></i></div>'
             ).join('');
             const sectionList = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '<i class="smg-home-skeleton-section-title smg-skeleton-shimmer"></i><span class="smg-home-skeleton-section-divider smg-skeleton-shimmer"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-list">' + listRows + '</div></section>';
             const sectionGrid = '<section><div class="smg-home-skeleton-section-head">'
-                + '<i class="smg-home-skeleton-section-title"></i><span class="smg-home-skeleton-section-divider"></span><span class="smg-home-skeleton-section-badge"></span>'
+                + '<i class="smg-home-skeleton-section-title smg-skeleton-shimmer"></i><span class="smg-home-skeleton-section-divider smg-skeleton-shimmer"></span><span class="smg-home-skeleton-section-badge"></span>'
                 + '</div><div class="smg-home-skeleton-grid">' + categoryTiles + '</div></section>';
             const noticesExpanded = gmGet('smg-notices-expanded', '0') === '1';
             const notices = '<div class="smg-home-skeleton-notices' + (noticesExpanded ? ' is-expanded' : '') + '">'
-                + '<div class="smg-home-skeleton-notices-head"><i></i><i class="smg-home-skeleton-notices-title"></i>'
-                + '<i class="smg-home-skeleton-notices-badge"></i><span class="smg-home-skeleton-notices-actions"><i></i><i></i></span></div>'
-                + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line"></i>'
-                + '<i class="smg-home-skeleton-notices-line short"></i></div></div>';
+                + '<div class="smg-home-skeleton-notices-head"><i class="smg-skeleton-shimmer"></i><i class="smg-home-skeleton-notices-title smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-notices-badge smg-skeleton-shimmer"></i><span class="smg-home-skeleton-notices-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></div>'
+                + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line smg-skeleton-shimmer"></i>'
+                + '<i class="smg-home-skeleton-notices-line short smg-skeleton-shimmer"></i></div></div>';
             return chrome + '<main class="smg-home-skeleton-main">' + notices
-                + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
+                + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><span class="smg-skeleton-shimmer"></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
                 + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
                 + bottomNav;
@@ -129,10 +129,17 @@
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
-    function paintRailMarkup() {
-        const row = '<div class="smg-page-skeleton-rail-row"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
+    // linha-fantasma do rail: a MESMA no skeleton da página e dentro do rail até o 1º fetch
+    // (antes eram duas geometrias, 86 px → 74 px, e a lista "encolhia" no meio do carregamento)
+    function paintRailRow(tag, extraClass) {
+        tag = tag || 'div';
+        return '<' + tag + ' class="smg-page-skeleton-rail-row' + (extraClass ? ' ' + extraClass : '') + '"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
             + '<div class="smg-page-skeleton-rail-copy"><i class="smg-page-skeleton-rail-line smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></div>';
+            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></' + tag + '>';
+    }
+
+    function paintRailMarkup() {
+        const row = paintRailRow();
         return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
             + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
             + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';

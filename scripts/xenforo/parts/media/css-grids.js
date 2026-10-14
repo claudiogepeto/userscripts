@@ -354,7 +354,6 @@
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 var(--smg-sp-12); border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-skel::after, .smg-gallery-tile.is-loading::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }

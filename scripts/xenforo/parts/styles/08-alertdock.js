@@ -61,27 +61,13 @@
                 stroke: currentColor !important;
                 stroke-width: 2px !important;
             }
-            /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
             .smg-aldock-list { list-style: none; margin: 0; padding: 0; }
-            .smg-aldock-skel-row {
-                position: relative; display: flex; align-items: center; gap: var(--smg-sp-10); min-height: 74px;
-                padding: var(--smg-sp-10) var(--smg-sp-14); border-bottom: 1px solid var(--smg-w-06); overflow: hidden;
-            }
-            .smg-aldock-skel-thumb { position: relative; flex: 0 0 54px; width: 54px; height: 54px; border-radius: var(--smg-r-12); background: var(--smg-w-08); overflow: hidden; }
-            .smg-aldock-skel-copy { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; gap: var(--smg-sp-8); overflow: hidden; }
-            .smg-aldock-skel-line { position: relative; width: 82%; height: 10px; border-radius: var(--smg-r-6); background: var(--smg-w-10); overflow: hidden; }
-            .smg-aldock-skel-line.short { width: 54%; height: 8px; }
-            .smg-aldock-skel-thumb::after,
-            .smg-aldock-skel-line::after {
-                content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-            }
+            .smg-aldock-skel-row { list-style: none; }   /* a linha é a MESMA do skeleton do rail (paintRailRow, 09-paint) */
             .smg-aldock-status { padding: var(--smg-sp-16) var(--smg-sp-14) var(--smg-sp-24); text-align: center; font-size: var(--smg-fs-13); color: var(--smg-w-40); }
             .smg-aldock-status--busy { color: var(--smg-w-55); }
             .smg-aldock-foot {
