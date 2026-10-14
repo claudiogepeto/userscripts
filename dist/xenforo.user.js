@@ -3678,7 +3678,7 @@
                 padding-right: var(--smg-sp-32);
                 min-height: 80px !important;
             }
-            /* linha do alerta: SEPARADOR entre todas + não-lida com faixa da cor do tema à esquerda */
+            /* linha do alerta: SEPARADOR entre todas */
             .smg-tb-listbody .smg-alert-clean li.alert {
                 position: relative; padding: var(--smg-sp-14) var(--smg-sp-14);
                 border-bottom: 1px solid var(--smg-al-sep);
@@ -3689,12 +3689,8 @@
             .smg-tb-listbody .smg-alert-clean li.alert,
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow { background: transparent !important; box-shadow: none !important; }
             .smg-tb-listbody .smg-alert-clean li.alert:hover { background: var(--smg-w-06) !important; }
-            /* NÃO-LIDA: tinta suave do tema + faixa de 3px na borda esquerda (marcador claro, sem poluir) */
+            /* NÃO-LIDA: tinta suave do tema (o marcador é o dot à direita, sem faixa na borda esquerda) */
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft) !important; }
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread::before {
-                content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px;
-                border-radius: 0 var(--smg-r-4) var(--smg-r-4) 0; background: var(--smg-link);
-            }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread:hover { box-shadow: inset 0 0 0 999px var(--smg-w-06) !important; }
             /* JÁ VISTAS: bem apagadas (o olho vai direto nas novas) — o hover devolve o contraste inteiro */
             .smg-tb-listbody .smg-alert-clean li.smg-al-old { opacity: 0.4; }
