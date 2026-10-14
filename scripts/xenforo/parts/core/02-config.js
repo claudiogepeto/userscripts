@@ -31,7 +31,6 @@
         directMedia: true,          // embeda mídia DIRETA (susercontent/Shopee, .mp4/.webm/.webp em link cru)
         fileHostCards: true,        // links de file-host (pixeldrain/bunkr/gofile/mega/cyberdrop/…) → card estilizado (thumb/logo + host + tipo)
         groupLinks: true,           // agrupa os links de file-host (GoFile/Bunkr/…) numa barra de chips no post
-        mediaDownload: true,        // botão "baixar toda a mídia do post" na action bar
         shareDirectLink: true,      // Compartilhar copia o link direto do post (em vez de abrir o menu de compartilhamento do XF)
         bookmarksFeed: true,        // /account/bookmarks: substitui a lista nativa por um feed com os posts salvos (igual o feed da home)
     };
@@ -72,7 +71,7 @@
         { section: 'Videos', items: [
             { key: 'autoLoadRedgifs', label: 'RedGifs — load automatically', desc: { en: 'Opens RedGifs players on their own, without requiring a click on the load prompt.', pt: 'Abre os players do RedGifs sozinho, sem exigir o clique no aviso de carregamento.' } },
             { key: 'redgifsPlayer', label: 'RedGifs — built-in player', desc: { en: "Replaces the default RedGifs player with a native one — true aspect ratio, mute and scrubbing. Falls back to the original if the API doesn't respond.", pt: 'Troca o player padrão do RedGifs por um nativo, com proporção real, mudo e controle de tempo. Retorna ao original caso a API não responda.' } },
-            { key: 'imagepondEmbeds', label: 'ImagePond — built-in player', desc: { en: 'Replaces the imagepond.net video iframe with the native player (own controls + download). Falls back to the original when it can\'t.', pt: 'Troca o iframe de vídeo do imagepond.net pelo player nativo (controles próprios + download). Recorre ao original quando não consegue.' } },
+            { key: 'imagepondEmbeds', label: 'ImagePond — built-in player', desc: { en: 'Replaces the imagepond.net video iframe with the native player (own controls). Falls back to the original when it can\'t.', pt: 'Troca o iframe de vídeo do imagepond.net pelo player nativo (controles próprios). Recorre ao original quando não consegue.' } },
             { key: 'cyberdropEmbeds', label: 'Cyberdrop — built-in player', desc: { en: 'The cyberdrop embed loads blank inside the forum (the host sits behind DDoS-Guard), leaving the post empty. Resolves the video through the host API and plays it in the native player, with a link back to the file.', pt: 'O embed do cyberdrop carrega em branco dentro do fórum (o host fica atrás do DDoS-Guard) e o post fica vazio. Resolve o vídeo pela API do host e toca no player nativo, com link de volta pro arquivo.' } },
         ] },
         { section: 'Links & files', items: [
@@ -88,7 +87,6 @@
             { key: 'infiniteScrollWatched', label: 'Infinite scroll in watched & forums', desc: { en: 'Loads next pages automatically in watched lists and forum thread listings.', pt: 'Carrega as próximas páginas automaticamente em listas de seguidos e fóruns.' } },
         ] },
         { section: 'Thread & reading', items: [
-            { key: 'mediaDownload', label: 'Download all media on the page', desc: { en: 'Adds a button (in the thread header) that downloads every image and video on the current page at once.', pt: 'Adiciona um botão (no header da thread) que baixa de uma vez todas as imagens e vídeos da página atual.' } },
             { key: 'revealLikedPosts', label: 'Reveal locked posts on reacting', desc: { en: 'On SMG, reloads a like/medal-locked post on its own as soon as you react — no manual refresh.', pt: 'No SMG, recarrega sozinho o post liberado por curtida/medalha assim que você reage, sem atualizar na mão.' } },
             { key: 'autoExpandSpoilers', label: 'Open spoilers automatically', desc: { en: 'Expands spoilers without requiring a click.', pt: 'Expande os spoilers sem exigir clique.' } },
             { key: 'keyboardShortcuts', label: 'Keyboard shortcuts', desc: { en: 'j / k posts · [ ] pages · g go to page · v grid/list · f feed mode · n notifications · / search.', pt: 'j / k posts · [ ] páginas · g ir para página · v grade/lista · f modo feed · n notificações · / buscar.' } },

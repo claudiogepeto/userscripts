@@ -320,7 +320,7 @@
         }
         if (wrap) rgAspect(wrap, r.w, r.h);   // proporção REAL (se for plausível)
         const pick = video._rgSd ? r.sd : r.hd;   // post = SD (menor/rápido); feed = HD
-        video._rgUrl = pick;   // guarda a URL resolvida → botão de download
+        video._rgUrl = pick;   // guarda a URL resolvida (play adiado / upgrade HD)
         if (rgDirect[rgHost(pick)] === false) {   // host precisa de blob (download inteiro, pesado)
             if (deferBlob(video, pick, wrap)) return;   // INLINE autoplay-off: adia pro play (não trava a fila baixando o mp4 inteiro à toa)
             return rgViaBlob(video, pick, wrap);
@@ -483,11 +483,6 @@
         const h = t / 3600 | 0, m = (t / 60 | 0) % 60, s = t % 60, ss = (s < 10 ? '0' : '') + s;
         return h ? h + ':' + (m < 10 ? '0' : '') + m + ':' + ss : m + ':' + ss;
     }
-    // nome do arquivo p/ o download: usa o ?fn= (turbo) ou o último segmento; senão genérico
-    function rgDownloadName(url, source) {
-        try { const u = new URL(url, location.href); const fn = u.searchParams.get('fn'); if (fn) return fn.replace(/[\\/:*?"<>|]+/g, '_'); const seg = decodeURIComponent((u.pathname.split('/').pop() || '')); if (/\.\w{2,5}$/.test(seg)) return seg; } catch (e) {}
-        return (source || 'video').toLowerCase().replace(/[^a-z0-9]+/g, '') + '.mp4';
-    }
     function rgControls(wrap, video) {   // controles próprios: play central + progresso embaixo + rail vertical (volume · overlay · tela cheia · externo)
         const mkAct = (icon, label, on) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-rgc-act'; b.innerHTML = icon; b.title = i18n(label); b.setAttribute('aria-label', i18n(label)); b.addEventListener('click', on); return b; };
         const toggle = () => {
@@ -618,7 +613,7 @@
             }
         };
 
-        // rail: velocidade · download · visualizador · tela cheia
+        // rail: velocidade · visualizador · tela cheia
         const over = mkAct(ICONS.gallery, 'Open in viewer', e => { e.stopPropagation(); document.querySelectorAll('video.smg-rg-v').forEach(v => { try { v.pause(); } catch (x) {} }); if (video._rgFeed) { try { openMediaFeed(video._rgFeed); } catch (x) {} } });   // grid (galeria) ≠ cantos (fullscreen)
         over.classList.add('smg-rgc-over');   // escondido no feed (lá já É o visualizador) — ver CSS
         const fs = mkAct(ICONS.rgExpand, 'Fullscreen', e => {
@@ -632,13 +627,12 @@
                 }
             } catch (x) {}
         });
-        const dl = mkAct(ICONS.download, 'Download', e => { e.stopPropagation(); const u = video._rgUrl; if (u) smgDownload(u, rgDownloadName(u, video._rgSource)); else if (video._rgExt) window.open(video._rgExt, '_blank', 'noopener'); });
-        // BARRA INFERIOR (YouTube): scrubber em cima + linha [play · volume · tempo ··· velocidade · download · visualizador · tela cheia]
+        // BARRA INFERIOR (YouTube): scrubber em cima + linha [play · volume · tempo ··· velocidade · visualizador · tela cheia]
         const barPlay = mkAct(ICONS.rgPlay, 'Play/Pause', e => { e.stopPropagation(); toggle(); }); barPlay.classList.add('smg-rgc-barplay');   // ícone PREENCHIDO → isenta do fill:none do #smg-feed
         const bottom = document.createElement('div'); bottom.className = 'smg-rgc-bottom';
         const row = document.createElement('div'); row.className = 'smg-rgc-row';
         const leftc = document.createElement('div'); leftc.className = 'smg-rgc-left'; leftc.append(barPlay, volgrp, tEl);
-        const rightc = document.createElement('div'); rightc.className = 'smg-rgc-right'; rightc.append(speedBtn, dl, over, fs);
+        const rightc = document.createElement('div'); rightc.className = 'smg-rgc-right'; rightc.append(speedBtn, over, fs);
         row.append(leftc, rightc);
         bottom.append(prog, row);
         // FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host".

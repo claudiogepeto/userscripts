@@ -1065,8 +1065,6 @@
             }
             /* ---- reveal: spinner do post travado por like/medalha (in-flow, não overlay) ---- */
             .smg-reveal-spin { position: static !important; inset: auto !important; min-height: 56px; margin: 14px auto; }
-            /* ---- download: botão central da dock (estado ocupado) ---- */
-            .smg-nav-btn.smg-dl-busy { opacity: 0.6; pointer-events: none; }
             /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
             .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
             /* Container de imagem horizontal/sheet standalone (fora de grid) */
@@ -1480,7 +1478,7 @@
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
             .smg-rg.smg-rg-ready .smg-rgc-play { pointer-events: auto; }
             /* ---- controles estilo YouTube: play CENTRAL (no pausado) + BARRA INFERIOR com gradiente:
-               scrubber em cima e linha [play · volume · tempo ··· download · visualizador · tela cheia]. Accent = tema. ---- */
+               scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
             /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
             .smg-rgc-flash {
                 position: absolute; inset: 0; z-index: 2;

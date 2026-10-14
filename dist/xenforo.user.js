@@ -5,12 +5,11 @@
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
-// @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
+// @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
 // @match        https://simpcity.su/*
 // @match        https://forums.socialmediagirls.com/*
 // @grant        GM_xmlhttpRequest
-// @grant        GM_download
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      api.redgifs.com
@@ -89,7 +88,7 @@
 //                      rgHidePlaceholder, applyRedgifsPlayer
 //  autoload/spoiler .. autoLoadRedgifs, autoExpandSpoilers
 //  DOCK (nav post) ... setupPostNavigation()  ← GRANDE: pager, goto, filtro de lista, view-toggle,
-//                      download, sheet mobile, e a BUSCA (history/chips/doSearch)
+//                      sheet mobile, e a BUSCA (history/chips/doSearch)
 //  busca títulos ..... enableSearchTitlesOnly
 //  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
 //                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
@@ -111,7 +110,6 @@
 //  favicon (SMG) ..... setFavicon
 //  REDIRECT unwrap ... b64decode, decodeProxyHref, bindProxyClick, unwrapRedirectLinks, handleRedirectPage
 //  REVEAL liked(SMG) . revealLikedPosts, revealPost, markRevealing
-//  DOWNLOAD .......... smgDownload, collectPostMedia, downloadAllMedia, dockBadge
 //  DIRECT media ...... processDirectMedia  (.mp4/img direto → <video>/<img>)
 //  GROUP links ....... linkLabel, groupPostLinks  (file-hosts → chips)
 //  INIT .............. safe(), processAll(), scheduleRun(), detectPageClasses(), boot()
@@ -202,7 +200,6 @@
         directMedia: true,          // embeda mídia DIRETA (susercontent/Shopee, .mp4/.webm/.webp em link cru)
         fileHostCards: true,        // links de file-host (pixeldrain/bunkr/gofile/mega/cyberdrop/…) → card estilizado (thumb/logo + host + tipo)
         groupLinks: true,           // agrupa os links de file-host (GoFile/Bunkr/…) numa barra de chips no post
-        mediaDownload: true,        // botão "baixar toda a mídia do post" na action bar
         shareDirectLink: true,      // Compartilhar copia o link direto do post (em vez de abrir o menu de compartilhamento do XF)
         bookmarksFeed: true,        // /account/bookmarks: substitui a lista nativa por um feed com os posts salvos (igual o feed da home)
     };
@@ -243,7 +240,7 @@
         { section: 'Videos', items: [
             { key: 'autoLoadRedgifs', label: 'RedGifs — load automatically', desc: { en: 'Opens RedGifs players on their own, without requiring a click on the load prompt.', pt: 'Abre os players do RedGifs sozinho, sem exigir o clique no aviso de carregamento.' } },
             { key: 'redgifsPlayer', label: 'RedGifs — built-in player', desc: { en: "Replaces the default RedGifs player with a native one — true aspect ratio, mute and scrubbing. Falls back to the original if the API doesn't respond.", pt: 'Troca o player padrão do RedGifs por um nativo, com proporção real, mudo e controle de tempo. Retorna ao original caso a API não responda.' } },
-            { key: 'imagepondEmbeds', label: 'ImagePond — built-in player', desc: { en: 'Replaces the imagepond.net video iframe with the native player (own controls + download). Falls back to the original when it can\'t.', pt: 'Troca o iframe de vídeo do imagepond.net pelo player nativo (controles próprios + download). Recorre ao original quando não consegue.' } },
+            { key: 'imagepondEmbeds', label: 'ImagePond — built-in player', desc: { en: 'Replaces the imagepond.net video iframe with the native player (own controls). Falls back to the original when it can\'t.', pt: 'Troca o iframe de vídeo do imagepond.net pelo player nativo (controles próprios). Recorre ao original quando não consegue.' } },
             { key: 'cyberdropEmbeds', label: 'Cyberdrop — built-in player', desc: { en: 'The cyberdrop embed loads blank inside the forum (the host sits behind DDoS-Guard), leaving the post empty. Resolves the video through the host API and plays it in the native player, with a link back to the file.', pt: 'O embed do cyberdrop carrega em branco dentro do fórum (o host fica atrás do DDoS-Guard) e o post fica vazio. Resolve o vídeo pela API do host e toca no player nativo, com link de volta pro arquivo.' } },
         ] },
         { section: 'Links & files', items: [
@@ -259,7 +256,6 @@
             { key: 'infiniteScrollWatched', label: 'Infinite scroll in watched & forums', desc: { en: 'Loads next pages automatically in watched lists and forum thread listings.', pt: 'Carrega as próximas páginas automaticamente em listas de seguidos e fóruns.' } },
         ] },
         { section: 'Thread & reading', items: [
-            { key: 'mediaDownload', label: 'Download all media on the page', desc: { en: 'Adds a button (in the thread header) that downloads every image and video on the current page at once.', pt: 'Adiciona um botão (no header da thread) que baixa de uma vez todas as imagens e vídeos da página atual.' } },
             { key: 'revealLikedPosts', label: 'Reveal locked posts on reacting', desc: { en: 'On SMG, reloads a like/medal-locked post on its own as soon as you react — no manual refresh.', pt: 'No SMG, recarrega sozinho o post liberado por curtida/medalha assim que você reage, sem atualizar na mão.' } },
             { key: 'autoExpandSpoilers', label: 'Open spoilers automatically', desc: { en: 'Expands spoilers without requiring a click.', pt: 'Expande os spoilers sem exigir clique.' } },
             { key: 'keyboardShortcuts', label: 'Keyboard shortcuts', desc: { en: 'j / k posts · [ ] pages · g go to page · v grid/list · f feed mode · n notifications · / search.', pt: 'j / k posts · [ ] páginas · g ir para página · v grade/lista · f modo feed · n notificações · / buscar.' } },
@@ -297,21 +293,18 @@
         'Infinite scroll': 'Rolagem infinita', 'Infinite scroll (global)': 'Rolagem infinita (global)',
         'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in timeline': 'Rolagem infinita na timeline',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
-        'Infinite scroll in thread': 'Rolagem infinita no tópico', 'Download all media on the page': 'Baixar toda a mídia da página',
+        'Infinite scroll in thread': 'Rolagem infinita no tópico',
         'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
         'Keyboard shortcuts': 'Atalhos de teclado', 'Gallery': 'Galeria', 'Expand': 'Maximizar',
-        // download + saint
-        'Download': 'Baixar', 'Download media': 'Baixar mídia', 'Open on saint': 'Abrir no saint', 'Open on turbo.cr': 'Abrir no turbo.cr', 'Open on cyberdrop': 'Abrir no cyberdrop',
+        // saint / turbo / cyberdrop
+        'Open on saint': 'Abrir no saint', 'Open on turbo.cr': 'Abrir no turbo.cr', 'Open on cyberdrop': 'Abrir no cyberdrop',
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
         'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
         'no response': 'sem resposta', 'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
         'Error': 'Erro', 'load error': 'erro ao carregar',
-        // download modal
-        'Scanning thread…': 'Varrendo a thread…', 'images': 'imagens', 'videos': 'vídeos', 'external links': 'links externos',
+        // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'Show gallery': 'Ver galeria', 'Open gallery': 'Abrir galeria', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
-        'Nothing to download': 'Nada pra baixar', 'Scan failed': 'Falha ao varrer', 'Download ZIP': 'Baixar ZIP', 'Download files': 'Baixar arquivos',
-        'Downloading…': 'Baixando…', 'Resolving…': 'Resolvendo…', 'Resolving videos…': 'Resolvendo vídeos…', 'Fetching…': 'Buscando…', 'Zipping…': 'Zipando…', 'Done': 'Pronto',
-        'Download failed': 'Falha no download', 'files': 'arquivos', 'Many files — ZIP may be heavy; "Download files" is lighter.': 'Muitos arquivos — o ZIP pode pesar; "Baixar arquivos" é mais leve.',
+        'Done': 'Pronto',
         'Copied!': 'Copiado!', 'Filtering': 'Filtrando', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
         'author': 'autor', 'titles only': 'só títulos', 'Nothing here yet.': 'Nada aqui ainda.', 'Couldn’t load.': 'Não foi possível carregar.',
         // dock — thread
@@ -347,7 +340,7 @@
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Gathering posts…': 'Reunindo posts…', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
-        'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início', 'Download': 'Baixar',
+        'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início',
         'Threads': 'Tópicos', 'This forum': 'Este fórum', 'This thread': 'Este tópico',
         'Filters': 'Filtros', 'Titles only': 'Só títulos', 'Author (optional)': 'Autor (opcional)',
         'Recent searches': 'Buscas recentes', 'Show all': 'Ver todas', 'Show less': 'Ver menos',
@@ -399,7 +392,7 @@
         'Relevance': 'Relevância', 'by date': 'por data',
         // feed de mídia
         'No media on this page': 'Sem mídia nesta página', 'Filter media': 'Filtrar mídia',
-        'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Download': 'Baixar', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
+        'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
         'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume', 'Back 5s': 'Voltar 5s', 'Forward 5s': 'Avançar 5s',
         'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador', 'RedGifs unavailable': 'RedGifs indisponível',
         'Edit in search bar': 'Editar na barra de busca', 'Search on': 'Buscar no',
@@ -553,7 +546,6 @@
         show: svgIcon('<path d="m18 15-6-6-6 6"/>'),
         settings: svgIcon('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
         filter: svgIcon('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'),
-        download: svgIcon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>'),
         volume: svgIcon('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>'),
         volumeMute: svgIcon('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>'),
         rgPlay: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M7 4.5v15a1 1 0 0 0 1.52.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
@@ -1694,8 +1686,6 @@
             }
             /* ---- reveal: spinner do post travado por like/medalha (in-flow, não overlay) ---- */
             .smg-reveal-spin { position: static !important; inset: auto !important; min-height: 56px; margin: 14px auto; }
-            /* ---- download: botão central da dock (estado ocupado) ---- */
-            .smg-nav-btn.smg-dl-busy { opacity: 0.6; pointer-events: none; }
             /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
             .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
             /* Container de imagem horizontal/sheet standalone (fora de grid) */
@@ -2109,7 +2099,7 @@
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
             .smg-rg.smg-rg-ready .smg-rgc-play { pointer-events: auto; }
             /* ---- controles estilo YouTube: play CENTRAL (no pausado) + BARRA INFERIOR com gradiente:
-               scrubber em cima e linha [play · volume · tempo ··· download · visualizador · tela cheia]. Accent = tema. ---- */
+               scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
             /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
             .smg-rgc-flash {
                 position: absolute; inset: 0; z-index: 2;
@@ -7106,7 +7096,7 @@
                 font-size: 9.5px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important;
                 font-weight: 700 !important; letter-spacing: .02em; line-height: 1.3 !important; vertical-align: middle;
             }
-            /* AÇÕES (feed · galeria · download) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
+            /* AÇÕES (feed · galeria) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
                Segmented control: UM bloco coeso (borda/fundo únicos) com divisores entre os ícones — junta os 3 num só. */
             html.smg-thread .p-body-header .p-title,
             html.smg-thread .smg-thead-unified .p-title {
@@ -7347,7 +7337,7 @@
             .smg-thead-unified.is-stuck .smg-bar-pager svg {
                 width: 14px !important; height: 14px !important;
             }
-            /* AÇÕES (feed · galeria · download) com o MESMO desenho do paginador: mesma caixa (fundo,
+            /* AÇÕES (feed · galeria) com o MESMO desenho do paginador: mesma caixa (fundo,
                borda, raio, altura) e botões-pílula sem borda própria, em vez do bloco com gradiente e
                divisórias que tinham antes. Assim as duas metades da direita parecem o mesmo componente. */
             html.smg-thread .smg-thead-unified .smg-thead-actions {
@@ -8538,7 +8528,7 @@
                 html.smg-threadlist .articlePreview-title { font-size: 13px !important; }
             }
 
-            /* ---- feed: barra de ferramentas (download / galeria / filtro / mudo) ---- */
+            /* ---- feed: barra de ferramentas (filtro / mudo) ---- */
             .smg-feed-tools { position: absolute; top: 18px; right: 84px; z-index: 6; display: flex; gap: 10px; }
             .smg-feed-tool {
                 width: 46px; height: 46px; font-size: 21px;
@@ -8613,35 +8603,6 @@
                 color: #fff !important;
                 border-color: var(--smg-link-strong, #d14d8f) !important;
             }
-
-            /* ===== modal de DOWNLOAD ===== */
-            #smg-dl-modal [hidden] { display: none !important; }   /* nossas seções têm display próprio → [hidden] precisa vencer (era o "tudo junto") */
-            #smg-dl-modal { position: fixed; inset: 0; z-index: 2147483640; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--smg-scrim, rgba(0,0,0,0.66)); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-            .smg-dl-card { width: min(440px, 100%); max-height: 86vh; display: flex; flex-direction: column; background: var(--smg-s1); border: 1px solid var(--smg-bd2); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.62); overflow: hidden; }
-            .smg-dl-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid var(--smg-bd); }
-            .smg-dl-title { font-size: 16px; font-weight: 800; color: #fff; }
-            .smg-dl-x { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9px; background: transparent; color: rgba(255,255,255,0.65); cursor: pointer; font-size: 18px; }
-            .smg-dl-x:hover { background: var(--smg-s2); color: #fff; }
-            .smg-dl-x svg { fill: none !important; }
-            .smg-dl-body { padding: 18px; overflow-y: auto; }
-            .smg-dl-scan { display: flex; align-items: center; gap: 11px; color: rgba(255,255,255,0.82); font-size: 14px; }
-            .smg-dl-spin { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.18); border-top-color: var(--smg-link, #ff77b2); animation: smg-dl-spin .7s linear infinite; }
-            @keyframes smg-dl-spin { to { transform: rotate(360deg); } }
-            .smg-dl-summary { display: flex; flex-direction: column; gap: 9px; }
-            .smg-dl-stat { font-size: 14px; color: rgba(255,255,255,0.78); }
-            .smg-dl-stat b { color: #fff; font-size: 19px; font-weight: 800; margin-right: 5px; }
-            .smg-dl-hosts { color: rgba(255,255,255,0.5); font-size: 12px; }
-            .smg-dl-warn { margin-top: 4px; font-size: 12px; color: rgba(255,200,120,0.85); }
-            .smg-dl-empty { color: rgba(255,255,255,0.6); font-size: 14px; }
-            .smg-dl-progress { display: flex; flex-direction: column; gap: 9px; }
-            .smg-dl-bar { height: 8px; border-radius: 999px; background: var(--smg-s3); overflow: hidden; }
-            .smg-dl-bar span { display: block; height: 100%; width: 0; background: var(--smg-link-strong, var(--smg-link, #ff77b2)); transition: width .2s ease; }
-            .smg-dl-progtxt { font-size: 12.5px; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
-            .smg-dl-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--smg-bd); }
-            .smg-dl-btn { flex: 1; padding: 11px; border: 1px solid var(--smg-bd2); border-radius: 11px; background: var(--smg-s2); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background .14s ease, filter .14s ease; }
-            .smg-dl-btn:hover { background: var(--smg-s3); }
-            .smg-dl-btn.smg-dl-zip { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); }
-            .smg-dl-btn.smg-dl-zip:hover { background: var(--smg-link-strong, #d14d8f); filter: brightness(1.1); }
 
             /* ============================================================
                POST estilo REDDIT (.smg-pc no <article>): 1 coluna · header · conteúdo · action bar.
@@ -14001,7 +13962,7 @@
         }
         if (wrap) rgAspect(wrap, r.w, r.h);   // proporção REAL (se for plausível)
         const pick = video._rgSd ? r.sd : r.hd;   // post = SD (menor/rápido); feed = HD
-        video._rgUrl = pick;   // guarda a URL resolvida → botão de download
+        video._rgUrl = pick;   // guarda a URL resolvida (play adiado / upgrade HD)
         if (rgDirect[rgHost(pick)] === false) {   // host precisa de blob (download inteiro, pesado)
             if (deferBlob(video, pick, wrap)) return;   // INLINE autoplay-off: adia pro play (não trava a fila baixando o mp4 inteiro à toa)
             return rgViaBlob(video, pick, wrap);
@@ -14164,11 +14125,6 @@
         const h = t / 3600 | 0, m = (t / 60 | 0) % 60, s = t % 60, ss = (s < 10 ? '0' : '') + s;
         return h ? h + ':' + (m < 10 ? '0' : '') + m + ':' + ss : m + ':' + ss;
     }
-    // nome do arquivo p/ o download: usa o ?fn= (turbo) ou o último segmento; senão genérico
-    function rgDownloadName(url, source) {
-        try { const u = new URL(url, location.href); const fn = u.searchParams.get('fn'); if (fn) return fn.replace(/[\\/:*?"<>|]+/g, '_'); const seg = decodeURIComponent((u.pathname.split('/').pop() || '')); if (/\.\w{2,5}$/.test(seg)) return seg; } catch (e) {}
-        return (source || 'video').toLowerCase().replace(/[^a-z0-9]+/g, '') + '.mp4';
-    }
     function rgControls(wrap, video) {   // controles próprios: play central + progresso embaixo + rail vertical (volume · overlay · tela cheia · externo)
         const mkAct = (icon, label, on) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-rgc-act'; b.innerHTML = icon; b.title = i18n(label); b.setAttribute('aria-label', i18n(label)); b.addEventListener('click', on); return b; };
         const toggle = () => {
@@ -14299,7 +14255,7 @@
             }
         };
 
-        // rail: velocidade · download · visualizador · tela cheia
+        // rail: velocidade · visualizador · tela cheia
         const over = mkAct(ICONS.gallery, 'Open in viewer', e => { e.stopPropagation(); document.querySelectorAll('video.smg-rg-v').forEach(v => { try { v.pause(); } catch (x) {} }); if (video._rgFeed) { try { openMediaFeed(video._rgFeed); } catch (x) {} } });   // grid (galeria) ≠ cantos (fullscreen)
         over.classList.add('smg-rgc-over');   // escondido no feed (lá já É o visualizador) — ver CSS
         const fs = mkAct(ICONS.rgExpand, 'Fullscreen', e => {
@@ -14313,13 +14269,12 @@
                 }
             } catch (x) {}
         });
-        const dl = mkAct(ICONS.download, 'Download', e => { e.stopPropagation(); const u = video._rgUrl; if (u) smgDownload(u, rgDownloadName(u, video._rgSource)); else if (video._rgExt) window.open(video._rgExt, '_blank', 'noopener'); });
-        // BARRA INFERIOR (YouTube): scrubber em cima + linha [play · volume · tempo ··· velocidade · download · visualizador · tela cheia]
+        // BARRA INFERIOR (YouTube): scrubber em cima + linha [play · volume · tempo ··· velocidade · visualizador · tela cheia]
         const barPlay = mkAct(ICONS.rgPlay, 'Play/Pause', e => { e.stopPropagation(); toggle(); }); barPlay.classList.add('smg-rgc-barplay');   // ícone PREENCHIDO → isenta do fill:none do #smg-feed
         const bottom = document.createElement('div'); bottom.className = 'smg-rgc-bottom';
         const row = document.createElement('div'); row.className = 'smg-rgc-row';
         const leftc = document.createElement('div'); leftc.className = 'smg-rgc-left'; leftc.append(barPlay, volgrp, tEl);
-        const rightc = document.createElement('div'); rightc.className = 'smg-rgc-right'; rightc.append(speedBtn, dl, over, fs);
+        const rightc = document.createElement('div'); rightc.className = 'smg-rgc-right'; rightc.append(speedBtn, over, fs);
         row.append(leftc, rightc);
         bottom.append(prog, row);
         // FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host".
@@ -18707,7 +18662,7 @@
     //   coleta ....... feedEmbedUrl · collectMediaFrom (acha imgs/vídeos/embeds num root)
     //   galeria ...... gal* (galPageUrl/Observe/Tile/Fetch/RenderPage/JumpTo/…) + openGallery/closeGallery
     //   visualizador . openMediaFeed() ← GRANDE: slides, zoom, nav (nextVisible/goTo/advance),
-    //                  buildSlide, loadNextPage, mute/filtro, downloadCurrent
+    //                  buildSlide, loadNextPage, mute/filtro
     // =========================================================
 
     // autoplay + mudo nos players suportados (param na URL; o iframe já tem allow="autoplay")
@@ -19184,28 +19139,6 @@
         smgSetNavParam('gallery', order);   // F5 reabre a galeria com a mesma ordem
     }
 
-    // baixa a mídia de um slide do feed (imagem via GM_download c/ fallback de aba; embed = abre o player externo).
-    // separado do controller porque só depende do elemento do slide.
-    function downloadSlide(s) {
-        if (!s) return;
-        const img = s.querySelector('.smg-feed-media');
-        const emb = s.querySelector('.smg-feed-embed');
-        if (img) {
-            const url = img.dataset.src || img.src;
-            if (!url) return;
-            const name = (url.split('/').pop() || 'image').split(/[?#]/)[0] || 'image';
-            if (typeof GM_download === 'function') {
-                try {
-                    GM_download({ url, name, onerror: () => window.open(url, '_blank', 'noopener'), ontimeout: () => window.open(url, '_blank', 'noopener') });
-                    return;
-                } catch {}
-            }
-            window.open(url, '_blank', 'noopener');
-        } else if (emb) {
-            window.open(emb.dataset.src, '_blank', 'noopener'); // player externo: baixe de lá
-        }
-    }
-
     function openMediaFeed(startUrl, mediaList, opts) {
         opts = opts || {};
         // DOCK/HEADER → feed com navegação PRÓPRIA: começa da página 1 da thread (não de onde você está lendo).
@@ -19232,7 +19165,6 @@
                 '<div class="smg-feed-tools">' +
                     '<button class="smg-feed-tool smg-feed-filter" type="button" aria-label="Filter media">' + ICONS.layers + '</button>' +
                     '<button class="smg-feed-tool smg-feed-mute" type="button" aria-label="Sound">' + ICONS.volumeMute + '</button>' +
-                    '<button class="smg-feed-tool smg-feed-download" type="button" aria-label="Download" title="Download">' + ICONS.download + '</button>' +
                 '</div>' +
                 '<button class="smg-feed-nav smg-feed-prev" type="button" aria-label="Previous">' + svgIcon('<path d="m18 15-6-6-6 6"/>') + '</button>' +
                 '<button class="smg-feed-nav smg-feed-next" type="button" aria-label="Next">' + svgIcon('<path d="m6 9 6 6 6-6"/>') + '</button>' +
@@ -19261,7 +19193,6 @@
             feed.querySelector('.smg-feed-close').addEventListener('click', closeFeed);
             feed.querySelector('.smg-feed-prev').addEventListener('click', () => feed._ctrl && feed._ctrl.step(-1));
             feed.querySelector('.smg-feed-next').addEventListener('click', () => feed._ctrl && feed._ctrl.step(1));
-            feed.querySelector('.smg-feed-download').addEventListener('click', () => feed._ctrl && feed._ctrl.download());
             feed.querySelector('.smg-feed-mute').addEventListener('click', () => feed._ctrl && feed._ctrl.toggleMute());
             feed.querySelector('.smg-feed-filter').addEventListener('click', () => feed._ctrl && feed._ctrl.cycleFilter());
 
@@ -19297,7 +19228,6 @@
                 else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); feed._ctrl && feed._ctrl.step(1); }
                 else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); feed._ctrl && feed._ctrl.step(-1); }
                 else if (e.key === 'm') { feed._ctrl && feed._ctrl.toggleMute(); }
-                else if (e.key === 'd') { feed._ctrl && feed._ctrl.download(); }
             });
 
             const setupFeedGestures = () => {
@@ -19668,9 +19598,6 @@
             return true;
         }
 
-        // ---- download da mídia em foco (lógica em downloadSlide, module-level) ----
-        function downloadCurrent() { downloadSlide(slides[current]); }
-
         // ---- mudo (redgifs/youtube; turbo/imagepond não têm param conhecido) ----
         function setMuteIcon() {
             muteBtn.innerHTML = muted ? ICONS.volumeMute : ICONS.volume;
@@ -19708,7 +19635,7 @@
         feed._ctrl = {
             cur: () => current, len: () => slides.length, reel,
             goTo, step, advance, toggleLive, toggleZoom, activeImg, revealActiveThumb,
-            download: downloadCurrent, toggleMute, cycleFilter,
+            toggleMute, cycleFilter,
         };
 
         initial.forEach(buildSlide);
@@ -21618,7 +21545,7 @@
         desc.dataset.smgTagsGrouped = '1';
     }
 
-    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria · download, maiores) ACIMA do título,
+    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria, maiores) ACIMA do título,
     // e remove autor + data da linha de descrição (mantém as tags). Roda 1× no boot (header é server-render, estático).
     function buildThreadHeader() {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (fórum tem .p-body-header também)
@@ -21638,7 +21565,7 @@
             const t = desc.querySelector('time'); const tl = t && t.closest('li'); if (tl) tl.remove();
             groupThreadTags(desc);
         }
-        // linha de ações no topo do header (feed/galeria/download), com navegação própria (página 1)
+        // linha de ações no topo do header (feed/galeria), com navegação própria (página 1)
         const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
         const mk = (icon, title, label, onClick) => {
             const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-thead-btn';
@@ -21651,10 +21578,9 @@
             b.addEventListener('mouseleave', smgHideTip); b.addEventListener('click', smgHideTip);
             return b;
         };
-        // ícones outline limpos (sem depender de fill): feed = play · galeria = grade · download = seta. Label só no mobile.
+        // ícones outline limpos (sem depender de fill): feed = play · galeria = grade. Label só no mobile.
         if (FEATURES.mediaFeed) bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
         bar.appendChild(mk(ICONS.gallery, 'Gallery', 'Gallery', () => openGallery()));
-        if (FEATURES.mediaDownload) { const d = mk(ICONS.download, 'Download media', 'Download', null); d.addEventListener('click', () => openDownloadModal()); bar.appendChild(d); }
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
         // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).
@@ -25105,7 +25031,7 @@
     // (processAll / scheduleRun / boot) está logo abaixo, no part 22-init.
     //
     // Mapa: safe · setFavicon(SMG) · redirect-unwrap (b64decode/decodeProxyHref/bindProxyClick) ·
-    //   reveal-liked(SMG) · saint embeds · download (smgDownload/downloadAllMedia) ·
+    //   reveal-liked(SMG) · saint embeds ·
     //   direct-media (processDirectMedia) · group-links (groupPostLinks)
     // =========================================================
     // RESILIÊNCIA: roda um passo sem deixar um erro de UMA feature derrubar as outras
@@ -25338,289 +25264,6 @@
         if (p.by) fields.push(['c[users]', p.by]);
         if (p.order === 'date') fields.push(['order', 'date']);
         postForm(action, fields);
-    }
-
-
-
-    // =========================================================
-    // FEATURE: botão "baixar toda a mídia do post" na action bar (GM_download + fallback)
-    // =========================================================
-    function smgDownload(url, name) {
-        if (typeof GM_download === 'function') {
-            try { GM_download({ url, name, onerror: () => window.open(url, '_blank', 'noopener'), ontimeout: () => window.open(url, '_blank', 'noopener') }); return; } catch (e) {}
-        }
-        window.open(url, '_blank', 'noopener');
-    }
-    function collectPostMedia(body) {
-        const urls = new Set();
-        body.querySelectorAll('img.bbImage').forEach(img => {
-            const a = img.closest('a[href]');
-            const linkUrl = a && a.getAttribute('href');
-            const u = (linkUrl && /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i.test(linkUrl)) ? a.href : (img.dataset.smgFull || img.currentSrc || img.src);
-            if (u && /^https?:/i.test(u)) urls.add(getBigUrl(u));
-        });
-        body.querySelectorAll('video[src], video source[src]').forEach(v => {
-            const u = v.src || v.getAttribute('src');
-            if (u && /^https?:/i.test(u)) urls.add(u);
-        });
-        return [...urls];
-    }
-    function filenameFromUrl(url) {
-        let n = (url.split('/').pop() || 'media').split(/[?#]/)[0] || 'media';
-        try { n = decodeURIComponent(n); } catch (e) {}
-        if (!/\.[a-z0-9]{2,4}$/i.test(n)) n += '.jpg';
-        return n;
-    }
-    // baixa TODA a mídia carregada na página (todos os posts) — acionado pelo botão central da dock
-    function downloadAllMedia(btn) {
-        if (btn.dataset.busy) return;
-        const urls = collectPostMedia(document.body);
-        if (!urls.length) { dockBadge(btn, '0'); setTimeout(() => dockBadge(btn, ''), 1500); return; }
-        const list = urls.slice(0, 100);   // cap p/ não martelar o host
-        if (list.length > 30 && !confirm(i18n('Download media') + ' (' + list.length + ')?')) return;
-        btn.dataset.busy = '1'; btn.classList.add('smg-dl-busy');
-        let i = 0;
-        const step = () => {
-            if (i >= list.length) { btn.classList.remove('smg-dl-busy'); delete btn.dataset.busy; dockBadge(btn, '✓'); setTimeout(() => dockBadge(btn, ''), 2200); return; }
-            smgDownload(list[i], filenameFromUrl(list[i]));
-            i++;
-            dockBadge(btn, String(list.length - i));   // contagem regressiva do que falta
-            setTimeout(step, 350);   // ~3/s
-        };
-        step();
-    }
-    function dockBadge(btn, text) {
-        const host = btn.querySelector('.smg-nav-ico') || btn;
-        let b = host.querySelector(':scope > .smg-nav-badge');
-        if (!text) { if (b) b.remove(); return; }
-        if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
-        b.textContent = text;
-    }
-
-    // =========================================================
-    // DOWNLOADER: modal de confirmação · varre a THREAD INTEIRA (segue o "Next" do paginador) · ZIP (JS puro) ·
-    // resolve pixeldrain pela API · gofile/bunkr/cyberdrop/etc. vão num links.txt (resolver por host = próximo passo).
-    // =========================================================
-    function dlGmGet(opts) {   // GM_xmlhttpRequest → Promise, com BACKSTOP manual (nunca deixa um worker travar)
-        return new Promise((resolve, reject) => {
-            if (typeof GM_xmlhttpRequest !== 'function') { reject(new Error('GMX off')); return; }
-            const tmo = opts.timeout || 30000;
-            let settled = false;
-            const ok = r => { if (settled) return; settled = true; clearTimeout(guard); resolve(r); };
-            const bad = m => { if (settled) return; settled = true; clearTimeout(guard); reject(new Error(m)); };
-            const guard = setTimeout(() => bad('stall'), tmo + 3000);   // se o GMX não disparar callback nenhum (CDN gotejando), aborta aqui
-            try { GM_xmlhttpRequest(Object.assign({ method: 'GET', timeout: tmo }, opts, { onload: ok, onerror: () => bad('net'), ontimeout: () => bad('timeout') })); }
-            catch (e) { bad((e && e.message) || 'err'); }
-        });
-    }
-    // Referer correto por host (hotlink): redgifs/turbo precisam do próprio; imagem do fórum usa o fórum
-    function dlReferer(url) {
-        if (/redgifs/i.test(url)) return 'https://www.redgifs.com/';
-        if (/turbo|turbocdn|saint/i.test(url)) return 'https://turbo.cr/';
-        return location.origin + '/';
-    }
-    // ZIP em JS PURO (STORE, sem compressão) — o generateAsync do JSZip travava no sandbox do Tampermonkey.
-    const DL_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
-    function dlCrc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = DL_CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
-    function dlBuildZip(entries) {   // entries: [{ name, bytes:Uint8Array }] → Blob (síncrono)
-        const enc = new TextEncoder();
-        const u16 = n => [n & 255, (n >>> 8) & 255];
-        const u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
-        const parts = [], central = []; let offset = 0; const FLAGS = 0x0800;   // nome UTF-8
-        entries.forEach(e => {
-            const nm = enc.encode(e.name), crc = dlCrc32(e.bytes), sz = e.bytes.length;
-            const lfh = new Uint8Array([].concat(u32(0x04034b50), u16(20), u16(FLAGS), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(nm.length), u16(0)));
-            parts.push(lfh, nm, e.bytes);
-            central.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(FLAGS), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))), nm);
-            offset += lfh.length + nm.length + sz;
-        });
-        let cdSize = 0; central.forEach(c => cdSize += c.length);
-        const eocd = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(entries.length), u16(entries.length), u32(cdSize), u32(offset), u16(0)));
-        return new Blob(parts.concat(central, [eocd]), { type: 'application/zip' });
-    }
-    // hosts de arquivo/galeria reconhecidos (casa o host EM QUALQUER LUGAR da URL decodificada — robusto a parse)
-    const DL_EXT = [
-        { key: 'pixeldrain', label: 'Pixeldrain', re: /\/\/(?:[a-z0-9-]+\.)?pixeldrain\.com\b/i },
-        { key: 'gofile', label: 'GoFile', re: /\/\/(?:[a-z0-9-]+\.)?gofile\.io\b/i },
-        { key: 'filester', label: 'Filester', re: /\/\/(?:[a-z0-9-]+\.)?filester\.[a-z]+\b/i },
-        { key: 'bunkr', label: 'Bunkr', re: /\/\/(?:[a-z0-9-]+\.)?bunkr[a-z]*\.[a-z]+\b/i },
-        { key: 'cyberdrop', label: 'Cyberdrop', re: /\/\/(?:[a-z0-9-]+\.)?cyberdrop\.[a-z]+\b/i },
-        { key: 'cyberfile', label: 'Cyberfile', re: /\/\/(?:[a-z0-9-]+\.)?cyberfile\.[a-z]+\b/i },
-        { key: 'saint', label: 'Saint/Turbo', re: /\/\/(?:[a-z0-9-]+\.)?(saint2?\.(su|to|cr)|turbo\.cr)\b/i },
-        { key: 'erome', label: 'Erome', re: /\/\/(?:[a-z0-9-]+\.)?erome\.com\b/i },
-        { key: 'jpghost', label: 'JPG host', re: /\/\/(?:[a-z0-9-]+\.)?(jpg\d?\.(church|su|fish|pet|fishing|homes)|jpeg\.pet|host\.church)\b/i },
-        { key: 'imgbox', label: 'ImgBox', re: /\/\/(?:[a-z0-9-]+\.)?imgbox\.com\b/i },
-        { key: 'pixhost', label: 'PixHost', re: /\/\/(?:[a-z0-9-]+\.)?pixhost\.(?:to|cc|se|st)\b/i },
-        { key: 'imagebam', label: 'ImageBam', re: /\/\/(?:[a-z0-9-]+\.)?imagebam\.com\b/i },
-        { key: 'ibb', label: 'ImgBB', re: /\/\/(?:[a-z0-9-]+\.)?ibb\.co\b/i },
-        { key: 'pixl', label: 'Pixl', re: /\/\/(?:[a-z0-9-]+\.)?pixl\.(is|li)\b/i },
-        { key: 'imgkiwi', label: 'Img.Kiwi', re: /\/\/(?:[a-z0-9-]+\.)?img\.kiwi\b/i },
-        { key: 'mega', label: 'MEGA', re: /\/\/(?:[a-z0-9-]+\.)?mega\.(nz|io)\b/i },
-    ];
-    // links que NÃO são arquivo (socials/nav) → ignora no balde "Outros"
-    const DL_SKIP = /(^|\.)(onlyfans\.com|fansly\.com|fans\.ly|twitter\.com|x\.com|instagram\.com|tiktok\.com|reddit\.com|youtube\.com|youtu\.be|patreon\.com|t\.me|telegram\.me|telegram\.org|discord\.(gg|com)|google\.com|facebook\.com|linktr\.ee|beacons\.ai|throne\.com|amazon\.|wikipedia\.org|imdb\.com)$/i;
-    function dlScanDoc(doc, acc, seen) {
-        const skip = el => el.closest('.bbCodeQuote, .message-signature');
-        const fh = location.hostname.toLowerCase();
-        const isMedia = u => /\.(jpe?g|png|gif|webp|avif|bmp|mp4|webm|mov|m4v|mkv)(\?|#|$)/i.test(u);
-        const addImg = u => { u = getBigUrl(absUrl(u)); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.images.push(u); } };
-        const addVid = u => { u = absUrl(u); if (/^https?:/i.test(u) && !seen.has(u)) { seen.add(u); acc.videos.push(u); } };
-        const addLink = raw => {
-            const u = absUrl(resolveProxyHref(raw) || raw);   // DECODIFICA o proxy do fórum (/goto, /redirect) → URL real
-            if (!/^https?:/i.test(u)) return;
-            let host; try { host = new URL(u).hostname.toLowerCase(); } catch (e) { return; }
-            if (host && (host === fh || host.endsWith('.' + fh) || fh.endsWith('.' + host))) return;   // link interno do fórum
-            if (isMedia(u)) return;                                                            // imagem/vídeo DIRETO → já entra como mídia
-            if (seen.has(u)) return;
-            const k = DL_EXT.find(h => h.re.test(u));                                          // casa o host de arquivo na URL TODA
-            if (!k && (!host || DL_SKIP.test(host))) return;                                   // social/nav OU host inválido → ignora
-            seen.add(u);
-            acc.links.push({ host: k ? k.key : 'other', label: k ? k.label : (IS_PT ? 'Outros' : 'Other'), url: u });
-        };
-        doc.querySelectorAll('img.bbImage').forEach(img => {
-            if (skip(img)) return;
-            const a = img.closest('a[href]'); const href = a && a.getAttribute('href');
-            if (href && /\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) addImg(href);
-            else addImg(img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('src') || '');
-        });
-        doc.querySelectorAll('video[src], video source[src]').forEach(el => { if (!skip(el)) addVid(el.getAttribute('src')); });
-        doc.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".mov"]').forEach(el => { if (!skip(el)) addVid(el.getAttribute('href')); });
-        // links externos: cards unfurl (data-url REAL) + TODAS as âncoras (decodificando o proxy)
-        doc.querySelectorAll('.bbCodeBlock--unfurl[data-url]').forEach(c => { if (!skip(c)) addLink(c.getAttribute('data-url') || ''); });
-        doc.querySelectorAll('a[href]').forEach(a => { if (!skip(a)) addLink(a.getAttribute('href') || ''); });
-        // embeds de vídeo (redgifs/turbo/saint): NÓS já resolvemos pro player → dá pra baixar o mp4. Reusa collectMediaFrom.
-        try { collectMediaFrom(doc).forEach(it => { if (it.type === 'embed' && /redgifs\.com|turbo\.cr|saint2?\.su/i.test(it.url) && !seen.has(it.url)) { seen.add(it.url); acc.embeds.push(it.url); } }); } catch (e) {}
-    }
-    async function dlScanThread(onProgress) {
-        const acc = { images: [], videos: [], links: [], embeds: [] };
-        const seen = new Set();
-        const pj = readPageJump();
-        if (!pj) { dlScanDoc(document, acc, seen); return acc; }   // thread de página única
-        let url = pj.tpl.replace('%page%', '1'), guard = 0;        // começa da pág. 1 e segue o Next (robusto)
-        while (url && guard++ < 600) {
-            let doc;
-            try { doc = await fetchDoc(url, { credentials: 'same-origin' }); } catch (e) { break; }
-            dlScanDoc(doc, acc, seen);
-            if (onProgress) onProgress(guard, pj.max || guard);
-            const nx = doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
-            url = nx ? absUrl(nx.getAttribute('href')) : null;
-        }
-        return acc;
-    }
-    async function dlResolvePixeldrain(link) {   // lista (/l/, /api/list/) ou arquivo (/u/ /d/ /file/ /api/file/ ou id solto) → [{url, name}]
-        const l = link.match(/pixeldrain\.com\/(?:l|api\/list)\/([a-z0-9]+)/i);
-        if (l) { try { const r = await dlGmGet({ url: 'https://pixeldrain.com/api/list/' + l[1] }); const j = JSON.parse(r.responseText || '{}'); const fs = (j.files || []).map(x => ({ url: 'https://pixeldrain.com/api/file/' + x.id + '?download', name: x.name || null })); if (fs.length) return fs; } catch (e) {} }
-        const f = link.match(/pixeldrain\.com\/(?:u|d|file|api\/file)\/([a-z0-9]+)/i) || link.match(/pixeldrain\.com\/([a-z0-9]{6,})(?:[/?#]|$)/i);
-        if (f) return [{ url: 'https://pixeldrain.com/api/file/' + f[1] + '?download', name: null }];
-        return [];
-    }
-    function dlThreadName() {
-        const t = ((document.querySelector('.p-title-value') || {}).textContent || document.title || 'thread');
-        return (t.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)) || 'thread';
-    }
-    function dlSaveBlob(blob, name) {
-        try {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
-            document.body.appendChild(a); a.click();
-            setTimeout(() => { try { a.remove(); URL.revokeObjectURL(url); } catch (e) {} }, 20000);   // NÃO remover/revogar na hora (cancela o download)
-        } catch (e) {
-            try { window.open(URL.createObjectURL(blob), '_blank'); } catch (e2) {}   // fallback: abre o blob (salva manual)
-        }
-    }
-    async function dlRunZip(files, unresolved, setProg) {
-        const used = new Set();
-        const nameFor = (url, name) => { let n = name || filenameFromUrl(url); const base = n; let i = 1; while (used.has(n)) n = base.replace(/(\.[^.]+)?$/, '_' + (i++) + '$1'); used.add(n); return n; };
-        const entries = []; let done = 0, added = 0; const total = files.length; const queue = files.slice();
-        const worker = async () => { while (queue.length) { const it = queue.shift(); try { const r = await dlGmGet({ url: it.url, responseType: 'arraybuffer', headers: { Referer: dlReferer(it.url) } }); const buf = r.response; if (buf && buf.byteLength > 200) { entries.push({ name: nameFor(it.url, it.name), bytes: new Uint8Array(buf) }); added++; } } catch (e) {} setProg(++done, total, i18n('Fetching…')); } };
-        await Promise.all(Array.from({ length: 4 }, worker));
-        if (unresolved.length) entries.push({ name: 'links.txt', bytes: new TextEncoder().encode(unresolved.join('\n')) });
-        if (!entries.length) throw new Error('0 baixados (fetch falhou)');
-        setProg(total, total, i18n('Zipping…'));
-        dlSaveBlob(dlBuildZip(entries), dlThreadName() + '.zip');   // monta o zip SÍNCRONO (sem JSZip) + baixa
-        return added;
-    }
-    async function dlRunFiles(files, unresolved, setProg) {
-        let done = 0; const total = files.length;
-        for (const it of files) { smgDownload(it.url, it.name || filenameFromUrl(it.url)); setProg(++done, total); await new Promise(r => setTimeout(r, 400)); }
-        if (unresolved.length) dlSaveBlob(new Blob([unresolved.join('\n')], { type: 'text/plain' }), dlThreadName() + '_links.txt');
-        return total;
-    }
-    function openDownloadModal() {
-        if (document.getElementById('smg-dl-modal')) return;
-        const ov = document.createElement('div'); ov.id = 'smg-dl-modal';
-        ov.innerHTML =
-            '<div class="smg-dl-card">' +
-                '<div class="smg-dl-head"><span class="smg-dl-title">' + i18n('Download media') + '</span>' +
-                    '<button type="button" class="smg-dl-x" aria-label="Close">' + ICONS.close + '</button></div>' +
-                '<div class="smg-dl-body">' +
-                    '<div class="smg-dl-scan"><span class="smg-dl-spin"></span><span class="smg-dl-scantxt">' + i18n('Scanning thread…') + '</span></div>' +
-                    '<div class="smg-dl-summary" hidden></div>' +
-                    '<div class="smg-dl-progress" hidden><div class="smg-dl-bar"><span></span></div><div class="smg-dl-progtxt"></div></div>' +
-                '</div>' +
-                '<div class="smg-dl-foot" hidden>' +
-                    '<button type="button" class="smg-dl-btn smg-dl-files">' + i18n('Download files') + '</button>' +
-                    '<button type="button" class="smg-dl-btn smg-dl-zip">' + i18n('Download ZIP') + '</button>' +
-                '</div>' +
-            '</div>';
-        document.body.appendChild(ov);
-        const close = () => ov.remove();
-        ov.querySelector('.smg-dl-x').addEventListener('click', close);
-        ov.addEventListener('click', e => { if (e.target === ov) close(); });
-        document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { if (document.getElementById('smg-dl-modal')) close(); document.removeEventListener('keydown', esc); } });
-
-        const $ = s => ov.querySelector(s);
-        let media = null;
-        dlScanThread((page, total) => { $('.smg-dl-scantxt').textContent = i18n('Scanning thread…') + ' (' + page + '/' + total + ')'; })
-            .then(acc => {
-                media = acc; $('.smg-dl-scan').hidden = true;
-                const byHost = {}; acc.links.forEach(l => { byHost[l.label] = (byHost[l.label] || 0) + 1; });
-                const hostStr = Object.keys(byHost).map(k => k + ': ' + byHost[k]).join(' · ');
-                const sum = $('.smg-dl-summary'); sum.hidden = false;
-                const nVid = acc.videos.length + acc.embeds.length;   // vídeos diretos + embeds (redgifs/turbo/saint) que resolvemos
-                if (!acc.images.length && !nVid && !acc.links.length) { sum.innerHTML = '<div class="smg-dl-empty">' + i18n('Nothing to download') + '</div>'; return; }
-                sum.innerHTML =
-                    '<div class="smg-dl-stat"><b>' + acc.images.length + '</b> ' + i18n('images') + '</div>' +
-                    '<div class="smg-dl-stat"><b>' + nVid + '</b> ' + i18n('videos') + '</div>' +
-                    (acc.links.length ? '<div class="smg-dl-stat"><b>' + acc.links.length + '</b> ' + i18n('external links') + (hostStr ? ' <span class="smg-dl-hosts">(' + hostStr + ')</span>' : '') + '</div>' : '') +
-                    (acc.images.length + nVid > 350 ? '<div class="smg-dl-warn">' + i18n('Many files — ZIP may be heavy; "Download files" is lighter.') + '</div>' : '');
-                $('.smg-dl-foot').hidden = false;
-            })
-            .catch(() => { $('.smg-dl-scan').hidden = true; const sum = $('.smg-dl-summary'); sum.hidden = false; sum.innerHTML = '<div class="smg-dl-empty">' + i18n('Scan failed') + '</div>'; });
-
-        const run = async asZip => {
-            if (!media) return;
-            $('.smg-dl-foot').hidden = true; $('.smg-dl-summary').hidden = true; $('.smg-dl-progress').hidden = false;
-            const bar = $('.smg-dl-bar span'), txt = $('.smg-dl-progtxt');
-            const setProg = (done, total, label) => { bar.style.width = (total ? Math.round(done / total * 100) : 0) + '%'; txt.textContent = (label || i18n('Downloading…')) + ' ' + done + '/' + total; };
-            txt.textContent = i18n('Resolving…');
-            const files = []; const unresolved = [];
-            media.images.forEach(u => files.push({ url: u, name: null }));
-            media.videos.forEach(u => files.push({ url: u, name: null }));
-            // resolve os embeds (redgifs) pro mp4 — reusa os resolvers do nosso player
-            for (let i = 0; i < media.embeds.length; i++) {
-                txt.textContent = i18n('Resolving videos…') + ' ' + (i + 1) + '/' + media.embeds.length;
-                const emb = media.embeds[i];
-                try {
-                    let mp4 = null;
-                    if (/redgifs/i.test(emb)) { const id = rgIdFrom(emb); if (id) { const r = await rgVideo(id); mp4 = r && (r.hd || r.sd); } }
-                    else { mp4 = null; }
-                    if (mp4) { const id = (/redgifs/i.test(emb) ? rgIdFrom(emb) : (emb.match(/\/embed\/([^/?#]+)/) || [])[1]) || 'video'; files.push({ url: mp4, name: id + '.mp4' }); }
-                    else unresolved.push(emb);
-                } catch (e) { unresolved.push(emb); }
-            }
-            for (const l of media.links) {
-                if (l.host === 'pixeldrain') { const r = await dlResolvePixeldrain(l.url); if (r.length) r.forEach(x => files.push(x)); else unresolved.push(l.url); }
-                else unresolved.push(l.url);
-            }
-            try {
-                const n = asZip ? await dlRunZip(files, unresolved, setProg) : await dlRunFiles(files, unresolved, setProg);
-                txt.textContent = i18n('Done') + ' ✓ — ' + (n != null ? n : files.length) + ' ' + i18n('files');
-            } catch (e) { txt.textContent = i18n('Download failed') + (e && e.message ? ' — ' + e.message : ''); $('.smg-dl-foot').hidden = false; }
-        };
-        $('.smg-dl-zip').addEventListener('click', () => run(true));
-        $('.smg-dl-files').addEventListener('click', () => run(false));
     }
 
     // =========================================================

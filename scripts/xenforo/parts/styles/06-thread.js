@@ -44,7 +44,7 @@
                 font-size: 9.5px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important;
                 font-weight: 700 !important; letter-spacing: .02em; line-height: 1.3 !important; vertical-align: middle;
             }
-            /* AÇÕES (feed · galeria · download) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
+            /* AÇÕES (feed · galeria) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
                Segmented control: UM bloco coeso (borda/fundo únicos) com divisores entre os ícones — junta os 3 num só. */
             html.smg-thread .p-body-header .p-title,
             html.smg-thread .smg-thead-unified .p-title {
@@ -285,7 +285,7 @@
             .smg-thead-unified.is-stuck .smg-bar-pager svg {
                 width: 14px !important; height: 14px !important;
             }
-            /* AÇÕES (feed · galeria · download) com o MESMO desenho do paginador: mesma caixa (fundo,
+            /* AÇÕES (feed · galeria) com o MESMO desenho do paginador: mesma caixa (fundo,
                borda, raio, altura) e botões-pílula sem borda própria, em vez do bloco com gradiente e
                divisórias que tinham antes. Assim as duas metades da direita parecem o mesmo componente. */
             html.smg-thread .smg-thead-unified .smg-thead-actions {
@@ -1476,7 +1476,7 @@
                 html.smg-threadlist .articlePreview-title { font-size: 13px !important; }
             }
 
-            /* ---- feed: barra de ferramentas (download / galeria / filtro / mudo) ---- */
+            /* ---- feed: barra de ferramentas (filtro / mudo) ---- */
             .smg-feed-tools { position: absolute; top: 18px; right: 84px; z-index: 6; display: flex; gap: 10px; }
             .smg-feed-tool {
                 width: 46px; height: 46px; font-size: 21px;
@@ -1551,35 +1551,6 @@
                 color: #fff !important;
                 border-color: var(--smg-link-strong, #d14d8f) !important;
             }
-
-            /* ===== modal de DOWNLOAD ===== */
-            #smg-dl-modal [hidden] { display: none !important; }   /* nossas seções têm display próprio → [hidden] precisa vencer (era o "tudo junto") */
-            #smg-dl-modal { position: fixed; inset: 0; z-index: 2147483640; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--smg-scrim, rgba(0,0,0,0.66)); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-            .smg-dl-card { width: min(440px, 100%); max-height: 86vh; display: flex; flex-direction: column; background: var(--smg-s1); border: 1px solid var(--smg-bd2); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.62); overflow: hidden; }
-            .smg-dl-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid var(--smg-bd); }
-            .smg-dl-title { font-size: 16px; font-weight: 800; color: #fff; }
-            .smg-dl-x { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9px; background: transparent; color: rgba(255,255,255,0.65); cursor: pointer; font-size: 18px; }
-            .smg-dl-x:hover { background: var(--smg-s2); color: #fff; }
-            .smg-dl-x svg { fill: none !important; }
-            .smg-dl-body { padding: 18px; overflow-y: auto; }
-            .smg-dl-scan { display: flex; align-items: center; gap: 11px; color: rgba(255,255,255,0.82); font-size: 14px; }
-            .smg-dl-spin { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.18); border-top-color: var(--smg-link, #ff77b2); animation: smg-dl-spin .7s linear infinite; }
-            @keyframes smg-dl-spin { to { transform: rotate(360deg); } }
-            .smg-dl-summary { display: flex; flex-direction: column; gap: 9px; }
-            .smg-dl-stat { font-size: 14px; color: rgba(255,255,255,0.78); }
-            .smg-dl-stat b { color: #fff; font-size: 19px; font-weight: 800; margin-right: 5px; }
-            .smg-dl-hosts { color: rgba(255,255,255,0.5); font-size: 12px; }
-            .smg-dl-warn { margin-top: 4px; font-size: 12px; color: rgba(255,200,120,0.85); }
-            .smg-dl-empty { color: rgba(255,255,255,0.6); font-size: 14px; }
-            .smg-dl-progress { display: flex; flex-direction: column; gap: 9px; }
-            .smg-dl-bar { height: 8px; border-radius: 999px; background: var(--smg-s3); overflow: hidden; }
-            .smg-dl-bar span { display: block; height: 100%; width: 0; background: var(--smg-link-strong, var(--smg-link, #ff77b2)); transition: width .2s ease; }
-            .smg-dl-progtxt { font-size: 12.5px; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
-            .smg-dl-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--smg-bd); }
-            .smg-dl-btn { flex: 1; padding: 11px; border: 1px solid var(--smg-bd2); border-radius: 11px; background: var(--smg-s2); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background .14s ease, filter .14s ease; }
-            .smg-dl-btn:hover { background: var(--smg-s3); }
-            .smg-dl-btn.smg-dl-zip { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); }
-            .smg-dl-btn.smg-dl-zip:hover { background: var(--smg-link-strong, #d14d8f); filter: brightness(1.1); }
 
             /* ============================================================
                POST estilo REDDIT (.smg-pc no <article>): 1 coluna · header · conteúdo · action bar.

@@ -3,12 +3,11 @@
 // @namespace    http://tampermonkey.net/
 // @version      4.1.7
 // @author       claudiogepeto
-// @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
+// @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
 // @match        https://simpcity.su/*
 // @match        https://forums.socialmediagirls.com/*
 // @grant        GM_xmlhttpRequest
-// @grant        GM_download
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      api.redgifs.com
@@ -88,7 +87,7 @@
 //                      rgHidePlaceholder, applyRedgifsPlayer
 //  autoload/spoiler .. autoLoadRedgifs, autoExpandSpoilers
 //  DOCK (nav post) ... setupPostNavigation()  ← GRANDE: pager, goto, filtro de lista, view-toggle,
-//                      download, sheet mobile, e a BUSCA (history/chips/doSearch)
+//                      sheet mobile, e a BUSCA (history/chips/doSearch)
 //  busca títulos ..... enableSearchTitlesOnly
 //  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
 //                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
@@ -110,7 +109,6 @@
 //  favicon (SMG) ..... setFavicon
 //  REDIRECT unwrap ... b64decode, decodeProxyHref, bindProxyClick, unwrapRedirectLinks, handleRedirectPage
 //  REVEAL liked(SMG) . revealLikedPosts, revealPost, markRevealing
-//  DOWNLOAD .......... smgDownload, collectPostMedia, downloadAllMedia, dockBadge
 //  DIRECT media ...... processDirectMedia  (.mp4/img direto → <video>/<img>)
 //  GROUP links ....... linkLabel, groupPostLinks  (file-hosts → chips)
 //  INIT .............. safe(), processAll(), scheduleRun(), detectPageClasses(), boot()

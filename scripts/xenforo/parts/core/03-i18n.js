@@ -23,21 +23,18 @@
         'Infinite scroll': 'Rolagem infinita', 'Infinite scroll (global)': 'Rolagem infinita (global)',
         'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in timeline': 'Rolagem infinita na timeline',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
-        'Infinite scroll in thread': 'Rolagem infinita no tópico', 'Download all media on the page': 'Baixar toda a mídia da página',
+        'Infinite scroll in thread': 'Rolagem infinita no tópico',
         'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
         'Keyboard shortcuts': 'Atalhos de teclado', 'Gallery': 'Galeria', 'Expand': 'Maximizar',
-        // download + saint
-        'Download': 'Baixar', 'Download media': 'Baixar mídia', 'Open on saint': 'Abrir no saint', 'Open on turbo.cr': 'Abrir no turbo.cr', 'Open on cyberdrop': 'Abrir no cyberdrop',
+        // saint / turbo / cyberdrop
+        'Open on saint': 'Abrir no saint', 'Open on turbo.cr': 'Abrir no turbo.cr', 'Open on cyberdrop': 'Abrir no cyberdrop',
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
         'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
         'no response': 'sem resposta', 'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
         'Error': 'Erro', 'load error': 'erro ao carregar',
-        // download modal
-        'Scanning thread…': 'Varrendo a thread…', 'images': 'imagens', 'videos': 'vídeos', 'external links': 'links externos',
+        // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'Show gallery': 'Ver galeria', 'Open gallery': 'Abrir galeria', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
-        'Nothing to download': 'Nada pra baixar', 'Scan failed': 'Falha ao varrer', 'Download ZIP': 'Baixar ZIP', 'Download files': 'Baixar arquivos',
-        'Downloading…': 'Baixando…', 'Resolving…': 'Resolvendo…', 'Resolving videos…': 'Resolvendo vídeos…', 'Fetching…': 'Buscando…', 'Zipping…': 'Zipando…', 'Done': 'Pronto',
-        'Download failed': 'Falha no download', 'files': 'arquivos', 'Many files — ZIP may be heavy; "Download files" is lighter.': 'Muitos arquivos — o ZIP pode pesar; "Baixar arquivos" é mais leve.',
+        'Done': 'Pronto',
         'Copied!': 'Copiado!', 'Filtering': 'Filtrando', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
         'author': 'autor', 'titles only': 'só títulos', 'Nothing here yet.': 'Nada aqui ainda.', 'Couldn’t load.': 'Não foi possível carregar.',
         // dock — thread
@@ -73,7 +70,7 @@
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Gathering posts…': 'Reunindo posts…', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
-        'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início', 'Download': 'Baixar',
+        'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início',
         'Threads': 'Tópicos', 'This forum': 'Este fórum', 'This thread': 'Este tópico',
         'Filters': 'Filtros', 'Titles only': 'Só títulos', 'Author (optional)': 'Autor (opcional)',
         'Recent searches': 'Buscas recentes', 'Show all': 'Ver todas', 'Show less': 'Ver menos',
@@ -125,7 +122,7 @@
         'Relevance': 'Relevância', 'by date': 'por data',
         // feed de mídia
         'No media on this page': 'Sem mídia nesta página', 'Filter media': 'Filtrar mídia',
-        'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Download': 'Baixar', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
+        'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
         'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume', 'Back 5s': 'Voltar 5s', 'Forward 5s': 'Avançar 5s',
         'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador', 'RedGifs unavailable': 'RedGifs indisponível',
         'Edit in search bar': 'Editar na barra de busca', 'Search on': 'Buscar no',

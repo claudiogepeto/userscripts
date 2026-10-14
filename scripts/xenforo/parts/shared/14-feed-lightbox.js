@@ -5,7 +5,7 @@
     //   coleta ....... feedEmbedUrl · collectMediaFrom (acha imgs/vídeos/embeds num root)
     //   galeria ...... gal* (galPageUrl/Observe/Tile/Fetch/RenderPage/JumpTo/…) + openGallery/closeGallery
     //   visualizador . openMediaFeed() ← GRANDE: slides, zoom, nav (nextVisible/goTo/advance),
-    //                  buildSlide, loadNextPage, mute/filtro, downloadCurrent
+    //                  buildSlide, loadNextPage, mute/filtro
     // =========================================================
 
     // autoplay + mudo nos players suportados (param na URL; o iframe já tem allow="autoplay")
@@ -482,28 +482,6 @@
         smgSetNavParam('gallery', order);   // F5 reabre a galeria com a mesma ordem
     }
 
-    // baixa a mídia de um slide do feed (imagem via GM_download c/ fallback de aba; embed = abre o player externo).
-    // separado do controller porque só depende do elemento do slide.
-    function downloadSlide(s) {
-        if (!s) return;
-        const img = s.querySelector('.smg-feed-media');
-        const emb = s.querySelector('.smg-feed-embed');
-        if (img) {
-            const url = img.dataset.src || img.src;
-            if (!url) return;
-            const name = (url.split('/').pop() || 'image').split(/[?#]/)[0] || 'image';
-            if (typeof GM_download === 'function') {
-                try {
-                    GM_download({ url, name, onerror: () => window.open(url, '_blank', 'noopener'), ontimeout: () => window.open(url, '_blank', 'noopener') });
-                    return;
-                } catch {}
-            }
-            window.open(url, '_blank', 'noopener');
-        } else if (emb) {
-            window.open(emb.dataset.src, '_blank', 'noopener'); // player externo: baixe de lá
-        }
-    }
-
     function openMediaFeed(startUrl, mediaList, opts) {
         opts = opts || {};
         // DOCK/HEADER → feed com navegação PRÓPRIA: começa da página 1 da thread (não de onde você está lendo).
@@ -530,7 +508,6 @@
                 '<div class="smg-feed-tools">' +
                     '<button class="smg-feed-tool smg-feed-filter" type="button" aria-label="Filter media">' + ICONS.layers + '</button>' +
                     '<button class="smg-feed-tool smg-feed-mute" type="button" aria-label="Sound">' + ICONS.volumeMute + '</button>' +
-                    '<button class="smg-feed-tool smg-feed-download" type="button" aria-label="Download" title="Download">' + ICONS.download + '</button>' +
                 '</div>' +
                 '<button class="smg-feed-nav smg-feed-prev" type="button" aria-label="Previous">' + svgIcon('<path d="m18 15-6-6-6 6"/>') + '</button>' +
                 '<button class="smg-feed-nav smg-feed-next" type="button" aria-label="Next">' + svgIcon('<path d="m6 9 6 6 6-6"/>') + '</button>' +
@@ -559,7 +536,6 @@
             feed.querySelector('.smg-feed-close').addEventListener('click', closeFeed);
             feed.querySelector('.smg-feed-prev').addEventListener('click', () => feed._ctrl && feed._ctrl.step(-1));
             feed.querySelector('.smg-feed-next').addEventListener('click', () => feed._ctrl && feed._ctrl.step(1));
-            feed.querySelector('.smg-feed-download').addEventListener('click', () => feed._ctrl && feed._ctrl.download());
             feed.querySelector('.smg-feed-mute').addEventListener('click', () => feed._ctrl && feed._ctrl.toggleMute());
             feed.querySelector('.smg-feed-filter').addEventListener('click', () => feed._ctrl && feed._ctrl.cycleFilter());
 
@@ -595,7 +571,6 @@
                 else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); feed._ctrl && feed._ctrl.step(1); }
                 else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); feed._ctrl && feed._ctrl.step(-1); }
                 else if (e.key === 'm') { feed._ctrl && feed._ctrl.toggleMute(); }
-                else if (e.key === 'd') { feed._ctrl && feed._ctrl.download(); }
             });
 
             const setupFeedGestures = () => {
@@ -966,9 +941,6 @@
             return true;
         }
 
-        // ---- download da mídia em foco (lógica em downloadSlide, module-level) ----
-        function downloadCurrent() { downloadSlide(slides[current]); }
-
         // ---- mudo (redgifs/youtube; turbo/imagepond não têm param conhecido) ----
         function setMuteIcon() {
             muteBtn.innerHTML = muted ? ICONS.volumeMute : ICONS.volume;
@@ -1006,7 +978,7 @@
         feed._ctrl = {
             cur: () => current, len: () => slides.length, reel,
             goTo, step, advance, toggleLive, toggleZoom, activeImg, revealActiveThumb,
-            download: downloadCurrent, toggleMute, cycleFilter,
+            toggleMute, cycleFilter,
         };
 
         initial.forEach(buildSlide);

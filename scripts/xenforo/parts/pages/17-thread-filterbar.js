@@ -381,7 +381,7 @@
         desc.dataset.smgTagsGrouped = '1';
     }
 
-    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria · download, maiores) ACIMA do título,
+    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria, maiores) ACIMA do título,
     // e remove autor + data da linha de descrição (mantém as tags). Roda 1× no boot (header é server-render, estático).
     function buildThreadHeader() {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (fórum tem .p-body-header também)
@@ -401,7 +401,7 @@
             const t = desc.querySelector('time'); const tl = t && t.closest('li'); if (tl) tl.remove();
             groupThreadTags(desc);
         }
-        // linha de ações no topo do header (feed/galeria/download), com navegação própria (página 1)
+        // linha de ações no topo do header (feed/galeria), com navegação própria (página 1)
         const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
         const mk = (icon, title, label, onClick) => {
             const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-thead-btn';
@@ -414,10 +414,9 @@
             b.addEventListener('mouseleave', smgHideTip); b.addEventListener('click', smgHideTip);
             return b;
         };
-        // ícones outline limpos (sem depender de fill): feed = play · galeria = grade · download = seta. Label só no mobile.
+        // ícones outline limpos (sem depender de fill): feed = play · galeria = grade. Label só no mobile.
         if (FEATURES.mediaFeed) bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
         bar.appendChild(mk(ICONS.gallery, 'Gallery', 'Gallery', () => openGallery()));
-        if (FEATURES.mediaDownload) { const d = mk(ICONS.download, 'Download media', 'Download', null); d.addEventListener('click', () => openDownloadModal()); bar.appendChild(d); }
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
         // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).
