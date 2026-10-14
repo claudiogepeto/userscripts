@@ -205,7 +205,6 @@
             /* tabbar = header da section com segmented control moderno */
             html.smg-home .smg-feed-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; margin: 0 0 20px; background: transparent; border-bottom: 0 !important; }
             /* tabs scrollam aqui; o "See all" fica fixo à direita */
-            html.smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
             html.smg-home .smg-feed-tablist { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.07); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
             html.smg-home .smg-feed-tablist::-webkit-scrollbar { display: none; }
             /* abas em cápsula moderna com realce no item ativo */
@@ -277,9 +276,7 @@
             /* Linha de badges/tags */
             html.smg-home .smg-feed-card-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
             html.smg-home .smg-feed-card-badges .label,
-            html.smg-home .smg-feed-card-badges .prefix,
-            html.smg-home .smg-feed-card-title .label,
-            html.smg-home .smg-feed-card-title .prefix {
+            html.smg-home .smg-feed-card-badges .prefix {
                 margin: 0 !important;
                 font-size: 9.5px !important;
                 font-weight: 700 !important;
