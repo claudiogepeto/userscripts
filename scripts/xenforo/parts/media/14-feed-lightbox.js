@@ -265,21 +265,6 @@
     function galHasNext(doc) {
         return !!doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
     }
-    // total de páginas (SÓ pro display do goto "of N pages") — duas fontes; não trava mais o fetch.
-    function galMaxFromDoc(doc) {
-        let max = 0;
-        doc.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
-            const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-            if (m) max = Math.max(max, parseInt(m[1], 10));
-        });
-        const cur = doc.querySelector('.pageNavSimple-el--current');
-        const sm = cur && cur.textContent.match(/(\d+)\D+(\d+)/);   // "1 of 30" / "1 de 30" / "1 / 30" → pega o 2º nº
-        if (sm) max = Math.max(max, parseInt(sm[2], 10) || 0);
-        const inp = doc.querySelector('[data-xf-init="page-jump"] input[type="number"]');
-        const im = inp && parseInt(inp.getAttribute('max') || '', 10);
-        if (im) max = Math.max(max, im);
-        return max;
-    }
     function galFetch(n, where) {
         if (!galState || galState.loading || n < 1) return;   // sem teto por max: quem decide "tem mais" é o paginador (hasMore)
         galState.loading = true;
@@ -298,7 +283,7 @@
                 if (!galState || galState.gen !== gen) return;   // jump/close no meio do caminho
                 galState.hasMore = galHasNext(doc);   // FONTE DE VERDADE: o paginador desta página tem "Next"?
                 // max é só pro display do goto: o maior entre paginação do doc, DOM vivo e a página atual descoberta.
-                galState.max = Math.max(galState.max, galMaxFromDoc(doc) || 0, (readPageJump() || {}).max || 0, galState.hi + (galState.hasMore ? 1 : 0));
+                galState.max = Math.max(galState.max, pagerMax(doc), (readPageJump() || {}).max || 0, galState.hi + (galState.hasMore ? 1 : 0));
                 const added = galRenderPage(doc, n, where, sec);   // renderiza (ou remove a seção se a página não tiver mídia nova)
                 galState.loading = false;
                 galUpdatePager();
@@ -472,7 +457,7 @@
         const pj = readPageJump();
         order = (order === 'reaction') ? 'reaction' : 'date';   // sort PRÓPRIO ('date' default); restaurado do ?order= no F5
         const cur = 1;             // SEMPRE página 1 (restaurar a página quebrava a paginação no F5 → percorre tudo desde o começo)
-        const max = pj ? pj.max : 1;   // galMaxFromDoc + readPageJump corrigem no 1º fetch
+        const max = pj ? pj.max : 1;   // pagerMax + readPageJump corrigem no 1º fetch
         galState = { scroller, head, seen: new Set(), items: [], loading: false, hasMore: true, order, lo: cur, hi: cur - 1, max, viewPage: cur, gen: 0 };
         galSyncSortBtn();          // a dock é criada 1x → sincroniza o toggle com a ordem (data/reações) a cada abertura
         if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${cur} / ${max}`);

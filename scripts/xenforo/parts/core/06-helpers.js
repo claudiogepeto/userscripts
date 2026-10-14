@@ -730,6 +730,22 @@
     // HELPERS: paginação + estado compartilhado entre features
     // =========================================================
 
+    // total de páginas pelo paginador de `root`: links /page-N e ?page=N, o "X of Y"/"X de Y" do pageNavSimple
+    // e o max do input do page-jump. 0 se nada disso existir.
+    function pagerMax(root) {
+        let max = 0;
+        root.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
+            const m = (a.getAttribute('href') || '').match(/(?:\/page-|[?&]page=)(\d+)/);
+            if (m) max = Math.max(max, parseInt(m[1], 10));
+        });
+        const cur = root.querySelector('.pageNavSimple-el--current');
+        const sm = cur && cur.textContent.match(/(\d+)\D+(\d+)/);   // "1 of 30" / "1 de 30" / "1 / 30" → 2º nº
+        if (sm) max = Math.max(max, parseInt(sm[2], 10) || 0);
+        const im = parseInt(root.querySelector('[data-xf-init="page-jump"] input[type="number"]')?.getAttribute('max') || '', 10);
+        if (im) max = Math.max(max, im);
+        return max;
+    }
+
     // template de URL + página atual/total (dock goto, scroll infinito da thread e do feed).
     // A página atual vem da URL (/page-N) — confiável; o input do page-jump costuma vir
     // vazio/errado no document-end, o que bagunçava a dock e o ponto de partida do scroll.
@@ -752,16 +768,7 @@
 
         // total só do paginador desta página. Link de "última página" dentro de um post,
         // da sidebar ou de outra thread na lista não entra — era isso que virava "página 1500".
-        let max = cur;
-        scope.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
-            const h = a.getAttribute('href') || '';
-            const m = h.match(/(?:\/page-|[?&]page=)(\d+)/);
-            if (m) max = Math.max(max, parseInt(m[1], 10));
-        });
-        const simple = document.querySelector('.pageNavSimple-el--current')?.textContent.match(/(\d+)\s*of\s*(\d+)/i);
-        if (simple) max = Math.max(max, parseInt(simple[2], 10) || 0);
-        const im = parseInt(row?.querySelector('input[type="number"]')?.getAttribute('max') || '', 10);
-        if (im) max = Math.max(max, im);
+        const max = Math.max(cur, pagerMax(scope));
 
         return { tpl, cur: cur || 1, max: max || 1 };
     }
@@ -1392,6 +1399,7 @@
         window.buildDeadBox = buildDeadBox;
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
+        window.__readPageJump = readPageJump;
         window.__fetchDoc = fetchDoc;
         window.__b64decode = b64decode;
         window.__rawParam = rawParam;

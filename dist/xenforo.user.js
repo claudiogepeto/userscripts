@@ -10061,6 +10061,22 @@
     // HELPERS: paginação + estado compartilhado entre features
     // =========================================================
 
+    // total de páginas pelo paginador de `root`: links /page-N e ?page=N, o "X of Y"/"X de Y" do pageNavSimple
+    // e o max do input do page-jump. 0 se nada disso existir.
+    function pagerMax(root) {
+        let max = 0;
+        root.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
+            const m = (a.getAttribute('href') || '').match(/(?:\/page-|[?&]page=)(\d+)/);
+            if (m) max = Math.max(max, parseInt(m[1], 10));
+        });
+        const cur = root.querySelector('.pageNavSimple-el--current');
+        const sm = cur && cur.textContent.match(/(\d+)\D+(\d+)/);   // "1 of 30" / "1 de 30" / "1 / 30" → 2º nº
+        if (sm) max = Math.max(max, parseInt(sm[2], 10) || 0);
+        const im = parseInt(root.querySelector('[data-xf-init="page-jump"] input[type="number"]')?.getAttribute('max') || '', 10);
+        if (im) max = Math.max(max, im);
+        return max;
+    }
+
     // template de URL + página atual/total (dock goto, scroll infinito da thread e do feed).
     // A página atual vem da URL (/page-N) — confiável; o input do page-jump costuma vir
     // vazio/errado no document-end, o que bagunçava a dock e o ponto de partida do scroll.
@@ -10083,16 +10099,7 @@
 
         // total só do paginador desta página. Link de "última página" dentro de um post,
         // da sidebar ou de outra thread na lista não entra — era isso que virava "página 1500".
-        let max = cur;
-        scope.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
-            const h = a.getAttribute('href') || '';
-            const m = h.match(/(?:\/page-|[?&]page=)(\d+)/);
-            if (m) max = Math.max(max, parseInt(m[1], 10));
-        });
-        const simple = document.querySelector('.pageNavSimple-el--current')?.textContent.match(/(\d+)\s*of\s*(\d+)/i);
-        if (simple) max = Math.max(max, parseInt(simple[2], 10) || 0);
-        const im = parseInt(row?.querySelector('input[type="number"]')?.getAttribute('max') || '', 10);
-        if (im) max = Math.max(max, im);
+        const max = Math.max(cur, pagerMax(scope));
 
         return { tpl, cur: cur || 1, max: max || 1 };
     }
@@ -10723,6 +10730,7 @@
         window.buildDeadBox = buildDeadBox;
         window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
         window.__structItemTs = structItemTs;
+        window.__readPageJump = readPageJump;
         window.__fetchDoc = fetchDoc;
         window.__b64decode = b64decode;
         window.__rawParam = rawParam;
@@ -18028,21 +18036,6 @@
     function galHasNext(doc) {
         return !!doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
     }
-    // total de páginas (SÓ pro display do goto "of N pages") — duas fontes; não trava mais o fetch.
-    function galMaxFromDoc(doc) {
-        let max = 0;
-        doc.querySelectorAll('.pageNav a[href], .pageNavSimple a[href]').forEach(a => {
-            const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-            if (m) max = Math.max(max, parseInt(m[1], 10));
-        });
-        const cur = doc.querySelector('.pageNavSimple-el--current');
-        const sm = cur && cur.textContent.match(/(\d+)\D+(\d+)/);   // "1 of 30" / "1 de 30" / "1 / 30" → pega o 2º nº
-        if (sm) max = Math.max(max, parseInt(sm[2], 10) || 0);
-        const inp = doc.querySelector('[data-xf-init="page-jump"] input[type="number"]');
-        const im = inp && parseInt(inp.getAttribute('max') || '', 10);
-        if (im) max = Math.max(max, im);
-        return max;
-    }
     function galFetch(n, where) {
         if (!galState || galState.loading || n < 1) return;   // sem teto por max: quem decide "tem mais" é o paginador (hasMore)
         galState.loading = true;
@@ -18061,7 +18054,7 @@
                 if (!galState || galState.gen !== gen) return;   // jump/close no meio do caminho
                 galState.hasMore = galHasNext(doc);   // FONTE DE VERDADE: o paginador desta página tem "Next"?
                 // max é só pro display do goto: o maior entre paginação do doc, DOM vivo e a página atual descoberta.
-                galState.max = Math.max(galState.max, galMaxFromDoc(doc) || 0, (readPageJump() || {}).max || 0, galState.hi + (galState.hasMore ? 1 : 0));
+                galState.max = Math.max(galState.max, pagerMax(doc), (readPageJump() || {}).max || 0, galState.hi + (galState.hasMore ? 1 : 0));
                 const added = galRenderPage(doc, n, where, sec);   // renderiza (ou remove a seção se a página não tiver mídia nova)
                 galState.loading = false;
                 galUpdatePager();
@@ -18235,7 +18228,7 @@
         const pj = readPageJump();
         order = (order === 'reaction') ? 'reaction' : 'date';   // sort PRÓPRIO ('date' default); restaurado do ?order= no F5
         const cur = 1;             // SEMPRE página 1 (restaurar a página quebrava a paginação no F5 → percorre tudo desde o começo)
-        const max = pj ? pj.max : 1;   // galMaxFromDoc + readPageJump corrigem no 1º fetch
+        const max = pj ? pj.max : 1;   // pagerMax + readPageJump corrigem no 1º fetch
         galState = { scroller, head, seen: new Set(), items: [], loading: false, hasMore: true, order, lo: cur, hi: cur - 1, max, viewPage: cur, gen: 0 };
         galSyncSortBtn();          // a dock é criada 1x → sincroniza o toggle com a ordem (data/reações) a cada abertura
         if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${cur} / ${max}`);
