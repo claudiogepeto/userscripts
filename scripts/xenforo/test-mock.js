@@ -8290,6 +8290,24 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SCROLL: sem hit-test de hover durante a rolagem (desktop)
+    // =========================================================================
+    {
+        console.log('\n--- Scroll: guarda de hover ---');
+        const root = document.documentElement;
+        root.classList.remove('smg-scrolling');
+        window.dispatchEvent(new window.Event('scroll'));
+        assert(root.classList.contains('smg-scrolling'), 'Rolar deve marcar html.smg-scrolling');
+        window.dispatchEvent(new window.Event('scroll'));
+        await new Promise(r => setTimeout(r, 60));
+        assert(root.classList.contains('smg-scrolling'), 'html.smg-scrolling continua enquanto a rolagem segue');
+        await new Promise(r => setTimeout(r, 260));
+        assert(!root.classList.contains('smg-scrolling'), 'html.smg-scrolling sai quando a rolagem para');
+        const scrollCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(/@media \(hover: hover\) and \(pointer: fine\)\s*\{\s*html\.smg-scrolling \.p-body \{ pointer-events: none/.test(scrollCss), 'CSS deve desligar o hover do .p-body só durante a rolagem e só com mouse');
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
