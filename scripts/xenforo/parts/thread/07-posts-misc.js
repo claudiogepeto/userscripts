@@ -105,14 +105,9 @@
         // inteira (querySelectors + readPageJump) re-roda TODO frame de processAll, pra sempre
         const settle = () => { if (document.readyState === 'complete') infScrollBound = true; };
 
-        // /watched/threads usa streamAllWatchedPages para carregar todas as páginas de uma vez
-        if (location.pathname.includes('/watched/threads') || location.href.includes('/watched/threads')) {
-            settle();
-            return;
-        }
-
         // contexto detectado por DOM (URLs de fórum do socialmediagirls não têm /forums/, ex.: /youtubers/)
         let container, itemSelector, fetchScope, keyOf = null;   // keyOf: dedup por thread (article view repete sticky por página)
+        let onPage = null, decorate = null;   // por página: ingestão do doc buscado / decoração de cada item importado
         if (document.querySelector('.message--post')) {
             // thread (posts)
             container = document.querySelector('.message--post').parentElement;
@@ -129,6 +124,12 @@
             container = pick(document);
             itemSelector = '.structItem--thread';
             fetchScope = doc => pick(doc) || doc;
+            if (/\/watched\/threads(?:\/|$)/.test(location.pathname)) {
+                // seguidas: mesma lista, + ingestão de cada página no followed e a decoração própria das linhas
+                keyOf = el => { const a = el.querySelector('.structItem-title a[href*="/threads/"]'); return a ? a.getAttribute('href').replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '') : null; };
+                onPage = doc => ingestWatchedPageToFollowed(doc);
+                decorate = decorateWatchedThreadRow;
+            }
         } else if (document.querySelector('.smg-article-grid')) {
             // article view (forum_view_type_article): cards já movidos pro nosso grid; anexa os da próxima página nele
             container = document.querySelector('.smg-article-grid');
@@ -172,6 +173,7 @@
         infScrollBound = true;
         let loading = false;
         let done = false;
+        let failures = 0;   // falhas seguidas (rede/429/HTTP): 3 → para, em vez de re-tentar a cada frame de scroll
         let lastNum = startPage;
         // dedup (article view): registra as threads já presentes pra não repetir os sticky em cada página
         const seen = new Set();
@@ -222,6 +224,9 @@
 
             grab(url)
                 .then(doc => {
+                    if (!doc) throw new Error('page fetch failed');   // fetchDoc devolve null em 429/HTTP != 2xx
+                    failures = 0;
+                    if (onPage) safe(onPage, doc);
                     const items = fetchScope(doc).querySelectorAll(itemSelector);
                     if (!items.length) { done = true; nextUrl = null; return; }
 
@@ -238,7 +243,9 @@
                     frag.appendChild(sep);
                     items.forEach(p => {
                         if (keyOf) { const k = keyOf(p); if (k && seen.has(k)) return; if (k) seen.add(k); }  // pula thread repetida (sticky)
-                        frag.appendChild(document.importNode(p, true));
+                        const node = document.importNode(p, true);
+                        if (decorate) safe(decorate, node);
+                        frag.appendChild(node);
                     });
                     container.appendChild(frag);
 
@@ -249,7 +256,10 @@
                         window.smgReapplyFilters();
                     }
                 })
-                .catch(() => { if (pre && pre.url === url) pre = null; })   // falhou: joga fora a promessa rejeitada, senão a mesma falha ficaria em cache pra sempre
+                .catch(() => {
+                    if (pre && pre.url === url) pre = null;   // falhou: joga fora a promessa, senão a mesma falha ficaria em cache pra sempre
+                    if (++failures >= 3) done = true;
+                })
                 .finally(() => { loading = false; });
         };
 

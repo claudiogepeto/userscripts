@@ -235,114 +235,20 @@
     }
 
     let isStreamingWatched = false;
-    let watchedStreamScroll = null;
     const onWatchedPage = () => /\/watched\/threads(?:\/|$|\?)/.test(location.pathname) || /\/watched\/threads(?:\/|$|\?)/.test(location.href);
     function stopWatchedStream() {
-        if (watchedStreamScroll) {
-            window.removeEventListener('scroll', watchedStreamScroll);
-            watchedStreamScroll = null;
-        }
         isStreamingWatched = false;
         document.querySelectorAll('.js-replyNewMessageContainer > .structItem--thread, .block--messages .structItem--thread').forEach(el => el.remove());
     }
-    async function streamAllWatchedPages() {
-        if (isStreamingWatched) return;
-        if (!onWatchedPage()) return;
+    // /watched/threads: ingere e decora a página aberta. As PRÓXIMAS páginas vêm do loader comum
+    // (setupInfiniteScroll, 07-posts-misc): separadores, pré-busca, URL e o toggle infiniteScrollWatched.
+    function streamAllWatchedPages() {
+        if (isStreamingWatched || !onWatchedPage()) return;
+        const container = document.querySelector('.p-body-content .structItemContainer') || document.querySelector('.structItemContainer');
+        if (!container) return;
         isStreamingWatched = true;
-
-        // Só a lista de seguidos. .block-body também é o miolo do post, e o fallback
-        // jogava as threads seguidas no fim da publicação depois de sair da página.
-        const getContainer = () => {
-            if (!onWatchedPage()) return null;
-            return document.querySelector('.p-body-content .structItemContainer')
-                || document.querySelector('.structItemContainer');
-        };
-        let container = getContainer();
-        if (!container) { isStreamingWatched = false; return; }
-
         ingestWatchedPageToFollowed(document);
-
-        let maxPages = 1;
-        document.querySelectorAll('.pageNav-page a, .pageNav a, .pageNavSimple, .pageNav-jump--last, a[href*="page="]').forEach(a => {
-            const m = (a.getAttribute('href') || a.textContent || '').match(/(?:page-|[?&]page=)(\d+)/);
-            if (m) maxPages = Math.max(maxPages, parseInt(m[1], 10) || 1);
-        });
-        const simple = document.querySelector('.pageNavSimple-el--current')?.textContent.match(/(\d+)\s*of\s*(\d+)/i);
-        if (simple) maxPages = Math.max(maxPages, parseInt(simple[2], 10) || 1);
-
         container.querySelectorAll('.structItem--thread').forEach(decorateWatchedThreadRow);
-
-        if (maxPages <= 1) return;
-
-        const seenHrefs = new Set();
-        container.querySelectorAll('.structItem--thread').forEach(row => {
-            const a = row.querySelector('.structItem-title a');
-            if (a) seenHrefs.add(a.getAttribute('href'));
-        });
-
-        let nextPage = 2;
-        let isFetching = false;
-
-        async function loadNextWatchedPage() {
-            if (isFetching || nextPage > maxPages || nextPage > 100) return;
-            isFetching = true;
-            const p = nextPage;
-            const url = `/watched/threads?page=${p}`;
-            try {
-                const doc = await fetchDoc(url, { credentials: 'same-origin' });
-                if (!doc) {
-                    isFetching = false;
-                    return;
-                }
-                ingestWatchedPageToFollowed(doc);
-                const rows = doc.querySelectorAll('.structItem--thread');
-                if (!rows.length) {
-                    nextPage = maxPages + 1;
-                    isFetching = false;
-                    return;
-                }
-
-                const frag = document.createDocumentFragment();
-                rows.forEach(r => {
-                    const a = r.querySelector('.structItem-title a');
-                    const href = a ? a.getAttribute('href') : null;
-                    if (href && seenHrefs.has(href)) return;
-                    if (href) seenHrefs.add(href);
-                    const node = document.importNode(r, true);
-                    decorateWatchedThreadRow(node);
-                    frag.appendChild(node);
-                });
-                if (!onWatchedPage()) { stopWatchedStream(); return; }
-                const curContainer = getContainer();
-                if (curContainer) curContainer.appendChild(frag);
-
-                if (typeof window.smgReapplyFilters === 'function') {
-                    window.smgReapplyFilters();
-                }
-                nextPage++;
-            } catch (e) {
-                console.error('[SMG] Erro no stream sob demanda de seguidos p=' + p, e);
-            } finally {
-                isFetching = false;
-            }
-        }
-
-        function onScrollWatched() {
-            if (!onWatchedPage()) { stopWatchedStream(); return; }
-            if (isFetching || nextPage > maxPages || nextPage > 100) return;
-            const scrollBottom = (window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0) + (window.scrollY || window.pageYOffset || 0);
-            const docHeight = Math.max((document.documentElement && document.documentElement.scrollHeight) || 0, (document.body && document.body.scrollHeight) || 0);
-            if (docHeight - scrollBottom <= 600) {
-                loadNextWatchedPage();
-            }
-        }
-
-        watchedStreamScroll = onScrollWatched;
-        window.addEventListener('scroll', onScrollWatched, { passive: true });
-        if (typeof window !== 'undefined') {
-            window.__onWatchedScroll = onScrollWatched;
-            window.__loadNextWatchedPage = loadNextWatchedPage;
-        }
     }
 
     function buildFilterBars(roots) {
