@@ -2326,9 +2326,10 @@ async function runTests() {
     assert(g2wWrappers[0].dataset.ipId === '5312499-abc', 'O primeiro wrapper deve ter o ID correto do ImagePond');
     assert(g2wWrappers[1].dataset.ipId === '987654-xyz', 'O segundo wrapper deve ter o ID correto do ImagePond');
 
-    // 13.4 Embeds/players são blocos de LARGURA TOTAL: o mosaico do post só agrupa imagens
+    // 13.4 Players de vídeo são itens do mosaico: dois players seguidos formam um grupo, na ordem do autor
     const grid13 = content13.querySelector('.auto-image-grid');
-    assert(grid13 === null, 'buildPostGalleries não agrupa embeds/players: eles ficam fora do mosaico, no lugar de origem');
+    assert(grid13 && grid13.children.length === 2 && Array.from(grid13.children).every(c => c.classList.contains('smg-mvid')), 'buildPostGalleries agrupa dois players de vídeo consecutivos (itens .smg-mvid)');
+    assert(Array.from(grid13.children).map(c => c.dataset.ipId).join(',') === '5312499-abc,987654-xyz', 'Players no grupo na ordem do documento');
     const rawIframes = content13.querySelectorAll('iframe:not(.saint-iframe):not([data-ip-done])');
     assert(rawIframes.length === 0, `Nenhum iframe cru sem processamento deve sobrar no card (restantes: ${rawIframes.length})`);
 
