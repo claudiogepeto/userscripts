@@ -401,7 +401,7 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
+        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
         safe(pinDeepLinkPost);
         safe(startTimelineCron);
 
@@ -520,7 +520,7 @@
             if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
             if (FEATURES.headerNotices) safe(setupHeaderNotices);
             if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
+            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();

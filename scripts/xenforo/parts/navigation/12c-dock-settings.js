@@ -854,7 +854,7 @@
                 updateWatchIcon();                  // re-sincroniza com o real (corrige se errou)
                 const nowWatching = smgIsWatching(getWatchButton());
                 // sincroniza o NOSSO banco do feed com a mudança: passou a seguir → adiciona a thread (puxa posts já); deixou de seguir → remove
-                if (nowWatching && !wasWatching) safe(feedAddCurrentThread);
+                if (nowWatching && !wasWatching) safe(ingestCurrentThreadPageIfFollowed);
                 else if (!nowWatching && wasWatching) safe(feedRemoveCurrentThread);
             }, 1500);
         });

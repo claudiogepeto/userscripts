@@ -17411,7 +17411,7 @@
                 updateWatchIcon();                  // re-sincroniza com o real (corrige se errou)
                 const nowWatching = smgIsWatching(getWatchButton());
                 // sincroniza o NOSSO banco do feed com a mudança: passou a seguir → adiciona a thread (puxa posts já); deixou de seguir → remove
-                if (nowWatching && !wasWatching) safe(feedAddCurrentThread);
+                if (nowWatching && !wasWatching) safe(ingestCurrentThreadPageIfFollowed);
                 else if (!nowWatching && wasWatching) safe(feedRemoveCurrentThread);
             }, 1500);
         });
@@ -20327,7 +20327,7 @@
                 setTimeout(() => {
                     const nowWatching = smgIsWatching(watch);
                     paint(nowWatching);  // re-sincroniza
-                    if (nowWatching && !wasWatching) safe(feedAddCurrentThread);
+                    if (nowWatching && !wasWatching) safe(ingestCurrentThreadPageIfFollowed);
                     else if (!nowWatching && wasWatching) safe(feedRemoveCurrentThread);
                 }, 1500);
             });
@@ -24975,11 +24975,15 @@
     // Só thread SEGUIDA vai pro feed (registro no followed OU botão de seguir marcado). A checagem vem
     // ANTES de qualquer varredura dos posts: thread não seguida não paga assinatura nem escreve nada.
     // =========================================================
-    function ingestCurrentThreadPageIfFollowed() {
-        if (!/\/threads\//.test(location.pathname)) return Promise.resolve(0);
-
+    // href canônico da thread aberta (o <link rel=canonical> sobrevive a ?page/#post); '' fora de thread
+    function currentThreadHref() {
+        if (!/\/threads\//.test(location.pathname)) return '';
         const canon = document.querySelector('link[rel="canonical"]');
-        let rawHref = (canon && canon.getAttribute('href')) || location.href;
+        return (canon && canon.getAttribute('href')) || location.href;
+    }
+
+    function ingestCurrentThreadPageIfFollowed() {
+        const rawHref = currentThreadHref();
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
 
@@ -26103,27 +26107,10 @@
         });
     }
     // base canônica + título da thread ABERTA (página de thread). '' se não for uma thread.
-    function feedCurrentThread() {
-        if (!/\/threads\//.test(location.pathname)) return null;
-        const canon = document.querySelector('link[rel="canonical"]');
-        let raw = (canon && canon.getAttribute('href')) || location.href;
-        const base = canonicalThreadPath(raw);
-        if (!base) return null;
-        const titleEl = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
-        const title = titleEl ? extractCleanTitleAndPrefixes(titleEl).title : '';
-        return { base: base, title: title };
-    }
-    function harvestCurrentThreadPage() {
-        return ingestCurrentThreadPageIfFollowed();
-    }
-
-    function feedAddCurrentThread() {
-        return ingestCurrentThreadPageIfFollowed();
-    }
     // DEIXAR DE SEGUIR → tira a thread (e os posts dela) do banco
     function feedRemoveCurrentThread() {
-        const c = feedCurrentThread(); if (!c) return Promise.resolve();
-        return dbFollowedDelete(c.base);
+        const path = canonicalThreadPath(currentThreadHref());
+        return path ? dbFollowedDelete(path) : Promise.resolve();
     }
     let lastTimelineSyncTime = 0;
 
@@ -27547,7 +27534,7 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
+        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
         safe(pinDeepLinkPost);
         safe(startTimelineCron);
 
@@ -27666,7 +27653,7 @@
             if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
             if (FEATURES.headerNotices) safe(setupHeaderNotices);
             if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
+            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();

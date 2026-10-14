@@ -615,27 +615,10 @@
         });
     }
     // base canônica + título da thread ABERTA (página de thread). '' se não for uma thread.
-    function feedCurrentThread() {
-        if (!/\/threads\//.test(location.pathname)) return null;
-        const canon = document.querySelector('link[rel="canonical"]');
-        let raw = (canon && canon.getAttribute('href')) || location.href;
-        const base = canonicalThreadPath(raw);
-        if (!base) return null;
-        const titleEl = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
-        const title = titleEl ? extractCleanTitleAndPrefixes(titleEl).title : '';
-        return { base: base, title: title };
-    }
-    function harvestCurrentThreadPage() {
-        return ingestCurrentThreadPageIfFollowed();
-    }
-
-    function feedAddCurrentThread() {
-        return ingestCurrentThreadPageIfFollowed();
-    }
     // DEIXAR DE SEGUIR → tira a thread (e os posts dela) do banco
     function feedRemoveCurrentThread() {
-        const c = feedCurrentThread(); if (!c) return Promise.resolve();
-        return dbFollowedDelete(c.base);
+        const path = canonicalThreadPath(currentThreadHref());
+        return path ? dbFollowedDelete(path) : Promise.resolve();
     }
     let lastTimelineSyncTime = 0;
 

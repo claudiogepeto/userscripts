@@ -306,7 +306,7 @@
                 setTimeout(() => {
                     const nowWatching = smgIsWatching(watch);
                     paint(nowWatching);  // re-sincroniza
-                    if (nowWatching && !wasWatching) safe(feedAddCurrentThread);
+                    if (nowWatching && !wasWatching) safe(ingestCurrentThreadPageIfFollowed);
                     else if (!nowWatching && wasWatching) safe(feedRemoveCurrentThread);
                 }, 1500);
             });

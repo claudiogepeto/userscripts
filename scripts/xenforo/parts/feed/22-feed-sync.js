@@ -50,11 +50,15 @@
     // Só thread SEGUIDA vai pro feed (registro no followed OU botão de seguir marcado). A checagem vem
     // ANTES de qualquer varredura dos posts: thread não seguida não paga assinatura nem escreve nada.
     // =========================================================
-    function ingestCurrentThreadPageIfFollowed() {
-        if (!/\/threads\//.test(location.pathname)) return Promise.resolve(0);
-
+    // href canônico da thread aberta (o <link rel=canonical> sobrevive a ?page/#post); '' fora de thread
+    function currentThreadHref() {
+        if (!/\/threads\//.test(location.pathname)) return '';
         const canon = document.querySelector('link[rel="canonical"]');
-        let rawHref = (canon && canon.getAttribute('href')) || location.href;
+        return (canon && canon.getAttribute('href')) || location.href;
+    }
+
+    function ingestCurrentThreadPageIfFollowed() {
+        const rawHref = currentThreadHref();
         const path = canonicalThreadPath(rawHref);
         if (!path) return Promise.resolve(0);
 
