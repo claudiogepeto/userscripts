@@ -5115,7 +5115,7 @@ async function runTests() {
     assert(allStyles39.includes('@media (max-width: 1400px)'), 'CSS injetado deve conter @media (max-width: 1400px)');
     assert(allStyles39.includes('--smg-cw: 92%;'), 'CSS injetado deve conter --smg-cw: 92%;');
     assert(allStyles39.includes('--smg-cw: 96%;'), 'CSS injetado deve conter --smg-cw: 96%;');
-    assert(allStyles39.includes('@media (max-width: 1760px)'), 'CSS injetado deve conter @media (max-width: 1760px)');
+    assert(allStyles39.includes('@media (max-width: 1920px)'), 'CSS injetado deve conter @media (max-width: 1920px) (masonry com rail, breakpoint consolidado)');
     assert(allStyles39.includes('--smg-mcols: 2;'), 'CSS injetado deve conter --smg-mcols: 2;');
 
     // =========================================================================
