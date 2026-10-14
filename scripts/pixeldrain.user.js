@@ -1676,35 +1676,6 @@
     const vsep = () => el("div", { class: "pdx-vsep" });
     const statCell = (label, cls = "") => el("div", { class: "pdx-stat " + cls }, el("span", { class: "pdx-k" }, label), el("b", { class: "pdx-statv" }, "—"));
 
-    function popup(title, body) {
-        document.querySelectorAll(".pdx-modal").forEach(m => m.remove());
-        const card = el("div", { class: "pdx-card" },
-            el("div", { class: "pdx-card-h" }, el("span", null, title), el("button", { class: "pdx-x", title: "Fechar", onClick: () => modal.remove() }, icon("close"))),
-            el("div", { class: "pdx-card-b" }, body));
-        const modal = el("div", { class: "pdx-modal", onClick: e => { if (e.target === modal) modal.remove(); } }, card);
-        document.body.append(modal); return modal;
-    }
-
-    function detailsPopup(f) {
-        const rows = [
-            ["Nome", f.name], ["Tipo", f.mime_type || "—"], ["Tamanho", f.size ? fmtSize(f.size) : "—"],
-            ["Views", f.views ?? "—"], ["Downloads", f.downloads ?? "—"],
-            ["Enviado", f.date_upload ? new Date(f.date_upload).toLocaleString() : "—"], ["SHA-256", f.hash_sha256 || "—"]
-        ];
-        popup("Detalhes do Arquivo", el("div", null,
-            el("table", { class: "pdx-tbl" }, ...rows.map(([k, v]) => el("tr", null, el("td", null, k), el("td", null, String(v))))),
-            el("div", { class: "pdx-links" },
-                el("a", { href: M().dl(f.id), target: "_blank", rel: "noopener" }, "↓ Baixar via Mirror (" + M().name + ")"),
-                el("a", { href: "https://pixeldrain.com/u/" + f.id, target: "_blank", rel: "noopener" }, "↗ Página oficial"),
-                el("a", { href: "https://pixeldrain.com/api/file/" + f.id + "/info", target: "_blank", rel: "noopener" }, "ℹ API info"))));
-    }
-
-    function qrPopup(f) {
-        popup("QR Code para Download", el("div", { style: { textAlign: "center" } },
-            el("img", { class: "pdx-qr", src: "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=" + encodeURIComponent(M().dl(f.id)), alt: "QR" }),
-            el("div", { class: "pdx-qrcap" }, "Baixe direto no celular via " + M().name + ", sem gastar cota local.")));
-    }
-
     function buildGlobalTopbar(fv) {
         if (fv.querySelector(":scope > .pdx-gtop")) return;
         const uname = (document.querySelector(".button_username") || {}).textContent;
