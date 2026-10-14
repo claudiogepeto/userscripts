@@ -8165,7 +8165,6 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .block--messages, html.smg-thread .block-body--messages { overflow-anchor: auto !important; }
             html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
             html.smg-thread .smg-pc:hover { border-color: rgba(255,255,255,0.22) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
@@ -8418,19 +8417,11 @@
             /* react = CONTADOR: esconde o visual nativo (sprite/<i>/emoji/"React" = a "asa" torta), usa ícone limpo + "N reações" */
             html.smg-thread .smg-pc-act--react > i, html.smg-thread .smg-pc-act--react .reaction-sprite, html.smg-thread .smg-pc-act--react .reaction-image, html.smg-thread .smg-pc-act--react .reaction-text,
             html.smg-thread .smg-cc-act--react > i, html.smg-thread .smg-cc-act--react .reaction-sprite, html.smg-thread .smg-cc-act--react .reaction-image, html.smg-thread .smg-cc-act--react .reaction-text { display: none !important; }
-            html.smg-thread .smg-pc-react-ic, html.smg-thread .smg-cc-react-ic { display: inline-flex; align-items: center; }
-            html.smg-thread .smg-pc-react-ic svg, html.smg-thread .smg-cc-react-ic svg { width: 16px; height: 16px; }
             /* CONTENT: texto maior que a action bar (hierarquia) */
             html.smg-thread .smg-pc .message-content, html.smg-thread .smg-pc .message-content .bbWrapper { font-size: 15px; line-height: 1.55; }
             /* PILLS de reação ESCONDIDAS (escolha do user): misturam joypixels + emojione (medal) = impossível alinhar a arte.
                O contador "N reações" na action bar já mostra o total (lê as contagens do DOM, que continua aqui em display:none). */
             html.smg-thread .smg-pc .reactionsBar, html.smg-thread .smg-pc .comment-reactions { display: none !important; }
-            /* PILLS de reação (addon do site, post E comentário): chip limpo, emoji + contagem CENTRALIZADOS (estavam tortos: img inline na baseline) */
-            html.smg-thread .smg-pc :is(.reactionsBar, .comment-reactions) .smgReactionPills { display: flex !important; flex-wrap: wrap; align-items: center !important; gap: 6px !important; margin: 0 !important; }
-            html.smg-thread .smg-pc :is(.reactionsBar, .comment-reactions) .smgReactionPill { display: inline-flex !important; align-items: center !important; gap: 5px !important; margin: 0 !important; height: 26px !important; padding: 0 10px !important; border-radius: 999px !important; background: var(--smg-s3, rgba(255,255,255,0.08)) !important; text-decoration: none !important; line-height: 1 !important; box-sizing: border-box !important; }
-            html.smg-thread .smg-pc :is(.reactionsBar, .comment-reactions) .smgReactionPill:hover { background: var(--smg-s2, rgba(255,255,255,0.16)) !important; }
-            html.smg-thread .smg-pc :is(.reactionsBar, .comment-reactions) .smgReactionPill-img { width: 18px !important; height: 18px !important; min-width: 18px !important; max-width: 18px !important; display: block !important; flex: 0 0 auto !important; margin: 0 !important; padding: 0 !important; object-fit: contain !important; vertical-align: middle !important; }
-            html.smg-thread .smg-pc :is(.reactionsBar, .comment-reactions) .smgReactionPill-count { font-size: 12px !important; font-weight: 700 !important; color: rgba(255,255,255,0.85) !important; font-variant-numeric: tabular-nums; line-height: 1 !important; }
             /* ⋯ overflow */
             html.smg-thread .smg-pc-morewrap { position: relative; margin-left: auto; }
             html.smg-thread .smg-pc-act--more { font-size: 18px; padding: 0 12px; }
@@ -8487,7 +8478,6 @@
             html.smg-thread .smg-cc-act .reaction-image, html.smg-thread .smg-cc-act .reaction-sprite { width: 16px; height: 16px; }
             html.smg-thread .smg-cc-act--more { margin-left: auto; font-size: 16px; }
             html.smg-thread .smg-cc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
-            html.smg-thread .smg-cc .comment-reactions { margin-top: 7px; }
             /* matar o "quadrado cinza" do tema nos comentários → integra no card; mantém só o thread-line do .smg-cc */
             html.smg-thread .smg-pc .message-responses, html.smg-thread .smg-pc .message-responseRow:not(.uw-comment-count), html.smg-thread .smg-pc .uw_fcs_comment_section,
             html.smg-thread .smg-cc, html.smg-thread .smg-cc .comment-inner, html.smg-thread .smg-cc .comment-main, html.smg-thread .smg-cc .comment-content { background: transparent !important; box-shadow: none !important; }

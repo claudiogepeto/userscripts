@@ -43,7 +43,6 @@
             html.smg-thread .smg-cc-act .reaction-image, html.smg-thread .smg-cc-act .reaction-sprite { width: 16px; height: 16px; }
             html.smg-thread .smg-cc-act--more { margin-left: auto; font-size: 16px; }
             html.smg-thread .smg-cc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
-            html.smg-thread .smg-cc .comment-reactions { margin-top: 7px; }
             /* matar o "quadrado cinza" do tema nos comentários → integra no card; mantém só o thread-line do .smg-cc */
             html.smg-thread .smg-pc .message-responses, html.smg-thread .smg-pc .message-responseRow:not(.uw-comment-count), html.smg-thread .smg-pc .uw_fcs_comment_section,
             html.smg-thread .smg-cc, html.smg-thread .smg-cc .comment-inner, html.smg-thread .smg-cc .comment-main, html.smg-thread .smg-cc .comment-content { background: transparent !important; box-shadow: none !important; }
