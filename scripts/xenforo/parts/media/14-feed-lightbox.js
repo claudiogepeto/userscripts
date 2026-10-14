@@ -485,6 +485,16 @@
         smgSetNavParam('gallery', order);   // F5 reabre a galeria com a mesma ordem
     }
 
+    // zoom/pan de uma imagem do feed: UM lugar escreve o transform (pinça, arrasto e clique usavam 3 cópias)
+    function feedZoomTransform(img, z) { img.style.transform = 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.scale + ')'; }
+    // esvazia os slides e a fita, desmontando os players antes (fechar E reabrir passam por aqui: reabrir
+    // por cima de um feed aberto só limpava o HTML e deixava cada <video> do reel vivo, sem rgDispose)
+    function feedClearReel(feed) {
+        const reelEl = feed.querySelector('.smg-feed-reel');
+        reelEl.querySelectorAll('video.smg-rg-v').forEach(rgDispose);
+        reelEl.innerHTML = '';
+        feed.querySelector('.smg-feed-strip').innerHTML = '';
+    }
     function openMediaFeed(startUrl, mediaList, opts) {
         opts = opts || {};
         // DOCK/HEADER → feed com navegação PRÓPRIA: começa da página 1 da thread (não de onde você está lendo).
@@ -528,10 +538,7 @@
                 feed.classList.remove('open');
                 const galOpen = document.getElementById('smg-gallery') && document.getElementById('smg-gallery').classList.contains('open');
                 if (!galOpen) document.documentElement.style.overflow = '';   // galeria por baixo (feed aberto via tile) continua fullscreen
-                const reelEl = feed.querySelector('.smg-feed-reel');
-                reelEl.querySelectorAll('video.smg-rg-v').forEach(rgDispose);   // teardown completo dos players antes do wipe
-                reelEl.innerHTML = '';
-                feed.querySelector('.smg-feed-strip').innerHTML = '';
+                feedClearReel(feed);   // teardown completo dos players antes do wipe
                 feed._ctrl = null;
                 rgReleaseDetachedBlobs();   // os <video> do feed saíram do DOM → libera os objectURLs de blob agora
                 smgSetNavParam(galOpen ? 'gallery' : null, galOpen && galState ? galState.order : null);   // volta o param pra gallery (se aberta) ou limpa
@@ -582,7 +589,6 @@
                 const dist2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
                 let mode = null, dragStartY = 0, dragDy = 0, moved = false;
                 let pinchStart = 0, pinchBase = 1, panSX = 0, panSY = 0, panBX = 0, panBY = 0;
-                const applyZoom = (img, z) => { img.style.transform = 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.scale + ')'; };
 
                 trackEl.addEventListener('touchstart', e => {
                     if (!feed._ctrl) return;
@@ -614,7 +620,7 @@
                         if (!img || e.touches.length < 2) return;
                         const z = img._zoom;
                         z.scale = Math.max(1, Math.min(5, pinchBase * dist2(e.touches) / (pinchStart || 1)));
-                        applyZoom(img, z);
+                        feedZoomTransform(img, z);
                         e.preventDefault();
                     } else if (mode === 'pan') {
                         const img = c.activeImg();
@@ -622,7 +628,7 @@
                         const z = img._zoom;
                         z.x = panBX + (e.touches[0].clientX - panSX);
                         z.y = panBY + (e.touches[0].clientY - panSY);
-                        applyZoom(img, z);
+                        feedZoomTransform(img, z);
                         e.preventDefault();
                     } else { // nav
                         dragDy = e.touches[0].clientY - dragStartY;
@@ -671,7 +677,7 @@
                     const dx = e.clientX - gSX, dy = e.clientY - gSY;
                     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) gMoved = true;
                     z.x = gBX + dx; z.y = gBY + dy;
-                    img.style.transform = 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.scale + ')';
+                    feedZoomTransform(img, z);
                 });
                 window.addEventListener('mouseup', () => {
                     if (!grabbing) return;
@@ -699,8 +705,7 @@
         const muteBtn = feed.querySelector('.smg-feed-mute');
         const filterBtn = feed.querySelector('.smg-feed-filter');
 
-        reel.innerHTML = '';
-        strip.innerHTML = '';
+        feedClearReel(feed);
         reel.style.transition = 'none';
         reel.style.transform = 'translateY(0)';
 
@@ -919,7 +924,6 @@
         // sob o cursor, mesmo subindo de nível). Reusa img._zoom (mesmo objeto do pinch). Retorna false se o slide NÃO
         // for imagem → o caller cai no toggleLive (vídeo).
         const ZOOM_STEPS = [2, 3.5];   // até 2 níveis
-        function applyZoomTransform(img, z) { img.style.transform = 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.scale + ')'; }
         function toggleZoom(clientX, clientY) {
             const img = activeImg();
             if (!img) return false;
@@ -939,7 +943,7 @@
             z.x += (clientX - cx) * (1 - s / z.scale);
             z.y += (clientY - cy) * (1 - s / z.scale);
             z.scale = s;
-            applyZoomTransform(img, z);
+            feedZoomTransform(img, z);
             img.classList.add('smg-zoomed');
             return true;
         }
@@ -980,7 +984,7 @@
 
         feed._ctrl = {
             cur: () => current, len: () => slides.length, reel,
-            goTo, step, advance, toggleLive, toggleZoom, activeImg, revealActiveThumb,
+            goTo, step, advance, toggleLive, toggleZoom, activeImg,
             toggleMute, cycleFilter,
         };
 
