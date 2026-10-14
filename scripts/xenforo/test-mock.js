@@ -8308,6 +8308,36 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SCROLL: banners animados do SMG pausam fora da tela
+    // =========================================================================
+    {
+        console.log('\n--- Scroll: banners animados fora da tela ---');
+        const PrevIO = window.IntersectionObserver;
+        const ios = [];
+        window.IntersectionObserver = class extends PrevIO { constructor(cb, opts) { super(cb, opts); ios.push(this); } };
+        const art = document.createElement('article');
+        art.className = 'message message--post js-post';
+        art.innerHTML = '<div class="message-userExtras"><div class="userBanner usergroup smgaddict"><span class="userBanner-before"></span><strong>Addict</strong><span class="userBanner-after"></span></div></div>';
+        (document.body || document.querySelector('.p-body') || document.documentElement).appendChild(art);
+        const banner = art.querySelector('.userBanner');
+        window.__pauseOffscreenBanners([art]);
+        const io = ios.find(o => o.elements.has(banner));
+        assert(!!io, 'O banner animado deve ser observado por um IntersectionObserver');
+        if (io) {
+            io.callback([{ target: banner, isIntersecting: false }], io);
+            assert(banner.classList.contains('smg-anim-paused'), 'Banner fora da tela deve ficar pausado');
+            io.callback([{ target: banner, isIntersecting: true }], io);
+            assert(!banner.classList.contains('smg-anim-paused'), 'Banner na tela volta a animar');
+        }
+        window.__pauseOffscreenBanners([art]);
+        assert(ios.filter(o => o.elements.has(banner)).length === 1, 'O mesmo banner não é observado duas vezes');
+        const bannerCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(/\.userBanner\.smg-anim-paused::before[^{]*\{\s*animation-play-state: paused !important/.test(bannerCss), 'CSS deve pausar o banner e os pseudo-elementos dele');
+        art.remove();
+        window.IntersectionObserver = PrevIO;
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
