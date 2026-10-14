@@ -1468,7 +1468,8 @@
             try { v.pause(); v.muted = true; } catch (err) {}
             v.remove();
         });
-        stMid.innerHTML = "";
+        // Limpa a mídia mas mantém as setas laterais, criadas uma única vez em buildStage().
+        Array.from(stMid.children).forEach(c => { if (!c.classList.contains("gf-nav-side")) c.remove(); });
 
         // Fecha qualquer modal nativo do GoFile via clique
         document.querySelectorAll("dialog[open], [data-action='close'], [data-action='back'], #modal-close, button[aria-label*='Close' i], [class*='fixed'] button[aria-label*='close' i]").forEach(b => {
