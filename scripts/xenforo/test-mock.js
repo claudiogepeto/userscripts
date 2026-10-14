@@ -944,6 +944,15 @@ async function runTests() {
     assert(legacyCard && legacyCard.querySelector('.smg-fp-tname').textContent === 'Legacy Thread', 'Salvo no formato antigo deve renderizar o título do tópico');
     assert(legacyCard.querySelector('.smg-fp-content').textContent.includes('legacy body'), 'Salvo no formato antigo deve renderizar o conteúdo');
 
+    // 5.5 Salvos não aplicam o filtro de tags do feed (discussion/off-topic/ajuda continuam visíveis)
+    ['Discussion', 'Off-Topic', 'Ajuda'].forEach(tag => {
+        let tagged = null;
+        try {
+            tagged = bmCardFromRec({ postId: 'tag-' + tag, note: '', bmTs: 1, obj: { post_id: 'tag-' + tag, created_at: 1700000000, author: 'A', author_href: '', thread_name: 'Tagged ' + tag, prefixes_html: '<span class="label">' + tag + '</span>', thread_thumb: '', permalink: 'https://example.com/posts/1/', content_html: '<div class="bbWrapper">tagged body</div>' } });
+        } catch (e) { tagged = null; }
+        assert(tagged && tagged.querySelector('.smg-fp-content'), 'Salvo com a tag "' + tag + '" deve renderizar um card');
+    });
+
     // 5.4 Testar as propriedades de largura 100% do #smg-bm-feed no CSS injetado
     const styleEls = Array.from(document.querySelectorAll('style'));
     const combinedCss = styleEls.map(s => s.textContent).join('\n');
