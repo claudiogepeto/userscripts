@@ -183,7 +183,7 @@ Edit the sources, then run:
 node build.mjs
 node --check scripts/xenforo/script.js
 node --check scripts/bypassbr/script.js
-node scripts/xenforo/test-mock.js
+node scripts/xenforo/tests/run.js
 \`\`\`
 
 The build regenerates XenForo, every individual file, and this README. Do not edit generated files in \`dist/\` or the assembled XenForo file directly. Every installable file includes its GitHub auto-update URL.
