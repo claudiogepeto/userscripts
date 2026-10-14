@@ -97,6 +97,13 @@
         return null;
     }
 
+    // id de VÍDEO do turbo/saint numa URL (/embed/ID, /v/ID ou /ID). '' p/ outras páginas: /a/ID é álbum, não vídeo.
+    function turboMediaId(url) {
+        const m = String(url || '').match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:(embed|v)\/)?([a-zA-Z0-9_-]+)(\/[a-zA-Z0-9_-])?/i);
+        if (!m || (!m[1] && m[3])) return '';
+        return m[2];
+    }
+
     function resolveProxyHref(href) {
         if (!href || typeof href !== 'string') return '';
         let trimmed = cleanProxyString(href);

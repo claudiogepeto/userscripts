@@ -44,8 +44,8 @@
             }
             if (el.matches('.bbCodeBlock--unfurl[data-url]')) {   // turbo/saint = card unfurl com data-url REAL (o <a> é um /goto base64). bunkr/pixeldrain caem aqui e são IGNORADOS (regex só turbo/saint).
                 const u = el.getAttribute('data-url') || '';
-                const m = u.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:embed\/)?([a-zA-Z0-9_-]+)/i);
-                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
+                const id = turboMediaId(u);
+                if (id) add('embed', 'https://turbo.cr/embed/' + id);
                 return;
             }
             if (el.tagName === 'IMG') {
@@ -61,8 +61,8 @@
                 }
             } else if (el.tagName === 'A') {   // link cru de saint/turbo (ex.: páginas buscadas pela galeria, onde o iframe ainda não foi montado)
                 const href = el.getAttribute('href') || '';
-                const m = href.match(/(?:turbo\.cr|saint2?\.(?:su|to|cr))\/(?:(?:embed|v)\/)?([a-zA-Z0-9_-]+)/i);
-                if (m) add('embed', 'https://turbo.cr/embed/' + m[1]);
+                const id = turboMediaId(href);
+                if (id) add('embed', 'https://turbo.cr/embed/' + id);
             } else { // div de redgifs ainda não carregado: pega o id do onclick
                 if (el.querySelector('iframe')) return;
                 const m = (el.getAttribute('onclick') || '').match(/redgifs\.com\/ifr\/([a-zA-Z0-9_-]+)/i);
