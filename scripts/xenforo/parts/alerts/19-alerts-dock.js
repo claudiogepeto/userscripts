@@ -332,27 +332,17 @@
         el.classList.toggle('smg-aldock-status--busy', kind === 'loading');
     }
 
-    function getWatchedUnreadCount() {
-        return Math.max(0, parseInt(gmGet('smg-watched-unread-count', '0'), 10) || 0);
-    }
-
-    // badge de não lidas: botões do topo (topSel) + ícone do dock (navSel). Mesmo desenho pros dois contadores.
-    function paintUnreadBadge(count, topSel, navSel) {
+    // badge de alertas não lidos: sino da topbar + sino da navbar mobile
+    function updateAlertsUnreadBadge(count) {
         const n = Math.max(0, parseInt(count, 10) || 0);
-        document.querySelectorAll(topSel).forEach(btn => {
+        document.querySelectorAll('#smg-topbar .smg-rt-alerts').forEach(btn => {
             setReactiveBadge(btn, n, 'smg-tb-badge');
         });
-        const nav = document.querySelector(navSel);
+        const nav = document.querySelector('#smg-nav-bell');
         if (nav) {
             const host = nav.querySelector('.smg-nav-ico') || nav;
             setReactiveBadge(host, n, 'smg-nav-badge');
         }
-    }
-    function updateWatchedUnreadBadge(count) {
-        paintUnreadBadge(count, '.smg-tb-railbtn', '#smg-nav-watched');
-    }
-    function updateAlertsUnreadBadge(count) {
-        paintUnreadBadge(count, '.smg-tb-railbtn, #smg-topbar .smg-rt-alerts', '#smg-nav-bell');
     }
 
     // contador do cabeçalho — atualiza o badge com a contagem de alertas não lidos
@@ -487,8 +477,6 @@
                 st.loaded = true;
                 st.next = null;
 
-                gmSet('smg-watched-unread-count', String(unread.length));
-                updateWatchedUnreadBadge(unread.length);
                 aldockSyncCount();
                 aldockStatus('watched', '');
 
@@ -886,14 +874,7 @@
         document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh(railTab); });
 
         window.addEventListener('smg-followed-updated', () => {
-            if (aldock && aldockOpen() && railTab === 'watched') {
-                railRefresh('watched', false);
-            } else {
-                dbFollowedGetUnreadCount().then(c => {
-                    gmSet('smg-watched-unread-count', String(c));
-                    updateWatchedUnreadBadge(c);
-                });
-            }
+            if (aldock && aldockOpen() && railTab === 'watched') railRefresh('watched', false);
         });
         window.addEventListener('smg-followed-seen', e => {
             const path = e && e.detail && e.detail.path;
@@ -926,9 +907,6 @@
 
     if (typeof window !== 'undefined') {
         window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
-        window.updateWatchedUnreadBadge = updateWatchedUnreadBadge;
-        window.updateAlertsUnreadBadge = updateAlertsUnreadBadge;
-        window.getWatchedUnreadCount = getWatchedUnreadCount;
         if (window.__TEST_MODE__) {
             window.__aldockExports = {
                 buildAlertsDock,
@@ -939,9 +917,7 @@
                 watchedRow,
                 renderFollowedRow,
                 aldockSyncCount,
-                updateWatchedUnreadBadge,
                 updateAlertsUnreadBadge,
-                getWatchedUnreadCount,
                 aldockWidth,
                 aldockState,
                 RAIL_SRC,

@@ -1632,21 +1632,7 @@ async function runTests() {
     assert(railBtnEl.classList.contains('smg-rt-alerts'), 'railBtn deve possuir classe .smg-rt-alerts');
     assert(!railBtnEl.classList.contains('smg-rt-watched'), 'railBtn NÃO deve possuir classe .smg-rt-watched');
 
-    // 9.9 Testar updateWatchedUnreadBadge e sincronização de não lidos de seguidos
-    const { updateWatchedUnreadBadge, getWatchedUnreadCount } = window.__aldockExports;
-    assert(typeof updateWatchedUnreadBadge === 'function', 'updateWatchedUnreadBadge deve ser função');
-    assert(typeof getWatchedUnreadCount === 'function', 'getWatchedUnreadCount deve ser função');
-
-    updateWatchedUnreadBadge(5);
-    const railBadge = railBtnEl.querySelector('.smg-tb-badge');
-    assert(railBadge !== null && railBadge.textContent === '5', `updateWatchedUnreadBadge(5) deve exibir "5" no railBtn (obtido: ${railBadge?.textContent})`);
-    const navWatchedBadge = btnWatchedEl.querySelector('.smg-nav-badge');
-    assert(navWatchedBadge !== null && navWatchedBadge.textContent === '5', `updateWatchedUnreadBadge(5) deve exibir "5" no #smg-nav-watched (obtido: ${navWatchedBadge?.textContent})`);
-
-    updateWatchedUnreadBadge(0);
-    assert(railBtnEl.querySelector('.smg-tb-badge') === null, 'updateWatchedUnreadBadge(0) deve remover badge do railBtn');
-    assert(btnWatchedEl.querySelector('.smg-nav-badge') === null, 'updateWatchedUnreadBadge(0) deve remover badge de #smg-nav-watched');
-
+    // 9.9 Badge de alertas no sino da topbar
     updateAlertsUnreadBadge(5);
     const railAlertsBadge = railBtnEl.querySelector('.smg-tb-badge');
     assert(railAlertsBadge !== null && railAlertsBadge.textContent === '5', `updateAlertsUnreadBadge(5) deve exibir "5" no railBtn (obtido: ${railAlertsBadge?.textContent})`);

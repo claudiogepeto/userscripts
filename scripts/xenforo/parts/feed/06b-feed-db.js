@@ -194,8 +194,6 @@
             };
             tx.oncomplete = () => {
                 try {
-                    gmSet('smg-watched-unread-count', '0');
-                    updateWatchedUnreadBadge(0);
                     window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
                 } catch (e) {}

@@ -104,10 +104,6 @@
             watchedPageStates.set(doc, signature);
             return Promise.resolve(0);
         }
-        // só depois da checagem de assinatura: página igual não reescreve o GM storage nem o badge
-        const unreadCount = doc.querySelectorAll('.structItem--thread.is-unread, .structItem--thread.structItem--unread').length;
-        gmSet('smg-watched-unread-count', String(unreadCount));
-        updateWatchedUnreadBadge(unreadCount);
 
         const run = dbFollowedGetAll().then(existingList => {
             const existingMap = new Map();
@@ -217,12 +213,6 @@
                     }
                 }
             });
-
-            // Atualiza o badge com a contagem de seguidos não lidos baseada em unread
-            const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
-                .filter(it => it && Boolean(it.unread)).length;
-            gmSet('smg-watched-unread-count', String(unreadCount));
-            updateWatchedUnreadBadge(unreadCount);
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 indexFollowedThumbs(itemsToUpsert);
