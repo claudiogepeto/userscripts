@@ -16,8 +16,6 @@
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,
             .bbCodeBlock--unfurl img.bbImage {
-                width: 88px !important;
-                height: 88px !important;
                 max-width: 88px !important;
                 max-height: 88px !important;
                 aspect-ratio: 1 !important;
@@ -252,7 +250,7 @@
             .smg-link-chip {
                 display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
                 padding: 6px 11px; border-radius: 8px; background: var(--smg-s2); border: 1px solid var(--smg-bd);
-                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600; text-decoration: none;
+                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600;
             }
             .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
             .smg-link-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -359,7 +357,6 @@
                 background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
                 color: var(--smg-tx) !important;
                 text-align: left !important;
-                text-decoration: none !important;
                 overflow: hidden !important;
                 aspect-ratio: auto !important;
                 cursor: pointer !important;
@@ -653,11 +650,7 @@
                 .p-nav-inner,
                 .p-sectionLinks-inner,
                 .p-body-inner,
-                .p-footer-inner {
-                    max-width: var(--smg-cw) !important;
-                    margin-left: auto !important;
-                    margin-right: auto !important;
-                }
+                .p-footer-inner,
                 /* o socialmediagirls usa .pageContent (fora do .p-body-inner) no header/breadcrumb;
                    alinha com o conteúdo (mesma largura) pra não ficar torto */
                 .p-body-header > .pageContent,
@@ -683,28 +676,5 @@
             a[href*="striply.com"],
             body > a[href*="striply"] { display: none !important; }
 
-            /* ---- SMG: REMOVE a sidebar fora da home · conteúdo a 100% ----
-               na home a sidebar é reaproveitada (realocada pro topo — ver bloco HOME);
-               nas demais páginas (threads, /forums, busca, whats-new) some de vez e o
-               .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
-               EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
-               ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
-            html:not(.smg-home) .p-body-sidebar,
-            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
-            /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
-               o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
-               mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
-                display: block !important; grid-template-columns: none !important; gap: 0 !important;
-            }
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
-                width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-                flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
-            }
-            /* ---- breadcrumb some por completo nos 2 sites (fórum · thread · busca…) ----
-               só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
-            html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
-            html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
 
             `;

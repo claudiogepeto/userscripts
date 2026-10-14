@@ -3,11 +3,6 @@
             /* modo feed: o JS marca .smg-river-hide nos irmãos do river (lista nativa + filtro + paginação) → robusto, independe da classe do bloco do tema */
             .smg-river-hide { display: none !important; }
             html.smg-watched-feed .structItemContainer { display: none !important; }   /* flash-kill: a lista some já no document-start, antes do JS rodar (no-op na home) */
-            html.smg-watched-feed .p-body-sidebar,
-            html.smg-watched-feed .p-body-sidebarCol {
-                display: none !important;
-                width: 0 !important;
-            }
             html.smg-watched-feed .p-body-main--withSidebar,
             html.smg-watched-feed .p-body-main {
                 display: block !important;
@@ -34,14 +29,12 @@
             html.smg-watched-feed .uix_nodeList,
             html.smg-watched-feed .node-list,
             html.smg-watched-feed .p-body-header,
-            html.smg-watched-feed .p-breadcrumbs,
             html.smg-watched-feed .notices--block,
             html.smg-watched-feed .block:not(#smg-river),
             html.smg-page-timeline .block--category,
             html.smg-page-timeline .uix_nodeList,
             html.smg-page-timeline .node-list,
             html.smg-page-timeline .p-body-header,
-            html.smg-page-timeline .p-breadcrumbs,
             html.smg-page-timeline .notices--block,
             html.smg-page-timeline .block:not(#smg-river) {
                 display: none !important;
@@ -88,7 +81,6 @@
                 gap: 0 !important;
             }
             html.smg-bm-feed-on .p-body-header,
-            html.smg-bm-feed-on .p-breadcrumbs,
             html.smg-bm-feed-on .p-title,
             html.smg-bm-feed-on .p-description,
             html.smg-bm-feed-on .notices,

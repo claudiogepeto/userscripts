@@ -588,7 +588,7 @@
             /* ===== ÍNDICE DO CSS (grep os rótulos abaixo) =====
                paleta (--smg-*) · image grids · images · turbo embeds · redgifs
                · site a 80% (largura) · header das páginas
-               · SMG: remove sidebar+breadcrumb fora da home (conteúdo a 100%)
+               · page chrome: sidebar e breadcrumb somem (conteúdo a 100%)
                · HOME (forum_list) reformulada · TOPBAR REFORMULADA
                · dock (container/botões/sheets/goto) · search dialog · modo feed
                · mobile (navbar) · settings/filtros · backdrop dos popovers
@@ -664,6 +664,29 @@
             @media (max-width: 1400px) and (min-width: 800px) {
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
+
+            /* ---- REMOVE a sidebar fora da home · conteúdo a 100% ----
+               a sidebar nativa some em todas as páginas (a home esconde a dela no bloco HOME);
+               fora da home o .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
+               EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
+               ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
+            html:not(.smg-home) .p-body-sidebar,
+            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
+            /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
+               o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
+               mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
+                display: block !important; grid-template-columns: none !important; gap: 0 !important;
+            }
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
+                width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+                flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
+            }
+            /* ---- breadcrumb some por completo nos 2 sites (fórum · thread · busca…) ----
+               só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
+            html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
+            html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
 
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
@@ -1001,18 +1024,6 @@
             #smg-gallery.open { display: flex; }
             #smg-gallery svg { fill: none !important; }   /* o CSS do fórum preenche svgs — força outline */
             #smg-gallery .smg-rg svg[fill="currentColor"] { fill: currentColor !important; }   /* EXCEÇÃO: ícones PREENCHIDOS do player (play/pause) — senão o fill:none acima apaga o triângulo de play */
-            /* stepper "ir pra página" da galeria — MESMO visual do #smg-goto-pop da thread (filhos .smg-goto-* já são classes compartilhadas) */
-            .smg-gallery-goto-pop {
-                position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%) translateY(6px);
-                display: flex; flex-direction: column; align-items: center; gap: 11px;
-                min-width: 232px; padding: 16px 18px; border-radius: 18px;
-                background: var(--smg-s1); border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 44px rgba(0,0,0,0.62);
-                -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%);
-                visibility: hidden; opacity: 0; pointer-events: none;
-                transition: opacity .18s ease, transform .18s ease, visibility .18s; z-index: 11;
-            }
-            .smg-gallery-dock.goto-open .smg-gallery-goto-pop { visibility: visible; opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
             /* DOCK da galeria: IDÊNTICA à dock da thread — mesma pílula do #smg-post-nav-panel + botões .smg-nav-btn (makeDockButton) */
             .smg-gallery-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 6; }
             .smg-gallery-dock-panel {
@@ -1073,16 +1084,7 @@
                 border-radius: 8px !important;
                 cursor: pointer !important;
             }
-            a.smg-imglink {
-                display: table !important;
-                width: fit-content !important;
-                max-width: 100% !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
-                margin-top: 8px !important;
-                margin-bottom: 8px !important;
-                text-align: center !important;
-            }
+            a.smg-imglink,
             .bbImageWrapper {
                 display: table !important;
                 width: fit-content !important;
@@ -1440,14 +1442,7 @@
             @keyframes smg-tw-spin {
                 to { transform: rotate(360deg); }
             }
-            .smg-tw-media img {
-                width: 100% !important;
-                max-height: 640px !important;
-                object-fit: contain !important;
-                display: block !important;
-                border-radius: 12px !important;
-                background: #000 !important;
-            }
+            .smg-tw-media img,
             .smg-tw-media video {
                 width: 100% !important;
                 max-height: 640px !important;
@@ -1515,8 +1510,6 @@
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,
             .bbCodeBlock--unfurl img.bbImage {
-                width: 88px !important;
-                height: 88px !important;
                 max-width: 88px !important;
                 max-height: 88px !important;
                 aspect-ratio: 1 !important;
@@ -1751,7 +1744,7 @@
             .smg-link-chip {
                 display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
                 padding: 6px 11px; border-radius: 8px; background: var(--smg-s2); border: 1px solid var(--smg-bd);
-                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600; text-decoration: none;
+                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600;
             }
             .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
             .smg-link-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1858,7 +1851,6 @@
                 background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
                 color: var(--smg-tx) !important;
                 text-align: left !important;
-                text-decoration: none !important;
                 overflow: hidden !important;
                 aspect-ratio: auto !important;
                 cursor: pointer !important;
@@ -2152,11 +2144,7 @@
                 .p-nav-inner,
                 .p-sectionLinks-inner,
                 .p-body-inner,
-                .p-footer-inner {
-                    max-width: var(--smg-cw) !important;
-                    margin-left: auto !important;
-                    margin-right: auto !important;
-                }
+                .p-footer-inner,
                 /* o socialmediagirls usa .pageContent (fora do .p-body-inner) no header/breadcrumb;
                    alinha com o conteúdo (mesma largura) pra não ficar torto */
                 .p-body-header > .pageContent,
@@ -2182,29 +2170,6 @@
             a[href*="striply.com"],
             body > a[href*="striply"] { display: none !important; }
 
-            /* ---- SMG: REMOVE a sidebar fora da home · conteúdo a 100% ----
-               na home a sidebar é reaproveitada (realocada pro topo — ver bloco HOME);
-               nas demais páginas (threads, /forums, busca, whats-new) some de vez e o
-               .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
-               EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
-               ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
-            html:not(.smg-home) .p-body-sidebar,
-            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
-            /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
-               o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
-               mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
-                display: block !important; grid-template-columns: none !important; gap: 0 !important;
-            }
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
-            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
-                width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-                flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
-            }
-            /* ---- breadcrumb some por completo nos 2 sites (fórum · thread · busca…) ----
-               só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
-            html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
-            html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
 
             `;
 
@@ -2215,18 +2180,13 @@
                 display: flex !important; flex-direction: column !important; align-items: stretch !important;
                 grid-template-columns: none !important; gap: 0 !important;
             }
-            html.smg-home .p-body-contentCol, html.smg-home .p-body-sidebarCol { display: none !important; }
-            html.smg-home .p-body-content,
-            html.smg-home .p-body-sidebar {
+            html.smg-home .p-body-contentCol, html.smg-home .p-body-sidebarCol, html.smg-home .p-body-sidebar { display: none !important; }
+            html.smg-home .p-body-content {
                 width: 100% !important; max-width: 100% !important; min-width: 0 !important;
                 flex: 0 0 auto !important; float: none !important; position: static !important;
                 grid-column: auto !important; grid-area: auto !important; min-height: 0 !important;
                 box-sizing: border-box !important;
             }
-            /* A home usa o feed próprio e as categorias como fonte única. A sidebar nativa pode chegar
-               depois do primeiro paint (ou ser recriada pelo XF), então não pode piscar nem reaparecer
-               ao lado do conteúdo novo durante o streaming. */
-            html.smg-home .p-body-sidebar { display: none !important; }
             /* Paint barrier: a home é transmitida em chunks e precisa de alguns frames para a
                reorganização terminar. O shell fica acima do conteúdo nativo e já reserva as
                proporções de todas as regiões visíveis; o DOM real só aparece quando a composição
@@ -2389,19 +2349,6 @@
                 }
             }
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
-            html.smg-home .p-body-sidebar { order: 1 !important; margin: 0 0 22px !important; padding: 0 !important; }
-            html.smg-home .p-body-sidebar .block { margin: 0 !important; }
-            html.smg-home .p-body-sidebar .uix_sidebarInner { margin: 0 !important; }
-            /* todo widget da sidebar vira card rounded com destaque */
-            html.smg-home .p-body-sidebar .block .block-container {
-                background: rgba(255,255,255,0.035) !important; border: 1px solid rgba(255,255,255,0.09) !important;
-                border-radius: 16px !important; overflow: hidden;
-            }
-            html.smg-home .p-body-sidebar .block-minorHeader,
-            html.smg-home .p-body-sidebar .block-header {
-                background: rgba(255,255,255,0.03) !important; border-bottom: 1px solid rgba(255,255,255,0.07) !important;
-                padding: 12px 16px !important; font-size: 14px !important; font-weight: 700 !important;
-            }
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
             html.smg-home .smg-feed-block {
@@ -4108,7 +4055,6 @@
             .smg-nav-ico svg {
                 width: 20px;
                 height: 20px;
-                fill: none !important;
                 display: block;
                 margin: 0 auto;
             }
@@ -4211,8 +4157,9 @@
                 white-space: nowrap !important;
             }
 
-            /* ---- goto: popover de pular pra uma página ---- */
-            #smg-goto-pop {
+            /* ---- goto: popover de pular pra uma página (thread e galeria: mesmo visual) ---- */
+            #smg-goto-pop,
+            .smg-gallery-goto-pop {
                 position: absolute;
                 bottom: calc(100% + 12px);
                 left: 50%;
@@ -4235,13 +4182,15 @@
                 transition: opacity .18s ease, transform .18s ease, visibility .18s;
                 z-index: 11;
             }
-            #smg-post-nav-wrapper.goto-open #smg-goto-pop {
+            #smg-post-nav-wrapper.goto-open #smg-goto-pop,
+            .smg-gallery-dock.goto-open .smg-gallery-goto-pop {
                 visibility: visible;
                 opacity: 1;
                 pointer-events: auto;
                 transform: translateX(-50%) translateY(0);
             }
-            .smg-goto-title {
+            .smg-goto-title,
+            .smg-pop-title {
                 font-size: 11px;
                 font-weight: 600;
                 letter-spacing: .06em;
@@ -4375,7 +4324,6 @@
                 min-height: min(240px, 36vh) !important;
                 max-height: min(62vh, 560px) !important;
                 overflow-y: auto !important;
-                overflow-x: hidden !important;
                 overscroll-behavior: contain !important;
                 padding-right: 4px;
             }
@@ -4539,11 +4487,6 @@
                 border-color: rgba(255,255,255,0.22);
                 color: #fff;
             }
-            .smg-search-author-trigger.has-value {
-                background: var(--smg-link-soft);
-                border-color: var(--smg-link);
-                color: var(--smg-link);
-            }
             .smg-search-author-trigger svg {
                 width: 15px;
                 height: 15px;
@@ -4620,7 +4563,8 @@
                 background: rgba(255,255,255,0.12);
                 color: #fff;
             }
-            .smg-search-author-row .smg-search-author-clear svg {
+            .smg-search-author-row .smg-search-author-clear svg,
+            .smg-search-author-row .smg-search-author-close svg {
                 width: 13px;
                 height: 13px;
                 fill: none !important;
@@ -4636,11 +4580,6 @@
             .smg-search-author-row .smg-search-author-close:hover {
                 background: rgba(255,255,255,0.16);
                 color: #fff;
-            }
-            .smg-search-author-row .smg-search-author-close svg {
-                width: 13px;
-                height: 13px;
-                fill: none !important;
             }
             .smg-search-tb-row .smg-search-cfg {
                 width: 34px;
@@ -4869,13 +4808,6 @@
             .smg-search-author-btn.open { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); color: #fff; }
             .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
-            /* footer: busca avançada (esq) · dica · botão Buscar primário (branco) */
-            .smg-search-foot {
-                display: flex; align-items: center; gap: 12px;
-                margin-top: 2px; padding-top: 16px; border-top: 1px solid var(--smg-bd);
-                flex-shrink: 0 !important;
-                overflow: visible !important;
-            }
             /* AÇÕES DA BARRA — ⇥ (comandos) · funil (avançada) · sliders (defaults) · esc · × têm UM desenho só:
                30px, raio 9, mesma borda/fundo/hover. Antes cada um tinha altura, raio e borda próprios (24/30/36px). */
             .smg-search-acts { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
@@ -4890,11 +4822,10 @@
             }
             .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
             .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
-            .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
+            .smg-search-author-trigger.has-value, .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
             .smg-search-adv svg, .smg-search-cfg svg, .smg-search-close svg { width: 16px; height: 16px; fill: none !important; }
             .smg-search-kbd { cursor: default; font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.4); }
             .smg-search-foot { display: none; }   /* rodapé (botão "Search") removido: digitar já busca (debounce) + "See all results" + Enter; o botão é redundante. Desktop já escondia; agora some no mobile tb. */
-            .smg-search-hint { font-size: 12.5px; color: rgba(255,255,255,0.4); white-space: nowrap; margin-right: auto; }
             .smg-search-go {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px;
                 height: 42px; padding: 0 18px; box-sizing: border-box;
@@ -5115,7 +5046,6 @@
             .smg-search-history[hidden] { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
             /* estado vazio (sem histórico): evita o dropdown virar um toco só com a toolbar */
             .smg-search-empty { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 30px 16px 34px; text-align: center; }
-            .smg-search-empty[hidden] { display: none; }
             .smg-search-empty-ic { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); margin-bottom: 2px; }
             .smg-search-empty-ic svg { width: 22px; height: 22px; fill: none; }
             .smg-search-empty-t { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.72); }
@@ -5519,7 +5449,6 @@
                     border-top: 1px solid rgba(255,255,255,0.08);
                 }
                 .smg-search-kbd { display: none; }
-                .smg-search-hint { display: none; } /* no touch, Enter/botão basta */
                 .smg-search-go { height: 46px; padding: 0 22px; } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
                 .smg-feed-tools { right: 70px; gap: 7px; }
@@ -6072,13 +6001,6 @@
             }
             .smg-lf-apply:active {
                 transform: scale(0.98);
-            }
-            .smg-pop-title {
-                font-size: 11px;
-                font-weight: 600;
-                letter-spacing: .06em;
-                text-transform: uppercase;
-                color: rgba(255,255,255,0.55);
             }`;
     // ── CSS: settings panel ──
     const CSS_SETTINGS = `
@@ -6452,7 +6374,7 @@
             html.smg-threadlist .pageNavWrapper,
             html.smg-threadlist .pageNav,
             html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
-            html.smg-threadlist .pageNav { display: flex !important; align-items: center; gap: 6px; }
+            html.smg-threadlist .pageNav { display: flex !important; gap: 6px; }
             /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
             html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
             html.smg-threadlist .pageNav-main {
@@ -6465,10 +6387,8 @@
             html.smg-threadlist .pageNav-jump,
             html.smg-threadlist .pageNavSimple-el {
                 display: inline-flex !important; align-items: center; justify-content: center;
-                min-width: 34px; height: 34px; padding: 0 11px; box-sizing: border-box;
-                border-radius: 9px !important; border: 1px solid rgba(255,255,255,0.08) !important;
-                background: rgba(255,255,255,0.05) !important; color: rgba(255,255,255,0.85) !important;
-                font-size: 14px; font-weight: 600; text-decoration: none !important; line-height: 1;
+                box-sizing: border-box;
+                font-weight: 600; text-decoration: none !important; line-height: 1;
                 transition: background .14s ease, color .14s ease, border-color .14s ease;
             }
             /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
@@ -6487,12 +6407,8 @@
             html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
             /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
             html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: 6px !important; }
-            html.smg-threadlist .block-outer-opposite .button {
-                border-radius: 9px !important; border: 1px solid rgba(255,255,255,0.1) !important;
-                background: rgba(255,255,255,0.05) !important; color: rgba(255,255,255,0.85) !important; box-shadow: none !important;
-                min-height: 34px;
-            }
-            html.smg-threadlist .block-outer-opposite .button:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important; }
+            html.smg-threadlist .block-outer-opposite .button { color: rgba(255,255,255,0.85) !important; box-shadow: none !important; }
+            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
 
             /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
                (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)
@@ -6659,9 +6575,6 @@
     const CSS_THREAD = `/* ============================================================
                THREAD: header no nosso modelo (sem breadcrumb · botões de ação)
                ============================================================ */
-            /* breadcrumb removido por completo */
-            html.smg-thread .breadcrumb,
-            html.smg-thread .p-breadcrumbs { display: none !important; }
             /* tags da thread (tamanho médio) */
             html.smg-thread .p-description .tagList .tagItem,
             html.smg-thread .p-description .tagItem {
@@ -6828,8 +6741,8 @@
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
             }
-            html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
+            html.smg-thread .smg-thead-unified .smg-bar { border-radius: 12px; }
+            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: 13px; }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
                e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
@@ -6854,7 +6767,10 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-titleline {
+            .smg-thead-unified.is-stuck .smg-thead-titleline,
+            .smg-thead-unified.is-stuck .smg-bar,
+            .smg-thead-unified.is-stuck .smg-bar-pager,
+            .smg-thead-unified.is-stuck .smg-thead-actions {
                 display: flex !important;
                 align-items: center !important;
                 height: 32px !important;
@@ -6897,12 +6813,8 @@
                 flex: 0 0 auto !important;
                 flex-shrink: 0 !important;
             }
-            .smg-thead-unified.is-stuck .smg-bar { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
-            .smg-thead-unified.is-stuck .smg-bar-pager { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
             .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
             .smg-thead-spacer {
                 display: none;
                 width: 100%;
@@ -6955,9 +6867,7 @@
             html.smg-thread .smg-thead-unified .smg-thead-btn:hover { background: var(--smg-s3) !important; color: #fff; }
             html.smg-thread .smg-thead-unified .smg-thead-btn + .smg-thead-btn { border-left: 0 !important; }
             html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
-            .smg-thead-unified.is-stuck .smg-bar { height: 32px; }
-            .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px; box-sizing: border-box; }
-            .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px; height: 28px; }
+            .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
             /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;
@@ -7040,15 +6950,7 @@
                 object-fit: cover !important;
                 display: block !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-hero {
-                align-items: center;
-                gap: 0;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-info {
-                justify-content: center;
-                align-self: center;
-                gap: 0;
-            }
+            .smg-thead-unified.is-stuck .smg-thead-info { align-self: center; }
             .smg-thead-unified.is-stuck .smg-thead-thumb {
                 display: none !important;
             }
@@ -7365,7 +7267,7 @@
             html.smg-thread .pageNavWrapper .pageNavSimple { display: none !important; }
             /* === BARRA ÚNICA: MESMO estilo de botão pra TODOS (pager · ações · ordenar) === */
             html.smg-thread .block-outer-opposite .buttonGroup { display: flex !important; gap: 6px !important; flex-wrap: wrap !important; align-items: center; }
-            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; border: 0 !important; box-shadow: none !important; gap: 6px !important; display: flex !important; }
+            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; gap: 6px !important; display: flex !important; }
             html.smg-thread .pageNavSimple-el,
             html.smg-thread .pageNav-jump,
             html.smg-thread .pageNav-page > a,
@@ -8358,7 +8260,6 @@
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
             html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link) !important; background: var(--smg-link-soft); }
-            html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
             html.smg-thread .smg-pc-actions .smg-pc-act--react,
             html.smg-thread .smg-cc-actions .smg-cc-act--react {
                 display: inline-flex !important;
@@ -8551,11 +8452,6 @@
             /* modo feed: o JS marca .smg-river-hide nos irmãos do river (lista nativa + filtro + paginação) → robusto, independe da classe do bloco do tema */
             .smg-river-hide { display: none !important; }
             html.smg-watched-feed .structItemContainer { display: none !important; }   /* flash-kill: a lista some já no document-start, antes do JS rodar (no-op na home) */
-            html.smg-watched-feed .p-body-sidebar,
-            html.smg-watched-feed .p-body-sidebarCol {
-                display: none !important;
-                width: 0 !important;
-            }
             html.smg-watched-feed .p-body-main--withSidebar,
             html.smg-watched-feed .p-body-main {
                 display: block !important;
@@ -8582,14 +8478,12 @@
             html.smg-watched-feed .uix_nodeList,
             html.smg-watched-feed .node-list,
             html.smg-watched-feed .p-body-header,
-            html.smg-watched-feed .p-breadcrumbs,
             html.smg-watched-feed .notices--block,
             html.smg-watched-feed .block:not(#smg-river),
             html.smg-page-timeline .block--category,
             html.smg-page-timeline .uix_nodeList,
             html.smg-page-timeline .node-list,
             html.smg-page-timeline .p-body-header,
-            html.smg-page-timeline .p-breadcrumbs,
             html.smg-page-timeline .notices--block,
             html.smg-page-timeline .block:not(#smg-river) {
                 display: none !important;
@@ -8636,7 +8530,6 @@
                 gap: 0 !important;
             }
             html.smg-bm-feed-on .p-body-header,
-            html.smg-bm-feed-on .p-breadcrumbs,
             html.smg-bm-feed-on .p-title,
             html.smg-bm-feed-on .p-description,
             html.smg-bm-feed-on .notices,

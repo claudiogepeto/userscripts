@@ -264,7 +264,6 @@
             .smg-nav-ico svg {
                 width: 20px;
                 height: 20px;
-                fill: none !important;
                 display: block;
                 margin: 0 auto;
             }
@@ -367,8 +366,9 @@
                 white-space: nowrap !important;
             }
 
-            /* ---- goto: popover de pular pra uma página ---- */
-            #smg-goto-pop {
+            /* ---- goto: popover de pular pra uma página (thread e galeria: mesmo visual) ---- */
+            #smg-goto-pop,
+            .smg-gallery-goto-pop {
                 position: absolute;
                 bottom: calc(100% + 12px);
                 left: 50%;
@@ -391,13 +391,15 @@
                 transition: opacity .18s ease, transform .18s ease, visibility .18s;
                 z-index: 11;
             }
-            #smg-post-nav-wrapper.goto-open #smg-goto-pop {
+            #smg-post-nav-wrapper.goto-open #smg-goto-pop,
+            .smg-gallery-dock.goto-open .smg-gallery-goto-pop {
                 visibility: visible;
                 opacity: 1;
                 pointer-events: auto;
                 transform: translateX(-50%) translateY(0);
             }
-            .smg-goto-title {
+            .smg-goto-title,
+            .smg-pop-title {
                 font-size: 11px;
                 font-weight: 600;
                 letter-spacing: .06em;

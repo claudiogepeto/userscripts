@@ -312,18 +312,6 @@
             #smg-gallery.open { display: flex; }
             #smg-gallery svg { fill: none !important; }   /* o CSS do fórum preenche svgs — força outline */
             #smg-gallery .smg-rg svg[fill="currentColor"] { fill: currentColor !important; }   /* EXCEÇÃO: ícones PREENCHIDOS do player (play/pause) — senão o fill:none acima apaga o triângulo de play */
-            /* stepper "ir pra página" da galeria — MESMO visual do #smg-goto-pop da thread (filhos .smg-goto-* já são classes compartilhadas) */
-            .smg-gallery-goto-pop {
-                position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%) translateY(6px);
-                display: flex; flex-direction: column; align-items: center; gap: 11px;
-                min-width: 232px; padding: 16px 18px; border-radius: 18px;
-                background: var(--smg-s1); border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 44px rgba(0,0,0,0.62);
-                -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%);
-                visibility: hidden; opacity: 0; pointer-events: none;
-                transition: opacity .18s ease, transform .18s ease, visibility .18s; z-index: 11;
-            }
-            .smg-gallery-dock.goto-open .smg-gallery-goto-pop { visibility: visible; opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
             /* DOCK da galeria: IDÊNTICA à dock da thread — mesma pílula do #smg-post-nav-panel + botões .smg-nav-btn (makeDockButton) */
             .smg-gallery-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 6; }
             .smg-gallery-dock-panel {

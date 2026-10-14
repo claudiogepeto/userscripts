@@ -226,11 +226,4 @@
             }
             .smg-lf-apply:active {
                 transform: scale(0.98);
-            }
-            .smg-pop-title {
-                font-size: 11px;
-                font-weight: 600;
-                letter-spacing: .06em;
-                text-transform: uppercase;
-                color: rgba(255,255,255,0.55);
             }`;

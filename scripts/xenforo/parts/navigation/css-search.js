@@ -44,7 +44,6 @@
                 min-height: min(240px, 36vh) !important;
                 max-height: min(62vh, 560px) !important;
                 overflow-y: auto !important;
-                overflow-x: hidden !important;
                 overscroll-behavior: contain !important;
                 padding-right: 4px;
             }
@@ -208,11 +207,6 @@
                 border-color: rgba(255,255,255,0.22);
                 color: #fff;
             }
-            .smg-search-author-trigger.has-value {
-                background: var(--smg-link-soft);
-                border-color: var(--smg-link);
-                color: var(--smg-link);
-            }
             .smg-search-author-trigger svg {
                 width: 15px;
                 height: 15px;
@@ -289,7 +283,8 @@
                 background: rgba(255,255,255,0.12);
                 color: #fff;
             }
-            .smg-search-author-row .smg-search-author-clear svg {
+            .smg-search-author-row .smg-search-author-clear svg,
+            .smg-search-author-row .smg-search-author-close svg {
                 width: 13px;
                 height: 13px;
                 fill: none !important;
@@ -305,11 +300,6 @@
             .smg-search-author-row .smg-search-author-close:hover {
                 background: rgba(255,255,255,0.16);
                 color: #fff;
-            }
-            .smg-search-author-row .smg-search-author-close svg {
-                width: 13px;
-                height: 13px;
-                fill: none !important;
             }
             .smg-search-tb-row .smg-search-cfg {
                 width: 34px;
@@ -538,13 +528,6 @@
             .smg-search-author-btn.open { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); color: #fff; }
             .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
-            /* footer: busca avançada (esq) · dica · botão Buscar primário (branco) */
-            .smg-search-foot {
-                display: flex; align-items: center; gap: 12px;
-                margin-top: 2px; padding-top: 16px; border-top: 1px solid var(--smg-bd);
-                flex-shrink: 0 !important;
-                overflow: visible !important;
-            }
             /* AÇÕES DA BARRA — ⇥ (comandos) · funil (avançada) · sliders (defaults) · esc · × têm UM desenho só:
                30px, raio 9, mesma borda/fundo/hover. Antes cada um tinha altura, raio e borda próprios (24/30/36px). */
             .smg-search-acts { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
@@ -559,11 +542,10 @@
             }
             .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
             .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
-            .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
+            .smg-search-author-trigger.has-value, .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
             .smg-search-adv svg, .smg-search-cfg svg, .smg-search-close svg { width: 16px; height: 16px; fill: none !important; }
             .smg-search-kbd { cursor: default; font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.4); }
             .smg-search-foot { display: none; }   /* rodapé (botão "Search") removido: digitar já busca (debounce) + "See all results" + Enter; o botão é redundante. Desktop já escondia; agora some no mobile tb. */
-            .smg-search-hint { font-size: 12.5px; color: rgba(255,255,255,0.4); white-space: nowrap; margin-right: auto; }
             .smg-search-go {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px;
                 height: 42px; padding: 0 18px; box-sizing: border-box;
@@ -784,7 +766,6 @@
             .smg-search-history[hidden] { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
             /* estado vazio (sem histórico): evita o dropdown virar um toco só com a toolbar */
             .smg-search-empty { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 30px 16px 34px; text-align: center; }
-            .smg-search-empty[hidden] { display: none; }
             .smg-search-empty-ic { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); margin-bottom: 2px; }
             .smg-search-empty-ic svg { width: 22px; height: 22px; fill: none; }
             .smg-search-empty-t { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.72); }

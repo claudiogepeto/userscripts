@@ -152,14 +152,7 @@
             @keyframes smg-tw-spin {
                 to { transform: rotate(360deg); }
             }
-            .smg-tw-media img {
-                width: 100% !important;
-                max-height: 640px !important;
-                object-fit: contain !important;
-                display: block !important;
-                border-radius: 12px !important;
-                background: #000 !important;
-            }
+            .smg-tw-media img,
             .smg-tw-media video {
                 width: 100% !important;
                 max-height: 640px !important;

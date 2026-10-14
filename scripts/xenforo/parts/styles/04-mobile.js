@@ -274,7 +274,7 @@
             html.smg-threadlist .pageNavWrapper,
             html.smg-threadlist .pageNav,
             html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
-            html.smg-threadlist .pageNav { display: flex !important; align-items: center; gap: 6px; }
+            html.smg-threadlist .pageNav { display: flex !important; gap: 6px; }
             /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
             html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
             html.smg-threadlist .pageNav-main {
@@ -287,10 +287,8 @@
             html.smg-threadlist .pageNav-jump,
             html.smg-threadlist .pageNavSimple-el {
                 display: inline-flex !important; align-items: center; justify-content: center;
-                min-width: 34px; height: 34px; padding: 0 11px; box-sizing: border-box;
-                border-radius: 9px !important; border: 1px solid rgba(255,255,255,0.08) !important;
-                background: rgba(255,255,255,0.05) !important; color: rgba(255,255,255,0.85) !important;
-                font-size: 14px; font-weight: 600; text-decoration: none !important; line-height: 1;
+                box-sizing: border-box;
+                font-weight: 600; text-decoration: none !important; line-height: 1;
                 transition: background .14s ease, color .14s ease, border-color .14s ease;
             }
             /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
@@ -309,12 +307,8 @@
             html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
             /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
             html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: 6px !important; }
-            html.smg-threadlist .block-outer-opposite .button {
-                border-radius: 9px !important; border: 1px solid rgba(255,255,255,0.1) !important;
-                background: rgba(255,255,255,0.05) !important; color: rgba(255,255,255,0.85) !important; box-shadow: none !important;
-                min-height: 34px;
-            }
-            html.smg-threadlist .block-outer-opposite .button:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important; }
+            html.smg-threadlist .block-outer-opposite .button { color: rgba(255,255,255,0.85) !important; box-shadow: none !important; }
+            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
 
             /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
                (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)

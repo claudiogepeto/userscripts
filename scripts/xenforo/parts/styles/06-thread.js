@@ -2,9 +2,6 @@
     const CSS_THREAD = `/* ============================================================
                THREAD: header no nosso modelo (sem breadcrumb · botões de ação)
                ============================================================ */
-            /* breadcrumb removido por completo */
-            html.smg-thread .breadcrumb,
-            html.smg-thread .p-breadcrumbs { display: none !important; }
             /* tags da thread (tamanho médio) */
             html.smg-thread .p-description .tagList .tagItem,
             html.smg-thread .p-description .tagItem {
@@ -171,8 +168,8 @@
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
             }
-            html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
+            html.smg-thread .smg-thead-unified .smg-bar { border-radius: 12px; }
+            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: 13px; }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
                e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
@@ -197,7 +194,10 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-titleline {
+            .smg-thead-unified.is-stuck .smg-thead-titleline,
+            .smg-thead-unified.is-stuck .smg-bar,
+            .smg-thead-unified.is-stuck .smg-bar-pager,
+            .smg-thead-unified.is-stuck .smg-thead-actions {
                 display: flex !important;
                 align-items: center !important;
                 height: 32px !important;
@@ -240,12 +240,8 @@
                 flex: 0 0 auto !important;
                 flex-shrink: 0 !important;
             }
-            .smg-thead-unified.is-stuck .smg-bar { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
-            .smg-thead-unified.is-stuck .smg-bar-pager { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
             .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
             .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px; }
             .smg-thead-spacer {
                 display: none;
                 width: 100%;
@@ -298,9 +294,7 @@
             html.smg-thread .smg-thead-unified .smg-thead-btn:hover { background: var(--smg-s3) !important; color: #fff; }
             html.smg-thread .smg-thead-unified .smg-thead-btn + .smg-thead-btn { border-left: 0 !important; }
             html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
-            .smg-thead-unified.is-stuck .smg-bar { height: 32px; }
-            .smg-thead-unified.is-stuck .smg-thead-actions { height: 32px; box-sizing: border-box; }
-            .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px; height: 28px; }
+            .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
             /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;
@@ -383,15 +377,7 @@
                 object-fit: cover !important;
                 display: block !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-hero {
-                align-items: center;
-                gap: 0;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-info {
-                justify-content: center;
-                align-self: center;
-                gap: 0;
-            }
+            .smg-thead-unified.is-stuck .smg-thead-info { align-self: center; }
             .smg-thead-unified.is-stuck .smg-thead-thumb {
                 display: none !important;
             }
@@ -708,7 +694,7 @@
             html.smg-thread .pageNavWrapper .pageNavSimple { display: none !important; }
             /* === BARRA ÚNICA: MESMO estilo de botão pra TODOS (pager · ações · ordenar) === */
             html.smg-thread .block-outer-opposite .buttonGroup { display: flex !important; gap: 6px !important; flex-wrap: wrap !important; align-items: center; }
-            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; border: 0 !important; box-shadow: none !important; gap: 6px !important; display: flex !important; }
+            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; gap: 6px !important; display: flex !important; }
             html.smg-thread .pageNavSimple-el,
             html.smg-thread .pageNav-jump,
             html.smg-thread .pageNav-page > a,

@@ -239,7 +239,6 @@
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
             html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link) !important; background: var(--smg-link-soft); }
-            html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
             html.smg-thread .smg-pc-actions .smg-pc-act--react,
             html.smg-thread .smg-cc-actions .smg-cc-act--react {
                 display: inline-flex !important;

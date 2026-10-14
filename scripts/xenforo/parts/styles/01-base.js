@@ -3,7 +3,7 @@
             /* ===== ÍNDICE DO CSS (grep os rótulos abaixo) =====
                paleta (--smg-*) · image grids · images · turbo embeds · redgifs
                · site a 80% (largura) · header das páginas
-               · SMG: remove sidebar+breadcrumb fora da home (conteúdo a 100%)
+               · page chrome: sidebar e breadcrumb somem (conteúdo a 100%)
                · HOME (forum_list) reformulada · TOPBAR REFORMULADA
                · dock (container/botões/sheets/goto) · search dialog · modo feed
                · mobile (navbar) · settings/filtros · backdrop dos popovers
@@ -79,6 +79,29 @@
             @media (max-width: 1400px) and (min-width: 800px) {
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
+
+            /* ---- REMOVE a sidebar fora da home · conteúdo a 100% ----
+               a sidebar nativa some em todas as páginas (a home esconde a dela no bloco HOME);
+               fora da home o .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
+               EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
+               ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
+            html:not(.smg-home) .p-body-sidebar,
+            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
+            /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
+               o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
+               mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
+                display: block !important; grid-template-columns: none !important; gap: 0 !important;
+            }
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
+                width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+                flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
+            }
+            /* ---- breadcrumb some por completo nos 2 sites (fórum · thread · busca…) ----
+               só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
+            html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
+            html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
 
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,

@@ -5,18 +5,13 @@
                 display: flex !important; flex-direction: column !important; align-items: stretch !important;
                 grid-template-columns: none !important; gap: 0 !important;
             }
-            html.smg-home .p-body-contentCol, html.smg-home .p-body-sidebarCol { display: none !important; }
-            html.smg-home .p-body-content,
-            html.smg-home .p-body-sidebar {
+            html.smg-home .p-body-contentCol, html.smg-home .p-body-sidebarCol, html.smg-home .p-body-sidebar { display: none !important; }
+            html.smg-home .p-body-content {
                 width: 100% !important; max-width: 100% !important; min-width: 0 !important;
                 flex: 0 0 auto !important; float: none !important; position: static !important;
                 grid-column: auto !important; grid-area: auto !important; min-height: 0 !important;
                 box-sizing: border-box !important;
             }
-            /* A home usa o feed próprio e as categorias como fonte única. A sidebar nativa pode chegar
-               depois do primeiro paint (ou ser recriada pelo XF), então não pode piscar nem reaparecer
-               ao lado do conteúdo novo durante o streaming. */
-            html.smg-home .p-body-sidebar { display: none !important; }
             /* Paint barrier: a home é transmitida em chunks e precisa de alguns frames para a
                reorganização terminar. O shell fica acima do conteúdo nativo e já reserva as
                proporções de todas as regiões visíveis; o DOM real só aparece quando a composição
@@ -179,19 +174,6 @@
                 }
             }
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
-            html.smg-home .p-body-sidebar { order: 1 !important; margin: 0 0 22px !important; padding: 0 !important; }
-            html.smg-home .p-body-sidebar .block { margin: 0 !important; }
-            html.smg-home .p-body-sidebar .uix_sidebarInner { margin: 0 !important; }
-            /* todo widget da sidebar vira card rounded com destaque */
-            html.smg-home .p-body-sidebar .block .block-container {
-                background: rgba(255,255,255,0.035) !important; border: 1px solid rgba(255,255,255,0.09) !important;
-                border-radius: 16px !important; overflow: hidden;
-            }
-            html.smg-home .p-body-sidebar .block-minorHeader,
-            html.smg-home .p-body-sidebar .block-header {
-                background: rgba(255,255,255,0.03) !important; border-bottom: 1px solid rgba(255,255,255,0.07) !important;
-                padding: 12px 16px !important; font-size: 14px !important; font-weight: 700 !important;
-            }
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
             html.smg-home .smg-feed-block {

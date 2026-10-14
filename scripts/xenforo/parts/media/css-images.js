@@ -11,16 +11,7 @@
                 border-radius: 8px !important;
                 cursor: pointer !important;
             }
-            a.smg-imglink {
-                display: table !important;
-                width: fit-content !important;
-                max-width: 100% !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
-                margin-top: 8px !important;
-                margin-bottom: 8px !important;
-                text-align: center !important;
-            }
+            a.smg-imglink,
             .bbImageWrapper {
                 display: table !important;
                 width: fit-content !important;

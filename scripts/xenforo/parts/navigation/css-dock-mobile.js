@@ -129,7 +129,6 @@
                     border-top: 1px solid rgba(255,255,255,0.08);
                 }
                 .smg-search-kbd { display: none; }
-                .smg-search-hint { display: none; } /* no touch, Enter/botão basta */
                 .smg-search-go { height: 46px; padding: 0 22px; } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
                 .smg-feed-tools { right: 70px; gap: 7px; }
