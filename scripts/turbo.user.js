@@ -1023,23 +1023,43 @@
                 saveP();
             }, { signal: ac.signal });
 
+            // Erro de mídia → re-assina no máximo MAX_RESIGNS vezes (com backoff);
+            // depois cai para o iframe nativo em vez de entrar em loop de /api/sign.
+            const MAX_RESIGNS = 2;
+            let resigns = 0, dead = false;
+            const giveUp = () => {
+                dead = true;
+                clearTimeout(video._refT);
+                try { video.pause(); video.removeAttribute("src"); video.load(); } catch (e) {}
+                if (mountIframe(mid)) { ac.abort(); host.remove(); }
+                else toast("Falha ao carregar o vídeo");
+            };
+            const resetResigns = () => { resigns = 0; };
+            video.addEventListener("loadeddata", resetResigns, { signal: ac.signal });
+            video.addEventListener("playing", resetResigns, { signal: ac.signal });
             video.addEventListener("error", () => {
-                if (recovering) return;
+                if (recovering || dead) return;
+                if (resigns >= MAX_RESIGNS) { giveUp(); return; }
                 recovering = true;
-                signUrl(id).then(newU => {
-                    recovering = false;
-                    const t = video.currentTime || 0, playing = !video.paused;
-                    video.src = newU;
-                    try { video.load(); } catch (e) {}
-                    if (t) {
-                        video.currentTime = t;
-                        if (playing) video.play().catch(() => {});
-                    }
-                    scheduleRefresh(video, id);
-                }).catch(() => {
-                    recovering = false;
-                    if (!mountIframe(mid)) toast("Falha ao carregar o vídeo");
-                });
+                const delay = 1000 * 2 ** resigns;
+                resigns++;
+                setTimeout(() => {
+                    if (!video.isConnected) { recovering = false; return; }
+                    signUrl(id).then(newU => {
+                        recovering = false;
+                        const t = video.currentTime || 0, playing = !video.paused;
+                        video.src = newU;
+                        try { video.load(); } catch (e) {}
+                        if (t) {
+                            video.currentTime = t;
+                            if (playing) video.play().catch(() => {});
+                        }
+                        scheduleRefresh(video, id);
+                    }).catch(() => {
+                        recovering = false;
+                        giveUp();
+                    });
+                }, delay);
             }, { signal: ac.signal });
 
             const host = el("div", { class: "tb-host tb-pl" }, video);
