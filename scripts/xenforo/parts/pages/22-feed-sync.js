@@ -41,25 +41,24 @@
         return Array.from(urls);
     }
 
+    // Assinatura BARATA da página aberta: só quais posts estão nela (id + timestamp). O conteúdo que os
+    // passes injetam (cards, players, chips) não muda a assinatura → não re-ingere a cada frame de mídia.
     function currentThreadDomSignature(path, page) {
-        const posts = Array.from(document.querySelectorAll('article.message--post, .message--post')).filter(isThreadPostElement);
-        const title = document.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
-        const parts = ['title:' + (title ? (title.textContent || '').replace(/\s+/g, ' ').trim() : '')];
-        posts.forEach(post => {
-            const body = post.querySelector('.message-userContent, .bbWrapper, .message-body');
-            if (!body) return;
+        const parts = [];
+        document.querySelectorAll('article.message--post, .message--post').forEach(post => {
+            if (!isThreadPostElement(post)) return;
             const id = post.getAttribute('data-content') || post.id || '';
-            const time = post.querySelector('.message-attribution time, .message-date time, time.u-dt') || null;
+            const time = post.querySelector('.message-attribution time, .message-date time, time.u-dt');
             const stamp = time ? (time.getAttribute('data-timestamp') || time.getAttribute('data-time') || time.getAttribute('datetime') || '') : '';
-            const text = (body.textContent || '').replace(/\s+/g, ' ').trim();
-            const media = extractPostMediaUrls(body);
-            parts.push(id + ':' + stamp + ':' + text.length + ':' + text.slice(0, 48) + ':' + text.slice(-48) + ':' + media.join(','));
+            parts.push(id + ':' + stamp);
         });
         return path + '|' + page + '|' + parts.join('|');
     }
 
     // =========================================================
     // 2. INGEST CURRENT THREAD PAGE (Rule 1: Organic Browsing)
+    // Só thread SEGUIDA vai pro feed (registro no followed OU botão de seguir marcado). A checagem vem
+    // ANTES de qualquer varredura dos posts: thread não seguida não paga assinatura nem escreve nada.
     // =========================================================
     function ingestCurrentThreadPageIfFollowed() {
         if (!/\/threads\//.test(location.pathname)) return Promise.resolve(0);
@@ -73,6 +72,14 @@
         const isDateOrder = !/[?&]order=reaction/i.test(location.search);
         if (!isDateOrder) return Promise.resolve(0);
 
+        // Watch status
+        const watchBtn = typeof getWatchButton === 'function' ? getWatchButton() : document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
+        const isWatching = (watchBtn) ? smgIsWatching(watchBtn) : false;
+        if (isWatching) return ingestFollowedThreadPage(rawHref, path, isWatching);
+        return dbFollowedHas(path).then(followed => (followed ? ingestFollowedThreadPage(rawHref, path, isWatching) : 0));
+    }
+
+    function ingestFollowedThreadPage(rawHref, path, isWatching) {
         // Determine current page
         let currentPage = 1;
         const pageMatch = location.pathname.match(/\/page-(\d+)/) || rawHref.match(/\/page-(\d+)/);
@@ -90,9 +97,6 @@
             if (m) maxPageOnDom = Math.max(maxPageOnDom, parseInt(m[1], 10) || 1);
         });
 
-        // Watch status
-        const watchBtn = typeof getWatchButton === 'function' ? getWatchButton() : document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
-        const isWatching = (watchBtn) ? smgIsWatching(watchBtn) : false;
         const ingestKey = path + '|page:' + currentPage;
         if (currentThreadIngestInflight.has(ingestKey)) return currentThreadIngestInflight.get(ingestKey);
         const domSignature = currentThreadDomSignature(path, currentPage) + '|watch:' + (isWatching ? '1' : '0');
@@ -525,6 +529,7 @@
             extractPostMediaUrls,
             syncTimeline,
             syncThreadPage,
+            ingestCurrentThreadPageIfFollowed,
             cronRefreshFollowedAndTimeline,
             startTimelineCron,
             CRON_MIN_INTERVAL_MS,
