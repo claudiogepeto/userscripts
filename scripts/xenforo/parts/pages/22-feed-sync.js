@@ -396,8 +396,6 @@
         });
     }
 
-    const TIMELINE_CRON_INTERVAL_MS = CRON_MIN_INTERVAL_MS;
-
     function startTimelineCron() {
         if (timelineCronTimer) return;
         timelineCronTimer = setTimeout(cronRefreshFollowedAndTimeline, currentCronIntervalMs);
@@ -533,7 +531,6 @@
             syncThreadPage,
             cronRefreshFollowedAndTimeline,
             startTimelineCron,
-            TIMELINE_CRON_INTERVAL_MS,
             CRON_MIN_INTERVAL_MS,
             CRON_MAX_INTERVAL_MS,
             applyCronBackoff,

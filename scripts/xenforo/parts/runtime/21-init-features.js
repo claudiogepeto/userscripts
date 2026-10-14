@@ -42,30 +42,6 @@
         const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=|link-proxy\/\?url=|proxy\.php\?link=)[^\s"'<>]+/g;
         hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = resolveProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
     }
-    // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
-    function unproxyAttr(a) {
-        if (!a) return;
-        const raw = a.getAttribute('href') || a.getAttribute('data-proxy-href') || '';
-        let real = resolveProxyHref(raw);
-        if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
-            const txt = a.textContent && a.textContent.trim();
-            if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
-                try {
-                    const parsed = new URL(txt);
-                    if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
-                } catch (e) {}
-            }
-        }
-        if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
-            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
-            a.href = real;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.dataset.smgUnwrap = '1';
-        }
-        a.removeAttribute('data-proxy-href');
-        a.removeAttribute('data-blank-handler');
-    }
     let proxyClickBound = false;
     function bindProxyClick() {
         if (proxyClickBound) return;
@@ -1344,17 +1320,10 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildTwitterCardDom = buildTwitterCardDom;
-        window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
-        window.fhExtractUnfurlMeta = fhExtractUnfurlMeta;
-        window.fhExtractUnfurlThumb = fhExtractUnfurlThumb;
-        window.fhUpdateCardThumbs = fhUpdateCardThumbs;
         window.fhPixeldrain = fhPixeldrain;
         window.fhBunkr = fhBunkr;
         window.fhGoonbox = fhGoonbox;
-        window.pdCache = pdCache;
-        window.pdInflight = pdInflight;
         window.bunkrCache = bunkrCache;
-        window.bunkrInflight = bunkrInflight;
         window.processFileHostCards = processFileHostCards;
         window.processDirectMedia = processDirectMedia;
         window.__processTurboEmbeds = processTurboEmbeds;
@@ -1363,6 +1332,4 @@
         window.pdPlace = pdPlace;
         window.unwrapRedirectLinks = unwrapRedirectLinks;
         window.__unwrapRedirectLinks = unwrapRedirectLinks;
-        window.unproxyAttr = unproxyAttr;
-        window.handleRedirectPage = handleRedirectPage;
     }

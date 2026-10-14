@@ -474,7 +474,6 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.i18n = i18n;
-        window.I18N_PT = I18N_PT;
     }
 
     // =========================================================
@@ -13103,38 +13102,6 @@
             fn();
         }
     }
-    function hasTextBetweenMedia(scope) {
-        if (!scope) return false;
-        const grids = scope.querySelectorAll('.auto-image-grid');
-        if (grids.length > 1) return true;   // múltiplas galerias separadas por conteúdo no mesmo post
-
-        const blocks = collectGalleryBlocks(scope);
-        if (blocks.length < 2) return false;
-
-        const first = (blocks[0].tagName === 'IMG') ? (blocks[0].closest('.bbImageWrapper, a') || blocks[0]) : blocks[0];
-        const last = (blocks[blocks.length - 1].tagName === 'IMG') ? (blocks[blocks.length - 1].closest('.bbImageWrapper, a') || blocks[blocks.length - 1]) : blocks[blocks.length - 1];
-        if (!first || !last || first === last) return false;
-        if (!first.parentNode || !last.parentNode) return false;
-
-        // Se ambos estão dentro do mesmo auto-image-grid, todo o conteúdo entre eles é puramente mídia
-        const g1 = first.closest && first.closest('.auto-image-grid');
-        const g2 = last.closest && last.closest('.auto-image-grid');
-        if (g1 && g1 === g2) return false;
-
-        try {
-            const range = document.createRange();
-            range.setStartAfter(first);
-            range.setEndBefore(last);
-            const frag = range.cloneContents();
-            if (frag.querySelectorAll) {
-                frag.querySelectorAll('.bbCodeQuote, .bbCodeSpoiler, .message-signature, .smg-post-links, .smg-fhcard, .bbCodeBlock--unfurl, .auto-image-grid, a.link--external, a.smg-imglink, script, style, noscript').forEach(el => el.remove());
-            }
-            const between = (frag.textContent || '').replace(/\s+/g, ' ').trim();
-            return between.length >= 15;
-        } catch (e) {
-            return false;
-        }
-    }
 
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
     function relayoutGrid(grid) {
@@ -13587,7 +13554,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;
@@ -21545,8 +21512,6 @@
 
         if (typeof window !== 'undefined' && window.__TEST_MODE__) {
             window.syncStuck = syncStuck;
-            window.theadSentinel = sentinel;
-            window.theadSpacer = spacer;
             header._syncStuck = syncStuck;
             header._sentinel = sentinel;
             header._spacer = spacer;
@@ -22529,11 +22494,9 @@
             buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
             set isStreamingWatched(v) { isStreamingWatched = v; },
-            get syncStuck() { return window.syncStuck; },
-            get sentinel() { return window.theadSentinel; }
+            get syncStuck() { return window.syncStuck; }
         };
         window.syncStuck = window.syncStuck || null;
-        window.theadSentinel = window.theadSentinel || null;
         window.createStickySync = createStickySync;
         window.unifyThreadHeader = unifyThreadHeader;
         window.buildThreadHeader = buildThreadHeader;
@@ -22767,10 +22730,7 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.cleanAlertRow = cleanAlertRow;
-        window.paintAlertThumb = paintAlertThumb;
         window.repaintAlertThumbs = repaintAlertThumbs;
-        window.syncAlertBadgeFrom = syncAlertBadgeFrom;
-        window.markAlertRead = markAlertRead;
         window.__alertsExports = {
             cleanAlertRow,
             paintAlertThumb,
@@ -24670,30 +24630,6 @@
         const rx = /(?:https?:\/\/[^\s"'<>]*)?\/(?:goto\/link-confirmation\?url=|redirect\/\?to=|link-proxy\/\?url=|proxy\.php\?link=)[^\s"'<>]+/g;
         hits.forEach(t => { t.nodeValue = t.nodeValue.replace(rx, m => { const r = resolveProxyHref(m); return (r && /^https?:/i.test(r)) ? r : m; }); });
     }
-    // desarma o link-proxy e blank-handler do XF num <a>: garante que a.href aponte para o destino real
-    function unproxyAttr(a) {
-        if (!a) return;
-        const raw = a.getAttribute('href') || a.getAttribute('data-proxy-href') || '';
-        let real = resolveProxyHref(raw);
-        if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
-            const txt = a.textContent && a.textContent.trim();
-            if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
-                try {
-                    const parsed = new URL(txt);
-                    if (parsed.hostname && parsed.hostname !== location.hostname) real = txt;
-                } catch (e) {}
-            }
-        }
-        if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
-            if (a.getAttribute('href') !== real) a.setAttribute('href', real);
-            a.href = real;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.dataset.smgUnwrap = '1';
-        }
-        a.removeAttribute('data-proxy-href');
-        a.removeAttribute('data-blank-handler');
-    }
     let proxyClickBound = false;
     function bindProxyClick() {
         if (proxyClickBound) return;
@@ -25972,17 +25908,10 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.buildTwitterCardDom = buildTwitterCardDom;
-        window.renderTwitterOfficialEmbed = renderTwitterOfficialEmbed;
-        window.fhExtractUnfurlMeta = fhExtractUnfurlMeta;
-        window.fhExtractUnfurlThumb = fhExtractUnfurlThumb;
-        window.fhUpdateCardThumbs = fhUpdateCardThumbs;
         window.fhPixeldrain = fhPixeldrain;
         window.fhBunkr = fhBunkr;
         window.fhGoonbox = fhGoonbox;
-        window.pdCache = pdCache;
-        window.pdInflight = pdInflight;
         window.bunkrCache = bunkrCache;
-        window.bunkrInflight = bunkrInflight;
         window.processFileHostCards = processFileHostCards;
         window.processDirectMedia = processDirectMedia;
         window.__processTurboEmbeds = processTurboEmbeds;
@@ -25991,8 +25920,6 @@
         window.pdPlace = pdPlace;
         window.unwrapRedirectLinks = unwrapRedirectLinks;
         window.__unwrapRedirectLinks = unwrapRedirectLinks;
-        window.unproxyAttr = unproxyAttr;
-        window.handleRedirectPage = handleRedirectPage;
     }
 
     // =========================================================
@@ -26695,8 +26622,6 @@
         });
     }
 
-    const TIMELINE_CRON_INTERVAL_MS = CRON_MIN_INTERVAL_MS;
-
     function startTimelineCron() {
         if (timelineCronTimer) return;
         timelineCronTimer = setTimeout(cronRefreshFollowedAndTimeline, currentCronIntervalMs);
@@ -26832,7 +26757,6 @@
             syncThreadPage,
             cronRefreshFollowedAndTimeline,
             startTimelineCron,
-            TIMELINE_CRON_INTERVAL_MS,
             CRON_MIN_INTERVAL_MS,
             CRON_MAX_INTERVAL_MS,
             applyCronBackoff,
@@ -28140,19 +28064,6 @@
         ));
     }
 
-    function paintPageCanFallback(context) {
-        if (paintHasFatalError()) return true;
-        if (context.kind === PAINT_PAGE_KINDS.TIMELINE) {
-            const river = document.getElementById('smg-river');
-            return !!river;
-        }
-        if (context.kind === PAINT_PAGE_KINDS.BOOKMARKS) {
-            const feed = document.getElementById('smg-bm-feed');
-            return !!feed;
-        }
-        return document.readyState === 'complete' && paintHasExplicitEmptyState();
-    }
-
     function requestedPostTargetId() {
         const h = (location.hash || '').replace(/^#/, '');
         const hm = h && h.match(/^(?:js-)?(?:post|comment|post-comment)-(\d+)$/i);
@@ -28505,7 +28416,6 @@
                 paintHasFatalError,
                 paintPageSignature,
                 paintPageIsReady,
-                paintPageCanFallback,
                 PAINT_PAGE_KINDS,
                 threadTreeIsComplete,
                 threadMediaTreeIsReady,
@@ -28809,90 +28719,6 @@
         earlyObsRoot = next;
     }
 
-    // SCROLL STABILIZER: media, embeds, post cards and galleries finish sizing AFTER the first paint, and
-    // everything above the viewport growing pushes the reading position down (opening on the last post ended
-    // mid-thread). Native scroll anchoring cannot help because the script rebuilds posts (the anchor node is
-    // replaced). So the post the reader landed on is pinned at its original viewport offset: every layout change
-    // (ResizeObserver runs before paint, so there is no visible jump) and every late image/video load
-    // re-aligns it. It lets go IMMEDIATELY on ANY user input (wheel, touch, click, scroll, key), or after
-    // a brief safety deadline (2.5s), never fighting against user scrolling.
-    let activeScrollStabilizer = null;
-
-    function armScrollStabilizer(target) {
-        if (!target || !target.isConnected || typeof ResizeObserver !== 'function') return;
-        if (activeScrollStabilizer) {
-            activeScrollStabilizer.stop();
-            activeScrollStabilizer = null;
-        }
-
-        const PIN_MAX_MS = 1200;
-        const startedAt = Date.now();
-        let wantTop = target.getBoundingClientRect().top;
-        let done = false;
-        let adjusting = false;
-        let ro = null;
-
-        const stabilizerObj = {
-            stop: () => stop(),
-            isActive: () => !done
-        };
-
-        const stop = () => {
-            if (done) return;
-            done = true;
-            if (activeScrollStabilizer === stabilizerObj) {
-                activeScrollStabilizer = null;
-            }
-            if (ro) ro.disconnect();
-            const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
-            inputs.forEach(ev => window.removeEventListener(ev, stop, true));
-            window.removeEventListener('scroll', onScroll, true);
-            window.removeEventListener('load', onLoad, true);
-            document.removeEventListener('load', realign, true);
-        };
-
-        const onScroll = () => {
-            if (done) return;
-            if (!adjusting) {
-                // Rolagem iniciada pelo usuário: solta o controle instantaneamente
-                stop();
-            }
-        };
-
-        const realign = () => {
-            if (done) return;
-            if (Date.now() - startedAt > PIN_MAX_MS || !target.isConnected) { stop(); return; }
-            const currentTop = target.getBoundingClientRect().top;
-            const delta = currentTop - wantTop;
-            if (Math.abs(delta) > 1) {
-                adjusting = true;
-                window.scrollBy(0, delta);
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        adjusting = false;
-                    });
-                });
-            }
-        };
-
-        const onLoad = () => realign();
-
-        const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
-        inputs.forEach(ev => window.addEventListener(ev, stop, { capture: true, passive: true }));
-        window.addEventListener('scroll', onScroll, { capture: true, passive: true });
-        document.addEventListener('load', realign, true);   // <img>/<video>/<iframe> loads do not bubble → capture
-        window.addEventListener('load', onLoad, true);
-
-        ro = new ResizeObserver(realign);
-        ro.observe(document.documentElement);
-        const root = document.querySelector('.block--messages, .block-body--messages, .p-body-content');
-        if (root) ro.observe(root);
-
-        activeScrollStabilizer = stabilizerObj;
-        setTimeout(stop, PIN_MAX_MS + 200);
-        return stabilizerObj;
-    }
-
     // DEEP-LINK (notificação/permalink → #post-X ou /posts/X): ao cair fundo na thread,
     // processa o post-alvo primeiro e faz o scroll suave inicial uma única vez
     // sem sequestrar a rolagem do usuário.
@@ -28912,11 +28738,6 @@
             post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
     }
-    // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
-    function pinRestoredPost() {
-        // O loading da página segura o layout. Não prender o scroll num observer.
-    }
-
     function resolvePostIdFromHref(href) {
         if (!href || typeof href !== 'string') return null;
         const hashMatch = href.match(/#(?:js-)?(?:post|comment|post-comment)-(\d+)/i);
@@ -29000,7 +28821,6 @@
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
         if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
         safe(pinDeepLinkPost);
-        safe(pinRestoredPost);
         safe(startTimelineCron);
 
         processAll([document.body]);
@@ -29134,10 +28954,8 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__processAll = processAll;
         window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, eachIn, makeTaskQueue, rootTouches });
-        window.__processImagepondNativeEmbeds = processImagepondNativeEmbeds;
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__inPagePostExports = { resolvePostIdFromHref, findPostElementById, handleInPagePostClick, armScrollStabilizer, getActiveScrollStabilizer: () => activeScrollStabilizer };
         window.detectPageClasses = detectPageClasses;
     }
 

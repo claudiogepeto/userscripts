@@ -217,5 +217,4 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.i18n = i18n;
-        window.I18N_PT = I18N_PT;
     }

@@ -666,8 +666,6 @@
 
         if (typeof window !== 'undefined' && window.__TEST_MODE__) {
             window.syncStuck = syncStuck;
-            window.theadSentinel = sentinel;
-            window.theadSpacer = spacer;
             header._syncStuck = syncStuck;
             header._sentinel = sentinel;
             header._spacer = spacer;
@@ -1650,11 +1648,9 @@
             buildCommentCards,
             get isStreamingWatched() { return isStreamingWatched; },
             set isStreamingWatched(v) { isStreamingWatched = v; },
-            get syncStuck() { return window.syncStuck; },
-            get sentinel() { return window.theadSentinel; }
+            get syncStuck() { return window.syncStuck; }
         };
         window.syncStuck = window.syncStuck || null;
-        window.theadSentinel = window.theadSentinel || null;
         window.createStickySync = createStickySync;
         window.unifyThreadHeader = unifyThreadHeader;
         window.buildThreadHeader = buildThreadHeader;

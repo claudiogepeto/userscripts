@@ -939,38 +939,6 @@
             fn();
         }
     }
-    function hasTextBetweenMedia(scope) {
-        if (!scope) return false;
-        const grids = scope.querySelectorAll('.auto-image-grid');
-        if (grids.length > 1) return true;   // múltiplas galerias separadas por conteúdo no mesmo post
-
-        const blocks = collectGalleryBlocks(scope);
-        if (blocks.length < 2) return false;
-
-        const first = (blocks[0].tagName === 'IMG') ? (blocks[0].closest('.bbImageWrapper, a') || blocks[0]) : blocks[0];
-        const last = (blocks[blocks.length - 1].tagName === 'IMG') ? (blocks[blocks.length - 1].closest('.bbImageWrapper, a') || blocks[blocks.length - 1]) : blocks[blocks.length - 1];
-        if (!first || !last || first === last) return false;
-        if (!first.parentNode || !last.parentNode) return false;
-
-        // Se ambos estão dentro do mesmo auto-image-grid, todo o conteúdo entre eles é puramente mídia
-        const g1 = first.closest && first.closest('.auto-image-grid');
-        const g2 = last.closest && last.closest('.auto-image-grid');
-        if (g1 && g1 === g2) return false;
-
-        try {
-            const range = document.createRange();
-            range.setStartAfter(first);
-            range.setEndBefore(last);
-            const frag = range.cloneContents();
-            if (frag.querySelectorAll) {
-                frag.querySelectorAll('.bbCodeQuote, .bbCodeSpoiler, .message-signature, .smg-post-links, .smg-fhcard, .bbCodeBlock--unfurl, .auto-image-grid, a.link--external, a.smg-imglink, script, style, noscript').forEach(el => el.remove());
-            }
-            const between = (frag.textContent || '').replace(/\s+/g, ' ').trim();
-            return between.length >= 15;
-        } catch (e) {
-            return false;
-        }
-    }
 
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
     function relayoutGrid(grid) {
@@ -1423,7 +1391,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, hasTextBetweenMedia, isTextPost: hasTextBetweenMedia, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;

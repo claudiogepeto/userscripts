@@ -278,90 +278,6 @@
         earlyObsRoot = next;
     }
 
-    // SCROLL STABILIZER: media, embeds, post cards and galleries finish sizing AFTER the first paint, and
-    // everything above the viewport growing pushes the reading position down (opening on the last post ended
-    // mid-thread). Native scroll anchoring cannot help because the script rebuilds posts (the anchor node is
-    // replaced). So the post the reader landed on is pinned at its original viewport offset: every layout change
-    // (ResizeObserver runs before paint, so there is no visible jump) and every late image/video load
-    // re-aligns it. It lets go IMMEDIATELY on ANY user input (wheel, touch, click, scroll, key), or after
-    // a brief safety deadline (2.5s), never fighting against user scrolling.
-    let activeScrollStabilizer = null;
-
-    function armScrollStabilizer(target) {
-        if (!target || !target.isConnected || typeof ResizeObserver !== 'function') return;
-        if (activeScrollStabilizer) {
-            activeScrollStabilizer.stop();
-            activeScrollStabilizer = null;
-        }
-
-        const PIN_MAX_MS = 1200;
-        const startedAt = Date.now();
-        let wantTop = target.getBoundingClientRect().top;
-        let done = false;
-        let adjusting = false;
-        let ro = null;
-
-        const stabilizerObj = {
-            stop: () => stop(),
-            isActive: () => !done
-        };
-
-        const stop = () => {
-            if (done) return;
-            done = true;
-            if (activeScrollStabilizer === stabilizerObj) {
-                activeScrollStabilizer = null;
-            }
-            if (ro) ro.disconnect();
-            const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
-            inputs.forEach(ev => window.removeEventListener(ev, stop, true));
-            window.removeEventListener('scroll', onScroll, true);
-            window.removeEventListener('load', onLoad, true);
-            document.removeEventListener('load', realign, true);
-        };
-
-        const onScroll = () => {
-            if (done) return;
-            if (!adjusting) {
-                // Rolagem iniciada pelo usuário: solta o controle instantaneamente
-                stop();
-            }
-        };
-
-        const realign = () => {
-            if (done) return;
-            if (Date.now() - startedAt > PIN_MAX_MS || !target.isConnected) { stop(); return; }
-            const currentTop = target.getBoundingClientRect().top;
-            const delta = currentTop - wantTop;
-            if (Math.abs(delta) > 1) {
-                adjusting = true;
-                window.scrollBy(0, delta);
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        adjusting = false;
-                    });
-                });
-            }
-        };
-
-        const onLoad = () => realign();
-
-        const inputs = ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'mousedown', 'keydown'];
-        inputs.forEach(ev => window.addEventListener(ev, stop, { capture: true, passive: true }));
-        window.addEventListener('scroll', onScroll, { capture: true, passive: true });
-        document.addEventListener('load', realign, true);   // <img>/<video>/<iframe> loads do not bubble → capture
-        window.addEventListener('load', onLoad, true);
-
-        ro = new ResizeObserver(realign);
-        ro.observe(document.documentElement);
-        const root = document.querySelector('.block--messages, .block-body--messages, .p-body-content');
-        if (root) ro.observe(root);
-
-        activeScrollStabilizer = stabilizerObj;
-        setTimeout(stop, PIN_MAX_MS + 200);
-        return stabilizerObj;
-    }
-
     // DEEP-LINK (notificação/permalink → #post-X ou /posts/X): ao cair fundo na thread,
     // processa o post-alvo primeiro e faz o scroll suave inicial uma única vez
     // sem sequestrar a rolagem do usuário.
@@ -381,11 +297,6 @@
             post.scrollIntoView({ block: 'start', behavior: 'instant' });
         } catch (e) {}
     }
-    // No hash (reload / browser scroll restoration / unread jump): pin whichever post sits at the top of the viewport.
-    function pinRestoredPost() {
-        // O loading da página segura o layout. Não prender o scroll num observer.
-    }
-
     function resolvePostIdFromHref(href) {
         if (!href || typeof href !== 'string') return null;
         const hashMatch = href.match(/#(?:js-)?(?:post|comment|post-comment)-(\d+)/i);
@@ -469,7 +380,6 @@
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
         if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(harvestCurrentThreadPage);
         safe(pinDeepLinkPost);
-        safe(pinRestoredPost);
         safe(startTimelineCron);
 
         processAll([document.body]);
@@ -603,10 +513,8 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__processAll = processAll;
         window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, eachIn, makeTaskQueue, rootTouches });
-        window.__processImagepondNativeEmbeds = processImagepondNativeEmbeds;
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
-        window.__inPagePostExports = { resolvePostIdFromHref, findPostElementById, handleInPagePostClick, armScrollStabilizer, getActiveScrollStabilizer: () => activeScrollStabilizer };
         window.detectPageClasses = detectPageClasses;
     }
 

@@ -411,19 +411,6 @@
         ));
     }
 
-    function paintPageCanFallback(context) {
-        if (paintHasFatalError()) return true;
-        if (context.kind === PAINT_PAGE_KINDS.TIMELINE) {
-            const river = document.getElementById('smg-river');
-            return !!river;
-        }
-        if (context.kind === PAINT_PAGE_KINDS.BOOKMARKS) {
-            const feed = document.getElementById('smg-bm-feed');
-            return !!feed;
-        }
-        return document.readyState === 'complete' && paintHasExplicitEmptyState();
-    }
-
     function requestedPostTargetId() {
         const h = (location.hash || '').replace(/^#/, '');
         const hm = h && h.match(/^(?:js-)?(?:post|comment|post-comment)-(\d+)$/i);
@@ -776,7 +763,6 @@
                 paintHasFatalError,
                 paintPageSignature,
                 paintPageIsReady,
-                paintPageCanFallback,
                 PAINT_PAGE_KINDS,
                 threadTreeIsComplete,
                 threadMediaTreeIsReady,

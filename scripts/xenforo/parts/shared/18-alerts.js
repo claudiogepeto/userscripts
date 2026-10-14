@@ -226,10 +226,7 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.cleanAlertRow = cleanAlertRow;
-        window.paintAlertThumb = paintAlertThumb;
         window.repaintAlertThumbs = repaintAlertThumbs;
-        window.syncAlertBadgeFrom = syncAlertBadgeFrom;
-        window.markAlertRead = markAlertRead;
         window.__alertsExports = {
             cleanAlertRow,
             paintAlertThumb,

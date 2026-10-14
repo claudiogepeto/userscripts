@@ -1408,7 +1408,6 @@ async function runTests() {
     const timerRef = window.__feedSyncExports.timelineCronTimer;
     startTimelineCron();
     assert(window.__feedSyncExports.timelineCronTimer === timerRef, 'startTimelineCron não deve duplicar o timer se já ativo');
-    assert(window.__feedSyncExports.TIMELINE_CRON_INTERVAL_MS === 300000, 'TIMELINE_CRON_INTERVAL_MS deve ser 300.000ms (5 minutos)');
 
     // 8.9 Backoff Exponencial do Cron (5 a 15 minutos)
     const {
@@ -2681,12 +2680,11 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 19: Contexto de Página & Paint Gate ---');
     assert(window.__paintExports !== undefined, 'window.__paintExports deve estar exposto');
-    const { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageIsReady, paintPageCanFallback, PAINT_PAGE_KINDS } = window.__paintExports;
+    const { classifyPaintPage, paintSkeletonMarkup, paintRailMarkup, paintHasFatalError, paintPageIsReady, PAINT_PAGE_KINDS } = window.__paintExports;
     assert(typeof classifyPaintPage === 'function', 'classifyPaintPage deve ser função');
     assert(typeof paintSkeletonMarkup === 'function', 'paintSkeletonMarkup deve ser função');
     assert(typeof paintRailMarkup === 'function', 'paintRailMarkup deve ser função');
     assert(typeof paintHasFatalError === 'function', 'paintHasFatalError deve ser função');
-    assert(typeof paintPageCanFallback === 'function', 'paintPageCanFallback deve ser função');
     assert(typeof paintPageIsReady === 'function', 'paintPageIsReady deve ser função');
 
     const originalTemplate19 = document.documentElement.getAttribute('data-template');
@@ -2753,9 +2751,6 @@ async function runTests() {
         document.body.appendChild(riverEl);
     }
     riverEl.dataset.smgPaintReady = '0';
-
-    // 1. paintPageCanFallback com contexto timeline e #smg-river presente retorna true
-    assert(paintPageCanFallback(timelineCtx) === true, 'paintPageCanFallback com contexto timeline e #smg-river presente retorna true');
 
     // 2. showSetupState define smgPaintReady = "1" no #smg-river
     let riverListEl = riverEl.querySelector('.smg-fp-list');
@@ -4116,9 +4111,7 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 31: Modelo Misto de Masonry (True Masonry vs Justified Rows com detecção de texto entre imagens) ---');
 
-    assert(window.__masonryExports && typeof window.__masonryExports.hasTextBetweenMedia === 'function', 'hasTextBetweenMedia deve estar exposto no __TEST_MODE__');
-    assert(window.__masonryExports && typeof window.__masonryExports.isTextPost === 'function', 'isTextPost deve estar mantido como alias no __TEST_MODE__');
-    const { hasTextBetweenMedia: testHasTextBetween, isTextPost: testIsTextPost, relayoutGrid: testRelayoutGrid, relayoutGrid } = window.__masonryExports;
+    const { relayoutGrid: testRelayoutGrid, relayoutGrid } = window.__masonryExports;
 
     // 1. Post com texto longo no COMEÇO ("Photoshoot from today, enjoy...") seguido de imagens contíguas
     const textStartDiv = document.createElement('div');
@@ -4126,8 +4119,6 @@ async function runTests() {
     textStartDiv.innerHTML = '<div class="bbWrapper"><p>Photoshoot from today, enjoy this beautiful session with lots of photos and great lighting!</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/s1.jpg"><img class="bbImage" src="https://example.com/s2.jpg"><img class="bbImage" src="https://example.com/s3.jpg"></div></div>';
     document.body.appendChild(textStartDiv);
 
-    assert(testHasTextBetween(textStartDiv) === false, 'Post com texto longo apenas no COMEÇO deve retornar false');
-    assert(testIsTextPost(textStartDiv) === false, 'Alias isTextPost deve retornar false para post com texto apenas no COMEÇO');
     const startGrid = textStartDiv.querySelector('.auto-image-grid');
     testRelayoutGrid(startGrid);
     assert(startGrid.classList.contains('smg-true-masonry'), 'Grid com texto apenas no COMEÇO deve receber .smg-true-masonry');
@@ -4139,7 +4130,6 @@ async function runTests() {
     textEndDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/e1.jpg"><img class="bbImage" src="https://example.com/e2.jpg"><img class="bbImage" src="https://example.com/e3.jpg"></div><p>Leave your comments below and don\'t forget to subscribe for upcoming updates!</p></div>';
     document.body.appendChild(textEndDiv);
 
-    assert(testHasTextBetween(textEndDiv) === false, 'Post com texto no FIM após imagens contíguas deve retornar false');
     const endGrid = textEndDiv.querySelector('.auto-image-grid');
     testRelayoutGrid(endGrid);
     assert(endGrid.classList.contains('smg-true-masonry'), 'Grid com texto apenas no FIM deve receber .smg-true-masonry');
@@ -4151,7 +4141,6 @@ async function runTests() {
     textStartEndDiv.innerHTML = '<div class="bbWrapper"><p>Photoshoot from today, enjoy this beautiful session!</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/se1.jpg"><img class="bbImage" src="https://example.com/se2.jpg"><img class="bbImage" src="https://example.com/se3.jpg"></div><p>Leave your comments below and thank you!</p></div>';
     document.body.appendChild(textStartEndDiv);
 
-    assert(testHasTextBetween(textStartEndDiv) === false, 'Post com texto no COMEÇO e no FIM deve retornar false');
     const startEndGrid = textStartEndDiv.querySelector('.auto-image-grid');
     testRelayoutGrid(startEndGrid);
     assert(startEndGrid.classList.contains('smg-true-masonry'), 'Grid com texto no COMEÇO e no FIM deve receber .smg-true-masonry');
@@ -4164,7 +4153,6 @@ async function runTests() {
     multiGridDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/m1.jpg"><img class="bbImage" src="https://example.com/m2.jpg"><img class="bbImage" src="https://example.com/m3.jpg"></div><p>Here is the second set of photos:</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/m4.jpg"><img class="bbImage" src="https://example.com/m5.jpg"><img class="bbImage" src="https://example.com/m6.jpg"></div></div>';
     document.body.appendChild(multiGridDiv);
 
-    assert(testHasTextBetween(multiGridDiv) === true, 'Post com múltiplas galerias separadas por texto deve retornar true');
     const multiGrids = multiGridDiv.querySelectorAll('.auto-image-grid');
     testRelayoutGrid(multiGrids[0]);
     testRelayoutGrid(multiGrids[1]);
@@ -4172,20 +4160,6 @@ async function runTests() {
     assert(!multiGrids[0].classList.contains('smg-justified-grid'), 'Primeira grade com texto ENTRE imagens NÃO deve receber .smg-justified-grid');
     assert(multiGrids[1].classList.contains('smg-true-masonry'), 'Segunda grade com texto ENTRE imagens (modo row) agora é seu próprio .smg-true-masonry local');
     assert(!multiGrids[1].classList.contains('smg-justified-grid'), 'Segunda grade com texto ENTRE imagens NÃO deve receber .smg-justified-grid');
-
-    // B) Elementos de mídia soltos com texto autoral entre eles
-    const textBetweenRawDiv = document.createElement('div');
-    textBetweenRawDiv.className = 'message-userContent';
-    textBetweenRawDiv.innerHTML = '<div class="bbWrapper"><img class="bbImage" src="https://example.com/r1.jpg"><p>Here is the second set of photos:</p><img class="bbImage" src="https://example.com/r2.jpg"></div>';
-    document.body.appendChild(textBetweenRawDiv);
-    assert(testHasTextBetween(textBetweenRawDiv) === true, 'Post com texto autoral real entre mídias soltas deve retornar true');
-
-    // C) Spoilers, quotes e links externos ignorados
-    const ignoreDecorationsDiv = document.createElement('div');
-    ignoreDecorationsDiv.className = 'message-userContent';
-    ignoreDecorationsDiv.innerHTML = '<div class="bbWrapper"><img class="bbImage" src="https://example.com/q1.jpg"><div class="bbCodeQuote">Quote muito longa que não deve contar como texto autoral</div><a class="link--external" href="https://mega.nz">https://mega.nz/file/xyz123</a><img class="bbImage" src="https://example.com/q2.jpg"></div>';
-    document.body.appendChild(ignoreDecorationsDiv);
-    assert(testHasTextBetween(ignoreDecorationsDiv) === false, 'Citações e links externos entre imagens não devem ser computados como texto autoral');
 
     // 5. Limite estrito de no máximo 3 colunas mesmo para 5+ imagens
     const pureGalleryDiv = document.createElement('div');
@@ -4221,8 +4195,6 @@ async function runTests() {
     textEndDiv.remove();
     textStartEndDiv.remove();
     multiGridDiv.remove();
-    textBetweenRawDiv.remove();
-    ignoreDecorationsDiv.remove();
     pureGalleryDiv.remove();
 
     // =========================================================================
@@ -5516,8 +5488,6 @@ async function runTests() {
     document.body.closest = origBodyClosest;
     eachInHost.remove();
 
-    // 3. Remoção de chamada redundante hasTextBetweenMedia(postBody) em relayoutGrid
-    assert(!scriptContent.includes('const hasTextBetween = hasTextBetweenMedia(postBody);'), 'relayoutGrid NÃO deve executar hasTextBetweenMedia(postBody)');
     const relayoutGridFn = window.__masonryExports.relayoutGrid;
     assert(typeof relayoutGridFn === 'function', 'relayoutGrid deve estar exposto em __masonryExports');
     const testGrid = document.createElement('div');
@@ -5529,16 +5499,6 @@ async function runTests() {
     relayoutGridFn(testGrid);
     assert(testGrid.style.getPropertyValue('--smg-mcols') !== '', 'relayoutGrid deve recalcular propriedades sem overhead de hasTextBetweenMedia');
     testGrid.remove();
-
-    // 4. Fast-path em hasTextBetweenMedia(scope)
-    const testHasText = window.__masonryExports.hasTextBetweenMedia;
-    assert(typeof testHasText === 'function', 'hasTextBetweenMedia deve estar exposto em __masonryExports');
-    const sameGridScope = document.createElement('div');
-    sameGridScope.className = 'message-userContent';
-    sameGridScope.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/1.jpg"><img class="bbImage" src="https://example.com/2.jpg"></div></div>';
-    document.body.appendChild(sameGridScope);
-    assert(testHasText(sameGridScope) === false, 'hasTextBetweenMedia deve retornar false instantaneamente se todas as mídias já estiverem no mesmo grid');
-    sameGridScope.remove();
 
     // 5. unwrapEmptyMediaFormatting sem clonagem de nós (hasAuthorText)
     const unwrapFn = window.__masonryExports.unwrapEmptyMediaFormatting;
@@ -6483,39 +6443,6 @@ async function runTests() {
 
         mockPostQuote.remove();
         quoteLink.remove();
-
-        // Testar armScrollStabilizer e liberação imediata em interação/rolagem do usuário
-        const { armScrollStabilizer, getActiveScrollStabilizer } = window.__inPagePostExports || {};
-        assert(typeof armScrollStabilizer === 'function', 'armScrollStabilizer deve ser função');
-        assert(typeof getActiveScrollStabilizer === 'function', 'getActiveScrollStabilizer deve ser função');
-
-        const stabPost = document.createElement('article');
-        stabPost.className = 'message message--post';
-        stabPost.getBoundingClientRect = () => ({ top: 120, bottom: 450 });
-        document.body.appendChild(stabPost);
-
-        const s1 = armScrollStabilizer(stabPost);
-        assert(s1 && s1.isActive(), 'armScrollStabilizer deve inicializar como ativo');
-        assert(getActiveScrollStabilizer() === s1, 'getActiveScrollStabilizer deve referenciar o stabilizer atual');
-
-        // Rolagem de usuário deve desativar o stabilizer instantaneamente
-        window.dispatchEvent(new window.Event('scroll'));
-        assert(s1.isActive() === false, 'Disparo de evento scroll do usuário deve soltar o stabilizer imediatamente');
-        assert(getActiveScrollStabilizer() === null, 'activeScrollStabilizer deve ser nulo após scroll');
-
-        // Testar evento de wheel / toque / pointerdown
-        const s2 = armScrollStabilizer(stabPost);
-        assert(s2 && s2.isActive(), 'armScrollStabilizer rearmado deve estar ativo');
-        window.dispatchEvent(new window.Event('wheel'));
-        assert(s2.isActive() === false, 'Disparo de evento wheel deve soltar o stabilizer imediatamente');
-        assert(getActiveScrollStabilizer() === null, 'activeScrollStabilizer deve ser nulo após wheel');
-
-        const s3 = armScrollStabilizer(stabPost);
-        assert(s3 && s3.isActive(), 'armScrollStabilizer deve estar ativo para teste de pointerdown');
-        window.dispatchEvent(new window.Event('pointerdown'));
-        assert(s3.isActive() === false, 'Disparo de evento pointerdown deve soltar o stabilizer imediatamente');
-
-        stabPost.remove();
     }
 
     // =========================================================================
