@@ -7255,11 +7255,11 @@ async function runTests() {
         const b2 = mk(im(5) + '\n  <br>\n<br> ' + im(6, 'a') + '<!-- c --><script type="application/json">{}</script>' + im(7, 'w'));
         assert(seq(b2) === 'G3', 'Separadores invisíveis não quebram a run (obtido: ' + seq(b2) + ')');
 
-        // 3. blocos não-mídia são linhas inteiras entre grupos: citação, spoiler, embed, card de file-host, card de link
+        // 3. blocos não-mídia são linhas inteiras entre grupos: citação, spoiler, card de file-host, card de link
+        //    (players de vídeo SÃO mídia e entram na run — ver "Mosaico no post: vídeos")
         const blocks = [
             '<blockquote class="bbCodeBlock bbCodeBlock--quote"><div class="bbCodeBlock-content">quote</div></blockquote>',
             '<div class="bbCodeSpoiler"><button class="bbCodeSpoiler-button">Spoiler</button><div class="bbCodeSpoiler-content">x</div></div>',
-            '<div class="generic2wide-iframe-div"><iframe src="https://turbo.cr/embed/abc"></iframe></div>',
             '<div class="smg-fhcard"><a class="smg-fhcard-main" href="https://gofile.io/d/x">gofile</a></div>',
             '<div class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://example.org/">link</div>',
         ];
@@ -7267,7 +7267,7 @@ async function runTests() {
             const b = mk(im(10 + i) + '<br>' + im(20 + i) + '<br>' + blk + '<br>' + im(30 + i) + '<br>' + im(40 + i));
             const s3 = seq(b);
             assert(/^G2 (BLOCKQUOTE|DIV) G2$/.test(s3.replace(/\bBR\b/g, '').replace(/ +/g, ' ').trim()), 'Bloco não-mídia #' + (i + 1) + ' fica entre dois grupos, fora deles (obtido: ' + s3 + ')');
-            assert(Array.from(b.querySelectorAll('.auto-image-grid')).every(g => !g.querySelector('blockquote, .bbCodeSpoiler, iframe, .smg-fhcard, .bbCodeBlock--unfurl')), 'Bloco não-mídia #' + (i + 1) + ' nunca entra no grupo');
+            assert(Array.from(b.querySelectorAll('.auto-image-grid')).every(g => !g.querySelector('blockquote, .bbCodeSpoiler, .smg-fhcard, .bbCodeBlock--unfurl')),'Bloco não-mídia #' + (i + 1) + ' nunca entra no grupo');
         });
 
         // 4. imagem dentro de citação/assinatura nunca entra no mosaico do post
@@ -7296,6 +7296,149 @@ async function runTests() {
     }
 
     // =========================================================================
+    // MOSAICO: vídeos são itens do mosaico; vídeo HORIZONTAL ocupa 2 colunas
+    // =========================================================================
+    {
+        console.log('\n--- Mosaico: motor com span de colunas ---');
+        const { masonryPlace } = window.__masonryEngine;
+        // (c) span escolhe o PAR de colunas adjacentes mais baixo (menor máximo), empate à esquerda
+        //     4 colunas de 292px: alturas depois da 1ª linha = 300, 66, 96, 154
+        const sp = masonryPlace([1, 0.2, 0.3, 0.5, 9 / 16], 1192, { gap: 8, spans: [1, 1, 1, 1, 2] });
+        const v = sp.boxes[4];
+        assert(sp.cols === 4, 'Span não muda a contagem de colunas pela largura (obtido: ' + sp.cols + ')');
+        assert(v.col === 1 && v.span === 2, 'Item de span 2 começa na coluna cujo par adjacente tem o menor máximo (obtido: col ' + v.col + ', span ' + v.span + ')');
+        assert(v.y === 96, 'Item de span 2 fica logo abaixo do mais alto dos dois (96), não do mais baixo (obtido: ' + v.y + ')');
+        assert(v.w === 592 && v.x === 300, 'Item de span 2 tem 2 colunas + 1 gap de largura (obtido: x ' + v.x + ', w ' + v.w + ')');
+        assert(v.h === 333, 'Altura do item de span 2 = sua largura × proporção (obtido: ' + v.h + ')');
+        assert(sp.height === Math.max(...sp.boxes.map(b => b.y + b.h)), 'Altura do container cobre o item de span 2');
+        // empate entre pares → o da esquerda
+        const tie = masonryPlace([0.5, 0.5, 0.5, 0.5, 9 / 16], 1192, { gap: 8, spans: [1, 1, 1, 1, 2] });
+        assert(tie.boxes[4].col === 0, 'Empate entre pares de colunas vai pro par mais à esquerda (obtido: ' + tie.boxes[4].col + ')');
+        // depois do span, as duas colunas cobertas começam no fundo dele
+        const after = masonryPlace([9 / 16, 1, 1], 1192, { gap: 8, spans: [2, 1, 1] });
+        assert(after.boxes[0].col === 0 && after.boxes[1].col === 2 && after.boxes[2].col === 3, 'Itens seguintes ocupam as colunas livres ao lado do span, na ordem');
+        // a contagem de colunas soma os spans: imagem + vídeo deitado no desktop = 3 colunas (1 + 2), não 2
+        const pair = masonryPlace([1.25, 9 / 16], 1192, { gap: 8, spans: [1, 2] });
+        assert(pair.cols === 3 && pair.boxes[1].w === Math.round(pair.colW * 2 + 8), 'Grupo pequeno usa tantas colunas quanto a soma dos spans (obtido: ' + pair.cols + ')');
+        // (e) com 2 colunas (mobile) o vídeo deitado ocupa a linha inteira; com 1 coluna também
+        const mob = masonryPlace([1.25, 9 / 16, 1.25], 402, { gap: 8, spans: [1, 2, 1] });
+        assert(mob.cols === 2 && mob.boxes[1].w === 402 && mob.boxes[1].x === 0, 'Em 2 colunas o vídeo deitado ocupa a largura inteira (obtido: x ' + mob.boxes[1].x + ', w ' + mob.boxes[1].w + ')');
+        assert(mob.boxes[1].y >= mob.boxes[0].y + mob.boxes[0].h, 'Em 2 colunas o vídeo deitado fica abaixo da imagem anterior');
+        const one = masonryPlace([9 / 16, 1], 300, { gap: 8, cols: 1, spans: [2, 1] });
+        assert(one.cols === 1 && one.boxes[0].w === 300 && one.boxes[0].h === 169, 'Com 1 coluna o span é limitado a ela (largura inteira)');
+        // sem spans, nada muda (todo item = 1 coluna)
+        const plain = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8 });
+        assert(plain.boxes.every(b => b.span === 1 && b.w === 292), 'Sem spans todo item ocupa 1 coluna');
+    }
+    {
+        console.log('\n--- Mosaico no post: vídeos ---');
+        document.documentElement.classList.add('smg-masonry-on');
+        const { buildPostGallery: bpg } = window.__masonryExports;
+        const eng = window.__masonryEngine;
+        const im = n => '<a href="https://example.com/v' + n + '.jpg" class="link link--external"><img class="bbImage" src="https://example.com/v' + n + '.jpg" width="1080" height="1350"></a>';
+        // players como o script os deixa no DOM
+        const direct = (w, h) => '<div class="smg-dm-wrap"><div class="smg-rg" style="aspect-ratio: ' + w + ' / ' + h + ';"><video class="smg-rg-v"></video></div></div>';
+        const cyber = (w, h) => '<div class="generic2wide-iframe-div"><div class="smg-turbo-slot smg-turbo-slot--filled"><div class="smg-rg" style="aspect-ratio: ' + w + ' / ' + h + ';"><video class="smg-rg-v"></video></div></div></div>';
+        const turbo = id => '<div class="generic2wide-iframe-div" data-tb-done="1"><iframe class="saint-iframe" src="https://turbo.cr/embed/' + id + '"></iframe></div>';
+        const s9eRg = (w, h) => '<span data-s9e-mediaembed="redgifs" class="smg-player-loaded"><div class="smg-rg" style="aspect-ratio: ' + w + ' / ' + h + ';"><video class="smg-rg-v" data-rgid="abc"></video></div></span>';
+        const mk = html => {
+            const post = document.createElement('div');
+            post.className = 'message-userContent';
+            post.innerHTML = '<div class="bbWrapper">' + html + '</div>';
+            document.body.appendChild(post);
+            bpg(post);
+            return post.querySelector('.bbWrapper');
+        };
+        const seq = bw => Array.from(bw.childNodes).map(n => {
+            if (n.nodeType === 3) return n.textContent.trim() ? 'T' : '';
+            if (n.classList.contains('auto-image-grid')) return 'G' + n.children.length;
+            if (n.querySelector && (n.matches('img.bbImage') || n.querySelector('img.bbImage'))) return 'I';
+            if (n.matches && n.matches('.smg-dm-wrap, .generic2wide-iframe-div, span[data-s9e-mediaembed], .smg-rg')) return 'V';
+            return n.tagName;
+        }).filter(Boolean).join(' ').replace(/\bBR\b ?/g, '').trim();
+        const kind = c => c.querySelector('img.bbImage') ? 'img' : 'vid';
+
+        // (a) imagem, vídeo deitado, imagem = UM grupo, na ordem do autor
+        const a = mk('Antes.<br>' + im(1) + '<br>' + direct(1920, 1080) + '<br>' + im(2) + '<br>Depois.');
+        assert(seq(a) === 'T G3 T', 'Imagem + vídeo + imagem formam um grupo só (obtido: ' + seq(a) + ')');
+        const ga = a.querySelector('.auto-image-grid');
+        assert(Array.from(ga.children).map(kind).join(',') === 'img,vid,img', 'O vídeo fica entre as imagens, na ordem do documento');
+        assert(ga.classList.contains('smg-mason'), 'O grupo com vídeo é montado no motor masonry');
+
+        // (b) deitado = 2 colunas, em pé = 1 coluna, imagem = 1 coluna
+        const b = mk(im(3) + '<br>' + direct(1920, 1080) + '<br>' + cyber(1080, 1920) + '<br>' + im(4) + '<br>' + im(5));
+        const gb = b.querySelector('.auto-image-grid');
+        assert(gb && gb.children.length === 5, 'Run de imagens e vídeos de tipos diferentes vira um grupo de 5 (obtido: ' + seq(b) + ')');
+        eng.setWidth(gb, 1192);
+        const lb = eng.masonryLayout(gb);
+        assert(lb.cols === 4 && Math.round(lb.colW) === 292, 'Desktop: 4 colunas de 292px');
+        assert(lb.boxes[1].w === 592, 'Vídeo horizontal ocupa 2 colunas (obtido: ' + lb.boxes[1].w + ')');
+        assert(lb.boxes[2].w === 292, 'Vídeo vertical ocupa 1 coluna (obtido: ' + lb.boxes[2].w + ')');
+        assert([0, 3, 4].every(i => lb.boxes[i].w === 292), 'Imagens continuam ocupando 1 coluna');
+        assert(Math.abs(lb.boxes[1].h / lb.boxes[1].w - 1080 / 1920) < 0.01, 'A caixa do vídeo tem a proporção do vídeo (sem letterbox)');
+        assert(gb.children[1].style.width === '592px', 'O motor escreve a largura de 2 colunas no item do vídeo');
+
+        // proporção desconhecida (iframe do turbo) → assume 16:9 deitado; s9e redgifs em pé → 1 coluna
+        const c = mk(im(6) + '<br>' + turbo('xyz') + '<br>' + s9eRg(1080, 1350) + '<br>' + im(7));
+        const gc = c.querySelector('.auto-image-grid');
+        assert(gc && gc.children.length === 4, 'Embed do turbo e redgifs do s9e entram na run (obtido: ' + seq(c) + ')');
+        eng.setWidth(gc, 1192);
+        const lc = eng.masonryLayout(gc);
+        assert(lc.boxes[1].w === 592 && Math.abs(lc.boxes[1].h / lc.boxes[1].w - 9 / 16) < 0.01, 'Vídeo sem proporção conhecida assume 16:9 e ocupa 2 colunas');
+        assert(lc.boxes[2].w === 292, 'Redgifs em pé (s9e) ocupa 1 coluna');
+
+        // o player revela a proporção depois → o MESMO nó é re-posicionado (não recriado nem movido)
+        const vidBox = gc.children[1];
+        const mo = new window.MutationObserver(() => {});
+        mo.observe(gc, { childList: true, subtree: true });
+        const rgx = window.__redgifsExports;
+        const slot = document.createElement('div'); slot.className = 'smg-rg';
+        vidBox.querySelector('iframe').replaceWith(slot);   // o iframe virou nosso player (caminho do fallback/scrape)
+        mo.takeRecords();
+        rgx.rgAspect(slot, 1080, 1920);
+        eng.masonryLayout(gc);
+        assert(gc.children[1] === vidBox && vidBox.contains(slot), 'Re-colocar não recria nem move o nó do player');
+        assert(mo.takeRecords().length === 0, 'Re-colocar não mexe na árvore do DOM (só estilo)');
+        assert(vidBox.style.width === '292px', 'Ao saber que é vertical, o vídeo passa a ocupar 1 coluna (obtido: ' + vidBox.style.width + ')');
+        mo.disconnect();
+
+        // imagem que chega depois ao lado de um grupo com vídeo entra nele SEM mover o player
+        const mo2 = new window.MutationObserver(() => {});
+        mo2.observe(ga, { childList: true });
+        ga.insertAdjacentHTML('afterend', '<br>' + im(8));
+        bpg(a.parentElement);
+        const moved = mo2.takeRecords().some(r => Array.from(r.removedNodes).some(n => n.nodeType === 1 && kind(n) === 'vid'));
+        assert(seq(a) === 'T G4 T', 'Imagem nova entra no grupo com vídeo (obtido: ' + seq(a) + ')');
+        assert(!moved, 'Juntar uma imagem ao grupo não tira o player do lugar (iframe recarregaria, vídeo pausaria)');
+        mo2.disconnect();
+
+        // (d) um vídeo sozinho NÃO é grupo
+        const d = mk('Texto.<br>' + direct(1920, 1080) + '<br>Mais texto.');
+        assert(!d.querySelector('.auto-image-grid') && seq(d) === 'T V T', 'Run de 1 vídeo fica solta, como imagem única (obtido: ' + seq(d) + ')');
+        const d2 = mk(cyber(1080, 1920));
+        assert(!d2.querySelector('.auto-image-grid'), 'Post com só um vídeo não vira grupo');
+
+        // (e) 2 colunas (mobile): o vídeo deitado ocupa a linha inteira
+        eng.setWidth(gb, 402);
+        const le = eng.masonryLayout(gb);
+        assert(le.cols === 2 && le.boxes[1].w === 402 && le.boxes[1].x === 0, 'Em 2 colunas o vídeo deitado ocupa a largura inteira (obtido: w ' + le.boxes[1].w + ')');
+        assert(le.boxes[2].w === Math.round(le.colW), 'Em 2 colunas o vídeo vertical continua com 1 coluna');
+
+        // (f) texto entre vídeo e imagem quebra a run
+        const f = mk(direct(1920, 1080) + '<br>Texto do autor.<br>' + im(9));
+        assert(!f.querySelector('.auto-image-grid') && seq(f) === 'V T I', 'Texto entre vídeo e imagem separa os dois (obtido: ' + seq(f) + ')');
+        const f2 = mk(direct(1920, 1080) + '<br>' + cyber(1080, 1920) + '<br>Texto.<br>' + im(10) + '<br>' + im(11));
+        assert(seq(f2) === 'G2 T G2', 'Dois vídeos, texto, duas imagens = dois grupos com o texto no meio (obtido: ' + seq(f2) + ')');
+        const quoteVid = mk(im(12) + '<blockquote class="bbCodeBlock bbCodeBlock--quote"><div class="bbCodeBlock-content">' + direct(1920, 1080) + '</div></blockquote>' + im(13));
+        assert(!quoteVid.querySelector('.auto-image-grid'), 'Vídeo dentro de citação não entra no mosaico nem junta as imagens de fora');
+
+        const css = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(/\.auto-image-grid\.smg-mason[^{]*\.smg-rg[^{]*\{[^}]*height:\s*100%/.test(css), 'CSS: o player preenche a caixa que o motor deu ao item');
+
+        document.querySelectorAll('.message-userContent').forEach(p => { if (p.querySelector('img[src^="https://example.com/v"], .smg-rg, .saint-iframe')) p.remove(); });
+    }
+
+    // =========================================================================
     // MOSAICO NA GALERIA: o overlay usa o mesmo motor (sem CSS columns)
     // =========================================================================
     {
@@ -7311,6 +7454,31 @@ async function runTests() {
         const galRules = (css.match(/\.smg-gallery-(cols|tile)[^{]*\{[^}]*\}/g) || []).join('\n');
         assert(!/column-(width|count)|break-inside/.test(galRules), 'A galeria não usa mais CSS columns (lia de cima pra baixo)');
         window.__masonryEngine.masonryUnmount(cols);
+
+        // vídeos na galeria: deitado = 2 colunas (16:9 até o player saber), em pé = 1 coluna
+        const vsec = gx.galMakeSection(2, false);
+        const vcols = vsec.querySelector('.smg-gallery-cols');
+        document.body.appendChild(vsec);
+        const tileOf = (type, relh) => { const t = document.createElement('div'); t.className = 'smg-gallery-tile smg-gallery-tile--' + type; if (relh) t.dataset.relh = relh; vcols.appendChild(t); return t; };
+        tileOf('image', '1.25'); const vUnknown = tileOf('embed'); const vVert = tileOf('embed', '1.7778'); tileOf('image', '1.5');
+        window.__masonryEngine.setWidth(vcols, 1192);
+        const gl = window.__masonryEngine.masonryLayout(vcols);
+        assert(gl.boxes[1].w === 592, 'Galeria: vídeo de proporção desconhecida assume 16:9 e ocupa 2 colunas (obtido: ' + gl.boxes[1].w + ')');
+        assert(gl.boxes[2].w === 292 && gl.boxes[0].w === 292 && gl.boxes[3].w === 292, 'Galeria: vídeo vertical e imagens ocupam 1 coluna');
+        // o player revela a proporção (API do redgifs / metadata) → o tile guarda e é re-colocado
+        const { wrap: gw } = window.__redgifsExports.rgBuild('galtest');
+        vUnknown.appendChild(gw);
+        window.__redgifsExports.rgAspect(gw, 1080, 1920);
+        assert(Math.abs(+vUnknown.dataset.relh - 1920 / 1080) < 0.001, 'Galeria: a proporção que o player descobre vai pro tile (obtido: ' + vUnknown.dataset.relh + ')');
+        const gl2 = window.__masonryEngine.masonryLayout(vcols);
+        assert(gl2.boxes[1].w === 292 && vUnknown.contains(gw), 'Galeria: vídeo que se revela vertical passa a 1 coluna, mesmo player no mesmo tile');
+        window.__masonryEngine.setWidth(vcols, 402);
+        const gl3 = window.__masonryEngine.masonryLayout(vcols);
+        vVert.dataset.relh = '0.5625';
+        const gl4 = window.__masonryEngine.masonryLayout(vcols);
+        assert(gl3.cols === 2 && gl4.boxes[2].w === 402, 'Galeria em 2 colunas: vídeo deitado ocupa a largura inteira (obtido: ' + gl4.boxes[2].w + ')');
+        window.__masonryEngine.masonryUnmount(vcols);
+        vsec.remove();
     }
 
     // =========================================================================
