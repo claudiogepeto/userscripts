@@ -441,7 +441,9 @@
         const staleRiver = document.getElementById('smg-river');
         if (staleRiver) staleRiver.remove();
         bmBuilt = false;
-        infScrollBound = false;
+        disposeInfiniteScroll();
+        disposeStickySyncs();
+        smgPopPrune();
         contentIsReady = false;
         if (!feedViewWanted()) feedStopPoll();
     }

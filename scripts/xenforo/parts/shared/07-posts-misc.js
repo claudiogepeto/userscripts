@@ -58,6 +58,11 @@
 
     let infScrollBound = false;
     let infScrollGen = 0;
+    let infScrollDispose = null;   // solta o listener de scroll da página anterior (soft-nav)
+    function disposeInfiniteScroll() {
+        if (infScrollDispose) { infScrollDispose(); infScrollDispose = null; }
+        infScrollBound = false;
+    }
 
     // pager-sync do scroll infinito: espelha a página visível na URL + dock + paginadores (nativo e SMG).
     // Fábrica: encapsula shownPage; devolve a função chamada no listener de scroll do setupInfiniteScroll.
@@ -268,7 +273,8 @@
         // ---- sincroniza o paginador com o que está na tela (URL + número da dock + "X of Y") ----
         const syncPage = makePagerSync(startPage, originalUrl);
 
-        onScrollRaf(() => { check(); syncPage(); });
+        if (infScrollDispose) infScrollDispose();
+        infScrollDispose = onScrollRaf(() => { check(); syncPage(); });
 
         check();
     }

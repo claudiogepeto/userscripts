@@ -51,6 +51,32 @@
         return el;
     }
 
+    // Registro dos popovers da barra: UM listener de clique-fora e UM de scroll pra todos (antes cada
+    // popover somava os dois no document/window e nenhum saía nunca). No soft-nav, smgPopPrune() tira
+    // do <body> os popovers cuja barra foi junto com a página.
+    const smgPops = new Set();   // { host, popEl, place }
+    let smgPopsBound = false;
+    function smgPopBind() {
+        if (smgPopsBound) return;
+        smgPopsBound = true;
+        document.addEventListener('click', e => {
+            smgPops.forEach(p => {
+                if (p.host.contains(e.target) || p.popEl.contains(e.target)) return;
+                p.host.classList.remove('open'); p.popEl.classList.remove('open');
+            });
+        });
+        window.addEventListener('scroll', () => {
+            smgPops.forEach(p => { if (p.popEl.classList.contains('open')) p.place(); });
+        }, { passive: true });
+    }
+    function smgPopPrune() {
+        smgPops.forEach(p => {
+            if (p.host.isConnected) return;
+            p.popEl.remove();
+            smgPops.delete(p);
+        });
+    }
+
     // popover ancorado num botão (abre no clique, fecha clicando fora). pop é position:fixed →
     // posiciono acima do botão na hora de abrir (escapa o overflow:hidden da barra).
     function smgPopHost(triggerBtn, popEl) {
@@ -83,12 +109,10 @@
             popEl.classList.toggle('open', abrir);
             if (abrir) { place(); setTimeout(() => { const i = popEl.querySelector('input'); if (i) { i.focus(); i.select(); } }, 0); }
         });
-        // fechar clicando fora: o popover não é mais descendente do host, então entra na checagem
-        document.addEventListener('click', e => {
-            if (host.contains(e.target) || popEl.contains(e.target)) return;
-            host.classList.remove('open'); popEl.classList.remove('open');
-        });
-        window.addEventListener('scroll', () => { if (popEl.classList.contains('open')) place(); }, { passive: true });
+        // fechar clicando fora / reposicionar no scroll: listeners delegados (smgPopBind). O popover não é
+        // descendente do host, então os dois entram na checagem.
+        smgPops.add({ host, popEl, place });
+        smgPopBind();
         host.append(triggerBtn);
         return host;
     }
@@ -583,6 +607,14 @@
         header.dataset.smgStructureRecorded = '1';
     }
 
+    // disposers das stickies vivas: o soft-nav troca o header, e os listeners de scroll/resize do header
+    // velho ficavam no window pra sempre (um par a mais por página navegada).
+    const stickySyncDisposers = new Set();
+    function disposeStickySyncs() {
+        stickySyncDisposers.forEach(off => off());
+        stickySyncDisposers.clear();
+    }
+
     function createStickySync(header, sentinel, spacer) {
         let topOff = null;
         let naturalHeight = 0;
@@ -656,8 +688,15 @@
             }
         };
 
+        const onResize = () => { topOff = null; naturalHeight = 0; measure(); syncStuck(); };
         window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', () => { topOff = null; naturalHeight = 0; measure(); syncStuck(); }, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+        const dispose = () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+            stickySyncDisposers.delete(dispose);
+        };
+        stickySyncDisposers.add(dispose);
         syncStuck();
         setTimeout(() => { measure(); syncStuck(); }, 150);
         setTimeout(() => { measure(); syncStuck(); }, 400);

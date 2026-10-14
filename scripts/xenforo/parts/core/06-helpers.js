@@ -559,13 +559,16 @@
 
     // listener de scroll throttled por requestAnimationFrame (no máx 1 fn por frame; passive).
     // o flag de "já agendado" fica encapsulado aqui (era repetido na dock/topbar/scroll infinito).
+    // Devolve o unsubscribe: quem vive só enquanto a página vive (scroll infinito) solta no soft-nav.
     function onScrollRaf(fn) {
         let tick = false;
-        window.addEventListener('scroll', () => {
+        const onScroll = () => {
             if (tick) return;
             tick = true;
             requestAnimationFrame(() => { tick = false; fn(); });
-        }, { passive: true });
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
     }
 
     // =========================================================
