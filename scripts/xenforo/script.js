@@ -22162,6 +22162,19 @@
         updateAlertsUnreadBadge(n);
     }
 
+    // fim comum das cargas (incremental e do zero): fotos das threads seguidas, warm, contador, status
+    function railAfterLoad(tab) {
+        dbFollowedGetAll().then(items => {
+            indexFollowedThumbs(items);
+            repaintAlertThumbs(railList(tab));
+        }).catch(() => {});
+        // a carga pode chegar depois de o cache já ter enchido → repinta sempre, e só então decide o warm
+        repaintAlertThumbs(railList(tab));
+        railWarmThumbs();
+        aldockSyncCount();
+        aldockStatus(tab, '');
+    }
+
     // Zera a lista e busca a primeira página de novo. O refresh incremental
     // só insere chave nova, então um alerta lido no clique continuava na sidebar.
     let railHardFlight = null;
@@ -22178,31 +22191,12 @@
                 // o contador do servidor; aldockSyncCount (fim desta mesma carga) grava e pinta
                 if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) st.serverUnread = visitorAlerts;
                 st.keys.clear();
-                const frag = document.createDocumentFragment();
-                (rows || []).forEach(li => {
-                    const key = alertKey(li);
-                    if (st.keys.has(key)) return;
-                    st.keys.add(key);
-                    const copy = document.importNode(li, true);
-                    copy.dataset.smgAlKey = key;
-                    frag.appendChild(copy);
-                });
-                list.replaceChildren(frag);
-                list.querySelectorAll('li.alert, li.js-alert').forEach(li => {
-                    try { cleanAlertRow(li.querySelector('.contentRow-main')); } catch (e) {}
-                    i18nDom(li);
-                });
+                list.replaceChildren();
+                aldockInsertRows(tab, rows || [], false);
                 st.next = next;
                 st.loaded = true;
                 st.dry = 0;
-                dbFollowedGetAll().then(items => {
-                    indexFollowedThumbs(items);
-                    repaintAlertThumbs(list);
-                }).catch(() => {});
-                repaintAlertThumbs(list);
-                railWarmThumbs();
-                aldockSyncCount();
-                aldockStatus(tab, '');
+                railAfterLoad(tab);
             })
             .catch(() => { aldockStatus(tab, 'error'); })
             .then(() => {
@@ -22238,15 +22232,7 @@
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar
                 if (added) syncAlertBadgeFrom(railList('alerts'));
-                dbFollowedGetAll().then(items => {
-                    indexFollowedThumbs(items);
-                    repaintAlertThumbs(railList('alerts'));
-                }).catch(() => {});
-                // a carga pode chegar depois de o cache já ter enchido → repinta sempre, e só então decide o warm
-                repaintAlertThumbs(railList('alerts'));
-                railWarmThumbs();
-                aldockSyncCount();
-                aldockStatus(tab, '');
+                railAfterLoad(tab);
             })
             .catch(() => { if (first) { clearSkeleton(); aldockStatus(tab, 'error'); } })
             .then(() => { st.busy = false; aldock.classList.remove('smg-aldock--refreshing'); });
