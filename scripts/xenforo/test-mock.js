@@ -5902,8 +5902,8 @@ async function runTests() {
         assert(scriptCode.includes('margin: 0 var(--smg-sp-6);'), 'Divisores da dock devem ter espaçamento horizontal reduzido');
         assert(scriptCode.includes('width: 44px;\n                height: 44px;') || scriptCode.includes('width: 44px; height: 44px;'), 'Botões da dock desktop devem ter 44px');
 
-        // 3. Ordem de ícones na dock mobile: up | down | pages | sort | mode | notification
-        assert(scriptCode.includes('[btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM]'), 'Dock mobile de thread deve ter ordem: up | down | pages | sort | mode | notification');
+        // 3. Ordem de ícones na dock mobile: up | down | pages | sort | media | notification
+        assert(scriptCode.includes('[btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnMediaM, btnWatchM]'), 'Dock mobile de thread deve ter ordem: up | down | pages | sort | media | notification');
 
         // 4. Ícone de notificação com cor quando seguindo no mobile
         assert(scriptCode.includes('.smg-dock-thread-bar #smg-thread-watch.smg-active'), 'Dock mobile deve colorir botão de notificação quando ativo/seguindo');
