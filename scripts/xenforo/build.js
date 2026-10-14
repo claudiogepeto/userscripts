@@ -56,6 +56,7 @@ const PART_FILES = [
     'core/06-helpers.js',
     'feed/06b-feed-db.js',
     'thread/07-posts-misc.js',
+    'media/08a-masonry-engine.js',
     'media/08-images-masonry.js',
     'media/10-redgifs-player.js',
     'media/11-autoload-spoiler.js',

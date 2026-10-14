@@ -42,6 +42,7 @@ readable. A file may continue a function opened by the previous one: `12b` and
 | `core/06-helpers` | Shared text, URL, UI, pagination, fetch, and thumbnail helpers |
 | `feed/06b-feed-db` | IndexedDB store for followed threads, feed posts, and bookmarks |
 | `thread/07-posts-misc` | Keyboard shortcuts and infinite scrolling |
+| `media/08a-masonry-engine` | Masonry layout engine (shortest column, one ResizeObserver, one rAF) |
 | `media/08-images-masonry` | Image processing and media gallery grouping |
 | `media/10-redgifs-player` | RedGifs, Turbo, ImagePond, and Cyberdrop player pipeline |
 | `media/11-autoload-spoiler` | RedGifs autoloading and spoiler expansion |
