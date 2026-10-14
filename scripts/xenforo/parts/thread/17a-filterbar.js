@@ -51,32 +51,6 @@
         return el;
     }
 
-    // Registro dos popovers da barra: UM listener de clique-fora e UM de scroll pra todos (antes cada
-    // popover somava os dois no document/window e nenhum saía nunca). No soft-nav, smgPopPrune() tira
-    // do <body> os popovers cuja barra foi junto com a página.
-    const smgPops = new Set();   // { host, popEl, place }
-    let smgPopsBound = false;
-    function smgPopBind() {
-        if (smgPopsBound) return;
-        smgPopsBound = true;
-        document.addEventListener('click', e => {
-            smgPops.forEach(p => {
-                if (p.host.contains(e.target) || p.popEl.contains(e.target)) return;
-                p.host.classList.remove('open'); p.popEl.classList.remove('open');
-            });
-        });
-        window.addEventListener('scroll', () => {
-            smgPops.forEach(p => { if (p.popEl.classList.contains('open')) p.place(); });
-        }, { passive: true });
-    }
-    function smgPopPrune() {
-        smgPops.forEach(p => {
-            if (p.host.isConnected) return;
-            p.popEl.remove();
-            smgPops.delete(p);
-        });
-    }
-
     // popover ancorado num botão (abre no clique, fecha clicando fora). pop é position:fixed →
     // posiciono acima do botão na hora de abrir (escapa o overflow:hidden da barra).
     function smgPopHost(triggerBtn, popEl) {
@@ -109,10 +83,16 @@
             popEl.classList.toggle('open', abrir);
             if (abrir) { place(); setTimeout(() => { const i = popEl.querySelector('input'); if (i) { i.focus(); i.select(); } }, 0); }
         });
-        // fechar clicando fora / reposicionar no scroll: listeners delegados (smgPopBind). O popover não é
-        // descendente do host, então os dois entram na checagem.
-        smgPops.add({ host, popEl, place });
-        smgPopBind();
+        // fechar clicando fora / Esc / reposicionar no scroll: registro único (smgPopover). O popover não é
+        // descendente do host, então os dois entram na checagem; quando a barra sai com a página
+        // (soft-nav), o popover que mora no <body> sai junto.
+        smgPopover({
+            inside: [host, popEl], place,
+            isOpen: () => popEl.classList.contains('open'),
+            close: () => { host.classList.remove('open'); popEl.classList.remove('open'); },
+            alive: () => host.isConnected,
+            onDispose: () => popEl.remove(),
+        });
         host.append(triggerBtn);
         return host;
     }

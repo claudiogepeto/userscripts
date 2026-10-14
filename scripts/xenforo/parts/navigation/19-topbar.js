@@ -496,8 +496,7 @@
                     p.pop.addEventListener('mouseleave', () => scheduleHoverClose(i));
                 }
             });
-            document.addEventListener('click', e => { if (!wrap.contains(e.target)) closeAll(); });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+            smgPopover({ inside: [wrap], isOpen: () => openIdx !== -1, close: closeAll });
         };
         wirePopovers();
 

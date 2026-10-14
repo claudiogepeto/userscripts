@@ -578,9 +578,10 @@
                 if (!drop) { unbindDropPositioning(); searchPop.style.top = ''; searchPop.style.left = ''; searchPop.style.width = ''; }
                 searchOverlay.classList.add('open');
                 if (drop) { bindDropPositioning(); positionDrop(); }
-                // modal (mobile): trava o fundo, senão a página rola atrás enquanto você digita e
-                // o arrasto pra fechar leva o documento junto. No dropdown do desktop, não.
-                if (!drop && !searchLocked) { searchLocked = true; smgLockScroll(); }
+                // modal (mobile): o mesmo dos bottom sheets — trava o fundo (senão a página rola atrás
+                // enquanto você digita) e o "voltar" do celular fecha a busca em vez de sair da página.
+                // No dropdown do desktop, nada disso.
+                if (!drop && !searchLocked) { searchLocked = true; smgModalOpen(searchPop, () => closeSearch(true)); }
                 document.documentElement.classList.add('smg-search-open');   // mostra o botão Buscar dentro do input da topbar (CSS)
                 updateSearchClearButtons();
                 // foco síncrono mantém o gesto p/ abrir o teclado no mobile (no desktop o input já é o da topbar, foco é no-op)
@@ -588,7 +589,7 @@
                 if (!drop) { syncSearchKeyboard(); setTimeout(syncSearchKeyboard, 260); }   // mobile: ajusta acima do teclado
             }
 
-            function closeSearch() {
+            function closeSearch(fromPop) {   // fromPop === true: o "voltar" já consumiu o estado do modal
                 closeCfg();
                 unbindDropPositioning();
                 if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
@@ -597,7 +598,7 @@
                 if (searchResultsEl) searchResultsEl.onscroll = null;
                 if (searchPop) searchPop.onscroll = null;
                 searchOverlay.classList.remove('open');
-                if (searchLocked) { searchLocked = false; smgUnlockScroll(); }
+                if (searchLocked) { searchLocked = false; smgModalClose(searchPop, fromPop === true); }
                 document.documentElement.classList.remove('smg-search-open');
                 searchPop.style.bottom = ''; searchPop.style.maxHeight = '';   // limpa pra animação de saída
                 searchPop.style.removeProperty('--smg-kb-top'); searchPop.style.removeProperty('--smg-kb-h');

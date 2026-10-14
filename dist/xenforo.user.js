@@ -9930,7 +9930,7 @@
     //     estado no history por abertura; o popstate fecha o sheet no lugar de navegar. Quem
     //     fecha por gesto/scrim consome esse estado (history.back) pra não deixar lixo.
     // Os três sheets (opções da dock, discover/conta, alertas) passam por aqui.
-    const smgSheets = { open: [], scrollY: 0, locks: 0 };
+    const smgSheets = { open: [], scrollY: 0, locks: 0, backs: 0 };
     // trava/destrava contadas: o modal de busca também usa (ele não é um .smg-sheet, mas no
     // mobile é um bottom sheet igual) e sobreposições não podem destravar uma à outra
     function smgLockScroll() {
@@ -9945,25 +9945,68 @@
         document.body.style.top = '';
         window.scrollTo(0, smgSheets.scrollY);       // devolve exatamente onde estava
     }
-    function smgSheetOpen(sheet) {
-        if (!sheet || smgSheets.open.indexOf(sheet) !== -1) return;
+    // MODAL (bottom sheet, busca e rail de alertas no celular): UM mecanismo. Abrir trava o fundo e
+    // empurra um estado no history; o "voltar" fecha o modal do topo; fechar por gesto/scrim/Esc
+    // consome o estado (history.back). key = o elemento; onPop = como a UI fecha quando o voltar chega.
+    // fromPop/fromNav: quem já mexeu no history (popstate, navegação) não pode dar outro back.
+    const smgModalIsOpen = key => smgSheets.open.some(m => m.key === key);
+    function smgModalOpen(key, onPop) {
+        if (!key || smgModalIsOpen(key)) return;
         smgLockScroll();
-        smgSheets.open.push(sheet);
-        sheet.classList.add('open');
+        smgSheets.open.push({ key, onPop });
         try { history.pushState({ smgSheet: true }, ''); } catch (e) {}
     }
-    function smgSheetClose(sheet, fromPop) {
-        const i = sheet ? smgSheets.open.indexOf(sheet) : -1;
-        if (i === -1) return;                       // já fechado → nada a desfazer (corta o eco do popstate)
+    function smgModalClose(key, fromPop) {
+        const i = smgSheets.open.findIndex(m => m.key === key);
+        if (i === -1) return false;                 // já fechado → nada a desfazer (corta o eco do popstate)
         smgSheets.open.splice(i, 1);
-        sheet.classList.remove('open');
         smgUnlockScroll();
-        if (!fromPop) { try { history.back(); } catch (e) {} }
+        // o popstate desse back chega DEPOIS (assíncrono): conta pra não fechar um modal aberto no meio
+        if (!fromPop) { try { smgSheets.backs++; history.back(); } catch (e) { smgSheets.backs = 0; } }
+        return true;
+    }
+    function smgSheetOpen(sheet) {
+        if (!sheet || smgModalIsOpen(sheet)) return;
+        smgModalOpen(sheet, () => sheet.classList.remove('open'));
+        sheet.classList.add('open');
+    }
+    function smgSheetClose(sheet, fromPop) {
+        if (smgModalClose(sheet, fromPop)) sheet.classList.remove('open');
     }
     window.addEventListener('popstate', () => {
+        if (smgSheets.backs) { smgSheets.backs--; return; }   // eco do nosso próprio history.back()
         const top = smgSheets.open[smgSheets.open.length - 1];
-        if (top) smgSheetClose(top, true);
+        if (top && smgModalClose(top.key, true)) top.onPop();
     });
+
+    // POPOVER: UM registro pra fechar clicando fora, no Esc e reposicionar no scroll. Cada popover
+    // diz o que é "dentro" (elementos ou função), como fechar e se está aberto. Exceções por opção:
+    // escape:false (quem trata o Esc em cascata), place() (posição fixa que segue o scroll),
+    // alive() (popover de uma página que o soft-nav trocou sai do registro e chama onDispose).
+    const smgPopovers = new Set();
+    function smgPopInside(p, t) {
+        return typeof p.inside === 'function' ? !!p.inside(t) : (p.inside || []).some(el => el && el.contains(t));
+    }
+    function smgPopPrune() {
+        smgPopovers.forEach(p => { if (p.alive && !p.alive()) { smgPopovers.delete(p); if (p.onDispose) p.onDispose(); } });
+    }
+    function smgPopover(entry) {
+        if (!smgPopovers.size) {
+            document.addEventListener('click', e => {
+                smgPopPrune();
+                smgPopovers.forEach(p => { if (p.isOpen() && !smgPopInside(p, e.target)) p.close(); });
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key !== 'Escape') return;
+                smgPopovers.forEach(p => { if (p.escape !== false && p.isOpen()) p.close(); });
+            });
+            window.addEventListener('scroll', () => {
+                smgPopovers.forEach(p => { if (p.place && p.isOpen()) p.place(); });
+            }, { passive: true });
+        }
+        smgPopovers.add(entry);
+        return entry;
+    }
     // liga scrim (toque no fundo), arrasto pra baixo e Esc de uma vez — todo sheet quer os três
     function wireSheetClose(sheet, panel) {
         if (!sheet) return;
@@ -10558,10 +10601,12 @@
             if (opts.onChange) opts.onChange(activeSet);
         });
 
-        document.addEventListener('click', (e) => {
-            if (!container.contains(e.target)) {
-                toggleOpen(false);
-            }
+        let msMounted = false;
+        smgPopover({   // antes: um listener por instância, nunca removido (as instâncias são recriadas)
+            inside: [container],
+            isOpen: () => !pop.hidden,
+            close: () => toggleOpen(false),
+            alive: () => { if (container.isConnected) msMounted = true; return container.isConnected || !msMounted; },
         });
 
         updateBadgeCount();
@@ -14475,24 +14520,24 @@
                 });
             }
 
-            document.addEventListener('click', e => {
-                if (viewModePop.classList.contains('open')) {
-                    if (!viewModePop.contains(e.target) && (!btnViewMode || !btnViewMode.contains(e.target)) && (!btnViewModeM || !btnViewModeM.contains(e.target))) {
-                        viewModePop.classList.remove('open');
-                        if (btnViewMode) btnViewMode.classList.remove('smg-active');
-                        if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
-                    }
-                }
+            smgPopover({
+                inside: [viewModePop, btnViewMode, btnViewModeM],
+                isOpen: () => viewModePop.classList.contains('open'),
+                close: () => {
+                    viewModePop.classList.remove('open');
+                    if (btnViewMode) btnViewMode.classList.remove('smg-active');
+                    if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
+                },
             });
         }
 
-        document.addEventListener('click', e => {
-            if (mobilePagePop && mobilePagePop.classList.contains('open')) {
-                if (!mobilePagePop.contains(e.target) && (!btnMobilePageBtn || !btnMobilePageBtn.contains(e.target))) {
-                    mobilePagePop.classList.remove('open');
-                    if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-                }
-            }
+        if (mobilePagePop) smgPopover({
+            inside: [mobilePagePop, btnMobilePageBtn],
+            isOpen: () => mobilePagePop.classList.contains('open'),
+            close: () => {
+                mobilePagePop.classList.remove('open');
+                if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
+            },
         });
 
         const btnUp = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });        // (era "Prev post") → rola pro topo
@@ -15045,7 +15090,9 @@
             return n;
         }
 
-        function closePopovers() {
+        // fromPop: o "voltar" já consumiu o estado do modal · keepModal: vai abrir outro sheet em seguida
+        function closePopovers(fromPop, keepModal) {
+            if (!keepModal) smgModalClose(navWrapper, fromPop === true);
             navWrapper.classList.remove('goto-open', 'settings-open', 'listfilter-open', 'listsort-open', 'smg-dock-show');
             searchOverlay.classList.remove('open');
             if (mobilePagePop) mobilePagePop.classList.remove('open');
@@ -15055,6 +15102,16 @@
         }
         // arrastar pra baixo fecha os sheets/modais mobile (settings · filtro · ordenação têm grip = bottom sheet; goto é popover pequeno → fora)
         const isMobileSheet = () => window.innerWidth <= 600;
+        // abre um popover da dock; no celular settings/filtro/ordenação são bottom sheets → modal único
+        // (trava do fundo + "voltar" fecha). Trocar de um sheet pro outro reaproveita o mesmo estado.
+        function openDockPop(cls) {
+            const wasModal = smgModalIsOpen(navWrapper);
+            closePopovers(false, true);
+            navWrapper.classList.add(cls);
+            const sheet = isMobileSheet() && cls !== 'goto-open';
+            if (sheet && !wasModal) smgModalOpen(navWrapper, () => closePopovers(true));
+            else if (!sheet && wasModal) smgModalClose(navWrapper);
+        }
         addSwipeClose(settingsPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('settings-open'));
         if (listFilterPop) addSwipeClose(listFilterPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('listfilter-open'));
         if (sortPop) addSwipeClose(sortPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('listsort-open'));
@@ -15678,9 +15735,10 @@
                 if (!drop) { unbindDropPositioning(); searchPop.style.top = ''; searchPop.style.left = ''; searchPop.style.width = ''; }
                 searchOverlay.classList.add('open');
                 if (drop) { bindDropPositioning(); positionDrop(); }
-                // modal (mobile): trava o fundo, senão a página rola atrás enquanto você digita e
-                // o arrasto pra fechar leva o documento junto. No dropdown do desktop, não.
-                if (!drop && !searchLocked) { searchLocked = true; smgLockScroll(); }
+                // modal (mobile): o mesmo dos bottom sheets — trava o fundo (senão a página rola atrás
+                // enquanto você digita) e o "voltar" do celular fecha a busca em vez de sair da página.
+                // No dropdown do desktop, nada disso.
+                if (!drop && !searchLocked) { searchLocked = true; smgModalOpen(searchPop, () => closeSearch(true)); }
                 document.documentElement.classList.add('smg-search-open');   // mostra o botão Buscar dentro do input da topbar (CSS)
                 updateSearchClearButtons();
                 // foco síncrono mantém o gesto p/ abrir o teclado no mobile (no desktop o input já é o da topbar, foco é no-op)
@@ -15688,7 +15746,7 @@
                 if (!drop) { syncSearchKeyboard(); setTimeout(syncSearchKeyboard, 260); }   // mobile: ajusta acima do teclado
             }
 
-            function closeSearch() {
+            function closeSearch(fromPop) {   // fromPop === true: o "voltar" já consumiu o estado do modal
                 closeCfg();
                 unbindDropPositioning();
                 if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
@@ -15697,7 +15755,7 @@
                 if (searchResultsEl) searchResultsEl.onscroll = null;
                 if (searchPop) searchPop.onscroll = null;
                 searchOverlay.classList.remove('open');
-                if (searchLocked) { searchLocked = false; smgUnlockScroll(); }
+                if (searchLocked) { searchLocked = false; smgModalClose(searchPop, fromPop === true); }
                 document.documentElement.classList.remove('smg-search-open');
                 searchPop.style.bottom = ''; searchPop.style.maxHeight = '';   // limpa pra animação de saída
                 searchPop.style.removeProperty('--smg-kb-top'); searchPop.style.removeProperty('--smg-kb-h');
@@ -16484,7 +16542,7 @@
             btnSettings.addEventListener('click', e => {
                 e.stopPropagation();
                 if (navWrapper.classList.contains('settings-open')) closePopovers();
-                else { closePopovers(); navWrapper.classList.add('settings-open'); }
+                else openDockPop('settings-open');
             });
             // toggles (FEATURES)
             settingsPop.querySelectorAll('input[data-feat]').forEach(inp => {
@@ -17227,46 +17285,31 @@
             if (btnListFilter) {
                 btnListFilter.addEventListener('click', e => {
                     e.stopPropagation();
-                    const isOpen = navWrapper.classList.contains('listfilter-open');
-                    closePopovers();
-                    if (!isOpen) {
-                        navWrapper.classList.add('listfilter-open');
-                        loadListFilter();
-                    }
+                    if (navWrapper.classList.contains('listfilter-open')) { closePopovers(); return; }
+                    openDockPop('listfilter-open');
+                    loadListFilter();
                 });
             }
 
             if (btnListSort) {
                 btnListSort.addEventListener('click', e => {
                     e.stopPropagation();
-                    const isOpen = navWrapper.classList.contains('listsort-open');
-                    closePopovers();
-                    if (!isOpen) {
-                        navWrapper.classList.add('listsort-open');
-                        if (!lfLoaded) loadListFilter(true);
-                        else buildSortPop();
-                    }
+                    if (navWrapper.classList.contains('listsort-open')) { closePopovers(); return; }
+                    openDockPop('listsort-open');
+                    if (!lfLoaded) loadListFilter(true);
+                    else buildSortPop();
                 });
             }
         };
         setupListSortAndFilter();
 
         // fecha os popovers da dock (goto/config/filtro de lista/ordenação) ao clicar fora — o search tem backdrop próprio
-        document.addEventListener('click', e => {
-            if (!navWrapper.classList.contains('goto-open') && !navWrapper.classList.contains('settings-open')
-                && !navWrapper.classList.contains('listfilter-open') && !navWrapper.classList.contains('listsort-open')) return;
-            const inside = gotoPop.contains(e.target)
-                || settingsPop.contains(e.target)
-                || (listFilterPop && listFilterPop.contains(e.target))
-                || (sortPop && sortPop.contains(e.target))
-                || btnGoto.contains(e.target)
-                || btnSettings.contains(e.target)
-                || (btnListFilter && btnListFilter.contains(e.target))
-                || (btnListFilterM && btnListFilterM.contains(e.target))
-                || (btnListSort && btnListSort.contains(e.target))
-                || (btnListSortM && btnListSortM.contains(e.target))
-                || (e.target.closest && e.target.closest('.filterBar')); // não fecha ao usar o loader nativo
-            if (!inside) closePopovers();
+        smgPopover({
+            inside: t => [gotoPop, settingsPop, listFilterPop, sortPop, btnGoto, btnSettings, btnListFilter, btnListFilterM, btnListSort, btnListSortM]
+                .some(el => el && el.contains(t))
+                || !!(t.closest && t.closest('.filterBar')),   // exceção: não fecha ao usar o loader nativo
+            isOpen: () => ['goto-open', 'settings-open', 'listfilter-open', 'listsort-open'].some(c => navWrapper.classList.contains(c)),
+            close: () => closePopovers(),
         });
 
         // ---- helpers de post ----
@@ -17512,7 +17555,12 @@
             scopeList.hidden = !willOpen;
             scopeBtn.classList.toggle('open', willOpen);
         });
-        document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#smg-rs-panel .smg-search-scope')) closeScope(); });
+        smgPopover({
+            inside: t => !!(t.closest && t.closest('#smg-rs-panel .smg-search-scope')),
+            isOpen: () => !scopeList.hidden,
+            close: closeScope,
+            alive: () => scopeList.isConnected,
+        });
 
         // ORDENAR — chip-toggle relevância ⇄ data; trocar aplica na hora (é o &o=date da URL)
         function paintOrder() {
@@ -18090,10 +18138,10 @@
                 if (e.key === 'Enter') { e.preventDefault(); galDoGoto(); }
                 else if (e.key === 'Escape') { e.stopPropagation(); galCloseGoto(); }
             });
-            document.addEventListener('click', e => {   // clique-fora fecha o goto
-                if (!gdock.classList.contains('goto-open')) return;
-                if (gGotoPop.contains(e.target) || gGoto.contains(e.target)) return;
-                galCloseGoto();
+            smgPopover({   // clique-fora fecha o goto; o Esc fica com o handler da galeria (goto primeiro, depois a galeria)
+                inside: [gGotoPop, gGoto], escape: false,
+                isOpen: () => gdock.classList.contains('goto-open'),
+                close: galCloseGoto,
             });
 
             gClose.addEventListener('click', closeGallery);
@@ -19952,32 +20000,6 @@
         return el;
     }
 
-    // Registro dos popovers da barra: UM listener de clique-fora e UM de scroll pra todos (antes cada
-    // popover somava os dois no document/window e nenhum saía nunca). No soft-nav, smgPopPrune() tira
-    // do <body> os popovers cuja barra foi junto com a página.
-    const smgPops = new Set();   // { host, popEl, place }
-    let smgPopsBound = false;
-    function smgPopBind() {
-        if (smgPopsBound) return;
-        smgPopsBound = true;
-        document.addEventListener('click', e => {
-            smgPops.forEach(p => {
-                if (p.host.contains(e.target) || p.popEl.contains(e.target)) return;
-                p.host.classList.remove('open'); p.popEl.classList.remove('open');
-            });
-        });
-        window.addEventListener('scroll', () => {
-            smgPops.forEach(p => { if (p.popEl.classList.contains('open')) p.place(); });
-        }, { passive: true });
-    }
-    function smgPopPrune() {
-        smgPops.forEach(p => {
-            if (p.host.isConnected) return;
-            p.popEl.remove();
-            smgPops.delete(p);
-        });
-    }
-
     // popover ancorado num botão (abre no clique, fecha clicando fora). pop é position:fixed →
     // posiciono acima do botão na hora de abrir (escapa o overflow:hidden da barra).
     function smgPopHost(triggerBtn, popEl) {
@@ -20010,10 +20032,16 @@
             popEl.classList.toggle('open', abrir);
             if (abrir) { place(); setTimeout(() => { const i = popEl.querySelector('input'); if (i) { i.focus(); i.select(); } }, 0); }
         });
-        // fechar clicando fora / reposicionar no scroll: listeners delegados (smgPopBind). O popover não é
-        // descendente do host, então os dois entram na checagem.
-        smgPops.add({ host, popEl, place });
-        smgPopBind();
+        // fechar clicando fora / Esc / reposicionar no scroll: registro único (smgPopover). O popover não é
+        // descendente do host, então os dois entram na checagem; quando a barra sai com a página
+        // (soft-nav), o popover que mora no <body> sai junto.
+        smgPopover({
+            inside: [host, popEl], place,
+            isOpen: () => popEl.classList.contains('open'),
+            close: () => { host.classList.remove('open'); popEl.classList.remove('open'); },
+            alive: () => host.isConnected,
+            onDispose: () => popEl.remove(),
+        });
         host.append(triggerBtn);
         return host;
     }
@@ -21200,15 +21228,17 @@
     // popover ⋯ : UM listener de document p/ TODOS os cards (antes era 1 por post/comentário —
     // centenas acumulados no scroll infinito, cada clique na página rodava N contains()).
     // Só um popover fica aberto por vez → fechar é O(1) via referência.
-    let openMoreWrap = null, moreCloseBound = false;
+    let openMoreWrap = null, moreRegistered = false;
     function smgToggleMore(wrap) {
         if (openMoreWrap && openMoreWrap !== wrap) { openMoreWrap.classList.remove('open'); openMoreWrap = null; }
         const on = wrap.classList.toggle('open');
         openMoreWrap = on ? wrap : null;
-        if (!moreCloseBound) {
-            moreCloseBound = true;
-            document.addEventListener('click', e => {
-                if (openMoreWrap && !openMoreWrap.contains(e.target)) { openMoreWrap.classList.remove('open'); openMoreWrap = null; }
+        if (!moreRegistered) {
+            moreRegistered = true;
+            smgPopover({
+                inside: t => !!openMoreWrap && openMoreWrap.contains(t),
+                isOpen: () => !!openMoreWrap,
+                close: () => { openMoreWrap.classList.remove('open'); openMoreWrap = null; },
             });
         }
     }
@@ -22190,20 +22220,20 @@
         // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria uma tela cheia na
         // cara do usuário em toda página — no desktop é uma coluna lateral, aqui é a tela inteira.
         if (aldockPhone()) {
-            if (!railPhoneOpen) { railPhoneOpen = true; smgLockScroll(); try { history.pushState({ smgSheet: true }, ''); } catch (e) {} }
+            if (!railPhoneOpen) { railPhoneOpen = true; smgModalOpen(railModalKey, () => closeAlertsDock(false, true)); }
             persist = false;
         }
         if (persist !== false) gmSet(ALDOCK_KEY, '1');
         railActivate();
     }
     let railPhoneOpen = false;
+    const railModalKey = { rail: 'alerts' };   // chave do modal (o painel pode ser recriado)
 
     function closeAlertsDock(persist, fromPop) {
         document.documentElement.classList.remove('smg-aldock-on');
         if (railPhoneOpen) {
             railPhoneOpen = false;
-            smgUnlockScroll();
-            if (!fromPop) { try { history.back(); } catch (e) {} }   // consome o estado que a abertura empurrou
+            smgModalClose(railModalKey, fromPop);   // sem fromPop: consome o estado que a abertura empurrou
         }
         if (persist !== false) gmSet(ALDOCK_KEY, '0');
     }
@@ -22246,8 +22276,6 @@
         // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
         // No celular não há "volta sozinho": lá o rail é tela cheia e só abre por gesto do usuário.
         window.addEventListener('resize', () => aldockReconcile(false));
-        // celular: o "voltar" fecha a tela cheia (par do pushState no openAlertsDock)
-        window.addEventListener('popstate', () => { if (railPhoneOpen) closeAlertsDock(false, true); });
 
         // conteúdo novo não avisa: sonda de tempos em tempos e ao voltar pra aba
         setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh('alerts'); }, ALDOCK_POLL_MS);
@@ -22777,8 +22805,7 @@
                     p.pop.addEventListener('mouseleave', () => scheduleHoverClose(i));
                 }
             });
-            document.addEventListener('click', e => { if (!wrap.contains(e.target)) closeAll(); });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+            smgPopover({ inside: [wrap], isOpen: () => openIdx !== -1, close: closeAll });
         };
         wirePopovers();
 

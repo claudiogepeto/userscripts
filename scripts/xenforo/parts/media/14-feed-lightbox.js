@@ -424,10 +424,10 @@
                 if (e.key === 'Enter') { e.preventDefault(); galDoGoto(); }
                 else if (e.key === 'Escape') { e.stopPropagation(); galCloseGoto(); }
             });
-            document.addEventListener('click', e => {   // clique-fora fecha o goto
-                if (!gdock.classList.contains('goto-open')) return;
-                if (gGotoPop.contains(e.target) || gGoto.contains(e.target)) return;
-                galCloseGoto();
+            smgPopover({   // clique-fora fecha o goto; o Esc fica com o handler da galeria (goto primeiro, depois a galeria)
+                inside: [gGotoPop, gGoto], escape: false,
+                isOpen: () => gdock.classList.contains('goto-open'),
+                close: galCloseGoto,
             });
 
             gClose.addEventListener('click', closeGallery);

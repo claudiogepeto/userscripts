@@ -93,15 +93,17 @@
     // popover ⋯ : UM listener de document p/ TODOS os cards (antes era 1 por post/comentário —
     // centenas acumulados no scroll infinito, cada clique na página rodava N contains()).
     // Só um popover fica aberto por vez → fechar é O(1) via referência.
-    let openMoreWrap = null, moreCloseBound = false;
+    let openMoreWrap = null, moreRegistered = false;
     function smgToggleMore(wrap) {
         if (openMoreWrap && openMoreWrap !== wrap) { openMoreWrap.classList.remove('open'); openMoreWrap = null; }
         const on = wrap.classList.toggle('open');
         openMoreWrap = on ? wrap : null;
-        if (!moreCloseBound) {
-            moreCloseBound = true;
-            document.addEventListener('click', e => {
-                if (openMoreWrap && !openMoreWrap.contains(e.target)) { openMoreWrap.classList.remove('open'); openMoreWrap = null; }
+        if (!moreRegistered) {
+            moreRegistered = true;
+            smgPopover({
+                inside: t => !!openMoreWrap && openMoreWrap.contains(t),
+                isOpen: () => !!openMoreWrap,
+                close: () => { openMoreWrap.classList.remove('open'); openMoreWrap = null; },
             });
         }
     }

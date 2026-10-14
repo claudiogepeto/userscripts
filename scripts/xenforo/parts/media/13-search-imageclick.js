@@ -133,7 +133,12 @@
             scopeList.hidden = !willOpen;
             scopeBtn.classList.toggle('open', willOpen);
         });
-        document.addEventListener('click', e => { if (!e.target.closest || !e.target.closest('#smg-rs-panel .smg-search-scope')) closeScope(); });
+        smgPopover({
+            inside: t => !!(t.closest && t.closest('#smg-rs-panel .smg-search-scope')),
+            isOpen: () => !scopeList.hidden,
+            close: closeScope,
+            alive: () => scopeList.isConnected,
+        });
 
         // ORDENAR — chip-toggle relevância ⇄ data; trocar aplica na hora (é o &o=date da URL)
         function paintOrder() {

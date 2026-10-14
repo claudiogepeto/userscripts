@@ -3,7 +3,7 @@
             btnSettings.addEventListener('click', e => {
                 e.stopPropagation();
                 if (navWrapper.classList.contains('settings-open')) closePopovers();
-                else { closePopovers(); navWrapper.classList.add('settings-open'); }
+                else openDockPop('settings-open');
             });
             // toggles (FEATURES)
             settingsPop.querySelectorAll('input[data-feat]').forEach(inp => {
@@ -746,46 +746,31 @@
             if (btnListFilter) {
                 btnListFilter.addEventListener('click', e => {
                     e.stopPropagation();
-                    const isOpen = navWrapper.classList.contains('listfilter-open');
-                    closePopovers();
-                    if (!isOpen) {
-                        navWrapper.classList.add('listfilter-open');
-                        loadListFilter();
-                    }
+                    if (navWrapper.classList.contains('listfilter-open')) { closePopovers(); return; }
+                    openDockPop('listfilter-open');
+                    loadListFilter();
                 });
             }
 
             if (btnListSort) {
                 btnListSort.addEventListener('click', e => {
                     e.stopPropagation();
-                    const isOpen = navWrapper.classList.contains('listsort-open');
-                    closePopovers();
-                    if (!isOpen) {
-                        navWrapper.classList.add('listsort-open');
-                        if (!lfLoaded) loadListFilter(true);
-                        else buildSortPop();
-                    }
+                    if (navWrapper.classList.contains('listsort-open')) { closePopovers(); return; }
+                    openDockPop('listsort-open');
+                    if (!lfLoaded) loadListFilter(true);
+                    else buildSortPop();
                 });
             }
         };
         setupListSortAndFilter();
 
         // fecha os popovers da dock (goto/config/filtro de lista/ordenação) ao clicar fora — o search tem backdrop próprio
-        document.addEventListener('click', e => {
-            if (!navWrapper.classList.contains('goto-open') && !navWrapper.classList.contains('settings-open')
-                && !navWrapper.classList.contains('listfilter-open') && !navWrapper.classList.contains('listsort-open')) return;
-            const inside = gotoPop.contains(e.target)
-                || settingsPop.contains(e.target)
-                || (listFilterPop && listFilterPop.contains(e.target))
-                || (sortPop && sortPop.contains(e.target))
-                || btnGoto.contains(e.target)
-                || btnSettings.contains(e.target)
-                || (btnListFilter && btnListFilter.contains(e.target))
-                || (btnListFilterM && btnListFilterM.contains(e.target))
-                || (btnListSort && btnListSort.contains(e.target))
-                || (btnListSortM && btnListSortM.contains(e.target))
-                || (e.target.closest && e.target.closest('.filterBar')); // não fecha ao usar o loader nativo
-            if (!inside) closePopovers();
+        smgPopover({
+            inside: t => [gotoPop, settingsPop, listFilterPop, sortPop, btnGoto, btnSettings, btnListFilter, btnListFilterM, btnListSort, btnListSortM]
+                .some(el => el && el.contains(t))
+                || !!(t.closest && t.closest('.filterBar')),   // exceção: não fecha ao usar o loader nativo
+            isOpen: () => ['goto-open', 'settings-open', 'listfilter-open', 'listsort-open'].some(c => navWrapper.classList.contains(c)),
+            close: () => closePopovers(),
         });
 
         // ---- helpers de post ----

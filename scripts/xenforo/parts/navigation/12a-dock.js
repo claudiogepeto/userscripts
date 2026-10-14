@@ -386,24 +386,24 @@
                 });
             }
 
-            document.addEventListener('click', e => {
-                if (viewModePop.classList.contains('open')) {
-                    if (!viewModePop.contains(e.target) && (!btnViewMode || !btnViewMode.contains(e.target)) && (!btnViewModeM || !btnViewModeM.contains(e.target))) {
-                        viewModePop.classList.remove('open');
-                        if (btnViewMode) btnViewMode.classList.remove('smg-active');
-                        if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
-                    }
-                }
+            smgPopover({
+                inside: [viewModePop, btnViewMode, btnViewModeM],
+                isOpen: () => viewModePop.classList.contains('open'),
+                close: () => {
+                    viewModePop.classList.remove('open');
+                    if (btnViewMode) btnViewMode.classList.remove('smg-active');
+                    if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
+                },
             });
         }
 
-        document.addEventListener('click', e => {
-            if (mobilePagePop && mobilePagePop.classList.contains('open')) {
-                if (!mobilePagePop.contains(e.target) && (!btnMobilePageBtn || !btnMobilePageBtn.contains(e.target))) {
-                    mobilePagePop.classList.remove('open');
-                    if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-                }
-            }
+        if (mobilePagePop) smgPopover({
+            inside: [mobilePagePop, btnMobilePageBtn],
+            isOpen: () => mobilePagePop.classList.contains('open'),
+            close: () => {
+                mobilePagePop.classList.remove('open');
+                if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
+            },
         });
 
         const btnUp = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });        // (era "Prev post") → rola pro topo
@@ -956,7 +956,9 @@
             return n;
         }
 
-        function closePopovers() {
+        // fromPop: o "voltar" já consumiu o estado do modal · keepModal: vai abrir outro sheet em seguida
+        function closePopovers(fromPop, keepModal) {
+            if (!keepModal) smgModalClose(navWrapper, fromPop === true);
             navWrapper.classList.remove('goto-open', 'settings-open', 'listfilter-open', 'listsort-open', 'smg-dock-show');
             searchOverlay.classList.remove('open');
             if (mobilePagePop) mobilePagePop.classList.remove('open');
@@ -966,6 +968,16 @@
         }
         // arrastar pra baixo fecha os sheets/modais mobile (settings · filtro · ordenação têm grip = bottom sheet; goto é popover pequeno → fora)
         const isMobileSheet = () => window.innerWidth <= 600;
+        // abre um popover da dock; no celular settings/filtro/ordenação são bottom sheets → modal único
+        // (trava do fundo + "voltar" fecha). Trocar de um sheet pro outro reaproveita o mesmo estado.
+        function openDockPop(cls) {
+            const wasModal = smgModalIsOpen(navWrapper);
+            closePopovers(false, true);
+            navWrapper.classList.add(cls);
+            const sheet = isMobileSheet() && cls !== 'goto-open';
+            if (sheet && !wasModal) smgModalOpen(navWrapper, () => closePopovers(true));
+            else if (!sheet && wasModal) smgModalClose(navWrapper);
+        }
         addSwipeClose(settingsPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('settings-open'));
         if (listFilterPop) addSwipeClose(listFilterPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('listfilter-open'));
         if (sortPop) addSwipeClose(sortPop, closePopovers, () => isMobileSheet() && navWrapper.classList.contains('listsort-open'));

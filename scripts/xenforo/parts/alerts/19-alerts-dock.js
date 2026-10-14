@@ -481,20 +481,20 @@
         // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria uma tela cheia na
         // cara do usuário em toda página — no desktop é uma coluna lateral, aqui é a tela inteira.
         if (aldockPhone()) {
-            if (!railPhoneOpen) { railPhoneOpen = true; smgLockScroll(); try { history.pushState({ smgSheet: true }, ''); } catch (e) {} }
+            if (!railPhoneOpen) { railPhoneOpen = true; smgModalOpen(railModalKey, () => closeAlertsDock(false, true)); }
             persist = false;
         }
         if (persist !== false) gmSet(ALDOCK_KEY, '1');
         railActivate();
     }
     let railPhoneOpen = false;
+    const railModalKey = { rail: 'alerts' };   // chave do modal (o painel pode ser recriado)
 
     function closeAlertsDock(persist, fromPop) {
         document.documentElement.classList.remove('smg-aldock-on');
         if (railPhoneOpen) {
             railPhoneOpen = false;
-            smgUnlockScroll();
-            if (!fromPop) { try { history.back(); } catch (e) {} }   // consome o estado que a abertura empurrou
+            smgModalClose(railModalKey, fromPop);   // sem fromPop: consome o estado que a abertura empurrou
         }
         if (persist !== false) gmSet(ALDOCK_KEY, '0');
     }
@@ -537,8 +537,6 @@
         // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
         // No celular não há "volta sozinho": lá o rail é tela cheia e só abre por gesto do usuário.
         window.addEventListener('resize', () => aldockReconcile(false));
-        // celular: o "voltar" fecha a tela cheia (par do pushState no openAlertsDock)
-        window.addEventListener('popstate', () => { if (railPhoneOpen) closeAlertsDock(false, true); });
 
         // conteúdo novo não avisa: sonda de tempos em tempos e ao voltar pra aba
         setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh('alerts'); }, ALDOCK_POLL_MS);

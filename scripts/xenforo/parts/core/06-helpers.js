@@ -696,7 +696,7 @@
     //     estado no history por abertura; o popstate fecha o sheet no lugar de navegar. Quem
     //     fecha por gesto/scrim consome esse estado (history.back) pra não deixar lixo.
     // Os três sheets (opções da dock, discover/conta, alertas) passam por aqui.
-    const smgSheets = { open: [], scrollY: 0, locks: 0 };
+    const smgSheets = { open: [], scrollY: 0, locks: 0, backs: 0 };
     // trava/destrava contadas: o modal de busca também usa (ele não é um .smg-sheet, mas no
     // mobile é um bottom sheet igual) e sobreposições não podem destravar uma à outra
     function smgLockScroll() {
@@ -711,25 +711,68 @@
         document.body.style.top = '';
         window.scrollTo(0, smgSheets.scrollY);       // devolve exatamente onde estava
     }
-    function smgSheetOpen(sheet) {
-        if (!sheet || smgSheets.open.indexOf(sheet) !== -1) return;
+    // MODAL (bottom sheet, busca e rail de alertas no celular): UM mecanismo. Abrir trava o fundo e
+    // empurra um estado no history; o "voltar" fecha o modal do topo; fechar por gesto/scrim/Esc
+    // consome o estado (history.back). key = o elemento; onPop = como a UI fecha quando o voltar chega.
+    // fromPop/fromNav: quem já mexeu no history (popstate, navegação) não pode dar outro back.
+    const smgModalIsOpen = key => smgSheets.open.some(m => m.key === key);
+    function smgModalOpen(key, onPop) {
+        if (!key || smgModalIsOpen(key)) return;
         smgLockScroll();
-        smgSheets.open.push(sheet);
-        sheet.classList.add('open');
+        smgSheets.open.push({ key, onPop });
         try { history.pushState({ smgSheet: true }, ''); } catch (e) {}
     }
-    function smgSheetClose(sheet, fromPop) {
-        const i = sheet ? smgSheets.open.indexOf(sheet) : -1;
-        if (i === -1) return;                       // já fechado → nada a desfazer (corta o eco do popstate)
+    function smgModalClose(key, fromPop) {
+        const i = smgSheets.open.findIndex(m => m.key === key);
+        if (i === -1) return false;                 // já fechado → nada a desfazer (corta o eco do popstate)
         smgSheets.open.splice(i, 1);
-        sheet.classList.remove('open');
         smgUnlockScroll();
-        if (!fromPop) { try { history.back(); } catch (e) {} }
+        // o popstate desse back chega DEPOIS (assíncrono): conta pra não fechar um modal aberto no meio
+        if (!fromPop) { try { smgSheets.backs++; history.back(); } catch (e) { smgSheets.backs = 0; } }
+        return true;
+    }
+    function smgSheetOpen(sheet) {
+        if (!sheet || smgModalIsOpen(sheet)) return;
+        smgModalOpen(sheet, () => sheet.classList.remove('open'));
+        sheet.classList.add('open');
+    }
+    function smgSheetClose(sheet, fromPop) {
+        if (smgModalClose(sheet, fromPop)) sheet.classList.remove('open');
     }
     window.addEventListener('popstate', () => {
+        if (smgSheets.backs) { smgSheets.backs--; return; }   // eco do nosso próprio history.back()
         const top = smgSheets.open[smgSheets.open.length - 1];
-        if (top) smgSheetClose(top, true);
+        if (top && smgModalClose(top.key, true)) top.onPop();
     });
+
+    // POPOVER: UM registro pra fechar clicando fora, no Esc e reposicionar no scroll. Cada popover
+    // diz o que é "dentro" (elementos ou função), como fechar e se está aberto. Exceções por opção:
+    // escape:false (quem trata o Esc em cascata), place() (posição fixa que segue o scroll),
+    // alive() (popover de uma página que o soft-nav trocou sai do registro e chama onDispose).
+    const smgPopovers = new Set();
+    function smgPopInside(p, t) {
+        return typeof p.inside === 'function' ? !!p.inside(t) : (p.inside || []).some(el => el && el.contains(t));
+    }
+    function smgPopPrune() {
+        smgPopovers.forEach(p => { if (p.alive && !p.alive()) { smgPopovers.delete(p); if (p.onDispose) p.onDispose(); } });
+    }
+    function smgPopover(entry) {
+        if (!smgPopovers.size) {
+            document.addEventListener('click', e => {
+                smgPopPrune();
+                smgPopovers.forEach(p => { if (p.isOpen() && !smgPopInside(p, e.target)) p.close(); });
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key !== 'Escape') return;
+                smgPopovers.forEach(p => { if (p.escape !== false && p.isOpen()) p.close(); });
+            });
+            window.addEventListener('scroll', () => {
+                smgPopovers.forEach(p => { if (p.place && p.isOpen()) p.place(); });
+            }, { passive: true });
+        }
+        smgPopovers.add(entry);
+        return entry;
+    }
     // liga scrim (toque no fundo), arrasto pra baixo e Esc de uma vez — todo sheet quer os três
     function wireSheetClose(sheet, panel) {
         if (!sheet) return;
@@ -1324,10 +1367,12 @@
             if (opts.onChange) opts.onChange(activeSet);
         });
 
-        document.addEventListener('click', (e) => {
-            if (!container.contains(e.target)) {
-                toggleOpen(false);
-            }
+        let msMounted = false;
+        smgPopover({   // antes: um listener por instância, nunca removido (as instâncias são recriadas)
+            inside: [container],
+            isOpen: () => !pop.hidden,
+            close: () => toggleOpen(false),
+            alive: () => { if (container.isConnected) msMounted = true; return container.isConnected || !msMounted; },
         });
 
         updateBadgeCount();
