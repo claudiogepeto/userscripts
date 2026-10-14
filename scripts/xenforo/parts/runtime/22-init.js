@@ -59,6 +59,7 @@
                 safe(syncMobileThreadbar, roots);
             }
             if (threadDirty) {
+                safe(pauseOffscreenBanners, roots);
                 safe(buildPostCards, roots);
                 safe(buildCommentCards, roots);
                 safe(buildCommentBar, roots);
@@ -618,6 +619,7 @@
         window.__buildPostGalleries = buildPostGalleries;
         window.detectPageClasses = detectPageClasses;
         window.__xfPageAssets = xfPageAssets;
+        window.__pauseOffscreenBanners = pauseOffscreenBanners;
     }
 
     if (document.readyState === 'loading') {

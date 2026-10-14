@@ -7,6 +7,10 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
+            /* PERF: banner animado do SMG fora da tela fica parado (pauseOffscreenBanners, 07-posts-misc) */
+            .userBanner.smg-anim-paused, .userBanner.smg-anim-paused *,
+            .userBanner.smg-anim-paused::before, .userBanner.smg-anim-paused::after,
+            .userBanner.smg-anim-paused *::before, .userBanner.smg-anim-paused *::after { animation-play-state: paused !important; }
             /* POST CARD: UMA pele pro post da thread (.smg-pc) e pros cards do Feed/Salvos (.smg-fp-card, o
                modificador "feed": thumb da thread + título como contexto, ver 07-feed). Superfície, header e
                conteúdo moram aqui; 07-feed só tem o que é do feed. */

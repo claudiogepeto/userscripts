@@ -8005,6 +8005,10 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
+            /* PERF: banner animado do SMG fora da tela fica parado (pauseOffscreenBanners, 07-posts-misc) */
+            .userBanner.smg-anim-paused, .userBanner.smg-anim-paused *,
+            .userBanner.smg-anim-paused::before, .userBanner.smg-anim-paused::after,
+            .userBanner.smg-anim-paused *::before, .userBanner.smg-anim-paused *::after { animation-play-state: paused !important; }
             /* POST CARD: UMA pele pro post da thread (.smg-pc) e pros cards do Feed/Salvos (.smg-fp-card, o
                modificador "feed": thumb da thread + título como contexto, ver 07-feed). Superfície, header e
                conteúdo moram aqui; 07-feed só tem o que é do feed. */
@@ -11049,6 +11053,29 @@
                 case '/': e.preventDefault(); click('smg-thread-search'); break; // busca
                 default: return;
             }
+        });
+    }
+
+    // =========================================================
+    // PERF: banners animados do SMG (.userBanner: pe-base/pe-heat/crownGlow, ~9 keyframes infinitos
+    // por post) repintavam a página a CADA frame, inclusive os que estão fora da tela. Os de fora
+    // pausam (classe smg-anim-paused); os visíveis continuam animando como no site.
+    // =========================================================
+    let bannerIO = null;
+    function pauseOffscreenBanners(roots) {
+        if (typeof IntersectionObserver !== 'function') return;
+        eachIn(roots, '.userBanner', el => {
+            if (el.dataset.smgAnimIo === '1') return;
+            el.dataset.smgAnimIo = '1';
+            if (!bannerIO) {   // só nasce na primeira página que tem banner
+                bannerIO = new IntersectionObserver(entries => {
+                    entries.forEach(en => {
+                        if (!en.target.isConnected) { bannerIO.unobserve(en.target); return; }
+                        en.target.classList.toggle('smg-anim-paused', !en.isIntersecting);
+                    });
+                }, { rootMargin: '100px 0px' });
+            }
+            bannerIO.observe(el);
         });
     }
 
@@ -26760,6 +26787,7 @@
                 safe(syncMobileThreadbar, roots);
             }
             if (threadDirty) {
+                safe(pauseOffscreenBanners, roots);
                 safe(buildPostCards, roots);
                 safe(buildCommentCards, roots);
                 safe(buildCommentBar, roots);
@@ -27319,6 +27347,7 @@
         window.__buildPostGalleries = buildPostGalleries;
         window.detectPageClasses = detectPageClasses;
         window.__xfPageAssets = xfPageAssets;
+        window.__pauseOffscreenBanners = pauseOffscreenBanners;
     }
 
     if (document.readyState === 'loading') {

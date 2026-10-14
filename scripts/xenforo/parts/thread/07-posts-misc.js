@@ -37,6 +37,29 @@
     }
 
     // =========================================================
+    // PERF: banners animados do SMG (.userBanner: pe-base/pe-heat/crownGlow, ~9 keyframes infinitos
+    // por post) repintavam a página a CADA frame, inclusive os que estão fora da tela. Os de fora
+    // pausam (classe smg-anim-paused); os visíveis continuam animando como no site.
+    // =========================================================
+    let bannerIO = null;
+    function pauseOffscreenBanners(roots) {
+        if (typeof IntersectionObserver !== 'function') return;
+        eachIn(roots, '.userBanner', el => {
+            if (el.dataset.smgAnimIo === '1') return;
+            el.dataset.smgAnimIo = '1';
+            if (!bannerIO) {   // só nasce na primeira página que tem banner
+                bannerIO = new IntersectionObserver(entries => {
+                    entries.forEach(en => {
+                        if (!en.target.isConnected) { bannerIO.unobserve(en.target); return; }
+                        en.target.classList.toggle('smg-anim-paused', !en.isIntersecting);
+                    });
+                }, { rootMargin: '100px 0px' });
+            }
+            bannerIO.observe(el);
+        });
+    }
+
+    // =========================================================
     // FEATURE: scroll infinito na thread (anexa as próximas páginas)
     // =========================================================
 
