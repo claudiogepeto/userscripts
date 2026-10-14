@@ -26800,6 +26800,11 @@
         window.__pauseOffscreenBanners = pauseOffscreenBanners;
     }
 
+    // THE test hook: the scenario suite (scripts/xenforo/tests) sets window.__SMG_TEST__ before the script
+    // runs, to reach the units no page shows directly (placement math, the pager engine). Everything else
+    // is tested through the DOM. Do not add other window exports for tests.
+    if (window.__SMG_TEST__ === true) window.__smgTest = Object.freeze({ masonryPlace, createPager });
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot, { once: true });
     } else {
