@@ -299,23 +299,25 @@
             body.appendChild(frag);
         };
 
-        const fillSitesBody = (sec, nodes) => {
+        // seção de hub (Sites / Categories): os nós "principais" (orderFn !== 999) vêm primeiro e, se houver
+        // também "outros", um divisor rotulado separa os dois grupos.
+        const fillHubBody = (sec, nodes, orderFn, label, dividerClass) => {
             const body = sec.querySelector('.block-body');
             if (!body) return;
             const frag = document.createDocumentFragment();
             let dividerInserted = false;
-            const hasMain = nodes.some(n => getMainSiteOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
-            const hasOthers = nodes.some(n => getMainSiteOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
+            const hasMain = nodes.some(n => orderFn(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
+            const hasOthers = nodes.some(n => orderFn(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
 
             nodes.forEach(n => {
                 const title = ((n.querySelector('.node-title') || {}).textContent || '').trim();
-                const isMain = getMainSiteOrder(title) !== 999;
+                const isMain = orderFn(title) !== 999;
                 if (!isMain && !dividerInserted && hasMain && hasOthers) {
                     const divider = document.createElement('div');
-                    divider.className = 'smg-hub-category-divider smg-hub-sites-divider';
+                    divider.className = dividerClass;
                     divider.setAttribute('role', 'separator');
                     divider.innerHTML = '<span class="smg-hub-divider-line"></span>'
-                        + `<span class="smg-hub-divider-text">${i18n('More sites')}</span>`
+                        + `<span class="smg-hub-divider-text">${i18n(label)}</span>`
                         + '<span class="smg-hub-divider-line"></span>';
                     frag.appendChild(divider);
                     dividerInserted = true;
@@ -326,35 +328,8 @@
             body.appendChild(frag);
         };
 
-        const fillCategoryBody = (sec, nodes) => {
-            const body = sec.querySelector('.block-body');
-            if (!body) return;
-            const frag = document.createDocumentFragment();
-            let dividerInserted = false;
-            const hasMain = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) !== 999);
-            const hasOthers = nodes.some(n => getMainCategoryOrder(((n.querySelector('.node-title') || {}).textContent || '').trim()) === 999);
-
-            nodes.forEach(n => {
-                const title = ((n.querySelector('.node-title') || {}).textContent || '').trim();
-                const isMain = getMainCategoryOrder(title) !== 999;
-                if (!isMain && !dividerInserted && hasMain && hasOthers) {
-                    const divider = document.createElement('div');
-                    divider.className = 'smg-hub-category-divider';
-                    divider.setAttribute('role', 'separator');
-                    divider.innerHTML = '<span class="smg-hub-divider-line"></span>'
-                        + `<span class="smg-hub-divider-text">${i18n('More categories')}</span>`
-                        + '<span class="smg-hub-divider-line"></span>';
-                    frag.appendChild(divider);
-                    dividerInserted = true;
-                }
-                frag.appendChild(n);
-            });
-            body.innerHTML = '';
-            body.appendChild(frag);
-        };
-
-        fillSitesBody(sitesSec, sitesNodes);
-        fillCategoryBody(catSec, categoriesNodes);
+        fillHubBody(sitesSec, sitesNodes, getMainSiteOrder, 'More sites', 'smg-hub-category-divider smg-hub-sites-divider');
+        fillHubBody(catSec, categoriesNodes, getMainCategoryOrder, 'More categories', 'smg-hub-category-divider');
         fillBody(discSec, discussionsNodes);
         fillBody(reqSec, requestsNodes);
         fillBody(navSec, navNodes);
