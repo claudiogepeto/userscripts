@@ -55,7 +55,6 @@
             }
             /* header do feed: título grande "Feed" + slot de ações (ícone de notices) à direita. Substitui a antiga tabbar. */
             .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-12); margin: var(--smg-sp-28) 0 var(--smg-sp-18); padding: 0 0 var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
-            @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); } }
             .smg-river-title { margin: 0; padding: 0; font-size: var(--smg-fs-28); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: var(--smg-sp-8); flex: 0 0 auto; }
             .smg-fp-empty { padding: 60px var(--smg-sp-16); text-align: center; font-size: var(--smg-fs-15); color: var(--smg-w-50); }
@@ -230,7 +229,7 @@
             .smg-fp-open { display: flex; align-items: center; gap: var(--smg-sp-6); margin: var(--smg-sp-6) 0 0; padding: var(--smg-sp-12) var(--smg-sp-24) var(--smg-sp-14); border-top: 1px solid var(--smg-bd); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; color: var(--smg-link); transition: gap var(--smg-dur-15) ease; }
             .smg-fp-open:hover { gap: var(--smg-sp-10); }
             .smg-fp-open svg { width: 15px; height: 15px; fill: none; }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); }
                 .smg-fp-card { border-radius: var(--smg-r-14); }
                 .smg-fp-head { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); }
                 .smg-fp-content { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-8); }

@@ -109,11 +109,6 @@
             html.smg-threadlist .articlePreview-meta .simp-avatar-border { display: none !important; }   /* tira a moldura decorativa */
             html.smg-threadlist .articlePreview-replies { margin-left: auto !important; flex: 0 0 auto; }
             html.smg-threadlist .articlePreview-replies a { color: var(--smg-w-60) !important; }
-            @media (max-width: 600px) {
-                html.smg-threadlist .block--articles .block-body,
-                html.smg-threadlist .smg-article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--smg-sp-10) !important; padding: var(--smg-sp-12) !important; }
-                html.smg-threadlist .articlePreview-title { font-size: var(--smg-fs-13) !important; }
-            }
 
             /* ---- feed: barra de ferramentas (filtro / mudo) ---- */
             .smg-feed-tools { position: absolute; top: 18px; right: 84px; z-index: var(--smg-z-6); display: flex; gap: var(--smg-sp-10); }
@@ -129,10 +124,6 @@
             .smg-feed-tool:active { transform: scale(0.9); }
             .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
-            @media (max-width: 600px) {
-                .smg-feed-tools { right: 70px; gap: var(--smg-sp-8); }
-                .smg-feed-tool { width: 40px; height: 40px; font-size: var(--smg-fs-18); }
-            }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
             #smg-feed .smg-rgc-play svg, #smg-feed .smg-rgc-barplay svg, #smg-feed .smg-gallery-play svg { fill: currentColor !important; }   /* play/pause + play da galeria são PREENCHIDOS (não outline) → re-afirma o fill, senão somem com a regra acima */
@@ -163,7 +154,12 @@
             .smg-feed-striparrow--next { right: 0; justify-content: flex-end; padding-right: var(--smg-sp-10); background: linear-gradient(270deg, var(--smg-k-92), rgba(0,0,0,0)); }
             .smg-feed-striparrow svg { width: 26px; height: 26px; filter: drop-shadow(0 1px 3px var(--smg-k-82)); transition: transform var(--smg-dur-12) ease; }
             .smg-feed-striparrow:hover svg { transform: scale(1.18); }
-            @media (max-width: 600px) { .smg-feed-striparrow { display: none !important; } }   /* mobile: rola por swipe */
+            @media (max-width: 600px) {
+                html.smg-threadlist .block--articles .block-body,
+                html.smg-threadlist .smg-article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--smg-sp-10) !important; padding: var(--smg-sp-12) !important; }
+                html.smg-threadlist .articlePreview-title { font-size: var(--smg-fs-13) !important; }
+                .smg-feed-tools { right: 70px; gap: var(--smg-sp-8); }
+                .smg-feed-tool { width: 40px; height: 40px; font-size: var(--smg-fs-18); } .smg-feed-striparrow { display: none !important; } }   /* mobile: rola por swipe */
             /* thumbs SEMPRE abertas → imagem/iframe/player sobem ~92px pra não ficar atrás do filmstrip */
             #smg-feed.strip-open .smg-feed-media,
             #smg-feed.strip-open .smg-feed-embed iframe { max-height: calc(100vh - 104px); margin-bottom: 92px; }

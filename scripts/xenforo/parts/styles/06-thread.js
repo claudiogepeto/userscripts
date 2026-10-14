@@ -110,10 +110,6 @@
                 clip-path: inset(0 -100vmax 0) !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08) !important;
             }
-            @media (max-width: 800px) {
-                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
-                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
-            }
             /* Lado ESQUERDO: hero (thumb + info [badges + título + tags]) */
             html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
                 display: flex !important;
@@ -453,7 +449,9 @@
             html.smg-thread .smg-thead-tags-row .tagList {
                 flex: 0 1 auto; max-width: 100%;
             }
-            @media (max-width: 700px) {
+            @media (max-width: 800px) {
+                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
+                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
                 html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }

@@ -150,7 +150,7 @@
                 min-width: 0 !important;
             }
 
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) {
                 /* tablet: some o Discover do canto, search central continua */
                 .smg-tb-nav { display: none; }
                 html.smg-topbar-on body { padding-top: 52px !important; }

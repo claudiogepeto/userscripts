@@ -62,7 +62,6 @@
                 stroke-width: 2px !important;
             }
             /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
-            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; } }
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
@@ -96,7 +95,7 @@
             html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
-            @media (max-width: 1099px) and (min-width: 601px) {
+            @media (max-width: 1100px) and (min-width: 601px) {
                 #smg-aldock { display: none !important; }
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
@@ -105,7 +104,7 @@
             }
             /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
                página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; }
                 #smg-aldock {
                     top: 0; right: 0; bottom: 0; left: 0; width: 100%;
                     z-index: var(--smg-z-sheet-1);                 /* acima da navbar e dos sheets */

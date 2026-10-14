@@ -552,7 +552,6 @@
             }
             .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
             .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
-            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } }
             /* SCRUBBER (no topo da barra) */
             .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
             .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: var(--smg-w-30); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
@@ -619,7 +618,7 @@
             .smg-rgc-src:active { transform: scale(0.96); }
             .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
-            @media (hover: none) { .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
+            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
             /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
             .smg-rg.smg-rg-buffering::after {
                 content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
@@ -645,7 +644,7 @@
             .smg-turbo-slot > .smg-rg { margin: 0 auto !important; }
 
             /* ---- site a 80% da largura disponível (desktop), CENTRALIZADO ---- */
-            @media (min-width: 800px) {
+            @media (min-width: 801px) {
                 .p-header-inner,
                 .p-nav-inner,
                 .p-sectionLinks-inner,

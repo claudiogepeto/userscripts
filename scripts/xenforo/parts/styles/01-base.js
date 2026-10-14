@@ -101,7 +101,7 @@
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
             html.smg-sc, html.smg-smg { --smg-cw: 80%; --smg-card-min: 230px; }   /* largura mínima de card em QUALQUER grid: nº de colunas segue o espaço do container (auto-fill), nunca o viewport */
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
-            @media (max-width: 1400px) and (min-width: 800px) {
+            @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
             }
             /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
@@ -109,7 +109,7 @@
                maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
             html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
             @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
-            @media (max-width: 1400px) and (min-width: 800px) {
+            @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
 

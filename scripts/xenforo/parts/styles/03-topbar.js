@@ -7,9 +7,6 @@
             html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
             html.smg-topbar-on :target { scroll-margin-top: 86px; }
-            @media (max-width: 800px) {
-                html.smg-topbar-on :target { scroll-margin-top: 66px; }
-            }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -36,9 +33,7 @@
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             /* Mobile threads use a dedicated shell, like an app topbar. */
-            .smg-mobile-threadbar { display: none; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
-            @media (max-width: 800px) { #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; } }
+            .smg-mobile-threadbar { display: none; }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
             /* SMG: cor da topbar #1a1a1a */
             html.smg-smg #smg-topbar { background: #1a1a1a; }
             .smg-tb-left { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
@@ -57,10 +52,6 @@
                 filter: drop-shadow(0 2px 8px var(--smg-k-45));
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), filter var(--smg-dur-20) ease;
             }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
-                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
-            }
             @media (max-width: 800px) {
                 .smg-tb-logo { height: 36px; margin-right: var(--smg-sp-6); }
                 .smg-tb-logo img { height: 30px; max-width: 140px; }
@@ -73,12 +64,6 @@
                 transition: font-size var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-logo-accent { color: #ff3d84; text-shadow: 0 0 16px rgba(255,61,132,0.5); }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
-            }
-            @media (max-width: 800px) {
-                .smg-logo-word { font-size: var(--smg-fs-20); }
-            }
             .smg-tb-nav { display: flex; align-items: center; gap: var(--smg-sp-4); }
             .smg-tb-item {
                 position: relative;
@@ -88,9 +73,6 @@
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft); color: #fff; }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-            }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
@@ -106,7 +88,11 @@
             }
             .smg-tb-act:hover { background: var(--smg-link-soft); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
-            @media (min-width: 801px) {
+            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
+                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
+                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
+                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
+                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
                 #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
@@ -168,8 +154,7 @@
             .smg-search-cfg-head { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); font-size: var(--smg-fs-11); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--smg-w-40); }
             .smg-search-cfg-row { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-8); border-radius: var(--smg-r-8); font-size: var(--smg-fs-14); color: var(--smg-tx); cursor: pointer; }
             .smg-search-cfg-row:hover { background: var(--smg-w-06); }
-            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }
-            @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; } }   /* mobile usa o modal da dock, não o overlay da topbar */
+            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }   /* mobile usa o modal da dock, não o overlay da topbar */
             .smg-tb-search-ico { display: inline-flex; align-items: center; flex: 0 0 auto; }
             .smg-tb-search-ico svg { width: 18px; height: 18px; opacity: 0.7; fill: none !important; }
             .smg-tb-search-input {
@@ -219,8 +204,7 @@
             }
             .smg-tb-loginbtn:hover { filter: brightness(1.12); }
             .smg-tb-loginbtn:active { transform: scale(0.97); }
-            .smg-tb-loginbtn .smg-tb-ico { font-size: var(--smg-fs-16); }
-            @media (max-width: 700px) { .smg-tb-authlink { display: none; } }   /* espaço curto: sobra o Entrar */
+            .smg-tb-loginbtn .smg-tb-ico { font-size: var(--smg-fs-16); }   /* espaço curto: sobra o Entrar */
 
             /* popovers agrupados */
             .smg-tb-pop {
@@ -272,7 +256,9 @@
             .smg-tb-mega-feat-desc { font-size: var(--smg-fs-12); line-height: 1.45; color: var(--smg-w-50); }
             .smg-tb-mega-feat-cta { margin-top: var(--smg-sp-4); display: inline-flex; align-items: center; gap: var(--smg-sp-6); font-size: var(--smg-fs-13); font-weight: 700; color: var(--smg-link); }
             .smg-tb-mega-feat-cta svg { width: 14px; height: 14px; fill: none !important; }
-            @media (max-width: 760px) {
+            @media (max-width: 800px) {
+                html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
+                .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
                 .smg-tb-mega-cols { flex-direction: column; gap: var(--smg-sp-14); }
                 .smg-tb-mega-feat { flex-basis: auto; }
@@ -315,7 +301,7 @@
                 line-height: 1.4 !important;
             }
             .flashMessage .flashMessage-content { color: inherit !important; }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; }
                 .flashMessage { right: 12px !important; left: 12px !important; bottom: 76px !important; max-width: none !important; }
             }
             /* Tooltip de bookmark: cartão, não a caixa nativa estreita. */

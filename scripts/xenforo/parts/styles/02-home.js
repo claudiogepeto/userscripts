@@ -125,9 +125,9 @@
             .smg-home-skeleton-tile .smg-home-skeleton-line { position: absolute; top: 101px; left: 20%; width: 60%; margin: 0; }
             .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 124px; left: 30%; width: 40%; }
             .smg-home-skeleton-bottom-nav { display: none; }
-            @media (max-width: 1180px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-            @media (max-width: 820px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+            @media (max-width: 800px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+            @media (max-width: 1100px) {
                 .smg-home-skeleton-topbar { height: 52px; padding: 0 var(--smg-sp-14); }
                 .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
                 .smg-home-skeleton-topbar-nav { display: none; }
@@ -183,7 +183,6 @@
                 box-shadow: var(--smg-hl), 0 18px 44px -18px var(--smg-k-62);
                 overflow: visible;
             }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; } }
             /* tabbar = header da section com segmented control moderno */
             html.smg-home .smg-feed-tabs { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-12); padding: 0; margin: 0 0 var(--smg-sp-20); background: transparent; border-bottom: 0 !important; }
             /* tabs scrollam aqui; o "See all" fica fixo à direita */
@@ -312,7 +311,7 @@
             @media (max-width: 1100px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: calc((100% - 14px) / 2); }
             }
-            @media (max-width: 700px) {
+            @media (max-width: 800px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: 92%; scroll-snap-type: x mandatory; gap: var(--smg-sp-10); }
                 html.smg-home .smg-feed-card { scroll-snap-align: center; }
                 html.smg-home .smg-feed-nav { display: none; }
@@ -542,7 +541,7 @@
                 color: var(--smg-w-50) !important;
             }
 
-            @media (max-width: 650px) {
+            @media (max-width: 600px) {
                 html.smg-home .block--category .node { min-height: 60px !important; }
                 html.smg-home .block--category .node-body {
                     flex-wrap: wrap !important; padding: var(--smg-sp-10) var(--smg-sp-14) !important; gap: var(--smg-sp-8) var(--smg-sp-12) !important;
@@ -729,7 +728,7 @@
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
                 color: var(--smg-w-55) !important;
             }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
                 html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
                     display: none !important;
                 }

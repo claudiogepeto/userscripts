@@ -685,7 +685,7 @@
                no mobile NÃO se aplica (a regra que usa isto fica num @media min-width:800px) */
             html.smg-sc, html.smg-smg { --smg-cw: 80%; --smg-card-min: 230px; }   /* largura mínima de card em QUALQUER grid: nº de colunas segue o espaço do container (auto-fill), nunca o viewport */
             @media (min-width: 1920px) { html.smg-sc, html.smg-smg { --smg-cw: 75%; } }
-            @media (max-width: 1400px) and (min-width: 800px) {
+            @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
             }
             /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
@@ -693,7 +693,7 @@
                maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
             html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
             @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
-            @media (max-width: 1400px) and (min-width: 800px) {
+            @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
             }
 
@@ -848,7 +848,7 @@
                     column-count: var(--smg-mcols, 2) !important;
                 }
             }
-            @media (max-width: 1760px) {
+            @media (max-width: 1920px) {
                 html.smg-aldock-on.smg-masonry-on .auto-image-grid {
                     --smg-mcols: 2;
                 }
@@ -856,7 +856,7 @@
                     column-count: var(--smg-mcols, 2) !important;
                 }
             }
-            @media (max-width: 599px) {
+            @media (max-width: 600px) {
                 html.smg-masonry-on .auto-image-grid {
                     --smg-mcols: 1;
                 }
@@ -1080,7 +1080,7 @@
             .smg-gallery-pagehdr::after { content: ""; flex: 1 1 auto; height: 3px; border-radius: var(--smg-r-4); background: var(--smg-bd2); }
             .smg-gallery-page.is-skel .smg-gallery-pagehdr { opacity: 0.55; }
             .smg-gallery-cols { column-width: 440px; column-gap: var(--smg-sp-12); }   /* 1 coluna a menos (tiles maiores) */
-            @media (max-width: 700px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: var(--smg-sp-8); } }
+            @media (max-width: 800px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: var(--smg-sp-8); } }
             .smg-gallery-tile { position: relative; display: block; width: 100%; margin: 0 0 var(--smg-sp-12); padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; break-inside: avoid; -webkit-column-break-inside: avoid; }
             .smg-gallery-tile img { display: block; width: 100%; height: auto; }
             .smg-gallery-tile--embed { aspect-ratio: 16 / 9; background: #000; }
@@ -2078,7 +2078,6 @@
             }
             .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
             .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
-            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } }
             /* SCRUBBER (no topo da barra) */
             .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
             .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: var(--smg-w-30); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
@@ -2145,7 +2144,7 @@
             .smg-rgc-src:active { transform: scale(0.96); }
             .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
-            @media (hover: none) { .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
+            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
             /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
             .smg-rg.smg-rg-buffering::after {
                 content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
@@ -2171,7 +2170,7 @@
             .smg-turbo-slot > .smg-rg { margin: 0 auto !important; }
 
             /* ---- site a 80% da largura disponível (desktop), CENTRALIZADO ---- */
-            @media (min-width: 800px) {
+            @media (min-width: 801px) {
                 .p-header-inner,
                 .p-nav-inner,
                 .p-sectionLinks-inner,
@@ -2332,9 +2331,9 @@
             .smg-home-skeleton-tile .smg-home-skeleton-line { position: absolute; top: 101px; left: 20%; width: 60%; margin: 0; }
             .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 124px; left: 30%; width: 40%; }
             .smg-home-skeleton-bottom-nav { display: none; }
-            @media (max-width: 1180px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-            @media (max-width: 820px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+            @media (max-width: 800px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+            @media (max-width: 1100px) {
                 .smg-home-skeleton-topbar { height: 52px; padding: 0 var(--smg-sp-14); }
                 .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
                 .smg-home-skeleton-topbar-nav { display: none; }
@@ -2390,7 +2389,6 @@
                 box-shadow: var(--smg-hl), 0 18px 44px -18px var(--smg-k-62);
                 overflow: visible;
             }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; } }
             /* tabbar = header da section com segmented control moderno */
             html.smg-home .smg-feed-tabs { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-12); padding: 0; margin: 0 0 var(--smg-sp-20); background: transparent; border-bottom: 0 !important; }
             /* tabs scrollam aqui; o "See all" fica fixo à direita */
@@ -2519,7 +2517,7 @@
             @media (max-width: 1100px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: calc((100% - 14px) / 2); }
             }
-            @media (max-width: 700px) {
+            @media (max-width: 800px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: 92%; scroll-snap-type: x mandatory; gap: var(--smg-sp-10); }
                 html.smg-home .smg-feed-card { scroll-snap-align: center; }
                 html.smg-home .smg-feed-nav { display: none; }
@@ -2749,7 +2747,7 @@
                 color: var(--smg-w-50) !important;
             }
 
-            @media (max-width: 650px) {
+            @media (max-width: 600px) {
                 html.smg-home .block--category .node { min-height: 60px !important; }
                 html.smg-home .block--category .node-body {
                     flex-wrap: wrap !important; padding: var(--smg-sp-10) var(--smg-sp-14) !important; gap: var(--smg-sp-8) var(--smg-sp-12) !important;
@@ -2936,7 +2934,7 @@
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
                 color: var(--smg-w-55) !important;
             }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
                 html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
                     display: none !important;
                 }
@@ -2953,9 +2951,6 @@
             html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
             html.smg-topbar-on :target { scroll-margin-top: 86px; }
-            @media (max-width: 800px) {
-                html.smg-topbar-on :target { scroll-margin-top: 66px; }
-            }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -2982,9 +2977,7 @@
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             /* Mobile threads use a dedicated shell, like an app topbar. */
-            .smg-mobile-threadbar { display: none; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; } }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
-            @media (max-width: 800px) { #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; } }
+            .smg-mobile-threadbar { display: none; }   /* encolhe no scroll down (.floating = scrollY>40); desktop só (mobile já é compacto) */
             /* SMG: cor da topbar #1a1a1a */
             html.smg-smg #smg-topbar { background: #1a1a1a; }
             .smg-tb-left { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
@@ -3003,10 +2996,6 @@
                 filter: drop-shadow(0 2px 8px var(--smg-k-45));
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), filter var(--smg-dur-20) ease;
             }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
-                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
-            }
             @media (max-width: 800px) {
                 .smg-tb-logo { height: 36px; margin-right: var(--smg-sp-6); }
                 .smg-tb-logo img { height: 30px; max-width: 140px; }
@@ -3019,12 +3008,6 @@
                 transition: font-size var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-logo-accent { color: #ff3d84; text-shadow: 0 0 16px rgba(255,61,132,0.5); }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
-            }
-            @media (max-width: 800px) {
-                .smg-logo-word { font-size: var(--smg-fs-20); }
-            }
             .smg-tb-nav { display: flex; align-items: center; gap: var(--smg-sp-4); }
             .smg-tb-item {
                 position: relative;
@@ -3034,9 +3017,6 @@
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft); color: #fff; }
-            @media (min-width: 801px) {
-                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-            }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
@@ -3052,7 +3032,11 @@
             }
             .smg-tb-act:hover { background: var(--smg-link-soft); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
-            @media (min-width: 801px) {
+            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
+                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
+                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
+                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
+                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
                 #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
@@ -3114,8 +3098,7 @@
             .smg-search-cfg-head { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); font-size: var(--smg-fs-11); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--smg-w-40); }
             .smg-search-cfg-row { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-8); border-radius: var(--smg-r-8); font-size: var(--smg-fs-14); color: var(--smg-tx); cursor: pointer; }
             .smg-search-cfg-row:hover { background: var(--smg-w-06); }
-            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }
-            @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; } }   /* mobile usa o modal da dock, não o overlay da topbar */
+            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }   /* mobile usa o modal da dock, não o overlay da topbar */
             .smg-tb-search-ico { display: inline-flex; align-items: center; flex: 0 0 auto; }
             .smg-tb-search-ico svg { width: 18px; height: 18px; opacity: 0.7; fill: none !important; }
             .smg-tb-search-input {
@@ -3165,8 +3148,7 @@
             }
             .smg-tb-loginbtn:hover { filter: brightness(1.12); }
             .smg-tb-loginbtn:active { transform: scale(0.97); }
-            .smg-tb-loginbtn .smg-tb-ico { font-size: var(--smg-fs-16); }
-            @media (max-width: 700px) { .smg-tb-authlink { display: none; } }   /* espaço curto: sobra o Entrar */
+            .smg-tb-loginbtn .smg-tb-ico { font-size: var(--smg-fs-16); }   /* espaço curto: sobra o Entrar */
 
             /* popovers agrupados */
             .smg-tb-pop {
@@ -3218,7 +3200,9 @@
             .smg-tb-mega-feat-desc { font-size: var(--smg-fs-12); line-height: 1.45; color: var(--smg-w-50); }
             .smg-tb-mega-feat-cta { margin-top: var(--smg-sp-4); display: inline-flex; align-items: center; gap: var(--smg-sp-6); font-size: var(--smg-fs-13); font-weight: 700; color: var(--smg-link); }
             .smg-tb-mega-feat-cta svg { width: 14px; height: 14px; fill: none !important; }
-            @media (max-width: 760px) {
+            @media (max-width: 800px) {
+                html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
+                .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
                 .smg-tb-mega-cols { flex-direction: column; gap: var(--smg-sp-14); }
                 .smg-tb-mega-feat { flex-basis: auto; }
@@ -3261,7 +3245,7 @@
                 line-height: 1.4 !important;
             }
             .flashMessage .flashMessage-content { color: inherit !important; }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; }
                 .flashMessage { right: 12px !important; left: 12px !important; bottom: 76px !important; max-width: none !important; }
             }
             /* Tooltip de bookmark: cartão, não a caixa nativa estreita. */
@@ -3815,7 +3799,7 @@
                 min-width: 0 !important;
             }
 
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) {
                 /* tablet: some o Discover do canto, search central continua */
                 .smg-tb-nav { display: none; }
                 html.smg-topbar-on body { padding-top: 52px !important; }
@@ -3824,6 +3808,35 @@
     const CSS_DOCK = `
             /* Mobile: fixed topbar with one height (matching the bottom navbar). Threads swap
                in the context shell; other pages keep the logo and actions. */
+
+            /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
+               no mobile esses botões continuam (viram a navbar inferior) */
+
+            @media (min-width: 601px) {
+                #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
+                .smg-dock-thread-bar { display: none !important; }
+                /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
+                #smg-post-nav-panel > .smg-nav-center,
+                #smg-post-nav-panel > .smg-nav-center + .smg-nav-divider { display: none !important; }
+                /* páginas sem ações (sobraria só a engrenagem): esconde a dock inteira no desktop */
+                #smg-post-nav-wrapper.smg-dock-baronly { display: none !important; }
+                #smg-post-nav-wrapper.smg-dock-baronly.smg-dock-show { display: block !important; }   /* reaberta pelo FAB */
+                html.smg-threadlist:not(.smg-thread) #smg-post-nav-wrapper.smg-dock-as-list { display: block !important; }
+            }
+            /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
+               então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
+            #smg-settings-fab {
+                position: fixed; right: 18px; bottom: 18px; z-index: var(--smg-z-dock-under);
+                width: 44px; height: 44px; border-radius: var(--smg-r-round); border: 1px solid var(--smg-bd);
+                background: var(--smg-s1); color: var(--smg-w-72); cursor: pointer;
+                display: inline-flex; align-items: center; justify-content: center;
+                box-shadow: var(--smg-shadow-2); transition: color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
+            }
+            #smg-settings-fab .smg-nav-ico { font-size: var(--smg-fs-22); }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
+            #smg-settings-fab:hover { color: #fff; background: var(--smg-s2); }
+            #smg-settings-fab:active { transform: scale(0.92); }
+            #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
             @media (max-width: 600px) {
                 :root { --smg-mobile-topbar-h: 54px; }
                 #smg-topbar-wrap {
@@ -3903,41 +3916,7 @@
                     display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis;
                     white-space: nowrap;
                 }
-                .smg-mobile-threadbar-end { width: 44px; height: 44px; }
-
-            }
-            @media (max-width: 480px) {
-            }
-
-            /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
-               no mobile esses botões continuam (viram a navbar inferior) */
-
-            @media (min-width: 601px) {
-                #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
-                .smg-dock-thread-bar { display: none !important; }
-                /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
-                #smg-post-nav-panel > .smg-nav-center,
-                #smg-post-nav-panel > .smg-nav-center + .smg-nav-divider { display: none !important; }
-                /* páginas sem ações (sobraria só a engrenagem): esconde a dock inteira no desktop */
-                #smg-post-nav-wrapper.smg-dock-baronly { display: none !important; }
-                #smg-post-nav-wrapper.smg-dock-baronly.smg-dock-show { display: block !important; }   /* reaberta pelo FAB */
-                html.smg-threadlist:not(.smg-thread) #smg-post-nav-wrapper.smg-dock-as-list { display: block !important; }
-            }
-            /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
-               então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
-            #smg-settings-fab {
-                position: fixed; right: 18px; bottom: 18px; z-index: var(--smg-z-dock-under);
-                width: 44px; height: 44px; border-radius: var(--smg-r-round); border: 1px solid var(--smg-bd);
-                background: var(--smg-s1); color: var(--smg-w-72); cursor: pointer;
-                display: inline-flex; align-items: center; justify-content: center;
-                box-shadow: var(--smg-shadow-2); transition: color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
-            }
-            #smg-settings-fab .smg-nav-ico { font-size: var(--smg-fs-22); }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
-            #smg-settings-fab:hover { color: #fff; background: var(--smg-s2); }
-            #smg-settings-fab:active { transform: scale(0.92); }
-            #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
-            @media (max-width: 600px) { #smg-settings-fab { display: none !important; } }   /* mobile: a navbar inferior já tem a engrenagem */
+                .smg-mobile-threadbar-end { width: 44px; height: 44px; } #smg-settings-fab { display: none !important; } }   /* mobile: a navbar inferior já tem a engrenagem */
             /* filtro/ordem/grade da LISTA existem sempre (a dock nasce uma vez). Só aparecem numa listagem. */
             html:not(.smg-threadlist) #smg-list-filter,
             html:not(.smg-threadlist) #smg-list-sort,
@@ -4888,11 +4867,6 @@
                 font-size: var(--smg-fs-13);
                 border-radius: var(--smg-r-10);
             }
-            @media (max-width: 600px) {
-                .smg-search-bar { gap: var(--smg-sp-6); }   /* barra mais apertada com os ícones */
-                #smg-rs-panel { margin-top: var(--smg-sp-10); }
-                #smg-rs-panel .smg-search-bar { height: 48px; }
-            }
 
             /* ===== página de RESULTADOS da busca: lista nativa re-tematizada (cards no padrão do tema) =====
                Os .contentRow do XF (avatar · título · snippet · meta) seguem server-render — só a CASCA muda:
@@ -4932,10 +4906,6 @@
             html.smg-search-page .block-row .contentRow-minor a:hover { color: #fff !important; text-decoration: underline !important; }
             html.smg-search-page .block-row .contentRow-minor time { color: var(--smg-w-55); }
             html.smg-search-page .block-row .contentRow-minor .tagItem { font-size: var(--smg-fs-11) !important; padding: var(--smg-sp-2) var(--smg-sp-8) !important; border-radius: var(--smg-r-6) !important; }
-            @media (max-width: 600px) {
-                html.smg-search-page .block-row.block-row--separated { padding: var(--smg-sp-12) var(--smg-sp-14) !important; border-radius: var(--smg-r-12) !important; }
-                html.smg-search-page .block-row .contentRow { gap: var(--smg-sp-10) !important; }
-            }
 
             /* ===== página de BUSCA AVANÇADA (search_form): form nativo re-tematizado =====
                Só a CASCA muda (CSS) — os widgets do XF (tagify, autocomplete, datas, abas, sticky submit)
@@ -4975,7 +4945,7 @@
                 display: grid; grid-template-columns: 1fr; gap: var(--smg-sp-20);
                 padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-24) !important; background: transparent !important; border: 0 !important;
             }
-            @media (min-width: 901px) {
+            @media (min-width: 801px) {
                 html.smg-search-form form.block .block-body { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--smg-sp-24) 40px; padding: var(--smg-sp-28) var(--smg-sp-32) var(--smg-sp-28) !important; }
                 html.smg-search-form form.block .block-body > .formRow:first-child { grid-column: 1 / -1; }
             }
@@ -5052,6 +5022,11 @@
             html.smg-search-form form.block .formSubmitRow .button--primary:hover { filter: brightness(1.1); }
             html.smg-search-form form.block .formSubmitRow .button--primary:active { transform: scale(0.97); }
             @media (max-width: 600px) {
+                .smg-search-bar { gap: var(--smg-sp-6); }   /* barra mais apertada com os ícones */
+                #smg-rs-panel { margin-top: var(--smg-sp-10); }
+                #smg-rs-panel .smg-search-bar { height: 48px; }
+                html.smg-search-page .block-row.block-row--separated { padding: var(--smg-sp-12) var(--smg-sp-14) !important; border-radius: var(--smg-r-12) !important; }
+                html.smg-search-page .block-row .contentRow { gap: var(--smg-sp-10) !important; }
                 html.smg-search-form form.block .block-body { padding: var(--smg-sp-16) var(--smg-sp-16) var(--smg-sp-18) !important; gap: var(--smg-sp-18); }
                 html.smg-search-form .block-tabHeader { padding: var(--smg-sp-2) var(--smg-sp-6) 0 !important; }
                 html.smg-search-form .block-tabHeader .tabs-tab { height: 44px; padding: 0 var(--smg-sp-10); font-size: var(--smg-fs-13) !important; }
@@ -6131,6 +6106,134 @@
     const CSS_MOBILE = `/* ============================================================
                MOBILE: search + filtros viram BOTTOM SHEETS (modernos)
                ============================================================ */
+            /* botão da dock "ativo" (filtro/escolha ligada) */
+            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
+
+            /* ---- scroll infinito: separador de página ---- */
+            .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-10); margin: var(--smg-sp-10) 0; color: rgba(127,127,127,0.85); font-size: var(--smg-fs-12); letter-spacing: .05em; text-transform: uppercase; }
+            .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
+
+            /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
+            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
+            html.smg-threadlist .structItem--thread,
+            html.smg-threadlist .contentRow {
+                display: flex !important;
+                align-items: center !important;
+                gap: var(--smg-sp-14) !important;
+            }
+            /* .dcThumbnail = simpcity (bg-image) · .dtt-thread-thumbnail = socialmediagirls (<img> real) */
+            html.smg-threadlist .dcThumbnail,
+            html.smg-threadlist .dtt-thread-thumbnail { width: 210px !important; height: 132px !important; border-radius: var(--smg-r-8) !important; flex: 0 0 auto !important; overflow: hidden !important; }
+            html.smg-threadlist .dtt-thread-thumbnail img,
+            html.smg-threadlist .dcThumbnail img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+            html.smg-threadlist .structItem-cell--icon:not(.structItem-cell--iconEnd) { flex: 0 0 auto !important; width: auto !important; height: auto !important; }
+            html.smg-threadlist .structItem-cell--main,
+            html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; }
+            html.smg-threadlist .structItem-title,
+            html.smg-threadlist .contentRow-title { font-size: var(--smg-fs-16) !important; line-height: 1.3 !important; }
+            /* divisores internos das células (verticais) sem cor — mantém só o divisor entre os cards */
+            html.smg-threadlist .structItem--thread .structItem-cell { border-color: transparent !important; }
+            /* MOBILE: lista compacta — thumb menor, esconde a coluna de "último post" (espremia o título a ~0) */
+            @media (max-width: 600px) {
+                html.smg-threadlist .structItem--thread,
+                html.smg-threadlist .contentRow { gap: var(--smg-sp-12) !important; align-items: flex-start !important; }
+                html.smg-threadlist .dcThumbnail,
+                html.smg-threadlist .dtt-thread-thumbnail { width: 92px !important; height: 70px !important; }
+                html.smg-threadlist .structItem-cell--latest { display: none !important; }
+                html.smg-threadlist .structItem-cell--main,
+                html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
+                html.smg-threadlist .structItem-title,
+                html.smg-threadlist .structItem-title a,
+                html.smg-threadlist .contentRow-title {
+                    font-size: var(--smg-fs-15) !important; white-space: normal !important;
+                    word-break: normal !important; overflow-wrap: break-word !important;
+                }
+            }
+
+            /* ---- barra de paginação + ações: 1 linha, justify-between, no nosso estilo ---- */
+            html.smg-threadlist .block-outer {
+                display: flex !important; align-items: center !important;
+                justify-content: space-between !important; flex-wrap: wrap !important; gap: var(--smg-sp-10) !important;
+                margin-bottom: var(--smg-sp-12) !important;
+            }
+            html.smg-threadlist .block-outer-main { flex: 1 1 auto !important; min-width: 0 !important; }
+            html.smg-threadlist .block-outer-opposite { flex: 0 0 auto !important; margin: 0 !important; }
+            /* mobile: quebra em 2 linhas (paginação em cima, ações tipo "Mark Forums Read" embaixo) */
+            @media (max-width: 600px) {
+                html.smg-threadlist .block-outer { row-gap: var(--smg-sp-12) !important; }
+                html.smg-threadlist .block-outer-main,
+                html.smg-threadlist .block-outer-opposite {
+                    flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important;
+                    display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
+                }
+                /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
+                html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
+            }
+            /* pager encostado à esquerda (o XF centraliza por padrão) */
+            html.smg-threadlist .pageNavWrapper,
+            html.smg-threadlist .pageNav,
+            html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
+            html.smg-threadlist .pageNav { display: flex !important; gap: var(--smg-sp-6); }
+            /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
+            html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
+            html.smg-threadlist .pageNav-main {
+                display: flex !important; flex-wrap: wrap; align-items: center;
+                gap: var(--smg-sp-6) !important; margin: 0 !important; padding: 0 !important; list-style: none !important;
+            }
+            html.smg-threadlist .pageNav-page, html.smg-threadlist .pageNav-jump { margin: 0 !important; }
+            /* pílulas no nosso estilo */
+            html.smg-threadlist .pageNav-page > a,
+            html.smg-threadlist .pageNav-jump,
+            html.smg-threadlist .pageNavSimple-el {
+                display: inline-flex !important; align-items: center; justify-content: center;
+                box-sizing: border-box;
+                font-weight: 600; text-decoration: none !important; line-height: 1;
+                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
+            }
+            /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
+            html.smg-threadlist .pageNavWrapper .pageNav-page,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a { box-shadow: none !important; }
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current { border: 0 !important; background: none !important; }
+            html.smg-threadlist .pageNavWrapper .pageNav-page::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
+            /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
+            html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: var(--smg-sp-6) !important; }
+            html.smg-threadlist .block-outer-opposite .button { color: var(--smg-w-85) !important; box-shadow: none !important; }
+            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
+
+            /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
+               (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)
+               scoped em .smg-smg (3 classes) → vence o .smg-threadlist genérico sem mexer no simpcity */
+            html.smg-threadlist .pageNav-page > a,
+            html.smg-threadlist .pageNav-jump,
+            html.smg-threadlist .pageNavSimple-el {
+                min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 var(--smg-sp-14) !important;
+                border-radius: var(--smg-r-10) !important; border: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important; color: var(--smg-w-85) !important; font-size: var(--smg-fs-14) !important;
+            }
+            html.smg-threadlist .pageNav-page > a:hover,
+            html.smg-threadlist .pageNav-jump:hover,
+            html.smg-threadlist .pageNavSimple-el:hover {
+                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
+            }
+            html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
+            /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
+            html.smg-threadlist .pageNav { align-items: center !important; }
+            html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
+            /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
+            html.smg-threadlist .block-outer-opposite .button {
+                min-height: 36px !important; border-radius: var(--smg-r-10) !important;
+                border: 1px solid var(--smg-bd) !important; background: var(--smg-s1) !important;
+            }
+            html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
             @media (max-width: 600px) {
                 /* scrim aparece quando um popover do dock está aberto */
                 #smg-post-nav-wrapper.settings-open .smg-dock-backdrop,
@@ -6334,136 +6437,6 @@
                 .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
                 .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
                 .smg-chip { height: 40px; font-size: var(--smg-fs-14); }
-            }
-            /* botão da dock "ativo" (filtro/escolha ligada) */
-            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
-
-            /* ---- scroll infinito: separador de página ---- */
-            .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-10); margin: var(--smg-sp-10) 0; color: rgba(127,127,127,0.85); font-size: var(--smg-fs-12); letter-spacing: .05em; text-transform: uppercase; }
-            .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
-
-            /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
-            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
-            html.smg-threadlist .structItem--thread,
-            html.smg-threadlist .contentRow {
-                display: flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-14) !important;
-            }
-            /* .dcThumbnail = simpcity (bg-image) · .dtt-thread-thumbnail = socialmediagirls (<img> real) */
-            html.smg-threadlist .dcThumbnail,
-            html.smg-threadlist .dtt-thread-thumbnail { width: 210px !important; height: 132px !important; border-radius: var(--smg-r-8) !important; flex: 0 0 auto !important; overflow: hidden !important; }
-            html.smg-threadlist .dtt-thread-thumbnail img,
-            html.smg-threadlist .dcThumbnail img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-            html.smg-threadlist .structItem-cell--icon:not(.structItem-cell--iconEnd) { flex: 0 0 auto !important; width: auto !important; height: auto !important; }
-            html.smg-threadlist .structItem-cell--main,
-            html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; }
-            html.smg-threadlist .structItem-title,
-            html.smg-threadlist .contentRow-title { font-size: var(--smg-fs-16) !important; line-height: 1.3 !important; }
-            /* divisores internos das células (verticais) sem cor — mantém só o divisor entre os cards */
-            html.smg-threadlist .structItem--thread .structItem-cell { border-color: transparent !important; }
-            /* MOBILE: lista compacta — thumb menor, esconde a coluna de "último post" (espremia o título a ~0) */
-            @media (max-width: 600px) {
-                html.smg-threadlist .structItem--thread,
-                html.smg-threadlist .contentRow { gap: var(--smg-sp-12) !important; align-items: flex-start !important; }
-                html.smg-threadlist .dcThumbnail,
-                html.smg-threadlist .dtt-thread-thumbnail { width: 92px !important; height: 70px !important; }
-                html.smg-threadlist .structItem-cell--latest { display: none !important; }
-                html.smg-threadlist .structItem-cell--main,
-                html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
-                html.smg-threadlist .structItem-title,
-                html.smg-threadlist .structItem-title a,
-                html.smg-threadlist .contentRow-title {
-                    font-size: var(--smg-fs-15) !important; white-space: normal !important;
-                    word-break: normal !important; overflow-wrap: break-word !important;
-                }
-            }
-
-            /* ---- barra de paginação + ações: 1 linha, justify-between, no nosso estilo ---- */
-            html.smg-threadlist .block-outer {
-                display: flex !important; align-items: center !important;
-                justify-content: space-between !important; flex-wrap: wrap !important; gap: var(--smg-sp-10) !important;
-                margin-bottom: var(--smg-sp-12) !important;
-            }
-            html.smg-threadlist .block-outer-main { flex: 1 1 auto !important; min-width: 0 !important; }
-            html.smg-threadlist .block-outer-opposite { flex: 0 0 auto !important; margin: 0 !important; }
-            /* mobile: quebra em 2 linhas (paginação em cima, ações tipo "Mark Forums Read" embaixo) */
-            @media (max-width: 600px) {
-                html.smg-threadlist .block-outer { row-gap: var(--smg-sp-12) !important; }
-                html.smg-threadlist .block-outer-main,
-                html.smg-threadlist .block-outer-opposite {
-                    flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important;
-                    display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
-                }
-                /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
-                html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
-            }
-            /* pager encostado à esquerda (o XF centraliza por padrão) */
-            html.smg-threadlist .pageNavWrapper,
-            html.smg-threadlist .pageNav,
-            html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
-            html.smg-threadlist .pageNav { display: flex !important; gap: var(--smg-sp-6); }
-            /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
-            html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
-            html.smg-threadlist .pageNav-main {
-                display: flex !important; flex-wrap: wrap; align-items: center;
-                gap: var(--smg-sp-6) !important; margin: 0 !important; padding: 0 !important; list-style: none !important;
-            }
-            html.smg-threadlist .pageNav-page, html.smg-threadlist .pageNav-jump { margin: 0 !important; }
-            /* pílulas no nosso estilo */
-            html.smg-threadlist .pageNav-page > a,
-            html.smg-threadlist .pageNav-jump,
-            html.smg-threadlist .pageNavSimple-el {
-                display: inline-flex !important; align-items: center; justify-content: center;
-                box-sizing: border-box;
-                font-weight: 600; text-decoration: none !important; line-height: 1;
-                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
-            }
-            /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
-            html.smg-threadlist .pageNavWrapper .pageNav-page,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a { box-shadow: none !important; }
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current { border: 0 !important; background: none !important; }
-            html.smg-threadlist .pageNavWrapper .pageNav-page::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
-            /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
-            html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: var(--smg-sp-6) !important; }
-            html.smg-threadlist .block-outer-opposite .button { color: var(--smg-w-85) !important; box-shadow: none !important; }
-            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
-
-            /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
-               (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)
-               scoped em .smg-smg (3 classes) → vence o .smg-threadlist genérico sem mexer no simpcity */
-            html.smg-threadlist .pageNav-page > a,
-            html.smg-threadlist .pageNav-jump,
-            html.smg-threadlist .pageNavSimple-el {
-                min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 var(--smg-sp-14) !important;
-                border-radius: var(--smg-r-10) !important; border: 1px solid var(--smg-bd) !important;
-                background: var(--smg-s1) !important; color: var(--smg-w-85) !important; font-size: var(--smg-fs-14) !important;
-            }
-            html.smg-threadlist .pageNav-page > a:hover,
-            html.smg-threadlist .pageNav-jump:hover,
-            html.smg-threadlist .pageNavSimple-el:hover {
-                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
-            /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
-            html.smg-threadlist .pageNav { align-items: center !important; }
-            html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
-            /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
-            html.smg-threadlist .block-outer-opposite .button {
-                min-height: 36px !important; border-radius: var(--smg-r-10) !important;
-                border: 1px solid var(--smg-bd) !important; background: var(--smg-s1) !important;
-            }
-            html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
-            @media (max-width: 600px) {
                 /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
                 html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
                 /* mobile: pager simples sem primeiro/último (evita pílula vazia do «/») */
@@ -6712,10 +6685,6 @@
                 justify-content: space-between !important;
                 clip-path: inset(0 -100vmax 0) !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08) !important;
-            }
-            @media (max-width: 800px) {
-                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
-                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
             }
             /* Lado ESQUERDO: hero (thumb + info [badges + título + tags]) */
             html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
@@ -7056,7 +7025,9 @@
             html.smg-thread .smg-thead-tags-row .tagList {
                 flex: 0 1 auto; max-width: 100%;
             }
-            @media (max-width: 700px) {
+            @media (max-width: 800px) {
+                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
+                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
                 html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
@@ -7963,11 +7934,6 @@
             html.smg-threadlist .articlePreview-meta .simp-avatar-border { display: none !important; }   /* tira a moldura decorativa */
             html.smg-threadlist .articlePreview-replies { margin-left: auto !important; flex: 0 0 auto; }
             html.smg-threadlist .articlePreview-replies a { color: var(--smg-w-60) !important; }
-            @media (max-width: 600px) {
-                html.smg-threadlist .block--articles .block-body,
-                html.smg-threadlist .smg-article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--smg-sp-10) !important; padding: var(--smg-sp-12) !important; }
-                html.smg-threadlist .articlePreview-title { font-size: var(--smg-fs-13) !important; }
-            }
 
             /* ---- feed: barra de ferramentas (filtro / mudo) ---- */
             .smg-feed-tools { position: absolute; top: 18px; right: 84px; z-index: var(--smg-z-6); display: flex; gap: var(--smg-sp-10); }
@@ -7983,10 +7949,6 @@
             .smg-feed-tool:active { transform: scale(0.9); }
             .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
-            @media (max-width: 600px) {
-                .smg-feed-tools { right: 70px; gap: var(--smg-sp-8); }
-                .smg-feed-tool { width: 40px; height: 40px; font-size: var(--smg-fs-18); }
-            }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
             #smg-feed .smg-rgc-play svg, #smg-feed .smg-rgc-barplay svg, #smg-feed .smg-gallery-play svg { fill: currentColor !important; }   /* play/pause + play da galeria são PREENCHIDOS (não outline) → re-afirma o fill, senão somem com a regra acima */
@@ -8017,7 +7979,12 @@
             .smg-feed-striparrow--next { right: 0; justify-content: flex-end; padding-right: var(--smg-sp-10); background: linear-gradient(270deg, var(--smg-k-92), rgba(0,0,0,0)); }
             .smg-feed-striparrow svg { width: 26px; height: 26px; filter: drop-shadow(0 1px 3px var(--smg-k-82)); transition: transform var(--smg-dur-12) ease; }
             .smg-feed-striparrow:hover svg { transform: scale(1.18); }
-            @media (max-width: 600px) { .smg-feed-striparrow { display: none !important; } }   /* mobile: rola por swipe */
+            @media (max-width: 600px) {
+                html.smg-threadlist .block--articles .block-body,
+                html.smg-threadlist .smg-article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--smg-sp-10) !important; padding: var(--smg-sp-12) !important; }
+                html.smg-threadlist .articlePreview-title { font-size: var(--smg-fs-13) !important; }
+                .smg-feed-tools { right: 70px; gap: var(--smg-sp-8); }
+                .smg-feed-tool { width: 40px; height: 40px; font-size: var(--smg-fs-18); } .smg-feed-striparrow { display: none !important; } }   /* mobile: rola por swipe */
             /* thumbs SEMPRE abertas → imagem/iframe/player sobem ~92px pra não ficar atrás do filmstrip */
             #smg-feed.strip-open .smg-feed-media,
             #smg-feed.strip-open .smg-feed-embed iframe { max-height: calc(100vh - 104px); margin-bottom: 92px; }
@@ -8540,7 +8507,6 @@
             }
             /* header do feed: título grande "Feed" + slot de ações (ícone de notices) à direita. Substitui a antiga tabbar. */
             .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-12); margin: var(--smg-sp-28) 0 var(--smg-sp-18); padding: 0 0 var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
-            @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); } }
             .smg-river-title { margin: 0; padding: 0; font-size: var(--smg-fs-28); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: var(--smg-sp-8); flex: 0 0 auto; }
             .smg-fp-empty { padding: 60px var(--smg-sp-16); text-align: center; font-size: var(--smg-fs-15); color: var(--smg-w-50); }
@@ -8715,7 +8681,7 @@
             .smg-fp-open { display: flex; align-items: center; gap: var(--smg-sp-6); margin: var(--smg-sp-6) 0 0; padding: var(--smg-sp-12) var(--smg-sp-24) var(--smg-sp-14); border-top: 1px solid var(--smg-bd); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; color: var(--smg-link); transition: gap var(--smg-dur-15) ease; }
             .smg-fp-open:hover { gap: var(--smg-sp-10); }
             .smg-fp-open svg { width: 15px; height: 15px; fill: none; }
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); }
                 .smg-fp-card { border-radius: var(--smg-r-14); }
                 .smg-fp-head { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); }
                 .smg-fp-content { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-8); }
@@ -8886,7 +8852,6 @@
                 stroke-width: 2px !important;
             }
             /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
-            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; } }
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
@@ -8920,7 +8885,7 @@
             html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
-            @media (max-width: 1099px) and (min-width: 601px) {
+            @media (max-width: 1100px) and (min-width: 601px) {
                 #smg-aldock { display: none !important; }
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
@@ -8929,7 +8894,7 @@
             }
             /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
                página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
-            @media (max-width: 600px) {
+            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; }
                 #smg-aldock {
                     top: 0; right: 0; bottom: 0; left: 0; width: 100%;
                     z-index: var(--smg-z-sheet-1);                 /* acima da navbar e dos sheets */
@@ -9005,25 +8970,12 @@
                 min-height: calc(100vh - 62px) !important;
                 min-height: calc(100dvh - 62px) !important;
             }
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) {
                 html.smg-topbar-ready #smg-page-skeleton,
                 html.smg-topbar-ready #smg-home-skeleton {
                     top: 52px !important;
                     min-height: calc(100vh - 52px) !important;
                     min-height: calc(100dvh - 52px) !important;
-                }
-            }
-            @media (max-width: 600px) {
-                html.smg-topbar-ready #smg-page-skeleton,
-                html.smg-topbar-ready #smg-home-skeleton {
-                    top: calc(54px + env(safe-area-inset-top)) !important;
-                    min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
-                    min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;
-                }
-                html.smg-thread.smg-topbar-ready #smg-page-skeleton {
-                    top: 0 !important;
-                    min-height: 100vh !important;
-                    min-height: 100dvh !important;
                 }
             }
             html.smg-sidebar-ready #smg-aldock {
@@ -9154,7 +9106,7 @@
             .smg-page-skeleton-rail-copy { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: var(--smg-sp-10); }
             .smg-page-skeleton-rail-line { display: block; width: 86%; height: 10px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
             .smg-page-skeleton-rail-line.short { width: 54%; height: 8px; }
-            @media (max-width: 992px) {
+            @media (max-width: 1100px) {
                 .smg-page-skeleton-chrome { height: 52px; padding: 0 var(--smg-sp-14); }
                 .smg-page-skeleton-chrome-logo { flex-basis: 100px; width: 100px; height: 24px; }
                 .smg-page-skeleton-chrome-nav { display: none; }
@@ -9165,6 +9117,17 @@
                 .smg-page-skeleton-main { width: 100%; max-width: none; padding-left: var(--smg-sp-16); padding-right: var(--smg-sp-16); }
             }
             @media (max-width: 600px) {
+                html.smg-topbar-ready #smg-page-skeleton,
+                html.smg-topbar-ready #smg-home-skeleton {
+                    top: calc(54px + env(safe-area-inset-top)) !important;
+                    min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
+                    min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;
+                }
+                html.smg-thread.smg-topbar-ready #smg-page-skeleton {
+                    top: 0 !important;
+                    min-height: 100vh !important;
+                    min-height: 100dvh !important;
+                }
                 #smg-page-skeleton-rail { display: none !important; }
                 .smg-page-skeleton-chrome { height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) var(--smg-sp-14) 0; }
                 .smg-page-skeleton-main { width: 100%; max-width: none; min-height: calc(100vh - 54px); min-height: calc(100dvh - 54px); padding: var(--smg-sp-14) var(--smg-sp-12) 38px; }

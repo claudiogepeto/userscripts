@@ -2,6 +2,134 @@
     const CSS_MOBILE = `/* ============================================================
                MOBILE: search + filtros viram BOTTOM SHEETS (modernos)
                ============================================================ */
+            /* botão da dock "ativo" (filtro/escolha ligada) */
+            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
+
+            /* ---- scroll infinito: separador de página ---- */
+            .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-10); margin: var(--smg-sp-10) 0; color: rgba(127,127,127,0.85); font-size: var(--smg-fs-12); letter-spacing: .05em; text-transform: uppercase; }
+            .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
+
+            /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
+            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
+            html.smg-threadlist .structItem--thread,
+            html.smg-threadlist .contentRow {
+                display: flex !important;
+                align-items: center !important;
+                gap: var(--smg-sp-14) !important;
+            }
+            /* .dcThumbnail = simpcity (bg-image) · .dtt-thread-thumbnail = socialmediagirls (<img> real) */
+            html.smg-threadlist .dcThumbnail,
+            html.smg-threadlist .dtt-thread-thumbnail { width: 210px !important; height: 132px !important; border-radius: var(--smg-r-8) !important; flex: 0 0 auto !important; overflow: hidden !important; }
+            html.smg-threadlist .dtt-thread-thumbnail img,
+            html.smg-threadlist .dcThumbnail img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+            html.smg-threadlist .structItem-cell--icon:not(.structItem-cell--iconEnd) { flex: 0 0 auto !important; width: auto !important; height: auto !important; }
+            html.smg-threadlist .structItem-cell--main,
+            html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; }
+            html.smg-threadlist .structItem-title,
+            html.smg-threadlist .contentRow-title { font-size: var(--smg-fs-16) !important; line-height: 1.3 !important; }
+            /* divisores internos das células (verticais) sem cor — mantém só o divisor entre os cards */
+            html.smg-threadlist .structItem--thread .structItem-cell { border-color: transparent !important; }
+            /* MOBILE: lista compacta — thumb menor, esconde a coluna de "último post" (espremia o título a ~0) */
+            @media (max-width: 600px) {
+                html.smg-threadlist .structItem--thread,
+                html.smg-threadlist .contentRow { gap: var(--smg-sp-12) !important; align-items: flex-start !important; }
+                html.smg-threadlist .dcThumbnail,
+                html.smg-threadlist .dtt-thread-thumbnail { width: 92px !important; height: 70px !important; }
+                html.smg-threadlist .structItem-cell--latest { display: none !important; }
+                html.smg-threadlist .structItem-cell--main,
+                html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
+                html.smg-threadlist .structItem-title,
+                html.smg-threadlist .structItem-title a,
+                html.smg-threadlist .contentRow-title {
+                    font-size: var(--smg-fs-15) !important; white-space: normal !important;
+                    word-break: normal !important; overflow-wrap: break-word !important;
+                }
+            }
+
+            /* ---- barra de paginação + ações: 1 linha, justify-between, no nosso estilo ---- */
+            html.smg-threadlist .block-outer {
+                display: flex !important; align-items: center !important;
+                justify-content: space-between !important; flex-wrap: wrap !important; gap: var(--smg-sp-10) !important;
+                margin-bottom: var(--smg-sp-12) !important;
+            }
+            html.smg-threadlist .block-outer-main { flex: 1 1 auto !important; min-width: 0 !important; }
+            html.smg-threadlist .block-outer-opposite { flex: 0 0 auto !important; margin: 0 !important; }
+            /* mobile: quebra em 2 linhas (paginação em cima, ações tipo "Mark Forums Read" embaixo) */
+            @media (max-width: 600px) {
+                html.smg-threadlist .block-outer { row-gap: var(--smg-sp-12) !important; }
+                html.smg-threadlist .block-outer-main,
+                html.smg-threadlist .block-outer-opposite {
+                    flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important;
+                    display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
+                }
+                /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
+                html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
+            }
+            /* pager encostado à esquerda (o XF centraliza por padrão) */
+            html.smg-threadlist .pageNavWrapper,
+            html.smg-threadlist .pageNav,
+            html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
+            html.smg-threadlist .pageNav { display: flex !important; gap: var(--smg-sp-6); }
+            /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
+            html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
+            html.smg-threadlist .pageNav-main {
+                display: flex !important; flex-wrap: wrap; align-items: center;
+                gap: var(--smg-sp-6) !important; margin: 0 !important; padding: 0 !important; list-style: none !important;
+            }
+            html.smg-threadlist .pageNav-page, html.smg-threadlist .pageNav-jump { margin: 0 !important; }
+            /* pílulas no nosso estilo */
+            html.smg-threadlist .pageNav-page > a,
+            html.smg-threadlist .pageNav-jump,
+            html.smg-threadlist .pageNavSimple-el {
+                display: inline-flex !important; align-items: center; justify-content: center;
+                box-sizing: border-box;
+                font-weight: 600; text-decoration: none !important; line-height: 1;
+                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
+            }
+            /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
+            html.smg-threadlist .pageNavWrapper .pageNav-page,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a { box-shadow: none !important; }
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current { border: 0 !important; background: none !important; }
+            html.smg-threadlist .pageNavWrapper .pageNav-page::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page > a::after,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::before,
+            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
+            /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
+            html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: var(--smg-sp-6) !important; }
+            html.smg-threadlist .block-outer-opposite .button { color: var(--smg-w-85) !important; box-shadow: none !important; }
+            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
+
+            /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
+               (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)
+               scoped em .smg-smg (3 classes) → vence o .smg-threadlist genérico sem mexer no simpcity */
+            html.smg-threadlist .pageNav-page > a,
+            html.smg-threadlist .pageNav-jump,
+            html.smg-threadlist .pageNavSimple-el {
+                min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 var(--smg-sp-14) !important;
+                border-radius: var(--smg-r-10) !important; border: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important; color: var(--smg-w-85) !important; font-size: var(--smg-fs-14) !important;
+            }
+            html.smg-threadlist .pageNav-page > a:hover,
+            html.smg-threadlist .pageNav-jump:hover,
+            html.smg-threadlist .pageNavSimple-el:hover {
+                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
+            }
+            html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
+            /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
+            html.smg-threadlist .pageNav { align-items: center !important; }
+            html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
+            /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
+            html.smg-threadlist .block-outer-opposite .button {
+                min-height: 36px !important; border-radius: var(--smg-r-10) !important;
+                border: 1px solid var(--smg-bd) !important; background: var(--smg-s1) !important;
+            }
+            html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
             @media (max-width: 600px) {
                 /* scrim aparece quando um popover do dock está aberto */
                 #smg-post-nav-wrapper.settings-open .smg-dock-backdrop,
@@ -205,136 +333,6 @@
                 .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
                 .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
                 .smg-chip { height: 40px; font-size: var(--smg-fs-14); }
-            }
-            /* botão da dock "ativo" (filtro/escolha ligada) */
-            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
-
-            /* ---- scroll infinito: separador de página ---- */
-            .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-10); margin: var(--smg-sp-10) 0; color: rgba(127,127,127,0.85); font-size: var(--smg-fs-12); letter-spacing: .05em; text-transform: uppercase; }
-            .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
-
-            /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
-            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
-            html.smg-threadlist .structItem--thread,
-            html.smg-threadlist .contentRow {
-                display: flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-14) !important;
-            }
-            /* .dcThumbnail = simpcity (bg-image) · .dtt-thread-thumbnail = socialmediagirls (<img> real) */
-            html.smg-threadlist .dcThumbnail,
-            html.smg-threadlist .dtt-thread-thumbnail { width: 210px !important; height: 132px !important; border-radius: var(--smg-r-8) !important; flex: 0 0 auto !important; overflow: hidden !important; }
-            html.smg-threadlist .dtt-thread-thumbnail img,
-            html.smg-threadlist .dcThumbnail img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-            html.smg-threadlist .structItem-cell--icon:not(.structItem-cell--iconEnd) { flex: 0 0 auto !important; width: auto !important; height: auto !important; }
-            html.smg-threadlist .structItem-cell--main,
-            html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; text-align: left !important; }
-            html.smg-threadlist .structItem-title,
-            html.smg-threadlist .contentRow-title { font-size: var(--smg-fs-16) !important; line-height: 1.3 !important; }
-            /* divisores internos das células (verticais) sem cor — mantém só o divisor entre os cards */
-            html.smg-threadlist .structItem--thread .structItem-cell { border-color: transparent !important; }
-            /* MOBILE: lista compacta — thumb menor, esconde a coluna de "último post" (espremia o título a ~0) */
-            @media (max-width: 600px) {
-                html.smg-threadlist .structItem--thread,
-                html.smg-threadlist .contentRow { gap: var(--smg-sp-12) !important; align-items: flex-start !important; }
-                html.smg-threadlist .dcThumbnail,
-                html.smg-threadlist .dtt-thread-thumbnail { width: 92px !important; height: 70px !important; }
-                html.smg-threadlist .structItem-cell--latest { display: none !important; }
-                html.smg-threadlist .structItem-cell--main,
-                html.smg-threadlist .contentRow-main { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
-                html.smg-threadlist .structItem-title,
-                html.smg-threadlist .structItem-title a,
-                html.smg-threadlist .contentRow-title {
-                    font-size: var(--smg-fs-15) !important; white-space: normal !important;
-                    word-break: normal !important; overflow-wrap: break-word !important;
-                }
-            }
-
-            /* ---- barra de paginação + ações: 1 linha, justify-between, no nosso estilo ---- */
-            html.smg-threadlist .block-outer {
-                display: flex !important; align-items: center !important;
-                justify-content: space-between !important; flex-wrap: wrap !important; gap: var(--smg-sp-10) !important;
-                margin-bottom: var(--smg-sp-12) !important;
-            }
-            html.smg-threadlist .block-outer-main { flex: 1 1 auto !important; min-width: 0 !important; }
-            html.smg-threadlist .block-outer-opposite { flex: 0 0 auto !important; margin: 0 !important; }
-            /* mobile: quebra em 2 linhas (paginação em cima, ações tipo "Mark Forums Read" embaixo) */
-            @media (max-width: 600px) {
-                html.smg-threadlist .block-outer { row-gap: var(--smg-sp-12) !important; }
-                html.smg-threadlist .block-outer-main,
-                html.smg-threadlist .block-outer-opposite {
-                    flex: 1 1 100% !important; width: 100% !important; min-width: 0 !important;
-                    display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
-                }
-                /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
-                html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
-            }
-            /* pager encostado à esquerda (o XF centraliza por padrão) */
-            html.smg-threadlist .pageNavWrapper,
-            html.smg-threadlist .pageNav,
-            html.smg-threadlist .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; }
-            html.smg-threadlist .pageNav { display: flex !important; gap: var(--smg-sp-6); }
-            /* mostra só UM paginador (completo no desktop) — evita o pager completo + o "1 of N" juntos */
-            html.smg-threadlist .pageNavWrapper .pageNavSimple { display: none !important; }
-            html.smg-threadlist .pageNav-main {
-                display: flex !important; flex-wrap: wrap; align-items: center;
-                gap: var(--smg-sp-6) !important; margin: 0 !important; padding: 0 !important; list-style: none !important;
-            }
-            html.smg-threadlist .pageNav-page, html.smg-threadlist .pageNav-jump { margin: 0 !important; }
-            /* pílulas no nosso estilo */
-            html.smg-threadlist .pageNav-page > a,
-            html.smg-threadlist .pageNav-jump,
-            html.smg-threadlist .pageNavSimple-el {
-                display: inline-flex !important; align-items: center; justify-content: center;
-                box-sizing: border-box;
-                font-weight: 600; text-decoration: none !important; line-height: 1;
-                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
-            }
-            /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
-            html.smg-threadlist .pageNavWrapper .pageNav-page,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a { box-shadow: none !important; }
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current { border: 0 !important; background: none !important; }
-            html.smg-threadlist .pageNavWrapper .pageNav-page::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page > a::after,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::before,
-            html.smg-threadlist .pageNavWrapper .pageNav-page--current > a::after { content: none !important; display: none !important; border: 0 !important; background: none !important; }
-            /* botões de ação (Mark Read / Watch / Manage…) no nosso estilo */
-            html.smg-threadlist .block-outer-opposite .buttonGroup { display: flex !important; gap: var(--smg-sp-6) !important; }
-            html.smg-threadlist .block-outer-opposite .button { color: var(--smg-w-85) !important; box-shadow: none !important; }
-            html.smg-threadlist .block-outer-opposite .button:hover { color: #fff !important; }
-
-            /* ---- SMG: paginador/barra do fórum = MESMO visual da thread ----
-               (pílula 36/raio 10 · página atual BRANCA · setas viram ícone · números alinhados)
-               scoped em .smg-smg (3 classes) → vence o .smg-threadlist genérico sem mexer no simpcity */
-            html.smg-threadlist .pageNav-page > a,
-            html.smg-threadlist .pageNav-jump,
-            html.smg-threadlist .pageNavSimple-el {
-                min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 var(--smg-sp-14) !important;
-                border-radius: var(--smg-r-10) !important; border: 1px solid var(--smg-bd) !important;
-                background: var(--smg-s1) !important; color: var(--smg-w-85) !important; font-size: var(--smg-fs-14) !important;
-            }
-            html.smg-threadlist .pageNav-page > a:hover,
-            html.smg-threadlist .pageNav-jump:hover,
-            html.smg-threadlist .pageNavSimple-el:hover {
-                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
-            /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
-            html.smg-threadlist .pageNav { align-items: center !important; }
-            html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
-            /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
-            html.smg-threadlist .block-outer-opposite .button {
-                min-height: 36px !important; border-radius: var(--smg-r-10) !important;
-                border: 1px solid var(--smg-bd) !important; background: var(--smg-s1) !important;
-            }
-            html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
-            @media (max-width: 600px) {
                 /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
                 html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
                 /* mobile: pager simples sem primeiro/último (evita pílula vazia do «/») */

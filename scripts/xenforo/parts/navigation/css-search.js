@@ -577,11 +577,6 @@
                 font-size: var(--smg-fs-13);
                 border-radius: var(--smg-r-10);
             }
-            @media (max-width: 600px) {
-                .smg-search-bar { gap: var(--smg-sp-6); }   /* barra mais apertada com os ícones */
-                #smg-rs-panel { margin-top: var(--smg-sp-10); }
-                #smg-rs-panel .smg-search-bar { height: 48px; }
-            }
 
             /* ===== página de RESULTADOS da busca: lista nativa re-tematizada (cards no padrão do tema) =====
                Os .contentRow do XF (avatar · título · snippet · meta) seguem server-render — só a CASCA muda:
@@ -621,10 +616,6 @@
             html.smg-search-page .block-row .contentRow-minor a:hover { color: #fff !important; text-decoration: underline !important; }
             html.smg-search-page .block-row .contentRow-minor time { color: var(--smg-w-55); }
             html.smg-search-page .block-row .contentRow-minor .tagItem { font-size: var(--smg-fs-11) !important; padding: var(--smg-sp-2) var(--smg-sp-8) !important; border-radius: var(--smg-r-6) !important; }
-            @media (max-width: 600px) {
-                html.smg-search-page .block-row.block-row--separated { padding: var(--smg-sp-12) var(--smg-sp-14) !important; border-radius: var(--smg-r-12) !important; }
-                html.smg-search-page .block-row .contentRow { gap: var(--smg-sp-10) !important; }
-            }
 
             /* ===== página de BUSCA AVANÇADA (search_form): form nativo re-tematizado =====
                Só a CASCA muda (CSS) — os widgets do XF (tagify, autocomplete, datas, abas, sticky submit)
@@ -664,7 +655,7 @@
                 display: grid; grid-template-columns: 1fr; gap: var(--smg-sp-20);
                 padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-24) !important; background: transparent !important; border: 0 !important;
             }
-            @media (min-width: 901px) {
+            @media (min-width: 801px) {
                 html.smg-search-form form.block .block-body { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--smg-sp-24) 40px; padding: var(--smg-sp-28) var(--smg-sp-32) var(--smg-sp-28) !important; }
                 html.smg-search-form form.block .block-body > .formRow:first-child { grid-column: 1 / -1; }
             }
@@ -741,6 +732,11 @@
             html.smg-search-form form.block .formSubmitRow .button--primary:hover { filter: brightness(1.1); }
             html.smg-search-form form.block .formSubmitRow .button--primary:active { transform: scale(0.97); }
             @media (max-width: 600px) {
+                .smg-search-bar { gap: var(--smg-sp-6); }   /* barra mais apertada com os ícones */
+                #smg-rs-panel { margin-top: var(--smg-sp-10); }
+                #smg-rs-panel .smg-search-bar { height: 48px; }
+                html.smg-search-page .block-row.block-row--separated { padding: var(--smg-sp-12) var(--smg-sp-14) !important; border-radius: var(--smg-r-12) !important; }
+                html.smg-search-page .block-row .contentRow { gap: var(--smg-sp-10) !important; }
                 html.smg-search-form form.block .block-body { padding: var(--smg-sp-16) var(--smg-sp-16) var(--smg-sp-18) !important; gap: var(--smg-sp-18); }
                 html.smg-search-form .block-tabHeader { padding: var(--smg-sp-2) var(--smg-sp-6) 0 !important; }
                 html.smg-search-form .block-tabHeader .tabs-tab { height: 44px; padding: 0 var(--smg-sp-10); font-size: var(--smg-fs-13) !important; }

@@ -2,6 +2,35 @@
     const CSS_DOCK = `
             /* Mobile: fixed topbar with one height (matching the bottom navbar). Threads swap
                in the context shell; other pages keep the logo and actions. */
+
+            /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
+               no mobile esses botões continuam (viram a navbar inferior) */
+
+            @media (min-width: 601px) {
+                #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
+                .smg-dock-thread-bar { display: none !important; }
+                /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
+                #smg-post-nav-panel > .smg-nav-center,
+                #smg-post-nav-panel > .smg-nav-center + .smg-nav-divider { display: none !important; }
+                /* páginas sem ações (sobraria só a engrenagem): esconde a dock inteira no desktop */
+                #smg-post-nav-wrapper.smg-dock-baronly { display: none !important; }
+                #smg-post-nav-wrapper.smg-dock-baronly.smg-dock-show { display: block !important; }   /* reaberta pelo FAB */
+                html.smg-threadlist:not(.smg-thread) #smg-post-nav-wrapper.smg-dock-as-list { display: block !important; }
+            }
+            /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
+               então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
+            #smg-settings-fab {
+                position: fixed; right: 18px; bottom: 18px; z-index: var(--smg-z-dock-under);
+                width: 44px; height: 44px; border-radius: var(--smg-r-round); border: 1px solid var(--smg-bd);
+                background: var(--smg-s1); color: var(--smg-w-72); cursor: pointer;
+                display: inline-flex; align-items: center; justify-content: center;
+                box-shadow: var(--smg-shadow-2); transition: color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
+            }
+            #smg-settings-fab .smg-nav-ico { font-size: var(--smg-fs-22); }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
+            #smg-settings-fab:hover { color: #fff; background: var(--smg-s2); }
+            #smg-settings-fab:active { transform: scale(0.92); }
+            #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
             @media (max-width: 600px) {
                 :root { --smg-mobile-topbar-h: 54px; }
                 #smg-topbar-wrap {
@@ -81,41 +110,7 @@
                     display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis;
                     white-space: nowrap;
                 }
-                .smg-mobile-threadbar-end { width: 44px; height: 44px; }
-
-            }
-            @media (max-width: 480px) {
-            }
-
-            /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
-               no mobile esses botões continuam (viram a navbar inferior) */
-
-            @media (min-width: 601px) {
-                #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
-                .smg-dock-thread-bar { display: none !important; }
-                /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
-                #smg-post-nav-panel > .smg-nav-center,
-                #smg-post-nav-panel > .smg-nav-center + .smg-nav-divider { display: none !important; }
-                /* páginas sem ações (sobraria só a engrenagem): esconde a dock inteira no desktop */
-                #smg-post-nav-wrapper.smg-dock-baronly { display: none !important; }
-                #smg-post-nav-wrapper.smg-dock-baronly.smg-dock-show { display: block !important; }   /* reaberta pelo FAB */
-                html.smg-threadlist:not(.smg-thread) #smg-post-nav-wrapper.smg-dock-as-list { display: block !important; }
-            }
-            /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
-               então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
-            #smg-settings-fab {
-                position: fixed; right: 18px; bottom: 18px; z-index: var(--smg-z-dock-under);
-                width: 44px; height: 44px; border-radius: var(--smg-r-round); border: 1px solid var(--smg-bd);
-                background: var(--smg-s1); color: var(--smg-w-72); cursor: pointer;
-                display: inline-flex; align-items: center; justify-content: center;
-                box-shadow: var(--smg-shadow-2); transition: color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
-            }
-            #smg-settings-fab .smg-nav-ico { font-size: var(--smg-fs-22); }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
-            #smg-settings-fab:hover { color: #fff; background: var(--smg-s2); }
-            #smg-settings-fab:active { transform: scale(0.92); }
-            #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
-            @media (max-width: 600px) { #smg-settings-fab { display: none !important; } }   /* mobile: a navbar inferior já tem a engrenagem */
+                .smg-mobile-threadbar-end { width: 44px; height: 44px; } #smg-settings-fab { display: none !important; } }   /* mobile: a navbar inferior já tem a engrenagem */
             /* filtro/ordem/grade da LISTA existem sempre (a dock nasce uma vez). Só aparecem numa listagem. */
             html:not(.smg-threadlist) #smg-list-filter,
             html:not(.smg-threadlist) #smg-list-sort,
