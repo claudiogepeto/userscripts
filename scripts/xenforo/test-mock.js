@@ -8305,6 +8305,7 @@ async function runTests() {
         assert(!root.classList.contains('smg-scrolling'), 'html.smg-scrolling sai quando a rolagem para');
         const scrollCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
         assert(/@media \(hover: hover\) and \(pointer: fine\)\s*\{\s*html\.smg-scrolling \.p-body \{ pointer-events: none/.test(scrollCss), 'CSS deve desligar o hover do .p-body só durante a rolagem e só com mouse');
+        assert(/html\.smg-scrolling \.p-body \* \{ pointer-events: none !important; \}/.test(scrollCss), 'A guarda de hover também cobre os descendentes (cards com pointer-events:auto explícito)');
     }
 
     // =========================================================================
