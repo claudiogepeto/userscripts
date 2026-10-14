@@ -8802,7 +8802,7 @@
     // core/06-helpers.js
     // Owns: shared helpers: URL/proxy decoding, text and title cleanup, fetchDoc/postForm, toast, sheet/modal/popover
     // registries (smgSheetOpen, smgModalOpen, smgPopover, wireSheetClose), dock buttons, pagination helpers, thumbnail cache.
-    // Exposes: toast, smgPopover, smgSheetOpen/Close, smgModalOpen/Close, fetchDoc, postForm, absUrl, eachIn, onScrollRaf, pagerMax, ...
+    // Exposes: toast, smgPopover, smgSheetOpen/Close, smgModalOpen/Close, fetchDoc, postForm, absUrl, eachIn, onScrollRaf, makeLazyIO, trackObserver, releaseObserversIn, pagerMax, ...
     // Depends on: core/02-config, core/03-i18n, core/04-icons.
     // =========================================================
     // HELPERS: text / url
@@ -9820,9 +9820,21 @@
     // Retorna null se o browser não tiver IO → o caller cai no fallback de carregar na hora.
     function makeLazyIO(onEnter, opts) {
         if (!('IntersectionObserver' in window)) return null;
-        return new IntersectionObserver((entries, obs) => {
+        return trackObserver(new IntersectionObserver((entries, obs) => {
             entries.forEach(en => { if (en.isIntersecting) { obs.unobserve(en.target); onEnter(en.target); } });
-        }, opts || {});
+        }, opts || {}));
+    }
+
+    // Observers de vida longa (IO/RO) que vigiam nós do conteúdo. Eles seguram os alvos: na soft-nav o
+    // .p-body que sai é des-observado em todos (releaseObserversIn), senão os nós velhos ficam presos.
+    const pageObservers = new Set();
+    function trackObserver(o) { if (o) pageObservers.add(o); return o; }
+    function releaseObserversIn(root) {
+        if (!root || !root.getElementsByTagName || !pageObservers.size) return;
+        const list = Array.from(pageObservers);
+        const els = root.getElementsByTagName('*');
+        list.forEach(o => o.unobserve(root));
+        for (let i = 0; i < els.length; i++) for (let j = 0; j < list.length; j++) list[j].unobserve(els[i]);
     }
 
     // =========================================================
@@ -10674,12 +10686,12 @@
             if (el.dataset.smgAnimIo === '1') return;
             el.dataset.smgAnimIo = '1';
             if (!bannerIO) {   // só nasce na primeira página que tem banner
-                bannerIO = new IntersectionObserver(entries => {
+                bannerIO = trackObserver(new IntersectionObserver(entries => {
                     entries.forEach(en => {
                         if (!en.target.isConnected) { bannerIO.unobserve(en.target); return; }
                         en.target.classList.toggle('smg-anim-paused', !en.isIntersecting);
                     });
-                }, { rootMargin: '100px 0px' });
+                }, { rootMargin: '100px 0px' }));
             }
             bannerIO.observe(el);
         });
@@ -11124,7 +11136,7 @@
     let masonryRO = null, masonRaf = 0, masonDirty = new Set();
     function masonryObserver() {
         if (masonryRO || typeof ResizeObserver === 'undefined') return masonryRO;
-        masonryRO = new ResizeObserver(entries => {
+        masonryRO = trackObserver(new ResizeObserver(entries => {
             entries.forEach(en => {
                 const st = masonryState.get(en.target);
                 if (!st) return;
@@ -11133,7 +11145,7 @@
                 st.width = w;
                 masonryLayout(en.target);     // width is known here: lay out now, no extra frame of a stale grid
             });
-        });
+        }));
         return masonryRO;
     }
     // registers a container (idempotent). opts.getRatio(item) -> height/width of that item;
@@ -12244,7 +12256,7 @@
 
     // media/10-redgifs-player.js
     // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
-    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
+    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
     // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
@@ -12663,6 +12675,19 @@
         for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
         if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
         rgLiveVideos.delete(video);
+    }
+    // soft-nav: o .p-body que sai leva junto os players. Solta decoder/buffer/blob de cada <video>/<audio>
+    // dele e tira os nossos do rgLiveVideos, senão o Set (e o elemento de mídia) seguram o body antigo vivo.
+    function releaseMediaIn(root) {
+        if (!root || !root.querySelectorAll) return;
+        root.querySelectorAll('video, audio').forEach(m => {
+            if (rgLiveVideos.has(m)) rgDispose(m);
+            try { m.pause(); } catch (e) {}
+            m.querySelectorAll('source').forEach(s => s.remove());
+            if (m.hasAttribute('src')) m.removeAttribute('src');
+            try { m.load(); } catch (e) {}
+        });
+        rgLiveVideos.forEach(v => { if (!v.isConnected) rgDispose(v); });
     }
     function rgRestore(video, dead) {
         const wrap = video.closest('.smg-rg'); if (!wrap) return;
@@ -13649,15 +13674,14 @@
             return;
         }
 
-        // anchors de cada post (ignora respostas em quote)
-        let posts = Array.from(
-            document.querySelectorAll('span.u-anchorTarget[id^="post-"]')
-        ).filter(el => !el.closest('.message-responseRow'));
-
-        // fallback
-        if (posts.length === 0) {
-            posts = Array.from(document.querySelectorAll('.message'));
+        // anchors de cada post (ignora respostas em quote); fallback .message. Re-consultado a cada página
+        // (smgRefreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
+        function queryDockPosts() {
+            const anchors = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]'))
+                .filter(el => !el.closest('.message-responseRow'));
+            return anchors.length ? anchors : Array.from(document.querySelectorAll('.message'));
         }
+        let posts = queryDockPosts();
 
         // dock é global: monta em qualquer página. Os grupos de navegação/ação
         // (e a fiação deles) só fazem sentido numa thread.
@@ -13855,6 +13879,7 @@
             navWrapper.classList.toggle('smg-dock-baronly', !list && !thread);
         }
         window.smgRefreshDockPage = () => {
+            posts = queryDockPosts();
             syncDockListMode();
             if (typeof closePopovers === 'function') closePopovers();
             mobilePagePop.classList.remove('open');
@@ -16631,8 +16656,7 @@
             const h = document.documentElement.scrollHeight;
             if (h === lastScanHeight) return;   // nada anexado desde o último scan → poupa o qSA doc-wide + closest por anchor
             lastScanHeight = h;
-            let p = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]')).filter(el => !el.closest('.message-responseRow'));
-            if (!p.length) p = Array.from(document.querySelectorAll('.message'));
+            const p = queryDockPosts();
             if (p.length > posts.length) posts = p;
         }
         // estado dos botões prev/next/goto: depende só de constantes capturadas no mount → seta 1× (não no scroll)
@@ -18375,14 +18399,14 @@
     function watchFarThumb(img, row) {
         if (!('IntersectionObserver' in window)) return;
         if (!farThumbIO) {
-            farThumbIO = new IntersectionObserver((entries, obs) => {
+            farThumbIO = trackObserver(new IntersectionObserver((entries, obs) => {
                 entries.forEach(en => {
                     obs.unobserve(en.target);
                     const r = en.target._smgPhRow;
                     en.target._smgPhRow = null;
                     if (r && !en.isIntersecting) r.dataset.smgPhReady = '1';
                 });
-            }, { rootMargin: '0px 0px 50% 0px' });
+            }, { rootMargin: '0px 0px 50% 0px' }));
         }
         img._smgPhRow = row;
         farThumbIO.observe(img);
@@ -26520,6 +26544,38 @@
         return out;
     }
 
+    // XF.activate registra cada elemento do body em XF.eventHandlers (XF.on) e os tooltips em
+    // XF.TooltipTrigger.cache; nada disso sai quando a soft-nav troca o .p-body, e cada página antiga ficava
+    // presa ali. Poda as entradas cujo elemento saiu do documento. Roda no mundo da página (vai como texto
+    // na ponte) ou direto do sandbox; API do XF ausente ou diferente → não faz nada.
+    function xfPruneDetached(XF) {
+        if (!XF) return;
+        var gone = function (el) { if (el && el.jquery) el = el[0]; return !!(el && el.nodeType === 1 && !el.isConnected); };
+        try {
+            var eh = XF.eventHandlers;
+            if (eh && typeof eh === 'object') {
+                Object.keys(eh).forEach(function (ns) {
+                    var byType = eh[ns];
+                    if (!byType || typeof byType !== 'object') return;
+                    Object.keys(byType).forEach(function (type) {
+                        var list = byType[type];
+                        if (!Array.isArray(list)) return;
+                        for (var i = list.length - 1; i >= 0; i--) if (list[i] && gone(list[i].element)) list.splice(i, 1);
+                    });
+                });
+            }
+        } catch (e) {}
+        try {
+            var cache = XF.TooltipTrigger && XF.TooltipTrigger.cache;
+            if (cache && typeof cache === 'object') {
+                Object.keys(cache).forEach(function (k) {
+                    var t = cache[k];
+                    if (t && gone(t.target || t.$target)) delete cache[k];
+                });
+            }
+        } catch (e) {}
+    }
+
     // A ativação roda no mundo da PÁGINA: com @grant o gerenciador pode isolar o script e esconder
     // window.XF. A ponte é um <script> inline (a CSP desses fóruns só tem upgrade-insecure-requests).
     const XF_BRIDGE_ATTR = 'data-smg-xf-bridge';
@@ -26530,6 +26586,7 @@
             var req = {};
             try { req = JSON.parse(ev.detail || '{}') || {}; } catch (e) {}
             var XF = window.XF;
+            (${xfPruneDetached.toString()})(XF);
             if (!XF || typeof XF.activate !== 'function') return;
             var run = function () {
                 var body = document.querySelector('.p-body');
@@ -26567,6 +26624,7 @@
         }
         // sem ponte (script inline bloqueado): mesmo caminho, direto do sandbox
         const XF = window.XF;
+        xfPruneDetached(XF);
         if (!XF || typeof XF.activate !== 'function') return;
         const run = () => {
             const body = document.querySelector('.p-body');
@@ -26633,6 +26691,7 @@
             const nextBody = nextBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
             const curBody = curBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
             const freshBody = document.importNode(nextBody, true);
+            curBodies.forEach(b => { releaseMediaIn(b); releaseObserversIn(b); });   // antes de sair do DOM: solta mídia e observers da página velha
             curBody.replaceWith(freshBody);
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
             swapOuterPageHeader(doc, nextBody, freshBody);

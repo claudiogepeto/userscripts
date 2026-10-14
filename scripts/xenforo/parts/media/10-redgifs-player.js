@@ -1,6 +1,6 @@
     // media/10-redgifs-player.js
     // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
-    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
+    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
     // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
@@ -419,6 +419,19 @@
         for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
         if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
         rgLiveVideos.delete(video);
+    }
+    // soft-nav: o .p-body que sai leva junto os players. Solta decoder/buffer/blob de cada <video>/<audio>
+    // dele e tira os nossos do rgLiveVideos, senão o Set (e o elemento de mídia) seguram o body antigo vivo.
+    function releaseMediaIn(root) {
+        if (!root || !root.querySelectorAll) return;
+        root.querySelectorAll('video, audio').forEach(m => {
+            if (rgLiveVideos.has(m)) rgDispose(m);
+            try { m.pause(); } catch (e) {}
+            m.querySelectorAll('source').forEach(s => s.remove());
+            if (m.hasAttribute('src')) m.removeAttribute('src');
+            try { m.load(); } catch (e) {}
+        });
+        rgLiveVideos.forEach(v => { if (!v.isConnected) rgDispose(v); });
     }
     function rgRestore(video, dead) {
         const wrap = video.closest('.smg-rg'); if (!wrap) return;

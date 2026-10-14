@@ -135,3 +135,46 @@ scenario('Back returns to the previous page through the same soft navigation', a
     assert.ok(page.$('#js-post-1'), 'the thread body is back');
     assert.ok(page.document.documentElement.classList.contains('smg-thread'));
 });
+
+scenario('leaving a page stops its media and drops its XenForo handlers and tooltips', async t => {
+    const page = await t.open({
+        url: SMG + THREAD,
+        html: threadPage({ posts: [{ id: 1, body: '<video class="old-vid" src="https://example.com/v.mp4"><source src="https://example.com/v.webm"></video>' }] }),
+        routes: site(),
+        before: (w, p) => {
+            stubXF(w, p);
+            w.XF.eventHandlers = { default: { click: [] } };
+            w.XF.TooltipTrigger = { cache: {} };
+        },
+    });
+    await page.settle(60);
+    const XF = page.window.XF;
+    const vid = page.$('video.old-vid');
+    const oldEl = page.$('#js-post-1');
+    assert.ok(vid && oldEl, 'control: the old page has its video and post');
+    let paused = 0;
+    vid.addEventListener('pause', () => { paused++; });
+    XF.eventHandlers.default.click.push({ element: oldEl, handler() {} }, { element: page.window, handler() {} }, { element: page.$('#smg-topbar') || page.document.body, handler() {} });
+    XF.TooltipTrigger.cache.a = { target: oldEl };
+    XF.TooltipTrigger.cache.b = { target: page.document.body };
+    await go(page, '/threads/other.200/');
+    assert.ok(!oldEl.isConnected, 'the old body left the document');
+    assert.ok(paused >= 1, 'the old video was paused');
+    assert.equal(vid.getAttribute('src'), null, 'the old video let go of its source');
+    assert.equal(vid.querySelectorAll('source').length, 0, 'and of its <source> children');
+    const left = XF.eventHandlers.default.click.map(r => r.element);
+    assert.equal(left.length, 2, 'only handlers of live elements remain');
+    assert.ok(!left.includes(oldEl), 'the old element handler is gone');
+    assert.ok(left.includes(page.window), 'window handlers are kept');
+    assert.deepEqual(Object.keys(XF.TooltipTrigger.cache), ['b'], 'tooltip cache keeps live targets only');
+    assert.equal(page.xf.load.length, 1, 'the new page is still activated through the loader');
+});
+
+scenario('a page whose XenForo has no handler registry or tooltip cache still navigates', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }] }), routes: site(), before: (w, p) => { stubXF(w, p); w.XF.eventHandlers = null; w.XF.TooltipTrigger = { cache: 7 }; } });
+    await page.settle(60);
+    await go(page, '/threads/other.200/');
+    page.xf.pending();
+    assert.equal(page.xf.activate.length, 1, 'activation still happens');
+    assert.ok(page.$('#js-post-2001'));
+});

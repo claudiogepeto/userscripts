@@ -254,14 +254,14 @@
     function watchFarThumb(img, row) {
         if (!('IntersectionObserver' in window)) return;
         if (!farThumbIO) {
-            farThumbIO = new IntersectionObserver((entries, obs) => {
+            farThumbIO = trackObserver(new IntersectionObserver((entries, obs) => {
                 entries.forEach(en => {
                     obs.unobserve(en.target);
                     const r = en.target._smgPhRow;
                     en.target._smgPhRow = null;
                     if (r && !en.isIntersecting) r.dataset.smgPhReady = '1';
                 });
-            }, { rootMargin: '0px 0px 50% 0px' });
+            }, { rootMargin: '0px 0px 50% 0px' }));
         }
         img._smgPhRow = row;
         farThumbIO.observe(img);

@@ -68,15 +68,14 @@
             return;
         }
 
-        // anchors de cada post (ignora respostas em quote)
-        let posts = Array.from(
-            document.querySelectorAll('span.u-anchorTarget[id^="post-"]')
-        ).filter(el => !el.closest('.message-responseRow'));
-
-        // fallback
-        if (posts.length === 0) {
-            posts = Array.from(document.querySelectorAll('.message'));
+        // anchors de cada post (ignora respostas em quote); fallback .message. Re-consultado a cada página
+        // (smgRefreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
+        function queryDockPosts() {
+            const anchors = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]'))
+                .filter(el => !el.closest('.message-responseRow'));
+            return anchors.length ? anchors : Array.from(document.querySelectorAll('.message'));
         }
+        let posts = queryDockPosts();
 
         // dock é global: monta em qualquer página. Os grupos de navegação/ação
         // (e a fiação deles) só fazem sentido numa thread.
@@ -274,6 +273,7 @@
             navWrapper.classList.toggle('smg-dock-baronly', !list && !thread);
         }
         window.smgRefreshDockPage = () => {
+            posts = queryDockPosts();
             syncDockListMode();
             if (typeof closePopovers === 'function') closePopovers();
             mobilePagePop.classList.remove('open');

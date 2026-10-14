@@ -476,6 +476,38 @@
         return out;
     }
 
+    // XF.activate registra cada elemento do body em XF.eventHandlers (XF.on) e os tooltips em
+    // XF.TooltipTrigger.cache; nada disso sai quando a soft-nav troca o .p-body, e cada página antiga ficava
+    // presa ali. Poda as entradas cujo elemento saiu do documento. Roda no mundo da página (vai como texto
+    // na ponte) ou direto do sandbox; API do XF ausente ou diferente → não faz nada.
+    function xfPruneDetached(XF) {
+        if (!XF) return;
+        var gone = function (el) { if (el && el.jquery) el = el[0]; return !!(el && el.nodeType === 1 && !el.isConnected); };
+        try {
+            var eh = XF.eventHandlers;
+            if (eh && typeof eh === 'object') {
+                Object.keys(eh).forEach(function (ns) {
+                    var byType = eh[ns];
+                    if (!byType || typeof byType !== 'object') return;
+                    Object.keys(byType).forEach(function (type) {
+                        var list = byType[type];
+                        if (!Array.isArray(list)) return;
+                        for (var i = list.length - 1; i >= 0; i--) if (list[i] && gone(list[i].element)) list.splice(i, 1);
+                    });
+                });
+            }
+        } catch (e) {}
+        try {
+            var cache = XF.TooltipTrigger && XF.TooltipTrigger.cache;
+            if (cache && typeof cache === 'object') {
+                Object.keys(cache).forEach(function (k) {
+                    var t = cache[k];
+                    if (t && gone(t.target || t.$target)) delete cache[k];
+                });
+            }
+        } catch (e) {}
+    }
+
     // A ativação roda no mundo da PÁGINA: com @grant o gerenciador pode isolar o script e esconder
     // window.XF. A ponte é um <script> inline (a CSP desses fóruns só tem upgrade-insecure-requests).
     const XF_BRIDGE_ATTR = 'data-smg-xf-bridge';
@@ -486,6 +518,7 @@
             var req = {};
             try { req = JSON.parse(ev.detail || '{}') || {}; } catch (e) {}
             var XF = window.XF;
+            (${xfPruneDetached.toString()})(XF);
             if (!XF || typeof XF.activate !== 'function') return;
             var run = function () {
                 var body = document.querySelector('.p-body');
@@ -523,6 +556,7 @@
         }
         // sem ponte (script inline bloqueado): mesmo caminho, direto do sandbox
         const XF = window.XF;
+        xfPruneDetached(XF);
         if (!XF || typeof XF.activate !== 'function') return;
         const run = () => {
             const body = document.querySelector('.p-body');
@@ -589,6 +623,7 @@
             const nextBody = nextBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
             const curBody = curBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
             const freshBody = document.importNode(nextBody, true);
+            curBodies.forEach(b => { releaseMediaIn(b); releaseObserversIn(b); });   // antes de sair do DOM: solta mídia e observers da página velha
             curBody.replaceWith(freshBody);
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
             swapOuterPageHeader(doc, nextBody, freshBody);

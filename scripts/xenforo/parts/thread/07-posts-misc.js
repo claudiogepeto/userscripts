@@ -52,12 +52,12 @@
             if (el.dataset.smgAnimIo === '1') return;
             el.dataset.smgAnimIo = '1';
             if (!bannerIO) {   // só nasce na primeira página que tem banner
-                bannerIO = new IntersectionObserver(entries => {
+                bannerIO = trackObserver(new IntersectionObserver(entries => {
                     entries.forEach(en => {
                         if (!en.target.isConnected) { bannerIO.unobserve(en.target); return; }
                         en.target.classList.toggle('smg-anim-paused', !en.isIntersecting);
                     });
-                }, { rootMargin: '100px 0px' });
+                }, { rootMargin: '100px 0px' }));
             }
             bannerIO.observe(el);
         });

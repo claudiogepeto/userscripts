@@ -784,8 +784,7 @@
             const h = document.documentElement.scrollHeight;
             if (h === lastScanHeight) return;   // nada anexado desde o último scan → poupa o qSA doc-wide + closest por anchor
             lastScanHeight = h;
-            let p = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]')).filter(el => !el.closest('.message-responseRow'));
-            if (!p.length) p = Array.from(document.querySelectorAll('.message'));
+            const p = queryDockPosts();
             if (p.length > posts.length) posts = p;
         }
         // estado dos botões prev/next/goto: depende só de constantes capturadas no mount → seta 1× (não no scroll)

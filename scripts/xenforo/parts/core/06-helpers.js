@@ -1,7 +1,7 @@
     // core/06-helpers.js
     // Owns: shared helpers: URL/proxy decoding, text and title cleanup, fetchDoc/postForm, toast, sheet/modal/popover
     // registries (smgSheetOpen, smgModalOpen, smgPopover, wireSheetClose), dock buttons, pagination helpers, thumbnail cache.
-    // Exposes: toast, smgPopover, smgSheetOpen/Close, smgModalOpen/Close, fetchDoc, postForm, absUrl, eachIn, onScrollRaf, pagerMax, ...
+    // Exposes: toast, smgPopover, smgSheetOpen/Close, smgModalOpen/Close, fetchDoc, postForm, absUrl, eachIn, onScrollRaf, makeLazyIO, trackObserver, releaseObserversIn, pagerMax, ...
     // Depends on: core/02-config, core/03-i18n, core/04-icons.
     // =========================================================
     // HELPERS: text / url
@@ -1019,9 +1019,21 @@
     // Retorna null se o browser não tiver IO → o caller cai no fallback de carregar na hora.
     function makeLazyIO(onEnter, opts) {
         if (!('IntersectionObserver' in window)) return null;
-        return new IntersectionObserver((entries, obs) => {
+        return trackObserver(new IntersectionObserver((entries, obs) => {
             entries.forEach(en => { if (en.isIntersecting) { obs.unobserve(en.target); onEnter(en.target); } });
-        }, opts || {});
+        }, opts || {}));
+    }
+
+    // Observers de vida longa (IO/RO) que vigiam nós do conteúdo. Eles seguram os alvos: na soft-nav o
+    // .p-body que sai é des-observado em todos (releaseObserversIn), senão os nós velhos ficam presos.
+    const pageObservers = new Set();
+    function trackObserver(o) { if (o) pageObservers.add(o); return o; }
+    function releaseObserversIn(root) {
+        if (!root || !root.getElementsByTagName || !pageObservers.size) return;
+        const list = Array.from(pageObservers);
+        const els = root.getElementsByTagName('*');
+        list.forEach(o => o.unobserve(root));
+        for (let i = 0; i < els.length; i++) for (let j = 0; j < list.length; j++) list[j].unobserve(els[i]);
     }
 
     // =========================================================

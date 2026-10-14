@@ -85,7 +85,7 @@
     let masonryRO = null, masonRaf = 0, masonDirty = new Set();
     function masonryObserver() {
         if (masonryRO || typeof ResizeObserver === 'undefined') return masonryRO;
-        masonryRO = new ResizeObserver(entries => {
+        masonryRO = trackObserver(new ResizeObserver(entries => {
             entries.forEach(en => {
                 const st = masonryState.get(en.target);
                 if (!st) return;
@@ -94,7 +94,7 @@
                 st.width = w;
                 masonryLayout(en.target);     // width is known here: lay out now, no extra frame of a stale grid
             });
-        });
+        }));
         return masonryRO;
     }
     // registers a container (idempotent). opts.getRatio(item) -> height/width of that item;
