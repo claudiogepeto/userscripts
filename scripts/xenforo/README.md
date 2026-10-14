@@ -68,17 +68,34 @@ readable. A file may continue a function opened by the previous one: `12b` and
 
 ### CSS contexts
 
-The injected stylesheet is assembled from small, ordered contexts instead of a
-single template literal:
+The injected stylesheet is assembled from small, ordered `CSS_*` constants
+instead of a single template literal. Shared contexts live in `parts/styles/`,
+feature-owned ones next to their feature as `css-*.js`; `core/05-styles.js`
+composes them in the order below:
 
 | File | Responsibility |
 |---|---|
-| `styles/01-base` | Theme tokens, reset, media and shared components |
+| `styles/01-base` | Theme tokens, layout width, and anti-CLS reset |
+| `media/css-grids` | Image grids, masonry, and the gallery overlay |
+| `media/css-images` | Post images, link chips, and file-host cards |
+| `media/css-social-embeds` | Twitter/X and Instagram embeds |
+| `media/css-players` | Embeds, native video player, dead media, and post links |
 | `styles/02-home` | Home layout and home feed |
-| `styles/03-topbar` | Topbar and sheets |
+| `styles/03-topbar` | Topbar, central nav, and Discover mega-menu |
+| `navigation/css-notices` | Header notices and the account dialog |
+| `alerts/css-alerts` | Alert list cards |
+| `navigation/css-dock` | Mobile bar, dock, bottom sheet, and goto popover |
+| `navigation/css-search` | Search dialog, results page, advanced search, and dropdown |
+| `media/css-media-feed` | Media feed (TikTok mode) |
+| `navigation/css-dock-mobile` | Mobile navbar dock |
+| `listing/css-listing-controls` | Listing filter and sort popovers |
+| `navigation/css-settings` | Settings panel |
 | `styles/04-mobile` | Mobile navigation and search |
 | `styles/05-filterbar` | Listing/thread filter controls |
-| `styles/06-thread` | Thread header, posts and comments |
+| `styles/06-thread` | Thread header, filter bar, and thread page chrome |
+| `listing/css-thread-cards` | Thread list placeholders and article view |
+| `thread/css-post-cards` | Post cards |
+| `thread/css-comments` | Comments, editor, and quick reply |
 | `styles/07-feed` | Feed and bookmark feed |
 | `styles/08-alertdock` | Alerts/following rail |
 | `styles/09-paint` | Shared paint gate and non-home skeletons |

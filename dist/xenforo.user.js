@@ -572,11 +572,11 @@
 
     // =========================================================
     // STYLES: compose context-owned CSS fragments in one deterministic style node.
-    // The fragments live in parts/styles/ so a page change does not require editing
-    // this runtime composer or searching through a monolithic template literal.
+    // Shared contexts live in parts/styles/, feature-owned ones in parts/<feature>/css-*.js,
+    // so a page change does not require searching through a monolithic template literal.
     // =========================================================
     function injectStyles() {
-        const css = CSS_BASE + CSS_HOME + CSS_TOPBAR + CSS_MOBILE + CSS_FILTERBAR + CSS_THREAD + CSS_FEED + CSS_ALERTDOCK + CSS_PAINT;
+        const css = CSS_BASE + CSS_MEDIA_GRIDS + CSS_MEDIA_IMAGES + CSS_SOCIAL_EMBEDS + CSS_MEDIA_PLAYERS + CSS_HOME + CSS_TOPBAR + CSS_NOTICES + CSS_ALERTS + CSS_DOCK + CSS_SEARCH + CSS_MEDIA_FEED + CSS_DOCK_MOBILE + CSS_LISTING_CONTROLS + CSS_SETTINGS + CSS_MOBILE + CSS_FILTERBAR + CSS_THREAD + CSS_THREAD_CARDS + CSS_POST_CARDS + CSS_COMMENTS + CSS_FEED + CSS_ALERTDOCK + CSS_PAINT;
         const style = document.createElement('style');
         style.id = 'smg-styles';
         style.textContent = css;
@@ -688,7 +688,9 @@
                 height: auto !important;
                 object-fit: contain;
             }
-
+`;
+    // ── CSS: image grids, masonry and the gallery overlay ──
+    const CSS_MEDIA_GRIDS = `
             /* ---- image grids ---- */
             .auto-image-grid {
                 display: grid !important;
@@ -1059,7 +1061,9 @@
             .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity .25s ease; }
-
+`;
+    // ── CSS: post images, link chips and file-host cards ──
+    const CSS_MEDIA_IMAGES = `
             /* ---- images ---- */
             img.bbImage {
                 width: auto !important;
@@ -1283,7 +1287,9 @@
                 width: 100% !important;
                 max-width: none !important;
             }
-
+`;
+    // ── CSS: Twitter/X and Instagram embeds ──
+    const CSS_SOCIAL_EMBEDS = `
             /* ---- Embeds Oficiais (Twitter / X e Instagram) ---- */
             .smg-twitter-embed {
                 display: flex !important;
@@ -1492,7 +1498,9 @@
                 max-width: 100% !important;
                 border-radius: 14px !important;
             }
-
+`;
+    // ── CSS: embeds, native video player, dead media and post links ──
+    const CSS_MEDIA_PLAYERS = `
             /* ---- turbo/saint embeds (iframe nativo) ---- */
             .generic2wide-iframe-div {
                 position: relative;
@@ -3426,7 +3434,9 @@
                 font-weight: 700 !important;
                 line-height: 1 !important;
             }
-
+`;
+    // ── CSS: header notices and the account dialog ──
+    const CSS_NOTICES = `
             /* ========================================================= */
             /* AVISOS / NOTICES COLLAPSE                                 */
             /* ========================================================= */
@@ -3690,7 +3700,9 @@
             .smg-sheet .smg-tb-listbody .contentRow-main { font-size: 16px !important; line-height: 1.5; }
             .smg-sheet .smg-tb-listbody .contentRow-main .label { font-size: 9.5px !important; padding: 1.5px 5px !important; border-radius: 4px !important; }
             .smg-sheet .smg-tb-listbody .contentRow-minor { font-size: 13px !important; margin-top: 4px; }
-
+`;
+    // ── CSS: alert list cards ──
+    const CSS_ALERTS = `
             /* ===== alertas "Limpo" (estilo FB): seções Novas/Anteriores · nome · tags · autor+data · dot ===== */
             /* cor de link do tema do XF (cada fórum tem a sua) — composta dos componentes H/S/L do XF */
             .smg-tb-listbody .smg-alert-clean { --smg-link: hsl(var(--xf-linkColor--h, 330), var(--xf-linkColor--s, 70%), var(--xf-linkColor--l, 60%)); --smg-al-sep: rgba(255,255,255,0.085); }
@@ -3889,7 +3901,9 @@
                 /* tablet: some o Discover do canto, search central continua */
                 .smg-tb-nav { display: none; }
                 html.smg-topbar-on body { padding-top: 52px !important; }
-            }
+            }`;
+    // ── CSS: mobile bar, dock, bottom sheet and goto popover ──
+    const CSS_DOCK = `
             /* Mobile: fixed topbar with one height (matching the bottom navbar). Threads swap
                in the context shell; other pages keep the logo and actions. */
             @media (max-width: 600px) {
@@ -4375,7 +4389,9 @@
             .smg-goto-btn:active {
                 transform: scale(0.98);
             }
-
+`;
+    // ── CSS: search dialog, results page, advanced search and dropdown ──
+    const CSS_SEARCH = `
             /* ---- search: dialog modal (command palette) + backdrop escuro ---- */
             #smg-search-overlay {
                 position: fixed;
@@ -5287,7 +5303,9 @@
                 fill: none;
                 stroke-width: 2;
             }
-
+`;
+    // ── CSS: media feed (tiktok mode) ──
+    const CSS_MEDIA_FEED = `
             /* ---- modo feed (tiktok) ---- */
             #smg-feed {
                 position: fixed;
@@ -5430,7 +5448,9 @@
                 font-size: 13px;
                 font-weight: 600;
             }
-
+`;
+    // ── CSS: mobile navbar dock ──
+    const CSS_DOCK_MOBILE = `
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */
             @media (max-width: 600px) {
                 .smg-side--desktop-only { display: none !important; }
@@ -5884,7 +5904,9 @@
                 height: 16px;
                 display: block;
             }
-
+`;
+    // ── CSS: listing filter and sort popovers ──
+    const CSS_LISTING_CONTROLS = `
             /* ---- settings / filtro por autor / filtro da listagem: popovers (padrão do search) ---- */
             #smg-settings-pop, #smg-listfilter-pop, #smg-listsort-pop {
                 position: absolute;
@@ -6118,7 +6140,9 @@
                 letter-spacing: .06em;
                 text-transform: uppercase;
                 color: rgba(255,255,255,0.55);
-            }
+            }`;
+    // ── CSS: settings panel ──
+    const CSS_SETTINGS = `
             /* ===== painel de settings (estilo painel do Twitter): header + busca + rail de categorias + seções + footer ===== */
             #smg-settings-pop { width: 460px; max-height: 86vh; padding: 0 !important; gap: 0 !important; overflow: hidden; }
             #smg-settings-pop .smg-set-body { min-height: 0; }
@@ -8002,7 +8026,9 @@
             }
             /* ads injetados na lista (samUnitWrapper) são .structItem--thread → viram célula VAZIA
                no grid. Some de vez (no grid e na lista) — corrige os "buracos" do grid. */
-            html.smg-threadlist .structItem--thread.samUnitWrapper { display: none !important; }
+            html.smg-threadlist .structItem--thread.samUnitWrapper { display: none !important; }`;
+    // ── CSS: thread list placeholders and article view ──
+    const CSS_THREAD_CARDS = `
             /* PLACEHOLDER (marca SMG) nos cards sem thumb real — no lugar do avatar/thumb-quebrada/vazio.
                esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho do placeholder muda por modo. */
             .smg-thumb-ph { display: none; }
@@ -8191,7 +8217,9 @@
                 color: #fff !important;
                 border-color: var(--smg-link-strong, #d14d8f) !important;
             }
-
+`;
+    // ── CSS: post cards ──
+    const CSS_POST_CARDS = `
             /* ============================================================
                POST estilo REDDIT (.smg-pc no <article>): 1 coluna · header · conteúdo · action bar.
                O JS moveu os nativos pro card; aqui esconde os containers esvaziados e estiliza.
@@ -8475,7 +8503,9 @@
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
             html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft, rgba(255,119,178,0.18)); color: var(--smg-link, #ff77b2); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: 11px; color: rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 3px; }
-
+`;
+    // ── CSS: comments, editor and quick reply ──
+    const CSS_COMMENTS = `
             /* ============================================================
                COMENTÁRIOS (uw_fcs, SMG): modernos, indentados sob o post (thread-line). Mesmo modelo do card.
                ============================================================ */

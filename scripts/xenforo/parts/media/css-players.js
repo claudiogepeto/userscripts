@@ -1,0 +1,710 @@
+    // ── CSS: embeds, native video player, dead media and post links ──
+    const CSS_MEDIA_PLAYERS = `
+            /* ---- turbo/saint embeds (iframe nativo) ---- */
+            .generic2wide-iframe-div {
+                position: relative;
+                width: 100% !important;
+                max-width: min(920px, calc(min(42vh, 420px) * 16 / 9)) !important;
+                max-height: min(42vh, 420px) !important;
+                margin: 16px auto !important;
+                display: block !important;
+                aspect-ratio: 16 / 9;
+                overflow: hidden;
+                border-radius: 10px;
+                background: #000;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure,
+            .bbCodeBlock--unfurl .contentRow-figure img,
+            .bbCodeBlock--unfurl img.bbImage {
+                width: 88px !important;
+                height: 88px !important;
+                max-width: 88px !important;
+                max-height: 88px !important;
+                aspect-ratio: 1 !important;
+                object-fit: cover !important;
+            }
+            .generic2wide-iframe-div.smg-player-loaded,
+            span[data-s9e-mediaembed].smg-player-loaded,
+            .generic2wide-iframe-div:has(.smg-rg),
+            .generic2wide-iframe-div:has(.smg-turbo-slot--filled) {
+                aspect-ratio: auto !important;
+                overflow: visible !important;
+                background: transparent !important;
+                border-radius: 0 !important;
+                display: block !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                height: auto !important;
+            }
+            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1, #16171b); }
+            /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
+                width: 100% !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                margin: 0 auto !important;
+                display: block !important;
+                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
+                position: relative !important;
+                border-radius: 0 !important;
+                background: #000;
+            }
+            /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
+            .generic2wide-iframe-div > iframe,
+            .generic2wide-iframe-div iframe.saint-iframe,
+            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
+            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: auto !important;
+                border: none !important;
+                border-radius: 0 !important;
+                background: #000 !important;
+                display: block !important;
+            }
+
+            /* ---- turbo: slot (loading), fallback link, error card ---- */
+            .smg-turbo-slot {
+                position: relative;
+                display: block;
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                min-height: 220px;
+                border-radius: 10px;
+                overflow: hidden;
+                background: #000;
+            }
+            .smg-turbo-slot.smg-turbo-slot--filled {
+                min-height: 0;
+            }
+            .smg-turbo-slot .saint-iframe {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                aspect-ratio: auto !important;
+                max-width: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+            .smg-loading {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2;
+            }
+            .smg-loading::after {
+                content: "";
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,0.15);
+                border-top-color: rgba(255,255,255,0.85);
+                animation: smg-spin 0.8s linear infinite;
+            }
+            @keyframes smg-spin {
+                to { transform: rotate(360deg); }
+            }
+            /* ---- reveal: spinner do post travado por like/medalha (in-flow, não overlay) ---- */
+            .smg-reveal-spin { position: static !important; inset: auto !important; min-height: 56px; margin: 14px auto; }
+            /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
+            .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
+            /* Container de imagem horizontal/sheet standalone (fora de grid) */
+            a.smg-imglink.smg-wide-link,
+            a.smg-imglink:has(> img.bbImage.smg-wide),
+            a.smg-imglink:has(> .bbImage.smg-wide),
+            .bbImageWrapper.smg-wide-link,
+            .bbImageWrapper:has(> a.smg-wide-link),
+            .bbImageWrapper:has(> img.smg-wide) {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                margin-top: 14px !important;
+                margin-bottom: 14px !important;
+                text-align: center !important;
+            }
+            /* Imagens widescreen/sheets fora de grid: preenchem nobremente até 100% da largura útil (máx 1080px) */
+            .smg-dm-wrap.smg-wide,
+            img.bbImage.smg-wide,
+            a.smg-wide-link > img.bbImage,
+            .smg-wide-link img.bbImage {
+                width: 100% !important;
+                max-width: min(100%, 1080px) !important;
+                height: auto !important;
+                max-height: none !important;
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                object-fit: contain !important;
+            }
+            /* Citações: imagens mantêm teto compacto */
+            .bbCodeBlock--quote a.smg-wide-link,
+            .bbCodeBlock--quote img.bbImage.smg-wide {
+                max-height: 280px !important;
+                width: auto !important;
+                max-width: 100% !important;
+            }
+            /* Preview de link: a regra .smg-wide (100% / height auto) vinha depois e
+               estourava a thumb do unfurl. A figura fica 88px e o texto ao lado. */
+            .bbCodeBlock--unfurl {
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .contentRow {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+                min-width: 0 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure {
+                flex: 0 0 88px !important;
+                width: 88px !important;
+                height: 88px !important;
+                overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure img,
+            .bbCodeBlock--unfurl img,
+            .bbCodeBlock--unfurl img.bbImage,
+            .bbCodeBlock--unfurl img.bbImage.smg-wide {
+                width: 88px !important;
+                height: 88px !important;
+                max-width: 88px !important;
+                max-height: 88px !important;
+                object-fit: cover !important;
+                margin: 0 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-main {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+            }
+            /* Vertical standalone images: wrapper is a full-width block so the img width (a % of it) resolves from
+               the column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *),
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                pointer-events: none;
+            }
+            a.smg-imglink.smg-vert-link:not(.auto-image-grid *) > img.bbImage,
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) img.bbImage { pointer-events: auto; }
+            .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
+                max-width: min(75%, 880px) !important;
+                max-height: var(--smg-media-h) !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            .smg-dm-wrap.smg-vert > .smg-dm-video {
+                max-width: 100% !important;
+                max-height: var(--smg-media-h) !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid img.bbImage,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,
+            html.smg-masonry-on .auto-image-grid .smg-wide {
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                max-height: none !important;
+                margin: 0 auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
+            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
+                width: auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: var(--smg-media-h) !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
+            }
+
+            .smg-dm-wrap img.bbImage { border-radius: 10px; }
+            .smg-dm-video {
+                display: block; width: 100%;
+                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9));
+                max-height: var(--smg-media-h);
+                margin: 0 auto; border-radius: 10px; background: #000;
+            }
+            /* ---- barra de chips dos links de file-host (GoFile/Bunkr/…) no fim do post ---- */
+            .smg-post-links { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 2px; padding-top: 11px; border-top: 1px solid var(--smg-bd); }
+            .smg-link-chip {
+                display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+                padding: 6px 11px; border-radius: 8px; background: var(--smg-s2); border: 1px solid var(--smg-bd);
+                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600; text-decoration: none;
+            }
+            .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
+            .smg-link-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-link-chip:hover { background: var(--smg-s3); color: #fff !important; border-color: var(--smg-bd2); }
+
+            /* ---- imagepond videos: full width igual aos outros ---- */
+            iframe[src*="imagepond.net"] {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
+                height: auto !important;
+                aspect-ratio: 16 / 9 !important;
+                margin: 16px auto !important;
+                border: none !important;
+                border-radius: 10px !important;
+                background: #000 !important;
+            }
+
+            /* ---- redgifs / gifs / youtube: full width igual aos outros ---- */
+            span[data-s9e-mediaembed="youtube"],
+            span[data-s9e-mediaembed="gifs"],
+            span[data-s9e-mediaembed="redgifs"] {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
+                margin: 16px auto !important;
+            }
+            span[data-s9e-mediaembed="youtube"] > span,
+            span[data-s9e-mediaembed="gifs"] > span,
+            span[data-s9e-mediaembed="redgifs"] > span {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            span[data-s9e-mediaembed="youtube"] iframe,
+            span[data-s9e-mediaembed="gifs"] iframe,
+            span[data-s9e-mediaembed="redgifs"] iframe {
+                position: static !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                aspect-ratio: 16 / 9 !important;
+                border: none !important;
+                border-radius: 10px !important;
+                background: #000 !important;
+            }
+
+            /* defensivo: o conteúdo do embed NUNCA passa da largura do container.
+               alguns players (ex.: redgifs) injetam iframe/wrapper aninhado com
+               largura fixa que escapava dos seletores acima e estourava a página
+               no mobile (scroll horizontal). */
+            .generic2wide-iframe-div:not(.smg-player-loaded):not(:has(.smg-rg)):not(:has(.smg-turbo-slot--filled)),
+            span[data-s9e-mediaembed]:not(.smg-player-loaded):not(:has(.smg-rg)) {
+                overflow: hidden !important;
+            }
+            .generic2wide-iframe-div *,
+            span[data-s9e-mediaembed] * {
+                max-width: 100% !important;
+            }
+
+            /* ---- player nativo de redgifs (.smg-rg substitui o iframe; mp4 da API num <video>) ---- */
+            .smg-rg {
+                position: relative;
+                display: block;
+                width: 100%;
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778)));
+                max-height: var(--smg-media-h, min(70vh, 750px));   /* TETO: não estoura o viewport (vale no masonry) */
+                margin: 16px auto;
+                aspect-ratio: 16 / 9;             /* placeholder; o JS troca pelo aspect REAL (videoWidth/Height ou API do redgifs) e MANTÉM (não some no clearSkel) */
+                background: #000;
+                border-radius: 10px;
+                overflow: hidden;
+                /* CRO antigo NÃO volta: o site forçava aspect/overflow no .generic2wide-iframe-div (já destravado); e o vídeo é
+                   position:absolute+inset:0 (preenche a caixa SEM depender de %-height resolver). object-fit:contain = nunca corta. */
+            }
+            span[data-s9e-mediaembed] .smg-rg,
+            .generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }   /* container já dá a margem → não dobra */
+            .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
+                display: flex; align-items: center; justify-content: center;
+                width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
+                background: #161616; color: rgba(255,255,255,0.45);
+                border-radius: 10px; font-size: 13px; text-align: center; padding: 8px;
+            }
+            /* ---- MÍDIA MORTA (buildDeadBox): um estado de falha só p/ imagem/vídeo/embed 404 ----
+               Fica DEPOIS de .smg-rg-fail e .smg-turbo-error de propósito: a caixa acumula essas classes (outros
+               passes as usam como marcador de "este slot já resolveu") e, com a mesma especificidade, quem vem
+               por último vence. */
+            .smg-dead {
+                position: relative;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 10px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 42px !important;
+                margin: 4px 0 !important;
+                padding: 10px 16px !important;
+                border: 1px solid rgba(255, 75, 75, 0.32) !important;
+                border-radius: 10px !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1, #16171b) !important;
+                color: var(--smg-tx, #e7e7ea) !important;
+                text-align: left !important;
+                text-decoration: none !important;
+                overflow: hidden !important;
+                aspect-ratio: auto !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
+                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
+            }
+            .smg-dead:hover {
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2, #202127) !important;
+                border-color: rgba(255, 95, 95, 0.55) !important;
+                box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
+            }
+            .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: 16px auto !important; }
+            .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
+            .smg-dead-code {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 2px 8px !important;
+                border-radius: 6px !important;
+                background: rgba(255, 75, 75, 0.2) !important;
+                border: 1px solid rgba(255, 75, 75, 0.4) !important;
+                font-size: 13px !important;
+                font-weight: 800 !important;
+                color: #ff6b6b !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
+            }
+            .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
+            .smg-dead-code b:empty { display: none; }
+            .smg-dead-sep { color: rgba(255,255,255,0.3) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
+            .smg-dead-sub { font-size: 13px !important; font-weight: 500 !important; color: rgba(255,255,255,0.75) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            /* No mosaico/grade: os cards de erro viram itens ocupando a largura total (span-all), empilhados horizontalmente */
+            html.smg-masonry-on .auto-image-grid .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dead,
+            html.smg-masonry-on .auto-image-grid.smg-true-masonry > .smg-dead {
+                grid-column: 1 / -1 !important;
+                column-span: all !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 42px !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
+                margin: 4px 0 !important;
+                display: flex !important;
+            }
+            /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
+                background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                border-radius: 8px !important;
+                position: relative !important;
+                min-height: 120px;
+                aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
+                overflow: hidden !important;
+            }
+            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+                background-size: 200% 100%;
+                animation: smg-img-shimmer 1.8s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 1;
+            }
+            /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
+            .generic2wide-iframe-div::before,
+            .generic2wide-iframe-div::after,
+            .generic2wide-iframe-div > iframe::before,
+            .generic2wide-iframe-div > iframe::after,
+            iframe.saint-iframe::before,
+            iframe.saint-iframe::after,
+            iframe[src*="turbo.cr"]::before,
+            iframe[src*="turbo.cr"]::after,
+            .smg-turbo-slot::before,
+            .smg-turbo-slot::after,
+            .tb-fallback::before,
+            .tb-fallback::after,
+            [data-url*="turbo.cr"]::before,
+            [data-url*="turbo.cr"]::after {
+                display: none !important;
+                content: none !important;
+                animation: none !important;
+            }
+            /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
+                color: color-mix(in srgb, var(--smg-link, #ff77b2) 42%, #e9e9ec) !important;
+                font-weight: 500;
+                text-decoration: underline !important;
+                text-decoration-color: color-mix(in srgb, var(--smg-link, #ff77b2) 55%, transparent) !important;
+                text-underline-offset: 3px !important;
+                text-decoration-thickness: 1px !important;
+                transition: color .15s ease, text-decoration-color .15s ease;
+            }
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
+                color: #fff !important;
+                text-decoration-color: #fff !important;
+                filter: none !important;
+            }
+            .smg-fhcard, .smg-fhcard *,
+            .smg-dead, .smg-dead *,
+            .smg-link-chip, .smg-link-chip * {
+                text-decoration: none !important;
+                filter: none !important;
+            }
+            .smg-rg-v {
+                position: absolute; inset: 0;    /* preenche a CAIXA (aspect-ratio do .smg-rg); inset:0 evita o bug de %-height não resolver com max-height */
+                display: block; width: 100%; height: 100%;
+                object-fit: contain;             /* nunca corta — letterbox só se o teto (max-height) mudar o aspect da caixa */
+                background: #000;
+                cursor: pointer;
+            }
+            /* LOADING NO PLAYER: o vídeo e seu poster NUNCA somem com opacity 0! Mostra spinner central sobre o poster */
+            .smg-rg.smg-rg-loading { background: #141414; overflow: hidden; }
+            .smg-rg.smg-rg-loading > .smg-rg-v { opacity: 1 !important; pointer-events: auto; }
+            .smg-rg.smg-rg-loading > .smg-rgc-flash { opacity: 0 !important; pointer-events: none !important; }
+            .smg-rg.smg-rg-loading > .smg-rgc-bottom { opacity: 0.6; pointer-events: none; }
+            .smg-rg.smg-rg-loading::after {
+                content: "";
+                position: absolute;
+                top: 50%; left: 50%;
+                width: 46px; height: 46px;
+                margin: -23px 0 0 -23px;
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,0.2);
+                border-top-color: var(--smg-link, #ff77b2);
+                animation: smg-spin 0.8s linear infinite;
+                z-index: 5;
+                pointer-events: none;
+            }
+            /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) */
+            .smg-rg-error {
+                position: absolute; inset: 0; z-index: 8;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 12px; padding: 20px;
+                background: rgba(18, 19, 24, 0.94);
+                backdrop-filter: blur(8px);
+                color: #fff; text-align: center; box-sizing: border-box;
+            }
+            .smg-rg-error-badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                padding: 6px 14px; border-radius: 999px;
+                background: rgba(255, 75, 75, 0.18);
+                border: 1px solid rgba(255, 75, 75, 0.45);
+                color: #ff5e5e; font-size: 14px; font-weight: 800; letter-spacing: 0.4px;
+            }
+            .smg-rg-error-badge svg { width: 17px; height: 17px; fill: none !important; stroke: currentColor; }
+            .smg-rg-error-msg { font-size: 13px; color: rgba(255,255,255,0.75); max-width: 85%; line-height: 1.4; overflow-wrap: anywhere; }
+            .smg-rg-error-acts { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+            .smg-rg-error-btn {
+                display: inline-flex; align-items: center; gap: 6px;
+                padding: 6px 14px; border-radius: 8px;
+                font-size: 12.5px; font-weight: 600; text-decoration: none !important;
+                cursor: pointer; transition: background .15s ease, color .15s ease;
+            }
+            .smg-rg-error-btn--open { background: var(--smg-link, #ff77b2); color: #fff !important; border: 0; }
+            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong, #d14d8f); }
+            .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
+            .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
+            /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
+               poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
+            .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
+            .smg-rg.smg-rg-ready .smg-rgc-play { pointer-events: auto; }
+            /* ---- controles estilo YouTube: play CENTRAL (no pausado) + BARRA INFERIOR com gradiente:
+               scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
+            /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
+            .smg-rgc-flash {
+                position: absolute; inset: 0; z-index: 2;
+                display: flex; align-items: center; justify-content: center;
+                opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+            }
+            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
+            .smg-rgc-flash button {
+                border: 0; border-radius: 50%; cursor: pointer; padding: 0;
+                background: rgba(0,0,0,0.55); color: #fff;
+                display: flex; align-items: center; justify-content: center;
+                transition: transform 0.12s ease, background 0.12s ease; pointer-events: none;   /* só interativo quando o flash aparece (regras abaixo) — senão capturaria cliques invisível */
+            }
+            .smg-rgc-flash button:hover { transform: scale(1.08); background: rgba(0,0,0,0.72); }
+            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
+            .smg-rgc-play { width: 64px; height: 64px; }
+            .smg-rgc-play svg { width: 30px; height: 30px; display: block; margin-left: 3px; }
+            @media (max-width: 600px) { .smg-rgc-play { width: 54px; height: 54px; } .smg-rgc-play svg { width: 26px; height: 26px; } }
+            /* BARRA INFERIOR: gradiente; some fora do hover; visível no pausado-carregado e no touch (NÃO no pronto/poster) */
+            .smg-rgc-bottom {
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+                padding: 8px 4px 2px;
+                background: linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.30) 62%, transparent 100%);
+                opacity: 0; pointer-events: none; transition: opacity 0.18s ease;
+            }
+            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
+            .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
+            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } }
+            /* SCRUBBER (no topo da barra) */
+            .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
+            .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: rgba(255,255,255,0.28); border-radius: 3px; transition: height 0.1s ease; }
+            .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
+            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,0.30); border-radius: 3px; pointer-events: none; }
+            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link, #ff77b2); border-radius: 3px; pointer-events: none; }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link, #ff77b2); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
+            .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
+            /* LINHA de controles */
+            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 1px 4px 2px; }
+            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: 1px; }
+            .smg-rgc-act {
+                width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; padding: 0;
+                background: transparent; color: #fff;
+                display: flex; align-items: center; justify-content: center;
+                transition: background 0.12s ease, transform 0.12s ease;
+            }
+            .smg-rgc-act:hover { background: rgba(255,255,255,0.16); }
+            .smg-rgc-act:active { transform: scale(0.9); }
+            .smg-rgc-act svg { width: 21px; height: 21px; display: block; }
+            .smg-rgc-speed {
+                height: 24px; min-width: 32px; padding: 0 6px;
+                border: 0; border-radius: 6px; cursor: pointer;
+                background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92);
+                font: 700 11.5px/1 var(--smg-mono, -apple-system, monospace);
+                letter-spacing: -0.2px;
+                display: flex; align-items: center; justify-content: center;
+                transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
+                user-select: none;
+            }
+            .smg-rgc-speed:hover { background: rgba(255,255,255,0.24); color: #fff; }
+            .smg-rgc-speed:active { transform: scale(0.92); }
+            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac, #ff77b2); color: #fff; font-weight: 800; }
+            /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
+            .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
+            .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
+            /* VOLUME: mute + barra que expande no hover (YouTube) */
+            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.35); cursor: pointer; opacity: 0; transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease; touch-action: none; }
+            .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
+            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 3px; pointer-events: none; }
+            /* TEMPO (atual / duração) */
+            .smg-rgc-time { color: #fff; font: 600 12px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 6px; white-space: nowrap; flex: 0 0 auto; }
+            @media (max-width: 600px) { .smg-rgc-act { width: 30px; height: 30px; } .smg-rgc-act svg { width: 19px; height: 19px; } .smg-rgc-time { font-size: 11px; padding: 0 4px; } }
+            /* indicador "« 5s" / "5s »" no duplo-clique p/ voltar/avançar */
+            .smg-rgc-seekflash {
+                position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3;
+                color: #fff; font: 700 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: rgba(0,0,0,0.55); padding: 9px 15px; border-radius: 999px;
+                opacity: 0; transition: opacity 0.15s ease; pointer-events: none; white-space: nowrap;
+            }
+            .smg-rgc-seekflash.on { opacity: 1; }
+            /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO do player ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host" (substituiu o ↗ do rail). */
+            .smg-rgc-src {
+                position: absolute; top: 10px; right: 10px; z-index: 4;
+                display: inline-flex; align-items: center; gap: 5px; max-width: calc(100% - 20px);
+                padding: 4px 9px; border-radius: 8px;
+                background: rgba(0,0,0,0.6); color: #fff; text-decoration: none;
+                font: 800 12px/1.2 -apple-system, system-ui, "Segoe UI", sans-serif; letter-spacing: 0.01em;
+                cursor: pointer; opacity: 0; pointer-events: none;
+                transition: opacity 0.15s ease, background 0.15s ease; box-shadow: 0 1px 5px rgba(0,0,0,0.45);
+            }
+            .smg-rg:hover .smg-rgc-src { opacity: 1; pointer-events: auto; }
+            .smg-rgc-src:hover { background: rgba(0,0,0,0.82); }
+            .smg-rgc-src:active { transform: scale(0.96); }
+            .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
+            @media (hover: none) { .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
+            /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
+            .smg-rg.smg-rg-buffering::after {
+                content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
+                border-radius: 50%; border: 3px solid rgba(255,255,255,0.22); border-top-color: rgba(255,255,255,0.9);
+                animation: smg-spin 0.8s linear infinite; z-index: 4; pointer-events: none;
+            }
+            .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; background: #000; }
+            .smg-rg:fullscreen .smg-rg-v { height: 100%; }
+            /* turbo/saint: quando o slot recebe NOSSO player, ele NÃO pode forçar 16:9 nem cortar — a altura
+               vem do aspect REAL do .smg-rg (vídeo vertical não vira faixa horizontal). A classe .smg-turbo-slot--filled
+               é setada no JS ao montar o player (robusto: não depende do :has, que às vezes não solta o 16:9 a tempo
+               e o overflow:hidden do slot recorta o player vertical num pedaço horizontal). */
+            /* ⚠️ REGRAS SEPARADAS de propósito: agrupar com :has(...) faz o browser DESCARTAR a regra
+               inteira se o :has falhar no contexto (era o bug — o --filled vinha no DOM mas sem efeito,
+               o vídeo vertical continuava cortado). A classe .smg-turbo-slot--filled é setada no JS e
+               NÃO depende de :has, então sempre vale. */
+            .smg-turbo-slot--filled {
+                aspect-ratio: auto !important; overflow: visible !important; background: transparent !important;
+                display: flex !important; justify-content: center !important; align-items: center !important;
+            }
+            /* (o fallback .smg-turbo-slot:has(.smg-rg) foi REMOVIDO: todo caminho que põe .smg-rg num slot chama
+               fillSlot() → a classe acima sempre vale, e o :has custava re-validação upward a cada mutação) */
+            .smg-turbo-slot > .smg-rg { margin: 0 auto !important; }
+
+            /* ---- site a 80% da largura disponível (desktop), CENTRALIZADO ---- */
+            @media (min-width: 800px) {
+                .p-header-inner,
+                .p-nav-inner,
+                .p-sectionLinks-inner,
+                .p-body-inner,
+                .p-footer-inner {
+                    max-width: var(--smg-cw) !important;
+                    margin-left: auto !important;
+                    margin-right: auto !important;
+                }
+                /* o socialmediagirls usa .pageContent (fora do .p-body-inner) no header/breadcrumb;
+                   alinha com o conteúdo (mesma largura) pra não ficar torto */
+                .p-body-header > .pageContent,
+                .breadcrumb > .pageContent,
+                .smg-thead-tags-bar > .pageContent {
+                    max-width: var(--smg-cw) !important;
+                    margin-left: auto !important;
+                    margin-right: auto !important;
+                }
+            }
+
+            /* ---- header das páginas: maior + alinhado à esquerda ---- */
+            /* mata o padding-top: 20px que o tema põe em todo filho direto do .p-body */
+            .p-body > * { padding-top: 0 !important; }
+            /* respiro abaixo da topbar FIXA: o título não cola na barra (era 10px → colava no desktop, onde
+               body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
+            html:not(.smg-thread) .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
+            .p-body-header .p-title { text-align: left !important; }
+            .p-body-header .p-title-value { font-size: 30px !important; font-weight: 800 !important; line-height: 1.2 !important; }
+
+            /* ---- remove banners de anúncio (striply etc.) ---- */
+            a[href*="striply.com"],
+            body > a[href*="striply"] { display: none !important; }
+
+            /* ---- SMG: REMOVE a sidebar fora da home · conteúdo a 100% ----
+               na home a sidebar é reaproveitada (realocada pro topo — ver bloco HOME);
+               nas demais páginas (threads, /forums, busca, whats-new) some de vez e o
+               .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
+               EXCEÇÃO: páginas com .p-body-sideNav (conta/settings) usam um menu LATERAL legítimo —
+               ali NÃO mexemos na largura do conteúdo (senão o layout de 2 colunas quebra/empilha). */
+            html:not(.smg-home) .p-body-sidebar,
+            html:not(.smg-home) .p-body-sidebarCol { display: none !important; }
+            /* PERF: html.smg-has-sidenav (setado 1× no detectPageClasses) no lugar de :not(:has(.p-body-sideNav)):
+               o :has ancorado no .p-body-main (ancestral da stream de posts INTEIRA) re-validava a cada
+               mutação de subtree — e o processAll muta quase todo frame. Mesmo padrão do smg-has-g2w. */
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main--withSidebar {
+                display: block !important; grid-template-columns: none !important; gap: 0 !important;
+            }
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-content,
+            html:not(.smg-home):not(.smg-has-sidenav) .p-body-main .p-body-contentCol {
+                width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+                flex: 1 1 100% !important; grid-column: 1 / -1 !important; float: none !important;
+            }
+            /* ---- breadcrumb some por completo nos 2 sites (fórum · thread · busca…) ----
+               só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
+            html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
+            html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
+
+            `;

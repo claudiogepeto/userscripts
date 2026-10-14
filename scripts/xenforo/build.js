@@ -30,11 +30,26 @@ const PART_FILES = [
     'core/04-icons.js',
     'core/05-styles.js',
     'styles/01-base.js',
+    'media/css-grids.js',
+    'media/css-images.js',
+    'media/css-social-embeds.js',
+    'media/css-players.js',
     'styles/02-home.js',
     'styles/03-topbar.js',
+    'navigation/css-notices.js',
+    'alerts/css-alerts.js',
+    'navigation/css-dock.js',
+    'navigation/css-search.js',
+    'media/css-media-feed.js',
+    'navigation/css-dock-mobile.js',
+    'listing/css-listing-controls.js',
+    'navigation/css-settings.js',
     'styles/04-mobile.js',
     'styles/05-filterbar.js',
     'styles/06-thread.js',
+    'listing/css-thread-cards.js',
+    'thread/css-post-cards.js',
+    'thread/css-comments.js',
     'styles/07-feed.js',
     'styles/08-alertdock.js',
     'styles/09-paint.js',
@@ -109,7 +124,7 @@ fs.writeFileSync(OUT, out);
         css = out.slice(open + 1, close);
     } else {
         // Modular format: collect all template literals from the context-owned style parts.
-        const stylePaths = PART_FILES.filter(file => file.startsWith('styles/')).map(file => path.join(PARTS, file));
+        const stylePaths = PART_FILES.filter(file => file.startsWith('styles/') || /\/css-[^/]+\.js$/.test(file)).map(file => path.join(PARTS, file));
         stylePaths.forEach(stylesPath => {
             const stylesSrc = fs.readFileSync(stylesPath, 'utf8');
             let i = 0, inT = false;
