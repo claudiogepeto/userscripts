@@ -30,9 +30,7 @@ scenario('opening a thread you watch stores its posts and the thread, in the fee
     assert.equal(rows[0].thread_path, THREAD);
     assert.equal(rows[0].created_at, 1700000011, 'seconds, from the post time');
     assert.equal(rows[0].page_num, 1);
-    // KNOWN BUG (reported, not fixed here): the title is read from .p-title, which after the header
-    // rebuild also holds the Media button, so it is stored as 'Sample ThreadMedia'.
-    assert.ok(rows[0].thread_name.startsWith('Sample Thread'), rows[0].thread_name);
+    assert.equal(rows[0].thread_name, 'Sample Thread');
     assert.match(rows[0].permalink, /\/threads\/sample-thread\.100\/post-11$/);
     assert.match(rows[0].content_html, /bbWrapper/);
     const followed = page.idbRows('followed');
@@ -41,6 +39,14 @@ scenario('opening a thread you watch stores its posts and the thread, in the fee
     assert.equal(followed[0].path, THREAD);
     assert.deepEqual(followed[0].saved_pages, [1]);
     assert.equal(followed[0].updated_at, 1700000012);
+});
+
+scenario('the stored thread name is exactly the title, without the controls the script adds to the header', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 31 }], watching: true }) });
+    await page.settle(150);
+    assert.ok(page.$('.p-body-header .smg-thead-actions'), 'the rebuilt header carries the Media button');
+    assert.deepEqual(page.idbRows('timeline').map(r => r.thread_name), ['Sample Thread']);
+    assert.deepEqual(page.idbRows('followed').map(r => r.thread_name), ['Sample Thread']);
 });
 
 scenario('a thread already in the followed table is ingested even without the watch button', async t => {
