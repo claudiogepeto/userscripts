@@ -23046,9 +23046,10 @@
         return Math.max(0, parseInt(gmGet('smg-watched-unread-count', '0'), 10) || 0);
     }
 
-    function updateWatchedUnreadBadge(count) {
+    // badge de não lidas: botões do topo (topSel) + ícone do dock (navSel). Mesmo desenho pros dois contadores.
+    function paintUnreadBadge(count, topSel, navSel) {
         const n = Math.max(0, parseInt(count, 10) || 0);
-        document.querySelectorAll('.smg-tb-railbtn').forEach(btn => {
+        document.querySelectorAll(topSel).forEach(btn => {
             if (typeof setReactiveBadge === 'function') {
                 setReactiveBadge(btn, n, 'smg-tb-badge');
             } else {
@@ -23062,9 +23063,9 @@
                 }
             }
         });
-        const navWatched = document.querySelector('#smg-nav-watched');
-        if (navWatched) {
-            const host = navWatched.querySelector('.smg-nav-ico') || navWatched;
+        const nav = document.querySelector(navSel);
+        if (nav) {
+            const host = nav.querySelector('.smg-nav-ico') || nav;
             if (typeof setReactiveBadge === 'function') {
                 setReactiveBadge(host, n, 'smg-nav-badge');
             } else {
@@ -23079,39 +23080,11 @@
             }
         }
     }
-
+    function updateWatchedUnreadBadge(count) {
+        paintUnreadBadge(count, '.smg-tb-railbtn', '#smg-nav-watched');
+    }
     function updateAlertsUnreadBadge(count) {
-        const n = Math.max(0, parseInt(count, 10) || 0);
-        document.querySelectorAll('.smg-tb-railbtn, #smg-topbar .smg-rt-alerts').forEach(btn => {
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(btn, n, 'smg-tb-badge');
-            } else {
-                let b = btn.querySelector(':scope > .smg-tb-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-tb-badge'; btn.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
-        });
-        const navAlerts = document.querySelector('#smg-nav-bell');
-        if (navAlerts) {
-            const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(host, n, 'smg-nav-badge');
-            } else {
-                let b = host.querySelector(':scope > .smg-nav-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
-        }
+        paintUnreadBadge(count, '.smg-tb-railbtn, #smg-topbar .smg-rt-alerts', '#smg-nav-bell');
     }
 
     // contador do cabeçalho — atualiza o badge com a contagem de alertas não lidos
