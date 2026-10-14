@@ -19147,7 +19147,9 @@
     // 1ª carga da aba: cache imediato se disponível, senão skeletons → rede → salva cache
     function loadFeed(feed, panel, onDone) {
         if (panel.dataset.loaded) { if (onDone) onDone(); return; }
-        feed._seen = new Set(); feed._nextUrl = ''; feed._loadingMore = false;
+        feed._seen = new Set();
+        const pager = feedPagerFor(feed, panel, onDone);
+        pager.reset(null);
 
         const loadToken = (feed._loadToken || 0) + 1;
         feed._loadToken = loadToken;
@@ -19171,7 +19173,7 @@
                 if (c) frag.appendChild(c);
             });
             panel.appendChild(frag);
-            feed._nextUrl = cached.nextUrl || '';
+            pager.reset(cached.nextUrl || null);
             finish();
 
             // Revalidação em segundo plano se o cache tiver mais de 45 segundos
@@ -19206,9 +19208,10 @@
             .then(doc => {
                 if (!isCurrentLoad()) return;
                 const res = feedRenderPage(doc, feed, panel, false);
-                feed._nextUrl = res.count ? feedNextUrl(doc) : '';
+                const next = res.count ? feedNextUrl(doc) : '';
+                pager.reset(next || null);
                 if (res.count) {
-                    setCachedFeed(feed.key, res.items, feed._nextUrl);
+                    setCachedFeed(feed.key, res.items, next);
                 } else {
                     panel.innerHTML = '<div class="smg-feed-loading">' + i18n('Nothing here yet.') + '</div>';
                 }
@@ -19221,24 +19224,40 @@
                 finish();
             });
     }
-    // PAGINAÇÃO: busca a próxima página e dá APPEND (chamada ao chegar perto da borda direita do scroll).
-    function loadMoreFeed(feed, panel, onDone) {
-        if (!feed || !feed._nextUrl || feed._loadingMore) return;
-        if (panel.querySelectorAll('.smg-feed-card:not(.smg-feed-skel)').length >= FEED_MAX) { feed._nextUrl = ''; return; }   // teto: para de paginar
-        feed._loadingMore = true;
-        const url = feed._nextUrl;
-        const skels = [];   // skeletons à direita enquanto busca
-        for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
-        fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
-            skels.forEach(s => s.remove());
-            // falha (429/HTTP → null): mantém o _nextUrl pra tentar de novo no próximo scroll. Antes o null
-            // estourava aqui dentro, _loadingMore ficava true e o carrossel parava de paginar pra sempre.
-            if (!doc) { feed._loadingMore = false; if (onDone) onDone(); return; }
-            const res = feedRenderPage(doc, feed, panel, true);
-            feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
-            feed._loadingMore = false;
-            if (onDone) onDone();
-        }, () => { skels.forEach(s => s.remove()); feed._loadingMore = false; if (onDone) onDone(); });
+    // PAGINAÇÃO no motor comum (createPager, 07): perto da borda DIREITA do painel busca a próxima página e dá
+    // APPEND, com 4 esqueletos à direita enquanto busca. Falha (429/HTTP → null) não trava: o cursor fica e o
+    // próximo scroll tenta a mesma página. Página sem item novo encerra (anti-loop); FEED_MAX cards é o teto.
+    // Rolar o carrossel não é rolar a página: o master switch do scroll infinito não vale aqui.
+    function feedPagerFor(feed, panel, onDone) {
+        if (feed._pager) return feed._pager;
+        let skels = [];
+        const clearSkels = () => { skels.forEach(el => el.remove()); skels = []; };
+        const pager = feed._pager = createPager({
+            root: panel,
+            axis: 'x',
+            near: 700,
+            load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
+            apply: doc => {
+                clearSkels();
+                const res = feedRenderPage(doc, feed, panel, true);
+                return { next: (res.count && feedNextUrl(doc)) || null, added: res.count };
+            },
+            enabled: () => {
+                if (panel.querySelectorAll('.smg-feed-card:not(.smg-feed-skel)').length < FEED_MAX) return true;
+                pager.reset(null);   // teto: para de paginar
+                return false;
+            },
+            onFail: () => 'retry',
+            onState: kind => {
+                if (kind === 'loading') {
+                    for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
+                    return;
+                }
+                clearSkels();
+                if (onDone) onDone();
+            },
+        });
+        return pager;
     }
     // cria o bloco (abas + painéis), insere antes das categorias e carrega a 1ª aba
     function buildHomeFeed(parent, ref) {
@@ -19270,16 +19289,11 @@
             navBtns[-1].classList.toggle('smg-nav-hidden', p.scrollLeft <= 2);
             navBtns[1].classList.toggle('smg-nav-hidden', p.scrollLeft >= max || max <= 0);
         };
-        // scroll do painel: atualiza as setas E, perto da borda direita, pré-busca a próxima página (append).
+        // scroll do painel: atualiza as setas (a próxima página vem do pager de cada painel, feedPagerFor)
         let scrollRaf = 0;
         const onPanelScroll = () => {
             if (scrollRaf) return;
-            scrollRaf = requestAnimationFrame(() => {
-                scrollRaf = 0;
-                updateNav();
-                const p = activePanel(); if (!p || !p._feed) return;
-                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, updateNav);
-            });
+            scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; updateNav(); });
         };
         [-1, 1].forEach(dir => {
             const b = document.createElement('button'); b.type = 'button';
@@ -19304,7 +19318,8 @@
             tab.innerHTML = '<span class="smg-feed-tab-ic">' + f.icon + '</span><span>' + f.label + '</span>';
             const panel = document.createElement('div'); panel.className = 'smg-feed-panel' + (i === 0 ? ' is-active' : '');
             panel.addEventListener('scroll', onPanelScroll, { passive: true });
-            f._panel = panel; panel._feed = f;   // panel→feed: o onPanelScroll sabe qual fonte paginar
+            f._panel = panel;
+            feedPagerFor(f, panel, updateNav);
             tab.addEventListener('click', () => {
                 tabsEl.querySelectorAll('.smg-feed-tab').forEach(t => t.classList.remove('is-active'));
                 panelsEl.querySelectorAll('.smg-feed-panel').forEach(p => p.classList.remove('is-active'));
@@ -19363,6 +19378,7 @@
         window.__homeExports = {
             extractFeedItemData,
             createFeedCardEl,
+            feedPagerFor,
             getCachedFeed,
             setCachedFeed,
             FEED_CACHE_KEY_PREFIX,
