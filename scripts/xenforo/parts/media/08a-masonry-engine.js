@@ -16,16 +16,13 @@
     // each write skipped when the value did not change.
     // =========================================================
     const MASONRY_GAP = 8;                 // = --smg-sp-8
-    const MASONRY_BP_TWO = 600;            // <= 600px wide: 2 columns
-    const MASONRY_BP_THREE = 1100;         // <= 1100px wide: 3 columns, above: 4
+    const MASONRY_BP_TWO = 600;            // <= 600px wide: 2 columns, above: 3 (never more)
     const MASONRY_PH_RELH = 1.3;           // placeholder height/width until the real ratio is known
     function masonryColsFor(width) {
-        if (width <= MASONRY_BP_TWO) return 2;
-        if (width <= MASONRY_BP_THREE) return 3;
-        return 4;
+        return width <= MASONRY_BP_TWO ? 2 : 3;
     }
     // pure placement: ratios (h/w) + width -> boxes. No DOM, so it is testable and costs nothing to read.
-    // opts.spans[i] = columns item i wants (a horizontal video wants 2), clamped to the column count. An item
+    // opts.spans[i] = columns item i wants (a horizontal image or video wants 2), clamped to the column count. An item
     // spanning k columns starts at the column c that minimises max(height[c..c+k-1]), ties going left, sits at
     // that top, and pushes those k columns to its bottom. With every span at 1 this is plain shortest-column.
     function masonryPlace(ratios, width, opts) {
@@ -56,9 +53,9 @@
         return { cols, colW, boxes, height };
     }
 
-    // a video tile's span from its h/w: horizontal (wider than tall) takes 2 columns, vertical or square 1.
-    // 0.98 and not 1: a "square" upload is often a few pixels off (1080x1072) and must not go wide.
-    function masonryVideoSpan(relH) {
+    // an image or video item's span from its h/w: horizontal (wider than tall) takes 2 columns, vertical or
+    // square 1. 0.98 and not 1: a "square" upload is often a few pixels off (1080x1072) and must not go wide.
+    function masonryOrientSpan(relH) {
         return (relH > 0 && relH < 0.98) ? 2 : 1;
     }
 
@@ -159,5 +156,5 @@
         return MASONRY_PH_RELH;
     }
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__masonryEngine = { masonryPlace, masonryColsFor, masonryMount, masonryUnmount, masonryLayout, masonrySchedule, masonryImgRatio, setWidth: (c, w) => { const st = masonryState.get(c); if (st) st.width = w; } };
+        window.__masonryEngine = { masonryPlace, masonryColsFor, masonryOrientSpan, masonryMount, masonryUnmount, masonryLayout, masonrySchedule, masonryImgRatio, setWidth: (c, w) => { const st = masonryState.get(c); if (st) st.width = w; } };
     }

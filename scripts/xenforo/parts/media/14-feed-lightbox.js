@@ -224,9 +224,9 @@
         if (tile.classList.contains('smg-gallery-tile--image')) return masonryImgRatio(tile.querySelector('img'));
         return 9 / 16;
     }
-    // colunas do tile: vídeo deitado (ou ainda sem proporção = 16:9) 2, em pé/quadrado 1; imagem e fantasma 1
+    // colunas do tile: vídeo (ou ainda sem proporção = 16:9) ou imagem deitada 2, em pé/quadrado 1; fantasma 1
     function galTileSpan(tile, relH) {
-        return tile.classList.contains('smg-gallery-tile--embed') ? masonryVideoSpan(relH) : 1;
+        return tile.classList.contains('smg-gallery-skel') ? 1 : masonryOrientSpan(relH);
     }
     // esvazia o scroller soltando cada seção do ResizeObserver do motor
     function galClearScroller(sc) {

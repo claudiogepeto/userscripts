@@ -877,9 +877,9 @@
         const dim = extractMediaDimensions(img);
         return dim ? dim.relH : MASONRY_PH_RELH;
     }
-    // colunas do item: vídeo deitado 2, o resto 1
+    // colunas do item: vídeo ou imagem deitada 2, em pé/quadrado 1; caixa morta 1
     function postItemSpan(item, relH) {
-        return item.classList.contains('smg-mvid') ? masonryVideoSpan(relH) : 1;
+        return item.classList.contains('smg-dead') ? 1 : masonryOrientSpan(relH);
     }
     function mountPostGroup(grid) {
         masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan });
