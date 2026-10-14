@@ -1315,6 +1315,8 @@
                 text-decoration: none !important;
                 overflow: hidden !important;
                 aspect-ratio: auto !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
             }
             .smg-dead:hover {

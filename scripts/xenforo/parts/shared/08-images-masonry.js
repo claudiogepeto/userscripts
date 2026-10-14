@@ -115,18 +115,22 @@
     function imgFailLink(img) {
         if (!img || img.dataset.smgFailed || !img.parentNode) return;
         img.dataset.smgFailed = '1';
-        const raw = img.dataset.smgLink || img.currentSrc || img.getAttribute('src') || '';
-        if (!raw || /^data:/.test(raw)) { img.classList.add('smg-img-ready'); return; }   // sem destino útil → só tira o shimmer
-        const href = resolveProxyHref(raw);   // mostra/abre a URL final, não o /goto/...&s=hash
-        // ABRIR = a página do host (smgLink, quando existe) · SONDAR = o arquivo que de fato não renderizou
         const direct = img.currentSrc || img.getAttribute('src') || '';
+        const parentA = img.closest('a[href]');
+        const parentHref = parentA ? resolveProxyHref(parentA.getAttribute('href') || '') : '';
+        const stored = img.dataset.smgLink ? resolveProxyHref(img.dataset.smgLink) : '';
+        const isFile = u => /\.(?:jpe?g|png|gif|webp|avif|mp4|webm|mov|m4v)(?:$|\?)/i.test(u || '');
+        let href = '';
+        if (stored && /^https?:/i.test(stored) && !isFile(stored)) href = stored;
+        else if (parentHref && /^https?:/i.test(parentHref) && !isFile(parentHref)) href = parentHref;
+        else href = resolveProxyHref(stored || direct);
+        if (!href || /^data:/.test(href)) { img.classList.add('smg-img-ready'); return; }
         const box = buildDeadBox(href, {
             probeUrl: /^https?:/i.test(direct) ? direct : href,
         });
-        // se a img é o ÚNICO conteúdo do <a> wrapper (jpg6), troca o <a> INTEIRO — a caixa já é um <a>, e <a>
-        // aninhado é inválido (o browser desmonta a árvore e o clique para de funcionar).
-        const wrap = img.parentNode;
-        if (wrap.tagName === 'A' && wrap.childElementCount === 1 && !(wrap.textContent || '').trim()) wrap.replaceWith(box);
+        // Troca o <a> que só embrulha esta imagem. <a> dentro de <a> é inválido e o clique deixa de navegar.
+        const wrap = img.closest('a');
+        if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
         else img.replaceWith(box);
         dropChipBreaks(box);
         const g = box.closest('.auto-image-grid');

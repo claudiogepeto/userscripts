@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.4
+// @version      4.1.5
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -1943,6 +1943,8 @@
                 text-decoration: none !important;
                 overflow: hidden !important;
                 aspect-ratio: auto !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
             }
             .smg-dead:hover {
@@ -11183,6 +11185,14 @@
         a.className = 'smg-dead' + (opts.media ? ' smg-dead--media' : '');
         a.href = url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.title = url || '';
+        a.addEventListener('click', e => {
+            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const dest = a.href || '';
+            if (!/^https?:/i.test(dest)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(dest, '_blank', 'noopener');
+        });
         if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
@@ -12331,18 +12341,22 @@
     function imgFailLink(img) {
         if (!img || img.dataset.smgFailed || !img.parentNode) return;
         img.dataset.smgFailed = '1';
-        const raw = img.dataset.smgLink || img.currentSrc || img.getAttribute('src') || '';
-        if (!raw || /^data:/.test(raw)) { img.classList.add('smg-img-ready'); return; }   // sem destino útil → só tira o shimmer
-        const href = resolveProxyHref(raw);   // mostra/abre a URL final, não o /goto/...&s=hash
-        // ABRIR = a página do host (smgLink, quando existe) · SONDAR = o arquivo que de fato não renderizou
         const direct = img.currentSrc || img.getAttribute('src') || '';
+        const parentA = img.closest('a[href]');
+        const parentHref = parentA ? resolveProxyHref(parentA.getAttribute('href') || '') : '';
+        const stored = img.dataset.smgLink ? resolveProxyHref(img.dataset.smgLink) : '';
+        const isFile = u => /\.(?:jpe?g|png|gif|webp|avif|mp4|webm|mov|m4v)(?:$|\?)/i.test(u || '');
+        let href = '';
+        if (stored && /^https?:/i.test(stored) && !isFile(stored)) href = stored;
+        else if (parentHref && /^https?:/i.test(parentHref) && !isFile(parentHref)) href = parentHref;
+        else href = resolveProxyHref(stored || direct);
+        if (!href || /^data:/.test(href)) { img.classList.add('smg-img-ready'); return; }
         const box = buildDeadBox(href, {
             probeUrl: /^https?:/i.test(direct) ? direct : href,
         });
-        // se a img é o ÚNICO conteúdo do <a> wrapper (jpg6), troca o <a> INTEIRO — a caixa já é um <a>, e <a>
-        // aninhado é inválido (o browser desmonta a árvore e o clique para de funcionar).
-        const wrap = img.parentNode;
-        if (wrap.tagName === 'A' && wrap.childElementCount === 1 && !(wrap.textContent || '').trim()) wrap.replaceWith(box);
+        // Troca o <a> que só embrulha esta imagem. <a> dentro de <a> é inválido e o clique deixa de navegar.
+        const wrap = img.closest('a');
+        if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
         else img.replaceWith(box);
         dropChipBreaks(box);
         const g = box.closest('.auto-image-grid');

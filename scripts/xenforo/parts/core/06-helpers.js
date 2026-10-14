@@ -1040,6 +1040,14 @@
         a.className = 'smg-dead' + (opts.media ? ' smg-dead--media' : '');
         a.href = url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.title = url || '';
+        a.addEventListener('click', e => {
+            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const dest = a.href || '';
+            if (!/^https?:/i.test(dest)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(dest, '_blank', 'noopener');
+        });
         if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
