@@ -169,7 +169,6 @@
             .smg-search-cfg-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-size: 13.5px; color: var(--smg-tx); cursor: pointer; }
             .smg-search-cfg-row:hover { background: rgba(255,255,255,0.06); }
             .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }
-            @media (max-width: 600px) { .smg-search-bar { gap: 6px; } .smg-search-kbd { display: none; } }   /* mobile: sem o badge "esc" (touch) + barra mais apertada com os ícones */
             @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; } }   /* mobile usa o modal da dock, não o overlay da topbar */
             .smg-tb-search-ico { display: inline-flex; align-items: center; flex: 0 0 auto; }
             .smg-tb-search-ico svg { width: 18px; height: 18px; opacity: 0.7; fill: none !important; }

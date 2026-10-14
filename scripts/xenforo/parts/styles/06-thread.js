@@ -457,7 +457,7 @@
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
                 html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
-                .smg-thead-thumb { width: 64px; height: 64px; border-radius: 12px; }
+                .smg-thead-thumb { flex: 0 0 64px !important; width: 64px !important; height: 64px !important; border-radius: 12px !important; }
                 html.smg-thread .p-body-header .p-title-value { font-size: 19px !important; }
             }
 
@@ -659,12 +659,6 @@
                 html.smg-thread .smg-pc-act--comment .smg-pc-act-lbl,
                 html.smg-thread .smg-cc-act--comment .smg-pc-act-lbl,
                 html.smg-thread .smg-react-w { display: none !important; }
-                html.smg-thread .smg-pc-act--save,
-                html.smg-thread .smg-pc-act--share,
-                html.smg-thread .smg-pc-act--comment { padding: 0 10px !important; }
-                html.smg-thread .smg-pc-actions { gap: 2px; flex-wrap: nowrap; padding: 10px 14px 12px; }
-                html.smg-thread .smg-pc-act { padding: 0 11px !important; }
-                html.smg-thread .smg-pc-morewrap { margin-left: auto; }   /* ⋯ encostado na direita */
 
             }
 

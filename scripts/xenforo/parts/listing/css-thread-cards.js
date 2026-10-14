@@ -129,6 +129,10 @@
             .smg-feed-tool:active { transform: scale(0.9); }
             .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
+            @media (max-width: 600px) {
+                .smg-feed-tools { right: 70px; gap: 7px; }
+                .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
+            }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
             #smg-feed .smg-rgc-play svg, #smg-feed .smg-rgc-barplay svg, #smg-feed .smg-gallery-play svg { fill: currentColor !important; }   /* play/pause + play da galeria são PREENCHIDOS (não outline) → re-afirma o fill, senão somem com a regra acima */

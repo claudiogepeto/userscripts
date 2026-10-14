@@ -578,6 +578,7 @@
                 border-radius: 9px;
             }
             @media (max-width: 600px) {
+                .smg-search-bar { gap: 6px; }   /* barra mais apertada com os ícones */
                 #smg-rs-panel { margin-top: 10px; }
                 #smg-rs-panel .smg-search-bar { height: 48px; }
             }

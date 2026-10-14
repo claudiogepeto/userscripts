@@ -3083,7 +3083,6 @@
             .smg-search-cfg-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-size: 13.5px; color: var(--smg-tx); cursor: pointer; }
             .smg-search-cfg-row:hover { background: rgba(255,255,255,0.06); }
             .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }
-            @media (max-width: 600px) { .smg-search-bar { gap: 6px; } .smg-search-kbd { display: none; } }   /* mobile: sem o badge "esc" (touch) + barra mais apertada com os ícones */
             @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; } }   /* mobile usa o modal da dock, não o overlay da topbar */
             .smg-tb-search-ico { display: inline-flex; align-items: center; flex: 0 0 auto; }
             .smg-tb-search-ico svg { width: 18px; height: 18px; opacity: 0.7; fill: none !important; }
@@ -4858,6 +4857,7 @@
                 border-radius: 9px;
             }
             @media (max-width: 600px) {
+                .smg-search-bar { gap: 6px; }   /* barra mais apertada com os ícones */
                 #smg-rs-panel { margin-top: 10px; }
                 #smg-rs-panel .smg-search-bar { height: 48px; }
             }
@@ -5399,7 +5399,6 @@
                     color: #fff;                             /* ícones brancos (ativo = preenchido, inativo = contorno) */
                     transition: transform .12s ease;
                 }
-                .smg-nav-ico svg { stroke-width: 1.9; }       /* traço mais leve na navbar */
                 /* item da página atual: ícone na COR DO TEMA (verde/rosa), em CONTORNO (sem preencher → sem "blob"/gradiente) */
                 .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link); }
                 /* profile = avatar circular (24px, idêntico aos outros ícones da navbar) */
@@ -5451,8 +5450,6 @@
                 .smg-search-kbd { display: none; }
                 .smg-search-go { height: 46px; padding: 0 22px; } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
-                .smg-feed-tools { right: 70px; gap: 7px; }
-                .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
 
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
@@ -6368,7 +6365,6 @@
                 }
                 /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
                 html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
-                html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
             }
             /* pager encostado à esquerda (o XF centraliza por padrão) */
             html.smg-threadlist .pageNavWrapper,
@@ -6436,6 +6432,8 @@
             }
             html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
             @media (max-width: 600px) {
+                /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
+                html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
                 /* mobile: pager simples sem primeiro/último (evita pílula vazia do «/») */
                 html.smg-threadlist .pageNavSimple-el--first,
                 html.smg-threadlist .pageNavSimple-el--last { display: none !important; }
@@ -7030,7 +7028,7 @@
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
                 html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
-                .smg-thead-thumb { width: 64px; height: 64px; border-radius: 12px; }
+                .smg-thead-thumb { flex: 0 0 64px !important; width: 64px !important; height: 64px !important; border-radius: 12px !important; }
                 html.smg-thread .p-body-header .p-title-value { font-size: 19px !important; }
             }
 
@@ -7232,12 +7230,6 @@
                 html.smg-thread .smg-pc-act--comment .smg-pc-act-lbl,
                 html.smg-thread .smg-cc-act--comment .smg-pc-act-lbl,
                 html.smg-thread .smg-react-w { display: none !important; }
-                html.smg-thread .smg-pc-act--save,
-                html.smg-thread .smg-pc-act--share,
-                html.smg-thread .smg-pc-act--comment { padding: 0 10px !important; }
-                html.smg-thread .smg-pc-actions { gap: 2px; flex-wrap: nowrap; padding: 10px 14px 12px; }
-                html.smg-thread .smg-pc-act { padding: 0 11px !important; }
-                html.smg-thread .smg-pc-morewrap { margin-left: auto; }   /* ⋯ encostado na direita */
 
             }
 
@@ -7959,6 +7951,10 @@
             .smg-feed-tool:active { transform: scale(0.9); }
             .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
+            @media (max-width: 600px) {
+                .smg-feed-tools { right: 70px; gap: 7px; }
+                .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
+            }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
             #smg-feed .smg-rgc-play svg, #smg-feed .smg-rgc-barplay svg, #smg-feed .smg-gallery-play svg { fill: currentColor !important; }   /* play/pause + play da galeria são PREENCHIDOS (não outline) → re-afirma o fill, senão somem com a regra acima */
@@ -8294,6 +8290,14 @@
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
             html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: 11px; color: rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 3px; }
+            /* mobile: barra de ações compacta numa linha só (depois da regra base, senão nunca vale) */
+            @media (max-width: 600px) {
+                html.smg-thread .smg-pc-actions { gap: 2px; flex-wrap: nowrap; padding: 10px 14px 12px; }
+                html.smg-thread .smg-pc-act { padding: 0 11px !important; }
+                html.smg-thread .smg-pc-act--save,
+                html.smg-thread .smg-pc-act--share,
+                html.smg-thread .smg-pc-act--comment { padding: 0 10px !important; }
+            }
 `;
     // ── CSS: comments, editor and quick reply ──
     const CSS_COMMENTS = `
@@ -8849,6 +8853,8 @@
                 stroke: currentColor !important;
                 stroke-width: 2px !important;
             }
+            /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
+            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; } }
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }

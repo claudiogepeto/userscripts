@@ -61,6 +61,8 @@
                 stroke: currentColor !important;
                 stroke-width: 2px !important;
             }
+            /* navbar mobile: traço mais leve (depois do 2px acima, senão nunca vale) */
+            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; } }
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }

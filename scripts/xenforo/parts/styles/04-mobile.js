@@ -268,7 +268,6 @@
                 }
                 /* paginador: esconde o completo, mostra só o simples (evita duplicação) */
                 html.smg-threadlist .pageNavWrapper .pageNav { display: none !important; }
-                html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
             }
             /* pager encostado à esquerda (o XF centraliza por padrão) */
             html.smg-threadlist .pageNavWrapper,
@@ -336,6 +335,8 @@
             }
             html.smg-threadlist .block-outer-opposite .button:hover { background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; }
             @media (max-width: 600px) {
+                /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
+                html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
                 /* mobile: pager simples sem primeiro/último (evita pílula vazia do «/») */
                 html.smg-threadlist .pageNavSimple-el--first,
                 html.smg-threadlist .pageNavSimple-el--last { display: none !important; }

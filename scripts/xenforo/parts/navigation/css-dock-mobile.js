@@ -79,7 +79,6 @@
                     color: #fff;                             /* ícones brancos (ativo = preenchido, inativo = contorno) */
                     transition: transform .12s ease;
                 }
-                .smg-nav-ico svg { stroke-width: 1.9; }       /* traço mais leve na navbar */
                 /* item da página atual: ícone na COR DO TEMA (verde/rosa), em CONTORNO (sem preencher → sem "blob"/gradiente) */
                 .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link); }
                 /* profile = avatar circular (24px, idêntico aos outros ícones da navbar) */
@@ -131,8 +130,6 @@
                 .smg-search-kbd { display: none; }
                 .smg-search-go { height: 46px; padding: 0 22px; } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
-                .smg-feed-tools { right: 70px; gap: 7px; }
-                .smg-feed-tool { width: 40px; height: 40px; font-size: 18px; }
 
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */

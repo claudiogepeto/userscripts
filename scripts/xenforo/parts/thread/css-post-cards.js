@@ -273,4 +273,12 @@
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
             html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: 11px; color: rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 3px; }
+            /* mobile: barra de ações compacta numa linha só (depois da regra base, senão nunca vale) */
+            @media (max-width: 600px) {
+                html.smg-thread .smg-pc-actions { gap: 2px; flex-wrap: nowrap; padding: 10px 14px 12px; }
+                html.smg-thread .smg-pc-act { padding: 0 11px !important; }
+                html.smg-thread .smg-pc-act--save,
+                html.smg-thread .smg-pc-act--share,
+                html.smg-thread .smg-pc-act--comment { padding: 0 10px !important; }
+            }
 `;
