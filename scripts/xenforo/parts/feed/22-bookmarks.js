@@ -310,19 +310,3 @@
         contentCol.appendChild(feed);
         renderBookmarksFeed(list);
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__bookmarkExports = {
-            setupBookmarksFeed,
-            bmParseRows,
-            bmIsActionOrBadgeLink,
-            bmFetchAllRows,
-            bmFetchPost,
-            bmFallbackPost,
-            bmCardFromRec,
-            bmUnsave,
-            isBookmarksPage,
-            get bmBuilt() { return bmBuilt; },
-            set bmBuilt(v) { bmBuilt = v; }
-        };
-    }

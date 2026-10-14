@@ -155,6 +155,3 @@
         if (w > 0 && h > 0) return h / w;
         return MASONRY_PH_RELH;
     }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__masonryEngine = { masonryPlace, masonryColsFor, masonryOrientSpan, masonryMount, masonryUnmount, masonryLayout, masonrySchedule, masonryImgRatio, setWidth: (c, w) => { const st = masonryState.get(c); if (st) st.width = w; } };
-    }

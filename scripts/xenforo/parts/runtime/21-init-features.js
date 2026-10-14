@@ -1021,14 +1021,10 @@
             });
 
             // Pré-carregamento lazy ao aproximar 200% da viewport
-            if (!(typeof window !== 'undefined' && window.__TEST_MODE__)) {
-                const lazyObs = makeLazyIO(() => {
-                    loadAndPlay(false);
-                }, { rootMargin: '200% 0px' });
-                if (lazyObs) lazyObs.observe(mwrap);
-            } else if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                vid.src = videoUrl;
-            }
+            const lazyObs = makeLazyIO(() => {
+                loadAndPlay(false);
+            }, { rootMargin: '200% 0px' });
+            if (lazyObs) lazyObs.observe(mwrap);
 
             mwrap.appendChild(vid);
             mwrap.appendChild(playOverlay);
@@ -1304,20 +1300,4 @@
             });
             if (bar.children.length >= 2) bb.appendChild(bar);
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.buildTwitterCardDom = buildTwitterCardDom;
-        window.fhPixeldrain = fhPixeldrain;
-        window.fhBunkr = fhBunkr;
-        window.fhGoonbox = fhGoonbox;
-        window.bunkrCache = bunkrCache;
-        window.processFileHostCards = processFileHostCards;
-        window.processDirectMedia = processDirectMedia;
-        window.__processTurboEmbeds = processTurboEmbeds;
-        window.processTurboEmbeds = processTurboEmbeds;
-        window.fhCard = fhCard;
-        window.pdPlace = pdPlace;
-        window.unwrapRedirectLinks = unwrapRedirectLinks;
-        window.__unwrapRedirectLinks = unwrapRedirectLinks;
     }

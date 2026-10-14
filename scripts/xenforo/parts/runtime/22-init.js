@@ -611,16 +611,6 @@
     }
     window.smgSoftNavigate = softNavigate;
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__processAll = processAll;
-        window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, eachIn, makeTaskQueue, rootTouches });
-        window.buildPostGalleries = buildPostGalleries;
-        window.__buildPostGalleries = buildPostGalleries;
-        window.detectPageClasses = detectPageClasses;
-        window.__xfPageAssets = xfPageAssets;
-        window.__pauseOffscreenBanners = pauseOffscreenBanners;
-    }
-
     // THE test hook: the scenario suite (scripts/xenforo/tests) sets window.__SMG_TEST__ before the script
     // runs, to reach the units no page shows directly (placement math, the pager engine). Everything else
     // is tested through the DOM. Do not add other window exports for tests.

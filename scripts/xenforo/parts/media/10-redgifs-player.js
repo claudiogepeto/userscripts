@@ -470,9 +470,6 @@
         rgControls(wrap, video);   // play/pause + flash · progresso seekável · volume flyout · tempo · externo · visualizador · auto-hide
         return { wrap, video };
     }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose, rgAspect };
-    }
     function rgFmt(t) {   // M:SS; ≥ 1h vira H:MM:SS (vídeo longo mostrava "160:19" em vez de "2:40:19")
         t = Math.max(0, t | 0);
         const h = t / 3600 | 0, m = (t / 60 | 0) % 60, s = t % 60, ss = (s < 10 ? '0' : '') + s;
@@ -1277,14 +1274,4 @@
                 if (!ph.querySelector('.smg-rg, .smg-rg-fail')) ph.style.setProperty('display', 'none', 'important');   // !important vence a CSS `display:block !important` do s9e
             });
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__imagepondCache = imagepondCache;
-        window.__imagepondInflight = imagepondInflight;
-        window.__imagepondResolve = imagepondResolve;
-        window.__rgPrepareUrl = rgPrepareUrl;
-        window.__rgViaDirect = rgViaDirect;
-        window.__rgControls = rgControls;
-        window.__showPlayerError = showPlayerError;
     }

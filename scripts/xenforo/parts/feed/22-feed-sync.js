@@ -310,8 +310,7 @@
     }
 
     if (typeof window !== 'undefined') {
-        window.applyCronBackoff = applyCronBackoff;
-        window.resetCronBackoff = resetCronBackoff;
+        window.applyCronBackoff = applyCronBackoff;   // read by riverHandle429 (22-feed)
     }
 
     let isCronRunning = false;
@@ -389,7 +388,6 @@
             return Promise.resolve(0);
         }
         riverAborted = false;
-        if (typeof window !== 'undefined') window.__riverAborted = false;
 
         if (timelineSyncRunning) return Promise.resolve(0);
         timelineSyncRunning = true;
@@ -433,7 +431,7 @@
                     try { opts.onProgress({ step: 'posts', added: 0, done: 0, total: total }); } catch (e) {}
                 }
 
-                const delayMs = (typeof window !== 'undefined' && window.__TEST_MODE__) ? 10 : 1200;
+                const delayMs = 1200;
                 let p = Promise.resolve();
                 queue.forEach((item, idx) => {
                     p = p.then(() => {
@@ -498,33 +496,4 @@
         }).finally(() => {
             timelineSyncRunning = false;
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedSyncExports = {
-            decideThreadFetch,
-            syncTimeline,
-            syncThreadPage,
-            ingestCurrentThreadPageIfFollowed,
-            cronRefreshFollowedAndTimeline,
-            startTimelineCron,
-            cronTick,
-            CRON_MIN_INTERVAL_MS,
-            CRON_MAX_INTERVAL_MS,
-            applyCronBackoff,
-            resetCronBackoff,
-            scheduleNextCron,
-            get currentCronIntervalMs() { return currentCronIntervalMs; },
-            set currentCronIntervalMs(v) { currentCronIntervalMs = v; },
-            get cronConsecutive429() { return cronConsecutive429; },
-            set cronConsecutive429(v) { cronConsecutive429 = v; },
-            get lastBackoffAppliedTs() { return lastBackoffAppliedTs; },
-            set lastBackoffAppliedTs(v) { lastBackoffAppliedTs = v; },
-            get isCronRunning() { return isCronRunning; },
-            set isCronRunning(v) { isCronRunning = v; },
-            get timelineSyncRunning() { return timelineSyncRunning; },
-            set timelineSyncRunning(v) { timelineSyncRunning = v; },
-            get timelineCronTimer() { return timelineCronTimer; },
-            set timelineCronTimer(v) { timelineCronTimer = v; }
-        };
     }

@@ -217,15 +217,3 @@
             fresh.forEach(row => i18nDom(row));
         }
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.cleanAlertRow = cleanAlertRow;
-        window.repaintAlertThumbs = repaintAlertThumbs;
-        window.__alertsExports = {
-            cleanAlertRow,
-            paintAlertThumb,
-            repaintAlertThumbs,
-            syncAlertBadgeFrom,
-            markAlertRead
-        };
-    }

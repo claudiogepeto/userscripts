@@ -285,7 +285,3 @@
             }
         }, true);
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__imageClickExports = { setupImageClickFeed, imageUrlOf };
-    }

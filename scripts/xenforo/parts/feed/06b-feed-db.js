@@ -365,24 +365,3 @@
             return dbClearTimeline().then(() => fdbResetSyncMarks()).then(() => dbMetaSet('syncVersion', version)).then(() => true);
         }).catch(() => false);
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedDbExports = {
-            fdbOpen,
-            dbClearAllData,
-            fdbResetSyncMarks,
-            dbClearTimeline,
-            dbClearFollowed,
-            fdbEnsureVersion,
-            dbFollowedGet,
-            dbFollowedGetAll,
-            dbFollowedUpsert,
-            dbFollowedBulkUpsert,
-            dbFollowedMarkAllSeen,
-            dbTimelinePutPosts,
-            dbTimelineGetRecent,
-            dbTimelineCount,
-            dbMetaGet,
-            dbMetaSet
-        };
-    }

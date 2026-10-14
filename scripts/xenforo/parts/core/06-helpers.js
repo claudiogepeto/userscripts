@@ -1441,35 +1441,3 @@
 
         return !!(hasPostClass || isArticleMessage || hasPostContent);
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.deadReason = deadReason;
-        window.buildDeadBox = buildDeadBox;
-        window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
-        window.__structItemTs = structItemTs;
-        window.__readPageJump = readPageJump;
-        window.__fetchDoc = fetchDoc;
-        window.__b64decode = b64decode;
-        window.__rawParam = rawParam;
-        window.__decodeProxyHref = decodeProxyHref;
-        window.__resolveProxyHref = resolveProxyHref;
-        window.resolveProxyHref = resolveProxyHref;
-        window.isProxyUrl = isProxyUrl;
-        window.__isProxyUrl = isProxyUrl;
-        window.cleanProxyString = cleanProxyString;
-        window.__cleanProxyString = cleanProxyString;
-        window.__absUrl = absUrl;
-        window.isThreadPostElement = isThreadPostElement;
-        window.normalizeRoots = normalizeRoots;
-        window.eachIn = eachIn;
-        window.indexFollowedThumbs = indexFollowedThumbs;
-        window.followedThumbsMap = followedThumbsMap;
-        window.thumbCacheGet = thumbCacheGet;
-        window.__helpersExports = Object.assign(window.__helpersExports || {}, {
-            indexFollowedThumbs,
-            followedThumbsMap,
-            thumbCacheGet,
-            normalizeRoots,
-            eachIn
-        });
-    }

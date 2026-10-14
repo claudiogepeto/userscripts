@@ -253,10 +253,6 @@
         ] },
     ];
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__configExports = { DEFAULT_FEATURES, FEATURES, SETTINGS_META, saveFeatures };
-    }
-
     // =========================================================
     // i18n: traduz a UI QUE A GENTE INJETA conforme o idioma do site (<html lang>).
     // Default = inglês (as próprias chaves). PT-BR quando o XF está em pt-*.
@@ -470,10 +466,6 @@
             e.preventDefault();
             native.click();
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.i18n = i18n;
     }
 
     // =========================================================
@@ -10132,38 +10124,6 @@
         return !!(hasPostClass || isArticleMessage || hasPostContent);
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.deadReason = deadReason;
-        window.buildDeadBox = buildDeadBox;
-        window.__extractCleanTitleAndPrefixes = extractCleanTitleAndPrefixes;
-        window.__structItemTs = structItemTs;
-        window.__readPageJump = readPageJump;
-        window.__fetchDoc = fetchDoc;
-        window.__b64decode = b64decode;
-        window.__rawParam = rawParam;
-        window.__decodeProxyHref = decodeProxyHref;
-        window.__resolveProxyHref = resolveProxyHref;
-        window.resolveProxyHref = resolveProxyHref;
-        window.isProxyUrl = isProxyUrl;
-        window.__isProxyUrl = isProxyUrl;
-        window.cleanProxyString = cleanProxyString;
-        window.__cleanProxyString = cleanProxyString;
-        window.__absUrl = absUrl;
-        window.isThreadPostElement = isThreadPostElement;
-        window.normalizeRoots = normalizeRoots;
-        window.eachIn = eachIn;
-        window.indexFollowedThumbs = indexFollowedThumbs;
-        window.followedThumbsMap = followedThumbsMap;
-        window.thumbCacheGet = thumbCacheGet;
-        window.__helpersExports = Object.assign(window.__helpersExports || {}, {
-            indexFollowedThumbs,
-            followedThumbsMap,
-            thumbCacheGet,
-            normalizeRoots,
-            eachIn
-        });
-    }
-
 // =========================================================
     // FEED DB (IndexedDB) — v5 moderno, relacional e anti-rate-limit.
     // Stores:
@@ -10532,27 +10492,6 @@
         }).catch(() => false);
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedDbExports = {
-            fdbOpen,
-            dbClearAllData,
-            fdbResetSyncMarks,
-            dbClearTimeline,
-            dbClearFollowed,
-            fdbEnsureVersion,
-            dbFollowedGet,
-            dbFollowedGetAll,
-            dbFollowedUpsert,
-            dbFollowedBulkUpsert,
-            dbFollowedMarkAllSeen,
-            dbTimelinePutPosts,
-            dbTimelineGetRecent,
-            dbTimelineCount,
-            dbMetaGet,
-            dbMetaSet
-        };
-    }
-
     // ── part 07-posts-misc: atalhos de teclado · scroll infinito ──
     // setado pela dock; o scroll infinito chama pra atualizar o número da página exibido
     let smgUpdateDockPage = null;
@@ -10743,7 +10682,6 @@
             get failed() { return failed; },
         };
     }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) window.__pagerExports = { createPager };
 
     // =========================================================
     // FEATURE: scroll infinito na thread (anexa as próximas páginas)
@@ -11124,9 +11062,6 @@
         if (w > 0 && h > 0) return h / w;
         return MASONRY_PH_RELH;
     }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__masonryEngine = { masonryPlace, masonryColsFor, masonryOrientSpan, masonryMount, masonryUnmount, masonryLayout, masonrySchedule, masonryImgRatio, setWidth: (c, w) => { const st = masonryState.get(c); if (st) st.width = w; } };
-    }
 
     // =========================================================
     // FEATURE: auto full images + portrait grid
@@ -11149,12 +11084,6 @@
         img.dataset.smgSwapping = targetAbs;
         if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
             img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-        }
-        if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
-            delete img.dataset.smgSwapping;
-            img.src = targetAbs;
-            relayoutPostGroupOf(img);
-            return;
         }
         const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
         const loadWithPolicy = (policy, canRetry) => {
@@ -12153,18 +12082,6 @@
         if (g) masonrySchedule(g);
     }
 
-    if (typeof window !== 'undefined') {
-        window.applyReplaceThumbsWithFull = applyReplaceThumbsWithFull;
-        window.resolveFullImageUrl = resolveFullImageUrl;
-        if (window.__TEST_MODE__) {
-            window.buildPostGalleries = buildPostGalleries;
-            window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { extractMediaDimensions, markWide, buildPostGallery, postItemRatio, postItemSpan, videoBoxRatio, isVideoBox, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, imgFailLink, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
-            window.processOneImage = processOneImage;
-            window.processImages = processImages;
-            window.goonboxEmbed = goonboxEmbed;
-        }
-    }
 
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
@@ -12637,9 +12554,6 @@
         });
         rgControls(wrap, video);   // play/pause + flash · progresso seekável · volume flyout · tempo · externo · visualizador · auto-hide
         return { wrap, video };
-    }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__redgifsExports = { rgBuild, rgSetPoster, rgCache, rgPosterCache, cacheSet: rgCacheSet, RG_CACHE_MAX, RG_POSTER_CACHE_MAX, rgDispose, rgAspect };
     }
     function rgFmt(t) {   // M:SS; ≥ 1h vira H:MM:SS (vídeo longo mostrava "160:19" em vez de "2:40:19")
         t = Math.max(0, t | 0);
@@ -13447,16 +13361,6 @@
         });
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__imagepondCache = imagepondCache;
-        window.__imagepondInflight = imagepondInflight;
-        window.__imagepondResolve = imagepondResolve;
-        window.__rgPrepareUrl = rgPrepareUrl;
-        window.__rgViaDirect = rgViaDirect;
-        window.__rgControls = rgControls;
-        window.__showPlayerError = showPlayerError;
-    }
-
     // =========================================================
     // FEATURE: auto-load redgifs
     // =========================================================
@@ -13504,10 +13408,6 @@
             // Retentativa síncrona durante a fase de composição inicial (sem salto tardio de 750ms pós-paint)
             setTimeout(tryClick, 200);
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__autoExpandSpoilers = autoExpandSpoilers;
     }
 
     // =========================================================
@@ -13567,14 +13467,6 @@
     // Coleta do DOM atual (prefixos remotos são colhidos lazily ao abrir busca/filtros)
     harvestPrefixesFromDoc(document);
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__prefixExports = {
-            harvestPrefixesFromDoc,
-            globalPrefixMap,
-            refreshPrefixHarvest
-        };
-    }
-
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
@@ -13628,9 +13520,6 @@
             } catch (e) {
                 return null;
             }
-        }
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            window.__getSortHref = getSortHref;
         }
 
         let sortIsDate = !/reaction/i.test(window.location.search || '');
@@ -14762,14 +14651,12 @@
                 }
                 return s.replace(/[/?#].*$/, '').replace(/[/]$/, '').trim();
             }
-            if (typeof window !== 'undefined') window.extractSocialHandle = extractSocialHandle;
 
             // NORMALIZAÇÃO DE DIACRÍTICOS / ACENTOS (Unicode Unaccent):
             function removeAccents(str) {
                 if (!str) return '';
                 return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
-            if (typeof window !== 'undefined') window.removeAccents = removeAccents;
 
             // GERAÇÃO FLEXÍVEL DE PALAVRAS-CHAVE:
             // Permite dar match tanto com espaços ("jade the jaguar") quanto sem espaços ("jadethejaguar"),
@@ -15192,10 +15079,6 @@
                 a.appendChild(main);
                 a.addEventListener('click', () => { commitCurrentSearch(); closeSearch(); });
                 return a;
-            }
-
-            function loadMoreSearchResults() {
-                return searchPager.more();
             }
 
             function runSearchInline(fields) {
@@ -15702,28 +15585,6 @@
                         closeAuthorRow();
                     }
                 });
-            }
-
-            if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                window.__dockSearchExports = {
-                    paintResults,
-                    activeSearchBadges,
-                    get searchResultsEl() { return searchResultsEl; },
-                    doSearch,
-                    openAdvanced,
-                    getSearchInput,
-                    parseSearchResults,
-                    loadMoreSearchResults,
-                    get currentSearchNextUrl() { return searchPager.cursor; },
-                    get searchSentinelEl() { return searchSentinelEl; },
-                    renderSearchCard,
-                    clearResults,
-                    openSearch,
-                    closeSearch,
-                    updateSearchClearButtons,
-                    extractSocialHandle,
-                    removeAccents
-                };
             }
 
             // Limpar busca (✕) no input
@@ -16977,10 +16838,6 @@
         }, true);
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__imageClickExports = { setupImageClickFeed, imageUrlOf };
-    }
-
     // =========================================================
     // FEATURE: modo mídia — a mídia da thread num overlay com DUAS vistas sobre UMA lista
     //
@@ -18071,12 +17928,6 @@
         if (slides.length) goStart();
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.collectMediaFrom = collectMediaFrom;
-        window.__galleryExports = { galMakeSection, galTileRatio, galTileSpan, galSkelTile };
-        window.__mediaExports = { openMedia, openMediaFeed, closeMedia, mediaView, setMediaView, restoreNavMode, resetRestore: () => { smgNavRestored = false; } };
-    }
-
     // =========================================================
     // LISTAGEM (modo lista/grade): marca o container REAL dos itens (.structItem--thread)
     // que o modo grade transforma em grid (o toggle lista/grade vive no dock)
@@ -18317,11 +18168,6 @@
                 img.addEventListener('error', addPh, { once: true });
             }
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.markThreadGridContainer = markThreadGridContainer;
-        window.markGridPlaceholders = markGridPlaceholders;
     }
 
     // =========================================================
@@ -19328,27 +19174,6 @@
         });
     }
 
-    if (typeof window !== 'undefined') {
-        window.__homeExports = {
-            extractFeedItemData,
-            createFeedCardEl,
-            feedPagerFor,
-            getCachedFeed,
-            setCachedFeed,
-            FEED_CACHE_KEY_PREFIX,
-            FEED_CACHE_TTL_MS,
-            enhanceHomeHubSections,
-            ensureHomeNodeIcons,
-            homeLayoutSignature,
-            classifyHomeNode,
-            organizeHomeHub,
-            getMainCategoryOrder,
-            MAIN_CATEGORY_PATTERNS,
-            getMainSiteOrder,
-            MAIN_SITE_PATTERNS,
-        };
-    }
-
     // =========================================================
     // BARRA ÚNICA SEGMENTADA (filter bar) — SMG · thread + fórum
     // Um componente só (pager · ordenar · ações). Espelha os links do XF e
@@ -20030,13 +19855,6 @@
         syncStuck();
         setTimeout(() => { measure(); syncStuck(); }, 150);
         setTimeout(() => { measure(); syncStuck(); }, 400);
-
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            window.syncStuck = syncStuck;
-            header._syncStuck = syncStuck;
-            header._sentinel = sentinel;
-            header._spacer = spacer;
-        }
         return syncStuck;
     }
 
@@ -20359,7 +20177,7 @@
 
     function fetchAndIngestFollowed() {
         const now = Date.now();
-        if (!(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
+        if (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS) {
             return Promise.resolve(0);
         }
         if (followedFetchInFlight) {
@@ -20781,36 +20599,6 @@
 
     // (THREAD header restyle removido — era dead code, nunca chamado; buildFilterBars cobre pager/ordenar/ações nos 2 sites)
 
-    if (typeof window !== 'undefined') {
-        window.fetchWatchedDoc = fetchWatchedDoc;
-        window.fetchAndIngestFollowed = fetchAndIngestFollowed;
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__filterbarExports = {
-            ingestWatchedPageToFollowed,
-            fetchWatchedDoc,
-            fetchAndIngestFollowed,
-            streamAllWatchedPages,
-            buildFilterBars,
-            buildThreadHeader,
-            unifyThreadHeader,
-            createStickySync,
-            decorateThreadCard,
-            decorateWatchedThreadRow,
-            buildPostCard,
-            buildPostCards,
-            buildCommentCard,
-            buildCommentCards,
-            get isStreamingWatched() { return isStreamingWatched; },
-            set isStreamingWatched(v) { isStreamingWatched = v; },
-            get syncStuck() { return window.syncStuck; }
-        };
-        window.syncStuck = window.syncStuck || null;
-        window.createStickySync = createStickySync;
-        window.unifyThreadHeader = unifyThreadHeader;
-        window.buildThreadHeader = buildThreadHeader;
-    }
 
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
@@ -21030,18 +20818,6 @@
         } else {
             fresh.forEach(row => i18nDom(row));
         }
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.cleanAlertRow = cleanAlertRow;
-        window.repaintAlertThumbs = repaintAlertThumbs;
-        window.__alertsExports = {
-            cleanAlertRow,
-            paintAlertThumb,
-            repaintAlertThumbs,
-            syncAlertBadgeFrom,
-            markAlertRead
-        };
     }
 
     // =========================================================
@@ -21426,10 +21202,6 @@
         const markReadBtn = el.querySelector('.smg-aldock-markread');
         if (markReadBtn) {
             markReadBtn.addEventListener('click', () => {
-                if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                    applyMarkAllReadSuccess();
-                    return;
-                }
                 if (markReadBtn.dataset.busy) return;
                 markReadBtn.dataset.busy = '1';
                 const csrf = document.documentElement.getAttribute('data-csrf')
@@ -21604,26 +21376,6 @@
         }
     }
 
-    if (typeof window !== 'undefined') {
-        if (window.__TEST_MODE__) {
-            window.__aldockExports = {
-                buildAlertsDock,
-                openAlertsDock,
-                closeAlertsDock,
-                toggleAlertsDock,
-                aldockSyncCount,
-                updateAlertsUnreadBadge,
-                aldockWidth,
-                aldockState,
-                RAIL_SRC,
-                railFetch,
-                railRefresh,
-                railMore,
-                railHardRefresh,
-                getAldock: () => aldock
-            };
-        }
-    }
 
     // =========================================================
     // FEATURE: topbar reformulada (ícones + popovers agrupados)
@@ -22422,9 +22174,6 @@
         if (firstBlock && firstBlock.parentNode) {
             firstBlock.parentNode.insertBefore(collapse, firstBlock);
         }
-    }
-    if (typeof window !== 'undefined') {
-        window.setupHeaderNotices = setupHeaderNotices;
     }
 
     // =========================================================
@@ -23464,14 +23213,10 @@
             });
 
             // Pré-carregamento lazy ao aproximar 200% da viewport
-            if (!(typeof window !== 'undefined' && window.__TEST_MODE__)) {
-                const lazyObs = makeLazyIO(() => {
-                    loadAndPlay(false);
-                }, { rootMargin: '200% 0px' });
-                if (lazyObs) lazyObs.observe(mwrap);
-            } else if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                vid.src = videoUrl;
-            }
+            const lazyObs = makeLazyIO(() => {
+                loadAndPlay(false);
+            }, { rootMargin: '200% 0px' });
+            if (lazyObs) lazyObs.observe(mwrap);
 
             mwrap.appendChild(vid);
             mwrap.appendChild(playOverlay);
@@ -23747,22 +23492,6 @@
             });
             if (bar.children.length >= 2) bb.appendChild(bar);
         });
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.buildTwitterCardDom = buildTwitterCardDom;
-        window.fhPixeldrain = fhPixeldrain;
-        window.fhBunkr = fhBunkr;
-        window.fhGoonbox = fhGoonbox;
-        window.bunkrCache = bunkrCache;
-        window.processFileHostCards = processFileHostCards;
-        window.processDirectMedia = processDirectMedia;
-        window.__processTurboEmbeds = processTurboEmbeds;
-        window.processTurboEmbeds = processTurboEmbeds;
-        window.fhCard = fhCard;
-        window.pdPlace = pdPlace;
-        window.unwrapRedirectLinks = unwrapRedirectLinks;
-        window.__unwrapRedirectLinks = unwrapRedirectLinks;
     }
 
     // =========================================================
@@ -24078,22 +23807,6 @@
         renderBookmarksFeed(list);
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__bookmarkExports = {
-            setupBookmarksFeed,
-            bmParseRows,
-            bmIsActionOrBadgeLink,
-            bmFetchAllRows,
-            bmFetchPost,
-            bmFallbackPost,
-            bmCardFromRec,
-            bmUnsave,
-            isBookmarksPage,
-            get bmBuilt() { return bmBuilt; },
-            set bmBuilt(v) { bmBuilt = v; }
-        };
-    }
-
     // =========================================================
     // FEED SYNC — modern, relational & anti-rate-limit sync engine.
     // Reads `followed` table and feeds `timeline`
@@ -24406,8 +24119,7 @@
     }
 
     if (typeof window !== 'undefined') {
-        window.applyCronBackoff = applyCronBackoff;
-        window.resetCronBackoff = resetCronBackoff;
+        window.applyCronBackoff = applyCronBackoff;   // read by riverHandle429 (22-feed)
     }
 
     let isCronRunning = false;
@@ -24485,7 +24197,6 @@
             return Promise.resolve(0);
         }
         riverAborted = false;
-        if (typeof window !== 'undefined') window.__riverAborted = false;
 
         if (timelineSyncRunning) return Promise.resolve(0);
         timelineSyncRunning = true;
@@ -24529,7 +24240,7 @@
                     try { opts.onProgress({ step: 'posts', added: 0, done: 0, total: total }); } catch (e) {}
                 }
 
-                const delayMs = (typeof window !== 'undefined' && window.__TEST_MODE__) ? 10 : 1200;
+                const delayMs = 1200;
                 let p = Promise.resolve();
                 queue.forEach((item, idx) => {
                     p = p.then(() => {
@@ -24596,35 +24307,6 @@
         });
     }
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedSyncExports = {
-            decideThreadFetch,
-            syncTimeline,
-            syncThreadPage,
-            ingestCurrentThreadPageIfFollowed,
-            cronRefreshFollowedAndTimeline,
-            startTimelineCron,
-            cronTick,
-            CRON_MIN_INTERVAL_MS,
-            CRON_MAX_INTERVAL_MS,
-            applyCronBackoff,
-            resetCronBackoff,
-            scheduleNextCron,
-            get currentCronIntervalMs() { return currentCronIntervalMs; },
-            set currentCronIntervalMs(v) { currentCronIntervalMs = v; },
-            get cronConsecutive429() { return cronConsecutive429; },
-            set cronConsecutive429(v) { cronConsecutive429 = v; },
-            get lastBackoffAppliedTs() { return lastBackoffAppliedTs; },
-            set lastBackoffAppliedTs(v) { lastBackoffAppliedTs = v; },
-            get isCronRunning() { return isCronRunning; },
-            set isCronRunning(v) { isCronRunning = v; },
-            get timelineSyncRunning() { return timelineSyncRunning; },
-            set timelineSyncRunning(v) { timelineSyncRunning = v; },
-            get timelineCronTimer() { return timelineCronTimer; },
-            set timelineCronTimer(v) { timelineCronTimer = v; }
-        };
-    }
-
     // =========================================================
     // FEED (river de posts) — modo "feed" da /watched/threads (?view=feed).
     // Arquitetura em 3 camadas: 21-feed-db.js (IndexedDB) · 22-feed-sync.js (busca/escreve) ·
@@ -24662,7 +24344,6 @@
 
     function riverAbortSync(reason) {
         riverAborted = true;
-        if (typeof window !== 'undefined') window.__riverAborted = true;
         const dropped = riverQueue.length;
         riverQueue.length = 0; // Esvazia IMEDIATAMENTE todas as requisições restantes da fila
         console.warn(`[SMG Timeline] Sincronização interrompida imediatamente (${reason || 'Rate Limit'}). ${dropped} requisições canceladas.`);
@@ -24706,11 +24387,6 @@
                     }, RIVER_DELAY_MS);
                 });
         }
-    }
-
-    if (typeof window !== 'undefined') {
-        window.riverHandle429 = riverHandle429;
-        window.riverAbortSync = riverAbortSync;
     }
 
     function riverEnqueue(job) {
@@ -25338,57 +25014,6 @@
         });
     });
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedExports = {
-            get feedSyncRunning() { return feedSyncRunning; },
-            set feedSyncRunning(v) { feedSyncRunning = v; },
-            mountSentinel,
-            firstPaint,
-            showSetupState,
-            markRiverPaintReady,
-            ensureRiverSorted,
-            insertFreshPosts,
-            fetchFreshPosts,
-            showPill,
-            afterSync,
-            riverNearTop,
-            get riverList() { return riverList; },
-            set riverList(v) { riverList = v; riverSortDirty = true; },
-            get riverSortDirty() { return riverSortDirty; },
-            set riverSortDirty(v) { riverSortDirty = !!v; },
-            markRiverSortDirty,
-            get riverSeen() { return riverSeen; },
-            set riverSeen(v) { riverSeen = v; },
-            get riverMoreEl() { return riverMoreEl; },
-            set riverMoreEl(v) { riverMoreEl = v; },
-            get riverLastTs() { return riverLastTs; },
-            set riverLastTs(v) { riverLastTs = v; },
-            renderMore,
-            kickSync,
-            FEED_DATA_VERSION,
-            FEED_SYNC_VERSION,
-            RIVER_CONCURRENCY,
-            RIVER_DELAY_MS,
-            riverHandle429,
-            riverAbortSync,
-            get riverAborted() { return riverAborted; },
-            set riverAborted(v) { riverAborted = v; if (typeof window !== 'undefined') window.__riverAborted = v; },
-            get riverQueue() { return riverQueue; },
-            get riverPauseUntil() { return riverPauseUntil; },
-            set riverPauseUntil(v) { riverPauseUntil = v; },
-            get riverFirstPainted() { return riverFirstPainted; },
-            set riverFirstPainted(v) { riverFirstPainted = v; },
-            get lastTimelineSyncTime() { return lastTimelineSyncTime; },
-            set lastTimelineSyncTime(v) { lastTimelineSyncTime = v; },
-            handleTimelineFocusOrVisibility,
-            riverCard,
-            riverThreadMeta,
-            riverParsePost,
-            isThreadPostElement,
-            buildRiver
-        };
-    }
-
     // =========================================================
     // PAINT RUNTIME: page context, skeletons and stable handoff.
     // The native XenForo tree stays mounted for compatibility, but remains hidden
@@ -25582,11 +25207,6 @@
         if (!shell && !rail) return;
 
         const root = document.documentElement;
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            if (shell && shell.parentNode) shell.remove();
-            if (rail && rail.parentNode) rail.remove();
-            return;
-        }
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
@@ -26145,37 +25765,7 @@
     }
 
     if (typeof window !== 'undefined') {
-        window.setupNavigationTransition = setupNavigationTransition;
-        window.setNavigatingOut = setNavigatingOut;
-        if (window.__TEST_MODE__) {
-            window.__paintExports = {
-                classifyPaintPage,
-                paintSkeletonMarkup,
-                paintRailMarkup,
-                paintHasFatalError,
-                paintPageSignature,
-                paintPageIsReady,
-                PAINT_PAGE_KINDS,
-                threadTreeIsComplete,
-                threadMediaTreeIsReady,
-                threadStructureIsRecorded,
-                requestedPostTargetId,
-                setupNavigationTransition,
-                markTopbarReady,
-                markSidebarReady,
-                markNavbarReady,
-                markContentReady,
-                isTopbarReady,
-                isSidebarReady,
-                isNavbarReady,
-                isContentReady,
-                setNavigatingOut,
-                isNavigatingOut: () => isNavigatingOut,
-                ensurePageSkeleton,
-                armPagePaintSafetyTimer,
-                resetPaintMediaDeadline: () => { paintMediaDeadline = 0; }
-            };
-        }
+        window.setNavigatingOut = setNavigatingOut;   // read by the dock (12a)
     }
 
     function rootTouches(roots, selector, alreadyNormalized) {
@@ -26790,16 +26380,6 @@
         });
     }
     window.smgSoftNavigate = softNavigate;
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__processAll = processAll;
-        window.__performanceExports = Object.assign(window.__performanceExports || {}, { normalizeRoots, eachIn, makeTaskQueue, rootTouches });
-        window.buildPostGalleries = buildPostGalleries;
-        window.__buildPostGalleries = buildPostGalleries;
-        window.detectPageClasses = detectPageClasses;
-        window.__xfPageAssets = xfPageAssets;
-        window.__pauseOffscreenBanners = pauseOffscreenBanners;
-    }
 
     // THE test hook: the scenario suite (scripts/xenforo/tests) sets window.__SMG_TEST__ before the script
     // runs, to reach the units no page shows directly (placement math, the pager engine). Everything else

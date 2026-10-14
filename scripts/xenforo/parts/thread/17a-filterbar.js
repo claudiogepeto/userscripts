@@ -679,13 +679,6 @@
         syncStuck();
         setTimeout(() => { measure(); syncStuck(); }, 150);
         setTimeout(() => { measure(); syncStuck(); }, 400);
-
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            window.syncStuck = syncStuck;
-            header._syncStuck = syncStuck;
-            header._sentinel = sentinel;
-            header._spacer = spacer;
-        }
         return syncStuck;
     }
 

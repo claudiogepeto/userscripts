@@ -35,7 +35,6 @@
 
     function riverAbortSync(reason) {
         riverAborted = true;
-        if (typeof window !== 'undefined') window.__riverAborted = true;
         const dropped = riverQueue.length;
         riverQueue.length = 0; // Esvazia IMEDIATAMENTE todas as requisições restantes da fila
         console.warn(`[SMG Timeline] Sincronização interrompida imediatamente (${reason || 'Rate Limit'}). ${dropped} requisições canceladas.`);
@@ -79,11 +78,6 @@
                     }, RIVER_DELAY_MS);
                 });
         }
-    }
-
-    if (typeof window !== 'undefined') {
-        window.riverHandle429 = riverHandle429;
-        window.riverAbortSync = riverAbortSync;
     }
 
     function riverEnqueue(job) {
@@ -710,54 +704,3 @@
             ensureRiverSorted();
         });
     });
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__feedExports = {
-            get feedSyncRunning() { return feedSyncRunning; },
-            set feedSyncRunning(v) { feedSyncRunning = v; },
-            mountSentinel,
-            firstPaint,
-            showSetupState,
-            markRiverPaintReady,
-            ensureRiverSorted,
-            insertFreshPosts,
-            fetchFreshPosts,
-            showPill,
-            afterSync,
-            riverNearTop,
-            get riverList() { return riverList; },
-            set riverList(v) { riverList = v; riverSortDirty = true; },
-            get riverSortDirty() { return riverSortDirty; },
-            set riverSortDirty(v) { riverSortDirty = !!v; },
-            markRiverSortDirty,
-            get riverSeen() { return riverSeen; },
-            set riverSeen(v) { riverSeen = v; },
-            get riverMoreEl() { return riverMoreEl; },
-            set riverMoreEl(v) { riverMoreEl = v; },
-            get riverLastTs() { return riverLastTs; },
-            set riverLastTs(v) { riverLastTs = v; },
-            renderMore,
-            kickSync,
-            FEED_DATA_VERSION,
-            FEED_SYNC_VERSION,
-            RIVER_CONCURRENCY,
-            RIVER_DELAY_MS,
-            riverHandle429,
-            riverAbortSync,
-            get riverAborted() { return riverAborted; },
-            set riverAborted(v) { riverAborted = v; if (typeof window !== 'undefined') window.__riverAborted = v; },
-            get riverQueue() { return riverQueue; },
-            get riverPauseUntil() { return riverPauseUntil; },
-            set riverPauseUntil(v) { riverPauseUntil = v; },
-            get riverFirstPainted() { return riverFirstPainted; },
-            set riverFirstPainted(v) { riverFirstPainted = v; },
-            get lastTimelineSyncTime() { return lastTimelineSyncTime; },
-            set lastTimelineSyncTime(v) { lastTimelineSyncTime = v; },
-            handleTimelineFocusOrVisibility,
-            riverCard,
-            riverThreadMeta,
-            riverParsePost,
-            isThreadPostElement,
-            buildRiver
-        };
-    }

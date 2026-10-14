@@ -239,8 +239,3 @@
             }
         });
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.markThreadGridContainer = markThreadGridContainer;
-        window.markGridPlaceholders = markGridPlaceholders;
-    }

@@ -191,11 +191,6 @@
         if (!shell && !rail) return;
 
         const root = document.documentElement;
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            if (shell && shell.parentNode) shell.remove();
-            if (rail && rail.parentNode) rail.remove();
-            return;
-        }
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
@@ -754,35 +749,5 @@
     }
 
     if (typeof window !== 'undefined') {
-        window.setupNavigationTransition = setupNavigationTransition;
-        window.setNavigatingOut = setNavigatingOut;
-        if (window.__TEST_MODE__) {
-            window.__paintExports = {
-                classifyPaintPage,
-                paintSkeletonMarkup,
-                paintRailMarkup,
-                paintHasFatalError,
-                paintPageSignature,
-                paintPageIsReady,
-                PAINT_PAGE_KINDS,
-                threadTreeIsComplete,
-                threadMediaTreeIsReady,
-                threadStructureIsRecorded,
-                requestedPostTargetId,
-                setupNavigationTransition,
-                markTopbarReady,
-                markSidebarReady,
-                markNavbarReady,
-                markContentReady,
-                isTopbarReady,
-                isSidebarReady,
-                isNavbarReady,
-                isContentReady,
-                setNavigatingOut,
-                isNavigatingOut: () => isNavigatingOut,
-                ensurePageSkeleton,
-                armPagePaintSafetyTimer,
-                resetPaintMediaDeadline: () => { paintMediaDeadline = 0; }
-            };
-        }
+        window.setNavigatingOut = setNavigatingOut;   // read by the dock (12a)
     }

@@ -86,7 +86,3 @@
             { key: 'shareDirectLink', label: 'Share copies the direct link', desc: { en: 'Share on a post copies its direct link straight to the clipboard instead of opening the sharing menu.', pt: 'O Compartilhar do post copia o link direto para a área de transferência, em vez de abrir o menu de compartilhamento.' } },
         ] },
     ];
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__configExports = { DEFAULT_FEATURES, FEATURES, SETTINGS_META, saveFeatures };
-    }

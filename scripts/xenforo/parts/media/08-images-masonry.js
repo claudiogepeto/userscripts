@@ -20,12 +20,6 @@
         if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
             img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
         }
-        if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
-            delete img.dataset.smgSwapping;
-            img.src = targetAbs;
-            relayoutPostGroupOf(img);
-            return;
-        }
         const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
         const loadWithPolicy = (policy, canRetry) => {
             const pre = new Image();
@@ -1023,15 +1017,3 @@
         if (g) masonrySchedule(g);
     }
 
-    if (typeof window !== 'undefined') {
-        window.applyReplaceThumbsWithFull = applyReplaceThumbsWithFull;
-        window.resolveFullImageUrl = resolveFullImageUrl;
-        if (window.__TEST_MODE__) {
-            window.buildPostGalleries = buildPostGalleries;
-            window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { extractMediaDimensions, markWide, buildPostGallery, postItemRatio, postItemSpan, videoBoxRatio, isVideoBox, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, imgFailLink, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
-            window.processOneImage = processOneImage;
-            window.processImages = processImages;
-            window.goonboxEmbed = goonboxEmbed;
-        }
-    }

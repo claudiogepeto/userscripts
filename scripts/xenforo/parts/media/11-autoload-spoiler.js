@@ -46,7 +46,3 @@
             setTimeout(tryClick, 200);
         });
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__autoExpandSpoilers = autoExpandSpoilers;
-    }

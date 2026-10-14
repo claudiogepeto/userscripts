@@ -339,33 +339,3 @@
 
     // (THREAD header restyle removido — era dead code, nunca chamado; buildFilterBars cobre pager/ordenar/ações nos 2 sites)
 
-    if (typeof window !== 'undefined') {
-        window.fetchWatchedDoc = fetchWatchedDoc;
-        window.fetchAndIngestFollowed = fetchAndIngestFollowed;
-    }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__filterbarExports = {
-            ingestWatchedPageToFollowed,
-            fetchWatchedDoc,
-            fetchAndIngestFollowed,
-            streamAllWatchedPages,
-            buildFilterBars,
-            buildThreadHeader,
-            unifyThreadHeader,
-            createStickySync,
-            decorateThreadCard,
-            decorateWatchedThreadRow,
-            buildPostCard,
-            buildPostCards,
-            buildCommentCard,
-            buildCommentCards,
-            get isStreamingWatched() { return isStreamingWatched; },
-            set isStreamingWatched(v) { isStreamingWatched = v; },
-            get syncStuck() { return window.syncStuck; }
-        };
-        window.syncStuck = window.syncStuck || null;
-        window.createStickySync = createStickySync;
-        window.unifyThreadHeader = unifyThreadHeader;
-        window.buildThreadHeader = buildThreadHeader;
-    }

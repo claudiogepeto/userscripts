@@ -1001,24 +1001,3 @@
             if (b.querySelector(':scope > .block-container > .block-body > .node--link')) b.classList.add('smg-ad-block');
         });
     }
-
-    if (typeof window !== 'undefined') {
-        window.__homeExports = {
-            extractFeedItemData,
-            createFeedCardEl,
-            feedPagerFor,
-            getCachedFeed,
-            setCachedFeed,
-            FEED_CACHE_KEY_PREFIX,
-            FEED_CACHE_TTL_MS,
-            enhanceHomeHubSections,
-            ensureHomeNodeIcons,
-            homeLayoutSignature,
-            classifyHomeNode,
-            organizeHomeHub,
-            getMainCategoryOrder,
-            MAIN_CATEGORY_PATTERNS,
-            getMainSiteOrder,
-            MAIN_SITE_PATTERNS,
-        };
-    }

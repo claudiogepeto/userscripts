@@ -206,7 +206,7 @@
 
     function fetchAndIngestFollowed() {
         const now = Date.now();
-        if (!(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
+        if (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS) {
             return Promise.resolve(0);
         }
         if (followedFetchInFlight) {

@@ -188,7 +188,6 @@
             get failed() { return failed; },
         };
     }
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) window.__pagerExports = { createPager };
 
     // =========================================================
     // FEATURE: scroll infinito na thread (anexa as próximas páginas)

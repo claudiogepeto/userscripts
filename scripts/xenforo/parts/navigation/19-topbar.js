@@ -796,6 +796,3 @@
             firstBlock.parentNode.insertBefore(collapse, firstBlock);
         }
     }
-    if (typeof window !== 'undefined') {
-        window.setupHeaderNotices = setupHeaderNotices;
-    }

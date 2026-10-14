@@ -1087,9 +1087,3 @@
         syncEmpty();
         if (slides.length) goStart();
     }
-
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.collectMediaFrom = collectMediaFrom;
-        window.__galleryExports = { galMakeSection, galTileRatio, galTileSpan, galSkelTile };
-        window.__mediaExports = { openMedia, openMediaFeed, closeMedia, mediaView, setMediaView, restoreNavMode, resetRestore: () => { smgNavRestored = false; } };
-    }

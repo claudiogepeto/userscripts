@@ -292,14 +292,12 @@
                 }
                 return s.replace(/[/?#].*$/, '').replace(/[/]$/, '').trim();
             }
-            if (typeof window !== 'undefined') window.extractSocialHandle = extractSocialHandle;
 
             // NORMALIZAÇÃO DE DIACRÍTICOS / ACENTOS (Unicode Unaccent):
             function removeAccents(str) {
                 if (!str) return '';
                 return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
-            if (typeof window !== 'undefined') window.removeAccents = removeAccents;
 
             // GERAÇÃO FLEXÍVEL DE PALAVRAS-CHAVE:
             // Permite dar match tanto com espaços ("jade the jaguar") quanto sem espaços ("jadethejaguar"),
@@ -722,10 +720,6 @@
                 a.appendChild(main);
                 a.addEventListener('click', () => { commitCurrentSearch(); closeSearch(); });
                 return a;
-            }
-
-            function loadMoreSearchResults() {
-                return searchPager.more();
             }
 
             function runSearchInline(fields) {
@@ -1232,28 +1226,6 @@
                         closeAuthorRow();
                     }
                 });
-            }
-
-            if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                window.__dockSearchExports = {
-                    paintResults,
-                    activeSearchBadges,
-                    get searchResultsEl() { return searchResultsEl; },
-                    doSearch,
-                    openAdvanced,
-                    getSearchInput,
-                    parseSearchResults,
-                    loadMoreSearchResults,
-                    get currentSearchNextUrl() { return searchPager.cursor; },
-                    get searchSentinelEl() { return searchSentinelEl; },
-                    renderSearchCard,
-                    clearResults,
-                    openSearch,
-                    closeSearch,
-                    updateSearchClearButtons,
-                    extractSocialHandle,
-                    removeAccents
-                };
             }
 
             // Limpar busca (✕) no input

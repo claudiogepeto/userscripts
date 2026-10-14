@@ -380,10 +380,6 @@
         const markReadBtn = el.querySelector('.smg-aldock-markread');
         if (markReadBtn) {
             markReadBtn.addEventListener('click', () => {
-                if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-                    applyMarkAllReadSuccess();
-                    return;
-                }
                 if (markReadBtn.dataset.busy) return;
                 markReadBtn.dataset.busy = '1';
                 const csrf = document.documentElement.getAttribute('data-csrf')
@@ -558,23 +554,3 @@
         }
     }
 
-    if (typeof window !== 'undefined') {
-        if (window.__TEST_MODE__) {
-            window.__aldockExports = {
-                buildAlertsDock,
-                openAlertsDock,
-                closeAlertsDock,
-                toggleAlertsDock,
-                aldockSyncCount,
-                updateAlertsUnreadBadge,
-                aldockWidth,
-                aldockState,
-                RAIL_SRC,
-                railFetch,
-                railRefresh,
-                railMore,
-                railHardRefresh,
-                getAldock: () => aldock
-            };
-        }
-    }

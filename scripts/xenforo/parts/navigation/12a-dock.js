@@ -55,14 +55,6 @@
     // Coleta do DOM atual (prefixos remotos são colhidos lazily ao abrir busca/filtros)
     harvestPrefixesFromDoc(document);
 
-    if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-        window.__prefixExports = {
-            harvestPrefixesFromDoc,
-            globalPrefixMap,
-            refreshPrefixHarvest
-        };
-    }
-
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
@@ -116,9 +108,6 @@
             } catch (e) {
                 return null;
             }
-        }
-        if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            window.__getSortHref = getSortHref;
         }
 
         let sortIsDate = !/reaction/i.test(window.location.search || '');
