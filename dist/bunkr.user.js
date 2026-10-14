@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bunkr — Theater Player, Gallery, Mirror & Downloader
 // @namespace    bunkr-youtube-player
-// @version      2.13.1
+// @version      2.13.2
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
 // @description  Camada visual sobre as páginas de arquivo do Bunkr (vídeo · foto · galeria), aproximando do YouTube. (1) PLAYER GRANDE: tira o cap de 1000px e usa o maior 16:9 que cabe na largura E na altura da viewport (theater), centralizado/arredondado. (2) Player, título e header na MESMA coluna → o título alinha com o vídeo (flush-left). (3) Topbar padronizada: logo direcionando para home do Bunkr, botões Search Albums (balbums.st), Upload e Stats na ponta direita. (4) Respiro maior no rodapé. @include por regex (o TLD do Bunkr muda toda hora). v2.0: Player próprio estilo YouTube, zoom/pan em foto, mirror probe. v2.1: Stage overlay. v2.2: Tema AMOLED. v2.3: Força Advanced View (?advanced=1). v2.4: Carregamento do álbum completo e filtro ?q=. v2.7: Playlist em sidebar lateral. v2.8: Refinamentos no player (controles reordenados, arcos de skip circulares, logo na topbar, fix no falso-positivo de mirror). v2.9: Galeria de álbum redesenhada estilo YouTube com Actionbar integrada, cards nítidos e sanitização de links. v2.9.1: Topbar padronizada e grade ampla. v2.9.2: Preservação do master.css, botão Report alinhado ao lado das informações do álbum, topbar com Search Albums/Upload/Stats na ponta direita e logo apontando para a home do Bunkr (/), e revamp AMOLED completo da homepage. v2.10.0: Identificação de datas no título, ordenação por Data de Envio e Data Extraída (⬇/⬆) na Galeria e na Sidebar, títulos limpos sem data com exibição em texto simples abaixo (sem badges/ícones), botões anterior/próximo lado a lado e botão 1x plano no player. v2.10.1: Correção do congelamento/crash em álbuns (eliminação de loop infinito no MutationObserver com observação restrita a childList sem subtree, proteção contra reentrância e renderização idempotente com chave de cache nos cards), decodificação segura e rápida de entidades HTML para títulos duplamente escapados pelo Bunkr. v2.11.0: Agrupamento inteligente por tipo de arquivo com seções dedicadas, visualizador integrado de texto no Stage, e layout mobile responsivo. v2.11.1: Correção do carregamento do leitor de arquivos .txt no Stage com detecção e bypass de CORS via GM_xmlhttpRequest, botão de download direto de arquivos de texto, e placeholders temáticos AMOLED na barra de playlist para arquivos sem thumbnail ou com erro de imagem.
@@ -404,7 +404,7 @@
 
         /* Barra inferior de controles */
         .bunkr-plc-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.45) 55%, transparent 100%); opacity: 0; pointer-events: none; transition: opacity .2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; gap: 4px; }
-        .bunkr-pl:hover .bunkr-plc-bottom, .bunkr-pl:not(.is-playing) .bunkr-plc-bottom, .bunkr-pl.is-menu-open .bunkr-plc-bottom { opacity: 1; pointer-events: auto; }
+        .bunkr-pl:hover .bunkr-plc-bottom, .bunkr-pl:not(.is-playing) .bunkr-plc-bottom, .bunkr-pl.is-menu-open .bunkr-plc-bottom, .bunkr-img-host:hover .bunkr-plc-bottom, .bunkr-img-host:focus-within .bunkr-plc-bottom { opacity: 1; pointer-events: auto; }
         @media (hover: none) { .bunkr-plc-bottom { opacity: 1; pointer-events: auto; } }
 
         /* Linha de progresso / scrubber com tooltip de tempo */
@@ -1491,6 +1491,56 @@
         return imgs[0] || null;
     }
 
+    /* barra de hover da foto: os mesmos atos do vídeo, sem timeline nem controles de playback */
+    function appendImageChrome(host) {
+        const mkAct = (ic, label, cb) => {
+            const b = el("button", { type: "button", class: "bunkr-plc-act", title: label, "aria-label": label });
+            b.innerHTML = ic;
+            b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); cb(); });
+            return b;
+        };
+        const prevBtn = mkAct(PL_ICONS.prev, "Anterior no álbum", () => navFile(-1));
+        const nextBtn = mkAct(PL_ICONS.next, "Próximo no álbum", () => navFile(1));
+        const reportBtn = mkAct(PL_ICONS.flag, "Reportar abuso", () => {
+            const reportA = document.querySelector('main a[href*="abuse"], a[href*="report"]');
+            if (reportA && reportA.href) window.open(reportA.href, "_blank", "noopener");
+            else window.open(location.origin + "/report", "_blank", "noopener");
+        });
+        const dlb = mkAct(PL_ICONS.download, "Baixar", () => {
+            const dlA = document.querySelector('main a[href*="/file/"], a[href*="dl.bunkr"], a[href*="/d/"], a[download]');
+            const img = host.querySelector(".bunkr-image");
+            const targetUrl = (dlA && dlA.href) || (img && (img.currentSrc || img.src)) || "";
+            if (!targetUrl) return;
+            const a = document.createElement("a");
+            a.href = targetUrl;
+            a.download = "";
+            a.rel = "noopener";
+            a.target = "_blank";
+            a.click();
+        });
+        const shareBtn = mkAct(PL_ICONS.share, "Compartilhar / Copiar link", () => {
+            copyText(location.href).then(ok => {
+                toast(ok ? "Link copiado!" : "Falha ao copiar link");
+                if (ok) {
+                    shareBtn.innerHTML = PL_ICONS.check;
+                    setTimeout(() => { shareBtn.innerHTML = PL_ICONS.share; }, 1600);
+                }
+            });
+        });
+        const fsb = mkAct(PL_ICONS.expand, "Tela cheia (f)", () => {
+            try {
+                const target = document.querySelector(".bunkr-stage") || host;
+                if (document.fullscreenElement) document.exitFullscreen();
+                else target.requestFullscreen();
+            } catch {}
+        });
+        const row = el("div", { class: "bunkr-plc-row" },
+            el("div", { class: "bunkr-plc-left" }, prevBtn, nextBtn),
+            el("div", { class: "bunkr-plc-right" }, reportBtn, dlb, shareBtn, fsb)
+        );
+        host.append(el("div", { class: "bunkr-plc-bottom" }, row));
+    }
+
     /* foto: zoom em níveis (1x→2x→4x no clique) + drag pan (só a <img> é transformada; stage-mid clipa) */
     let zoomMounted = false;
     function mountPhotoZoom() {
@@ -1511,6 +1561,7 @@
             style: "opacity: 1 !important; filter: none !important; position: static !important; display: block !important;"
         });
         host.appendChild(newImg);
+        appendImageChrome(host);
         const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
         const clampPan = () => {
             const stageW = mid.clientWidth || window.innerWidth;

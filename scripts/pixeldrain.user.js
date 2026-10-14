@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pixeldrain — Mirror Bypass & Theater Player (AMOLED)
 // @namespace    pixeldrain-mirror-player
-// @version      14.16.0
+// @version      14.16.1
 // @description  Refaz o pixeldrain.com em cima de MIRRORS (proxy Cloudflare/espelho), contornando o limite de 6 GB/dia (que é por IP), e redesenha a interface com Stage estilo YouTube AMOLED, Sidebar de Playlist lateral com abas e placeholders, visualizador de texto integrado, controles modernizados no player e agrupamento por tipo de mídia.
 // @author       claudiogepeto
 // @match        https://pixeldrain.com/*
@@ -1008,6 +1008,36 @@
         applyMirror(video);
     }
 
+    function appendImageChrome(host, f) {
+        const mkAct = (ic, label, cb) => {
+            const b = el("button", { type: "button", class: "pdx-plc-act", title: label, "aria-label": label });
+            b.innerHTML = ic;
+            b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); cb(); });
+            return b;
+        };
+        const prevBtn = mkAct(PL_ICONS.prev, "Mídia anterior", () => navItem(-1));
+        const nextBtn = mkAct(PL_ICONS.next, "Próxima mídia", () => navItem(1));
+        const reportBtn = mkAct(PL_ICONS.flag, "Reportar", () => {
+            const a = document.querySelector('a[href*="report"], a[href*="abuse"]');
+            if (a && a.href) window.open(a.href, "_blank", "noopener");
+            else toast("Sem página de denúncia neste site");
+        });
+        const dlb = mkAct(PL_ICONS.download, "Baixar via mirror", () => { if (f) window.open(M().dl(f.id), "_blank", "noopener"); });
+        const shareBtn = mkAct(PL_ICONS.share, "Compartilhar / Copiar link", () => {
+            const link = f ? M().dl(f.id) : location.href;
+            copyText(link).then(ok => {
+                toast(ok ? "Link copiado!" : "Falha ao copiar link");
+                if (ok) { shareBtn.innerHTML = PL_ICONS.check; setTimeout(() => { shareBtn.innerHTML = PL_ICONS.share; }, 1600); }
+            });
+        });
+        const fsb = mkAct(PL_ICONS.expand, "Tela cheia (f)", () => goFullscreen());
+        const row = el("div", { class: "pdx-plc-row" },
+            el("div", { class: "pdx-plc-left" }, prevBtn, nextBtn),
+            el("div", { class: "pdx-plc-right" }, reportBtn, dlb, shareBtn, fsb)
+        );
+        host.append(el("div", { class: "pdx-plc-bottom" }, row));
+    }
+
     /* ==================================================================== * (2) IMAGEM COM ZOOM, PAN E MIRROR */
     function mountImage(f) {
         const preview = document.querySelector(".file_preview");
@@ -1031,6 +1061,7 @@
         fail.style.display = "none";
 
         const host = el("div", { class: "pdx-host pdx-img-host" }, img, fail);
+        appendImageChrome(host, f);
 
         // Zoom 1x → 2x → 4x com Drag
         const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
@@ -2480,7 +2511,7 @@
             background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 65%, transparent 100%);
             opacity: 0; pointer-events: none; transition: opacity .18s ease; display: flex; flex-direction: column; gap: 4px;
         }
-        .pdx-pl:hover .pdx-plc-bottom, .pdx-pl:not(.pdx-pl-playing) .pdx-plc-bottom { opacity: 1; pointer-events: auto; }
+        .pdx-pl:hover .pdx-plc-bottom, .pdx-pl:not(.pdx-pl-playing) .pdx-plc-bottom, .pdx-img-host:hover .pdx-plc-bottom, .pdx-img-host:focus-within .pdx-plc-bottom { opacity: 1; pointer-events: auto; }
         @media (hover:none) { .pdx-plc-bottom { opacity: 1; pointer-events: auto; } }
 
         .pdx-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }

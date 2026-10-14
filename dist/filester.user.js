@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Filester — Theater Stage, Custom Player, Album Strip & Gallery
 // @namespace    filester-theater
-// @version      2.5.0
+// @version      2.5.1
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/filester.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/filester.user.js
 // @description  Theater stage, custom player, YouTube-style playlist sidebar with tabs and placeholders, adjacent prev/next controls, flat 1x speed, gallery grouping, text viewer, zoomable images, and AMOLED styling for Filester.
@@ -117,7 +117,7 @@
             padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.45) 65%, transparent 100%);
             opacity: 0; pointer-events: none; transition: opacity .18s ease; gap: 4px;
         }
-        .fl-host:hover .fl-plc-bottom, .fl-pl:not(.is-playing) .fl-plc-bottom { opacity: 1; pointer-events: auto; }
+        .fl-host:hover .fl-plc-bottom, .fl-pl:not(.is-playing) .fl-plc-bottom, .fl-img-host:hover .fl-plc-bottom, .fl-img-host:focus-within .fl-plc-bottom { opacity: 1; pointer-events: auto; }
         @media (hover: none) { .fl-plc-bottom { opacity: 1; pointer-events: auto; } }
 
         .fl-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
@@ -783,6 +783,45 @@
         return fullRes || imgs[0] || null;
     }
 
+    function appendImageChrome(host) {
+        const mkAct = (ic, label, cb) => {
+            const b = el("button", { type: "button", class: "fl-plc-act", title: label, "aria-label": label });
+            b.innerHTML = ic;
+            b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); cb(); });
+            return b;
+        };
+        const prevBtn = mkAct(PL_ICONS.prev, "Anterior", () => navFile(-1));
+        const nextBtn = mkAct(PL_ICONS.next, "Próximo", () => navFile(1));
+        const reportBtn = mkAct(PL_ICONS.flag, "Reportar", () => {
+            const a = document.querySelector('a[href*="report"], a[href*="abuse"]');
+            if (a && a.href) window.open(a.href, "_blank", "noopener");
+            else toast("Sem página de denúncia neste site");
+        });
+        const dlb = mkAct(PL_ICONS.download, "Baixar", () => {
+            const dlBtn = document.getElementById("downloadButton") || document.querySelector('a[id*="download" i], .download-btn');
+            const img = host.querySelector(".fl-image");
+            if (dlBtn) dlBtn.click();
+            else if (img && (img.currentSrc || img.src)) window.open(img.currentSrc || img.src, "_blank", "noopener");
+        });
+        const shareBtn = mkAct(PL_ICONS.share, "Compartilhar / Copiar link", () => {
+            copyText(location.href).then(ok => {
+                toast(ok ? "Link copiado!" : "Falha ao copiar link");
+                if (ok) { shareBtn.innerHTML = PL_ICONS.check; setTimeout(() => { shareBtn.innerHTML = PL_ICONS.share; }, 1600); }
+            });
+        });
+        const fsb = mkAct(PL_ICONS.expand, "Tela cheia (f)", () => {
+            try {
+                if (document.fullscreenElement) document.exitFullscreen();
+                else host.requestFullscreen();
+            } catch { /* fullscreen blocked */ }
+        });
+        const row = el("div", { class: "fl-plc-row" },
+            el("div", { class: "fl-plc-left" }, prevBtn, nextBtn),
+            el("div", { class: "fl-plc-right" }, reportBtn, dlb, shareBtn, fsb)
+        );
+        host.append(el("div", { class: "fl-plc-bottom" }, row));
+    }
+
     let zoomMounted = false;
     function mountPhotoZoom(mid) {
         if (zoomMounted) return;
@@ -800,6 +839,7 @@
             style: "opacity: 1 !important; filter: none !important; position: static !important; display: block !important;"
         });
         host.appendChild(newImg);
+        appendImageChrome(host);
         const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
         const clampPan = () => {
             const stageW = mid.clientWidth || window.innerWidth;

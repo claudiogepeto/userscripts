@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.5.0
+// @version      3.5.1
 // @description  Card grid, search, custom player, YouTube-style theater stage with sidebar playlist, media grouping (Videos & Photos), instant photo zoom, and AMOLED styling for GoFile.
 // @author       claudiogepeto
 // @run-at       document-start
@@ -251,7 +251,8 @@
         .gf-plc-seekflash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,.75); color: #fff; padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 15px; pointer-events: none; opacity: 0; transition: opacity .15s; }
         .gf-plc-seekflash.on { opacity: 1; }
         .gf-plc-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 0 14px 10px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.85) 100%); opacity: 0; transition: opacity .18s; pointer-events: none; }
-        .gf-host:hover .gf-plc-bottom, .gf-host:not(.is-playing) .gf-plc-bottom { opacity: 1; pointer-events: auto; }
+        .gf-host:hover .gf-plc-bottom, .gf-host:not(.is-playing) .gf-plc-bottom, .gf-img-host:hover .gf-plc-bottom, .gf-img-host:focus-within .gf-plc-bottom { opacity: 1; pointer-events: auto; }
+        @media (hover: none) { .gf-plc-bottom { opacity: 1; pointer-events: auto; } }
         .gf-plc-prog { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; }
         .gf-plc-bar { position: relative; width: 100%; height: 4px; background: rgba(255,255,255,.25); border-radius: 2px; transition: height .1s; }
         .gf-plc-prog:hover .gf-plc-bar { height: 6px; }
@@ -1058,6 +1059,73 @@
         return null;
     }
 
+    function copyText(s) {
+        try { return navigator.clipboard.writeText(s); } catch { /* clipboard blocked */ }
+        try {
+            const t = document.createElement("textarea");
+            t.value = s;
+            t.style.position = "fixed";
+            t.style.opacity = "0";
+            document.body.append(t);
+            t.select();
+            document.execCommand("copy");
+            t.remove();
+        } catch { /* fallback blocked */ }
+        return Promise.resolve();
+    }
+    let gfToastT;
+    function toast(msg) {
+        let t = document.querySelector(".gf-toast");
+        if (!t) {
+            t = document.createElement("div");
+            t.className = "gf-toast";
+            t.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483000;background:#111;color:#fff;padding:8px 14px;border-radius:8px;font:600 13px/1 Inter,system-ui,sans-serif;opacity:0;transition:opacity .15s;pointer-events:none";
+            document.body.append(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = "1";
+        clearTimeout(gfToastT);
+        gfToastT = setTimeout(() => { t.style.opacity = "0"; }, 1600);
+    }
+    function appendImageChrome(host, imgUrl) {
+        const mkAct = (ic, label, cb) => {
+            const b = el("button", { type: "button", class: "gf-plc-act", title: label, "aria-label": label });
+            b.innerHTML = ic;
+            b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); cb(); });
+            return b;
+        };
+        const prevBtn = mkAct(IC.prev, "Anterior", () => navStage(-1));
+        const nextBtn = mkAct(IC.next, "Próximo", () => navStage(1));
+        const reportBtn = mkAct(IC.flag, "Reportar", () => {
+            const a = document.querySelector('a[href*="report"], a[href*="abuse"]');
+            if (a && a.href) window.open(a.href, "_blank", "noopener");
+            else toast("Sem página de denúncia neste site");
+        });
+        const dlb = mkAct(IC.download, "Baixar", () => {
+            const d = stCur && stCur._gf;
+            if (d && d.downloadBtn) d.downloadBtn.click();
+            else if (imgUrl) window.open(imgUrl, "_blank", "noopener");
+        });
+        const shareBtn = mkAct(IC.share, "Compartilhar / Copiar link", () => {
+            copyText(location.href).then(ok => {
+                toast(ok ? "Link copiado!" : "Falha ao copiar link");
+                if (ok) { shareBtn.innerHTML = IC.check; setTimeout(() => { shareBtn.innerHTML = IC.share; }, 1600); }
+            });
+        });
+        const fsb = mkAct(IC.expand, "Tela cheia (f)", () => {
+            try {
+                const target = host;
+                if (document.fullscreenElement) document.exitFullscreen();
+                else target.requestFullscreen();
+            } catch { /* fullscreen blocked */ }
+        });
+        const row = el("div", { class: "gf-plc-row" },
+            el("div", { class: "gf-plc-left" }, prevBtn, nextBtn),
+            el("div", { class: "gf-plc-right" }, reportBtn, dlb, shareBtn, fsb)
+        );
+        host.append(el("div", { class: "gf-plc-bottom" }, row));
+    }
+
     let curAc = null;
     function mountPhotoZoom(mid, imgUrl, fallbackUrl) {
         const existingHost = mid.querySelector(".gf-img-host");
@@ -1085,6 +1153,7 @@
             };
         }
         host.appendChild(newImg);
+        appendImageChrome(host, imgUrl);
         const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
         const clampPan = () => {
             const stageW = mid.clientWidth || window.innerWidth;

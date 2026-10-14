@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Turbo — Native Player & Theater Stage (embed bypass)
 // @namespace    turbo-theater
-// @version      2.3.0
+// @version      2.4.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js
 // @description  Native player and theater stage for Turbo with signed-media playback, YouTube-style AMOLED player, playlist sidebar with tabs and placeholders, adjacent prev/next controls, flat 1x speed, responsive mobile layout, and media grouping in albums.
@@ -95,7 +95,10 @@
 
         /* ===================== PLAYER ESTILO YOUTUBE ===================== */
         :root { --tb-accent: ${ACCENT}; }
-        .tb-host { position: relative; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .tb-host, .tb-img-host { position: relative; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .tb-image { display: block; max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; user-select: none; -webkit-user-drag: none; transform-origin: center center; touch-action: none; }
+        .tb-img-host.is-zoomed .tb-image { cursor: grab; }
+        .tb-img-host.is-zoomed .tb-image:active { cursor: grabbing; }
         .tb-video { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; background: #000 !important; outline: none; cursor: pointer; display: block; }
         .tb-stage-mid > iframe { width: 100% !important; height: 100% !important; border: 0; background: #000; }
 
@@ -119,7 +122,7 @@
             padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.45) 65%, transparent 100%);
             opacity: 0; pointer-events: none; transition: opacity .18s ease; gap: 4px;
         }
-        .tb-host:hover .tb-plc-bottom, .tb-pl:not(.is-playing) .tb-plc-bottom { opacity: 1; pointer-events: auto; }
+        .tb-host:hover .tb-plc-bottom, .tb-pl:not(.is-playing) .tb-plc-bottom, .tb-img-host:hover .tb-plc-bottom, .tb-img-host:focus-within .tb-plc-bottom { opacity: 1; pointer-events: auto; }
         @media (hover: none) { .tb-plc-bottom { opacity: 1; pointer-events: auto; } }
 
         .tb-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
@@ -873,6 +876,113 @@
             }).catch(() => { video._refT = setTimeout(() => scheduleRefresh(video, id), 30000); });
         }, ms);
     }
+    const IMAGE_NAME = /\.(jpe?g|png|gif|webp|avif|bmp)(?:$|\?)/i;
+    function appendImageChrome(host, id, src) {
+        const mkAct = (ic, label, cb) => {
+            const b = el("button", { type: "button", class: "tb-plc-act", title: label, "aria-label": label });
+            b.innerHTML = ic;
+            b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); cb(); });
+            return b;
+        };
+        const prevBtn = mkAct(IC.prev, "Anterior", () => navFile(-1));
+        const nextBtn = mkAct(IC.next, "Próximo", () => navFile(1));
+        const reportBtn = mkAct(IC.flag, "Reportar", () => {
+            const a = document.querySelector('a[href*="report"], a[href*="abuse"]');
+            if (a && a.href) window.open(a.href, "_blank", "noopener");
+            else toast("Sem página de denúncia neste site");
+        });
+        const dlb = mkAct(IC.download, "Baixar", () => {
+            const dlBtn = document.getElementById("btnDownload") || document.querySelector('a[href*="/d/"]');
+            if (dlBtn && dlBtn.href) window.open(dlBtn.href, "_blank", "noopener");
+            else if (id) window.open("/d/" + id, "_blank", "noopener");
+            else if (src) window.open(src, "_blank", "noopener");
+        });
+        const shareBtn = mkAct(IC.share, "Compartilhar / Copiar link", () => {
+            copyText(location.href).then(ok => {
+                toast(ok ? "Link copiado!" : "Falha ao copiar link");
+                if (ok) { shareBtn.innerHTML = IC.check; setTimeout(() => { shareBtn.innerHTML = IC.share; }, 1600); }
+            });
+        });
+        const fsb = mkAct(IC.expand, "Tela cheia (f)", () => {
+            try {
+                if (document.fullscreenElement) document.exitFullscreen();
+                else host.requestFullscreen();
+            } catch { /* fullscreen blocked */ }
+        });
+        const row = el("div", { class: "tb-plc-row" },
+            el("div", { class: "tb-plc-left" }, prevBtn, nextBtn),
+            el("div", { class: "tb-plc-right" }, reportBtn, dlb, shareBtn, fsb)
+        );
+        host.append(el("div", { class: "tb-plc-bottom" }, row));
+    }
+    function mountPhotoFromSrc(mid, src, id) {
+        if (mid.querySelector(".tb-img-host")) return;
+        mediaMounted = true;
+        const host = el("div", { class: "tb-img-host" });
+        const img = el("img", { class: "tb-image", src: src || "", alt: "", draggable: "false" });
+        host.append(img);
+        appendImageChrome(host, id, src);
+        const ZOOMS = [1, 2, 4];
+        let zi = 0, z = 1, tx = 0, ty = 0;
+        const clampPan = () => {
+            const stageW = host.clientWidth || mid.clientWidth || window.innerWidth;
+            const stageH = host.clientHeight || mid.clientHeight || window.innerHeight;
+            const imgW = img.clientWidth * z;
+            const imgH = img.clientHeight * z;
+            const mx = Math.max(0, (imgW - stageW) / 2);
+            const my = Math.max(0, (imgH - stageH) / 2);
+            tx = Math.max(-mx, Math.min(mx, tx));
+            ty = Math.max(-my, Math.min(my, ty));
+        };
+        const applyTf = () => {
+            img.style.transform = z === 1 ? "" : `translate(${tx}px,${ty}px) scale(${z})`;
+            host.classList.toggle("is-zoomed", z !== 1);
+        };
+        const setZoomIdx = i => {
+            zi = ((i % ZOOMS.length) + ZOOMS.length) % ZOOMS.length;
+            z = ZOOMS[zi];
+            if (z === 1) { tx = 0; ty = 0; }
+            else clampPan();
+            applyTf();
+        };
+        let drag = null;
+        img.addEventListener("pointerdown", e => {
+            if (e.button) return;
+            e.preventDefault();
+            drag = { x: e.clientX, y: e.clientY, tx, ty, moved: false };
+            try { img.setPointerCapture(e.pointerId); } catch { /* pointer already released */ }
+        });
+        img.addEventListener("pointermove", e => {
+            if (!drag) return;
+            const dx = e.clientX - drag.x;
+            const dy = e.clientY - drag.y;
+            if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
+            if (z !== 1 && drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; clampPan(); applyTf(); }
+        });
+        const end = e => {
+            if (!drag) return;
+            const click = !drag.moved;
+            drag = null;
+            try { img.releasePointerCapture(e.pointerId); } catch { /* capture already gone */ }
+            if (click) setZoomIdx(zi + 1);
+        };
+        img.addEventListener("pointerup", end);
+        img.addEventListener("pointercancel", end);
+        mid.appendChild(host);
+        const stage = mid.closest(".tb-stage");
+        if (stage) stage.classList.add("is-image");
+    }
+    function mountPhoto(mid, id) {
+        const spin = el("div", { class: "tb-spin" });
+        mid.appendChild(spin);
+        signUrl(id).then(u => {
+            spin.remove();
+            mountPhotoFromSrc(mid, u, id);
+        }).catch(() => {
+            spin.remove();
+            toast("Falha ao carregar a imagem");
+        });
+    }
     function mountIframe(mid) {
         document.documentElement.classList.add("tb-fallback");
         mid.querySelectorAll(".tb-spin").forEach(s => s.remove());
@@ -898,6 +1008,11 @@
         let ac = new AbortController();
 
         signUrl(id).then(u => {
+            if (IMAGE_NAME.test(u)) {
+                spin.remove();
+                mountPhotoFromSrc(mid, u, id);
+                return;
+            }
             spin.remove();
             mediaMounted = true;
             const video = el("video", { class: "tb-video", playsinline: "", preload: "metadata" });
@@ -1348,6 +1463,7 @@
         const titleEl = document.getElementById("videoTitle");
         if (!id || !titleEl) return null;
         const name = (titleEl.textContent || "").replace(/\s+/g, " ").trim();
+        const imagePage = IMAGE_NAME.test(name);
         const sizeEl = document.getElementById("videoSize");
         const viewsEl = document.getElementById("videoViews");
         const size = sizeEl ? (sizeEl.textContent || "").trim() : "";
@@ -1355,7 +1471,7 @@
         const albumA = document.querySelector('a[href*="/a/"]');
         const dlA = document.getElementById("btnDownload") || document.querySelector('a[href*="/d/"]');
 
-        const stage = el("div", { class: "tb-stage is-video" + (isSidebarCollapsed ? " is-sidebar-collapsed" : "") });
+        const stage = el("div", { class: "tb-stage " + (imagePage ? "is-image" : "is-video") + (isSidebarCollapsed ? " is-sidebar-collapsed" : "") });
         const main = el("div", { class: "tb-stage-main" });
 
         // ---- vrow (topbar) ----
@@ -1366,7 +1482,7 @@
             el("span", null, "Turbo")
         );
         const nameEl = el("div", { class: "tb-name", title: name });
-        nameEl.insertAdjacentHTML("beforeend", IC.video);
+        nameEl.insertAdjacentHTML("beforeend", imagePage ? IC.image : IC.video);
         nameEl.append(el("span", null, name));
         vtop.append(logo, nameEl);
 
@@ -1405,7 +1521,8 @@
         document.body.insertBefore(stage, document.body.firstChild);
         document.documentElement.classList.add("tb-has-stage");
 
-        mountVideo(mid, id);
+        if (imagePage) mountPhoto(mid, id);
+        else mountVideo(mid, id);
 
         // Monta Sidebar da Playlist
         setupSidebar(stage);
