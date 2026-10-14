@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.3.0
+// @version      4.3.1
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -18541,7 +18541,7 @@
     // home/16-home.js
     // Owns: the forum home: node layout, category cards, sidebar, and the What's new carousel (createPager, x axis).
     // Exposes: organizeHomeHub, buildHomeFeed, layoutHomeSidebar, homeComponentsReady, FEED_CACHE_KEY_PREFIX.
-    // Depends on: thread/07-posts-misc (createPager), core/06-helpers, core/04-icons.
+    // Depends on: thread/07-posts-misc (createPager), core/06-helpers, core/04-icons, navigation/20-thumb-url (smallThumbUrl).
     // =========================================================
     // HOME (forum_list): cards · sections · sub-fóruns · atalhos · sidebar
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)
@@ -19184,8 +19184,12 @@
         if (data.thumbUrl) {
             const im = document.createElement('img');
             im.loading = 'lazy';
-            im.src = data.thumbUrl;
-            im.addEventListener('error', usePh);
+            const small = smallThumbUrl(data.thumbUrl);   // versão reduzida do host quando existe (o card tem ~280px)
+            im.src = small;
+            im.addEventListener('error', () => {
+                if (im.getAttribute('src') === small && small !== data.thumbUrl) im.src = data.thumbUrl;   // reduzida falhou → original
+                else usePh();
+            });
             thumb.appendChild(im);
         } else usePh();
 
@@ -22577,8 +22581,8 @@
     }
 
     // navigation/20-thumb-url.js
-    // Owns: the large thumbnail URL rule.
-    // Exposes: dcThumbUrl.
+    // Owns: the large and the small thumbnail URL rules.
+    // Exposes: dcThumbUrl, smallThumbUrl.
     // Depends on: core/06-helpers.
     // =========================================================
     // HOVER preview: dcThumbUrl (URL grande da thumb de uma lista/grade; usado pela navegação)
@@ -22592,6 +22596,23 @@
         const url = m ? m[1] : (im ? (im.getAttribute('src') || im.currentSrc || im.getAttribute('data-src') || '') : '');
         if (!url || url.startsWith('data:')) return '';
         return getBigUrl(url); // tenta a versão maior (.md/.th → full)
+    }
+
+    // =========================================================
+    // CARD pequeno: smallThumbUrl (versão reduzida da thumb, quando o host tem uma)
+    // =========================================================
+    // A thumb de uma thread é quase sempre o ARQUIVO ORIGINAL no host (1-3 MB num card de ~280px). Só sobe
+    // pra versão reduzida onde ela foi confirmada nas URLs que o próprio fórum serve:
+    //   · CDN do jpg6 (simpN.cuckcapital.cr, simpN.selti-delivery.ru …, Chevereto): `.md.` antes da extensão
+    //     (~500px; o fórum já lista thumbs assim). GIF fica de fora: o .md de GIF não foi confirmado.
+    // Sem versão confirmada (imagepond, ibb — o .md do ibb devolve o mesmo arquivo — pixhost, cujo thumb tem
+    // ~200px e borra num card de 373px) a URL volta intacta. Quem usa cai no original se a reduzida falhar.
+    function smallThumbUrl(url) {
+        if (!url || /\.(?:md|th)\.|\.gif(?:$|[?#])/i.test(url)) return url;
+        let host = '';
+        try { host = new URL(url, location.href).hostname; } catch (e) { return url; }
+        if (/^simp\d*\./i.test(host)) return getMedUrl(url);
+        return url;
     }
 
     // runtime/21-init-features.js
