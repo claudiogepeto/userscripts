@@ -7117,22 +7117,15 @@ async function runTests() {
     }
 
     // =========================================================================
-    // SCROLL: sem hit-test de hover durante a rolagem (desktop)
+    // SCROLL: sem guarda de pointer-events durante a rolagem
     // =========================================================================
     {
-        console.log('\n--- Scroll: guarda de hover ---');
+        console.log('\n--- Scroll: sem guarda de hover ---');
         const root = document.documentElement;
-        root.classList.remove('smg-scrolling');
         window.dispatchEvent(new window.Event('scroll'));
-        assert(root.classList.contains('smg-scrolling'), 'Rolar deve marcar html.smg-scrolling');
-        window.dispatchEvent(new window.Event('scroll'));
-        await new Promise(r => setTimeout(r, 60));
-        assert(root.classList.contains('smg-scrolling'), 'html.smg-scrolling continua enquanto a rolagem segue');
-        await new Promise(r => setTimeout(r, 260));
-        assert(!root.classList.contains('smg-scrolling'), 'html.smg-scrolling sai quando a rolagem para');
+        assert(!root.classList.contains('smg-scrolling'), 'Rolar não marca mais html.smg-scrolling (cliques logo após rolar chegam ao alvo)');
         const scrollCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-        assert(/@media \(hover: hover\) and \(pointer: fine\)\s*\{\s*html\.smg-scrolling \.p-body \{ pointer-events: none/.test(scrollCss), 'CSS deve desligar o hover do .p-body só durante a rolagem e só com mouse');
-        assert(/html\.smg-scrolling \.p-body \* \{ pointer-events: none !important; \}/.test(scrollCss), 'A guarda de hover também cobre os descendentes (cards com pointer-events:auto explícito)');
+        assert(!scrollCss.includes('smg-scrolling'), 'CSS não desliga pointer-events durante a rolagem');
     }
 
     // =========================================================================
