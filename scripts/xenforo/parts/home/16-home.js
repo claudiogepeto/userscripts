@@ -3,7 +3,7 @@
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)
     //
     // Mapa: expandSubForums · makeHomeCardsClickable ·
-    //   buildHomeFeed (+feedThumbUrl/feedCard/loadFeed) · layoutHomeSidebar
+    //   buildHomeFeed (+feedThumbUrl/loadFeed) · layoutHomeSidebar
     // =========================================================
 
     // Assinatura barata da estrutura que as passagens de layout realmente usam. O INIT compara esse valor
@@ -702,10 +702,6 @@
         return card;
     }
 
-    function feedCard(it, phMark) {
-        const data = extractFeedItemData(it);
-        return data ? createFeedCardEl(data, phMark) : null;
-    }
     // threads "ruído" p/ um carrossel VISUAL: chat/bate-papo, guias, pedidos de identificação, discussões, perguntas (sem mídia própria).
     // Filtra pelo PREFIXO (chip do título) OU pelo FÓRUM de origem — nunca pelo texto do título (senão tira post legítimo).
     function isIgnoredThread(it) {
@@ -1002,7 +998,6 @@
         window.__homeExports = {
             extractFeedItemData,
             createFeedCardEl,
-            feedCard,
             getCachedFeed,
             setCachedFeed,
             FEED_CACHE_KEY_PREFIX,

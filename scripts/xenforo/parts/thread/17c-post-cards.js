@@ -104,15 +104,8 @@
             });
         }
     }
-    function buildPostCard(post) {
-        const inner = post.querySelector(':scope > .message-inner, .message-inner');
-        const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
-        if (!inner || !main) {
-            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
-            post.dataset.smgCard = '1';
-            post.dataset.smgCardReady = 'skip';
-            return;   // não é um post padrão (deletado/placeholder) → deixa nativo
-        }
+    // inner/main: achados por buildPostCards (post padrão; deletado/placeholder fica nativo lá)
+    function buildPostCard(post, inner, main) {
         post.dataset.smgCard = '1';
         delete post.dataset.smgCardReady;
         post.classList.add('smg-pc');
@@ -252,9 +245,7 @@
             const inner = post.querySelector(':scope > .message-inner, .message-inner');
             const main = inner && (inner.querySelector(':scope > .message-cell--main, .message-cell--main') || post.querySelector('.message-cell--main'));
             if (inner && main) {
-                delete post.dataset.smgCard;
-                delete post.dataset.smgCardReady;
-                buildPostCard(post);
+                buildPostCard(post, inner, main);
             } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
                 post.dataset.smgCard = '1';
                 post.dataset.smgCardReady = 'skip';
@@ -265,14 +256,8 @@
     // COMENTÁRIOS (uw_fcs, só no SMG): mesmo modelo do post — header compacto (avatar · user · tempo · #N),
     // body, action bar leve (react · responder · ⋯ citar/denunciar/traduzir/share). Indentação (thread-line) via CSS.
     // MOVE os nativos (preserva AJAX); reusa o popover ⋯ do post (smg-pc-more*). 1×/comentário via data-smg-cc.
-    function buildCommentCard(comment) {
-        const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
-        if (!cinner) {
-            if (document.readyState !== 'complete' && document.readyState !== 'interactive') return;
-            comment.dataset.smgCc = '1';
-            comment.dataset.smgCcReady = 'skip';
-            return;
-        }
+    // cinner: achado por buildCommentCards (comentário sem ele fica nativo lá)
+    function buildCommentCard(comment, cinner) {
         comment.dataset.smgCc = '1';
         delete comment.dataset.smgCcReady;
         comment.classList.add('smg-cc');
@@ -335,9 +320,7 @@
         eachIn(roots, '.message-responses .comment:not([data-smg-cc]), .message-responses .comment[data-smg-cc-ready="skip"]', comment => {
             const cinner = comment.querySelector(':scope > .comment-inner, .comment-inner');
             if (cinner) {
-                delete comment.dataset.smgCc;
-                delete comment.dataset.smgCcReady;
-                buildCommentCard(comment);
+                buildCommentCard(comment, cinner);
             } else if (document.readyState === 'complete' || document.readyState === 'interactive') {
                 comment.dataset.smgCc = '1';
                 comment.dataset.smgCcReady = 'skip';

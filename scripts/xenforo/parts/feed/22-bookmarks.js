@@ -238,7 +238,6 @@
                     return false;
                 });
                 if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
-                if (!hadCache && !fresh.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; }
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
