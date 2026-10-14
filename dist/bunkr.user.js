@@ -1170,7 +1170,7 @@
         const mkAct = (ic, label, cb) => { const b = el("button", { type: "button", class: "bunkr-plc-act", title: label, "aria-label": label }); b.innerHTML = ic; b.addEventListener("click", cb); return b; };
         const toggle = () => { if (!video.paused) { video.pause(); return; } const p = video.play(); if (p && p.catch) p.catch(() => {}); };
         const sflash = el("div", { class: "bunkr-plc-seekflash" }); let sft;
-        const seek = d => { if (!video.duration) return; video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + d)); sflash.textContent = d < 0 ? "« 5s" : "5s »"; sflash.classList.add("on"); clearTimeout(sft); sft = setTimeout(() => sflash.classList.remove("on"), 480); };
+        const seek = d => { if (!video.duration) return; video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + d)); sflash.textContent = d < 0 ? `« ${-d}s` : `${d}s »`; sflash.classList.add("on"); clearTimeout(sft); sft = setTimeout(() => sflash.classList.remove("on"), 480); };
         let clickT = null;
         on(video, "click", e => { e.preventDefault(); e.stopPropagation(); if (clickT) return; clickT = setTimeout(() => { clickT = null; toggle(); }, 230); });
         on(video, "dblclick", e => { e.preventDefault(); e.stopPropagation(); if (clickT) { clearTimeout(clickT); clickT = null; } const r = video.getBoundingClientRect(); seek((e.clientX - r.left) < r.width / 2 ? -5 : 5); });
@@ -1249,8 +1249,8 @@
             b.addEventListener("click", cb);
             return b;
         };
-        const skipBack = mkSkip(PL_ICONS.skipBack, "Voltar 5s (← / j)", e => { e.stopPropagation(); seek(-5); });
-        const skipFwd = mkSkip(PL_ICONS.skipFwd, "Avançar 5s (→ / l)", e => { e.stopPropagation(); seek(5); });
+        const skipBack = mkSkip(PL_ICONS.skipBack, "Voltar 5s (←) · 10s (j)", e => { e.stopPropagation(); seek(-5); });
+        const skipFwd = mkSkip(PL_ICONS.skipFwd, "Avançar 5s (→) · 10s (l)", e => { e.stopPropagation(); seek(5); });
 
         const nextBtn = mkAct(PL_ICONS.next, "Próximo no álbum (Shift+N)", e => { e.stopPropagation(); navFile(1); });
         nextBtn.classList.add("bunkr-plc-next");
