@@ -76,8 +76,7 @@
             .smg-gallery-close { width: auto !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-16) !important; gap: var(--smg-sp-8); }
             .smg-gallery-close-label { font-size: var(--smg-fs-14); font-weight: 600; white-space: nowrap; }
             .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
-            /* SCROLLER vertical · as colunas crescem pra baixo (altura auto) — sem scroll horizontal */
-            /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio masonry (anexar não reembaralha as outras) */
+            /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio mosaico (motor 08a; anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
             /* separador de página "PAGE N" — NÃO sticky (rola junto); linha divisória mais grossa */
             .smg-gallery-pagehdr {
@@ -87,11 +86,11 @@
             }
             .smg-gallery-pagehdr::after { content: ""; flex: 1 1 auto; height: 3px; border-radius: var(--smg-r-4); background: var(--smg-bd2); }
             .smg-gallery-page.is-skel .smg-gallery-pagehdr { opacity: 0.55; }
-            .smg-gallery-cols { column-width: 440px; column-gap: var(--smg-sp-12); }   /* 1 coluna a menos (tiles maiores) */
-            @media (max-width: 800px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: var(--smg-sp-8); } }
-            .smg-gallery-tile { position: relative; display: block; width: 100%; margin: 0 0 var(--smg-sp-12); padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-tile img { display: block; width: 100%; height: auto; }
-            .smg-gallery-tile--embed { aspect-ratio: 16 / 9; background: #000; }
+            @media (max-width: 800px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } }
+            /* tile = item do mosaico: o motor dá posição, largura e altura (proporção da mídia) */
+            .smg-gallery-tile { display: block; padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; }
+            .smg-gallery-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+            .smg-gallery-tile--embed { background: #000; }
             .smg-gallery-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
             .smg-gallery-play svg { width: 42px; height: 42px; color: var(--smg-w-95); fill: currentColor !important; }
             .smg-gallery-tile--embed .saint-iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; aspect-ratio: auto !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }
@@ -105,8 +104,8 @@
             .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
-            .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 var(--smg-sp-12); border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
+            .smg-gallery-skel { border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); }
+            .smg-gallery-tile--image.is-loading { background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }
 `;

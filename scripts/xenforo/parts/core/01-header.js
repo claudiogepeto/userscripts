@@ -57,9 +57,11 @@
 //    5) carga: streaming DIRETO (no-referrer) → se der erro, BLOB (Referer forjado).
 //    6) à prova de falha: qualquer erro → rgRestore() recoloca o iframe nativo.
 //
-//  MASONRY do post: collectGalleryBlocks() junta imgs+embeds; buildPostGallery()
-//    distribui em N colunas por JS (coluna mais curta = Pinterest, sem recarregar o
-//    que já está posto). O visualizador cheio (tiktok/zoom/slides) = openMediaFeed().
+//  MASONRY: um motor só (08a: masonryMount/masonryPlace — coluna mais curta, colunas pela
+//    largura do container, 1 ResizeObserver + 1 rAF). buildPostGallery() lê o corpo do post
+//    em blocos: runs de 2+ imagens viram um grupo, texto/embed/card ficam onde o autor pôs.
+//    A galeria (#smg-gallery) usa o mesmo motor por página. O visualizador cheio
+//    (tiktok/zoom/slides) = openMediaFeed().
 //
 //  GOTCHAS que já queimaram (memória do projeto · [[script-passes-traps]]):
 //    • CSS vive num template `…` (backtick) em injectStyles → NUNCA backtick dentro
@@ -78,8 +80,9 @@
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump
 //  POST teclado ...... setupKeyboardShortcuts
 //  POST scroll-inf ... setupInfiniteScroll
-//  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,
-//                      blockRelH, buildPostGallery, buildPostGalleries
+//  MASONRY (motor) ... masonryColsFor, masonryPlace, masonryMount/Unmount, masonrySchedule, masonryLayout
+//  IMG + MOSAICO ..... getThumbIO/getFullIO, processImages, markWide (imagem solta),
+//                      buildPostGallery (runs de imagem → grupo), buildPostGalleries
 //  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO,
 //                      rgTasks(fila), rgPlayIfVisible, rgLoad, rgViaDirect/rgViaBlob, rgRestore,
 //                      rgBuild, rgControls, rgStart, buildNativeVideo, rgLoadUrl/rgStartUrl,

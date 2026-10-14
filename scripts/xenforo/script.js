@@ -57,9 +57,11 @@
 //    5) carga: streaming DIRETO (no-referrer) → se der erro, BLOB (Referer forjado).
 //    6) à prova de falha: qualquer erro → rgRestore() recoloca o iframe nativo.
 //
-//  MASONRY do post: collectGalleryBlocks() junta imgs+embeds; buildPostGallery()
-//    distribui em N colunas por JS (coluna mais curta = Pinterest, sem recarregar o
-//    que já está posto). O visualizador cheio (tiktok/zoom/slides) = openMediaFeed().
+//  MASONRY: um motor só (08a: masonryMount/masonryPlace — coluna mais curta, colunas pela
+//    largura do container, 1 ResizeObserver + 1 rAF). buildPostGallery() lê o corpo do post
+//    em blocos: runs de 2+ imagens viram um grupo, texto/embed/card ficam onde o autor pôs.
+//    A galeria (#smg-gallery) usa o mesmo motor por página. O visualizador cheio
+//    (tiktok/zoom/slides) = openMediaFeed().
 //
 //  GOTCHAS que já queimaram (memória do projeto · [[script-passes-traps]]):
 //    • CSS vive num template `…` (backtick) em injectStyles → NUNCA backtick dentro
@@ -78,8 +80,9 @@
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump
 //  POST teclado ...... setupKeyboardShortcuts
 //  POST scroll-inf ... setupInfiniteScroll
-//  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,
-//                      blockRelH, buildPostGallery, buildPostGalleries
+//  MASONRY (motor) ... masonryColsFor, masonryPlace, masonryMount/Unmount, masonrySchedule, masonryLayout
+//  IMG + MOSAICO ..... getThumbIO/getFullIO, processImages, markWide (imagem solta),
+//                      buildPostGallery (runs de imagem → grupo), buildPostGalleries
 //  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO,
 //                      rgTasks(fila), rgPlayIfVisible, rgLoad, rgViaDirect/rgViaBlob, rgRestore,
 //                      rgBuild, rgControls, rgStart, buildNativeVideo, rgLoadUrl/rgStartUrl,
@@ -886,8 +889,7 @@
             .smg-gallery-close { width: auto !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-16) !important; gap: var(--smg-sp-8); }
             .smg-gallery-close-label { font-size: var(--smg-fs-14); font-weight: 600; white-space: nowrap; }
             .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
-            /* SCROLLER vertical · as colunas crescem pra baixo (altura auto) — sem scroll horizontal */
-            /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio masonry (anexar não reembaralha as outras) */
+            /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio mosaico (motor 08a; anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
             /* separador de página "PAGE N" — NÃO sticky (rola junto); linha divisória mais grossa */
             .smg-gallery-pagehdr {
@@ -897,11 +899,11 @@
             }
             .smg-gallery-pagehdr::after { content: ""; flex: 1 1 auto; height: 3px; border-radius: var(--smg-r-4); background: var(--smg-bd2); }
             .smg-gallery-page.is-skel .smg-gallery-pagehdr { opacity: 0.55; }
-            .smg-gallery-cols { column-width: 440px; column-gap: var(--smg-sp-12); }   /* 1 coluna a menos (tiles maiores) */
-            @media (max-width: 800px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: var(--smg-sp-8); } }
-            .smg-gallery-tile { position: relative; display: block; width: 100%; margin: 0 0 var(--smg-sp-12); padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-tile img { display: block; width: 100%; height: auto; }
-            .smg-gallery-tile--embed { aspect-ratio: 16 / 9; background: #000; }
+            @media (max-width: 800px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } }
+            /* tile = item do mosaico: o motor dá posição, largura e altura (proporção da mídia) */
+            .smg-gallery-tile { display: block; padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; }
+            .smg-gallery-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+            .smg-gallery-tile--embed { background: #000; }
             .smg-gallery-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
             .smg-gallery-play svg { width: 42px; height: 42px; color: var(--smg-w-95); fill: currentColor !important; }
             .smg-gallery-tile--embed .saint-iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; aspect-ratio: auto !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }
@@ -915,8 +917,8 @@
             .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
-            .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 var(--smg-sp-12); border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
+            .smg-gallery-skel { border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); }
+            .smg-gallery-tile--image.is-loading { background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }
 `;
@@ -17147,7 +17149,7 @@
             img.loading = 'lazy'; img.alt = '';
             const full = it.url, med = getMedUrl(full);   // TILE = médio (perf); o feed abre o FULL no clique (alta)
             const done = () => tile.classList.remove('is-loading');
-            img.addEventListener('load', done);
+            img.addEventListener('load', () => { done(); masonrySchedule(tile.parentElement); });   // proporção real → a seção reflui
             img.addEventListener('error', () => { if (med !== full && img.src !== full) img.src = full; else done(); });   // médio 404 → tenta o full; full falhou → tira o shimmer
             img.src = med;
             if (img.complete && img.naturalWidth) done();   // já em cache → sem shimmer preso
@@ -17176,7 +17178,11 @@
                     tile.insertBefore(iframe, maxBtn);
                 };
                 // tile ganha o aspect REAL do vídeo (vertical = tile alto, não esmagado em 16:9)
-                const fitTile = video => video.addEventListener('loadedmetadata', () => { if (video.videoWidth && video.videoHeight) tile.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight; }, { once: true });
+                const fitTile = video => video.addEventListener('loadedmetadata', () => {
+                    if (!video.videoWidth || !video.videoHeight) return;
+                    tile.dataset.relh = (video.videoHeight / video.videoWidth).toFixed(4);
+                    masonrySchedule(tile.parentElement);
+                }, { once: true });
                 const rid = (FEATURES.redgifsPlayer && GMX) ? rgIdFrom(it.url) : null;
                 if (rid) {   // redgifs → NOSSO player (autoplay-off, igual ao inline)
                     const { wrap, video } = rgBuild(rid);
@@ -17196,8 +17202,20 @@
     function galSkelTile(i) {
         const t = document.createElement('div');
         t.className = 'smg-gallery-skel smg-skeleton-shimmer';
-        t.style.paddingTop = GAL_SKEL_H[i % GAL_SKEL_H.length] + '%';   // altura via padding-% (relativo à largura da coluna)
+        t.dataset.relh = String(GAL_SKEL_H[i % GAL_SKEL_H.length] / 100);   // altura/largura do tile-fantasma
         return t;
+    }
+    // altura/largura de um tile pro motor masonry (08a): imagem carregada → pixels; vídeo → proporção do player
+    // (ou 16:9 até ele saber); tile-fantasma e imagem ainda sem pixels → a proporção guardada / o placeholder
+    function galTileRatio(tile) {
+        if (tile.dataset.relh) return +tile.dataset.relh;
+        if (tile.classList.contains('smg-gallery-tile--image')) return masonryImgRatio(tile.querySelector('img'));
+        return 9 / 16;
+    }
+    // esvazia o scroller soltando cada seção do ResizeObserver do motor
+    function galClearScroller(sc) {
+        sc.querySelectorAll('.smg-gallery-cols').forEach(masonryUnmount);
+        sc.innerHTML = '';
     }
     function galMakeSection(n, skel) {
         const sec = document.createElement('div');
@@ -17207,6 +17225,7 @@
         const cols = document.createElement('div');
         cols.className = 'smg-gallery-cols';
         sec.appendChild(cols);
+        masonryMount(cols, { getRatio: galTileRatio });   // mosaico: o mesmo motor do post
         return sec;
     }
     // muta o scroller mantendo `keep` visualmente fixo (corrige scrollTop pela variação de altura acima dele) → sem "pulo"
@@ -17223,7 +17242,7 @@
         const fresh = collectMediaFrom(doc).filter(it => !galState.seen.has(it.url));
         fresh.forEach(it => galState.seen.add(it.url));
         if (!fresh.length) {   // página sem mídia nova → tira o skeleton (preservando a posição)
-            galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => sec.remove());
+            galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => { masonryUnmount(sec.querySelector('.smg-gallery-cols')); sec.remove(); });
             if (!galState.scroller.querySelector('.smg-gallery-page'))
                 galState.scroller.innerHTML = '<div class="smg-gallery-empty">' + i18n('No media on this page') + '</div>';
             return false;
@@ -17234,7 +17253,8 @@
         // troca skeleton → real sem "pulo": no append ancora no topo da própria seção (preenche p/ baixo);
         // no prepend a seção está ACIMA da viewport → ancora no que vem ABAIXO dela (o que se está lendo)
         const keep = where === 'prepend' ? sec.nextElementSibling : sec;
-        galKeepStable(keep, () => { cols.innerHTML = ''; cols.appendChild(frag); sec.classList.remove('is-skel'); });
+        // layout SÍNCRONO dentro do mutate: o galKeepStable mede a altura nova logo depois
+        galKeepStable(keep, () => { cols.innerHTML = ''; cols.appendChild(frag); sec.classList.remove('is-skel'); masonryLayout(cols); });
         galState.items = where === 'prepend' ? fresh.concat(galState.items) : galState.items.concat(fresh);
         return true;
     }
@@ -17287,7 +17307,7 @@
             .catch(() => {
                 if (!galState || galState.gen !== gen) return;
                 galState.loading = false;
-                if (sec.isConnected) galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => sec.remove());
+                if (sec.isConnected) galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => { masonryUnmount(cols); sec.remove(); });
                 if (where === 'prepend') galState.lo = n + 1; else if (galState.hi === n) galState.hi = n - 1;   // libera p/ tentar de novo no próximo scroll
             });
     }
@@ -17296,7 +17316,7 @@
         n = Math.max(1, Math.min(galState.max, n));
         if (galIO) galIO.disconnect();   // larga os tiles de vídeo observados (evita refs presas a nós removidos)
         galState.gen++; galState.seen = new Set(); galState.items = []; galState.loading = false; galState.hasMore = true;
-        galState.scroller.innerHTML = ''; galState.scroller.scrollTop = 0;
+        galClearScroller(galState.scroller); galState.scroller.scrollTop = 0;
         galState.lo = n; galState.hi = n - 1;   // hi = n-1 → galFetch(n,'append') seta hi=n
         galFetch(n, 'append');
     }
@@ -17330,7 +17350,7 @@
         // esvazia a grade AGORA (reabrir reconstrói da pág. 1 de qualquer jeito): manter milhares de tiles +
         // <video> com src vivo num DOM display:none segurava dezenas/centenas de MB até a próxima abertura
         const grid = gal && gal.querySelector('.smg-gallery-grid');
-        if (grid) { grid.querySelectorAll('video.smg-rg-v').forEach(rgDispose); grid.innerHTML = ''; }
+        if (grid) { grid.querySelectorAll('video.smg-rg-v').forEach(rgDispose); galClearScroller(grid); }
         rgReleaseDetachedBlobs();
         galState = null;
         const feed = document.getElementById('smg-feed');
@@ -17444,7 +17464,7 @@
         }
         const scroller = gal.querySelector('.smg-gallery-grid');
         const head = gal.querySelector('.smg-gallery-dock-panel');
-        scroller.innerHTML = '';   // o galFetch insere o skeleton na hora (sem flash de "sem mídia")
+        galClearScroller(scroller);   // o galFetch insere o skeleton na hora (sem flash de "sem mídia")
         const pj = readPageJump();
         order = (order === 'reaction') ? 'reaction' : 'date';   // sort PRÓPRIO ('date' default); restaurado do ?order= no F5
         const cur = 1;             // SEMPRE página 1 (restaurar a página quebrava a paginação no F5 → percorre tudo desde o começo)
@@ -17972,6 +17992,7 @@
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.collectMediaFrom = collectMediaFrom;
+        window.__galleryExports = { galMakeSection, galTileRatio, galSkelTile };
     }
 
     // =========================================================
