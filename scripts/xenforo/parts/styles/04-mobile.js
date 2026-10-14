@@ -13,7 +13,7 @@
 
                 /* config / filtro por autor / filtro da listagem: ancorados embaixo, full-width.
                    opacity fixa em 1 → slide puro (sem fade ao fechar); show/hide via transform + pointer-events */
-                #smg-settings-pop, #smg-filter-pop, #smg-listfilter-pop, #smg-listsort-pop {
+                #smg-settings-pop, #smg-listfilter-pop, #smg-listsort-pop {
                     position: fixed; left: 0; right: 0; bottom: 0; top: auto;
                     width: 100%; max-width: 100%; max-height: 86vh; max-height: 86dvh; z-index: 20;
                     border: none; border-top: 1px solid rgba(255,255,255,0.1);
@@ -25,7 +25,6 @@
                     box-shadow: 0 -16px 50px rgba(0,0,0,0.6);
                 }
                 #smg-post-nav-wrapper.settings-open #smg-settings-pop,
-                #smg-post-nav-wrapper.filter-open #smg-filter-pop,
                 #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
                 #smg-post-nav-wrapper.listsort-open #smg-listsort-pop {
                     transform: translateY(0);
@@ -197,8 +196,7 @@
                 #smg-search-pop .smg-search-hist-item { min-height: 44px; padding: 8px 6px; }
 
                 /* grip (puxador) no topo dos demais sheets (settings, filtro, ordenar) */
-                #smg-settings-pop::before,
-                #smg-filter-pop::before, #smg-listfilter-pop::before, #smg-listsort-pop::before {
+                #smg-settings-pop::before, #smg-listfilter-pop::before, #smg-listsort-pop::before {
                     content: ''; flex: 0 0 auto; width: 40px; height: 5px;
                     border-radius: 999px; background: rgba(255,255,255,0.25);
                     margin: 2px auto 10px;
@@ -207,10 +205,7 @@
                 /* alvos de toque maiores + cantos mais macios */
                 .smg-lf-select, .smg-lf-input { height: 48px; font-size: 16px; border-radius: 13px; }
                 .smg-lf-apply { padding: 15px; font-size: 16px; border-radius: 14px; }
-                .smg-filter-input { height: 48px; font-size: 16px; border-radius: 13px; }
-                .smg-filter-apply, .smg-filter-clear { height: 48px; font-size: 15px; border-radius: 13px; }
-                .smg-chip, .smg-filter-chip { height: 40px; font-size: 14px; }
-                .smg-set-list { max-height: 60vh; }
+                .smg-chip { height: 40px; font-size: 14px; }
             }
             /* botão da dock "ativo" (filtro/escolha ligada) */
             .smg-nav-btn.smg-active { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */

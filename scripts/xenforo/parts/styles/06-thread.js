@@ -1530,7 +1530,6 @@
 
             /* ITENS ativos/atuais/primários seguem o ACENTO do tema (eram BRANCOS nos 2 sites → agora verde/rosa por site) */
             /* (a aba ativa da home saiu daqui: agora é sublinhado-accent, não fill — ver .smg-feed-tab::after) */
-            .smg-tb-search-go,
             .smg-search-go,
             .smg-search-author-btn.has-value,
             .smg-bar-btn--current,

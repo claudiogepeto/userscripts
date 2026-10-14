@@ -92,8 +92,6 @@
             @media (min-width: 801px) {
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 12px; font-size: 14px; }
             }
-            /* badge inline (notificações como item do nav) */
-            .smg-tb-badge--inline { position: static; top: auto; right: auto; margin-left: 1px; }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
@@ -140,9 +138,6 @@
             html.smg-search-open .smg-tb-left,
             html.smg-search-open .smg-tb-center--nav,
             html.smg-search-open .smg-tb-actions { opacity: 0; pointer-events: none; transition: opacity .14s ease; }
-            .smg-tb-search-close { flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; margin: 0 -6px 0 4px; border: 0; border-radius: 8px; background: transparent; color: rgba(255,255,255,0.55); cursor: pointer; transition: background .14s ease, color .14s ease; }
-            .smg-tb-search-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
-            .smg-tb-search-close svg { width: 17px; height: 17px; fill: none !important; }
             .smg-search-clear {
                 flex: 0 0 auto; width: 28px; height: 28px;
                 display: inline-flex; align-items: center; justify-content: center;
@@ -185,35 +180,12 @@
                 color: #fff; font: inherit;
             }
             .smg-tb-search-input::placeholder { color: rgba(255,255,255,0.5); }
-            .smg-tb-search-ph { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
-            .smg-tb-search-scan { display: inline-flex; align-items: center; flex: 0 0 auto; opacity: 0.4; }
-            .smg-tb-search-scan svg { width: 17px; height: 17px; fill: none !important; }
-            /* botão Buscar DENTRO do input — só aparece com o dropdown aberto (substitui o scan) */
-            .smg-tb-search-go {
-                flex: 0 0 auto; display: none; align-items: center; gap: 6px;
-                height: 30px; padding: 0 13px; box-sizing: border-box; margin-right: -4px;
-                border: 0; border-radius: 8px; background: #fff; color: #141414;
-                font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
-                transition: filter .15s ease, transform .12s ease;
-            }
-            .smg-tb-search-go-ic { display: inline-flex; }
-            .smg-tb-search-go-ic svg { width: 15px; height: 15px; fill: none !important; stroke-width: 2.4; }
-            .smg-tb-search-go:hover { filter: brightness(0.9); }
-            .smg-tb-search-go:active { transform: scale(0.96); }
-            html.smg-search-open .smg-tb-search-go { display: inline-flex; }
-            html.smg-search-open .smg-tb-search-scan { display: none; }
             .smg-tb-badge {
                 position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px;
                 border-radius: 999px; background: #e0245e; color: #fff; font-size: 10px; font-weight: 700;
                 display: flex; align-items: center; justify-content: center; box-sizing: border-box;
                 font-variant-numeric: tabular-nums;
             }
-            /* badge de NOTICES: menor e neutro (cinza) — o vermelho fixo dava aparência de erro */
-            .smg-tb-notices .smg-tb-badge {
-                background: rgba(255,255,255,0.24); color: rgba(255,255,255,0.92);
-                min-width: 13px; height: 13px; padding: 0 3px; font-size: 8.5px; top: 1px; right: 1px;
-            }
-            .smg-tb-divider { width: 1px; height: 26px; background: rgba(255,255,255,0.14); margin: 0 6px; flex: 0 0 auto; }
             /* CONTA: mesma caixa de 40px dos outros ícones da direita (busca/painel), com o avatar
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
@@ -251,15 +223,6 @@
             .smg-tb-loginbtn:active { transform: scale(0.97); }
             .smg-tb-loginbtn .smg-tb-ico { font-size: 16px; }
             @media (max-width: 700px) { .smg-tb-authlink { display: none; } }   /* espaço curto: sobra o Entrar */
-            .smg-tb-cta {
-                display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; margin-left: 5px; flex: 0 0 auto;
-                border-radius: 11px; background: var(--smg-s3); color: #fff;
-                font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--smg-bd2);
-                transition: filter .14s ease, transform .12s ease;
-            }
-            .smg-tb-cta:hover { filter: brightness(1.08); }
-            .smg-tb-cta:active { transform: scale(0.97); }
-            .smg-tb-cta svg { width: 17px; height: 17px; fill: none !important; }
 
             /* popovers agrupados */
             .smg-tb-pop {
@@ -321,18 +284,8 @@
 
             /* lista nativa do XF embutida (sheet mobile de alertas + painel lateral) */
             .smg-tb-listbody { position: relative; max-height: 62vh; overflow-y: auto; margin: 2px 0; }
-            /* ATUALIZANDO: reabrir o sino re-busca a lista. Em vez de piscar/esvaziar, a lista atual fica
-               na tela, levemente apagada, com uma barrinha correndo no topo até o conteúdo novo chegar. */
-            .smg-tb-listbody--refreshing { opacity: 0.55; transition: opacity .15s ease; }
-            .smg-tb-listbody--refreshing::before {
-                content: ""; position: sticky; top: 0; left: 0; z-index: 3; display: block; height: 2px;
-                border-radius: 2px; background: var(--smg-link, #ff77b2);
-                animation: smg-al-scan 1s ease-in-out infinite;
-            }
-            @keyframes smg-al-scan { 0% { margin-left: 0; width: 22%; } 50% { margin-left: 78%; width: 22%; } 100% { margin-left: 0; width: 22%; } }
             .smg-tb-listbody::-webkit-scrollbar { width: 8px; }
             .smg-tb-listbody::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
-            .smg-tb-loading { padding: 26px; text-align: center; color: rgba(255,255,255,0.5); font-size: 13px; }
             .smg-tb-listbody .listPlain { list-style: none; margin: 0; padding: 0; }
             .smg-tb-listbody .menu-row { display: block; padding: 9px 8px; border: none !important; border-radius: 10px; }
             .smg-tb-listbody .menu-row + .menu-row { border-top: 1px solid rgba(255,255,255,0.06) !important; }
@@ -761,7 +714,6 @@
             .smg-csheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; font-size: 15px; font-weight: 700; color: #fff; }
             .smg-csheet-head a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); text-decoration: none; }
             .smg-csheet-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }   /* contain = chegar no fim da lista não "vaza" o scroll pro fundo */
-            .smg-csheet-user { padding: 2px 4px 10px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.55); }
             /* alertas dentro do sheet (mobile): fonte e respiro bem maiores que o dropdown do desktop */
             .smg-sheet .smg-csheet-head { font-size: 18px; padding: 6px 6px 12px; }
             .smg-sheet .smg-csheet-head a { font-size: 14px; }
@@ -897,8 +849,6 @@
                 justify-content: flex-start !important;
                 width: 100% !important;
             }
-            .smg-al-by .smg-al-user { color: rgba(255,255,255,0.68) !important; font-weight: 600; text-decoration: none; white-space: nowrap; }
-            .smg-al-by .smg-al-user:hover { color: #fff !important; text-decoration: underline; }
             .smg-al-time,
             .smg-alert-clean .smg-al-time,
             .smg-tb-listbody .smg-alert-clean .smg-al-time,
@@ -973,7 +923,7 @@
 
             @media (max-width: 992px) {
                 /* tablet: some o Discover do canto, search central continua */
-                .smg-tb-nav, .smg-tb-cta { display: none; }
+                .smg-tb-nav { display: none; }
                 html.smg-topbar-on body { padding-top: 52px !important; }
             }
             /* Mobile: fixed topbar with one height (matching the bottom navbar). Threads swap
@@ -1660,14 +1610,6 @@
                 background: #18181b;
                 color: #fff;
             }
-            .smg-search-tb-left, .smg-search-tb-right {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .smg-search-tb-right {
-                margin-left: auto;
-            }
             /* AUTOR: trigger icon-only compacto e row expansível no lugar da toolbar */
             .smg-search-author-trigger {
                 display: inline-flex;
@@ -1791,7 +1733,7 @@
                 height: 13px;
                 fill: none !important;
             }
-            .smg-search-tb-row .smg-search-cfg, .smg-search-tb-right .smg-search-cfg {
+            .smg-search-tb-row .smg-search-cfg {
                 width: 34px;
                 height: 34px;
                 padding: 0;
@@ -1805,7 +1747,7 @@
                 cursor: pointer;
                 transition: all .15s ease;
             }
-            .smg-search-tb-row .smg-search-cfg:hover, .smg-search-tb-right .smg-search-cfg:hover {
+            .smg-search-tb-row .smg-search-cfg:hover {
                 background: rgba(255,255,255,0.1);
                 border-color: rgba(255,255,255,0.22);
                 color: #fff;
@@ -1826,16 +1768,16 @@
                 cursor: pointer;
                 transition: all .15s ease;
             }
-            .smg-search-tb-row .smg-search-adv:hover, .smg-search-tb-right .smg-search-adv:hover {
+            .smg-search-tb-row .smg-search-adv:hover {
                 background: rgba(255,255,255,0.1);
                 border-color: rgba(255,255,255,0.22);
                 color: #fff;
             }
-            .smg-search-tb-row .smg-search-adv .smg-ext-ic, .smg-search-tb-right .smg-search-adv .smg-ext-ic {
+            .smg-search-tb-row .smg-search-adv .smg-ext-ic {
                 display: inline-flex;
                 align-items: center;
             }
-            .smg-search-tb-row .smg-search-adv .smg-ext-ic svg, .smg-search-tb-right .smg-search-adv .smg-ext-ic svg {
+            .smg-search-tb-row .smg-search-adv .smg-ext-ic svg {
                 width: 12px;
                 height: 12px;
                 opacity: 0.7;
@@ -1861,48 +1803,6 @@
                 background: var(--smg-link-soft, rgba(255,119,178,0.18));
                 border-color: var(--smg-link, #ff77b2);
                 color: #fff;
-            }
-            .smg-search-tool-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                height: 34px;
-                padding: 0 11px;
-                border-radius: 9px;
-                background: rgba(255,255,255,0.05);
-                border: 1px solid rgba(255,255,255,0.1);
-                color: rgba(255,255,255,0.85);
-                font-size: 12.5px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all .15s ease;
-            }
-            .smg-search-tool-btn:hover {
-                background: rgba(255,255,255,0.1);
-                color: #fff;
-            }
-            .smg-search-tool-btn.active {
-                background: var(--smg-link-soft, rgba(255,119,178,0.18));
-                border-color: var(--smg-link, #ff77b2);
-                color: #fff;
-            }
-            select.smg-search-tool-btn {
-                appearance: none;
-                -webkit-appearance: none;
-                padding-right: 22px;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-                background-repeat: no-repeat;
-                background-position: right 8px center;
-            }
-            select.smg-search-tool-btn option {
-                background: #18181b;
-                color: #fff;
-            }
-            input.smg-search-tool-btn {
-                appearance: none;
-                -webkit-appearance: none;
-                outline: none;
-                font-family: inherit;
             }
 
             .smg-ios-toggle {
@@ -1957,19 +1857,6 @@
                 color: rgba(255,255,255,0.85);
             }
 
-            /* filtros: label + chips de escopo + toggle "só títulos" + autor */
-            /* seções separadas com header em maiúsculas (estilo command palette) */
-            .smg-search-section { display: flex; flex-direction: column; gap: 11px; }
-            .smg-search-shead { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
-            /* "Search in" / Filters: row único com scroll horizontal (não quebra linha) */
-            .smg-search-scopes, .smg-search-toggles {
-                display: flex; align-items: center; gap: 8px;
-                flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
-                scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch;
-                margin: 0 -2px; padding: 2px;
-            }
-            .smg-search-scopes::-webkit-scrollbar, .smg-search-toggles::-webkit-scrollbar { display: none; }
-            .smg-search-scopes .smg-chip, .smg-search-toggles .smg-chip { flex: 0 0 auto; }
             .smg-chip {
                 display: inline-flex; align-items: center; gap: 7px;
                 height: 40px; padding: 0 18px; box-sizing: border-box;
@@ -2012,7 +1899,7 @@
             .smg-search-scope-chev { display: inline-flex; opacity: 0.55; transition: transform .18s ease; }
             .smg-search-scope-chev svg { width: 14px; height: 14px; fill: none; }
             .smg-search-scope-btn.open .smg-search-scope-chev { transform: rotate(180deg); }
-            #smg-search-pop.smg-scope-open { overflow: visible; }   /* menu de escopo aberto → pop não corta o dropdown (overflow do scroll cortava) */
+               /* menu de escopo aberto → pop não corta o dropdown (overflow do scroll cortava) */
             .smg-search-scope-list {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
                 min-width: 180px; padding: 6px;
@@ -2085,8 +1972,7 @@
             /* AÇÕES DA BARRA — ⇥ (comandos) · funil (avançada) · sliders (defaults) · esc · × têm UM desenho só:
                30px, raio 9, mesma borda/fundo/hover. Antes cada um tinha altura, raio e borda próprios (24/30/36px). */
             .smg-search-acts { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
-            .smg-search-acts .smg-search-sep { width: 1px; height: 20px; margin: 0 2px; background: rgba(255,255,255,0.12); }
-            .smg-search-cmdbtn, .smg-search-adv, .smg-search-cfg, .smg-search-close, .smg-search-kbd {
+            .smg-search-adv, .smg-search-cfg, .smg-search-close, .smg-search-kbd {
                 flex: 0 0 auto; box-sizing: border-box;
                 display: inline-flex; align-items: center; justify-content: center;
                 min-width: 30px; height: 30px; padding: 0 7px; margin: 0;
@@ -2095,9 +1981,9 @@
                 font: 600 13px/1 -apple-system, system-ui, sans-serif; text-decoration: none; cursor: pointer;
                 transition: background .14s ease, color .14s ease, border-color .14s ease, transform .12s ease;
             }
-            .smg-search-cmdbtn:hover, .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
-            .smg-search-cmdbtn:active, .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
-            .smg-search-cmdbtn.open, .smg-search-cfg.open { background: var(--smg-link-soft, rgba(255,119,178,0.18)); border-color: var(--smg-link, #ff77b2); color: var(--smg-link, #ff77b2); }
+            .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
+            .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
+            .smg-search-cfg.open { background: var(--smg-link-soft, rgba(255,119,178,0.18)); border-color: var(--smg-link, #ff77b2); color: var(--smg-link, #ff77b2); }
             .smg-search-adv svg, .smg-search-cfg svg, .smg-search-close svg { width: 16px; height: 16px; fill: none !important; }
             .smg-search-kbd { cursor: default; font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.4); }
             .smg-search-foot { display: none; }   /* rodapé (botão "Search") removido: digitar já busca (debounce) + "See all results" + Enter; o botão é redundante. Desktop já escondia; agora some no mobile tb. */
@@ -2425,17 +2311,6 @@
             .smg-search-result-meta { font-size: 12.5px; color: rgba(255,255,255,0.42); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* highlight do termo buscado (title + snippet) */
             .smg-search-result mark.smg-search-hl { background: rgba(255,205,70,0.30); color: #fff; border-radius: 3px; padding: 0 1px; font-weight: 700; }
-            /* "Ver todos" = FOOTER FIXO (sticky no fundo do dropdown; resultados rolam atrás) */
-            .smg-search-result-all {
-                position: sticky; bottom: 0; z-index: 3;
-                display: flex; align-items: center; justify-content: center; gap: 7px;
-                margin: 6px -18px 0; padding: 13px 18px;
-                background: var(--smg-s1); border-top: 1px solid var(--smg-bd);
-                font-size: 13px; font-weight: 700; text-decoration: none; color: rgba(255,255,255,0.82);
-                transition: color .14s ease, gap .14s ease;
-            }
-            .smg-search-result-all:hover { color: #fff; gap: 11px; }
-            .smg-search-result-all svg { width: 15px; height: 15px; fill: none; }
             .smg-search-pop--drop .smg-search-history { padding-bottom: 12px; }   /* sem footer (mostrando histórico) → respiro no fundo */
             /* lista SEMPRE scrollável (substituiu o "Show all" e a paginação ‹ ›) — chunks renderizam conforme rola */
             .smg-search-hist-list--scroll {
@@ -3068,7 +2943,7 @@
             }
 
             /* ---- settings / filtro por autor / filtro da listagem: popovers (padrão do search) ---- */
-            #smg-settings-pop, #smg-filter-pop, #smg-listfilter-pop, #smg-listsort-pop {
+            #smg-settings-pop, #smg-listfilter-pop, #smg-listsort-pop {
                 position: absolute;
                 bottom: calc(100% + 12px);
                 left: 50%;
@@ -3093,7 +2968,6 @@
                 z-index: 11;
             }
             #smg-post-nav-wrapper.settings-open #smg-settings-pop,
-            #smg-post-nav-wrapper.filter-open #smg-filter-pop,
             #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
             #smg-post-nav-wrapper.listsort-open #smg-listsort-pop {
                 visibility: visible;
@@ -3140,21 +3014,6 @@
             .smg-lf-reset-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
             .smg-lf-row { display: flex; flex-direction: column; gap: 7px; }
             .smg-lf-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); }
-            .smg-lf-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-            .smg-lf-group { width: 100%; margin-top: 4px; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.35); }
-            .smg-lf-group-title {
-                width: 100%;
-                margin: 8px 0 4px 0;
-                font-size: 10.5px;
-                font-weight: 800;
-                letter-spacing: .05em;
-                text-transform: uppercase;
-                color: rgba(255,255,255,0.45);
-                border-bottom: 1px solid rgba(255,255,255,0.06);
-                padding-bottom: 3px;
-            }
-            .smg-lf-prefix { padding: 0 9px; height: 30px; }
-            .smg-lf-prefix .label { font-size: 10px !important; padding: 1.5px 5px !important; }
             .label,
             .smg-badge-chip {
                 display: inline-flex !important;
@@ -3251,29 +3110,6 @@
             .label.label--hong_kong, .smg-badge-chip.label--hong_kong, .label--hong_kong { background: #eb2f06 !important; color: #fff !important; }
             .label.label--singapore, .smg-badge-chip.label--singapore, .label--singapore { background: #b71540 !important; color: #fff !important; }
             .label.label--malaysia, .smg-badge-chip.label--malaysia, .label--malaysia { background: #f39c12 !important; color: #fff !important; }
-            .smg-badge-chip-cnt {
-                font-size: 10px !important;
-                font-weight: 800 !important;
-                padding: 1px 4px !important;
-                border-radius: 4px !important;
-                background: rgba(0,0,0,0.35) !important;
-                color: rgba(255,255,255,0.9) !important;
-                line-height: 1 !important;
-                margin-left: 2px !important;
-            }
-            .smg-search-chips {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 6px !important;
-                padding: 8px 12px 10px !important;
-                border-top: 1px solid rgba(255,255,255,0.06) !important;
-            }
-            .smg-lf-badges {
-                display: flex; flex-wrap: wrap; gap: 6px;
-                max-height: 200px; overflow-y: auto; padding: 2px 0;
-            }
-            .smg-lf-badges::-webkit-scrollbar { width: 6px; }
-            .smg-lf-badges::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
             .smg-lf-input {
                 height: 38px; padding: 0 12px; box-sizing: border-box;
                 border-radius: 10px; border: 1px solid rgba(255,255,255,0.16);
@@ -3281,8 +3117,6 @@
             }
             .smg-lf-input:focus { border-color: rgba(255,255,255,0.45); }
             .smg-lf-select option { background: #1b1c20; color: #fff; }
-            .smg-lf-sort { display: flex; gap: 8px; }
-            .smg-lf-sort .smg-lf-select { flex: 1; }
             /* ---- Controles de Ordenação na Dock ---- */
             .smg-lf-sort-row { display: flex; flex-direction: column; gap: 8px; }
             .smg-lf-sort-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -3424,17 +3258,6 @@
             .smg-set-reload { border: 1px solid var(--smg-bd2); background: var(--smg-s3); color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 9px; cursor: pointer; }
             .smg-set-reload:hover { filter: brightness(1.12); }
             .smg-set-ver { margin-left: auto; color: rgba(255,255,255,0.35); font-size: 12px; }
-            /* filtro por autor */
-            .smg-filter-quick { display: flex; flex-wrap: wrap; gap: 8px; }
-            .smg-filter-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.07); color: #fff; font-size: 13px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-filter-chip:hover { background: rgba(255,255,255,0.16); }
-            .smg-filter-chip.active { background: var(--smg-s3); border-color: var(--smg-bd2); }
-            .smg-filter-row { display: flex; gap: 8px; }
-            .smg-filter-input { flex: 1 1 auto; min-width: 0; height: 38px; padding: 0 12px; box-sizing: border-box; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.07); color: #fff; font-size: 14px; outline: none; }
-            .smg-filter-input:focus { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.1); }
-            .smg-filter-apply, .smg-filter-clear { flex: 0 0 auto; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.13); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
-            .smg-filter-apply:hover, .smg-filter-clear:hover { background: rgba(255,255,255,0.22); }
-            .smg-filter-clear { width: 100%; }
 
             /* ---- backdrop dos popovers do dock (vira o scrim do bottom sheet no mobile) ---- */
             .smg-dock-backdrop {
