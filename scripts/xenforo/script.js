@@ -24969,16 +24969,6 @@
     const currentThreadIngestInflight = new Map();
     const currentThreadIngestSignatures = new Map();
 
-    function extractPostMediaUrls(body) {
-        if (!body || !body.querySelectorAll) return [];
-        const urls = new Set();
-        body.querySelectorAll('img, video, video source, source').forEach(media => {
-            const u = media.getAttribute('data-src') || media.getAttribute('data-url') || media.getAttribute('data-original') || media.getAttribute('src') || '';
-            if (u && !/^data:/i.test(u) && /^https?:/i.test(u)) urls.add(u);
-        });
-        return Array.from(urls);
-    }
-
     // Assinatura BARATA da página aberta: só quais posts estão nela (id + timestamp). O conteúdo que os
     // passes injetam (cards, players, chips) não muda a assinatura → não re-ingere a cada frame de mídia.
     function currentThreadDomSignature(path, page) {
@@ -25097,8 +25087,6 @@
                 if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
-                const mediaUrls = p.mediaUrls || [];
-
                 timelinePosts.push({
                     post_id: pid,
                     thread_path: path,
@@ -25109,7 +25097,6 @@
                     page_num: currentPage,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (path + '#post-' + p.postId),
-                    media_urls: mediaUrls,
                     prefixes_html: p.prefixesHtml || prefixesHtml,
                     thread_thumb: p.threadThumb || thumb
                 });
@@ -25186,8 +25173,6 @@
                 if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
                 if (finalTs > maxPostTs) maxPostTs = finalTs;
 
-                const mediaUrls = p.mediaUrls || [];
-
                 timelinePosts.push({
                     post_id: pid,
                     thread_path: thread.path,
@@ -25198,7 +25183,6 @@
                     page_num: pageNum,
                     content_html: p.contentHtml || '',
                     permalink: p.permalink || (thread.path + '#post-' + p.postId),
-                    media_urls: mediaUrls,
                     prefixes_html: p.prefixesHtml || '',
                     thread_thumb: p.threadThumb || thread.thumbnail_url || ''
                 });
@@ -25492,7 +25476,6 @@
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.__feedSyncExports = {
             decideThreadFetch,
-            extractPostMediaUrls,
             syncTimeline,
             syncThreadPage,
             ingestCurrentThreadPageIfFollowed,
@@ -25708,7 +25691,7 @@
         return {
             postId: postId, ts: finalTs, author: author, authorHref: authorA ? authorA.getAttribute('href') : '',
             threadTitle: meta.title, prefixesHtml: meta.prefixesHtml || '', threadThumb: meta.thumb || '',
-            permalink: permalink, contentHtml: body.outerHTML || '', mediaUrls: extractPostMediaUrls(body)
+            permalink: permalink, contentHtml: body.outerHTML || ''
         };
     }
 

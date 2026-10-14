@@ -405,12 +405,6 @@ async function runTests() {
     assert(queueOrder[0] === 'near', 'Fila de trabalho deve priorizar o item mais próximo da viewport');
     near.remove(); far.remove();
 
-    const feedSyncPerf = window.__feedSyncExports;
-    assert(typeof feedSyncPerf.extractPostMediaUrls === 'function', 'extractPostMediaUrls deve estar exposta para regressão');
-    const mediaFixture = new window.DOMParser().parseFromString('<div><img src="https://cdn.test/a.jpg"><img src="https://cdn.test/a.jpg"><video src="https://cdn.test/v.mp4"></video></div>', 'text/html').body.firstElementChild;
-    const mediaUrls = feedSyncPerf.extractPostMediaUrls(mediaFixture);
-    assert(mediaUrls.length === 2 && mediaUrls.includes('https://cdn.test/a.jpg') && mediaUrls.includes('https://cdn.test/v.mp4'), 'Extração de mídia deve deduplicar URLs em uma única leitura');
-
     const feedPerf = window.__feedExports;
     assert(feedPerf.riverSortDirty === true || typeof feedPerf.markRiverSortDirty === 'function', 'Timeline deve expor estado de ordenação suja');
     if (typeof feedPerf.markRiverSortDirty === 'function') feedPerf.markRiverSortDirty();

@@ -187,7 +187,7 @@
         return {
             postId: postId, ts: finalTs, author: author, authorHref: authorA ? authorA.getAttribute('href') : '',
             threadTitle: meta.title, prefixesHtml: meta.prefixesHtml || '', threadThumb: meta.thumb || '',
-            permalink: permalink, contentHtml: body.outerHTML || '', mediaUrls: extractPostMediaUrls(body)
+            permalink: permalink, contentHtml: body.outerHTML || ''
         };
     }
 
