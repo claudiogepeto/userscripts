@@ -104,3 +104,20 @@ scenario('SMG thread header follows the page and the thread across soft navigati
     assert.equal(page.$$('.p-body-header .smg-bar').length, 0, 'no thread pager left on the forum list');
     assert.ok(!page.$('.smg-thead-hero'), 'no thread header left on the forum list');
 });
+
+const SMILIE = '<img class="smilie smilie--emoji" alt="😍" src="https://cdn.jsdelivr.net/joypixels/assets/8.0/png/unicode/64/1f60d.png" title="Smiling face with heart-eyes" width="64" height="64">';
+function smilieThread(body) {
+    return uix(threadPage({ posts: [{ id: 1, body }] }), 'Sample Thread');
+}
+
+scenario('SMG thread header never uses a post smilie as the thread image', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: smilieThread(SMILIE + ' nice <img src="https://img.example/real.jpg" class="bbImage" alt="">'), before: stubXF });
+    await page.settle(120);
+    assert.equal(head(page).thumb, 'https://img.example/real.jpg', 'the first real image, not the smilie before it');
+});
+
+scenario('SMG thread header with only a smilie in the posts has no image', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: smilieThread('so good ' + SMILIE), before: stubXF });
+    await page.settle(120);
+    assert.equal(head(page).thumb, '', 'no thread image rather than the smilie');
+});
