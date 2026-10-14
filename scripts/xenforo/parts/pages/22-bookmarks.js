@@ -116,7 +116,10 @@
     // busca o conteúdo do post salvo → objeto serializável do riverParsePost (fallback se sumiu/erro)
     function bmFetchPost(row) {
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
-        return fetchDoc(postUrl, { credentials: 'same-origin' }).then(doc => {
+        return fetchDoc(postUrl, {
+            credentials: 'same-origin',
+            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+        }).then(doc => {
             if (!doc) return bmFallbackPost(row);
             let postEl = null;
             if (row.postId && row.postId.startsWith('t-')) {

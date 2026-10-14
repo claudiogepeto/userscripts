@@ -210,7 +210,12 @@
     // =========================================================
     function syncThreadPage(thread, pageNum) {
         const url = thread.path + (pageNum > 1 ? `page-${pageNum}` : '');
-        return fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
+        // Prefetch: o fórum marca o alerta como lido em qualquer GET normal da thread.
+        // A sync da timeline e do Seguindo não pode consumir a notificação.
+        return fetchDoc(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+        }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
             if (thread.timeline_skip || timelineContentSkip(timelineForumBag(doc).concat((thread.tags || []).map(t => t && (t.name || t))))) {

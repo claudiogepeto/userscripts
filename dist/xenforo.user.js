@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.2
+// @version      4.1.3
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -23161,8 +23161,8 @@
                         visitorAlerts = parseInt(j.visitor.alerts_unread, 10);
                     }
                 } catch (e) {}
-                const tmp = document.createElement('div');
-                tmp.innerHTML = html;
+                const parsed = new DOMParser().parseFromString('<div id="smg-rail-parse">' + html + '</div>', 'text/html');
+                const tmp = parsed.getElementById('smg-rail-parse') || parsed.body;
                 let rows;
                 if (tab === 'watched') {
                     rows = Array.prototype.slice.call(tmp.querySelectorAll('.structItem--thread'))
@@ -23520,6 +23520,63 @@
         updateAlertsUnreadBadge(n);
     }
 
+    // Zera a lista e busca a primeira página de novo. O refresh incremental
+    // só insere chave nova, então um alerta lido no clique continuava na sidebar.
+    let railHardFlight = null;
+    function railHardRefresh(tab) {
+        const st = aldockState[tab];
+        const list = railList(tab);
+        if (!aldock || !st || !list || tab !== 'alerts') return Promise.resolve();
+        if (railHardFlight) return railHardFlight;
+        st.busy = true;
+        st.lastFetch = Date.now();
+        aldock.classList.add('smg-aldock--refreshing');
+        railHardFlight = railFetch(tab, railBaseUrl(tab))
+            .then(({ rows, next, visitorAlerts }) => {
+                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
+                    st.serverUnread = visitorAlerts;
+                    gmSet('smg-alerts-count', String(visitorAlerts));
+                    updateAlertsUnreadBadge(visitorAlerts);
+                }
+                st.keys.clear();
+                const frag = document.createDocumentFragment();
+                (rows || []).forEach(li => {
+                    const key = alertKey(li);
+                    if (st.keys.has(key)) return;
+                    st.keys.add(key);
+                    const copy = document.importNode(li, true);
+                    copy.dataset.smgAlKey = key;
+                    frag.appendChild(copy);
+                });
+                list.replaceChildren(frag);
+                list.querySelectorAll('li.alert, li.js-alert').forEach(li => {
+                    try { cleanAlertRow(li.querySelector('.contentRow-main')); } catch (e) {}
+                    i18nDom(li);
+                });
+                st.next = next;
+                st.loaded = true;
+                st.dry = 0;
+                if (typeof dbFollowedGetAll === 'function') {
+                    dbFollowedGetAll().then(items => {
+                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                        repaintAlertThumbs(list);
+                    }).catch(() => {});
+                }
+                repaintAlertThumbs(list);
+                railWarmThumbs();
+                aldockSyncCount();
+                aldockStatus(tab, '');
+            })
+            .catch(() => { aldockStatus(tab, 'error'); })
+            .then(() => {
+                st.busy = false;
+                railHardFlight = null;
+                if (aldock) aldock.classList.remove('smg-aldock--refreshing');
+            });
+        return railHardFlight;
+    }
+    window.smgRefreshAlertsDock = () => railHardRefresh('alerts');
+
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
     function railRefresh(tab, force) {
         const st = aldockState[tab];
@@ -23818,9 +23875,10 @@
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
         el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
             if (railTab === 'watched' && typeof fetchAndIngestFollowed === 'function') {
-                fetchAndIngestFollowed(false, true).catch(() => {});
+                fetchAndIngestFollowed(false, false).catch(() => {});
             }
-            railRefresh(railTab, true);
+            if (railTab === 'alerts') railHardRefresh('alerts');
+            else railRefresh(railTab, true);
         });
         el.querySelector('.smg-aldock-view').addEventListener('click', () => {
             gmSet(ALDOCK_VIEW_KEY(railTab), railView(railTab) === 'grid' ? 'list' : 'grid');
@@ -23829,56 +23887,28 @@
         });
 
         const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
-        const refreshAlertsRail = () => {
-            const st = aldockState && aldockState.alerts;
-            if (st) {
-                st.busy = false;
-                st.lastFetch = 0;
-            }
-            railRefresh('alerts', true);
-        };
-        const dropUnreadAlert = li => {
-            if (!li || !li.classList || !li.classList.contains('is-unread')) return;
-            const href = li.dataset.smgMark || '';
-            if (!href || (typeof window !== 'undefined' && window.__TEST_MODE__)) {
-                refreshAlertsRail();
-                return;
-            }
-            const csrf = document.documentElement.getAttribute('data-csrf')
-                || (document.querySelector('input[name="_xfToken"]') || {}).value
-                || (window.XF && window.XF.config && window.XF.config.csrf) || '';
-            fetch(href, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                body: '_xfToken=' + encodeURIComponent(csrf) + '&_xfResponseType=json&_xfWithData=1'
-            }).catch(() => {}).finally(refreshAlertsRail);
-        };
         if (alertsBody) {
             alertsBody.addEventListener('click', e => {
                 const a = e.target.closest('a[href]');
                 if (!a || a.classList.contains('smg-al-read')) return;
-                dropUnreadAlert(a.closest('li.alert, li'));
-                const href = a.getAttribute('href') || a.href || '';
-                const postMatch = href.match(/\/(?:posts|post)[/-]?(\d+)/i)
-                    || (href.includes('/goto/') && href.match(/[?&]id=(\d+)/i));
-                if (postMatch && postMatch[1]) {
-                    const pid = postMatch[1];
-                    const inPagePost = document.getElementById('post-' + pid)
-                        || document.getElementById('js-post-' + pid)
-                        || document.querySelector('[data-content="post-' + pid + '"]')
-                        || document.querySelector('article.message[data-content*="' + pid + '"]');
-                    if (inPagePost) {
-                        e.preventDefault();
-                        if (aldockPhone()) closeAlertsDock();
-                        try {
-                            inPagePost.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        } catch (err) {}
-                        try {
-                            history.replaceState(null, '', '#post-' + pid);
-                        } catch (err) {}
+                let url;
+                try { url = new URL(a.href, location.href); } catch (err) { return; }
+                if (url.origin !== location.origin) return;
+                // O fórum tira o alerta quando a página é vista. Não marca como lido daqui.
+                // Mesma página: a navegação interna não busca de novo, então a visita é este GET.
+                if (url.pathname + url.search === location.pathname + location.search) {
+                    e.preventDefault();
+                    fetch(url.href, { credentials: 'same-origin' }).catch(() => {}).finally(() => {
+                        if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
+                    });
+                    const id = (url.hash || '').replace(/^#/, '');
+                    const target = id && document.getElementById(id);
+                    if (target) {
+                        try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (err) {}
                     }
+                    return;
                 }
+                window.smgAlertsNeedRefresh = true;
             });
         }
 
@@ -26776,7 +26806,10 @@
     // busca o conteúdo do post salvo → objeto serializável do riverParsePost (fallback se sumiu/erro)
     function bmFetchPost(row) {
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
-        return fetchDoc(postUrl, { credentials: 'same-origin' }).then(doc => {
+        return fetchDoc(postUrl, {
+            credentials: 'same-origin',
+            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+        }).then(doc => {
             if (!doc) return bmFallbackPost(row);
             let postEl = null;
             if (row.postId && row.postId.startsWith('t-')) {
@@ -27169,7 +27202,12 @@
     // =========================================================
     function syncThreadPage(thread, pageNum) {
         const url = thread.path + (pageNum > 1 ? `page-${pageNum}` : '');
-        return fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
+        // Prefetch: o fórum marca o alerta como lido em qualquer GET normal da thread.
+        // A sync da timeline e do Seguindo não pode consumir a notificação.
+        return fetchDoc(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+        }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
             if (thread.timeline_skip || timelineContentSkip(timelineForumBag(doc).concat((thread.tags || []).map(t => t && (t.name || t))))) {
@@ -29778,6 +29816,10 @@
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
+            if (window.smgAlertsNeedRefresh) {
+                window.smgAlertsNeedRefresh = false;
+                if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
+            }
             processAll([document.body]);
             observePageContent();
             schedulePagePaintRelease();

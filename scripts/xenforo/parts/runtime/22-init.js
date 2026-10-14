@@ -590,6 +590,10 @@
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
+            if (window.smgAlertsNeedRefresh) {
+                window.smgAlertsNeedRefresh = false;
+                if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
+            }
             processAll([document.body]);
             observePageContent();
             schedulePagePaintRelease();
