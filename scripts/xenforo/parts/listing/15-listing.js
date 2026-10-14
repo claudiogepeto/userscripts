@@ -77,15 +77,14 @@
     }
     function watchNativeBadges() {
         if (badgeObsBound) return;   // o MutationObserver já mantém os badges em sync ao vivo — não varre todo frame
-        const targets = ['.p-navgroup-link--alerts', '.p-navgroup-link--conversations']
-            .map(s => document.querySelector(s)).filter(Boolean);
-        if (!targets.length) return;     // sem nav nativa (logout/página sem nav) → nem sincroniza badge à toa todo frame
+        const target = document.querySelector('.p-navgroup-link--alerts');
+        if (!target) return;     // sem nav nativa (logout/página sem nav) → nem sincroniza badge à toa todo frame
         syncReactiveBadges();
         badgeObsBound = true;
         const obs = new MutationObserver(syncReactiveBadges);
         // subtree + texto: em tema que renderiza o contador como ELEMENTO (não atributo), a troca do
         // número não mexe em nenhum atributo do link — só observar o data-badge dele nunca dispararia.
-        targets.forEach(el => obs.observe(el, { attributes: true, attributeFilter: ['data-badge'], childList: true, subtree: true, characterData: true }));
+        obs.observe(target, { attributes: true, attributeFilter: ['data-badge'], childList: true, subtree: true, characterData: true });
     }
 
     // SMG: cards sem thumb real (XF mostra o avatar do autor, ou nada) ganham um PLACEHOLDER

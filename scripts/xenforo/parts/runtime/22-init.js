@@ -494,7 +494,6 @@
             const title = doc.querySelector('title');
             if (title && title.textContent) document.title = title.textContent;
             copyNativeBadge('.p-navgroup-link--alerts', doc);
-            copyNativeBadge('.p-navgroup-link--conversations', doc);
             syncReactiveBadges();
             const nextUrl = abs.pathname + abs.search;
             softNavUrl = nextUrl;
