@@ -43,7 +43,7 @@ readable. A file may continue a function opened by the previous one: `12b` and
 | `feed/06b-feed-db` | IndexedDB store for followed threads, feed posts, and bookmarks |
 | `thread/07-posts-misc` | Keyboard shortcuts and infinite scrolling |
 | `media/08a-masonry-engine` | Masonry layout engine (shortest column, one ResizeObserver, one rAF) |
-| `media/08-images-masonry` | Image processing and media gallery grouping |
+| `media/08-images-masonry` | Image processing and in-post grouping (runs of images become masonry groups) |
 | `media/10-redgifs-player` | RedGifs, Turbo, ImagePond, and Cyberdrop player pipeline |
 | `media/11-autoload-spoiler` | RedGifs autoloading and spoiler expansion |
 | `navigation/12a-dock` | Post navigation dock: buttons, global links, mobile sheet, goto |
@@ -77,7 +77,7 @@ composes them in the order below:
 | File | Responsibility |
 |---|---|
 | `styles/01-base` | Theme tokens, layout width, and anti-CLS reset |
-| `media/css-grids` | Image grids, masonry, and the gallery overlay |
+| `media/css-grids` | Masonry items (in-post groups) and the gallery overlay |
 | `media/css-images` | Post images, link chips, and file-host cards |
 | `media/css-social-embeds` | Twitter/X and Instagram embeds |
 | `media/css-players` | Embeds, native video player, dead media, and post links |

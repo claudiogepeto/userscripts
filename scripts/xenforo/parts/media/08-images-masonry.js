@@ -23,8 +23,7 @@
         if (typeof window !== 'undefined' && window.__TEST_MODE__ && (!window.Image || !('decode' in (new window.Image())))) {
             delete img.dataset.smgSwapping;
             img.src = targetAbs;
-            const grid = img.closest('.auto-image-grid');
-            if (grid) scheduleRelayout(grid);
+            relayoutPostGroupOf(img);
             return;
         }
         const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
@@ -39,8 +38,7 @@
                         if (policy) img.referrerPolicy = policy;
                         else img.removeAttribute('referrerpolicy');
                         img.src = targetAbs;
-                        const grid = img.closest('.auto-image-grid');
-                        if (grid) scheduleRelayout(grid);
+                        relayoutPostGroupOf(img);
                     }
                 }
             };
@@ -128,13 +126,21 @@
         const box = buildDeadBox(href, {
             probeUrl: /^https?:/i.test(direct) ? direct : href,
         });
-        // Troca o <a> que só embrulha esta imagem. <a> dentro de <a> é inválido e o clique deixa de navegar.
+        // caixa de IMAGEM morta: conta como item de mídia na run (o mosaico guarda o lugar dela) e herda a
+        // proporção que a imagem já tinha, pra o grupo não pular
+        box.classList.add('smg-dead--img');
+        const relH = masonryImgRatio(img);
+        if (relH !== MASONRY_PH_RELH) box.dataset.smgRatio = relH.toFixed(4);
+        // Troca o nó que só embrulha esta imagem (o item inteiro, dentro de um grupo). <a> dentro de <a> é
+        // inválido e o clique deixa de navegar.
+        const flow = mediaFlowNode(img);
         const wrap = img.closest('a');
-        if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
+        if (flow !== img && flow.parentElement && isPostGroup(flow.parentElement)) flow.replaceWith(box);
+        else if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
         else img.replaceWith(box);
+        if (isPostGroup(box.parentElement)) box.dataset.smgGridded = '1';
         dropChipBreaks(box);
-        const g = box.closest('.auto-image-grid');
-        if (g) scheduleRelayout(g);
+        relayoutPostGroupOf(box);
     }
     // WATCHDOG do "loading eterno": alguns hosts aceitam a conexão e nunca respondem — a <img> não dispara load
     // NEM error, então nem o onReady nem o imgFailLink rodam e o shimmer gira pra sempre.
@@ -221,10 +227,7 @@
             img.dataset.smgFull = full;
             img.dataset.smgMed = med;
             if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
-            img.addEventListener('load', () => {
-                const g = img.closest('.auto-image-grid');
-                if (g) scheduleRelayout(g);
-            }, { once: true });
+            img.addEventListener('load', () => relayoutPostGroupOf(img), { once: true });
             const link = document.createElement('a');
             link.href = full;
             link.target = '_blank';
@@ -493,14 +496,11 @@
                     img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
                 }
             }
-            markWide(img, img.naturalWidth, img.naturalHeight);   // deitada → largura limitada fora do mosaico
+            // solta: o tamanho natural só limita a caixa quando este já é o arquivo FINAL (a thumb é menor que ele)
+            const finalSrc = !img.dataset.smgFull || absUrl(img.dataset.smgFull) === absUrl(img.currentSrc || img.src || '');
+            markWide(img, img.naturalWidth, img.naturalHeight, finalSrc ? img.naturalWidth : 0);
             const grid = img.closest('.auto-image-grid');
-            if (grid) {
-                if (img.style.aspectRatio && !grid.style.getPropertyValue('--smg-grid-img-ph')) {
-                    grid.style.setProperty('--smg-grid-img-ph', img.style.aspectRatio);
-                }
-                scheduleRelayout(grid);
-            }
+            if (grid) masonrySchedule(grid);
             img.classList.add('smg-img-ready');
 
             const fullTarget = img.dataset.smgFull;
@@ -592,10 +592,7 @@
             if (!url || !card.isConnected) return;   // falhou → fica o card
             const full = getBigUrl(url);   // a viewer do chevereto serve a versão .md (MÉDIA) → sobe pro ORIGINAL (resolução cheia)
             const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = full;
-            img.addEventListener('load', () => {
-                const g = img.closest('.auto-image-grid');
-                if (g) scheduleRelayout(g);
-            }, { once: true });   // tem dimensões → masonry re-grida
+            img.addEventListener('load', () => relayoutPostGroupOf(img), { once: true });   // tem dimensões → o grupo reflui
             const link = document.createElement('a'); link.href = full; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.appendChild(img);
             card.replaceWith(link);
             img.src = full;
@@ -634,10 +631,7 @@
             all.forEach(u => {
                 const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
                 const img = document.createElement('img'); img.className = 'bbImage'; img.loading = 'lazy'; img.alt = ''; img.dataset.smgLink = href; img.dataset.smgFull = u;
-                img.addEventListener('load', () => {
-                    const g = img.closest('.auto-image-grid');
-                    if (g) scheduleRelayout(g);
-                }, { once: true });
+                img.addEventListener('load', () => relayoutPostGroupOf(img), { once: true });
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
             const host = card.parentElement;
@@ -731,106 +725,80 @@
             img.className = 'bbImage'; img.src = url; img.loading = 'eager'; img.alt = '';   // EAGER: força resolver (lazy + sem aspect-ratio = célula vazia, e o onerror nunca dispara)
             img.dataset.smgLink = href;
             img.addEventListener('error', () => {
-                if (a.isConnected) showLink();                          // img ainda no <a> → vira texto-link
-                else if (img.parentNode) { const c = linkChip(); img.replaceWith(c); dropChipBreaks(c); }   // a masonry moveu pro grid → chip de link no lugar
+                if (a.closest('.auto-image-grid')) imgFailLink(img);      // dentro de um mosaico → caixa morta (guarda o lugar)
+                else if (a.isConnected) showLink();                     // img ainda no <a> → vira texto-link
             }, { once: true });
             a.innerHTML = '';   // limpa o noscript + whitespace
             a.appendChild(img);
         });
     }
 
-    // GALERIA NO POST (html.smg-masonry-on): agrupa TODA a mídia do post — imagens E vídeos/embeds —
-    // num .auto-image-grid (masonry por CSS). Roda DEPOIS dos passes de embed (turbo/saint/redgifs/direta)
-    // pra os wrappers já existirem. Incremental: embed lazy que aparecer depois entra no grid já existente.
-    function collectGalleryBlocks(scope) {
-        const out = [];
-        // imagens + TODOS os embeds: wrappers conhecidos (turbo/saint/redgifs/s9e/mídia direta) + iframe/video SOLTOS (imagepond, vídeo nativo, outros hosts)
-        scope.querySelectorAll('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"]').forEach(el => {   // só tipos conhecidos + imagepond (bare video/iframe puxava vídeo nativo preto/thumb quebrada)
-            if (el.closest('.bbCodeQuote, .smg-post-links, .message-signature')) return;
-            const sp = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content');
-            if (sp && sp !== scope && scope.contains(sp)) return;
-            if (!scope.classList.contains('bbCodeSpoiler-content') && !scope.classList.contains('bbCodeBlock-content') && sp) return;
-            // img/iframe/video que JÁ está dentro de um wrapper coletado → representado por ele (evita duplicar)
-            if (/^(IMG|IFRAME|VIDEO)$/.test(el.tagName) && el.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]')) return;
-            // s9e dentro de um .generic2wide-iframe-div (redgifs do Simp) → o DIV pai é o bloco (senão conta 2x: o span + o div)
-            if (el.matches('span[data-s9e-mediaembed]') && el.closest('.generic2wide-iframe-div')) return;
-            // s9e CONSUMIDO (saint/turbo/redgifs tiraram o iframe e montaram o player num generic2wide-iframe-div IRMÃO →
-            // sobrou só o .url-below vazio): FANTASMA. Sem isto ele virava um bloco a mais → grid com coluna(s) vazia(s).
-            if (el.matches('span[data-s9e-mediaembed]') && !el.querySelector('iframe, video, img')) return;
-            // .generic2wide-iframe-div VAZIO NÃO conta como mídia (loader pós-autoload esvazia: iframe vai pra s9e separado).
-            // basta o teste de conteúdo: o loader que ASSUMIMOS tem .smg-rg>video → entra; o esvaziado (sem iframe/slot/video) → sai.
-            if (el.matches('.generic2wide-iframe-div') && !el.querySelector('iframe, .smg-turbo-slot, video, .smg-rg-fail')) return;
-            out.push(el);
-        });
-        return out;
+    // MOSAICO NO POST (html.smg-masonry-on). O corpo do post é uma sequência de blocos, lida em ordem:
+    //   · RUN de mídia = imagens consecutivas (img.bbImage, o <a>/.bbImageWrapper que só embrulha uma, a caixa
+    //     de imagem morta). <br>, espaço em branco e nós invisíveis entre duas imagens NÃO quebram a run.
+    //   · qualquer outra coisa (texto, citação, spoiler, player/embed, card de file-host, card de link) é um
+    //     bloco de LARGURA TOTAL e fica exatamente onde o autor pôs.
+    // Run de 2+ → um .auto-image-grid (motor masonry, 08a). Run de 1 → imagem solta (markWide: largura do
+    // conteúdo, altura limitada). Incremental: imagem que nasce depois (chevereto/goonbox/imagepond) ao lado
+    // de um grupo entra nele.
+    const MEDIA_ITEM_SEL = 'img.bbImage, .smg-dead--img';
+    const MEDIA_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-rg, span[data-s9e-mediaembed], .bbCodeBlock--unfurl';
+    // filho "vazio" de um wrapper de imagem: espaço, comentário, <noscript>/<br> → não conta como conteúdo
+    function isInertNode(n) {
+        if (!n) return true;
+        if (n.nodeType === 3) return !n.textContent.trim();
+        if (n.nodeType !== 1) return true;
+        return /^(BR|NOSCRIPT|SCRIPT|STYLE|META|LINK|TEMPLATE)$/i.test(n.tagName);
     }
-    // proporção PROVISÓRIA das imagens (altura/largura) enquanto a real não chega. Uma constante só,
-    // espelhada no CSS via --smg-img-ph: o espaço pintado e as linhas reservadas no grid TÊM que ser o
-    // mesmo, senão todo item nasce torto e o grid se rearranja quando a imagem carrega.
-    const IMG_PH_RELH = 1.3;
-    try { document.documentElement.style.setProperty('--smg-img-ph', '1 / ' + IMG_PH_RELH); } catch (e) {}
-    function blockRelH(b) {   // altura relativa (h/w) p/ distribuir no masonry, SEM reflow (usa dimensões extraídas do HTML/metadados)
-        const dim = extractMediaDimensions(b);
-        if (dim) return dim.relH;
-        // embed: usa o aspect-ratio REAL se o player já souber (redgifs/turbo setam no .smg-rg após carregar — muitos são retrato, não 16:9)
-        const rg = (b.matches && b.matches('.smg-rg')) ? b : (b.querySelector && b.querySelector('.smg-rg'));
-        const am = rg && rg.style.aspectRatio && rg.style.aspectRatio.match(/([\d.]+)\D+([\d.]+)/);
-        if (am && +am[1]) return (+am[2]) / (+am[1]);
-        if (isVideoBlock(b)) return 0.5625;   // embeds/vídeo 16:9 (default até o player saber a proporção)
-        return IMG_PH_RELH;   // fotos/imagens default para 1.3 (retrato)
+    // separador que NÃO quebra uma run (pula entre duas imagens): o inerte acima + nó escondido inline
+    // (o link cru que a mídia direta substituiu fica display:none no lugar)
+    function isRunSeparator(n) {
+        if (isInertNode(n)) return true;
+        return !!(n.style && n.style.display === 'none');
     }
-    function getEffectiveWidth() {
-        let w = (typeof window !== 'undefined' && window.innerWidth) || 1200;
-        if (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('smg-aldock-on')) {
-            const dock = document.getElementById('smg-aldock');
-            const dockW = (dock && dock.offsetWidth) ? dock.offsetWidth : 360;
-            w -= dockW;
+    // o nó que senta no fluxo do texto por esta imagem: sobe pelos wrappers que só a embrulham
+    function mediaFlowNode(el) {
+        let flow = el;
+        for (;;) {
+            const p = flow.parentElement;
+            if (!p || !p.matches('a, .bbImageWrapper, .smg-dm-wrap')) return flow;
+            const others = Array.prototype.some.call(p.childNodes, n => n !== flow && !isInertNode(n));
+            if (others) return flow;
+            flow = p;
         }
-        return w;
     }
-    function gridCols() {
-        const w = getEffectiveWidth();
-        if (w < 600) return 1;
-        if (w <= 1400) return 2;
-        return 3;
-    }
-    // nº de colunas pela quantidade E orientação:
-    //   · mobile (< 600px) → 1
-    //   · 1 item → 1 coluna
-    //   · 2 itens horizontais (h/w < 0.9) → 1 coluna; qualquer vertical → 2 colunas
-    //   · 3 itens com pelo menos 2 verticais (h/w >= 0.9) → 3 colunas; caso contrário → 2
-    //   · 4 itens com maioria vertical (3+) → 3 colunas; caso contrário → 2
-    //   · 5 ou mais → 3 colunas
+    // MÍDIA SOLTA (run de 1, fora de grupo): imagem na largura do conteúdo, altura até --smg-solo-h (~80vh),
+    // centrada, e nunca maior que o próprio arquivo quando o tamanho natural do arquivo FINAL é conhecido (natW).
+    // STABLE BOX: a largura é uma expressão (proporção × teto), não `auto` — com `auto` a caixa seguia os pixels
+    // do arquivo e a troca thumb→original (mesma proporção, mais pixels) empurrava a página.
+    // Vídeo direto (.smg-dm-wrap) mantém a regra antiga: só o vertical ganha teto.
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
-    function setVerticalMaxWidth(el, w, h, vertical) {
+    function setSoloSize(el, w, h, vertical, natW) {
         if (!el || !el.style || !w || !h) return;
-        // No masonry (.auto-image-grid), a largura é rigorosamente 100% da coluna (gap de 8px).
-        // NUNCA aplica max-width inline em itens de grid, pois causaria encolhimento e vãos horizontais gigantes!
-        if (el.closest && el.closest('.auto-image-grid')) {
-            el.style.removeProperty('max-width');
+        const grid = el.closest && el.closest('.auto-image-grid');
+        if (grid) {   // no grupo o motor manda no tamanho (o item em si guarda o width do motor: não mexe)
+            if (el.parentElement !== grid) { el.style.removeProperty('max-width'); el.style.removeProperty('width'); }
             return;
         }
-        if (!vertical) { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
-        const ratio = w / h;
-        const maxWidth = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio.toFixed(4) + '))';
-        el.style.setProperty('max-width', maxWidth, 'important');
-        // STABLE BOX: the width is the SAME expression, not `auto`. With `auto` the box followed the intrinsic
-        // size of whatever file was loaded, so swapping the small thumbnail for the large original resized it
-        // (same ratio, bigger pixels) and pushed the page. Now the box is fixed by ratio + column, never by pixels.
-        // (the link/wrapper around it is a full-width block for this to resolve without a circular percentage)
-        el.style.setProperty('width', maxWidth, 'important');
+        const ratio = (w / h).toFixed(4);
+        let size;
+        if (el.tagName === 'IMG') size = 'min(100%, calc(var(--smg-solo-h, 80vh) * ' + ratio + ')' + (natW > 0 ? ', ' + Math.round(natW) + 'px' : '') + ')';
+        else if (vertical) size = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio + '))';
+        else { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
+        el.style.setProperty('max-width', size, 'important');
+        el.style.setProperty('width', size, 'important');
     }
-    function markWide(el, w, h) {
+    function markWide(el, w, h, natW) {
         if (!el || !w || !h) return;
         const wide = (h / w) < WIDE_RELH;
         el.classList.toggle('smg-wide', wide);
         el.classList.toggle('smg-vert', !wide);
-        setVerticalMaxWidth(el, w, h, !wide);
+        setSoloSize(el, w, h, !wide, natW);
         const wrap = el.closest && el.closest('.smg-dm-wrap');
         if (wrap) {
             wrap.classList.toggle('smg-wide', wide);
             wrap.classList.toggle('smg-vert', !wide);
-            setVerticalMaxWidth(wrap, w, h, !wide);
+            setSoloSize(wrap, w, h, !wide);
         }
         const link = el.closest && (el.closest('a.smg-imglink') || (el.parentElement && el.parentElement.tagName === 'A' ? el.parentElement : null));
         if (link) {
@@ -843,552 +811,141 @@
             bbWrap.classList.toggle('smg-vert-link', !wide);
         }
     }
-    function isVideoBlock(b) {
-        if (!b) return false;
-        if (b.tagName === 'IMG') return false;
-        if (b.querySelector && b.querySelector('img.bbImage, .bbImage')) return false;
-        if (b.classList && (b.classList.contains('smg-dead') || b.classList.contains('smg-imglink'))) return false;
-        return true;
+    function isPostGroup(n) {
+        return !!(n && n.nodeType === 1 && n.classList.contains('auto-image-grid'));
     }
-    function isWideMedia(b) {
-        if (!b) return false;
-        return blockRelH(b) < WIDE_RELH;
+    // altura/largura de um item do grupo: a imagem dele, ou a proporção guardada na caixa morta
+    function postItemRatio(item) {
+        if (item.classList.contains('smg-dead')) return +item.dataset.smgRatio || 0.75;
+        const img = item.tagName === 'IMG' ? item : item.querySelector('img.bbImage, img');
+        if (!img) return MASONRY_PH_RELH;
+        const r = masonryImgRatio(img);
+        if (r !== MASONRY_PH_RELH) return r;
+        const dim = extractMediaDimensions(img);
+        return dim ? dim.relH : MASONRY_PH_RELH;
     }
-    function gridColsFor(blocks) {
-        const w = getEffectiveWidth();
-        if (w < 600) return 1;
-        if (blocks.length <= 1) return 1;
-
-        const isCompact = w <= 1400;
-        const videoCount = blocks.filter(isVideoBlock).length;
-        const photoCount = blocks.length - videoCount;
-        const wideCount = blocks.filter(isWideMedia).length;
-        const tallCount = blocks.length - wideCount;
-
-        if (blocks.length === 2) {
-            // 2 itens (sejam vídeos, fotos horizontais, verticais ou misto) sempre em 2 colunas (1 row só)
-            return 2;
-        }
-        if (blocks.length === 3) {
-            if (w < 600) return 1;
-            // Se houver vídeo (misto ou 3 vídeos): 2 colunas para acomodar players
-            if (videoCount > 0) return 2;
-            // 3 fotos horizontais: 2 colunas (2 no topo + 1 embaixo span-all)
-            if (wideCount === 3) return 2;
-            // 1 foto vertical + 2 fotos horizontais (caso do usuário): 2 COLUNAS (50% cada)!
-            // Coluna 1: 1 vertical | Coluna 2: 2 horizontais empilhadas.
-            // As alturas coincidem (~1.78 vs ~1.50) e preenchem 100% da largura útil sem coluna vazia!
-            if (tallCount === 1 && wideCount === 2) return 2;
-            // 2 fotos verticais + 1 foto horizontal: 2 colunas (linha 1: 2 verticais, linha 2: 1 horizontal span-all)
-            if (tallCount === 2 && wideCount === 1) return 2;
-            // 3 fotos verticais/quadradas puras (tallCount === 3):
-            // Em telas compactas (<= 1400px): 2 colunas
-            // Em telas amplas (> 1400px): 3 colunas (1 única linha equilibrada com 1 foto por coluna)
-            if (isCompact) return 2;
-            return 3;
-        }
-        if (blocks.length === 4) {
-            // 4 itens: 2x2 equilibrado
-            return 2;
-        }
-        if (blocks.length === 5) {
-            // Caso 3: 2 fotos + 3 vídeos -> 6 trilhas (2x span 3 + 3x span 2) apenas em telas amplas
-            if (!isCompact && photoCount === 2 && videoCount === 3) return 6;
-            // 5 mídias wide -> 2 colunas (2 + 2 + 1)
-            if (wideCount === 5) return 2;
-            return isCompact ? 2 : 3;
-        }
-        if (blocks.length === 6) {
-            // Caso 4: 4 fotos + 2 vídeos -> 2 colunas (3 linhas perfeitas de 2 itens)
-            if (photoCount === 4 && videoCount === 2) return 2;
-            // 6 mídias wide -> 2 colunas (3 linhas perfeitas de 2 itens)
-            if (wideCount === 6) return 2;
-            return isCompact ? 2 : 3;
-        }
-        // Se todas as mídias forem wide (vídeos e/ou fotos horizontais), mantém 2 colunas para preservar a largura
-        if (wideCount === blocks.length) return 2;
-        return isCompact ? 2 : 3;
+    function mountPostGroup(grid) {
+        masonryMount(grid, { getRatio: postItemRatio });
     }
-    // ===== MASONRY por CSS Grid =====
-    // The grid keeps uniform columns, row-major order, and one consistent gap. Each item keeps its
-    // natural height; without row-span calculations in JS, late proportions cannot crop, distort, or
-    // overlap neighboring media. CSS Grid recomputes row geometry as content changes.
-    // Relayout is needed only when structure or column count changes; CSS Grid handles the rest.
-    let masonryDirty = new Set(), masonryRaf = 0;
-    function scheduleRelayout(grid) {
-        masonryDirty.add(grid);
-        if (masonryRaf) return;
-        masonryRaf = requestAnimationFrame(() => {
-            masonryRaf = 0;
-            const gs = masonryDirty; masonryDirty = new Set();
-            const b = gridCols();
-            gs.forEach(g => { if (g.isConnected) relayoutGrid(g, b); });
-        });
-    }
-    // (uma pré-medição com new Image() foi testada aqui e NÃO ajudou: o Image() usa o mesmo download da
-    //  <img> real, então a proporção chega no mesmo instante — não antes. O que reduz o pulo é o
-    //  relayout local acima.)
-    // embed lazy (turbo/saint/imagepond/cyberdrop/etc.): ativa IMEDIATAMENTE ao entrar no grid
-    function activateLazyEmbed(b) {
-        if (!b) return;
-        const slot = (b._smgActivate ? b : null) || (b.querySelector && (b.querySelector('.smg-turbo-slot') || b.querySelector('video')));
-        if (slot && slot._smgActivate) {
-            const fn = slot._smgActivate;
-            slot._smgActivate = null;
-            if (typeof lazyEmbedIO !== 'undefined' && lazyEmbedIO) lazyEmbedIO.unobserve(slot);
-            fn();
-        }
-    }
-
-    // Recalculate the column count and center a lone item on the last row of a three-column grid.
-    // --smg-ratio só é escrito quando muda: cada load de imagem relayouta a grade inteira, e reescrever o
-    // mesmo valor em todos os itens invalidava o estilo de todos à toa.
-    function setItemRatio(it) {
-        const rh = blockRelH(it);
-        const v = (rh > 0 ? (1 / rh) : 1).toFixed(4);
-        if (it.style.getPropertyValue('--smg-ratio') !== v) it.style.setProperty('--smg-ratio', v);
-    }
-    // bucket = gridCols() já medido por quem relayouta várias grades no mesmo frame: medir de novo entre
-    // uma grade e outra lia a largura da dock logo depois das escritas da anterior (1 layout forçado por grade).
-    function relayoutGrid(grid, bucket) {
-        const cols = bucket || gridCols();
-        const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
-        if (!items.length) return;
-
-        const isTrueMasonry = grid.classList.contains('smg-true-masonry');
-        const establishedCols = +(grid.dataset.smgCols || 0);
-        const prevCount = +(grid.dataset.smgItemCount || 0);
-        const prevBucket = +(grid.dataset.smgBucket || 0);
-        const currentWideCount = items.filter(isWideMedia).length;
-        const prevWideCount = +(grid.dataset.smgWideCount || -1);
-        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === cols && prevWideCount === currentWideCount) {
-            // Em True Masonry estável com mesmo bucket e mesma orientação de mídias, atualiza apenas proporções individuais
-            items.forEach(it => {
-                setItemRatio(it);
-            });
-            grid.dataset.smgRelayoutDone = '1';
-            return;
-        }
-        grid.dataset.smgWideCount = currentWideCount;
-
-        grid.classList.remove('smg-grid-2', 'smg-grid-2-tall', 'smg-grid-2-asym', 'smg-grid-pair-tall', 'smg-grid-6', 'smg-grid-orphan', 'smg-justified-grid', 'smg-true-masonry');
-        grid.style.removeProperty('--smg-col1-w');
-        grid.style.removeProperty('--smg-col2-w');
-
-        items.forEach(it => {
-            it.classList.remove('smg-span-all', 'smg-item-centered', 'smg-span-2', 'smg-span-3');
-            setItemRatio(it);
-            if (it.style) {
-                if (it.style.maxWidth) it.style.removeProperty('max-width');
-                if (it.style.width) it.style.removeProperty('width');
-            }
-            const innerImg = it.tagName === 'IMG' ? it : (it.querySelector && it.querySelector('img.bbImage'));
-            if (innerImg && innerImg.style) {
-                if (innerImg.style.maxWidth) innerImg.style.removeProperty('max-width');
-                if (innerImg.style.width) innerImg.style.removeProperty('width');
-            }
-        });
-
-        const videoCount = items.filter(isVideoBlock).length;
-        const photoCount = items.length - videoCount;
-        const hasVideo = videoCount > 0;
-        const wideCount = items.filter(isWideMedia).length;
-        const tallCount = items.length - wideCount;
-        const isAllWide = wideCount === items.length;
-
-        // ESTABILIDADE DE COLUNAS (Anti-CLS): se a grade já teve suas colunas calculadas
-        // e a quantidade de itens é a mesma para o mesmo bucket de tela, não altera o número de colunas (N) por causa
-        // do término do carregamento de imagem individual para evitar que o layout pule!
-        let N;
-        const currentBucket = cols;
-        if (establishedCols && prevBucket === currentBucket && prevCount === items.length) {
-            N = establishedCols;
-        } else {
-            N = Math.min(6, Math.max(1, gridColsFor(items)));
-            grid.dataset.smgCols = N;
-            grid.dataset.smgBucket = currentBucket;
-            grid.dataset.smgItemCount = items.length;
-        }
-        grid.style.setProperty('--smg-mcols', N);
-        masonryBucket = currentBucket;
-
-        if (items.length === 2) {
-            grid.classList.add('smg-grid-2');
-            const r0 = blockRelH(items[0]), r1 = blockRelH(items[1]);
-            // Se as duas fotos/mídias forem verticais ou quadradas (h/w >= 0.9):
-            // restringe o container (.smg-grid-2-tall) para não estourar em telas ultrawide
-            const isTwoTall = N === 2 && r0 >= 0.9 && r1 >= 0.9;
-            if (isTwoTall) {
-                grid.classList.add('smg-grid-2-tall');
-            } else if (r0 > 0 && r1 > 0 && Math.abs(r0 - r1) > 0.15) {
-                grid.classList.add('smg-grid-2-asym');
-                const w0 = r1 / (r0 + r1);
-                const w1 = r0 / (r0 + r1);
-                grid.style.setProperty('--smg-col1-w', 'calc((100% - 8px) * ' + w0.toFixed(4) + ')');
-                grid.style.setProperty('--smg-col2-w', 'calc((100% - 8px) * ' + w1.toFixed(4) + ')');
-            }
-        } else if (isAllWide && items.length >= 3) {
-            // GRADE PURA DE MÍDIAS HORIZONTAIS (vídeos e/ou fotos 16:9, 4:3):
-            // Usa CSS Grid em 2 colunas para preservar a largura ampla de cada item sem espremer.
-            // Se houver item ímpar no final de uma grade de 2 colunas, ele é centralizado ou recebe span-all
-            if (N === 2 && items.length % 2 === 1) {
-                const lastItem = items[items.length - 1];
-                if (lastItem) lastItem.classList.add('smg-span-all');
-            }
-        } else if (!hasVideo && items.length === 3 && N === 2 && wideCount === 1 && tallCount === 2) {
-            // 2 verticais + 1 horizontal:
-            // CSS Grid 2 colunas — linha 1: 2 verticais (50% cada) | linha 2: 1 horizontal (span-all 100%)
-            const wideItem = items.find(isWideMedia);
-            if (wideItem) wideItem.classList.add('smg-span-all');
-        } else if (!hasVideo && items.length === 3 && N === 2 && tallCount === 1 && wideCount === 2) {
-            // 1 vertical + 2 horizontais (caso do usuário):
-            // True Masonry 2 colunas (50% cada) — Coluna 1: 1 vertical | Coluna 2: 2 horizontais empilhadas
-            // As alturas coincidem (~1.78 vs ~1.50) e ocupam 100% da largura útil sem coluna 3 vazia!
-            const tallItem = items.find(it => !isWideMedia(it));
-            if (tallItem && items.indexOf(tallItem) === 1) {
-                // Se a foto vertical estiver no meio (wide, tall, wide), move para o início para que as 2 wide fiquem juntas
-                grid.insertBefore(tallItem, grid.firstChild);
-            }
-            grid.classList.add('smg-true-masonry');
-        } else if (hasVideo) {
-            // Se houver vídeo (Casos 1, 2, 3, 4): utiliza o CSS Grid com spans estruturados
-            if (items.length === 3 && N === 2) {
-                const videoItem = items.find(isVideoBlock);
-                const photoItems = items.filter(it => !isVideoBlock(it));
-                if (videoItem && photoItems.length === 2) {
-                    videoItem.classList.add('smg-span-all');
-                } else {
-                    const photoItem = items.find(it => !isVideoBlock(it));
-                    if (photoItem) photoItem.classList.add('smg-item-centered');
-                }
-            } else if (items.length === 5 && N === 6) {
-                grid.classList.add('smg-grid-6');
-                items.forEach(it => {
-                    if (isVideoBlock(it)) it.classList.add('smg-span-2');
-                    else it.classList.add('smg-span-3');
-                });
-            }
-            grid.classList.toggle('smg-grid-orphan', N === 3 && items.length % N === 1);
-        } else if (items.length >= 3) {
-            // Toda galeria de fotos (seja o post inteiro ou cada bloco entre textos no modo row)
-            // é o seu próprio True Masonry local, sem cortes e sem vãos vazios!
-            grid.classList.add('smg-true-masonry');
-            if (items.length === 4 && N === 2) {
-                const allTallOrSquare = items.every(it => blockRelH(it) >= 0.9);
-                if (allTallOrSquare) grid.classList.add('smg-grid-pair-tall');
-            }
-        }
-        grid.dataset.smgRelayoutDone = '1';
-    }
-    // move os novos blocos pra serem filhos DIRETOS do grid e deixa o CSS Grid recalcular as linhas.
-    function fillGrid(grid, newBlocks) {
-        grid.style.removeProperty('grid-template-columns');   // limpa eventual template inline do modo legado
-        let insertRef = grid.firstChild;
-        newBlocks.forEach(b => {
-            if (b.parentNode === grid) return;
-            const unfurl = b.closest('.bbCodeBlock--unfurl');   // ANTES de mover: o card de link vira caixa vazia → esconde
-            const followingMask = (typeof Node !== 'undefined' && Node.DOCUMENT_POSITION_FOLLOWING) || 4;
-            if (b.compareDocumentPosition && (b.compareDocumentPosition(grid) & followingMask)) {
-                if (insertRef) grid.insertBefore(b, insertRef);
-                else grid.appendChild(b);
-            } else {
-                grid.appendChild(b);
-            }
-            b.dataset.smgGridded = '1';
-            if (unfurl) unfurl.style.display = 'none';
-            // CSS Grid updates row geometry when the item changes height; JS only handles classification.
-            activateLazyEmbed(b);
-        });
-        relayoutGrid(grid);
-    }
-    // remove os <a> esvaziados (a img foi pro grid) + os <br> separadores, no PARENT do grid (e no próprio grid) — sem tocar em texto/links reais.
-    function cleanupGhosts(grid) {
-        if (!grid) return;
-        grid.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
-            let real = false;
-            a.childNodes.forEach(n => { if (n.nodeType === 1 && n.tagName !== 'NOSCRIPT') real = true; else if (n.nodeType === 3 && n.textContent.trim()) real = true; });
-            if (!real) a.remove();
-        });
-        const parent = grid.parentNode; if (!parent) return;
-        parent.querySelectorAll(':scope > a, :scope > .bbImageWrapper').forEach(a => {
-            let real = false;   // conteúdo PRÓPRIO do <a> (ignora <noscript>, que vaza como texto OU vira DOM dependendo do parse)
-            a.childNodes.forEach(n => { if (n.nodeType === 1 && n.tagName !== 'NOSCRIPT') real = true; else if (n.nodeType === 3 && n.textContent.trim()) real = true; });
-            if (real) return;   // <a> com texto/mídia real → mantém SEMPRE
-            let sib = a.nextSibling; a.remove();
-            while (sib && sib.nodeType === 3 && !sib.textContent.trim()) { const nx = sib.nextSibling; sib.remove(); sib = nx; }
-            if (sib && sib.nodeName === 'BR') sib.remove();   // o <br> que separava esta imagem da próxima
-        });
-        let p = grid.previousSibling;   // <br>/ws colado ANTES do grid (sobra dos breaks das imagens movidas) → senão empurra o grid pra baixo
-        while (p && (p.nodeName === 'BR' || (p.nodeType === 3 && !p.textContent.trim()))) { const pv = p.previousSibling; p.remove(); p = pv; }
-    }
+    // dissolve formatação SEM texto em volta de imagens (<b><img><img></b>, <span>…) → as imagens ficam
+    // irmãs do texto em volta e a run enxerga todas
     function unwrapEmptyMediaFormatting(scope) {
         if (!scope || !scope.querySelectorAll) return;
-        const sel = 'b, strong, i, em, u, s, span:not([data-s9e-mediaembed]), font, center';
         const hasAuthorText = node => {
-            if (!node) return false;
             if (node.nodeType === 3) return node.textContent.trim().length > 0;
             if (node.nodeType !== 1) return false;
-            const tag = node.tagName;
-            if (/^(IMG|IFRAME|VIDEO|BR|NOSCRIPT|SCRIPT|STYLE)$/i.test(tag)) return false;
-            if (node.classList && (node.classList.contains('generic2wide-iframe-div') || node.classList.contains('smg-dm-wrap') || node.classList.contains('auto-image-grid'))) return false;
-            if (node.hasAttribute && node.hasAttribute('data-s9e-mediaembed')) return false;
-            for (let child = node.firstChild; child; child = child.nextSibling) {
-                if (hasAuthorText(child)) return true;
-            }
+            if (/^(IMG|IFRAME|VIDEO|BR|NOSCRIPT|SCRIPT|STYLE)$/i.test(node.tagName)) return false;
+            if (node.classList && (node.classList.contains('auto-image-grid') || node.classList.contains('smg-dead'))) return false;
+            for (let c = node.firstChild; c; c = c.nextSibling) if (hasAuthorText(c)) return true;
             return false;
         };
-
-        let changed = true;
-        let passes = 0;
-        while (changed && passes < 10) {
-            changed = false;
-            passes++;
-            const candidates = scope.querySelectorAll(sel);
-            for (let i = candidates.length - 1; i >= 0; i--) {
-                const el = candidates[i];
-                if (!el.parentNode) continue;
-                // Contém mídia ou grid?
-                const hasMedia = el.querySelector('img.bbImage, .generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], iframe[src*="imagepond.net"], .auto-image-grid');
-                if (!hasMedia) continue;
-
-                // Verifica se há texto autoral real dentro de el sem clonar o nó
-                if (!hasAuthorText(el)) {
-                    // É puramente um wrapper de formatação ao redor de mídias sem nenhum texto:
-                    // dissolve o wrapper no parent para que as mídias fiquem no mesmo nível das demais mídias
-                    el.replaceWith(...el.childNodes);
-                    changed = true;
-                }
+        const sel = 'b, strong, i, em, u, s, span:not([data-s9e-mediaembed]), font, center';
+        for (let pass = 0; pass < 10; pass++) {
+            let changed = false;
+            const cands = scope.querySelectorAll(sel);
+            for (let i = cands.length - 1; i >= 0; i--) {
+                const el = cands[i];
+                if (!el.parentNode || el.closest(MEDIA_SKIP_SEL)) continue;
+                if (!el.querySelector(MEDIA_ITEM_SEL + ', .auto-image-grid') || hasAuthorText(el)) continue;
+                el.replaceWith(...el.childNodes);
+                changed = true;
             }
+            if (!changed) break;
         }
     }
-
-    function mergeAdjacentGrids(scope) {
-        if (!scope || !scope.querySelectorAll) return;
-        const grids = Array.from(scope.querySelectorAll('.auto-image-grid'));
-        for (let i = 0; i < grids.length; i++) {
-            const grid = grids[i];
-            if (!grid.parentNode) continue;
-            let next = grid.nextSibling;
-            // Pula nós de texto vazios/whitespace, comentários e quebras <br>
-            while (next && (
-                (next.nodeType === 3 && !next.textContent.trim()) ||
-                (next.nodeType === 8) ||
-                (next.nodeType === 1 && next.tagName === 'BR')
-            )) {
-                next = next.nextSibling;
+    // agrupa as runs de UM pai. Devolve os grupos montados/alterados.
+    function groupRunsIn(parent, flows) {
+        const touched = [];
+        let run = [];   // { flow } | { grid }
+        const flush = () => {
+            const items = run; run = [];
+            let count = 0;
+            items.forEach(it => { count += it.grid ? it.grid.children.length : 1; });
+            if (count < 2 || !items.some(it => it.flow)) return;   // nada novo, ou 1 imagem só → fica solta
+            const target = (items.find(it => it.grid) || {}).grid || document.createElement('div');
+            if (!target.parentNode) {
+                target.className = 'auto-image-grid';
+                parent.insertBefore(target, items[0].flow);
             }
-            if (next && next.nodeType === 1 && next.classList.contains('auto-image-grid')) {
-                const grid1IsWide = Array.from(grid.children).every(isWideMedia);
-                const grid2IsWide = Array.from(next.children).every(isWideMedia);
-                // Não mescla se um grid for wide (2 colunas) e o outro for tall (True Masonry 3 colunas)
-                if (grid1IsWide !== grid2IsWide) {
-                    continue;
-                }
-                // Encontrou grid adjacente sem texto entre eles do mesmo tipo: mescla os itens do segundo grid no primeiro!
-                while (next.firstChild) {
-                    grid.appendChild(next.firstChild);
-                }
-                const nextToRemove = next;
-                let between = grid.nextSibling;
-                while (between && between !== nextToRemove) {
-                    const nb = between.nextSibling;
-                    between.remove();
-                    between = nb;
-                }
-                nextToRemove.remove();
-                relayoutGrid(grid);
-                cleanupGhosts(grid);
-                i--; // Reavalia este mesmo grid caso haja outro grid em seguida
+            // tudo que está entre o 1º e o último item da run e não é item (só <br>/espaço) sai do fluxo
+            const first = items[0].flow || items[0].grid, last = items[items.length - 1].flow || items[items.length - 1].grid;
+            for (let n = first; n && n !== last;) {
+                const nx = n.nextSibling;
+                if (n !== target && !items.some(it => it.flow === n || it.grid === n) && isInertNode(n)) n.remove();
+                n = nx;
             }
-        }
-    }
-
-    // GALERIA EM CONTEXTO (era: UM grid no fim do post → quebrava o contexto quando havia texto entre as mídias). Agora agrupa
-    // só RUNS de mídia CONTÍGUA (separadas apenas por <br>/espaço); texto OU card/elemento não-mídia entre mídias QUEBRA a run →
-    // vira um grid à parte NO LUGAR de origem, então o texto fica junto da mídia a que se refere. Run de 1 mídia → fica inline.
-    function buildPostGallery(scope) {
-        unwrapEmptyMediaFormatting(scope);
-        // 1. Desaninhar grids acidentais prévios (auto-image-grid dentro de auto-image-grid)
-        scope.querySelectorAll('.auto-image-grid .auto-image-grid').forEach(innerGrid => {
-            const outer = innerGrid.parentElement;
-            if (!outer) return;
-            while (innerGrid.firstChild) {
-                outer.insertBefore(innerGrid.firstChild, innerGrid);
-            }
-            innerGrid.remove();
-            relayoutGrid(outer);
-        });
-
-        const byParent = new Map();   // parent-do-fluxo → Map(flowEl → [blocks]); flowEl = o nó que senta no fluxo (o <a> da img, ou o próprio wrapper)
-        collectGalleryBlocks(scope).forEach(b => {
-            if (b.dataset.smgGridded) return;   // já gridada (filho direto do grid)
-            const flow = (b.tagName === 'IMG') ? (b.closest('.bbImageWrapper, a') || b) : b;
-            const parent = flow.parentNode; if (!parent) return;
-            if (!byParent.has(parent)) byParent.set(parent, new Map());
-            const m = byParent.get(parent); if (!m.has(flow)) m.set(flow, []); m.get(flow).push(b);
-        });
-        byParent.forEach((flowMap, parent) => {
-            if (parent.classList && parent.classList.contains('auto-image-grid')) {
-                // O próprio parent já é um grid! Não cria outro grid filho dentro dele.
-                const ungridded = [];
-                flowMap.forEach(blocks => ungridded.push.apply(ungridded, blocks));
-                if (ungridded.length) {
-                    fillGrid(parent, ungridded);
-                    cleanupGhosts(parent);
-                }
-                return;
-            }
-            let run = [];   // itens contíguos: {flow,blocks} (mídia nova) | {grid} (grid já existente → mídia nova adjacente entra nele)
-            const mountSubRun = (subItems, subUngri) => {
-                if (!subUngri.length) return;
-                let grid = (subItems.find(it => it.grid) || {}).grid;
-                const have = grid ? grid.children.length : 0;
-                if (subUngri.length + have < 2) return;   // 1 mídia isolada → fica inline no fluxo
-                if (!grid) {
-                    const firstFlow = (subItems.find(it => it.flow) || {}).flow;
-                    if (!firstFlow || !firstFlow.parentNode) return;
-                    grid = document.createElement('div'); grid.className = 'auto-image-grid';
-                    firstFlow.parentNode.insertBefore(grid, firstFlow);
-                }
-                fillGrid(grid, subUngri);
-                cleanupGhosts(grid);
-            };
-
-            const flush = () => {
-                const items = run; run = [];
-                const ungridded = []; items.forEach(it => { if (it.blocks) ungridded.push.apply(ungridded, it.blocks); });
-                if (!ungridded.length) return;
-
-                const wideBlocks = ungridded.filter(isWideMedia);
-                const tallBlocks = ungridded.filter(b => !isWideMedia(b));
-                const isMixed = wideBlocks.length > 0 && tallBlocks.length > 0;
-                const isSmallSpecialCase = ungridded.length <= 2
-                    || (wideBlocks.length === 1 && tallBlocks.length === 2)
-                    || (wideBlocks.length === 2 && tallBlocks.length === 1)
-                    || (wideBlocks.length === 3 && tallBlocks.length === 2)
-                    || (wideBlocks.length === 2 && tallBlocks.length === 4);
-
-                if (!isMixed || isSmallSpecialCase || items.some(it => it.grid)) {
-                    mountSubRun(items, ungridded);
-                    return;
-                }
-
-                // PARTIÇÃO INTELIGENTE POR ORIENTAÇÃO (Mídias Wide vs Tall):
-                // Particiona itens contíguos de mesmo tipo (mídias wide: vídeos e fotos horizontais vs fotos verticais).
-                // - Corridas de mídia wide ficam no seu grid de 2 colunas amplas (50% cada).
-                // - Corridas de fotos verticais ficam no seu grid de 3 colunas em True Masonry contínuo!
-                // Isso elimina 100% os buracos vazios e garante que fotos horizontais tenham tamanho nobre.
-                const subRuns = [];
-                let currentType = null;
-                let curSub = [];
-                items.forEach(it => {
-                    const isW = it.blocks ? it.blocks.some(isWideMedia) : false;
-                    const type = isW ? 'wide' : 'tall';
-                    if (type !== currentType) {
-                        if (curSub.length) subRuns.push(curSub);
-                        curSub = [];
-                        currentType = type;
-                    }
-                    curSub.push(it);
+            // ordem do documento: cada item (ou o conteúdo de cada grupo) entra no fim do alvo, na sequência
+            const ordered = [];
+            items.forEach(it => { if (it.grid) ordered.push.apply(ordered, Array.from(it.grid.children)); else ordered.push(it.flow); });
+            ordered.forEach(n => {
+                n.dataset.smgGridded = '1';
+                // o tamanho de imagem SOLTA (inline !important) brigaria com o do motor
+                [n].concat(Array.from(n.querySelectorAll ? n.querySelectorAll('img') : [])).forEach(el => {
+                    if (el.style) { el.style.removeProperty('width'); el.style.removeProperty('max-width'); }
                 });
-                if (curSub.length) subRuns.push(curSub);
-
-                subRuns.forEach(sub => {
-                    const subUngri = []; sub.forEach(it => { if (it.blocks) subUngri.push.apply(subUngri, it.blocks); });
-                    mountSubRun(sub, subUngri);
-                });
-            };
-            Array.from(parent.childNodes).forEach(node => {
-                if (node.nodeType === 3) { if (node.textContent.trim()) flush(); return; }   // texto real → quebra a run; whitespace → mantém
-                if (node.nodeType !== 1) return;
-                if (/^(BR|SCRIPT|STYLE|NOSCRIPT|META|LINK|TEMPLATE)$/i.test(node.tagName)) return;   // separador ou metadados sem impacto visual → mantém a run
-                if (node.classList && node.classList.contains('auto-image-grid')) { run.push({ grid: node }); return; }   // grid existente
-                if (flowMap.has(node)) { run.push({ flow: node, blocks: flowMap.get(node) }); return; }   // mídia ainda não gridada
-                flush();   // card/parágrafo/qualquer outro elemento → quebra a run (preserva o contexto texto↔mídia)
+                target.appendChild(n);
             });
+            items.forEach(it => { if (it.grid && it.grid !== target) { masonryUnmount(it.grid); it.grid.remove(); } });
+            // separadores que sobraram colados ANTES do grupo empurravam o grupo pra baixo
+            // <br>/espaço colados nas bordas do grupo (sobra das quebras entre as imagens) viravam linhas vazias
+            const isBreak = n => n && (n.nodeType === 3 ? !n.textContent.trim() : (n.nodeType === 1 && n.tagName === 'BR'));
+            for (let p = target.previousSibling; isBreak(p);) { const pv = p.previousSibling; p.remove(); p = pv; }
+            for (let nx = target.nextSibling; isBreak(nx);) { const nn = nx.nextSibling; nx.remove(); nx = nn; }
+            touched.push(target);
+        };
+        Array.from(parent.childNodes).forEach(node => {
+            if (flows.has(node)) { run.push({ flow: node }); return; }
+            if (isPostGroup(node)) { run.push({ grid: node }); return; }
+            if (isRunSeparator(node)) return;
             flush();
         });
-        mergeAdjacentGrids(scope);
+        flush();
+        return touched;
     }
-    // Resize/rotation changes fluid column widths automatically. Only crossing the mobile/desktop
-    // breakpoint changes the column count, so existing grids need a new classification then.
-    let masonryResizeBound = false, masonryBucket = -1;
-    function bindMasonryResize() {
-        if (masonryResizeBound) return;
-        masonryResizeBound = true;
-        masonryBucket = gridCols();
-        let t;
-        window.addEventListener('resize', () => {
-            clearTimeout(t);
-            t = setTimeout(() => {
-                const b = gridCols();
-                if (b === masonryBucket) return;   // mesma faixa → o RO já cuida da largura
-                masonryBucket = b;
-                document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));   // recalculate columns + orphan alignment
-            }, 200);
-        }, { passive: true });
-        if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.documentElement) {
-            let dockWasOn = document.documentElement.classList.contains('smg-aldock-on');
-            const mo = new MutationObserver(() => {
-                const dockIsOn = document.documentElement.classList.contains('smg-aldock-on');
-                if (dockIsOn !== dockWasOn) {
-                    dockWasOn = dockIsOn;
-                    const b = gridCols();
-                    if (b !== masonryBucket) {
-                        masonryBucket = b;
-                        document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));
-                    }
-                }
-            });
-            mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        }
+    function buildPostGallery(scope) {
+        unwrapEmptyMediaFormatting(scope);
+        const byParent = new Map();   // pai no fluxo → Set(flow nodes ainda fora de grupo)
+        scope.querySelectorAll(MEDIA_ITEM_SEL).forEach(el => {
+            if (el.closest(MEDIA_SKIP_SEL)) return;
+            const flow = mediaFlowNode(el);
+            const parent = flow.parentElement;
+            if (!parent || isPostGroup(parent)) return;   // já está num grupo
+            if (!byParent.has(parent)) byParent.set(parent, new Set());
+            byParent.get(parent).add(flow);
+        });
+        byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
     }
     function buildPostGalleries(roots) {
         if (!document.documentElement.classList.contains('smg-masonry-on')) return;   // só com a Galeria ligada
-        bindMasonryResize();
-        roots.forEach(r => {
-            if (!r || !r.querySelectorAll) return;
-            const innerGrids = (r.matches && r.matches('.auto-image-grid'))
-                ? r.querySelectorAll('.auto-image-grid')
-                : r.querySelectorAll('.auto-image-grid .auto-image-grid');
-            innerGrids.forEach(innerGrid => {
-                const outer = innerGrid.parentElement;
-                if (!outer) return;
-                while (innerGrid.firstChild) {
-                    outer.insertBefore(innerGrid.firstChild, innerGrid);
-                }
-                innerGrid.remove();
-                relayoutGrid(outer);
-            });
-        });
         // gate barato (data-smg-galseen marca cada item 1x → steady-state ~0). Escopo = CORPO do post (.message-userContent)
-        // inteiro, NÃO só dentro do .bbWrapper: no SMG nosso embed às vezes entra como IRMÃO do .bbWrapper (fora dele) e ficava de fora.
+        // inteiro, NÃO só o .bbWrapper: no SMG o embed às vezes entra como IRMÃO do .bbWrapper.
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
-        // Seletores diretos de mídia — busca indexada rápida sem caminhar 20 combinações descendentes
-        const mediaSelector = 'img.bbImage:not([data-smg-galseen]), .generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), iframe[src*="imagepond.net"]:not([data-smg-galseen])';
         const bodies = new Set();
-        eachIn(roots, mediaSelector, el => {
+        eachIn(roots, 'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])', el => {
             el.dataset.smgGalseen = '1';
             if (el.closest('.bbCodeQuote, .message-signature')) return;
-            const b = el.closest('.bbCodeSpoiler-content, .bbCodeBlock--spoiler .bbCodeBlock-content, .message-userContent, .comment-body');
-            if (b) {
-                const post = b.closest('article.message, .message--post') || b;
-                if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
-                    if (!post.querySelector('.js-selectToQuoteEnd, .message-footer, .message-actionBar, .message-cell--user')) {
-                        delete el.dataset.smgGalseen;
-                        return;
-                    }
-                }
-                bodies.add(b);
+            const b = el.closest('.message-userContent, .comment-body, .bbWrapper');
+            if (!b) return;
+            const post = b.closest('article.message, .message--post') || b;
+            if (document.readyState !== 'complete' && document.readyState !== 'interactive'
+                && !post.querySelector('.js-selectToQuoteEnd, .message-footer, .message-actionBar, .message-cell--user')) {
+                delete el.dataset.smgGalseen;   // post ainda chegando no parse → volta no próximo pass
+                return;
             }
+            bodies.add(b);
         });
         bodies.forEach(buildPostGallery);
-        // Marcação de prontidão das galerias nos posts processados (para sincronismo com o paint gate)
+        // prontidão das galerias nos posts processados (o paint gate espera por ela)
         roots.forEach(r => {
             if (!r || !r.querySelectorAll) return;
             const ps = (r.matches && r.matches('article.message, .message--post')) ? [r] : r.querySelectorAll('article.message, .message--post');
             ps.forEach(p => { p.dataset.smgGalReady = '1'; });
         });
+    }
+    // item mudou de proporção (imagem carregou, virou caixa morta) → relayout do grupo dele no próximo frame
+    function relayoutPostGroupOf(el) {
+        const g = el && el.closest && el.closest('.auto-image-grid');
+        if (g) masonrySchedule(g);
     }
 
     if (typeof window !== 'undefined') {
@@ -1397,7 +954,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { isWideMedia, extractMediaDimensions, blockRelH, getEffectiveWidth, gridCols, gridColsFor, relayoutGrid, bindMasonryResize, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, mergeAdjacentGrids, imgFailLink, isVideoBlock, cleanupGhosts, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { extractMediaDimensions, markWide, buildPostGallery, postItemRatio, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, imgFailLink, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;

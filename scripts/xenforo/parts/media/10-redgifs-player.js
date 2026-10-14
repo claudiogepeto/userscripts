@@ -182,10 +182,7 @@
         const isVertical = (h / w) >= 0.9;
         wrap.classList.toggle('smg-rg-vert', isVertical);
         // Quando o teto de altura é atingido, reduz a largura do wrapper na mesma proporção.
-        // Em masonry o !important da regra geral de coluna é sobrescrito apenas neste player real.
-        const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
-        if (wrap.closest && wrap.closest('.auto-image-grid')) wrap.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
-        else wrap.style.maxWidth = maxWidth;
+        wrap.style.maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
 
         // Atualiza o container pai (se for .generic2wide-iframe-div, .smg-dm-wrap ou span[data-s9e-mediaembed])
         const parentBox = wrap.closest && wrap.closest('.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed]');
@@ -195,13 +192,6 @@
             parentBox.style.setProperty('--smg-rg-ratio', r.toFixed(4));
             parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
             parentBox.style.setProperty('overflow', 'visible', 'important');
-            if (parentBox.closest && parentBox.closest('.auto-image-grid')) {
-                parentBox.style.setProperty('max-width', 'min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))', 'important');
-            }
-        }
-        const grid = wrap.closest && wrap.closest('.auto-image-grid');
-        if (grid) {
-            scheduleRelayout(grid);
         }
         return true;
     }
@@ -1023,7 +1013,6 @@
                         return;
                     }
                     if (res && res.img) {                                   // IMAGEM (o /videos/ do imagepond às vezes é foto) → troca o embed por <img> (entra no pipeline de img + masonry)
-                        const grid = wrapper.closest('.auto-image-grid');
                         const img = document.createElement('img');
                         img.className = 'bbImage';
                         img.src = res.img;
@@ -1032,20 +1021,13 @@
                         img.dataset.smgLink = pageUrl;
                         img.dataset.smgFull = res.img;
                         img.dataset.smgMed = res.img;
-                        if (grid) {
-                            img.dataset.smgGridded = '1';
-                            wrapper.replaceWith(img);
-                            cleanupGhosts(grid);
-                            relayoutGrid(grid);
-                        } else {
-                            const a = document.createElement('a');
-                            a.href = res.img;
-                            a.target = '_blank';
-                            a.rel = 'noopener noreferrer';
-                            a.className = 'smg-imglink';
-                            a.appendChild(img);
-                            wrapper.replaceWith(a);
-                        }
+                        const a = document.createElement('a');   // virou imagem → entra na run de mídia do post (masonry)
+                        a.href = res.img;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.className = 'smg-imglink';
+                        a.appendChild(img);
+                        wrapper.replaceWith(a);
                         processOneImage(img);
                         scheduleRun(img.parentElement || img);
                         return;

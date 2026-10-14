@@ -8,7 +8,7 @@
                 max-height: none !important;
                 display: block !important;
                 margin: 0 auto !important;
-                border-radius: var(--smg-r-8) !important;
+                border-radius: var(--smg-img-r) !important;
                 cursor: pointer !important;
             }
             a.smg-imglink,
@@ -22,19 +22,6 @@
                 margin-bottom: var(--smg-sp-8) !important;
                 text-align: center !important;
             }
-            .auto-image-grid a.smg-imglink, .portrait-grid a.smg-imglink {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-            }
-            /* verticais: NÃO força largura da coluna (era o que estourava a altura). Capa pela
-               altura (width:auto) → a vertical nunca passa de --smg-media-h, centrada na coluna. */
-            .portrait-grid img.bbImage {
-                width: auto !important;
-                max-width: 100% !important;
-                max-height: none !important;
-                object-fit: contain !important;
-            }
             /* skeleton: shimmer enquanto a imagem do post não pintou (sem DOM extra — é o bg da própria <img>).
                aspect-ratio (não min-height fixo!) → o box escala com a largura, batendo com a maioria das
                imagens (paisagem). a thumb fica visível e fixa o tamanho real; o JS troca pra inline aspect-ratio
@@ -44,8 +31,7 @@
                O keyframes smg-img-shimmer continua existindo pros consumidores pequenos (fhcard 72px). */
             img.bbImage:not(.smg-img-ready):not([style*="aspect-ratio"]) {
                 width: 100% !important;
-                /* Herda a proporção de grade --smg-grid-img-ph assim que o 1º item resolve, ou fallback --smg-img-ph */
-                aspect-ratio: var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13));
+                aspect-ratio: var(--smg-img-ph, 10 / 13);   /* = MASONRY_PH_RELH (1.3) do motor */
                 object-fit: cover;
                 background-color: var(--smg-s2);
                 border-radius: var(--smg-r-8);

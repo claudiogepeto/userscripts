@@ -24,7 +24,8 @@
                 --smg-tx2: var(--smg-w-50);         /* texto secundário */
                 --smg-ac: #ff77b2;                  /* acento fixo (rosa) */
                 --smg-mono: -apple-system, monospace;
-                --smg-target-h: 320px;              /* altura-alvo da linha justificada (flex-basis) */
+                --smg-solo-h: 80vh;                 /* altura MÁX de uma imagem sozinha no post (run de 1, fora do mosaico) */
+                --smg-img-r: var(--smg-r-8);        /* raio das imagens do post e dos itens do mosaico */
             }
             /* ===== escalas (definidas UMA vez; todo valor cru do CSS cai num degrau destas) ===== */
             html.smg-sc, html.smg-smg {

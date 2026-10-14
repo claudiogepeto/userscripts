@@ -114,9 +114,6 @@
                 color: #fff !important;
             }
             /* Mídias / imagens dentro da citação */
-            .bbCodeBlock--quote .auto-image-grid {
-                margin: var(--smg-sp-10) 0 !important;
-            }
             .bbCodeBlock--quote img.bbImage {
                 max-height: 280px !important;
                 object-fit: contain !important;

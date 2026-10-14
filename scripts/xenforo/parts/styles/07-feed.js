@@ -183,32 +183,7 @@
                 display: none !important;
             }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: var(--smg-r-8); }
-            html.smg-masonry-on .smg-fp-content .auto-image-grid {
-                display: grid !important;
-                grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
-                grid-auto-flow: row !important;
-                grid-auto-rows: auto !important;
-                gap: var(--smg-sp-8) !important;
-                align-items: start !important;
-                justify-items: center !important;
-                margin: var(--smg-sp-10) 0 !important;
-                max-width: 100% !important;
-                text-align: center !important;
-            }
-            html.smg-masonry-on .smg-fp-content .auto-image-grid.smg-grid-orphan > :last-child { grid-column: 2; }
-            html.smg-masonry-on .smg-fp-content .auto-image-grid > * {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                display: block;
-            }
-            .smg-fp-content .auto-image-grid img.bbImage,
-            .smg-fp-content .auto-image-grid img {
-                border-radius: var(--smg-r-8) !important;
-            }
-            .smg-fp-content iframe,
-            .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe {
+            .smg-fp-content iframe {
                 width: 100% !important;
                 max-width: 100% !important;
                 aspect-ratio: 16 / 9 !important;

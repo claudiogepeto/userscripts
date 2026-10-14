@@ -1,312 +1,64 @@
-    // ── CSS: image grids, masonry and the gallery overlay ──
+    // ── CSS: masonry mosaic (in-post groups) and the gallery overlay ──
     const CSS_MEDIA_GRIDS = `
-            /* ---- image grids ---- */
-            .auto-image-grid {
-                display: grid !important;
-                grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
-                grid-auto-flow: row dense !important;
-                grid-auto-rows: auto !important;
-                gap: var(--smg-sp-8) !important;
-                row-gap: var(--smg-sp-8) !important;
-                column-gap: var(--smg-sp-8) !important;
-                margin: var(--smg-sp-12) auto !important;
-                max-width: 100%;
-                text-align: center !important;
-            }
-            .auto-image-grid .auto-image-grid {
-                display: contents !important;
-            }
-            .auto-image-grid.portrait-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                align-items: start !important;
-            }
-            /* MASONRY UNIFICADO por CSS Grid — linhas explícitas, ordem visual por linha e espaçamento único de 8px */
-            html.smg-masonry-on .auto-image-grid {
-                display: grid !important;
-                grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
-                grid-auto-flow: row dense !important;
-                grid-auto-rows: auto !important;
-                gap: var(--smg-sp-8) !important;
-                row-gap: var(--smg-sp-8) !important;
-                column-gap: var(--smg-sp-8) !important;
-                align-items: start !important;
-                justify-items: stretch !important;
-                margin: var(--smg-sp-12) auto !important;
-                max-width: 100% !important;
-                text-align: center !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-6 {
-                grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-3 {
-                grid-column: span 3 !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-6 > .smg-span-2 {
-                grid-column: span 2 !important;
-            }
-            html.smg-masonry-on .auto-image-grid > .smg-span-all {
-                grid-column: 1 / -1 !important;
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-                justify-self: center !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid > .smg-item-centered {
-                grid-column: 1 / -1 !important;
-                justify-self: center !important;
-                width: auto !important;
-                max-width: min(calc((100% - 8px) / 2), calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 0.6))) !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-orphan > :last-child {
-                grid-column: 2 !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2-tall,
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-tall,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry.smg-grid-pair-tall {
-                max-width: 100% !important;
-                margin: var(--smg-sp-12) auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid > * {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
+            /* ---- MOSAICO (motor masonry, 08a): grupo de imagens no post + overlay da galeria ----
+               O motor posiciona cada item (transform + width + height inline) e dá a altura do container;
+               o CSS só tira os itens do fluxo e faz a mídia preencher a caixa (a caixa já tem a proporção dela,
+               então cover não corta nada depois que a proporção real chega). */
+            .smg-mason {
+                position: relative !important;
                 display: block !important;
                 box-sizing: border-box !important;
+                overflow-anchor: none;
             }
-
-
-                        html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) > img.bbImage,
-            html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) > a > img.bbImage,
-            html.smg-masonry-on .auto-image-grid:not(.smg-justified-grid) .bbImageWrapper > img.bbImage {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
+            .smg-mason > * {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
                 margin: 0 !important;
-                display: block !important;
-            }
-
-            /* ---- POST DE GALERIA PURA: TRUE MASONRY (Pinterest-style, colunas independentes contínuas) ---- */
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry {
-                display: block !important;
-                column-count: var(--smg-mcols, 3) !important;
-                column-gap: var(--smg-sp-8) !important;
-                margin: var(--smg-sp-12) auto !important;
-                max-width: 100% !important;
-                text-align: center !important;
-            }
-            @media (max-width: 1400px) {
-                html.smg-masonry-on .auto-image-grid {
-                    --smg-mcols: 2;
-                }
-                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
-                    column-count: var(--smg-mcols, 2) !important;
-                }
-            }
-            @media (max-width: 1920px) {
-                html.smg-aldock-on.smg-masonry-on .auto-image-grid {
-                    --smg-mcols: 2;
-                }
-                html.smg-aldock-on.smg-masonry-on .auto-image-grid.smg-true-masonry {
-                    column-count: var(--smg-mcols, 2) !important;
-                }
-            }
-            @media (max-width: 600px) {
-                html.smg-masonry-on .auto-image-grid {
-                    --smg-mcols: 1;
-                }
-                html.smg-masonry-on .auto-image-grid.smg-true-masonry {
-                    column-count: var(--smg-mcols, 1) !important;
-                }
-            }
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-                display: block !important;
-                width: 100% !important;
-                margin: 0 0 var(--smg-sp-8) 0 !important;
                 box-sizing: border-box !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dm-wrap > img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage.smg-wide {
+            html.smg-masonry-on .auto-image-grid.smg-mason {
                 width: 100% !important;
                 max-width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-                display: block !important;
-                object-fit: contain !important;
-                margin: 0 0 var(--smg-sp-8) 0 !important;
+                margin: var(--smg-sp-12) 0 !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry > * img.bbImage {
+            /* .smg-mason dobrado: vence os wrappers de imagem solta (a.smg-imglink:has(> img.smg-wide) = 0,3,2) */
+            html.smg-masonry-on .auto-image-grid.smg-mason.smg-mason > * {
+                display: block !important;
                 margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                max-height: none !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+                border-radius: var(--smg-img-r) !important;
+                background: var(--smg-s2);
+            }
+            html.smg-masonry-on .auto-image-grid.smg-mason img.bbImage {
                 display: block !important;
                 width: 100% !important;
-                height: auto !important;
+                height: 100% !important;
+                max-width: none !important;
                 max-height: none !important;
+                margin: 0 !important;
+                object-fit: cover !important;
+                border-radius: var(--smg-img-r) !important;
+                aspect-ratio: auto !important;
             }
-            /* ---- POST COM TEXTO: LINHAS JUSTIFICADAS (OPÇÃO A) ---- */
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid {
+            html.smg-masonry-on .auto-image-grid.smg-mason > * > * {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+            }
+            /* caixa de imagem morta no mosaico: ocupa o lugar da imagem, conteúdo centrado */
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead {
                 display: flex !important;
                 flex-wrap: wrap !important;
-                gap: var(--smg-sp-8) !important;
-                row-gap: var(--smg-sp-8) !important;
-                column-gap: var(--smg-sp-8) !important;
+                align-content: center !important;
                 justify-content: center !important;
-                align-items: stretch !important;
-                margin: var(--smg-sp-12) auto !important;
-                max-width: 100% !important;
                 text-align: center !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid > * {
-                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h) * var(--smg-ratio, 1)) !important;
-                min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                max-width: 100% !important;
-                min-height: 160px !important;
-                height: auto !important;
-                width: auto !important;
-                margin: 0 auto !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                overflow: hidden !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap > img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-dm-wrap.smg-vert > img.bbImage {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: cover !important;
-                display: block !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid .smg-rg,
-            html.smg-masonry-on .auto-image-grid.smg-justified-grid .generic2wide-iframe-div {
-                width: 100% !important;
-                height: 100% !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-            }
-
-            /* ---- GRID DE EXATAMENTE 2 IMAGENS (REGRAS CLÁSSICAS DO MASONRY) ---- */
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 {
-                display: grid !important;
-                grid-template-columns: repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;
-                grid-auto-flow: row dense !important;
-                grid-auto-rows: auto !important;
-                gap: var(--smg-sp-8) !important;
-                row-gap: var(--smg-sp-8) !important;
-                column-gap: var(--smg-sp-8) !important;
-                align-items: start !important;
-                justify-items: stretch !important;
-                margin: var(--smg-sp-12) auto !important;
-                max-width: 100% !important;
-                text-align: center !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-tall {
-                max-width: 100% !important;
-                margin: var(--smg-sp-12) auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-asym {
-                grid-template-columns: var(--smg-col1-w, 1fr) var(--smg-col2-w, 1fr) !important;
-                max-width: 100% !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 > *,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 img.bbImage.smg-wide,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap > img.bbImage,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-dm-wrap.smg-vert > img.bbImage {
-                width: 100% !important;
-                height: auto !important;
-                max-width: 100% !important;
-                max-height: none !important;
-                object-fit: contain !important;
-                margin: 0 !important;
-                display: block !important;
-            }
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div.smg-player-loaded,
-            html.smg-masonry-on .auto-image-grid span[data-s9e-mediaembed].smg-player-loaded,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-rg) {
-                aspect-ratio: auto !important;
-                height: auto !important;
-                min-height: 0 !important;
-                max-height: none !important;
-                overflow: visible !important;
-                background: transparent !important;
-                max-width: 100% !important;
-                display: block !important;
-            }
-            html.smg-masonry-on .auto-image-grid img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                object-fit: contain !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .smg-rg,
-            html.smg-masonry-on .auto-image-grid .smg-rg {
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                aspect-ratio: var(--smg-rg-ratio, 16 / 9) !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap {
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video {
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                width: 100% !important;
-                height: auto !important;
-                object-fit: contain !important;
-                display: block !important;
-                margin: 0 auto !important;
-            }
-            /* Verticais no masonry: preenchem 100% da largura da coluna, garantindo gap de 8px exato */
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                object-fit: contain !important;
-                margin: 0 !important;
-            }
-            html.smg-masonry-on .auto-image-grid .smg-rg.smg-rg-vert {
-                width: 100% !important;
-                max-width: 100% !important; /* rgAspect aplica o teto proporcional inline quando a dimensão real chega */
-                max-height: var(--smg-media-h) !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
-            }
-            /* O bloco e cada item ficam centralizados: quando a mídia é menor que a coluna, as colunas não parecem soltas. */
-            html.smg-masonry-on .auto-image-grid > *,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap,
-            html.smg-masonry-on .auto-image-grid .smg-rg {
-                margin-left: auto !important;
-                margin-right: auto !important;
-            }
-            /* GRID de verdade: sem cantos arredondados nos itens (foto/vídeo/iframe/player); os controles do player (.smg-rgc-*) mantêm o raio */
-            html.smg-masonry-on .auto-image-grid > *,
-            html.smg-masonry-on .auto-image-grid img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > .smg-dm-video,
-            html.smg-masonry-on .auto-image-grid > iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
-            html.smg-masonry-on .auto-image-grid .smg-rg,
-            html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
             #smg-gallery { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }

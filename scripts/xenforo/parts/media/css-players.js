@@ -35,24 +35,9 @@
                 height: auto !important;
             }
             html.smg-thread .smg-pc-head { position: relative; z-index: var(--smg-z-1); background: var(--smg-s1); }
-            /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                margin: 0 auto !important;
-                display: block !important;
-                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
-                position: relative !important;
-                border-radius: 0 !important;
-                background: #000;
-            }
             /* iframes nativos dentro de .generic2wide-iframe-div preenchem o container 16:9 perfeitamente */
             .generic2wide-iframe-div > iframe,
-            .generic2wide-iframe-div iframe.saint-iframe,
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe {
+            .generic2wide-iframe-div iframe.saint-iframe {
                 position: absolute !important;
                 inset: 0 !important;
                 width: 100% !important;
@@ -186,17 +171,21 @@
                 min-width: 0 !important;
                 overflow: hidden !important;
             }
-            /* Vertical standalone images: wrapper is a full-width block so the img width (a % of it) resolves from
-               the column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
+            /* Standalone images (a run of one): wrapper is a full-width block so the img width (a % of it) resolves
+               from the post column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
             a.smg-imglink.smg-vert-link:not(.auto-image-grid *),
-            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) {
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *),
+            a.smg-imglink.smg-wide-link:not(.auto-image-grid *),
+            .bbImageWrapper.smg-wide-link:not(.auto-image-grid *) {
                 display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 pointer-events: none;
             }
             a.smg-imglink.smg-vert-link:not(.auto-image-grid *) > img.bbImage,
-            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) img.bbImage { pointer-events: auto; }
+            .bbImageWrapper.smg-vert-link:not(.auto-image-grid *) img.bbImage,
+            a.smg-imglink.smg-wide-link:not(.auto-image-grid *) > img.bbImage,
+            .bbImageWrapper.smg-wide-link:not(.auto-image-grid *) img.bbImage { pointer-events: auto; }
             .smg-dm-wrap.smg-vert, img.bbImage.smg-vert {
                 max-width: min(75%, 880px) !important;
                 max-height: var(--smg-media-h) !important;
@@ -215,27 +204,6 @@
                 object-fit: contain !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid img.bbImage,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,
-            html.smg-masonry-on .auto-image-grid .smg-wide {
-                width: 100% !important;
-                max-width: none !important;
-                height: auto !important;
-                max-height: none !important;
-                margin: 0 auto !important;
-            }
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
-                width: auto !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: var(--smg-media-h) !important;
-                object-fit: contain !important;
-                margin: 0 auto !important;
             }
 
             .smg-dm-wrap img.bbImage { border-radius: var(--smg-r-10); }
@@ -388,39 +356,6 @@
             .smg-dead-code b:empty { display: none; }
             .smg-dead-sep { color: var(--smg-w-30) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
             .smg-dead-sub { font-size: var(--smg-fs-13) !important; font-weight: 500 !important; color: var(--smg-w-72) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
-            /* No mosaico/grade: os cards de erro viram itens ocupando a largura total (span-all), empilhados horizontalmente */
-            html.smg-masonry-on .auto-image-grid .smg-dead,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dead,
-            html.smg-masonry-on .auto-image-grid.smg-true-masonry > .smg-dead {
-                grid-column: 1 / -1 !important;
-                column-span: all !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                min-height: 42px !important;
-                height: auto !important;
-                aspect-ratio: auto !important;
-                margin: var(--smg-sp-4) 0 !important;
-                display: flex !important;
-            }
-            /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
-                background-color: var(--smg-s2) !important;
-                border-radius: var(--smg-r-8) !important;
-                position: relative !important;
-                min-height: 120px;
-                aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
-                overflow: hidden !important;
-            }
-            html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing))::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(90deg, transparent 0%, var(--smg-w-06) 50%, transparent 100%);
-                background-size: 200% 100%;
-                animation: smg-img-shimmer 1.8s ease-in-out infinite;
-                pointer-events: none;
-                z-index: var(--smg-z-1);
-            }
             /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
             .generic2wide-iframe-div::before,
             .generic2wide-iframe-div::after,
