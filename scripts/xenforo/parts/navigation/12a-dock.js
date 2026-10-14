@@ -718,10 +718,7 @@
         // ícone por categoria (rail à esquerda) + sliders dos tunables do feed (gmGet/gmSet)
         const SET_ICONS = { 'Appearance': ICONS.sliders, 'Images': ICONS.typeImage, 'Videos': ICONS.typeVideo, 'Links & files': ICONS.link, 'Infinite scroll': ICONS.scrollBottom, 'Thread & reading': ICONS.list, 'Feed': ICONS.feed };
         const SET_TUNABLES = [
-            { key: 'smg-feed-window-days', label: i18n('Search window (days)'), min: 3, max: 30, def: 14 },
             { key: 'smg-feed-retention-days', label: i18n('Keep posts for (days)'), min: 7, max: 90, def: 30 },
-            { key: 'smg-feed-cold-threads', label: i18n('Threads on first load'), min: 40, max: 300, step: 10, def: 120 },
-            { key: 'smg-feed-deep-ttl', label: i18n('Deep re-scan every (h)'), min: 1, max: 48, def: 6 },
         ];
         const qAttr = s => (s || '').toLowerCase().replace(/["<>]/g, '');
         const setToggleRow = it =>

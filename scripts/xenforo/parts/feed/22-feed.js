@@ -15,11 +15,7 @@
         return !!feedContext() && new URLSearchParams(location.search).get('view') === 'feed';
     }
 
-    // janela de BUSCA: até quantos dias atrás paginamos por thread (≠ o que fica guardado). 14d → 1º contato traz mais história;
-    // quem acessa sempre cai no delta (só o último dia, barato). Tunável: gmSet('smg-feed-window-days','21').
-    const RIVER_WINDOW_DAYS = (parseInt(gmGet('smg-feed-window-days', ''), 10) || 14);
-    // RETENÇÃO (≠ janela de busca): quanto tempo o post FICA no banco. Maior que a janela → não joga fora o que já buscamos
-    // (posts > 1 semana que vieram de brinde nas páginas recentes ficam visíveis no feed, scroll abaixo). Tunável: gmSet('smg-feed-retention-days','60').
+    // RETENÇÃO: quanto tempo o post FICA no banco. Tunável: gmSet('smg-feed-retention-days','60').
     const RIVER_RETENTION_DAYS = (parseInt(gmGet('smg-feed-retention-days', ''), 10) || 30);
     // SELF-HEAL do cache: BUMP isto sempre que o formato do post serializado (riverParsePost) ou a lógica de sync mudar.
     // Na próxima abertura, dataVersion != FEED_DATA_VERSION → o IDB é descartado e reconstruído sozinho (o usuário NÃO precisa limpar cache na mão).
@@ -503,7 +499,7 @@
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {
             console.log('[SMG Timeline] Botão de atualizar clicado.');
-            kickSync(null, true);
+            kickSync(true);
         });
         const actions = fhead.querySelector('.smg-river-head-actions');
         if (actions) {
@@ -533,7 +529,6 @@
         host.appendChild(wrap);
 
         riverSeen = new Set(); riverLastTs = null; riverNoMore = false;
-        const cutoff = Math.floor(Date.now() / 1000) - RIVER_WINDOW_DAYS * 86400;
 
         showSetupState();
 
@@ -544,19 +539,19 @@
                     const cardsCount = riverList ? riverList.querySelectorAll('.smg-fp-card').length : 0;
                     if (cardsCount === 0) {
                         showSetupState();
-                        kickSync(cutoff, true);
+                        kickSync(true);
                     } else {
                         markRiverPaintReady();
-                        kickSync(cutoff, false);
+                        kickSync(false);
                     }
                 });
             } else {
                 showSetupState();
-                kickSync(cutoff, true);
+                kickSync(true);
             }
         }).catch(() => {
             showSetupState();
-            kickSync(cutoff, true);
+            kickSync(true);
         });
     }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
@@ -607,10 +602,7 @@
     }
     let lastTimelineSyncTime = 0;
 
-    function kickSync(cutoff, cold) {
-        if (cutoff == null) {
-            cutoff = Math.floor(Date.now() / 1000) - RIVER_WINDOW_DAYS * 86400;
-        }
+    function kickSync(cold) {
         lastTimelineSyncTime = Date.now();
         feedSyncRunning = true;
         if (riverMoreEl) riverMoreEl.classList.add('is-loading');

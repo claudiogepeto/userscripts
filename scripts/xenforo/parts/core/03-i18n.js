@@ -56,7 +56,7 @@
         'Settings': 'Configurações', 'Options': 'Opções',
         'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock',
         'Search setting…': 'Buscar ajuste…', 'No settings found': 'Nenhum ajuste encontrado', 'Restore defaults': 'Restaurar padrões', 'Reload': 'Recarregar', 'Restore default settings?': 'Restaurar as configurações padrão?',
-        'Search window (days)': 'Janela de busca (dias)', 'Keep posts for (days)': 'Guardar posts por (dias)', 'Threads on first load': 'Threads no 1º carregamento', 'Deep re-scan every (h)': 'Re-varredura completa a cada (h)',
+        'Keep posts for (days)': 'Guardar posts por (dias)',
         // busca
         'Search the forum…': 'Buscar no fórum…', 'Search in': 'Buscar em', 'Everywhere': 'Em tudo',
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',

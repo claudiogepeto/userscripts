@@ -2135,7 +2135,7 @@ async function runTests() {
     assert(fallbackCalled === true, 'fetchWatchedDoc deve executar fallback para fetchDoc quando JSON não contiver .structItem--thread');
     assert(docFallback !== null && docFallback.querySelectorAll('.structItem--thread').length === 1, 'Fallback deve retornar documento válido');
 
-    // 11.5 Testar botão de refresh da Timeline (.smg-river-refresh) disparando kickSync(null, true)
+    // 11.5 Testar botão de refresh da Timeline (.smg-river-refresh) disparando kickSync(true)
     const { buildRiver } = window.__feedExports;
     assert(typeof buildRiver === 'function', 'buildRiver deve estar exportado');
     const existingRiver = document.getElementById('smg-river');

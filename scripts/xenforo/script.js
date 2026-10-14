@@ -311,7 +311,7 @@
         'Settings': 'Configurações', 'Options': 'Opções',
         'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock',
         'Search setting…': 'Buscar ajuste…', 'No settings found': 'Nenhum ajuste encontrado', 'Restore defaults': 'Restaurar padrões', 'Reload': 'Recarregar', 'Restore default settings?': 'Restaurar as configurações padrão?',
-        'Search window (days)': 'Janela de busca (dias)', 'Keep posts for (days)': 'Guardar posts por (dias)', 'Threads on first load': 'Threads no 1º carregamento', 'Deep re-scan every (h)': 'Re-varredura completa a cada (h)',
+        'Keep posts for (days)': 'Guardar posts por (dias)',
         // busca
         'Search the forum…': 'Buscar no fórum…', 'Search in': 'Buscar em', 'Everywhere': 'Em tudo',
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',
@@ -14887,10 +14887,7 @@
         // ícone por categoria (rail à esquerda) + sliders dos tunables do feed (gmGet/gmSet)
         const SET_ICONS = { 'Appearance': ICONS.sliders, 'Images': ICONS.typeImage, 'Videos': ICONS.typeVideo, 'Links & files': ICONS.link, 'Infinite scroll': ICONS.scrollBottom, 'Thread & reading': ICONS.list, 'Feed': ICONS.feed };
         const SET_TUNABLES = [
-            { key: 'smg-feed-window-days', label: i18n('Search window (days)'), min: 3, max: 30, def: 14 },
             { key: 'smg-feed-retention-days', label: i18n('Keep posts for (days)'), min: 7, max: 90, def: 30 },
-            { key: 'smg-feed-cold-threads', label: i18n('Threads on first load'), min: 40, max: 300, step: 10, def: 120 },
-            { key: 'smg-feed-deep-ttl', label: i18n('Deep re-scan every (h)'), min: 1, max: 48, def: 6 },
         ];
         const qAttr = s => (s || '').toLowerCase().replace(/["<>]/g, '');
         const setToggleRow = it =>
@@ -25458,11 +25455,7 @@
         return !!feedContext() && new URLSearchParams(location.search).get('view') === 'feed';
     }
 
-    // janela de BUSCA: até quantos dias atrás paginamos por thread (≠ o que fica guardado). 14d → 1º contato traz mais história;
-    // quem acessa sempre cai no delta (só o último dia, barato). Tunável: gmSet('smg-feed-window-days','21').
-    const RIVER_WINDOW_DAYS = (parseInt(gmGet('smg-feed-window-days', ''), 10) || 14);
-    // RETENÇÃO (≠ janela de busca): quanto tempo o post FICA no banco. Maior que a janela → não joga fora o que já buscamos
-    // (posts > 1 semana que vieram de brinde nas páginas recentes ficam visíveis no feed, scroll abaixo). Tunável: gmSet('smg-feed-retention-days','60').
+    // RETENÇÃO: quanto tempo o post FICA no banco. Tunável: gmSet('smg-feed-retention-days','60').
     const RIVER_RETENTION_DAYS = (parseInt(gmGet('smg-feed-retention-days', ''), 10) || 30);
     // SELF-HEAL do cache: BUMP isto sempre que o formato do post serializado (riverParsePost) ou a lógica de sync mudar.
     // Na próxima abertura, dataVersion != FEED_DATA_VERSION → o IDB é descartado e reconstruído sozinho (o usuário NÃO precisa limpar cache na mão).
@@ -25946,7 +25939,7 @@
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {
             console.log('[SMG Timeline] Botão de atualizar clicado.');
-            kickSync(null, true);
+            kickSync(true);
         });
         const actions = fhead.querySelector('.smg-river-head-actions');
         if (actions) {
@@ -25976,7 +25969,6 @@
         host.appendChild(wrap);
 
         riverSeen = new Set(); riverLastTs = null; riverNoMore = false;
-        const cutoff = Math.floor(Date.now() / 1000) - RIVER_WINDOW_DAYS * 86400;
 
         showSetupState();
 
@@ -25987,19 +25979,19 @@
                     const cardsCount = riverList ? riverList.querySelectorAll('.smg-fp-card').length : 0;
                     if (cardsCount === 0) {
                         showSetupState();
-                        kickSync(cutoff, true);
+                        kickSync(true);
                     } else {
                         markRiverPaintReady();
-                        kickSync(cutoff, false);
+                        kickSync(false);
                     }
                 });
             } else {
                 showSetupState();
-                kickSync(cutoff, true);
+                kickSync(true);
             }
         }).catch(() => {
             showSetupState();
-            kickSync(cutoff, true);
+            kickSync(true);
         });
     }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
@@ -26050,10 +26042,7 @@
     }
     let lastTimelineSyncTime = 0;
 
-    function kickSync(cutoff, cold) {
-        if (cutoff == null) {
-            cutoff = Math.floor(Date.now() / 1000) - RIVER_WINDOW_DAYS * 86400;
-        }
+    function kickSync(cold) {
         lastTimelineSyncTime = Date.now();
         feedSyncRunning = true;
         if (riverMoreEl) riverMoreEl.classList.add('is-loading');
