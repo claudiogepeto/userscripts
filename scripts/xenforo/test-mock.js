@@ -3726,7 +3726,7 @@ async function runTests() {
 
     // Restaurar window.open
     window.open = origWindowOpen;
-    if (feedEl) feedEl.classList.remove('open');
+    window.__mediaExports.closeMedia();
     goonboxLink.remove();
 
     // 4. Validar que um link externo de texto puro (sem imagem) continua sendo interceptado normalmente pelo bindProxyClick
