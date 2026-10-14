@@ -8,12 +8,12 @@
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
             .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: var(--smg-s2, #23242a) !important; color: rgba(255,255,255,0.38) !important; }
+                background: var(--smg-s2) !important; color: rgba(255,255,255,0.38) !important; }
             .smg-thumb-ph .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
             html.smg-smg.smg-threadlist .block-container,
             html.smg-smg.smg-threadlist .structItemContainer,
             html.smg-smg.smg-threadlist .uix_stickyContainerOuter {
-                background: var(--smg-bg, #101113) !important;
+                background: var(--smg-bg) !important;
                 border-color: rgba(255,255,255,0.06) !important;
             }
             /* GRID: quadrado, ocupa a célula toda */
@@ -39,7 +39,7 @@
             /* GRADE (modo grade): gated em smg-tv-grid → o toggle lista/grade da dock vale aqui também */
             html.smg-threadlist.smg-tv-grid .smg-article-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important; padding: 14px !important; background: transparent !important; align-items: start !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-article-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -127,7 +127,7 @@
             }
             .smg-feed-tool:hover { background: rgba(42,42,50,0.85); }
             .smg-feed-tool:active { transform: scale(0.9); }
-            .smg-feed-tool.smg-active { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }
+            .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
@@ -184,8 +184,8 @@
             .smg-bar-go,
             html.smg-thread .pageNav-page--current > a,
             html.smg-threadlist .pageNav-page--current > a {
-                background: var(--smg-link-strong, #d14d8f) !important;
+                background: var(--smg-link-strong) !important;
                 color: #fff !important;
-                border-color: var(--smg-link-strong, #d14d8f) !important;
+                border-color: var(--smg-link-strong) !important;
             }
 `;

@@ -61,7 +61,7 @@
                     border-color: rgba(255,255,255,0.14);
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
                 }
-                #smg-search-pop .smg-search-lupa { flex: 0 0 auto; color: var(--smg-link, #ff77b2); }
+                #smg-search-pop .smg-search-lupa { flex: 0 0 auto; color: var(--smg-link); }
                 #smg-search-pop .smg-search-lupa svg { width: 19px; height: 19px; }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
@@ -137,9 +137,9 @@
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-author-trigger.has-value {
-                    background: var(--smg-link-soft, rgba(255,119,178,0.22)) !important;
-                    border-color: var(--smg-link, #ff77b2) !important;
-                    color: var(--smg-link, #ff77b2) !important;
+                    background: var(--smg-link-soft) !important;
+                    border-color: var(--smg-link) !important;
+                    color: var(--smg-link) !important;
                 }
                 #smg-search-pop .smg-search-author-trigger svg {
                     width: 17px !important; height: 17px !important; fill: none !important;
@@ -207,7 +207,7 @@
                 .smg-chip { height: 40px; font-size: 14px; }
             }
             /* botão da dock "ativo" (filtro/escolha ligada) */
-            .smg-nav-btn.smg-active { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
+            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
 
             /* ---- scroll infinito: separador de página ---- */
             .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; color: rgba(127,127,127,0.85); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }

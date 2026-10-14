@@ -4,7 +4,7 @@
                while a custom page is still being composed. This prevents the original layout from
                flashing underneath the skeleton or dancing during the handoff. */
             html.smg-page-pending {
-                background: var(--smg-bg, #101113) !important;
+                background: var(--smg-bg) !important;
                 overflow: hidden !important;
                 scrollbar-gutter: stable;
             }
@@ -31,13 +31,13 @@
             html.smg-page-pending #smg-post-nav-wrapper { z-index: 1102 !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: 1000; display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
-                pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
+                pointer-events: none; background: var(--smg-bg); color: #fff;
             }
             html.smg-page-pending #smg-page-skeleton { display: block; }
-            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w, 360px); }
+            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w); }
             #smg-page-skeleton-rail {
-                position: fixed; top: 0; right: 0; bottom: 0; z-index: 1001; display: none; width: var(--smg-ald-w, 360px);
-                overflow: hidden; pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
+                position: fixed; top: 0; right: 0; bottom: 0; z-index: 1001; display: none; width: var(--smg-ald-w);
+                overflow: hidden; pointer-events: none; background: var(--smg-bg); color: #fff;
                 border-left: 1px solid rgba(255,255,255,0.09); box-shadow: -10px 0 30px rgba(0,0,0,0.25);
             }
             html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail { display: block; }
@@ -125,8 +125,8 @@
             .smg-page-skeleton *, .smg-page-skeleton *::before, .smg-page-skeleton *::after { box-sizing: border-box; }
             .smg-page-skeleton-chrome {
                 display: flex; align-items: center; gap: 24px; height: 62px;
-                padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
-                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
+                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
             }
             .smg-page-skeleton-chrome-logo,
             .smg-page-skeleton-chrome-nav i,
@@ -150,7 +150,7 @@
             .smg-page-skeleton-chrome-actions i { display: block; width: 24px; height: 24px; border-radius: 50%; }
             .smg-page-skeleton-chrome-actions i:last-child { width: 34px; height: 34px; }
             .smg-page-skeleton-main {
-                width: var(--smg-cw, 80%); min-height: calc(100vh - 62px); min-height: calc(100dvh - 62px);
+                width: var(--smg-cw); min-height: calc(100vh - 62px); min-height: calc(100dvh - 62px);
                 margin: 0 auto; padding: 26px 0 64px;
             }
             .smg-page-skeleton-header { display: flex; align-items: center; gap: 16px; min-height: 94px; padding: 20px 0 16px; border-bottom: 1px solid rgba(255,255,255,0.10); }
@@ -239,7 +239,7 @@
                     position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
                     display: flex; align-items: center; justify-content: space-around; gap: 2px;
                     height: calc(54px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom);
-                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
                 }
                 .smg-page-skeleton-bottom-nav i {
                     display: block; width: 22px; height: 22px; border-radius: 7px;

@@ -33,13 +33,13 @@
                 --smg-s3: hsl(0 0% 22%);
             }
             /* ACENTO do tema, POR SITE: VERDE no SimpCity, ROSA no SocialMediaGirls. Usa o linkColor real do
-               fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link, ...) passa a seguir isto. */
+               fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link) passa a seguir isto. */
             html.smg-sc  { --smg-link: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%)); --smg-link-soft: hsla(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%), 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), 38%); }
             /* SMG: rosa institucional da marca (#ff3d84 / hue 334) */
             html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 85%, 68%, 0.12); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 75%, 52%); }
             /* O tema do SMG pinta .block-container de rosa (#ff77b2). A superfície do script é neutra. */
             html.smg-smg .block-container {
-                background: var(--smg-s1, #222) !important;
+                background: var(--smg-s1) !important;
                 color: #fff !important;
             }
             /* SMG: o tema pinta a página de cinza-azulado. A superfície do script é cinza neutro. */
@@ -60,7 +60,7 @@
             html.smg-smg .p-header,
             html.smg-smg .p-sectionLinks,
             html.smg-smg .p-footer {
-                background-color: var(--smg-bg, #1a1a1a) !important;
+                background-color: var(--smg-bg) !important;
                 border-color: rgba(255,255,255,0.06) !important;
             }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */

@@ -618,13 +618,13 @@
                 --smg-s3: hsl(0 0% 22%);
             }
             /* ACENTO do tema, POR SITE: VERDE no SimpCity, ROSA no SocialMediaGirls. Usa o linkColor real do
-               fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link, ...) passa a seguir isto. */
+               fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link) passa a seguir isto. */
             html.smg-sc  { --smg-link: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%)); --smg-link-soft: hsla(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), var(--xf-linkColor--l, 50%), 0.10); --smg-link-strong: hsl(var(--xf-linkColor--h, 145), var(--xf-linkColor--s, 58%), 38%); }
             /* SMG: rosa institucional da marca (#ff3d84 / hue 334) */
             html.smg-smg { --smg-link: hsl(var(--xf-linkColor--h, 334), 85%, 68%); --smg-link-soft: hsla(var(--xf-linkColor--h, 334), 85%, 68%, 0.12); --smg-link-strong: hsl(var(--xf-linkColor--h, 334), 75%, 52%); }
             /* O tema do SMG pinta .block-container de rosa (#ff77b2). A superfície do script é neutra. */
             html.smg-smg .block-container {
-                background: var(--smg-s1, #222) !important;
+                background: var(--smg-s1) !important;
                 color: #fff !important;
             }
             /* SMG: o tema pinta a página de cinza-azulado. A superfície do script é cinza neutro. */
@@ -645,7 +645,7 @@
             html.smg-smg .p-header,
             html.smg-smg .p-sectionLinks,
             html.smg-smg .p-footer {
-                background-color: var(--smg-bg, #1a1a1a) !important;
+                background-color: var(--smg-bg) !important;
                 border-color: rgba(255,255,255,0.06) !important;
             }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
@@ -850,7 +850,7 @@
                 text-align: center !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-justified-grid > * {
-                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h, 320px) * var(--smg-ratio, 1)) !important;
+                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h) * var(--smg-ratio, 1)) !important;
                 min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;
                 max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 max-width: 100% !important;
@@ -1024,7 +1024,7 @@
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
             .smg-gallery-close { width: auto !important; border-radius: 20px !important; padding: 0 15px !important; gap: 8px; }
             .smg-gallery-close-label { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
-            .smg-gallery-close:hover { background: var(--smg-link, #ff77b2) !important; border-color: var(--smg-link, #ff77b2) !important; }
+            .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
             /* SCROLLER vertical · as colunas crescem pra baixo (altura auto) — sem scroll horizontal */
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio masonry (anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 8px 14px 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
@@ -1051,7 +1051,7 @@
             .smg-gallery-max:hover { background: rgba(0,0,0,0.82); }
             .smg-gallery-tile--embed:hover .smg-gallery-max { opacity: 1; }
             @media (hover: none) { .smg-gallery-max { opacity: 1; } }
-            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link, #ff77b2); outline-offset: -2px; }
+            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: rgba(255,255,255,0.5); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 12px; border-radius: 10px; overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
@@ -1118,7 +1118,7 @@
                 /* Herda a proporção de grade --smg-grid-img-ph assim que o 1º item resolve, ou fallback --smg-img-ph */
                 aspect-ratio: var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13));
                 object-fit: cover;
-                background-color: var(--smg-s2, rgba(255,255,255,0.05));
+                background-color: var(--smg-s2);
                 border-radius: 8px;
             }
             @keyframes smg-img-shimmer { 0% { background-position: 160% 0; } 100% { background-position: -160% 0; } }
@@ -1127,12 +1127,12 @@
             /* fallback de imagem que não renderiza (jpg6.su/jpg5 & afins fora do ar) → chip de link clicável */
             /* CHIP de link solto: mesmo idioma visual dos cards (borda, raio, tipografia), só que numa
                linha — antes era uma caixa alta, com fonte grande e a URL quebrada no meio da palavra. */
-            .smg-imglink-fallback { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin: 3px 0; padding: 5px 10px; border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)); border-radius: 9px; background: var(--smg-s1, #16171b); color: var(--smg-tx, #e7e7ea) !important; font-size: 12.5px; font-weight: 500; text-decoration: none !important; vertical-align: middle; }
+            .smg-imglink-fallback { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin: 3px 0; padding: 5px 10px; border: 1px solid var(--smg-bd); border-radius: 9px; background: var(--smg-s1); color: var(--smg-tx) !important; font-size: 12.5px; font-weight: 500; text-decoration: none !important; vertical-align: middle; }
             .smg-imglink-fallback::before { content: "🔗"; font-size: 12px; opacity: 0.7; flex: 0 0 auto; }
             .smg-imglink-fallback.smg-has-fav::before { content: none; }   /* achamos o ícone do site → dispensa o emoji */
             .smg-linkfav { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 4px; object-fit: contain; }
             .smg-linktext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-imglink-fallback:hover { background: var(--smg-s2, rgba(255,255,255,0.06)); border-color: var(--smg-bd2, rgba(255,255,255,0.2)); color: var(--smg-link, #ff77b2) !important; }
+            .smg-imglink-fallback:hover { background: var(--smg-s2); border-color: var(--smg-bd2); color: var(--smg-link) !important; }
 
             /* card de link de file-host (pixeldrain/bunkr/gofile): estilo limpo, escuro e neutro */
             .smg-fhcard {
@@ -1145,13 +1145,13 @@
                 padding: 8px 12px;
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 border-radius: 12px;
-                background: var(--smg-s1, #1b1b1b);
+                background: var(--smg-s1);
                 box-shadow: 0 2px 6px rgba(0,0,0,0.25);
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
             }
             .smg-fhcard:hover {
                 border-color: rgba(255, 255, 255, 0.25);
-                background: var(--smg-s2, #232323);
+                background: var(--smg-s2);
                 box-shadow: 0 4px 14px rgba(0,0,0,0.35);
             }
             .smg-fhcard-main {
@@ -1163,7 +1163,7 @@
                 padding: 4px;
                 border-radius: 8px;
                 text-decoration: none !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 filter: none !important;
                 transition: opacity .15s ease;
             }
@@ -1201,10 +1201,10 @@
             .smg-fhcard-btn svg { width: 17px; height: 17px; }
             .smg-fhcard-copied { color: #46d369 !important; }
             /* preview RICO: mosaico de até 4 thumbs + badge de contagem + "+N" no último */
-            .smg-fhcard-thumb { position: relative; flex: 0 0 auto; width: 96px; height: 96px; border-radius: 11px; overflow: hidden; background: var(--smg-s2, rgba(255,255,255,0.06)); }
+            .smg-fhcard-thumb { position: relative; flex: 0 0 auto; width: 96px; height: 96px; border-radius: 11px; overflow: hidden; background: var(--smg-s2); }
             .smg-fhcard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
             .smg-fhcard-thumb--multi { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
-            .smg-fhcard-cell { position: relative; overflow: hidden; background: var(--smg-s2, rgba(255,255,255,0.06)); }
+            .smg-fhcard-cell { position: relative; overflow: hidden; background: var(--smg-s2); }
             .smg-fhcard-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.56); color: #fff; font-size: 16px; font-weight: 800; }
             .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 999px; background: rgba(0,0,0,0.66); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
             .smg-fhcard-count svg { width: 12px; height: 12px; fill: none !important; }
@@ -1216,7 +1216,7 @@
             .smg-fhcard-thumb--logo, .smg-fhcard-thumb--letter { width: 54px; height: 54px; border-radius: 10px; }
             .smg-fhcard-thumb--logo { display: flex; align-items: center; justify-content: center; }
             .smg-fhcard-thumb--logo img.smg-fhcard-logo { width: 30px; height: 30px; object-fit: contain; }
-            .smg-fhcard-thumb--letter { display: flex; align-items: center; justify-content: center; font: 800 22px/1 -apple-system, system-ui, "Segoe UI", sans-serif; color: #fff; background: linear-gradient(135deg, var(--smg-link-strong, #d14d8f), var(--smg-link, #ff77b2)); }
+            .smg-fhcard-thumb--letter { display: flex; align-items: center; justify-content: center; font: 800 22px/1 -apple-system, system-ui, "Segoe UI", sans-serif; color: #fff; background: linear-gradient(135deg, var(--smg-link-strong), var(--smg-link)); }
             .smg-fhcard-thumb--instagram {
                 background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important;
                 display: flex !important;
@@ -1251,8 +1251,8 @@
                 height: 13px !important;
             }
             .smg-fhcard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
-            .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link, #ff77b2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
-            .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx, #e7e7ea); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
+            .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-fhcard-sub { font-size: 12px; color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* DENTRO DE LISTA/TABELA: uma linha por item. O card cheio (tile de 96px) repetido em cada
                <li> de uma lista de 80 links viraria uma página quilométrica — aqui ele vira uma pílula. */
@@ -1268,7 +1268,7 @@
             /* título e host na MESMA linha (o sub vira sufixo discreto): duas linhas por item dobravam a
                altura da lista sem acrescentar nada — o host já aparece no ícone. */
             .smg-fhcard--inline .smg-fhcard-body { flex-direction: row; align-items: baseline; gap: 7px; }
-            .smg-fhcard--inline .smg-fhcard-platform { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link, #ff77b2); flex: 0 0 auto; }
+            .smg-fhcard--inline .smg-fhcard-platform { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link); flex: 0 0 auto; }
             .smg-fhcard--inline .smg-fhcard-host { font-size: 13px; font-weight: 600; flex: 0 1 auto; }
             .smg-fhcard--inline .smg-fhcard-sub { font-size: 10.5px; flex: 0 0 auto; opacity: 0.75; }
             .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: 7px; }
@@ -1313,11 +1313,11 @@
                 max-width: 100% !important;
                 margin: 14px 0 !important;
                 padding: 16px 18px !important;
-                background: var(--smg-s1, #16171b) !important;
+                background: var(--smg-s1) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
                 border-radius: 16px !important;
                 box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
                 box-sizing: border-box !important;
             }
@@ -1333,7 +1333,7 @@
                 border-radius: 50% !important;
                 overflow: hidden !important;
                 flex-shrink: 0 !important;
-                background: var(--smg-s2, rgba(255,255,255,0.06)) !important;
+                background: var(--smg-s2) !important;
             }
             .smg-tw-avatar img {
                 width: 100% !important;
@@ -1351,7 +1351,7 @@
             .smg-tw-name {
                 font-weight: 700 !important;
                 font-size: 14.5px !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
                 white-space: nowrap !important;
@@ -1362,7 +1362,7 @@
             }
             .smg-tw-user {
                 font-size: 12.5px !important;
-                color: var(--smg-tx2, rgba(255,255,255,0.5)) !important;
+                color: var(--smg-tx2) !important;
                 text-decoration: none !important;
             }
             .smg-tw-xlogo {
@@ -1384,7 +1384,7 @@
                 word-break: break-word !important;
                 white-space: pre-wrap !important;
                 margin-bottom: 12px !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
             }
             .smg-tw-media {
                 position: relative !important;
@@ -1472,7 +1472,7 @@
                 padding-top: 10px !important;
                 border-top: 1px solid rgba(255,255,255,0.08) !important;
                 font-size: 12px !important;
-                color: var(--smg-tx2, rgba(255,255,255,0.5)) !important;
+                color: var(--smg-tx2) !important;
             }
             .smg-tw-stats {
                 display: flex !important;
@@ -1483,7 +1483,7 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 gap: 4px !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: none !important;
                 font-weight: 600 !important;
             }
@@ -1535,7 +1535,7 @@
                 max-height: none !important;
                 height: auto !important;
             }
-            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1, #16171b); }
+            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1); }
             /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
             html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
@@ -1855,8 +1855,8 @@
                 padding: 10px 16px !important;
                 border: 1px solid rgba(255, 75, 75, 0.32) !important;
                 border-radius: 10px !important;
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1, #16171b) !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
+                color: var(--smg-tx) !important;
                 text-align: left !important;
                 text-decoration: none !important;
                 overflow: hidden !important;
@@ -1866,7 +1866,7 @@
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
             }
             .smg-dead:hover {
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2, #202127) !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2) !important;
                 border-color: rgba(255, 95, 95, 0.55) !important;
                 box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
             }
@@ -1906,7 +1906,7 @@
             }
             /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
             html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
-                background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                background-color: var(--smg-s2) !important;
                 border-radius: 8px !important;
                 position: relative !important;
                 min-height: 120px;
@@ -1946,10 +1946,10 @@
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
-                color: color-mix(in srgb, var(--smg-link, #ff77b2) 42%, #e9e9ec) !important;
+                color: color-mix(in srgb, var(--smg-link) 42%, #e9e9ec) !important;
                 font-weight: 500;
                 text-decoration: underline !important;
-                text-decoration-color: color-mix(in srgb, var(--smg-link, #ff77b2) 55%, transparent) !important;
+                text-decoration-color: color-mix(in srgb, var(--smg-link) 55%, transparent) !important;
                 text-underline-offset: 3px !important;
                 text-decoration-thickness: 1px !important;
                 transition: color .15s ease, text-decoration-color .15s ease;
@@ -1987,7 +1987,7 @@
                 margin: -23px 0 0 -23px;
                 border-radius: 50%;
                 border: 3px solid rgba(255,255,255,0.2);
-                border-top-color: var(--smg-link, #ff77b2);
+                border-top-color: var(--smg-link);
                 animation: smg-spin 0.8s linear infinite;
                 z-index: 5;
                 pointer-events: none;
@@ -2017,8 +2017,8 @@
                 font-size: 12.5px; font-weight: 600; text-decoration: none !important;
                 cursor: pointer; transition: background .15s ease, color .15s ease;
             }
-            .smg-rg-error-btn--open { background: var(--smg-link, #ff77b2); color: #fff !important; border: 0; }
-            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong, #d14d8f); }
+            .smg-rg-error-btn--open { background: var(--smg-link); color: #fff !important; border: 0; }
+            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
             .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
             .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
@@ -2060,8 +2060,8 @@
             .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: rgba(255,255,255,0.28); border-radius: 3px; transition: height 0.1s ease; }
             .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
             .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,0.30); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link, #ff77b2); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link, #ff77b2); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
+            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: 3px; pointer-events: none; }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
             .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
             /* LINHA de controles */
             .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 1px 4px 2px; }
@@ -2079,7 +2079,7 @@
                 height: 24px; min-width: 32px; padding: 0 6px;
                 border: 0; border-radius: 6px; cursor: pointer;
                 background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92);
-                font: 700 11.5px/1 var(--smg-mono, -apple-system, monospace);
+                font: 700 11.5px/1 var(--smg-mono);
                 letter-spacing: -0.2px;
                 display: flex; align-items: center; justify-content: center;
                 transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
@@ -2087,7 +2087,7 @@
             }
             .smg-rgc-speed:hover { background: rgba(255,255,255,0.24); color: #fff; }
             .smg-rgc-speed:active { transform: scale(0.92); }
-            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac, #ff77b2); color: #fff; font-weight: 800; }
+            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac); color: #fff; font-weight: 800; }
             /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
             .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
@@ -2236,14 +2236,14 @@
                keep our already-built topbar/dock visible because they are stable custom chrome. */
             #smg-home-skeleton {
                 position: fixed; inset: 0; z-index: 1000; min-height: 100vh; min-height: 100dvh; overflow: hidden; pointer-events: none;
-                background: var(--smg-bg, #101113); visibility: visible;
+                background: var(--smg-bg); visibility: visible;
             }
-            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w, 360px); }
+            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w); }
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
             .smg-home-skeleton-topbar {
                 display: flex; align-items: center; justify-content: space-between; gap: 24px;
-                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
-                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
+                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
             }
             .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: 8px; }
             .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: 30px; margin-left: auto; }
@@ -2266,7 +2266,7 @@
             .smg-home-skeleton-topbar-actions i { display: block; width: 24px; height: 24px; border-radius: 50%; }
             .smg-home-skeleton-topbar-actions i:last-child { width: 34px; height: 34px; }
             .smg-home-skeleton-main {
-                width: var(--smg-cw, 80%); margin: 0 auto; padding: 16px 0 44px;
+                width: var(--smg-cw); margin: 0 auto; padding: 16px 0 44px;
             }
             .smg-home-skeleton-notices {
                 margin-bottom: 22px; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
@@ -2376,7 +2376,7 @@
                     position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
                     display: flex; align-items: center; justify-content: space-around; gap: 2px;
                     height: calc(54px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom);
-                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
                 }
                 .smg-home-skeleton-bottom-nav i {
                     position: relative; display: block; width: 22px; height: 22px; border-radius: 7px; overflow: hidden;
@@ -2406,7 +2406,7 @@
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
             html.smg-home .smg-feed-block {
                 margin: 28px 0 46px !important; padding: 18px 18px 20px;
-                background: var(--smg-s1, #16171c);
+                background: var(--smg-s1);
                 border: 1px solid rgba(255,255,255,0.08); border-radius: 22px;
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 44px -18px rgba(0,0,0,0.6);
                 overflow: visible;
@@ -2463,15 +2463,15 @@
                 width: var(--smg-feed-card-w) !important; min-width: var(--smg-feed-card-w) !important; max-width: var(--smg-feed-card-w) !important;
                 height: auto !important; aspect-ratio: 3 / 4 !important; scroll-snap-align: start;
                 display: block; border-radius: 18px; overflow: hidden;
-                background: var(--smg-s2, #18191f); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
+                background: var(--smg-s2); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
                 box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
                 transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), border-color .2s ease, box-shadow .2s ease;
             }
             html.smg-home .smg-feed-card:hover {
                 transform: translateY(-6px); border-color: rgba(255,255,255,0.22);
-                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft, rgba(255,119,178,0.22));
+                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft);
             }
-            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2, #18191f); overflow: hidden; display: block; }
+            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
             html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
@@ -2514,8 +2514,8 @@
             html.smg-home .smg-feed-loading { width: 100%; padding: 40px; text-align: center; color: rgba(255,255,255,0.45); font-size: 13px; }
             /* skeletons de loading */
             html.smg-home .smg-feed-skel { pointer-events: none; }
-            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2, #18191f); }
-            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2, #18191f); }
+            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2); }
+            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2); }
             html.smg-home .smg-skel-line { height: 11px; border-radius: 5px; margin-bottom: 7px; }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: 5px; margin-bottom: 0; }
@@ -2579,9 +2579,9 @@
                 color: rgba(255,255,255,0.5); margin-left: 10px;
             }
             html.smg-smg.smg-home .smg-hub-badge {
-                background: var(--smg-link-soft, rgba(255, 61, 132, 0.12));
+                background: var(--smg-link-soft);
                 border-color: rgba(255, 61, 132, 0.25);
-                color: var(--smg-link, #ff3d84);
+                color: var(--smg-link);
             }
 
             html.smg-home .block--category .block-body,
@@ -2606,7 +2606,7 @@
                 cursor: pointer;
                 border: 1px solid rgba(255,255,255,0.07) !important;
                 border-radius: 14px !important;
-                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1) !important;
                 overflow: hidden !important;
                 min-height: 64px !important;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
@@ -2619,7 +2619,7 @@
             html.smg-home .block--category .node:hover {
                 transform: translateY(-2px) !important;
                 border-color: rgba(255,255,255,0.18) !important;
-                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2, #181920) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2) !important;
                 box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
 
@@ -2700,7 +2700,7 @@
                 text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
             }
             html.smg-smg.smg-home .smg-hub-divider-text {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
 
             /* Últimos posts (.node-extra) à direita no layout de lista */
@@ -2738,24 +2738,24 @@
                 line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
             }
             html.smg-home .node-title a:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
             html.smg-home .node-title .uix_newIndicator {
                 margin-left: 8px !important;
                 font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.04em !important;
                 text-transform: uppercase !important; padding: 1.5px 6px !important; border-radius: 5px !important;
                 line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
-                background: var(--smg-link-soft, rgba(255, 61, 132, 0.15)) !important;
-                color: var(--smg-link, #ff3d84) !important;
-                border: 1px solid var(--smg-link-soft, rgba(255, 61, 132, 0.3)) !important;
+                background: var(--smg-link-soft) !important;
+                color: var(--smg-link) !important;
+                border: 1px solid var(--smg-link-soft) !important;
             }
             html.smg-home .node-extra:hover .node-extra-title,
             html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-smg.smg-home .node-extra-title:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
             html.smg-home .node-extra .listInline {
                 display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
@@ -2947,7 +2947,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {
@@ -3054,7 +3054,7 @@
                 font-size: 14.5px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
                 transition: background .14s ease, color .14s ease, height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft, rgba(255,255,255,0.09)); color: #fff; }
+            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft); color: #fff; }
             @media (min-width: 801px) {
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 12px; font-size: 14px; }
             }
@@ -3071,7 +3071,7 @@
                 cursor: pointer; text-decoration: none;
                 transition: background .14s ease, color .14s ease, width .22s cubic-bezier(0.16, 1, 0.3, 1), height .22s cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-act:hover { background: var(--smg-link-soft, rgba(255,255,255,0.1)); color: #fff; }
+            .smg-tb-act:hover { background: var(--smg-link-soft); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
             @media (min-width: 801px) {
                 #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
@@ -3085,7 +3085,7 @@
                 transition: background .15s ease, border-color .15s ease;
             }
             .smg-tb-search:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
-            .smg-tb-search:focus-within { background: rgba(255,255,255,0.09); border-color: var(--smg-link, #ff77b2); }   /* foco na cor do tema */
+            .smg-tb-search:focus-within { background: rgba(255,255,255,0.09); border-color: var(--smg-link); }   /* foco na cor do tema */
             /* ===== experimento: nav CENTRAL + search como OVERLAY que ocupa a topbar ===== */
             .smg-tb-center--nav { justify-content: center; }
             .smg-tb-center--nav .smg-tb-nav { gap: 4px; }
@@ -3115,7 +3115,7 @@
             .smg-search-clear svg { width: 14px; height: 14px; fill: none !important; }
             .smg-search-clear[hidden] { display: none !important; }
             /* SEARCH: chip de contexto (Reddit-style) + tooltip de comandos — valem na barra da topbar E no modal da dock */
-            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; max-width: 42%; margin-right: 2px; padding: 4px 5px 4px 11px; border: 0; border-radius: 9px; background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: 2; }
+            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; max-width: 42%; margin-right: 2px; padding: 4px 5px 4px 11px; border: 0; border-radius: 9px; background: var(--smg-link-soft); color: var(--smg-link); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: 2; }
             .smg-tb-search-chip[hidden], .smg-search-chip[hidden] { display: none !important; }   /* o display:inline-flex de autor vencia o [hidden] do browser → chip vazio aparecia fora de tópico/fórum */
             .smg-search-chip-k { flex: 0 0 auto; padding: 1px 6px; border-radius: 5px; background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.78); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }   /* tag TÓPICO/FÓRUM antes do nome */
             .smg-search-chip-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3124,18 +3124,18 @@
             .smg-search-chip-x svg { width: 12px; height: 12px; fill: none !important; }
             .smg-search-tabkey { flex: 0 0 auto; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); font: 600 12px/1.4 -apple-system, system-ui, sans-serif; }
             /* paleta de comandos (Tab) */
-            .smg-search-cmd { position: fixed; z-index: 2147483647; display: none; flex-direction: column; gap: 1px; width: 280px; max-width: calc(100vw - 16px); padding: 6px; border-radius: 12px; background: var(--smg-s1, #1c1d22); border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)); box-shadow: 0 12px 34px rgba(0,0,0,0.6); }
+            .smg-search-cmd { position: fixed; z-index: 2147483647; display: none; flex-direction: column; gap: 1px; width: 280px; max-width: calc(100vw - 16px); padding: 6px; border-radius: 12px; background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: 0 12px 34px rgba(0,0,0,0.6); }
             .smg-search-cmd.open { display: flex; }
             .smg-search-cmd-head { padding: 4px 8px 6px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); }
-            .smg-search-cmd-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--smg-tx, #e7e7ea); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
-            .smg-search-cmd-item:hover, .smg-search-cmd-item.sel { background: var(--smg-link-soft, rgba(255,119,178,0.14)); }
-            .smg-search-cmd-item code { flex: 0 0 auto; min-width: 46px; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--smg-link, #ff77b2); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
-            .smg-search-cfg-portal { position: fixed; z-index: 2147483647; display: none; flex-direction: column; gap: 1px; min-width: 244px; max-width: 320px; padding: 7px; border-radius: 12px; background: var(--smg-s1, #1c1d22); border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)); box-shadow: 0 12px 34px rgba(0,0,0,0.6); }
+            .smg-search-cmd-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--smg-tx); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+            .smg-search-cmd-item:hover, .smg-search-cmd-item.sel { background: var(--smg-link-soft); }
+            .smg-search-cmd-item code { flex: 0 0 auto; min-width: 46px; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
+            .smg-search-cfg-portal { position: fixed; z-index: 2147483647; display: none; flex-direction: column; gap: 1px; min-width: 244px; max-width: 320px; padding: 7px; border-radius: 12px; background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: 0 12px 34px rgba(0,0,0,0.6); }
             .smg-search-cfg-portal.open { display: flex; }
             .smg-search-cfg-head { padding: 4px 8px 6px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); }
-            .smg-search-cfg-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-size: 13.5px; color: var(--smg-tx, #e7e7ea); cursor: pointer; }
+            .smg-search-cfg-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-size: 13.5px; color: var(--smg-tx); cursor: pointer; }
             .smg-search-cfg-row:hover { background: rgba(255,255,255,0.06); }
-            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link, #ff77b2); cursor: pointer; }
+            .smg-search-cfg-row input { flex: 0 0 auto; width: 16px; height: 16px; accent-color: var(--smg-link); cursor: pointer; }
             @media (max-width: 600px) { .smg-search-bar { gap: 6px; } .smg-search-kbd { display: none; } }   /* mobile: sem o badge "esc" (touch) + barra mais apertada com os ícones */
             @media (max-width: 600px) { .smg-tb-search--overlay, html.smg-search-open .smg-tb-search--overlay { display: none !important; } }   /* mobile usa o modal da dock, não o overlay da topbar */
             .smg-tb-search-ico { display: inline-flex; align-items: center; flex: 0 0 auto; }
@@ -3161,7 +3161,7 @@
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px;
                 transition: background .14s ease;
             }
-            .smg-tb-account:hover { background: var(--smg-link-soft, rgba(255,255,255,0.1)); }
+            .smg-tb-account:hover { background: var(--smg-link-soft); }
             .smg-tb-account img { width: 100%; height: 100%; object-fit: cover; }
             .smg-tb-account .avatar,
             .smg-tb-account > img {
@@ -3181,7 +3181,7 @@
             .smg-tb-loginbtn {
                 display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 15px; flex: 0 0 auto;
                 border-radius: 10px; border: 0; white-space: nowrap;
-                background: var(--smg-link-strong, #c2185b); color: #fff !important;
+                background: var(--smg-link-strong); color: #fff !important;
                 font-size: 14px; font-weight: 800; text-decoration: none !important;
                 transition: filter .14s ease, transform .12s ease;
             }
@@ -3206,7 +3206,7 @@
             .smg-tb-acchead { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px; font-size: 13px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 4px; }
             /* pílula com quantas NÃO-LIDAS vieram nesta busca (some quando zera) */
             .smg-tb-poprow { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 11px; text-decoration: none; color: #fff; transition: background .12s ease; }
-            .smg-tb-poprow:hover { background: var(--smg-link-soft, rgba(255,255,255,0.08)); }
+            .smg-tb-poprow:hover { background: var(--smg-link-soft); }
             .smg-tb-poprow--sm { gap: 11px; padding: 8px 10px; }
             .smg-tb-popico { flex: 0 0 auto; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
             .smg-tb-poprow--sm .smg-tb-popico { width: 28px; height: 28px; border-radius: 8px; }
@@ -3223,9 +3223,9 @@
             .smg-tb-mega-label { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,0.38); padding: 0 8px 9px; }
             .smg-tb-mega-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
             .smg-tb-megaitem { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 11px; text-decoration: none; color: #fff; transition: background .12s ease; }
-            .smg-tb-megaitem:hover { background: var(--smg-link-soft, rgba(255,255,255,0.07)); }
+            .smg-tb-megaitem:hover { background: var(--smg-link-soft); }
             .smg-tb-megaico { flex: 0 0 auto; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.82); transition: background .14s ease, color .14s ease, transform .14s ease; }
-            .smg-tb-megaitem:hover .smg-tb-megaico { background: var(--smg-link, #ff77b2); color: #fff; transform: translateY(-1px); }
+            .smg-tb-megaitem:hover .smg-tb-megaico { background: var(--smg-link); color: #fff; transform: translateY(-1px); }
             .smg-tb-megaico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-megatext { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
             .smg-tb-megatitle { font-size: 13.5px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3233,12 +3233,12 @@
             /* painel destacado à direita (promove a Timeline) */
             .smg-tb-mega-feat { flex: 0 0 226px; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; text-decoration: none; background: var(--smg-s2); border: 1px solid var(--smg-bd); transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
             .smg-tb-mega-feat:hover { border-color: var(--smg-bd2); transform: translateY(-2px); box-shadow: 0 14px 30px rgba(0,0,0,0.4); }
-            .smg-tb-mega-feat-art { height: 112px; display: flex; align-items: center; justify-content: center; color: #fff; background: radial-gradient(120% 110% at 28% 18%, var(--smg-link, #ff77b2), transparent 62%), linear-gradient(155deg, var(--smg-s3), var(--smg-s1)); }
+            .smg-tb-mega-feat-art { height: 112px; display: flex; align-items: center; justify-content: center; color: #fff; background: radial-gradient(120% 110% at 28% 18%, var(--smg-link), transparent 62%), linear-gradient(155deg, var(--smg-s3), var(--smg-s1)); }
             .smg-tb-mega-feat-art svg { width: 34px; height: 34px; fill: none !important; opacity: .95; }
             .smg-tb-mega-feat-body { padding: 13px 15px 16px; display: flex; flex-direction: column; gap: 5px; }
             .smg-tb-mega-feat-title { font-size: 15px; font-weight: 800; color: #fff; }
             .smg-tb-mega-feat-desc { font-size: 12px; line-height: 1.45; color: rgba(255,255,255,0.5); }
-            .smg-tb-mega-feat-cta { margin-top: 3px; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--smg-link, #ff77b2); }
+            .smg-tb-mega-feat-cta { margin-top: 3px; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--smg-link); }
             .smg-tb-mega-feat-cta svg { width: 14px; height: 14px; fill: none !important; }
             @media (max-width: 760px) {
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: 14px; }
@@ -3276,7 +3276,7 @@
                 padding: 12px 16px !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
                 border-radius: 14px !important;
-                background: var(--smg-s1, #1c1d22) !important;
+                background: var(--smg-s1) !important;
                 color: #fff !important;
                 box-shadow: 0 14px 36px rgba(0,0,0,0.5) !important;
                 font-size: 14px !important;
@@ -3289,7 +3289,7 @@
             /* Tooltip de bookmark: cartão, não a caixa nativa estreita. */
             .tooltip--bookmark { z-index: 1000005 !important; max-width: min(380px, calc(100vw - 24px)) !important; }
             .tooltip--bookmark .tooltip-content {
-                background: var(--smg-s1, #1c1d22) !important;
+                background: var(--smg-s1) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
                 border-radius: 16px !important;
                 box-shadow: 0 18px 48px rgba(0,0,0,0.55) !important;
@@ -3324,7 +3324,7 @@
                 min-height: 36px;
             }
             .tooltip--bookmark .button--primary {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 border-color: transparent !important;
                 color: #fff !important;
             }
@@ -3365,7 +3365,7 @@
                 bottom: 6px !important;
                 width: 3px !important;
                 border-radius: 0 3px 3px 0 !important;
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
             }
             .notice-content {
                 flex: 1 1 auto !important;
@@ -3378,7 +3378,7 @@
                 font-size: 13px !important;
             }
             .notice-content a {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 600 !important;
                 text-decoration: underline !important;
                 text-underline-offset: 2px !important;
@@ -3436,7 +3436,7 @@
             .smg-notices-collapse {
                 margin: 16px 0 !important;
                 border-radius: 14px !important;
-                background: var(--smg-s1, #1a1a1a) !important;
+                background: var(--smg-s1) !important;
                 border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
                 overflow: hidden !important;
@@ -3468,7 +3468,7 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-size: 16px !important;
                 flex-shrink: 0 !important;
             }
@@ -3488,7 +3488,7 @@
                 border-radius: 999px !important;
                 font-size: 11px !important;
                 font-weight: 700 !important;
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
                 line-height: 1 !important;
             }
@@ -3583,7 +3583,7 @@
                 color: rgba(255, 255, 255, 0.88) !important;
             }
             .smg-notices-item-content a {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 600 !important;
                 text-decoration: underline !important;
                 text-underline-offset: 2px !important;
@@ -3677,7 +3677,7 @@
             }
             .smg-csheet-idtxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
             .smg-csheet-idtxt strong { font-size: 19px; font-weight: 800; line-height: 1.2; }
-            .smg-csheet-idtxt span { font-size: 13px; font-weight: 600; color: var(--smg-link, #ff77b2); }
+            .smg-csheet-idtxt span { font-size: 13px; font-weight: 600; color: var(--smg-link); }
             .smg-csheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; font-size: 15px; font-weight: 700; color: #fff; }
             .smg-csheet-head a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); text-decoration: none; }
             .smg-csheet-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }   /* contain = chegar no fim da lista não "vaza" o scroll pro fundo */
@@ -3701,10 +3701,10 @@
                 transition: border-color .15s ease, background .15s ease, color .15s ease;
             }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon svg { width: 24px; height: 24px; }
-            .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link, #ff77b2); }
+            .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link); }
             /* não-lida: o ícone ganha a tinta do tema (o card inteiro fica mais "vivo" que as lidas) */
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread .smg-al-icon {
-                background: var(--smg-link-soft, rgba(255,119,178,0.16)); border-color: rgba(255,255,255,0.14); color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft); border-color: rgba(255,255,255,0.14); color: var(--smg-link);
             }
             /* FOTO da thread no lugar do glifo (quando o cache de thumbs conhece a thread do alerta):
                mesma caixa, então trocar o glifo pela imagem não desloca uma linha sequer. */
@@ -3740,10 +3740,10 @@
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow { background: transparent !important; box-shadow: none !important; }
             .smg-tb-listbody .smg-alert-clean li.alert:hover { background: rgba(255,255,255,0.055) !important; }
             /* NÃO-LIDA: tinta suave do tema + faixa de 3px na borda esquerda (marcador claro, sem poluir) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft, rgba(255,255,255,0.05)) !important; }
+            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft) !important; }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread::before {
                 content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px;
-                border-radius: 0 3px 3px 0; background: var(--smg-link, #ff77b2);
+                border-radius: 0 3px 3px 0; background: var(--smg-link);
             }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread:hover { box-shadow: inset 0 0 0 999px rgba(255,255,255,0.05) !important; }
             /* JÁ VISTAS: bem apagadas (o olho vai direto nas novas) — o hover devolve o contraste inteiro */
@@ -3800,11 +3800,11 @@
                 display: inline-flex; align-items: center; justify-content: center; transition: background .15s ease;
             }
             .smg-al-read::before {
-                content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--smg-link, #ff77b2);
+                content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--smg-link);
                 line-height: 1; font-size: 0; font-weight: 800; transition: background .12s ease;
             }
             .smg-al-read:hover { background: rgba(255,255,255,0.12); }
-            .smg-al-read:hover::before { content: "✓"; width: auto; height: auto; background: transparent; font-size: 17px; color: var(--smg-link, #ff77b2); }
+            .smg-al-read:hover::before { content: "✓"; width: auto; height: auto; background: transparent; font-size: 17px; color: var(--smg-link); }
             .smg-al-read:active { transform: scale(0.88); }
             .smg-al-read-txt { display: none; }   /* texto só no mobile (sheet) */
             html.smg-smg .smg-al-read::before { width: 8px; height: 8px; }   /* badge um pouco menor no socialmediagirls */
@@ -4062,7 +4062,7 @@
             .smg-sheet-ico svg { width: 1em; height: 1em; fill: none !important; }
             .smg-sheet-item:active .smg-sheet-ico { transform: scale(0.9); background: rgba(255,255,255,0.14); }
             /* estado ativo — espelha o .smg-active do dock (watch on, filtro on, etc.) */
-            .smg-sheet-item.smg-active .smg-sheet-ico { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }
+            .smg-sheet-item.smg-active .smg-sheet-ico { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-sheet-lbl { font-size: 10.5px; line-height: 1.2; text-align: center; color: rgba(255,255,255,0.7); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
             /* ---- dock: botões circulares (icon-only) ---- */
@@ -4405,7 +4405,7 @@
                 height: 22px !important;
                 border-width: 2.5px !important;
                 border-color: rgba(255,255,255,0.15) !important;
-                border-top-color: var(--smg-link, #ff77b2) !important;
+                border-top-color: var(--smg-link) !important;
             }
             .smg-search-results[hidden],
             .smg-search-empty[hidden],
@@ -4433,7 +4433,7 @@
                 flex-shrink: 0 !important;
                 overflow: visible !important;
             }
-            .smg-search-bar:focus-within { border-color: var(--smg-link, #ff77b2); background: rgba(255,255,255,0.07); }   /* foco na cor do tema = mesmo focus da pílula da topbar */
+            .smg-search-bar:focus-within { border-color: var(--smg-link); background: rgba(255,255,255,0.07); }   /* foco na cor do tema = mesmo focus da pílula da topbar */
             .smg-search-lupa { flex: 0 0 auto; display: flex; align-items: center; color: rgba(255,255,255,0.5); }
             .smg-search-lupa svg { width: 20px; height: 20px; fill: none; }
             .smg-search-input {
@@ -4512,8 +4512,8 @@
                 color: #fff;
             }
             .smg-search-select-wrap select:focus {
-                border-color: var(--smg-link, #ff77b2);
-                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                border-color: var(--smg-link);
+                box-shadow: 0 0 0 1px var(--smg-link);
             }
             .smg-search-select-wrap select option {
                 background: #18181b;
@@ -4540,9 +4540,9 @@
                 color: #fff;
             }
             .smg-search-author-trigger.has-value {
-                background: var(--smg-link-soft, rgba(255,119,178,0.18));
-                border-color: var(--smg-link, #ff77b2);
-                color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft);
+                border-color: var(--smg-link);
+                color: var(--smg-link);
             }
             .smg-search-author-trigger svg {
                 width: 15px;
@@ -4561,9 +4561,9 @@
                 box-sizing: border-box;
                 border-radius: 9px;
                 background: rgba(255,255,255,0.07);
-                border: 1px solid var(--smg-link, #ff77b2);
+                border: 1px solid var(--smg-link);
                 padding: 0 8px 0 10px;
-                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                box-shadow: 0 0 0 1px var(--smg-link);
                 transition: all .15s ease;
             }
             .smg-search-author-row[hidden] {
@@ -4573,7 +4573,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: var(--smg-link, #ff77b2);
+                color: var(--smg-link);
                 flex-shrink: 0;
             }
             .smg-search-author-row .smg-search-author-ic svg {
@@ -4709,8 +4709,8 @@
                 color: #fff;
             }
             .smg-search-global-toolbar .smg-multiselect-btn.has-active {
-                background: var(--smg-link-soft, rgba(255,119,178,0.18));
-                border-color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft);
+                border-color: var(--smg-link);
                 color: #fff;
             }
 
@@ -4755,7 +4755,7 @@
                 box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch {
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch::before {
                 transform: translateX(14px);
@@ -4890,7 +4890,7 @@
             }
             .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
             .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
-            .smg-search-cfg.open { background: var(--smg-link-soft, rgba(255,119,178,0.18)); border-color: var(--smg-link, #ff77b2); color: var(--smg-link, #ff77b2); }
+            .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
             .smg-search-adv svg, .smg-search-cfg svg, .smg-search-close svg { width: 16px; height: 16px; fill: none !important; }
             .smg-search-kbd { cursor: default; font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.4); }
             .smg-search-foot { display: none; }   /* rodapé (botão "Search") removido: digitar já busca (debounce) + "See all results" + Enter; o botão é redundante. Desktop já escondia; agora some no mobile tb. */
@@ -4955,8 +4955,8 @@
             html.smg-search-page .block-row .contentRow-title .prefix,
             html.smg-search-page .block-row .contentRow-title .labelLink { overflow: visible !important; vertical-align: middle !important; }
             html.smg-search-page .block-row .contentRow-title a { color: #fff !important; text-decoration: none !important; }
-            html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link, #ff77b2) !important; }
-            html.smg-search-page .block-row .textHighlight { color: var(--smg-link, #ff77b2) !important; font-style: normal !important; background: none !important; }
+            html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link) !important; }
+            html.smg-search-page .block-row .textHighlight { color: var(--smg-link) !important; font-style: normal !important; background: none !important; }
             /* snippet: no máx 2 linhas, texto suave (URL crua não estoura o card) */
             html.smg-search-page .block-row .contentRow-snippet {
                 font-size: 13px !important; line-height: 1.5 !important; color: rgba(255,255,255,0.62) !important;
@@ -5001,7 +5001,7 @@
             html.smg-search-form .block-tabHeader .tabs-tab::before { content: none !important; }
             html.smg-search-form .block-tabHeader .tabs-tab::after {   /* substitui QUALQUER indicador nativo pelo nosso sublinhado */
                 content: "" !important; position: absolute; left: 11px; right: 11px; bottom: -1px; height: 2.5px;
-                border-radius: 3px 3px 0 0; background: var(--smg-link, #ff77b2); border: 0 !important; box-shadow: none !important;
+                border-radius: 3px 3px 0 0; background: var(--smg-link); border: 0 !important; box-shadow: none !important;
                 transform: scaleX(0); transition: transform .2s ease;
             }
             html.smg-search-form .block-tabHeader .tabs-tab.is-active::after { transform: scaleX(1); }
@@ -5035,7 +5035,7 @@
                 border-radius: 11px !important; color: #fff !important; font-size: 14.5px !important; box-shadow: none !important;
             }
             html.smg-search-form form.block .input:focus, html.smg-search-form form.block .input:focus-within {
-                border-color: var(--smg-link, #ff77b2) !important; background: rgba(255,255,255,0.07) !important; outline: none !important;
+                border-color: var(--smg-link) !important; background: rgba(255,255,255,0.07) !important; outline: none !important;
             }
             html.smg-search-form form.block select.input option { background: #1b1c20; color: #fff; }
             /* tagify (Tags / Without tags): chips no padrão (o tile do chip nativo vem de um ::before com box-shadow) */
@@ -5067,7 +5067,7 @@
             }
             html.smg-search-form form.block label.iconic--radio > i { border-radius: 50% !important; }
             html.smg-search-form form.block label.iconic > i::after { position: static !important; margin: 0 !important; font-size: 11px !important; line-height: 1 !important; }
-            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong, #d14d8f) !important; border-color: var(--smg-link-strong, #d14d8f) !important; }
+            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong) !important; border-color: var(--smg-link-strong) !important; }
             html.smg-search-form form.block label.iconic input:checked + i::after { color: #fff !important; }
             /* Order by (Relevance/Date): radios na HORIZONTAL */
             html.smg-search-form form.block .inputChoices { display: flex !important; flex-wrap: wrap; gap: 8px 22px; margin: 0 !important; padding: 0 !important; }
@@ -5082,7 +5082,7 @@
             html.smg-search-form form.block .formSubmitRow .button--primary {
                 display: inline-flex !important; align-items: center; gap: 8px; height: 44px; padding: 0 24px !important;
                 border: 0 !important; border-radius: 11px !important; box-shadow: none !important;
-                background: var(--smg-link-strong, #d14d8f) !important; color: #fff !important;
+                background: var(--smg-link-strong) !important; color: #fff !important;
                 font-size: 14px !important; font-weight: 700 !important;
                 transition: filter .14s ease, transform .12s ease;
             }
@@ -5121,7 +5121,7 @@
             .smg-search-empty-t { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.72); }
             .smg-search-empty-s { font-size: 12.5px; color: rgba(255,255,255,0.4); }
             .smg-search-empty-hint { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
-            .smg-search-empty-hint code { padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.07); color: var(--smg-link, #ff77b2); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+            .smg-search-empty-hint code { padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.07); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
             .smg-search-hist-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
             .smg-search-hist-badge { padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -5184,8 +5184,8 @@
             }
             .smg-search-result-chip:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
             .smg-search-result-chip.is-active {
-                background: var(--smg-link, #ff77b2); color: #fff;
-                border-color: var(--smg-link, #ff77b2); font-weight: 700;
+                background: var(--smg-link); color: #fff;
+                border-color: var(--smg-link); font-weight: 700;
                 box-shadow: 0 2px 8px rgba(255,119,178,0.3);
             }
             .smg-search-result-chip .smg-chip-count {
@@ -5263,7 +5263,7 @@
             .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: 16px; padding: 22px 22px 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
             .smg-navnotice-title { font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.95); margin: 0 0 9px; }
             .smg-navnotice-text { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.62); margin: 0 0 18px; }
-            .smg-navnotice-ok { display: block; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--smg-link, #ff77b2); color: #fff; font-size: 14px; font-weight: 650; cursor: pointer; }
+            .smg-navnotice-ok { display: block; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--smg-link); color: #fff; font-size: 14px; font-weight: 650; cursor: pointer; }
             .smg-navnotice-ok:hover { filter: brightness(1.06); }
             .smg-feed-track {
                 height: 100%;
@@ -5425,7 +5425,7 @@
                     border: none !important;
                     border-top: 1px solid rgba(255,255,255,0.08) !important;
                     border-radius: 0 !important;
-                    background: var(--smg-bg, #16171b) !important;
+                    background: var(--smg-bg) !important;
                     box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
                     overflow: visible !important;
                 }
@@ -5471,7 +5471,7 @@
                 }
                 .smg-nav-ico svg { stroke-width: 1.9; }       /* traço mais leve na navbar */
                 /* item da página atual: ícone na COR DO TEMA (verde/rosa), em CONTORNO (sem preencher → sem "blob"/gradiente) */
-                .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link, #ff77b2); }
+                .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link); }
                 /* profile = avatar circular (24px, idêntico aos outros ícones da navbar) */
                 .smg-nav-ico--avatar {
                     width: 24px !important;
@@ -5495,7 +5495,7 @@
                     text-align: center !important;
                 }
                 .smg-nav-active .smg-nav-ico--avatar {
-                    box-shadow: 0 0 0 1.5px var(--smg-bg), 0 0 0 2.5px var(--smg-link, #ff77b2) !important;
+                    box-shadow: 0 0 0 1.5px var(--smg-bg), 0 0 0 2.5px var(--smg-link) !important;
                 }
                 .smg-nav-btn[data-label]::after {
                     display: none;
@@ -5638,14 +5638,14 @@
                 .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
                 }
 
                 /* Botão de View Mode no Mobile */
                 .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link, #ff77b2) !important;
-                    stroke: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
+                    stroke: var(--smg-link) !important;
                 }
 
                 /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
@@ -5655,8 +5655,8 @@
                 }
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link, #ff77b2) !important;
-                    stroke: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
+                    stroke: var(--smg-link) !important;
                 }
 
                 /* Linha 2 (Navbar Global do Fórum no Mobile) */
@@ -5708,8 +5708,8 @@
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 50;
-                background: var(--smg-s2, #1c1c1f);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                background: var(--smg-s2);
+                border: 1px solid var(--smg-bd);
                 border-radius: 16px;
                 padding: 6px 10px;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -5734,7 +5734,7 @@
                 transition: background .14s ease;
             }
             .smg-mp-btn:hover {
-                background: var(--smg-s3, rgba(255,255,255,0.15));
+                background: var(--smg-s3);
                 color: #fff;
             }
             .smg-mp-btn[disabled] {
@@ -5750,7 +5750,7 @@
                 align-items: center;
                 gap: 4px;
                 background: rgba(255,255,255,0.04);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                border: 1px solid var(--smg-bd);
                 border-radius: 8px;
                 padding: 2px 6px;
             }
@@ -5774,7 +5774,7 @@
                 height: 28px;
                 padding: 0 8px;
                 border-radius: 6px;
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
                 color: #fff;
                 border: 0;
                 font-weight: 700;
@@ -5809,8 +5809,8 @@
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 50;
-                background: var(--smg-s2, #1c1c1f);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                background: var(--smg-s2);
+                border: 1px solid var(--smg-bd);
                 border-radius: 16px;
                 padding: 6px;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -5836,7 +5836,7 @@
                 transition: background .14s ease;
             }
             .smg-vm-opt:hover {
-                background: var(--smg-s3, rgba(255,255,255,0.15));
+                background: var(--smg-s3);
             }
             .smg-vm-ic svg {
                 width: 16px;
@@ -5944,7 +5944,7 @@
             }
             .smg-badge-chip.active,
             .smg-badge-chip.is-selected {
-                outline: 2px solid var(--smg-link, #ff77b2) !important;
+                outline: 2px solid var(--smg-link) !important;
                 outline-offset: 1px !important;
                 box-shadow: 0 0 10px rgba(255,119,178,0.45) !important;
                 filter: brightness(1.25) !important;
@@ -6044,7 +6044,7 @@
                 cursor: pointer; transition: all .15s ease; text-align: center;
             }
             .smg-lf-dir-opt:hover { color: #fff; }
-            .smg-lf-dir-opt.active { background: var(--smg-link, #ff77b2); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
+            .smg-lf-dir-opt.active { background: var(--smg-link); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
             .smg-lf-select {
                 width: 100%; height: 38px; padding: 0 12px; border-radius: 10px;
                 background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
@@ -6058,7 +6058,7 @@
                 padding: 12px;
                 border-radius: 12px;
                 border: none;
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
                 color: #fff;
                 font-size: 14.5px;
                 font-weight: 700;
@@ -6086,14 +6086,14 @@
             #smg-settings-pop { width: 460px; max-height: 86vh; padding: 0 !important; gap: 0 !important; overflow: hidden; }
             #smg-settings-pop .smg-set-body { min-height: 0; }
             .smg-set-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-            .smg-set-logo { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; background: var(--smg-link, #ff77b2); display: flex; align-items: center; justify-content: center; }
+            .smg-set-logo { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; background: var(--smg-link); display: flex; align-items: center; justify-content: center; }
             .smg-set-logo svg { width: 17px; height: 17px; fill: none !important; color: #fff; }
             .smg-set-title { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; color: #fff; }
             .smg-set-x { flex: 0 0 auto; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: rgba(255,255,255,0.55); cursor: pointer; }
             .smg-set-x:hover { background: rgba(255,255,255,0.12); color: #fff; }
             .smg-set-x svg { width: 16px; height: 16px; fill: none !important; }
             .smg-set-search { display: flex; align-items: center; gap: 8px; margin: 11px 14px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
-            .smg-set-search:focus-within { border-color: var(--smg-link, #ff77b2); }
+            .smg-set-search:focus-within { border-color: var(--smg-link); }
             .smg-set-searchic { flex: 0 0 auto; display: inline-flex; color: rgba(255,255,255,0.5); }
             .smg-set-searchic svg { width: 16px; height: 16px; fill: none !important; }
             .smg-set-q { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; color: #fff; font: inherit; font-size: 14px; }
@@ -6103,7 +6103,7 @@
             .smg-set-tab { width: 40px; height: 40px; border: 0; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: rgba(255,255,255,0.5); cursor: pointer; transition: background .14s ease, color .14s ease; }
             .smg-set-tab svg { width: 20px; height: 20px; fill: none !important; }
             .smg-set-tab:hover { background: rgba(255,255,255,0.07); color: #fff; }
-            .smg-set-tab.active { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
+            .smg-set-tab.active { background: var(--smg-link-soft); color: var(--smg-link); }
             .smg-set-content { flex: 1; min-width: 0; overflow-y: auto; max-height: 58vh; padding: 2px 10px 12px; }
             .smg-set-sectitle { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.45); padding: 12px 6px 6px; }
             .smg-set-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 9px 6px; border-radius: 9px; cursor: pointer; }
@@ -6115,12 +6115,12 @@
             .smg-switch { position: relative; flex: 0 0 auto; width: 40px; height: 23px; border-radius: 999px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.12); transition: background .16s ease; }
             .smg-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%; background: #fff; transition: transform .18s cubic-bezier(.2,.8,.3,1); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
             .smg-set-row input { position: absolute; opacity: 0; pointer-events: none; }
-            .smg-set-row input:checked + .smg-switch { background: var(--smg-link, #ff77b2); border-color: var(--smg-link, #ff77b2); }
+            .smg-set-row input:checked + .smg-switch { background: var(--smg-link); border-color: var(--smg-link); }
             .smg-set-row input:checked + .smg-switch::after { transform: translateX(17px); }
             .smg-set-slider { display: flex; flex-direction: column; gap: 9px; padding: 11px 6px; }
             .smg-set-slidertop { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-            .smg-set-val { flex: 0 0 auto; color: var(--smg-link, #ff77b2); font-weight: 700; background: var(--smg-link-soft, rgba(255,119,178,0.12)); border-radius: 6px; padding: 1px 8px; font-size: 13px; min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
-            .smg-set-slider input[type=range] { width: 100%; accent-color: var(--smg-link, #ff77b2); cursor: pointer; }
+            .smg-set-val { flex: 0 0 auto; color: var(--smg-link); font-weight: 700; background: var(--smg-link-soft); border-radius: 6px; padding: 1px 8px; font-size: 13px; min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
+            .smg-set-slider input[type=range] { width: 100%; accent-color: var(--smg-link); cursor: pointer; }
             .smg-set-action-card {
                 display: flex;
                 align-items: center;
@@ -6239,7 +6239,7 @@
                     border-color: rgba(255,255,255,0.14);
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
                 }
-                #smg-search-pop .smg-search-lupa { flex: 0 0 auto; color: var(--smg-link, #ff77b2); }
+                #smg-search-pop .smg-search-lupa { flex: 0 0 auto; color: var(--smg-link); }
                 #smg-search-pop .smg-search-lupa svg { width: 19px; height: 19px; }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
@@ -6315,9 +6315,9 @@
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-author-trigger.has-value {
-                    background: var(--smg-link-soft, rgba(255,119,178,0.22)) !important;
-                    border-color: var(--smg-link, #ff77b2) !important;
-                    color: var(--smg-link, #ff77b2) !important;
+                    background: var(--smg-link-soft) !important;
+                    border-color: var(--smg-link) !important;
+                    color: var(--smg-link) !important;
                 }
                 #smg-search-pop .smg-search-author-trigger svg {
                     width: 17px !important; height: 17px !important; fill: none !important;
@@ -6385,7 +6385,7 @@
                 .smg-chip { height: 40px; font-size: 14px; }
             }
             /* botão da dock "ativo" (filtro/escolha ligada) */
-            .smg-nav-btn.smg-active { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
+            .smg-nav-btn.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }   /* toggle ativo (watch/filtro): acento fundo + texto branco */
 
             /* ---- scroll infinito: separador de página ---- */
             .smg-inf-sep { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; color: rgba(127,127,127,0.85); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
@@ -7148,7 +7148,7 @@
             .smg-thead-ic { display: inline-flex; align-items: center; justify-content: center; }
             .smg-thead-lbl { display: none; }   /* desktop: só ícone (compacto na linha do título); label aparece no mobile */
             .smg-thead-btn + .smg-thead-btn { border-left: 1px solid var(--smg-bd); }   /* divisor entre os segmentos */
-            .smg-thead-btn:hover { background: var(--smg-link, #ff77b2); color: #fff; }   /* hover de marca: destaca o propósito “maior” */
+            .smg-thead-btn:hover { background: var(--smg-link); color: #fff; }   /* hover de marca: destaca o propósito “maior” */
             .smg-thead-btn:active { transform: scale(0.9); }
             /* título + descrição alinhados à esquerda (sem centralizar nada) */
             html.smg-thread .p-body-header .p-title,
@@ -7457,8 +7457,8 @@
                 gap: 3px !important;
                 margin: 0 0 16px 0 !important;
                 padding: 6px 10px !important;
-                background: var(--smg-s1, #16171b) !important;
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
+                background: var(--smg-s1) !important;
+                border: 1px solid var(--smg-bd) !important;
                 border-radius: 12px !important;
                 list-style: none !important;
                 width: 100% !important;
@@ -7578,7 +7578,7 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-title a:hover,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-title a:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-pageJump,
@@ -7652,7 +7652,7 @@
                container real dos itens (varia entre fórum e watched) ---- */
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 14px !important;
                 align-items: stretch !important;
@@ -7672,7 +7672,7 @@
                 border: 1px solid rgba(127,127,127,0.18) !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
-                background: var(--smg-s1, #1b1c21) !important;
+                background: var(--smg-s1) !important;
                 position: relative !important;
                 transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
             }
@@ -7683,7 +7683,7 @@
                 display: none !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
-                border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
+                border-color: var(--smg-bd2) !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
             }
@@ -7739,7 +7739,7 @@
             }
             .smg-thread-unwatch-btn.is-following {
                 opacity: 0.85 !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 background: rgba(0,0,0,0.75) !important;
             }
             .smg-thread-unwatch-btn.is-following:hover {
@@ -7747,7 +7747,7 @@
                 color: #fff !important;
             }
             .smg-thread-unwatch-btn:not(.is-following):hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
             }
             .smg-thread-unwatch-btn:hover {
@@ -7808,7 +7808,7 @@
                 word-break: break-word !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
 
@@ -7875,7 +7875,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-pageJump a:hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #000 !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--meta,
@@ -7892,8 +7892,8 @@
                 width: 7px !important;
                 height: 7px !important;
                 border-radius: 50% !important;
-                background: var(--smg-link, #ff77b2) !important;
-                box-shadow: 0 0 6px var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
+                background: var(--smg-link) !important;
+                box-shadow: 0 0 6px var(--smg-link-soft) !important;
                 margin-left: 6px !important;
                 vertical-align: middle !important;
             }
@@ -7914,7 +7914,7 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd) {
                 position: relative !important;
                 overflow: hidden !important;
-                background: var(--smg-s2, #2a2a2a) !important;
+                background: var(--smg-s2) !important;
                 min-height: 160px;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after {
@@ -7936,12 +7936,12 @@
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
             .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: var(--smg-s2, #23242a) !important; color: rgba(255,255,255,0.38) !important; }
+                background: var(--smg-s2) !important; color: rgba(255,255,255,0.38) !important; }
             .smg-thumb-ph .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
             html.smg-smg.smg-threadlist .block-container,
             html.smg-smg.smg-threadlist .structItemContainer,
             html.smg-smg.smg-threadlist .uix_stickyContainerOuter {
-                background: var(--smg-bg, #101113) !important;
+                background: var(--smg-bg) !important;
                 border-color: rgba(255,255,255,0.06) !important;
             }
             /* GRID: quadrado, ocupa a célula toda */
@@ -7967,7 +7967,7 @@
             /* GRADE (modo grade): gated em smg-tv-grid → o toggle lista/grade da dock vale aqui também */
             html.smg-threadlist.smg-tv-grid .smg-article-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important; padding: 14px !important; background: transparent !important; align-items: start !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-article-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -8055,7 +8055,7 @@
             }
             .smg-feed-tool:hover { background: rgba(42,42,50,0.85); }
             .smg-feed-tool:active { transform: scale(0.9); }
-            .smg-feed-tool.smg-active { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }
+            .smg-feed-tool.smg-active { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-feed-tool svg { width: 1em; height: 1em; display: block; }
             /* o CSS do fórum enche os SVGs (fill); força outline em tudo dentro do feed */
             #smg-feed svg { fill: none !important; }
@@ -8112,9 +8112,9 @@
             .smg-bar-go,
             html.smg-thread .pageNav-page--current > a,
             html.smg-threadlist .pageNav-page--current > a {
-                background: var(--smg-link-strong, #d14d8f) !important;
+                background: var(--smg-link-strong) !important;
                 color: #fff !important;
-                border-color: var(--smg-link-strong, #d14d8f) !important;
+                border-color: var(--smg-link-strong) !important;
             }
 `;
     // ── CSS: post cards ──
@@ -8126,7 +8126,7 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
             html.smg-thread .smg-pc:hover { border-color: rgba(255,255,255,0.22) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
@@ -8141,9 +8141,9 @@
                 margin: 16px 0 20px !important;
                 padding: 0 !important;
                 border: 1px solid rgba(255,255,255,0.09) !important;
-                border-left: 4px solid var(--smg-link, #ff77b2) !important;
+                border-left: 4px solid var(--smg-link) !important;
                 border-radius: 12px !important;
-                background: var(--smg-s2, rgba(255,255,255,0.04)) !important;
+                background: var(--smg-s2) !important;
                 overflow: hidden !important;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.25) !important;
             }
@@ -8154,7 +8154,7 @@
                 padding: 10px 16px 8px !important;
                 font-size: 13px !important;
                 font-weight: 700 !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 background: rgba(0,0,0,0.22) !important;
                 border-bottom: 1px solid rgba(255,255,255,0.06) !important;
             }
@@ -8174,7 +8174,7 @@
                 padding: 14px 18px 16px !important;
                 font-size: 14px !important;
                 line-height: 1.65 !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 background: transparent !important;
             }
             .bbCodeBlock--quote .bbCodeBlock-expandContent {
@@ -8202,7 +8202,7 @@
             /* Gradiente e link "Clique para expandir..." suave e elegante */
             .bbCodeBlock--quote .bbCodeBlock-expandLink,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink {
-                background: linear-gradient(to bottom, transparent, var(--smg-s1, #16171b) 90%) !important;
+                background: linear-gradient(to bottom, transparent, var(--smg-s1) 90%) !important;
                 padding: 28px 0 10px !important;
                 text-align: center !important;
             }
@@ -8211,9 +8211,9 @@
                 display: inline-block !important;
                 padding: 5px 16px !important;
                 border-radius: 999px !important;
-                background: var(--smg-s3, rgba(255,255,255,0.08)) !important;
+                background: var(--smg-s3) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-size: 12px !important;
                 font-weight: 700 !important;
                 cursor: pointer !important;
@@ -8221,7 +8221,7 @@
             }
             .bbCodeBlock--quote .bbCodeBlock-expandLink a:hover,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink a:hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
             }
             /* Mídias / imagens dentro da citação */
@@ -8238,8 +8238,8 @@
                 margin: 10px 0 !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)) !important;
-                background: var(--smg-s1, #16171b) !important;
+                border: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important;
                 box-shadow: 0 4px 14px rgba(0,0,0,0.25) !important;
             }
             .bbCodeSpoiler-button {
@@ -8248,10 +8248,10 @@
                 justify-content: space-between !important;
                 width: 100% !important;
                 padding: 10px 14px !important;
-                background: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                background: var(--smg-s2) !important;
                 border: none !important;
                 border-radius: 0 !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 font-size: 13.5px !important;
                 font-weight: 600 !important;
                 cursor: pointer !important;
@@ -8268,7 +8268,7 @@
                 gap: 8px !important;
             }
             .bbCodeSpoiler-button .bbCodeSpoiler-button-title {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 700 !important;
             }
             .smg-spoiler-arrow {
@@ -8285,12 +8285,12 @@
             .bbCodeSpoiler.is-active .smg-spoiler-arrow,
             .bbCodeSpoiler-button[aria-expanded="true"] .smg-spoiler-arrow {
                 transform: rotate(180deg) !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
             }
             .bbCodeSpoiler-content {
                 padding: 12px 14px !important;
-                border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
-                background: var(--smg-s1, #16171b) !important;
+                border-top: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important;
                 text-align: left !important;
             }
             .bbCodeSpoiler-content .bbCodeBlock--spoiler {
@@ -8312,7 +8312,7 @@
             html.smg-thread .smg-pc .message-actionBar { display: none !important; }                    /* react/comentar/quote/report movidos */
             html.smg-thread .smg-pc .message-content { padding: 18px 22px 10px; }
             /* HEADER (com divisor border-b) */
-            html.smg-thread .smg-pc-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
+            html.smg-thread .smg-pc-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
             html.smg-thread .smg-pc-avatar img, html.smg-thread .smg-pc-avatar span { width: 100% !important; height: 100% !important; object-fit: cover; display: flex; align-items: center; justify-content: center; }
             html.smg-thread .smg-pc-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -8331,9 +8331,9 @@
             html.smg-thread .smg-pc-row2 .featuredBadges { display: inline-flex; flex-wrap: wrap; gap: 3px; margin: 0; }
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
             /* ACTION BAR */
-            html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); }
+            html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: 7px; height: 34px; margin: 0 !important; padding: 0 13px !important; border-radius: 9px; border: 0; background: transparent; color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
-            html.smg-thread .smg-pc-act:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; }
+            html.smg-thread .smg-pc-act:hover { background: var(--smg-s3); color: #fff; }
             /* MÉTRICA ÚNICA dos ícones da action bar (post e comentário). Cada ação trazia a sua:
                o <i> da fonte do XF em 15px, o nosso react em 16, o bookmark/share nativos em outra
                — tamanhos, pesos e espaçamentos diferentes na mesma fila. Aqui todos passam a ter
@@ -8357,7 +8357,7 @@
             html.smg-thread .smg-pc-act--save .js-bookmarkText { display: none; }   /* texto nativo "Adicionar aos favoritos" fica escondido → o rótulo "Salvar" (smg-pc-act-lbl) é o visível (sem duplicar) */
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
-            html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link) !important; background: var(--smg-link-soft); }
             html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
             html.smg-thread .smg-pc-actions .smg-pc-act--react,
             html.smg-thread .smg-cc-actions .smg-cc-act--react {
@@ -8369,7 +8369,7 @@
             html.smg-thread .smg-cc-react-n { display: inline-flex !important; align-items: baseline; gap: 4px; visibility: visible !important; }
             /* Compartilhar copiou o link: confirmação de ~1,2s no próprio botão (não abre menu nenhum) */
             html.smg-thread .smg-pc-act--copied { color: #46d369 !important; background: rgba(70,211,105,0.12); }
-            html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link) !important; background: var(--smg-link-soft); }
             /* REACT: cor NEUTRA (ícone + número + texto iguais aos outros) — o azul nativo fazia parecer "já reagi" */
             html.smg-thread .smg-pc-act--react { color: rgba(255,255,255,0.72) !important; }
             html.smg-thread .smg-cc-act--react { color: rgba(255,255,255,0.65) !important; }
@@ -8386,12 +8386,12 @@
             /* ⋯ overflow */
             html.smg-thread .smg-pc-morewrap { position: relative; margin-left: auto; }
             html.smg-thread .smg-pc-act--more { font-size: 18px; padding: 0 12px; }
-            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: 2px; min-width: 168px; padding: 6px; z-index: 50; background: var(--smg-s2, #1c1d22); border: 1px solid var(--smg-bd2, rgba(255,255,255,0.12)); border-radius: 12px; box-shadow: 0 14px 38px rgba(0,0,0,0.55); }
+            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: 2px; min-width: 168px; padding: 6px; z-index: 50; background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: 12px; box-shadow: 0 14px 38px rgba(0,0,0,0.55); }
             html.smg-thread .smg-pc-morewrap.open .smg-pc-morepop { display: flex; }
             html.smg-thread .smg-pc-morerow { display: flex !important; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 8px; background: transparent; color: rgba(255,255,255,0.85); font-size: 13.5px; font-weight: 600; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
-            html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; }
+            html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3); color: #fff; }
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
-            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft, rgba(255,119,178,0.18)); color: var(--smg-link, #ff77b2); }
+            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: 11px; color: rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 3px; }
 `;
     // ── CSS: comments, editor and quick reply ──
@@ -8402,20 +8402,20 @@
             html.smg-thread .smg-pc .message-responses { margin-top: 4px; padding: 4px 22px 18px; }
             /* HEADER da seção de comentários: faixa destacada (full-width via margin negativa que cancela o padding da section) + dividers em cima/embaixo.
                !important + escopo .smg-pc → ganha do neutralize/tema. align-items:center + line-height:1 centralizam ícone · nº · "Comments". */
-            html.smg-thread .smg-pc .uw-comment-count { display: flex !important; flex-wrap: wrap; align-items: center !important; gap: 8px; margin: 6px -22px 12px !important; padding: 13px 22px !important; font-size: 14px; font-weight: 800; line-height: 1; color: #fff; background: var(--smg-s2, rgba(255,255,255,0.05)) !important; border-top: 1px solid var(--smg-bd2, rgba(255,255,255,0.12)) !important; border-bottom: 1px solid var(--smg-bd2, rgba(255,255,255,0.12)) !important; }
+            html.smg-thread .smg-pc .uw-comment-count { display: flex !important; flex-wrap: wrap; align-items: center !important; gap: 8px; margin: 6px -22px 12px !important; padding: 13px 22px !important; font-size: 14px; font-weight: 800; line-height: 1; color: #fff; background: var(--smg-s2) !important; border-top: 1px solid var(--smg-bd2) !important; border-bottom: 1px solid var(--smg-bd2) !important; }
             html.smg-thread .smg-pc .uw-comment-count .mdi { font-size: 16px; line-height: 1; display: inline-flex; align-items: center; opacity: 0.85; }
-            html.smg-thread .smg-pc .uw-comment-count .comment-count { color: var(--smg-link, #ff77b2); line-height: 1; }   /* nº em destaque (cor do tema) */
+            html.smg-thread .smg-pc .uw-comment-count .comment-count { color: var(--smg-link); line-height: 1; }   /* nº em destaque (cor do tema) */
             html.smg-thread .smg-pc .uw-fcs-sort-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }   /* sort no canto DIREITO do header */
             html.smg-thread .smg-pc .uw-fcs-sort-sep { display: none; }   /* tira o "|" separador */
             html.smg-thread .smg-pc .smg-cbar-sortlbl { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); white-space: nowrap; }   /* label "Sort:" antes do chip */
             /* "Top reacted" → chip de sort à direita */
-            html.smg-thread .smg-pc .uw-fcs-sort-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid var(--smg-bd2, rgba(255,255,255,0.14)); border-radius: 999px; background: var(--smg-s1, #16171b); color: rgba(255,255,255,0.78); font-size: 12px; font-weight: 700; line-height: 1; text-decoration: none !important; white-space: nowrap; }
-            html.smg-thread .smg-pc .uw-fcs-sort-btn:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; border-color: var(--smg-bd2, rgba(255,255,255,0.25)); }
+            html.smg-thread .smg-pc .uw-fcs-sort-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid var(--smg-bd2); border-radius: 999px; background: var(--smg-s1); color: rgba(255,255,255,0.78); font-size: 12px; font-weight: 700; line-height: 1; text-decoration: none !important; white-space: nowrap; }
+            html.smg-thread .smg-pc .uw-fcs-sort-btn:hover { background: var(--smg-s3); color: #fff; border-color: var(--smg-bd2); }
             html.smg-thread .smg-pc .uw-fcs-sort-btn i { font-size: 12px; opacity: .85; }
             /* "Previous comments" → botão paginador (linha própria, full-width — flex-basis 100% quebra a linha) */
-            html.smg-thread .smg-pc .uw_load_prev { flex: 0 0 100%; display: block; box-sizing: border-box; margin: 11px 0 1px; padding: 9px; border: 1px solid var(--smg-bd2, rgba(255,255,255,0.12)); border-radius: 10px; background: var(--smg-s1, #16171b); color: var(--smg-link, #ff77b2); font-size: 13px; font-weight: 700; text-align: center; text-decoration: none !important; }
-            html.smg-thread .smg-pc .uw_load_prev:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); border-color: var(--smg-bd2, rgba(255,255,255,0.22)); }
-            html.smg-thread .smg-cc { position: relative; margin: 0; padding: 13px 0 13px 16px; border-left: 2px solid var(--smg-bd2, rgba(255,255,255,0.12)); border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); }
+            html.smg-thread .smg-pc .uw_load_prev { flex: 0 0 100%; display: block; box-sizing: border-box; margin: 11px 0 1px; padding: 9px; border: 1px solid var(--smg-bd2); border-radius: 10px; background: var(--smg-s1); color: var(--smg-link); font-size: 13px; font-weight: 700; text-align: center; text-decoration: none !important; }
+            html.smg-thread .smg-pc .uw_load_prev:hover { background: var(--smg-s3); border-color: var(--smg-bd2); }
+            html.smg-thread .smg-cc { position: relative; margin: 0; padding: 13px 0 13px 16px; border-left: 2px solid var(--smg-bd2); border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-cc .comment-inner { display: block; }
             html.smg-thread .smg-cc .comment-avatar { display: none; }                              /* movido pro head */
             html.smg-thread .smg-cc .comment-content { display: none; }                             /* user/tempo/# movidos */
@@ -8433,7 +8433,7 @@
             html.smg-thread .smg-cc .comment-body { font-size: 14px; line-height: 1.5; }
             html.smg-thread .smg-cc-actions { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-top: 6px; }
             html.smg-thread .smg-cc-act { display: inline-flex !important; align-items: center; gap: 6px; height: 30px; margin: 0 !important; padding: 0 10px !important; border-radius: 8px; background: transparent; border: 0; color: rgba(255,255,255,0.65); font-size: 12.5px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
-            html.smg-thread .smg-cc-act:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; }
+            html.smg-thread .smg-cc-act:hover { background: var(--smg-s3); color: #fff; }
             html.smg-thread .smg-cc-act svg { width: 14px; height: 14px; }
             html.smg-thread .smg-cc-act > i { font-size: 14px; }
             html.smg-thread .smg-cc-act .reaction-image, html.smg-thread .smg-cc-act .reaction-sprite { width: 16px; height: 16px; }
@@ -8444,54 +8444,54 @@
             html.smg-thread .smg-cc, html.smg-thread .smg-cc .comment-inner, html.smg-thread .smg-cc .comment-main, html.smg-thread .smg-cc .comment-content { background: transparent !important; box-shadow: none !important; }
             html.smg-thread .smg-pc .message-responseRow:not(.uw-comment-count), html.smg-thread .smg-cc .comment-inner, html.smg-thread .smg-cc .comment-main, html.smg-thread .smg-cc .comment-content { border: 0 !important; }
             /* editor "escrever comentário": blend escuro (era um quadrado claro do tema) */
-            html.smg-thread .smg-pc .editorPlaceholder-placeholder .input { background: var(--smg-s2, #1c1d22) !important; border: 1px solid var(--smg-bd2, rgba(255,255,255,0.1)) !important; border-radius: 10px !important; color: rgba(255,255,255,0.6) !important; }
+            html.smg-thread .smg-pc .editorPlaceholder-placeholder .input { background: var(--smg-s2) !important; border: 1px solid var(--smg-bd2) !important; border-radius: 10px !important; color: rgba(255,255,255,0.6) !important; }
             /* ---- editor Froala (reply / comentário / conversa): vinha CLARO (destoava do tema escuro) → escurece toolbar, área de edição e dropdowns ---- */
             /* RING ÚNICO: a borda do editor vive SÓ no .fr-box (filhos com border 0) — o tema desenhava
                border-top azul no toolbar + border-bottom azul no second-toolbar, parecendo um anel quebrado.
                SEM overflow:hidden no box (clipava os dropdowns absolutos do toolbar) → cantos arredondados
                explícitos nos filhos das pontas. */
             :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic {
-                border: 1px solid var(--smg-bd2, rgba(255,255,255,0.14)) !important;
+                border: 1px solid var(--smg-bd2) !important;
                 border-radius: 12px !important; box-shadow: none !important;
                 transition: border-color .15s ease;
             }
             :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-toolbar {
-                background: var(--smg-s2, #1c1d22) !important; color: var(--smg-tx, #e7e7ea) !important;
-                border: 0 !important; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.1)) !important;
+                background: var(--smg-s2) !important; color: var(--smg-tx) !important;
+                border: 0 !important; border-bottom: 1px solid var(--smg-bd) !important;
                 border-radius: 11px 11px 0 0 !important; box-shadow: none !important;
             }
-            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-toolbar .fr-more-toolbar { background: var(--smg-s2, #1c1d22) !important; border: 0 !important; box-shadow: none !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-toolbar .fr-more-toolbar { background: var(--smg-s2) !important; border: 0 !important; box-shadow: none !important; }
             :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-second-toolbar {
-                background: var(--smg-s2, #1c1d22) !important; color: var(--smg-tx, #e7e7ea) !important;
+                background: var(--smg-s2) !important; color: var(--smg-tx) !important;
                 border: 0 !important; border-radius: 0 0 11px 11px !important; box-shadow: none !important;
             }
-            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-wrapper { background: var(--smg-s1, #16171b) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-element.fr-view { color: var(--smg-tx, #e7e7ea) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-wrapper { background: var(--smg-s1) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-element.fr-view { color: var(--smg-tx) !important; }
             :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic .fr-placeholder { color: rgba(255,255,255,0.38) !important; }
             :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn, :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn i, :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn svg { color: rgba(255,255,255,0.72) !important; }
             :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn.fr-disabled, :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn.fr-disabled i { color: rgba(255,255,255,0.28) !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn:not(.fr-disabled):hover { background: var(--smg-s3, rgba(255,255,255,0.08)) !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn.fr-active { color: var(--smg-link, #ff77b2) !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu { background: var(--smg-s1, #16171b) !important; box-shadow: 0 6px 20px rgba(0,0,0,0.45) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn:not(.fr-disabled):hover { background: var(--smg-s3) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-toolbar .fr-btn.fr-active { color: var(--smg-link) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu { background: var(--smg-s1) !important; box-shadow: 0 6px 20px rgba(0,0,0,0.45) !important; }
             :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-wrapper { background: transparent !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a, :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a * { color: var(--smg-tx, #e7e7ea) !important; }
-            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a:hover { background: var(--smg-s3, rgba(255,255,255,0.08)) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a, :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a * { color: var(--smg-tx) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-dropdown-menu .fr-dropdown-list a:hover { background: var(--smg-s3) !important; }
             /* foco no editor: o RING (borda do .fr-box) acende no acento — mesma linguagem dos inputs */
-            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic:focus-within { border-color: var(--smg-link, #ff77b2) !important; }
+            :is(html.smg-sc, html.smg-smg) .fr-box.fr-basic:focus-within { border-color: var(--smg-link) !important; }
             /* QUOTE dentro do EDITOR (blockquote do Froala ao citar um post): mesmo visual dos quotes
                renderizados no post (.smg-pc .bbCodeBlock) — inset escuro + filete no ACENTO. O caixote
                azul-claro com borda azul era o estilo nativo do editor do XF. */
             :is(html.smg-sc, html.smg-smg) .fr-element blockquote {
                 background: rgba(0,0,0,0.22) !important;
                 border: 1px solid rgba(255,255,255,0.08) !important;
-                border-left: 3px solid var(--smg-link, #ff77b2) !important;
+                border-left: 3px solid var(--smg-link) !important;
                 border-radius: 12px !important;
                 margin: 10px 0 !important; padding: 11px 15px !important;
                 color: rgba(255,255,255,0.85) !important;
             }
             /* nome do autor citado (o XF desenha via ::before com attr(data-quote)) → acento + peso */
             :is(html.smg-sc, html.smg-smg) .fr-element blockquote::before {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 700 !important; font-size: 12.5px !important; opacity: 1 !important;
             }
             :is(html.smg-sc, html.smg-smg) .fr-element blockquote img { border-radius: 8px; }
@@ -8507,7 +8507,7 @@
                e a botoeira entra no tema: Post Content = acento · Add Discussion = secundário ·
                extras (.button--link, ex. ImagePond) = chip fantasma à ESQUERDA. */
             html.smg-thread form.js-quickReply .block-container {
-                background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important;
+                background: var(--smg-s1) !important; border: 1px solid rgba(255,255,255,0.11) !important;
                 border-radius: 18px !important; box-shadow: none !important; overflow: hidden;
             }
             html.smg-smg.smg-thread form.js-quickReply .block-container { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }   /* mesmas superfícies dos cards (.smg-pc) */
@@ -8533,9 +8533,9 @@
             html.smg-thread form.js-quickReply .formButtonGroup .button:hover { background: var(--smg-s3) !important; color: #fff !important; }
             html.smg-thread form.js-quickReply .formButtonGroup .button:active { transform: scale(0.97); }
             html.smg-thread form.js-quickReply .formButtonGroup .button--primary {
-                background: var(--smg-link-strong, #d14d8f) !important; border: 0 !important; color: #fff !important; font-weight: 700 !important; padding: 0 22px;
+                background: var(--smg-link-strong) !important; border: 0 !important; color: #fff !important; font-weight: 700 !important; padding: 0 22px;
             }
-            html.smg-thread form.js-quickReply .formButtonGroup .button--primary:hover { background: var(--smg-link-strong, #d14d8f) !important; filter: brightness(1.12); }
+            html.smg-thread form.js-quickReply .formButtonGroup .button--primary:hover { background: var(--smg-link-strong) !important; filter: brightness(1.12); }
             html.smg-thread form.js-quickReply .formButtonGroup .button--link {
                 background: transparent !important; border: 1px solid var(--smg-bd) !important; color: rgba(255,255,255,0.55) !important;
             }
@@ -8609,7 +8609,7 @@
                 max-width: 100% !important;
             }
             /* header do feed: título grande "Feed" + slot de ações (ícone de notices) à direita. Substitui a antiga tabbar. */
-            .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.10)); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
+            .smg-river-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--smg-bd); }   /* margin-top 26px = respiro abaixo da topbar (casa com .p-body-header) */
             @media (max-width: 600px) { .smg-river-head { margin-top: 16px; } }
             .smg-river-title { margin: 0; padding: 0; font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
@@ -8623,7 +8623,7 @@
             .smg-fp-setup-bar { width: min(460px, 78vw); height: 6px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
             .smg-fp-list { display: flex; flex-direction: column; gap: 22px; }
             .smg-fp-card { margin: 0; }
-            .smg-fp-setup-barfill { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--smg-link, #ff77b2); transition: width .3s ease; }
+            .smg-fp-setup-barfill { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--smg-link); transition: width .3s ease; }
             /* BOOKMARKS como feed (replace total da lista nativa): some a sidebar da conta + conteúdo a 100% (mata o layout de 2 colunas) */
             html.smg-bm-feed-on .p-body-sideNav,
             html.smg-bm-feed-on .p-body-sideNavCol { display: none !important; width: 0 !important; }
@@ -8675,18 +8675,18 @@
             .smg-bm-remove svg { width: 18px; height: 18px; fill: none !important; }
             .smg-bm-remove.is-busy { opacity: 0.5; pointer-events: none; }
             .smg-fp-card.smg-bm-leaving { opacity: 0; transform: scale(0.97); transition: opacity .24s ease, transform .24s ease; }
-            .smg-bm-note { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--smg-link, #ff77b2); background: var(--smg-link-soft, rgba(255,119,178,0.10)); border-radius: 6px; font-size: 13.5px; line-height: 1.4; color: var(--smg-tx, #e7e7ea); }
-            .smg-bm-skel { width: 100%; min-height: 180px; margin: 0 0 14px; border-radius: 12px; background: var(--smg-s2, rgba(255,255,255,0.05)); position: relative; overflow: hidden; }
+            .smg-bm-note { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--smg-link); background: var(--smg-link-soft); border-radius: 6px; font-size: 13.5px; line-height: 1.4; color: var(--smg-tx); }
+            .smg-bm-skel { width: 100%; min-height: 180px; margin: 0 0 14px; border-radius: 12px; background: var(--smg-s2); position: relative; overflow: hidden; }
             .smg-bm-skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
-            .smg-river-more { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 22px; margin: 6px 0 0; padding: 14px 0; border: 1px solid var(--smg-bd, rgba(255,255,255,0.1)); border-radius: 12px; background: var(--smg-s1, #16171b); color: rgba(255,255,255,0.72); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s ease, color .15s ease; }
-            .smg-river-more:hover { color: #fff; background: var(--smg-s2, rgba(255,255,255,0.06)); }
+            .smg-river-more { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 22px; margin: 6px 0 0; padding: 14px 0; border: 1px solid var(--smg-bd); border-radius: 12px; background: var(--smg-s1); color: rgba(255,255,255,0.72); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s ease, color .15s ease; }
+            .smg-river-more:hover { color: #fff; background: var(--smg-s2); }
             .smg-river-more .smg-loading { position: static; inset: auto; display: none; }   /* dentro do botão o spinner é INLINE (não overlay), oculto até is-loading */
             .smg-river-more .smg-loading::after { width: 18px; height: 18px; border-width: 2px; }   /* menor: cabe no botão */
             .smg-river-more.is-loading { cursor: default; }
             .smg-river-more.is-loading .smg-loading { display: flex; }
             .smg-river-more.is-loading .smg-river-more-t { display: none; }
             /* pílula "N novos posts" (flutua no topo, estilo Twitter) */
-            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 60; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px 8px 12px; border: 0; border-radius: 999px; background: var(--smg-link, #ff77b2); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 60; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px 8px 12px; border: 0; border-radius: 999px; background: var(--smg-link); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
             .smg-river-pill[hidden] { display: none; }
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -8695,7 +8695,7 @@
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
             }
-            .smg-fp-card { background: var(--smg-s1, #16171b); border: 1px solid rgba(255,255,255,0.11); border-radius: 18px; overflow: hidden; transition: border-color .16s ease, box-shadow .16s ease; }
+            .smg-fp-card { background: var(--smg-s1); border: 1px solid rgba(255,255,255,0.11); border-radius: 18px; overflow: hidden; transition: border-color .16s ease, box-shadow .16s ease; }
             .smg-fp-card:hover { border-color: rgba(255,255,255,0.22); box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px rgba(255,255,255,0.16); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
@@ -8703,7 +8703,7 @@
             @media (prefers-reduced-motion: reduce) { .smg-fp-card.smg-fp-enter { animation: none; } }
             html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície do SimpCity (igual o post card) */
             /* HEADER: [foto da thread]  ·  tags / nome do tópico / postado por — divisor border-b */
-            .smg-fp-head { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
+            .smg-fp-head { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--smg-bd); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
             .smg-fp-thumb--letter { display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c5cff, #c54b8c); }   /* sem thumb / .su morto → inicial do tópico */
@@ -8714,8 +8714,8 @@
             .smg-fp-tname:hover { text-decoration: underline; }
             .smg-fp-by { font-size: 12.5px; color: rgba(255,255,255,0.45); }
             .smg-fp-share { flex: 0 0 auto; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; margin: -2px -6px 0 4px; border: 0; border-radius: 9px; background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; transition: background .14s ease, color .14s ease; }
-            .smg-fp-share:hover { background: var(--smg-link-soft, rgba(255,255,255,0.1)); color: #fff; }
-            .smg-fp-share.is-done { color: var(--smg-link, #ff77b2); }
+            .smg-fp-share:hover { background: var(--smg-link-soft); color: #fff; }
+            .smg-fp-share.is-done { color: var(--smg-link); }
             .smg-fp-share svg { width: 17px; height: 17px; fill: none !important; }
             .smg-fp-byname { color: rgba(255,255,255,0.7); font-weight: 600; text-decoration: none; }
             .smg-fp-byname:hover { color: #fff; text-decoration: underline; }
@@ -8783,7 +8783,7 @@
                 display: block !important;
             }
             /* FOOTER: "abrir no tópico" com divisor em cima (= action bar do post) */
-            .smg-fp-open { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 12px 22px 14px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--smg-link, #ff77b2); transition: gap .14s ease; }
+            .smg-fp-open { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 12px 22px 14px; border-top: 1px solid var(--smg-bd); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--smg-link); transition: gap .14s ease; }
             .smg-fp-open:hover { gap: 10px; }
             .smg-fp-open svg { width: 15px; height: 15px; fill: none; }
             @media (max-width: 600px) {
@@ -8799,19 +8799,19 @@
             .smg-lf-row .smg-multiselect-container { width: 100%; display: flex; flex-direction: column; }
             .smg-multiselect-btn {
                 display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px;
-                background: var(--smg-s1, #1e1e24); border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                background: var(--smg-s1); border: 1px solid var(--smg-bd);
                 border-radius: 9px; color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 600;
                 cursor: pointer; transition: all .15s ease; box-sizing: border-box;
             }
             .smg-lf-row .smg-multiselect-btn { width: 100%; justify-content: space-between; }
-            .smg-multiselect-btn:hover { background: var(--smg-s2, #282830); border-color: var(--smg-bd2, rgba(255,255,255,0.2)); color: #fff; }
-            .smg-multiselect-btn.is-open { border-color: var(--smg-link, #ff77b2); background: var(--smg-s2, #282830); color: #fff; }
-            .smg-multiselect-btn.has-active { border-color: var(--smg-link, #ff77b2); }
+            .smg-multiselect-btn:hover { background: var(--smg-s2); border-color: var(--smg-bd2); color: #fff; }
+            .smg-multiselect-btn.is-open { border-color: var(--smg-link); background: var(--smg-s2); color: #fff; }
+            .smg-multiselect-btn.has-active { border-color: var(--smg-link); }
             .smg-multiselect-btn-icon { display: inline-flex; align-items: center; justify-content: center; }
             .smg-multiselect-btn-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; }
             .smg-multiselect-btn-badge {
                 display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
-                padding: 0 5px; border-radius: 999px; background: var(--smg-link, #ff77b2); color: #fff;
+                padding: 0 5px; border-radius: 999px; background: var(--smg-link); color: #fff;
                 font-size: 11px; font-weight: 700; line-height: 1;
             }
             .smg-multiselect-btn-arrow { margin-left: auto; display: inline-flex; align-items: center; }
@@ -8820,14 +8820,14 @@
 
             .smg-multiselect-pop {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: 9999999 !important; width: 340px; max-width: 90vw;
-                max-height: 480px; display: flex; flex-direction: column; background: var(--smg-s1, #18181c);
-                border: 1px solid var(--smg-bd2, rgba(255,255,255,0.18)); border-radius: 14px;
+                max-height: 480px; display: flex; flex-direction: column; background: var(--smg-s1);
+                border: 1px solid var(--smg-bd2); border-radius: 14px;
                 box-shadow: 0 12px 36px rgba(0,0,0,0.65); overflow: hidden;
             }
             .smg-lf-row .smg-multiselect-pop { width: 100%; max-width: 100%; box-sizing: border-box; }
             .smg-multiselect-pop[hidden] { display: none !important; }
             .smg-multiselect-search-wrap {
-                display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08));
+                display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--smg-bd);
             }
             .smg-multiselect-search-icon { display: inline-flex; color: rgba(255,255,255,0.4); }
             .smg-multiselect-search-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; }
@@ -8843,13 +8843,13 @@
 
             .smg-multiselect-pills-bar {
                 display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 12px;
-                background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.06));
+                background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--smg-bd);
             }
             .smg-multiselect-pills-bar[hidden] { display: none !important; }
             .smg-multiselect-pills { display: flex; flex-wrap: wrap; gap: 4px; max-height: 70px; overflow-y: auto; }
             .smg-multiselect-pill {
                 display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px;
-                background: var(--smg-link-soft, rgba(255,119,178,0.18)); border: 1px solid var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft); border: 1px solid var(--smg-link);
                 color: #fff; font-size: 11px; font-weight: 600;
             }
             .smg-multiselect-pill-del {
@@ -8857,7 +8857,7 @@
             }
             .smg-multiselect-pill-del:hover { color: #fff; }
             .smg-multiselect-clear-all {
-                flex: 0 0 auto; background: transparent; border: 0; color: var(--smg-link, #ff77b2); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 2px 4px;
+                flex: 0 0 auto; background: transparent; border: 0; color: var(--smg-link); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 2px 4px;
             }
             .smg-multiselect-clear-all:hover { text-decoration: underline; }
 
@@ -8876,9 +8876,9 @@
                 display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer; transition: background .1s ease;
             }
             .smg-multiselect-item:hover { background: rgba(255,255,255,0.06); }
-            .smg-multiselect-item.is-checked { background: var(--smg-link-soft, rgba(255,119,178,0.12)); }
+            .smg-multiselect-item.is-checked { background: var(--smg-link-soft); }
             .smg-multiselect-item input[type="checkbox"] {
-                accent-color: var(--smg-link, #ff77b2); width: 14px; height: 14px; margin: 0; cursor: pointer;
+                accent-color: var(--smg-link); width: 14px; height: 14px; margin: 0; cursor: pointer;
             }
             .smg-multiselect-item .smg-badge-chip { font-size: 10px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important; }
             .smg-multiselect-empty { padding: 24px; text-align: center; color: rgba(255,255,255,0.4); font-size: 13px; }
@@ -8916,7 +8916,7 @@
                 position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; z-index: 3;
                 cursor: col-resize; background: transparent; transition: background .15s ease;
             }
-            .smg-aldock-grip:hover, html.smg-aldock-resizing .smg-aldock-grip { background: var(--smg-link-soft, rgba(255,255,255,0.12)); }
+            .smg-aldock-grip:hover, html.smg-aldock-resizing .smg-aldock-grip { background: var(--smg-link-soft); }
             /* cabeçalho: título + contador + ações (atualizar · marcar tudo · fechar) */
             .smg-aldock-head {
                 flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
@@ -8926,7 +8926,7 @@
             .smg-aldock-title { display: flex; align-items: center; gap: 8px; margin-right: auto; font-size: 16px; font-weight: 800; color: #fff; }
             .smg-aldock-n {
                 padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums;
-                background: var(--smg-link-soft, rgba(255,119,178,0.18)); color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft); color: var(--smg-link);
             }
             .smg-aldock-n[hidden] { display: none; }
             .smg-aldock-acts { display: flex; align-items: center; gap: 6px; }
@@ -8986,7 +8986,7 @@
             .smg-aldock-foot a:hover { background: rgba(255,255,255,0.09); color: #fff; }
             /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
             .smg-tb-bellbtn.active,
-            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
+            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1099px) and (min-width: 601px) {
@@ -9021,7 +9021,7 @@
                while a custom page is still being composed. This prevents the original layout from
                flashing underneath the skeleton or dancing during the handoff. */
             html.smg-page-pending {
-                background: var(--smg-bg, #101113) !important;
+                background: var(--smg-bg) !important;
                 overflow: hidden !important;
                 scrollbar-gutter: stable;
             }
@@ -9048,13 +9048,13 @@
             html.smg-page-pending #smg-post-nav-wrapper { z-index: 1102 !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: 1000; display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
-                pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
+                pointer-events: none; background: var(--smg-bg); color: #fff;
             }
             html.smg-page-pending #smg-page-skeleton { display: block; }
-            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w, 360px); }
+            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w); }
             #smg-page-skeleton-rail {
-                position: fixed; top: 0; right: 0; bottom: 0; z-index: 1001; display: none; width: var(--smg-ald-w, 360px);
-                overflow: hidden; pointer-events: none; background: var(--smg-bg, #101113); color: #fff;
+                position: fixed; top: 0; right: 0; bottom: 0; z-index: 1001; display: none; width: var(--smg-ald-w);
+                overflow: hidden; pointer-events: none; background: var(--smg-bg); color: #fff;
                 border-left: 1px solid rgba(255,255,255,0.09); box-shadow: -10px 0 30px rgba(0,0,0,0.25);
             }
             html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail { display: block; }
@@ -9142,8 +9142,8 @@
             .smg-page-skeleton *, .smg-page-skeleton *::before, .smg-page-skeleton *::after { box-sizing: border-box; }
             .smg-page-skeleton-chrome {
                 display: flex; align-items: center; gap: 24px; height: 62px;
-                padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
-                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
+                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
             }
             .smg-page-skeleton-chrome-logo,
             .smg-page-skeleton-chrome-nav i,
@@ -9167,7 +9167,7 @@
             .smg-page-skeleton-chrome-actions i { display: block; width: 24px; height: 24px; border-radius: 50%; }
             .smg-page-skeleton-chrome-actions i:last-child { width: 34px; height: 34px; }
             .smg-page-skeleton-main {
-                width: var(--smg-cw, 80%); min-height: calc(100vh - 62px); min-height: calc(100dvh - 62px);
+                width: var(--smg-cw); min-height: calc(100vh - 62px); min-height: calc(100dvh - 62px);
                 margin: 0 auto; padding: 26px 0 64px;
             }
             .smg-page-skeleton-header { display: flex; align-items: center; gap: 16px; min-height: 94px; padding: 20px 0 16px; border-bottom: 1px solid rgba(255,255,255,0.10); }
@@ -9256,7 +9256,7 @@
                     position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
                     display: flex; align-items: center; justify-content: space-around; gap: 2px;
                     height: calc(54px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom);
-                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
                 }
                 .smg-page-skeleton-bottom-nav i {
                     display: block; width: 22px; height: 22px; border-radius: 7px;

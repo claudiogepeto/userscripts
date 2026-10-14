@@ -25,11 +25,11 @@
                 max-width: 100% !important;
                 margin: 14px 0 !important;
                 padding: 16px 18px !important;
-                background: var(--smg-s1, #16171b) !important;
+                background: var(--smg-s1) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
                 border-radius: 16px !important;
                 box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
                 box-sizing: border-box !important;
             }
@@ -45,7 +45,7 @@
                 border-radius: 50% !important;
                 overflow: hidden !important;
                 flex-shrink: 0 !important;
-                background: var(--smg-s2, rgba(255,255,255,0.06)) !important;
+                background: var(--smg-s2) !important;
             }
             .smg-tw-avatar img {
                 width: 100% !important;
@@ -63,7 +63,7 @@
             .smg-tw-name {
                 font-weight: 700 !important;
                 font-size: 14.5px !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
                 white-space: nowrap !important;
@@ -74,7 +74,7 @@
             }
             .smg-tw-user {
                 font-size: 12.5px !important;
-                color: var(--smg-tx2, rgba(255,255,255,0.5)) !important;
+                color: var(--smg-tx2) !important;
                 text-decoration: none !important;
             }
             .smg-tw-xlogo {
@@ -96,7 +96,7 @@
                 word-break: break-word !important;
                 white-space: pre-wrap !important;
                 margin-bottom: 12px !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
             }
             .smg-tw-media {
                 position: relative !important;
@@ -184,7 +184,7 @@
                 padding-top: 10px !important;
                 border-top: 1px solid rgba(255,255,255,0.08) !important;
                 font-size: 12px !important;
-                color: var(--smg-tx2, rgba(255,255,255,0.5)) !important;
+                color: var(--smg-tx2) !important;
             }
             .smg-tw-stats {
                 display: flex !important;
@@ -195,7 +195,7 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 gap: 4px !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: none !important;
                 font-weight: 600 !important;
             }

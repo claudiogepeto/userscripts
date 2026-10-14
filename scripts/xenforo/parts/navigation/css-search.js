@@ -74,7 +74,7 @@
                 height: 22px !important;
                 border-width: 2.5px !important;
                 border-color: rgba(255,255,255,0.15) !important;
-                border-top-color: var(--smg-link, #ff77b2) !important;
+                border-top-color: var(--smg-link) !important;
             }
             .smg-search-results[hidden],
             .smg-search-empty[hidden],
@@ -102,7 +102,7 @@
                 flex-shrink: 0 !important;
                 overflow: visible !important;
             }
-            .smg-search-bar:focus-within { border-color: var(--smg-link, #ff77b2); background: rgba(255,255,255,0.07); }   /* foco na cor do tema = mesmo focus da pílula da topbar */
+            .smg-search-bar:focus-within { border-color: var(--smg-link); background: rgba(255,255,255,0.07); }   /* foco na cor do tema = mesmo focus da pílula da topbar */
             .smg-search-lupa { flex: 0 0 auto; display: flex; align-items: center; color: rgba(255,255,255,0.5); }
             .smg-search-lupa svg { width: 20px; height: 20px; fill: none; }
             .smg-search-input {
@@ -181,8 +181,8 @@
                 color: #fff;
             }
             .smg-search-select-wrap select:focus {
-                border-color: var(--smg-link, #ff77b2);
-                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                border-color: var(--smg-link);
+                box-shadow: 0 0 0 1px var(--smg-link);
             }
             .smg-search-select-wrap select option {
                 background: #18181b;
@@ -209,9 +209,9 @@
                 color: #fff;
             }
             .smg-search-author-trigger.has-value {
-                background: var(--smg-link-soft, rgba(255,119,178,0.18));
-                border-color: var(--smg-link, #ff77b2);
-                color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft);
+                border-color: var(--smg-link);
+                color: var(--smg-link);
             }
             .smg-search-author-trigger svg {
                 width: 15px;
@@ -230,9 +230,9 @@
                 box-sizing: border-box;
                 border-radius: 9px;
                 background: rgba(255,255,255,0.07);
-                border: 1px solid var(--smg-link, #ff77b2);
+                border: 1px solid var(--smg-link);
                 padding: 0 8px 0 10px;
-                box-shadow: 0 0 0 1px var(--smg-link, #ff77b2);
+                box-shadow: 0 0 0 1px var(--smg-link);
                 transition: all .15s ease;
             }
             .smg-search-author-row[hidden] {
@@ -242,7 +242,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: var(--smg-link, #ff77b2);
+                color: var(--smg-link);
                 flex-shrink: 0;
             }
             .smg-search-author-row .smg-search-author-ic svg {
@@ -378,8 +378,8 @@
                 color: #fff;
             }
             .smg-search-global-toolbar .smg-multiselect-btn.has-active {
-                background: var(--smg-link-soft, rgba(255,119,178,0.18));
-                border-color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft);
+                border-color: var(--smg-link);
                 color: #fff;
             }
 
@@ -424,7 +424,7 @@
                 box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch {
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
             }
             .smg-ios-toggle input:checked + .smg-ios-switch::before {
                 transform: translateX(14px);
@@ -559,7 +559,7 @@
             }
             .smg-search-adv:hover, .smg-search-cfg:hover, .smg-search-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.24); color: #fff; }
             .smg-search-adv:active, .smg-search-cfg:active, .smg-search-close:active { transform: scale(0.93); }
-            .smg-search-cfg.open { background: var(--smg-link-soft, rgba(255,119,178,0.18)); border-color: var(--smg-link, #ff77b2); color: var(--smg-link, #ff77b2); }
+            .smg-search-cfg.open { background: var(--smg-link-soft); border-color: var(--smg-link); color: var(--smg-link); }
             .smg-search-adv svg, .smg-search-cfg svg, .smg-search-close svg { width: 16px; height: 16px; fill: none !important; }
             .smg-search-kbd { cursor: default; font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.4); }
             .smg-search-foot { display: none; }   /* rodapé (botão "Search") removido: digitar já busca (debounce) + "See all results" + Enter; o botão é redundante. Desktop já escondia; agora some no mobile tb. */
@@ -624,8 +624,8 @@
             html.smg-search-page .block-row .contentRow-title .prefix,
             html.smg-search-page .block-row .contentRow-title .labelLink { overflow: visible !important; vertical-align: middle !important; }
             html.smg-search-page .block-row .contentRow-title a { color: #fff !important; text-decoration: none !important; }
-            html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link, #ff77b2) !important; }
-            html.smg-search-page .block-row .textHighlight { color: var(--smg-link, #ff77b2) !important; font-style: normal !important; background: none !important; }
+            html.smg-search-page .block-row .contentRow-title a:hover { color: var(--smg-link) !important; }
+            html.smg-search-page .block-row .textHighlight { color: var(--smg-link) !important; font-style: normal !important; background: none !important; }
             /* snippet: no máx 2 linhas, texto suave (URL crua não estoura o card) */
             html.smg-search-page .block-row .contentRow-snippet {
                 font-size: 13px !important; line-height: 1.5 !important; color: rgba(255,255,255,0.62) !important;
@@ -670,7 +670,7 @@
             html.smg-search-form .block-tabHeader .tabs-tab::before { content: none !important; }
             html.smg-search-form .block-tabHeader .tabs-tab::after {   /* substitui QUALQUER indicador nativo pelo nosso sublinhado */
                 content: "" !important; position: absolute; left: 11px; right: 11px; bottom: -1px; height: 2.5px;
-                border-radius: 3px 3px 0 0; background: var(--smg-link, #ff77b2); border: 0 !important; box-shadow: none !important;
+                border-radius: 3px 3px 0 0; background: var(--smg-link); border: 0 !important; box-shadow: none !important;
                 transform: scaleX(0); transition: transform .2s ease;
             }
             html.smg-search-form .block-tabHeader .tabs-tab.is-active::after { transform: scaleX(1); }
@@ -704,7 +704,7 @@
                 border-radius: 11px !important; color: #fff !important; font-size: 14.5px !important; box-shadow: none !important;
             }
             html.smg-search-form form.block .input:focus, html.smg-search-form form.block .input:focus-within {
-                border-color: var(--smg-link, #ff77b2) !important; background: rgba(255,255,255,0.07) !important; outline: none !important;
+                border-color: var(--smg-link) !important; background: rgba(255,255,255,0.07) !important; outline: none !important;
             }
             html.smg-search-form form.block select.input option { background: #1b1c20; color: #fff; }
             /* tagify (Tags / Without tags): chips no padrão (o tile do chip nativo vem de um ::before com box-shadow) */
@@ -736,7 +736,7 @@
             }
             html.smg-search-form form.block label.iconic--radio > i { border-radius: 50% !important; }
             html.smg-search-form form.block label.iconic > i::after { position: static !important; margin: 0 !important; font-size: 11px !important; line-height: 1 !important; }
-            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong, #d14d8f) !important; border-color: var(--smg-link-strong, #d14d8f) !important; }
+            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong) !important; border-color: var(--smg-link-strong) !important; }
             html.smg-search-form form.block label.iconic input:checked + i::after { color: #fff !important; }
             /* Order by (Relevance/Date): radios na HORIZONTAL */
             html.smg-search-form form.block .inputChoices { display: flex !important; flex-wrap: wrap; gap: 8px 22px; margin: 0 !important; padding: 0 !important; }
@@ -751,7 +751,7 @@
             html.smg-search-form form.block .formSubmitRow .button--primary {
                 display: inline-flex !important; align-items: center; gap: 8px; height: 44px; padding: 0 24px !important;
                 border: 0 !important; border-radius: 11px !important; box-shadow: none !important;
-                background: var(--smg-link-strong, #d14d8f) !important; color: #fff !important;
+                background: var(--smg-link-strong) !important; color: #fff !important;
                 font-size: 14px !important; font-weight: 700 !important;
                 transition: filter .14s ease, transform .12s ease;
             }
@@ -790,7 +790,7 @@
             .smg-search-empty-t { font-size: 14.5px; font-weight: 600; color: rgba(255,255,255,0.72); }
             .smg-search-empty-s { font-size: 12.5px; color: rgba(255,255,255,0.4); }
             .smg-search-empty-hint { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
-            .smg-search-empty-hint code { padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.07); color: var(--smg-link, #ff77b2); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+            .smg-search-empty-hint code { padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.07); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
             .smg-search-hist-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
             .smg-search-hist-badge { padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -853,8 +853,8 @@
             }
             .smg-search-result-chip:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
             .smg-search-result-chip.is-active {
-                background: var(--smg-link, #ff77b2); color: #fff;
-                border-color: var(--smg-link, #ff77b2); font-weight: 700;
+                background: var(--smg-link); color: #fff;
+                border-color: var(--smg-link); font-weight: 700;
                 box-shadow: 0 2px 8px rgba(255,119,178,0.3);
             }
             .smg-search-result-chip .smg-chip-count {

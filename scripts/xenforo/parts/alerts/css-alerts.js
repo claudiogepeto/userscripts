@@ -14,10 +14,10 @@
                 transition: border-color .15s ease, background .15s ease, color .15s ease;
             }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon svg { width: 24px; height: 24px; }
-            .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link, #ff77b2); }
+            .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link); }
             /* não-lida: o ícone ganha a tinta do tema (o card inteiro fica mais "vivo" que as lidas) */
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread .smg-al-icon {
-                background: var(--smg-link-soft, rgba(255,119,178,0.16)); border-color: rgba(255,255,255,0.14); color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft); border-color: rgba(255,255,255,0.14); color: var(--smg-link);
             }
             /* FOTO da thread no lugar do glifo (quando o cache de thumbs conhece a thread do alerta):
                mesma caixa, então trocar o glifo pela imagem não desloca uma linha sequer. */
@@ -53,10 +53,10 @@
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow { background: transparent !important; box-shadow: none !important; }
             .smg-tb-listbody .smg-alert-clean li.alert:hover { background: rgba(255,255,255,0.055) !important; }
             /* NÃO-LIDA: tinta suave do tema + faixa de 3px na borda esquerda (marcador claro, sem poluir) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft, rgba(255,255,255,0.05)) !important; }
+            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft) !important; }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread::before {
                 content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px;
-                border-radius: 0 3px 3px 0; background: var(--smg-link, #ff77b2);
+                border-radius: 0 3px 3px 0; background: var(--smg-link);
             }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread:hover { box-shadow: inset 0 0 0 999px rgba(255,255,255,0.05) !important; }
             /* JÁ VISTAS: bem apagadas (o olho vai direto nas novas) — o hover devolve o contraste inteiro */
@@ -113,11 +113,11 @@
                 display: inline-flex; align-items: center; justify-content: center; transition: background .15s ease;
             }
             .smg-al-read::before {
-                content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--smg-link, #ff77b2);
+                content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--smg-link);
                 line-height: 1; font-size: 0; font-weight: 800; transition: background .12s ease;
             }
             .smg-al-read:hover { background: rgba(255,255,255,0.12); }
-            .smg-al-read:hover::before { content: "✓"; width: auto; height: auto; background: transparent; font-size: 17px; color: var(--smg-link, #ff77b2); }
+            .smg-al-read:hover::before { content: "✓"; width: auto; height: auto; background: transparent; font-size: 17px; color: var(--smg-link); }
             .smg-al-read:active { transform: scale(0.88); }
             .smg-al-read-txt { display: none; }   /* texto só no mobile (sheet) */
             html.smg-smg .smg-al-read::before { width: 8px; height: 8px; }   /* badge um pouco menor no socialmediagirls */

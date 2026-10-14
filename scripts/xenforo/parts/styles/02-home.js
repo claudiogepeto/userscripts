@@ -26,14 +26,14 @@
                keep our already-built topbar/dock visible because they are stable custom chrome. */
             #smg-home-skeleton {
                 position: fixed; inset: 0; z-index: 1000; min-height: 100vh; min-height: 100dvh; overflow: hidden; pointer-events: none;
-                background: var(--smg-bg, #101113); visibility: visible;
+                background: var(--smg-bg); visibility: visible;
             }
-            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w, 360px); }
+            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w); }
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
             .smg-home-skeleton-topbar {
                 display: flex; align-items: center; justify-content: space-between; gap: 24px;
-                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw, 80%)) / 2));
-                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
+                border-bottom: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
             }
             .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: 8px; }
             .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: 30px; margin-left: auto; }
@@ -56,7 +56,7 @@
             .smg-home-skeleton-topbar-actions i { display: block; width: 24px; height: 24px; border-radius: 50%; }
             .smg-home-skeleton-topbar-actions i:last-child { width: 34px; height: 34px; }
             .smg-home-skeleton-main {
-                width: var(--smg-cw, 80%); margin: 0 auto; padding: 16px 0 44px;
+                width: var(--smg-cw); margin: 0 auto; padding: 16px 0 44px;
             }
             .smg-home-skeleton-notices {
                 margin-bottom: 22px; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
@@ -166,7 +166,7 @@
                     position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
                     display: flex; align-items: center; justify-content: space-around; gap: 2px;
                     height: calc(54px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom);
-                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg, #101113);
+                    border-top: 1px solid rgba(255,255,255,0.08); background: var(--smg-bg);
                 }
                 .smg-home-skeleton-bottom-nav i {
                     position: relative; display: block; width: 22px; height: 22px; border-radius: 7px; overflow: hidden;
@@ -196,7 +196,7 @@
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
             html.smg-home .smg-feed-block {
                 margin: 28px 0 46px !important; padding: 18px 18px 20px;
-                background: var(--smg-s1, #16171c);
+                background: var(--smg-s1);
                 border: 1px solid rgba(255,255,255,0.08); border-radius: 22px;
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 44px -18px rgba(0,0,0,0.6);
                 overflow: visible;
@@ -253,15 +253,15 @@
                 width: var(--smg-feed-card-w) !important; min-width: var(--smg-feed-card-w) !important; max-width: var(--smg-feed-card-w) !important;
                 height: auto !important; aspect-ratio: 3 / 4 !important; scroll-snap-align: start;
                 display: block; border-radius: 18px; overflow: hidden;
-                background: var(--smg-s2, #18191f); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
+                background: var(--smg-s2); border: 1px solid rgba(255,255,255,0.08); text-decoration: none;
                 box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
                 transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), border-color .2s ease, box-shadow .2s ease;
             }
             html.smg-home .smg-feed-card:hover {
                 transform: translateY(-6px); border-color: rgba(255,255,255,0.22);
-                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft, rgba(255,119,178,0.22));
+                box-shadow: 0 22px 44px -10px rgba(0,0,0,0.7), 0 0 24px -6px var(--smg-link-soft);
             }
-            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2, #18191f); overflow: hidden; display: block; }
+            html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.2,.7,.3,1); }
             html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
@@ -304,8 +304,8 @@
             html.smg-home .smg-feed-loading { width: 100%; padding: 40px; text-align: center; color: rgba(255,255,255,0.45); font-size: 13px; }
             /* skeletons de loading */
             html.smg-home .smg-feed-skel { pointer-events: none; }
-            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2, #18191f); }
-            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2, #18191f); }
+            html.smg-home .smg-skel-box, html.smg-home .smg-skel-line { position: relative; overflow: hidden; background: var(--smg-s2); }
+            html.smg-home .smg-feed-skel .smg-feed-card-thumb { background: var(--smg-s2); }
             html.smg-home .smg-skel-line { height: 11px; border-radius: 5px; margin-bottom: 7px; }
             html.smg-home .smg-skel-line--short { width: 60%; }
             html.smg-home .smg-skel-line--meta { width: 45%; height: 9px; margin-top: 5px; margin-bottom: 0; }
@@ -369,9 +369,9 @@
                 color: rgba(255,255,255,0.5); margin-left: 10px;
             }
             html.smg-smg.smg-home .smg-hub-badge {
-                background: var(--smg-link-soft, rgba(255, 61, 132, 0.12));
+                background: var(--smg-link-soft);
                 border-color: rgba(255, 61, 132, 0.25);
-                color: var(--smg-link, #ff3d84);
+                color: var(--smg-link);
             }
 
             html.smg-home .block--category .block-body,
@@ -396,7 +396,7 @@
                 cursor: pointer;
                 border: 1px solid rgba(255,255,255,0.07) !important;
                 border-radius: 14px !important;
-                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1, #15161a) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), var(--smg-s1) !important;
                 overflow: hidden !important;
                 min-height: 64px !important;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
@@ -409,7 +409,7 @@
             html.smg-home .block--category .node:hover {
                 transform: translateY(-2px) !important;
                 border-color: rgba(255,255,255,0.18) !important;
-                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2, #181920) !important;
+                background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%), var(--smg-s2) !important;
                 box-shadow: 0 10px 24px -4px rgba(0,0,0,0.55), 0 0 16px -4px rgba(255,255,255,0.05) !important;
             }
 
@@ -490,7 +490,7 @@
                 text-transform: uppercase !important; color: rgba(255,255,255,0.4) !important; white-space: nowrap !important;
             }
             html.smg-smg.smg-home .smg-hub-divider-text {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
 
             /* Últimos posts (.node-extra) à direita no layout de lista */
@@ -528,24 +528,24 @@
                 line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
             }
             html.smg-home .node-title a:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
             html.smg-home .node-title .uix_newIndicator {
                 margin-left: 8px !important;
                 font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.04em !important;
                 text-transform: uppercase !important; padding: 1.5px 6px !important; border-radius: 5px !important;
                 line-height: 1.2 !important; display: inline-block !important; vertical-align: middle !important;
-                background: var(--smg-link-soft, rgba(255, 61, 132, 0.15)) !important;
-                color: var(--smg-link, #ff3d84) !important;
-                border: 1px solid var(--smg-link-soft, rgba(255, 61, 132, 0.3)) !important;
+                background: var(--smg-link-soft) !important;
+                color: var(--smg-link) !important;
+                border: 1px solid var(--smg-link-soft) !important;
             }
             html.smg-home .node-extra:hover .node-extra-title,
             html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-smg.smg-home .node-extra-title:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
             }
             html.smg-home .node-extra .listInline {
                 display: inline-flex !important; align-items: center !important; justify-content: flex-end !important;
@@ -737,7 +737,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-title:hover {
-                color: var(--smg-link, #ff3d84) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-date {

@@ -6,7 +6,7 @@
             .smg-notices-collapse {
                 margin: 16px 0 !important;
                 border-radius: 14px !important;
-                background: var(--smg-s1, #1a1a1a) !important;
+                background: var(--smg-s1) !important;
                 border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
                 overflow: hidden !important;
@@ -38,7 +38,7 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-size: 16px !important;
                 flex-shrink: 0 !important;
             }
@@ -58,7 +58,7 @@
                 border-radius: 999px !important;
                 font-size: 11px !important;
                 font-weight: 700 !important;
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
                 line-height: 1 !important;
             }
@@ -153,7 +153,7 @@
                 color: rgba(255, 255, 255, 0.88) !important;
             }
             .smg-notices-item-content a {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 600 !important;
                 text-decoration: underline !important;
                 text-underline-offset: 2px !important;
@@ -247,7 +247,7 @@
             }
             .smg-csheet-idtxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
             .smg-csheet-idtxt strong { font-size: 19px; font-weight: 800; line-height: 1.2; }
-            .smg-csheet-idtxt span { font-size: 13px; font-weight: 600; color: var(--smg-link, #ff77b2); }
+            .smg-csheet-idtxt span { font-size: 13px; font-weight: 600; color: var(--smg-link); }
             .smg-csheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; font-size: 15px; font-weight: 700; color: #fff; }
             .smg-csheet-head a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); text-decoration: none; }
             .smg-csheet-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }   /* contain = chegar no fim da lista não "vaza" o scroll pro fundo */

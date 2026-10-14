@@ -98,7 +98,7 @@
             }
             .smg-badge-chip.active,
             .smg-badge-chip.is-selected {
-                outline: 2px solid var(--smg-link, #ff77b2) !important;
+                outline: 2px solid var(--smg-link) !important;
                 outline-offset: 1px !important;
                 box-shadow: 0 0 10px rgba(255,119,178,0.45) !important;
                 filter: brightness(1.25) !important;
@@ -198,7 +198,7 @@
                 cursor: pointer; transition: all .15s ease; text-align: center;
             }
             .smg-lf-dir-opt:hover { color: #fff; }
-            .smg-lf-dir-opt.active { background: var(--smg-link, #ff77b2); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
+            .smg-lf-dir-opt.active { background: var(--smg-link); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
             .smg-lf-select {
                 width: 100%; height: 38px; padding: 0 12px; border-radius: 10px;
                 background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
@@ -212,7 +212,7 @@
                 padding: 12px;
                 border-radius: 12px;
                 border: none;
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
                 color: #fff;
                 font-size: 14.5px;
                 font-weight: 700;

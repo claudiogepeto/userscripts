@@ -7,7 +7,7 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .smg-pc { background: var(--smg-s1, #16171b) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid rgba(255,255,255,0.11) !important; border-radius: 18px !important; margin: 0 0 14px; overflow: visible; transition: border-color .16s ease, box-shadow .16s ease; contain: style; overflow-anchor: auto !important; }
             html.smg-thread .smg-pc:hover { border-color: rgba(255,255,255,0.22) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
@@ -22,9 +22,9 @@
                 margin: 16px 0 20px !important;
                 padding: 0 !important;
                 border: 1px solid rgba(255,255,255,0.09) !important;
-                border-left: 4px solid var(--smg-link, #ff77b2) !important;
+                border-left: 4px solid var(--smg-link) !important;
                 border-radius: 12px !important;
-                background: var(--smg-s2, rgba(255,255,255,0.04)) !important;
+                background: var(--smg-s2) !important;
                 overflow: hidden !important;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.25) !important;
             }
@@ -35,7 +35,7 @@
                 padding: 10px 16px 8px !important;
                 font-size: 13px !important;
                 font-weight: 700 !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 background: rgba(0,0,0,0.22) !important;
                 border-bottom: 1px solid rgba(255,255,255,0.06) !important;
             }
@@ -55,7 +55,7 @@
                 padding: 14px 18px 16px !important;
                 font-size: 14px !important;
                 line-height: 1.65 !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 background: transparent !important;
             }
             .bbCodeBlock--quote .bbCodeBlock-expandContent {
@@ -83,7 +83,7 @@
             /* Gradiente e link "Clique para expandir..." suave e elegante */
             .bbCodeBlock--quote .bbCodeBlock-expandLink,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink {
-                background: linear-gradient(to bottom, transparent, var(--smg-s1, #16171b) 90%) !important;
+                background: linear-gradient(to bottom, transparent, var(--smg-s1) 90%) !important;
                 padding: 28px 0 10px !important;
                 text-align: center !important;
             }
@@ -92,9 +92,9 @@
                 display: inline-block !important;
                 padding: 5px 16px !important;
                 border-radius: 999px !important;
-                background: var(--smg-s3, rgba(255,255,255,0.08)) !important;
+                background: var(--smg-s3) !important;
                 border: 1px solid rgba(255,255,255,0.12) !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-size: 12px !important;
                 font-weight: 700 !important;
                 cursor: pointer !important;
@@ -102,7 +102,7 @@
             }
             .bbCodeBlock--quote .bbCodeBlock-expandLink a:hover,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink a:hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
             }
             /* Mídias / imagens dentro da citação */
@@ -119,8 +119,8 @@
                 margin: 10px 0 !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12)) !important;
-                background: var(--smg-s1, #16171b) !important;
+                border: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important;
                 box-shadow: 0 4px 14px rgba(0,0,0,0.25) !important;
             }
             .bbCodeSpoiler-button {
@@ -129,10 +129,10 @@
                 justify-content: space-between !important;
                 width: 100% !important;
                 padding: 10px 14px !important;
-                background: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                background: var(--smg-s2) !important;
                 border: none !important;
                 border-radius: 0 !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                color: var(--smg-tx) !important;
                 font-size: 13.5px !important;
                 font-weight: 600 !important;
                 cursor: pointer !important;
@@ -149,7 +149,7 @@
                 gap: 8px !important;
             }
             .bbCodeSpoiler-button .bbCodeSpoiler-button-title {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 font-weight: 700 !important;
             }
             .smg-spoiler-arrow {
@@ -166,12 +166,12 @@
             .bbCodeSpoiler.is-active .smg-spoiler-arrow,
             .bbCodeSpoiler-button[aria-expanded="true"] .smg-spoiler-arrow {
                 transform: rotate(180deg) !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
             }
             .bbCodeSpoiler-content {
                 padding: 12px 14px !important;
-                border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
-                background: var(--smg-s1, #16171b) !important;
+                border-top: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important;
                 text-align: left !important;
             }
             .bbCodeSpoiler-content .bbCodeBlock--spoiler {
@@ -193,7 +193,7 @@
             html.smg-thread .smg-pc .message-actionBar { display: none !important; }                    /* react/comentar/quote/report movidos */
             html.smg-thread .smg-pc .message-content { padding: 18px 22px 10px; }
             /* HEADER (com divisor border-b) */
-            html.smg-thread .smg-pc-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid var(--smg-bd, rgba(255,255,255,0.08)); }
+            html.smg-thread .smg-pc-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
             html.smg-thread .smg-pc-avatar img, html.smg-thread .smg-pc-avatar span { width: 100% !important; height: 100% !important; object-fit: cover; display: flex; align-items: center; justify-content: center; }
             html.smg-thread .smg-pc-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -212,9 +212,9 @@
             html.smg-thread .smg-pc-row2 .featuredBadges { display: inline-flex; flex-wrap: wrap; gap: 3px; margin: 0; }
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
             /* ACTION BAR */
-            html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); }
+            html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: 7px; height: 34px; margin: 0 !important; padding: 0 13px !important; border-radius: 9px; border: 0; background: transparent; color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
-            html.smg-thread .smg-pc-act:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; }
+            html.smg-thread .smg-pc-act:hover { background: var(--smg-s3); color: #fff; }
             /* MÉTRICA ÚNICA dos ícones da action bar (post e comentário). Cada ação trazia a sua:
                o <i> da fonte do XF em 15px, o nosso react em 16, o bookmark/share nativos em outra
                — tamanhos, pesos e espaçamentos diferentes na mesma fila. Aqui todos passam a ter
@@ -238,7 +238,7 @@
             html.smg-thread .smg-pc-act--save .js-bookmarkText { display: none; }   /* texto nativo "Adicionar aos favoritos" fica escondido → o rótulo "Salvar" (smg-pc-act-lbl) é o visível (sem duplicar) */
             html.smg-thread .smg-pc-react-n { font-weight: 600; font-variant-numeric: tabular-nums; }
             /* ESTADO ATIVO (#3): salvo = bookmark (is-bookmarked, nativo) · reagido = classe do XF (is-reacted/reaction--active) → cor do tema + fundinho */
-            html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--save.is-bookmarked { color: var(--smg-link) !important; background: var(--smg-link-soft); }
             html.smg-thread .smg-pc-act--save.is-bookmarked .smg-pc-act-ic svg { fill: currentColor !important; stroke: currentColor !important; }
             html.smg-thread .smg-pc-actions .smg-pc-act--react,
             html.smg-thread .smg-cc-actions .smg-cc-act--react {
@@ -250,7 +250,7 @@
             html.smg-thread .smg-cc-react-n { display: inline-flex !important; align-items: baseline; gap: 4px; visibility: visible !important; }
             /* Compartilhar copiou o link: confirmação de ~1,2s no próprio botão (não abre menu nenhum) */
             html.smg-thread .smg-pc-act--copied { color: #46d369 !important; background: rgba(70,211,105,0.12); }
-            html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link, #ff77b2) !important; background: var(--smg-link-soft, rgba(255,119,178,0.13)); }
+            html.smg-thread .smg-pc-act--react.is-reacted, html.smg-thread .smg-pc-act--react.reaction--active, html.smg-thread .smg-cc-act--react.is-reacted, html.smg-thread .smg-cc-act--react.reaction--active { color: var(--smg-link) !important; background: var(--smg-link-soft); }
             /* REACT: cor NEUTRA (ícone + número + texto iguais aos outros) — o azul nativo fazia parecer "já reagi" */
             html.smg-thread .smg-pc-act--react { color: rgba(255,255,255,0.72) !important; }
             html.smg-thread .smg-cc-act--react { color: rgba(255,255,255,0.65) !important; }
@@ -267,11 +267,11 @@
             /* ⋯ overflow */
             html.smg-thread .smg-pc-morewrap { position: relative; margin-left: auto; }
             html.smg-thread .smg-pc-act--more { font-size: 18px; padding: 0 12px; }
-            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: 2px; min-width: 168px; padding: 6px; z-index: 50; background: var(--smg-s2, #1c1d22); border: 1px solid var(--smg-bd2, rgba(255,255,255,0.12)); border-radius: 12px; box-shadow: 0 14px 38px rgba(0,0,0,0.55); }
+            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: 2px; min-width: 168px; padding: 6px; z-index: 50; background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: 12px; box-shadow: 0 14px 38px rgba(0,0,0,0.55); }
             html.smg-thread .smg-pc-morewrap.open .smg-pc-morepop { display: flex; }
             html.smg-thread .smg-pc-morerow { display: flex !important; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 8px; background: transparent; color: rgba(255,255,255,0.85); font-size: 13.5px; font-weight: 600; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
-            html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3, rgba(255,255,255,0.08)); color: #fff; }
+            html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3); color: #fff; }
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
-            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft, rgba(255,119,178,0.18)); color: var(--smg-link, #ff77b2); }
+            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: 10px; font-weight: 800; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: 11px; color: rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 3px; }
 `;

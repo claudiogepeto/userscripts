@@ -491,7 +491,7 @@
             .smg-thead-ic { display: inline-flex; align-items: center; justify-content: center; }
             .smg-thead-lbl { display: none; }   /* desktop: só ícone (compacto na linha do título); label aparece no mobile */
             .smg-thead-btn + .smg-thead-btn { border-left: 1px solid var(--smg-bd); }   /* divisor entre os segmentos */
-            .smg-thead-btn:hover { background: var(--smg-link, #ff77b2); color: #fff; }   /* hover de marca: destaca o propósito “maior” */
+            .smg-thead-btn:hover { background: var(--smg-link); color: #fff; }   /* hover de marca: destaca o propósito “maior” */
             .smg-thead-btn:active { transform: scale(0.9); }
             /* título + descrição alinhados à esquerda (sem centralizar nada) */
             html.smg-thread .p-body-header .p-title,
@@ -800,8 +800,8 @@
                 gap: 3px !important;
                 margin: 0 0 16px 0 !important;
                 padding: 6px 10px !important;
-                background: var(--smg-s1, #16171b) !important;
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.08)) !important;
+                background: var(--smg-s1) !important;
+                border: 1px solid var(--smg-bd) !important;
                 border-radius: 12px !important;
                 list-style: none !important;
                 width: 100% !important;
@@ -921,7 +921,7 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-title a:hover,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-title a:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-pageJump,
@@ -995,7 +995,7 @@
                container real dos itens (varia entre fórum e watched) ---- */
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
                 display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
+                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: 14px !important;
                 padding: 14px !important;
                 align-items: stretch !important;
@@ -1015,7 +1015,7 @@
                 border: 1px solid rgba(127,127,127,0.18) !important;
                 border-radius: 12px !important;
                 overflow: hidden !important;
-                background: var(--smg-s1, #1b1c21) !important;
+                background: var(--smg-s1) !important;
                 position: relative !important;
                 transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
             }
@@ -1026,7 +1026,7 @@
                 display: none !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
-                border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
+                border-color: var(--smg-bd2) !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
             }
@@ -1082,7 +1082,7 @@
             }
             .smg-thread-unwatch-btn.is-following {
                 opacity: 0.85 !important;
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 background: rgba(0,0,0,0.75) !important;
             }
             .smg-thread-unwatch-btn.is-following:hover {
@@ -1090,7 +1090,7 @@
                 color: #fff !important;
             }
             .smg-thread-unwatch-btn:not(.is-following):hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #fff !important;
             }
             .smg-thread-unwatch-btn:hover {
@@ -1151,7 +1151,7 @@
                 word-break: break-word !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a:hover {
-                color: var(--smg-link, #ff77b2) !important;
+                color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
 
@@ -1218,7 +1218,7 @@
                 text-decoration: none !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-pageJump a:hover {
-                background: var(--smg-link, #ff77b2) !important;
+                background: var(--smg-link) !important;
                 color: #000 !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--meta,
@@ -1235,8 +1235,8 @@
                 width: 7px !important;
                 height: 7px !important;
                 border-radius: 50% !important;
-                background: var(--smg-link, #ff77b2) !important;
-                box-shadow: 0 0 6px var(--smg-link-soft, rgba(255,119,178,0.45)) !important;
+                background: var(--smg-link) !important;
+                box-shadow: 0 0 6px var(--smg-link-soft) !important;
                 margin-left: 6px !important;
                 vertical-align: middle !important;
             }
@@ -1257,7 +1257,7 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd) {
                 position: relative !important;
                 overflow: hidden !important;
-                background: var(--smg-s2, #2a2a2a) !important;
+                background: var(--smg-s2) !important;
                 min-height: 160px;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after {

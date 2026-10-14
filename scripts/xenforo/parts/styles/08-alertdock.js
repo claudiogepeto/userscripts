@@ -21,7 +21,7 @@
                 position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; z-index: 3;
                 cursor: col-resize; background: transparent; transition: background .15s ease;
             }
-            .smg-aldock-grip:hover, html.smg-aldock-resizing .smg-aldock-grip { background: var(--smg-link-soft, rgba(255,255,255,0.12)); }
+            .smg-aldock-grip:hover, html.smg-aldock-resizing .smg-aldock-grip { background: var(--smg-link-soft); }
             /* cabeçalho: título + contador + ações (atualizar · marcar tudo · fechar) */
             .smg-aldock-head {
                 flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
@@ -31,7 +31,7 @@
             .smg-aldock-title { display: flex; align-items: center; gap: 8px; margin-right: auto; font-size: 16px; font-weight: 800; color: #fff; }
             .smg-aldock-n {
                 padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums;
-                background: var(--smg-link-soft, rgba(255,119,178,0.18)); color: var(--smg-link, #ff77b2);
+                background: var(--smg-link-soft); color: var(--smg-link);
             }
             .smg-aldock-n[hidden] { display: none; }
             .smg-aldock-acts { display: flex; align-items: center; gap: 6px; }
@@ -91,7 +91,7 @@
             .smg-aldock-foot a:hover { background: rgba(255,255,255,0.09); color: #fff; }
             /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
             .smg-tb-bellbtn.active,
-            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
+            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1099px) and (min-width: 601px) {

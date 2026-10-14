@@ -35,7 +35,7 @@
                     border: none !important;
                     border-top: 1px solid rgba(255,255,255,0.08) !important;
                     border-radius: 0 !important;
-                    background: var(--smg-bg, #16171b) !important;
+                    background: var(--smg-bg) !important;
                     box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
                     overflow: visible !important;
                 }
@@ -81,7 +81,7 @@
                 }
                 .smg-nav-ico svg { stroke-width: 1.9; }       /* traço mais leve na navbar */
                 /* item da página atual: ícone na COR DO TEMA (verde/rosa), em CONTORNO (sem preencher → sem "blob"/gradiente) */
-                .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link, #ff77b2); }
+                .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link); }
                 /* profile = avatar circular (24px, idêntico aos outros ícones da navbar) */
                 .smg-nav-ico--avatar {
                     width: 24px !important;
@@ -105,7 +105,7 @@
                     text-align: center !important;
                 }
                 .smg-nav-active .smg-nav-ico--avatar {
-                    box-shadow: 0 0 0 1.5px var(--smg-bg), 0 0 0 2.5px var(--smg-link, #ff77b2) !important;
+                    box-shadow: 0 0 0 1.5px var(--smg-bg), 0 0 0 2.5px var(--smg-link) !important;
                 }
                 .smg-nav-btn[data-label]::after {
                     display: none;
@@ -248,14 +248,14 @@
                 .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
                 }
 
                 /* Botão de View Mode no Mobile */
                 .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link, #ff77b2) !important;
-                    stroke: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
+                    stroke: var(--smg-link) !important;
                 }
 
                 /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
@@ -265,8 +265,8 @@
                 }
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link, #ff77b2) !important;
-                    stroke: var(--smg-link, #ff77b2) !important;
+                    color: var(--smg-link) !important;
+                    stroke: var(--smg-link) !important;
                 }
 
                 /* Linha 2 (Navbar Global do Fórum no Mobile) */
@@ -318,8 +318,8 @@
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 50;
-                background: var(--smg-s2, #1c1c1f);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                background: var(--smg-s2);
+                border: 1px solid var(--smg-bd);
                 border-radius: 16px;
                 padding: 6px 10px;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -344,7 +344,7 @@
                 transition: background .14s ease;
             }
             .smg-mp-btn:hover {
-                background: var(--smg-s3, rgba(255,255,255,0.15));
+                background: var(--smg-s3);
                 color: #fff;
             }
             .smg-mp-btn[disabled] {
@@ -360,7 +360,7 @@
                 align-items: center;
                 gap: 4px;
                 background: rgba(255,255,255,0.04);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                border: 1px solid var(--smg-bd);
                 border-radius: 8px;
                 padding: 2px 6px;
             }
@@ -384,7 +384,7 @@
                 height: 28px;
                 padding: 0 8px;
                 border-radius: 6px;
-                background: var(--smg-link, #ff77b2);
+                background: var(--smg-link);
                 color: #fff;
                 border: 0;
                 font-weight: 700;
@@ -419,8 +419,8 @@
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 50;
-                background: var(--smg-s2, #1c1c1f);
-                border: 1px solid var(--smg-bd, rgba(255,255,255,0.12));
+                background: var(--smg-s2);
+                border: 1px solid var(--smg-bd);
                 border-radius: 16px;
                 padding: 6px;
                 box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -446,7 +446,7 @@
                 transition: background .14s ease;
             }
             .smg-vm-opt:hover {
-                background: var(--smg-s3, rgba(255,255,255,0.15));
+                background: var(--smg-s3);
             }
             .smg-vm-ic svg {
                 width: 16px;

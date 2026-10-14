@@ -161,7 +161,7 @@
                 text-align: center !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-justified-grid > * {
-                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h, 320px) * var(--smg-ratio, 1)) !important;
+                flex: var(--smg-ratio, 1) 1 calc(var(--smg-target-h) * var(--smg-ratio, 1)) !important;
                 min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;
                 max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 max-width: 100% !important;
@@ -335,7 +335,7 @@
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
             .smg-gallery-close { width: auto !important; border-radius: 20px !important; padding: 0 15px !important; gap: 8px; }
             .smg-gallery-close-label { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
-            .smg-gallery-close:hover { background: var(--smg-link, #ff77b2) !important; border-color: var(--smg-link, #ff77b2) !important; }
+            .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
             /* SCROLLER vertical · as colunas crescem pra baixo (altura auto) — sem scroll horizontal */
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio masonry (anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 8px 14px 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
@@ -362,7 +362,7 @@
             .smg-gallery-max:hover { background: rgba(0,0,0,0.82); }
             .smg-gallery-tile--embed:hover .smg-gallery-max { opacity: 1; }
             @media (hover: none) { .smg-gallery-max { opacity: 1; } }
-            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link, #ff77b2); outline-offset: -2px; }
+            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: rgba(255,255,255,0.5); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 12px; border-radius: 10px; overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }

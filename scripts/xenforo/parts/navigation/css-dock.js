@@ -218,7 +218,7 @@
             .smg-sheet-ico svg { width: 1em; height: 1em; fill: none !important; }
             .smg-sheet-item:active .smg-sheet-ico { transform: scale(0.9); background: rgba(255,255,255,0.14); }
             /* estado ativo — espelha o .smg-active do dock (watch on, filtro on, etc.) */
-            .smg-sheet-item.smg-active .smg-sheet-ico { background: var(--smg-link-strong, #d14d8f); border-color: var(--smg-link-strong, #d14d8f); color: #fff; }
+            .smg-sheet-item.smg-active .smg-sheet-ico { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
             .smg-sheet-lbl { font-size: 10.5px; line-height: 1.2; text-align: center; color: rgba(255,255,255,0.7); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
             /* ---- dock: botões circulares (icon-only) ---- */

@@ -36,7 +36,7 @@
                 max-height: none !important;
                 height: auto !important;
             }
-            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1, #16171b); }
+            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1); }
             /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
             html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
@@ -356,8 +356,8 @@
                 padding: 10px 16px !important;
                 border: 1px solid rgba(255, 75, 75, 0.32) !important;
                 border-radius: 10px !important;
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1, #16171b) !important;
-                color: var(--smg-tx, #e7e7ea) !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
+                color: var(--smg-tx) !important;
                 text-align: left !important;
                 text-decoration: none !important;
                 overflow: hidden !important;
@@ -367,7 +367,7 @@
                 transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
             }
             .smg-dead:hover {
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2, #202127) !important;
+                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2) !important;
                 border-color: rgba(255, 95, 95, 0.55) !important;
                 box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
             }
@@ -407,7 +407,7 @@
             }
             /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
             html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
-                background-color: var(--smg-s2, rgba(255,255,255,0.05)) !important;
+                background-color: var(--smg-s2) !important;
                 border-radius: 8px !important;
                 position: relative !important;
                 min-height: 120px;
@@ -447,10 +447,10 @@
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
             .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
-                color: color-mix(in srgb, var(--smg-link, #ff77b2) 42%, #e9e9ec) !important;
+                color: color-mix(in srgb, var(--smg-link) 42%, #e9e9ec) !important;
                 font-weight: 500;
                 text-decoration: underline !important;
-                text-decoration-color: color-mix(in srgb, var(--smg-link, #ff77b2) 55%, transparent) !important;
+                text-decoration-color: color-mix(in srgb, var(--smg-link) 55%, transparent) !important;
                 text-underline-offset: 3px !important;
                 text-decoration-thickness: 1px !important;
                 transition: color .15s ease, text-decoration-color .15s ease;
@@ -488,7 +488,7 @@
                 margin: -23px 0 0 -23px;
                 border-radius: 50%;
                 border: 3px solid rgba(255,255,255,0.2);
-                border-top-color: var(--smg-link, #ff77b2);
+                border-top-color: var(--smg-link);
                 animation: smg-spin 0.8s linear infinite;
                 z-index: 5;
                 pointer-events: none;
@@ -518,8 +518,8 @@
                 font-size: 12.5px; font-weight: 600; text-decoration: none !important;
                 cursor: pointer; transition: background .15s ease, color .15s ease;
             }
-            .smg-rg-error-btn--open { background: var(--smg-link, #ff77b2); color: #fff !important; border: 0; }
-            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong, #d14d8f); }
+            .smg-rg-error-btn--open { background: var(--smg-link); color: #fff !important; border: 0; }
+            .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
             .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
             .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
@@ -561,8 +561,8 @@
             .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: rgba(255,255,255,0.28); border-radius: 3px; transition: height 0.1s ease; }
             .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
             .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,0.30); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link, #ff77b2); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link, #ff77b2); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
+            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: 3px; pointer-events: none; }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
             .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
             /* LINHA de controles */
             .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 1px 4px 2px; }
@@ -580,7 +580,7 @@
                 height: 24px; min-width: 32px; padding: 0 6px;
                 border: 0; border-radius: 6px; cursor: pointer;
                 background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92);
-                font: 700 11.5px/1 var(--smg-mono, -apple-system, monospace);
+                font: 700 11.5px/1 var(--smg-mono);
                 letter-spacing: -0.2px;
                 display: flex; align-items: center; justify-content: center;
                 transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
@@ -588,7 +588,7 @@
             }
             .smg-rgc-speed:hover { background: rgba(255,255,255,0.24); color: #fff; }
             .smg-rgc-speed:active { transform: scale(0.92); }
-            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac, #ff77b2); color: #fff; font-weight: 800; }
+            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac); color: #fff; font-weight: 800; }
             /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
             .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
