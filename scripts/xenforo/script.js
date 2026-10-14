@@ -23696,7 +23696,7 @@
             bb.dataset.smgLinks = '1';
             const links = Array.from(bb.querySelectorAll('a[href^="http"]')).filter(a =>
                 a.hostname !== forumHost                              // externo (pula menção/thread/quote do fórum)
-                && !a.querySelector('img')                           // não é link de imagem (lightbox)
+                && ![].some.call(a.querySelectorAll('img'), im => !im.matches('.smg-linkfav, .smg-fhcard-logo'))   // não é link de imagem (lightbox); o favicon que o script pôs no chip não conta
                 && !a.classList.contains('smg-turbo-fallback')       // não é o fallback de embed
                 && a.style.display !== 'none'                        // não foi escondido pelo directMedia
                 && !a.closest('.bbCodeBlock, .bbCodeSpoiler, .bbCodeBlock--spoiler, .bbCodeQuote, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap'));
