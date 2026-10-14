@@ -26464,11 +26464,9 @@
             const list = feed && feed.querySelector('.smg-fp-list');
             return feed ? 'bookmarks:' + (list ? list.childElementCount : 0) : '';
         }
-        return '';
-    }
-
-    function paintHasExplicitEmptyState() {
-        return !!document.querySelector('.blockMessage, .blockMessage--empty, .message--none, .no-results, .js-emptyMessage, .structItemContainer .blockMessage');
+        // GENERIC (membros, conversas, conta, ajuda…): nada a compor além do próprio HTML → a assinatura
+        // é o estado do documento. Vazia, ela nunca estabilizava e a página esperava o prazo de 4 s.
+        return 'generic:' + document.readyState;
     }
 
     function paintListItems() {
@@ -26671,7 +26669,8 @@
         }
         if (context.kind === PAINT_PAGE_KINDS.LISTING || context.kind === PAINT_PAGE_KINDS.FOLLOWING) {
             const items = paintListItems();
-            if (!items.length) return document.readyState === 'complete' && paintHasExplicitEmptyState();
+            // listagem sem linhas de thread (vazia, busca, tags, alertas): pronta assim que o HTML chegou
+            if (!items.length) return document.readyState !== 'loading';
             return items.every(row => {
                 if (row.classList.contains('message--articlePreview')) return row.dataset.smgArtReady === '1';
                 return row.dataset.smgDecoratedReady === '1'
@@ -26689,7 +26688,7 @@
             const list = document.querySelector('#smg-bm-feed .smg-fp-list');
             return !!feed && feed.dataset.smgPaintReady === '1' && !!list && !!list.firstElementChild;
         }
-        return true;
+        return document.readyState !== 'loading';
     }
 
     function pagePaintIsStable(context, final) {
