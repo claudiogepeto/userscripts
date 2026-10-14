@@ -484,7 +484,7 @@
             }
             const pageTitleText = (tv ? tv.textContent : '').replace(/\s+/g, ' ').trim();
             const thumbUrl = (() => {
-                let u = (typeof thumbCacheGet === 'function') ? (thumbCacheGet(location.href, pageTitleText) || '') : '';
+                let u = (thumbCacheGet(location.href, pageTitleText) || '');
                 if (!u) {
                     const holder = document.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img');
                     if (holder) {
@@ -514,9 +514,7 @@
                 thumbImg.onerror = () => { thumbSpan.remove(); };
                 thumbSpan.appendChild(thumbImg);
                 hero.appendChild(thumbSpan);
-                if (typeof thumbCachePut === 'function') {
-                    thumbCachePut(location.href, thumbUrl, pageTitleText);
-                }
+                thumbCachePut(location.href, thumbUrl, pageTitleText);
             }
 
             const info = document.createElement('div');
@@ -745,7 +743,7 @@
                         btn.title = IS_PT ? 'Seguir tópico' : 'Watch thread';
                         if (path) {
                             fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-                            if (typeof dbFollowedDelete === 'function') dbFollowedDelete(path);
+                            dbFollowedDelete(path);
                             if (typeof followedSet !== 'undefined' && followedSet) followedSet.delete(path);
                         }
                         const t = (titleA?.textContent || '').trim();
@@ -764,11 +762,7 @@
                                 thumbnail_url: thumbImg ? (thumbImg.currentSrc || thumbImg.src) : '',
                                 updated_at: Date.now()
                             };
-                            if (typeof dbFollowedPut === 'function') {
-                                dbFollowedPut(itemData);
-                            } else if (typeof dbFollowedUpsert === 'function') {
-                                dbFollowedUpsert(itemData);
-                            }
+                            dbFollowedUpsert(itemData);
                             if (typeof followedSet !== 'undefined' && followedSet) followedSet.add(path);
                         }
                         const t = (titleA?.textContent || '').trim();
@@ -782,24 +776,22 @@
     }
 
     let followedSet = new Set();
-    if (typeof dbFollowedGetAll === 'function') {
-        dbFollowedGetAll().then(list => {
-            if (Array.isArray(list)) {
-                list.forEach(it => { if (it && it.path) followedSet.add(canonicalThreadPath(it.path)); });
-                document.querySelectorAll('.structItem--thread').forEach(row => {
-                    const btn = row.querySelector('.smg-thread-unwatch-btn');
-                    if (!btn) return;
-                    const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
-                    const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
-                    if (path && followedSet.has(path) && !btn.classList.contains('is-following')) {
-                        btn.classList.add('is-following');
-                        btn.innerHTML = ICONS.unwatch;
-                        btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch';
-                    }
-                });
-            }
-        }).catch(() => {});
-    }
+    dbFollowedGetAll().then(list => {
+        if (Array.isArray(list)) {
+            list.forEach(it => { if (it && it.path) followedSet.add(canonicalThreadPath(it.path)); });
+            document.querySelectorAll('.structItem--thread').forEach(row => {
+                const btn = row.querySelector('.smg-thread-unwatch-btn');
+                if (!btn) return;
+                const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
+                const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
+                if (path && followedSet.has(path) && !btn.classList.contains('is-following')) {
+                    btn.classList.add('is-following');
+                    btn.innerHTML = ICONS.unwatch;
+                    btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch';
+                }
+            });
+        }
+    }).catch(() => {});
 
     function decorateWatchedThreadRow(row) {
         if (!row) return;
@@ -835,7 +827,7 @@
                 fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
             }
 
-            if (typeof dbFollowedDelete === 'function' && path) dbFollowedDelete(path);
+            if (path) dbFollowedDelete(path);
 
             row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
             row.style.opacity = '0';
@@ -874,12 +866,7 @@
             const unreadRows = doc.querySelectorAll('.structItem--thread.is-unread, .structItem--thread.structItem--unread');
             const unreadCount = unreadRows.length;
             gmSet('smg-watched-unread-count', String(unreadCount));
-            if (typeof updateWatchedUnreadBadge === 'function') {
-                updateWatchedUnreadBadge(unreadCount);
-            }
-        }
-        if (typeof dbFollowedGetAll !== 'function' || typeof dbFollowedBulkUpsert !== 'function') {
-            return Promise.resolve(0);
+            updateWatchedUnreadBadge(unreadCount);
         }
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
@@ -900,7 +887,7 @@
             rows.forEach(it => {
                 const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
                 if (!titleA) return;
-                const path = typeof canonicalThreadPath === 'function' ? canonicalThreadPath(titleA.getAttribute('href')) : (titleA.getAttribute('href') || '');
+                const path = canonicalThreadPath(titleA.getAttribute('href'));
                 if (!path || seenPaths.has(path)) return;
                 seenPaths.add(path);
 
@@ -913,20 +900,20 @@
                     const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
                     thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
                 }
-                if (!thumb && typeof feedThumbUrl === 'function') thumb = feedThumbUrl(it);
-                if (!thumb && typeof thumbCacheGet === 'function') thumb = thumbCacheGet(path, title) || '';
+                if (!thumb) thumb = feedThumbUrl(it);
+                if (!thumb) thumb = thumbCacheGet(path, title) || '';
 
                 const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
                 // tags / badges
-                const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(it) : [];
+                const badges = extractRowBadges(it);
                 const tags = badges.map(b => ({ name: b.name, className: b.className }));
                 const forumLink = it.querySelector('.structItem-parts a[href*="/forums/"], a[href*="/forums/"]');
                 const forumName = forumLink ? (forumLink.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                const timeline_skip = typeof timelineContentSkip === 'function' && timelineContentSkip(tags.map(t => t.name).concat(forumName));
+                const timeline_skip = timelineContentSkip(tags.map(t => t.name).concat(forumName));
 
                 // forum_activity_ts
-                const forum_activity_ts = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
+                const forum_activity_ts = structItemTs(it);
 
                 // created_at
                 const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
@@ -1002,14 +989,10 @@
             const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
                 .filter(it => it && Boolean(it.unread)).length;
             gmSet('smg-watched-unread-count', String(unreadCount));
-            if (typeof updateWatchedUnreadBadge === 'function') {
-                updateWatchedUnreadBadge(unreadCount);
-            }
+            updateWatchedUnreadBadge(unreadCount);
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
-                if (typeof indexFollowedThumbs === 'function') {
-                    indexFollowedThumbs(itemsToUpsert);
-                }
+                indexFollowedThumbs(itemsToUpsert);
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}
@@ -1017,7 +1000,7 @@
             }) : Promise.resolve(0);
 
             return upsertPromise.then(count => {
-                if (syncPages && syncCandidates.length && typeof syncThreadPage === 'function') {
+                if (syncPages && syncCandidates.length) {
                     return Promise.all(syncCandidates.map(c => syncThreadPage(c.thread, c.page).catch(() => 0))).then(() => count);
                 }
                 return count;
@@ -1034,7 +1017,7 @@
     }
 
     function fetchWatchedDoc() {
-        const url = (typeof navHref === 'function' && navHref('watchedThreads', 'watched', 'watchedThreads2')) || '/watched/threads';
+        const url = (navHref('watchedThreads', 'watched', 'watchedThreads2')) || '/watched/threads';
         const csrf = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-csrf'))
             || ((typeof document !== 'undefined' && document.querySelector('input[name="_xfToken"]')) || {}).value || '';
         const full = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_xfResponseType=json'
@@ -1073,7 +1056,7 @@
         console.log('[SMG Timeline] Buscando tópicos seguidos em segundo plano...');
         followedFetchInFlight = fetchWatchedDoc()
             .then(doc => {
-                if (doc && typeof ingestWatchedPageToFollowed === 'function') {
+                if (doc) {
                     return ingestWatchedPageToFollowed(doc, syncPages).then(count => {
                         console.log('[SMG Timeline] Ingestão concluída: ' + count + ' tópicos processados na tabela followed.');
                         return count;

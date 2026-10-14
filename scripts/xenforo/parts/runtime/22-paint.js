@@ -266,9 +266,9 @@
             const root = document.documentElement;
             if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
                 isNavigatingOut = false;
-                if (typeof markTopbarReady === 'function') markTopbarReady();
-                if (typeof markSidebarReady === 'function') markSidebarReady();
-                if (typeof markNavbarReady === 'function') markNavbarReady();
+                markTopbarReady();
+                markSidebarReady();
+                markNavbarReady();
                 markContentReady(classifyPaintPage());
             }
         }, PAINT_HARD_TIMEOUT_MS);
@@ -367,7 +367,7 @@
     function paintPageSignature(context) {
         const kind = context.kind;
         if (kind === PAINT_PAGE_KINDS.HOME) {
-            return typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : '';
+            return homeLayoutSignature();
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
@@ -477,7 +477,7 @@
         }
         if (!content) return true;
 
-        const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        const targetPost = (findTargetPost());
 
         // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
         const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
@@ -565,9 +565,9 @@
         if (!paintChromeIsReady()) return false;
         if (context.kind === PAINT_PAGE_KINDS.HOME) {
             const hasCategory = !!document.querySelector('.p-body-content .block--category');
-            if (!hasCategory || typeof homeLayoutSignature !== 'function') return false;
-            if (typeof homeComponentsReady === 'function' && !homeComponentsReady()) return false;
-            if (typeof homeNoticesAreReady === 'function' && FEATURES.headerNotices && !homeNoticesAreReady()) return false;
+            if (!hasCategory) return false;
+            if (!homeComponentsReady()) return false;
+            if (FEATURES.headerNotices && !homeNoticesAreReady()) return false;
             return homePassSignature === homeLayoutSignature();
         }
         if (context.kind === PAINT_PAGE_KINDS.THREAD) {
@@ -724,15 +724,13 @@
             if (url.pathname + url.search === location.pathname + location.search) return;
 
             // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
-            if (document.documentElement.classList.contains('smg-thread') && typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+            if (document.documentElement.classList.contains('smg-thread')) {
                 const pid = resolvePostIdFromHref(href);
                 if (pid && findPostElementById(pid)) return;
             }
 
-            if (typeof softNavigate === 'function') {
-                e.preventDefault();
-                softNavigate(url.href);
-            }
+            e.preventDefault();
+            softNavigate(url.href);
         }, { capture: true });
 
         window.addEventListener('pageshow', e => {

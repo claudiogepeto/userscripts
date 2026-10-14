@@ -67,7 +67,7 @@
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
-            if (typeof markNavbarReady === 'function') markNavbarReady();
+            markNavbarReady();
             return;
         }
 
@@ -240,7 +240,7 @@
             if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
             document.documentElement.classList.add('smg-page-pending');
             document.documentElement.classList.remove('smg-page-ready');
-            if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
+            ensurePageSkeleton();
             mobilePagePop.classList.remove('open');
             btnMobilePageBtn.classList.remove('smg-active');
             dockGo(jumpUrl(n));
@@ -291,7 +291,7 @@
             if (listSortTxtM) listSortTxtM.textContent = getListSortLabel(currentSortOrder);
             if (typeof updateWatchIcon === 'function') updateWatchIcon();
             if (typeof markActiveNav === 'function') markActiveNav();
-            const pj = typeof readPageJump === 'function' ? readPageJump() : null;
+            const pj = readPageJump();
             if (!pj) {
                 pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
@@ -362,11 +362,11 @@
                     if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
                     const m = opt.dataset.mode;
                     if (m === 'gallery') {
-                        if (typeof openGallery === 'function') openGallery();
+                        openGallery();
                     } else if (m === 'feed') {
-                        if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true });
+                        openMediaFeed(null, null, { fromStart: true });
                     } else if (m === 'normal') {
-                        if (typeof closeGallery === 'function') closeGallery();
+                        closeGallery();
                         const f = document.getElementById('smg-feed');
                         if (f) f.remove();
                     }
@@ -465,14 +465,14 @@
             btnWatched.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (typeof toggleAlertsDock === 'function') toggleAlertsDock('watched');
+                toggleAlertsDock('watched');
             });
         }
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
             btnBell.addEventListener('click', e => {
-                if (typeof toggleAlertsDock !== 'function' || !FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
+                if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
                 e.stopPropagation();
                 toggleAlertsDock('alerts');
@@ -500,7 +500,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 const uSheet = document.getElementById('smg-user-sheet');
-                if (uSheet && typeof smgSheetOpen === 'function') {
+                if (uSheet) {
                     smgSheetOpen(uSheet);
                 } else {
                     const tbUser = document.querySelector('.p-navgroup-link--user');
@@ -809,7 +809,7 @@
         if (viewModePop) navWrapper.append(viewModePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
-        if (typeof markNavbarReady === 'function') markNavbarReady();
+        markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----
 
@@ -928,9 +928,9 @@
                 if (isThread) {
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
-                        sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); if (typeof openGallery === 'function') openGallery(); }),
-                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }),
-                        sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); if (typeof closeGallery === 'function') closeGallery(); }),
+                        sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); openGallery(); }),
+                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); openMediaFeed(null, null, { fromStart: true }); }),
+                        sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); closeGallery(); }),
                     ]);
                     // Sort by date entra DEPOIS de Next page
                     addSection('Navigation', [btnUp, btnDown, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnSort].map(b => b && fromBtn(b)));
@@ -2411,11 +2411,7 @@
                     FEATURES[feat] = inp.checked;
                     saveFeatures();
                     if (feat === 'replaceThumbsWithFull') {
-                        if (typeof applyReplaceThumbsWithFull === 'function') {
-                            applyReplaceThumbsWithFull(inp.checked);
-                        } else if (typeof window !== 'undefined' && typeof window.applyReplaceThumbsWithFull === 'function') {
-                            window.applyReplaceThumbsWithFull(inp.checked);
-                        }
+                        applyReplaceThumbsWithFull(inp.checked);
                     }
                 });
             });
@@ -2562,7 +2558,7 @@
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
                     || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, h3 a');
                 const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
-                const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
+                const badges = extractRowBadges(el);
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
                 const startTime = el.querySelector('.structItem-startDate time, .contentRow-minor time, time');
                 const lastTime = el.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt');

@@ -19,7 +19,7 @@
                 a.removeAttribute('data-xf-init');
                 a.removeAttribute('data-preview-url');
             });
-            if (typeof decorateThreadCard === 'function') decorateThreadCard(it);
+            decorateThreadCard(it);
         });
     }
 
@@ -73,7 +73,7 @@
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
         setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
-        if (typeof aldockSyncCount === 'function') aldockSyncCount();   // contador do rail de notificações (se estiver docked)
+        aldockSyncCount();   // contador do rail de notificações (se estiver docked)
     }
     function watchNativeBadges() {
         if (badgeObsBound) return;   // o MutationObserver já mantém os badges em sync ao vivo — não varre todo frame

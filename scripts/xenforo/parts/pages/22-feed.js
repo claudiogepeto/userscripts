@@ -204,7 +204,7 @@
         if (!p) return null;
         const postId = p.post_id || p.postId || '';
         if (!postId || (!p.content_html && !p.contentHtml)) return null;
-        if (typeof timelineContentSkip === 'function' && timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
+        if (timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
@@ -534,9 +534,7 @@
             markAllBtn.addEventListener('click', () => {
                 saveNewestWatermark();
                 if (riverList) riverList.querySelectorAll('.smg-fp-card.is-unread').forEach(c => c.classList.remove('is-unread'));
-                if (typeof dbFollowedMarkAllSeen === 'function') {
-                    dbFollowedMarkAllSeen();
-                }
+                dbFollowedMarkAllSeen();
             });
             actions.appendChild(markAllBtn);
             actions.appendChild(refBtn);
@@ -549,9 +547,7 @@
         riverPill.addEventListener('click', () => {
             refreshTop(true);
             window.scrollTo(0, 0);
-            if (typeof syncTimeline === 'function') {
-                syncTimeline().catch(() => {});
-            }
+            syncTimeline().catch(() => {});
         });
         wrap.appendChild(riverPill);
         const host = riverContainer();
@@ -688,18 +684,12 @@
         };
 
         if (cold) {
-            if (typeof fetchAndIngestFollowed === 'function') {
-                fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
-            } else {
-                doSync();
-            }
+            fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
         } else {
-            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            const getFollowed = dbFollowedGetAll();
             getFollowed.then(items => {
                 if (!items || !items.length) {
-                    if (typeof fetchAndIngestFollowed === 'function') {
-                        return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
-                    }
+                    return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
                 }
                 doSync();
             }).catch(() => {
@@ -790,7 +780,7 @@
 
     function handleTimelineFocusOrVisibility() {
         if (document.hidden) return;
-        const onTimeline = (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) || (typeof feedViewWanted === 'function' && feedViewWanted());
+        const onTimeline = (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) || (feedViewWanted());
         if (!onTimeline) return;
         const now = Date.now();
         if (now - lastTimelineSyncTime > 30000) {

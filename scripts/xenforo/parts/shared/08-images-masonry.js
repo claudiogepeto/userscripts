@@ -359,7 +359,7 @@
 
         // 6. Goonbox resolvido em cache
         const smgLink = (img.dataset && img.dataset.smgLink) || '';
-        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        const gbx = goonboxViewer(smgLink);
         if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
@@ -642,7 +642,7 @@
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
             card.replaceWith(frag);
-            if (typeof scheduleRun === 'function') scheduleRun();
+            scheduleRun();
         };
         const fetchPage = url => {
             chvTasks.push(() => new Promise(release => {
@@ -685,8 +685,7 @@
             // + copiar/abrir, na variante compacta. Só quando o texto do <a> É a própria URL — link com
             // texto próprio no meio de uma frase continua chip inline, senão a frase quebraria em duas.
             const asCard = () => {
-                if (typeof fhCard !== 'function' || typeof pdPlace !== 'function' || typeof fhLogoChain !== 'function') return false;
-                if (typeof fhProvider === 'function' && fhProvider(href)) return false;   // file-host → aquele pass monta (com thumbs/contagem)
+                if (fhProvider(href)) return false;   // file-host → aquele pass monta (com thumbs/contagem)
                 if (!/^https?:\/\//i.test(label)) return false;
                 let u; try { u = new URL(href, location.href); } catch (e) { return false; }
                 const host = u.hostname.replace(/^www\./, '');
@@ -703,14 +702,14 @@
                 if (!a.isConnected) return;
                 if (asCard()) return;
                 a.innerHTML = ''; a.classList.add('smg-imglink-fallback'); a.appendChild(chipText());
-                if (typeof fhLinkFavicon === 'function') fhLinkFavicon(a, href);   // ícone do site no lugar do 🔗 genérico
+                fhLinkFavicon(a, href);   // ícone do site no lugar do 🔗 genérico
                 dropChipBreaks(a);
             };
             const linkChip = () => {
                 const lk = document.createElement('a');
                 lk.href = href; lk.target = '_blank'; lk.rel = 'noopener noreferrer';
                 lk.className = 'link link--external smg-imglink-fallback'; lk.appendChild(chipText());
-                if (typeof fhLinkFavicon === 'function') fhLinkFavicon(lk, href);
+                fhLinkFavicon(lk, href);
                 return lk;
             };
             // URL da img: do <noscript> — seja ele DOM (querySelector) ou texto cru (regex)

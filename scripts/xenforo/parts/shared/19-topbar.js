@@ -447,7 +447,7 @@
         document.body.insertBefore(wrap, document.body.firstChild);
         document.documentElement.classList.add('smg-topbar-on');
         if (!loggedIn) document.documentElement.classList.add('smg-guest');   // marcador estático p/ o CSS (esconde o que é de membro)
-        if (typeof markTopbarReady === 'function') markTopbarReady();
+        markTopbarReady();
 
         // ---- abrir/fechar popovers (megamenu: hover troca, clique abre/fecha) ----
         const wirePopovers = () => {
@@ -554,7 +554,6 @@
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
                 const followRow = uSheet.querySelector('[data-smg-id="following"]');
                 if (followRow) followRow.addEventListener('click', e => {
-                    if (typeof openAlertsDock !== 'function') return;   // no rail → plain navigation to the list page
                     e.preventDefault();
                     smgSheetClose(uSheet);
                     openAlertsDock('watched', false);

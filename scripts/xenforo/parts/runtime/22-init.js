@@ -27,7 +27,7 @@
         const isAlerts = /\/account\/alerts/i.test(path);
         const isBookmarks = isBookmarksPage();
         const isSearch = /\/search\//i.test(path);
-        const isContentFeed = isThread || isBookmarks || (typeof feedContext === 'function' && feedContext());
+        const isContentFeed = isThread || isBookmarks || (feedContext());
         const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === 'function' && feedContext());
 
         if (isContentFeed && contentDirty) {
@@ -86,7 +86,7 @@
         // organização por causa dessas mutações irrelevantes.
         if (isHome && FEATURES.headerNotices) safe(setupHeaderNotices);
         const homeCandidate = isHome && (fullScan || rootTouches(roots, '.p-body-content, .p-body-pageContent, .block--category', true));
-        const currentHomeSignature = homeCandidate && typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : null;
+        const currentHomeSignature = homeCandidate ? homeLayoutSignature() : null;
         const homeDirty = homeCandidate
             && (homePassSignature !== currentHomeSignature || rootTouches(roots, '.node--link, .node-subNodesFlat', true));
         if (homeCandidate && !homeSidebarDone) safe(layoutHomeSidebar, roots);
@@ -97,7 +97,7 @@
             safe(makeHomeCardsClickable, roots);
             safe(ensureHomeNodeIcons, roots);
             safe(enhanceHomeHubSections, roots);
-            homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
+            homePassSignature = homeLayoutSignature();
         }
 
         // 4. Passes de Páginas Específicas
@@ -191,24 +191,24 @@
         cls.toggle('smg-home-page', isForumHome); // a URL identifica a home antes do data-template
         const paintContext = classifyPaintPage({ pathname: path, search: location.search, template: tpl });
         ['home', 'thread', 'listing', 'following', 'timeline', 'bookmarks'].forEach(kind => cls.toggle('smg-page-' + kind, paintContext.kind === kind));
-        const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (typeof isContentReady === 'function' && isContentReady());
+        const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (isContentReady());
         if (paintContext.gated && !isContentAlreadyReady) {
             cls.add('smg-page-pending');
             cls.add('smg-content-pending');
-            if (typeof armPagePaintSafetyTimer === 'function') armPagePaintSafetyTimer();
+            armPagePaintSafetyTimer();
         }
-        const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (typeof isTopbarReady === 'function' && isTopbarReady());
+        const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (isTopbarReady());
         if (FEATURES.topBar && !isTopbarAlreadyReady) {
             cls.add('smg-topbar-loading');
             cls.add('smg-topbar-pending');
-        } else if (typeof markTopbarReady === 'function') {
+        } else {
             markTopbarReady();
         }
-        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (typeof isNavbarReady === 'function' && isNavbarReady());
+        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (isNavbarReady());
         if (!isNavbarAlreadyReady) {
             cls.add('smg-navbar-loading');
             cls.add('smg-navbar-pending');
-        } else if (typeof markNavbarReady === 'function') {
+        } else {
             markNavbarReady();
         }
         const showHome = isForumHome && !isFeedView && FEATURES.homeRemake;
@@ -250,12 +250,12 @@
     if (FEATURES.alertsDock && typeof aldockWanted === 'function'
         && aldockWanted() && aldockFits() && !aldockPhone()) {
         cls.add('smg-aldock-on');
-        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (typeof isSidebarReady === 'function' && isSidebarReady());
+        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
         if (!isSidebarAlreadyReady) {
             cls.add('smg-sidebar-loading');
             cls.add('smg-sidebar-pending');
         }
-    } else if (typeof markSidebarReady === 'function') {
+    } else {
         markSidebarReady();
     }
     ensurePageSkeleton();
@@ -287,7 +287,7 @@
         const hasPathTarget = /\/(?:posts|post)[/-]?\d+/i.test(location.pathname)
             || (location.pathname.includes('/goto/') && /[?&]id=\d+/i.test(location.search));
         if (!hasHashTarget && !hasPathTarget) return;
-        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null)
+        const target = (findTargetPost())
             || (h && (document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]')));
         const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
         if (!post) return;
@@ -337,7 +337,7 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (typeof aldockPhone === 'function' && aldockPhone() && typeof closeAlertsDock === 'function') {
+            if (typeof aldockPhone === 'function' && aldockPhone()) {
                 closeAlertsDock();
             }
             try {
@@ -353,7 +353,7 @@
 
     document.addEventListener('click', handleInPagePostClick);
     window.addEventListener('hashchange', () => {
-        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        const target = (findTargetPost());
         if (target && !document.documentElement.classList.contains('smg-page-pending')) {
             try { target.scrollIntoView({ block: 'start', behavior: 'instant' }); } catch (err) {}
         }
@@ -422,7 +422,7 @@
         bmBuilt = false;
         infScrollBound = false;
         contentIsReady = false;
-        if (typeof feedStopPoll === 'function' && !feedViewWanted()) feedStopPoll();
+        if (!feedViewWanted()) feedStopPoll();
     }
 
     function softNavigate(url, opts) {
@@ -431,7 +431,7 @@
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
         const token = ++softNavToken;
-        if (typeof stopWatchedStream === 'function') stopWatchedStream();
+        stopWatchedStream();
         document.dispatchEvent(new Event('smg-search-close'));
         const root = document.documentElement;
         cancelPagePaintRelease();
@@ -470,7 +470,7 @@
             if (title && title.textContent) document.title = title.textContent;
             copyNativeBadge('.p-navgroup-link--alerts', doc);
             copyNativeBadge('.p-navgroup-link--conversations', doc);
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            syncReactiveBadges();
             const nextUrl = abs.pathname + abs.search;
             softNavUrl = nextUrl;
             if (opts.push !== false) {

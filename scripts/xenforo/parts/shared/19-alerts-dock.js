@@ -92,14 +92,12 @@
                         .map(watchedRow).filter(Boolean);
                     const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
                     const nextHref = nx ? nx.getAttribute('href') : null;
-                    if (typeof ingestWatchedPageToFollowed === 'function') {
-                        return ingestWatchedPageToFollowed(tmp).catch(() => 0).then(() => {
-                            try {
-                                window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
-                            } catch (e) {}
-                            return { rows, next: nextHref, visitorAlerts };
-                        });
-                    }
+                    return ingestWatchedPageToFollowed(tmp).catch(() => 0).then(() => {
+                        try {
+                            window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
+                        } catch (e) {}
+                        return { rows, next: nextHref, visitorAlerts };
+                    });
                     try {
                         window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                     } catch (e) {}
@@ -193,12 +191,10 @@
         const base = (item.path || '').replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
         a.href = safeHref(base + '/latest');
         a.addEventListener('click', () => {
-            if (typeof dbFollowedMarkSeen === 'function') {
-                dbFollowedMarkSeen(item.path);
-            }
+            dbFollowedMarkSeen(item.path);
         });
 
-        const thumbUrl = item.thumbnail_url || (typeof thumbCacheGet === 'function' ? thumbCacheGet(item.path, item.thread_name) : '');
+        const thumbUrl = item.thumbnail_url || (thumbCacheGet(item.path, item.thread_name));
         const th = document.createElement('span');
         th.className = 'smg-rail-wt-thumb';
         if (thumbUrl) {
@@ -262,7 +258,7 @@
             const time = document.createElement('time');
             time.className = 'smg-al-time';
             time.setAttribute('data-timestamp', String(ts));
-            time.textContent = (typeof smgRelTime === 'function') ? smgRelTime(ts) : '';
+            time.textContent = smgRelTime(ts);
             meta.appendChild(time);
         }
         if (meta.childNodes.length) body.appendChild(meta);
@@ -344,34 +340,12 @@
     function paintUnreadBadge(count, topSel, navSel) {
         const n = Math.max(0, parseInt(count, 10) || 0);
         document.querySelectorAll(topSel).forEach(btn => {
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(btn, n, 'smg-tb-badge');
-            } else {
-                let b = btn.querySelector(':scope > .smg-tb-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-tb-badge'; btn.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
+            setReactiveBadge(btn, n, 'smg-tb-badge');
         });
         const nav = document.querySelector(navSel);
         if (nav) {
             const host = nav.querySelector('.smg-nav-ico') || nav;
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(host, n, 'smg-nav-badge');
-            } else {
-                let b = host.querySelector(':scope > .smg-nav-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
+            setReactiveBadge(host, n, 'smg-nav-badge');
         }
     }
     function updateWatchedUnreadBadge(count) {
@@ -388,9 +362,7 @@
         const domUnread = (list && list.querySelector('li.alert'))
             ? list.querySelectorAll('li.alert.is-unread').length
             : null;
-        const serverCount = (typeof alertsBadgeCount === 'function')
-            ? alertsBadgeCount()
-            : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const serverCount = alertsBadgeCount();
         const st = aldockState && aldockState.alerts;
         const hasMore = Boolean(st && st.next);
 
@@ -452,12 +424,10 @@
                 st.next = next;
                 st.loaded = true;
                 st.dry = 0;
-                if (typeof dbFollowedGetAll === 'function') {
-                    dbFollowedGetAll().then(items => {
-                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
-                        repaintAlertThumbs(list);
-                    }).catch(() => {});
-                }
+                dbFollowedGetAll().then(items => {
+                    indexFollowedThumbs(items);
+                    repaintAlertThumbs(list);
+                }).catch(() => {});
                 repaintAlertThumbs(list);
                 railWarmThumbs();
                 aldockSyncCount();
@@ -489,7 +459,7 @@
         if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
 
         if (tab === 'watched') {
-            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            const getFollowed = dbFollowedGetAll();
             return getFollowed.then(items => {
                 clearSkeleton();
                 const list = railList('watched');
@@ -523,9 +493,7 @@
                 aldockStatus('watched', '');
 
                 if (!valid.length && first) {
-                    if (typeof fetchAndIngestFollowed === 'function') {
-                        fetchAndIngestFollowed(false, false).catch(() => {});
-                    }
+                    fetchAndIngestFollowed(false, false).catch(() => {});
                 }
             }).catch(() => {
                 clearSkeleton();
@@ -548,9 +516,9 @@
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar (só alertas têm contador)
                 if (added && tab === 'alerts') syncAlertBadgeFrom(railList('alerts'));
-                if (tab === 'alerts' && typeof dbFollowedGetAll === 'function') {
+                if (tab === 'alerts') {
                     dbFollowedGetAll().then(items => {
-                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                        indexFollowedThumbs(items);
                         repaintAlertThumbs(railList('alerts'));
                     }).catch(() => {});
                 }
@@ -708,7 +676,7 @@
             '</div>';
         document.body.appendChild(el);
         aldock = el;
-        if (typeof markSidebarReady === 'function') markSidebarReady();
+        markSidebarReady();
 
         const applyMarkAllReadSuccess = () => {
             el.querySelectorAll('li.alert.is-unread').forEach(row => {
@@ -726,7 +694,7 @@
             gmSet('smg-alerts-count', '0');
             const nav = document.querySelector('.p-navgroup-link--alerts');
             if (nav) nav.removeAttribute('data-badge');
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            syncReactiveBadges();
             aldockSyncCount();
         };
 
@@ -768,7 +736,7 @@
 
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
         el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
-            if (railTab === 'watched' && typeof fetchAndIngestFollowed === 'function') {
+            if (railTab === 'watched') {
                 fetchAndIngestFollowed(false, false).catch(() => {});
             }
             if (railTab === 'alerts') railHardRefresh('alerts');
@@ -889,17 +857,15 @@
             // The preference can survive a logout. Remove the early layout
             // reservation when there is no account control to own the dock.
             document.documentElement.classList.remove('smg-aldock-on');
-            if (typeof markSidebarReady === 'function') markSidebarReady();
+            markSidebarReady();
             return;
         }   // deslogado / tema sem sino → não há o que dockar
         aldockBound = true;
 
-        if (typeof dbFollowedGetAll === 'function') {
-            dbFollowedGetAll().then(items => {
-                if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
-                repaintAlertThumbs(railList('alerts'));
-            }).catch(() => {});
-        }
+        dbFollowedGetAll().then(items => {
+            indexFollowedThumbs(items);
+            repaintAlertThumbs(railList('alerts'));
+        }).catch(() => {});
 
         // (o sino da topbar não existe mais — o botão do painel é o único controle e tem o próprio handler)
 
@@ -922,7 +888,7 @@
         window.addEventListener('smg-followed-updated', () => {
             if (aldock && aldockOpen() && railTab === 'watched') {
                 railRefresh('watched', false);
-            } else if (typeof dbFollowedGetUnreadCount === 'function') {
+            } else {
                 dbFollowedGetUnreadCount().then(c => {
                     gmSet('smg-watched-unread-count', String(c));
                     updateWatchedUnreadBadge(c);
@@ -945,7 +911,7 @@
         if (aldockWanted() && aldockFits() && !aldockPhone()) {
             openAlertsDock(null, false);
         } else {
-            if (typeof markSidebarReady === 'function') markSidebarReady();
+            markSidebarReady();
         }
     }
 

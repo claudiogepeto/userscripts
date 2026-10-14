@@ -200,7 +200,7 @@
             }
         }
         const grid = wrap.closest && wrap.closest('.auto-image-grid');
-        if (grid && typeof scheduleRelayout === 'function') {
+        if (grid) {
             scheduleRelayout(grid);
         }
         return true;
@@ -1020,8 +1020,8 @@
                         if (grid) {
                             img.dataset.smgGridded = '1';
                             wrapper.replaceWith(img);
-                            if (typeof cleanupGhosts === 'function') cleanupGhosts(grid);
-                            if (typeof relayoutGrid === 'function') relayoutGrid(grid);
+                            cleanupGhosts(grid);
+                            relayoutGrid(grid);
                         } else {
                             const a = document.createElement('a');
                             a.href = res.img;
@@ -1031,7 +1031,7 @@
                             a.appendChild(img);
                             wrapper.replaceWith(a);
                         }
-                        if (typeof processOneImage === 'function') processOneImage(img);
+                        processOneImage(img);
                         scheduleRun();
                         return;
                     }

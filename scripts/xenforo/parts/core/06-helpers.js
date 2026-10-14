@@ -452,11 +452,7 @@
                 if (r.status === 429) {
                     const retryHeader = r.headers && r.headers.get ? r.headers.get('Retry-After') : null;
                     const retrySec = parseInt(retryHeader || '0', 10) || 0;
-                    if (typeof riverHandle429 === 'function') {
-                        riverHandle429(retrySec);
-                    } else if (typeof window !== 'undefined' && typeof window.riverHandle429 === 'function') {
-                        window.riverHandle429(retrySec);
-                    }
+                    riverHandle429(retrySec);
                     return null;
                 }
                 if (!r.ok) return null;
@@ -812,10 +808,10 @@
     }
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
-        const id = (typeof threadIdOf === 'function') ? threadIdOf(href) : '';
-        const slug = (typeof threadSlugOf === 'function') ? (!id && threadSlugOf(href)) : '';
-        const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
-        const canon = (typeof canonicalThreadPath === 'function' && href) ? canonicalThreadPath(href) : '';
+        const id = threadIdOf(href);
+        const slug = (!id && threadSlugOf(href));
+        const titleK = threadTitleKey(title);
+        const canon = (href) ? canonicalThreadPath(href) : '';
 
         // 1. In-memory followed thumbs (IndexedDB)
         if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
@@ -899,20 +895,20 @@
             const thumb = it.thumbnail_url;
             const path = it.path || '';
             const title = it.thread_name || '';
-            const id = (typeof threadIdOf === 'function') ? threadIdOf(path) : '';
-            const slug = (typeof threadSlugOf === 'function') ? threadSlugOf(path) : '';
-            const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
-            const canon = (typeof canonicalThreadPath === 'function' && path) ? canonicalThreadPath(path) : path;
+            const id = threadIdOf(path);
+            const slug = threadSlugOf(path);
+            const titleK = threadTitleKey(title);
+            const canon = (path) ? canonicalThreadPath(path) : path;
 
             if (id) followedThumbsMap.set(id, thumb);
             if (slug) followedThumbsMap.set(slug, thumb);
             if (canon) followedThumbsMap.set(canon, thumb);
             if (titleK) followedThumbsMap.set(titleK, thumb);
-            if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
+            if (thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
             const dock = document.getElementById('smg-aldock');
-            if (dock && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(dock);
+            if (dock) repaintAlertThumbs(dock);
         }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
@@ -1183,7 +1179,7 @@
 
             const groups = new Map();
             currentBadges.forEach(b => {
-                const cat = (typeof getBadgeCategory === 'function') ? getBadgeCategory(b.name, b.type) : 'Outros & Tags';
+                const cat = getBadgeCategory(b.name, b.type);
                 if (!groups.has(cat)) groups.set(cat, []);
                 groups.get(cat).push(b);
             });

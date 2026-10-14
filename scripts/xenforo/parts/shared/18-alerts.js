@@ -27,7 +27,7 @@
                 btn.remove();
                 const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
                 if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-                if (typeof aldockSyncCount === 'function') aldockSyncCount();
+                aldockSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -220,7 +220,7 @@
 
     if (location.pathname.includes('/account/alerts')) {
         setTimeout(() => {
-            if (typeof openAlertsDock === 'function') openAlertsDock('alerts', false);
+            openAlertsDock('alerts', false);
         }, 50);
     }
 

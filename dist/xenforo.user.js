@@ -9910,11 +9910,7 @@
                 if (r.status === 429) {
                     const retryHeader = r.headers && r.headers.get ? r.headers.get('Retry-After') : null;
                     const retrySec = parseInt(retryHeader || '0', 10) || 0;
-                    if (typeof riverHandle429 === 'function') {
-                        riverHandle429(retrySec);
-                    } else if (typeof window !== 'undefined' && typeof window.riverHandle429 === 'function') {
-                        window.riverHandle429(retrySec);
-                    }
+                    riverHandle429(retrySec);
                     return null;
                 }
                 if (!r.ok) return null;
@@ -10270,10 +10266,10 @@
     }
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
-        const id = (typeof threadIdOf === 'function') ? threadIdOf(href) : '';
-        const slug = (typeof threadSlugOf === 'function') ? (!id && threadSlugOf(href)) : '';
-        const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
-        const canon = (typeof canonicalThreadPath === 'function' && href) ? canonicalThreadPath(href) : '';
+        const id = threadIdOf(href);
+        const slug = (!id && threadSlugOf(href));
+        const titleK = threadTitleKey(title);
+        const canon = (href) ? canonicalThreadPath(href) : '';
 
         // 1. In-memory followed thumbs (IndexedDB)
         if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
@@ -10357,20 +10353,20 @@
             const thumb = it.thumbnail_url;
             const path = it.path || '';
             const title = it.thread_name || '';
-            const id = (typeof threadIdOf === 'function') ? threadIdOf(path) : '';
-            const slug = (typeof threadSlugOf === 'function') ? threadSlugOf(path) : '';
-            const titleK = (typeof threadTitleKey === 'function') ? threadTitleKey(title) : '';
-            const canon = (typeof canonicalThreadPath === 'function' && path) ? canonicalThreadPath(path) : path;
+            const id = threadIdOf(path);
+            const slug = threadSlugOf(path);
+            const titleK = threadTitleKey(title);
+            const canon = (path) ? canonicalThreadPath(path) : path;
 
             if (id) followedThumbsMap.set(id, thumb);
             if (slug) followedThumbsMap.set(slug, thumb);
             if (canon) followedThumbsMap.set(canon, thumb);
             if (titleK) followedThumbsMap.set(titleK, thumb);
-            if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
+            if (thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
             const dock = document.getElementById('smg-aldock');
-            if (dock && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(dock);
+            if (dock) repaintAlertThumbs(dock);
         }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
@@ -10641,7 +10637,7 @@
 
             const groups = new Map();
             currentBadges.forEach(b => {
-                const cat = (typeof getBadgeCategory === 'function') ? getBadgeCategory(b.name, b.type) : 'Outros & Tags';
+                const cat = getBadgeCategory(b.name, b.type);
                 if (!groups.has(cat)) groups.set(cat, []);
                 groups.get(cat).push(b);
             });
@@ -11015,7 +11011,7 @@
 
     function dbFollowedMarkSeen(path) {
         if (!path) return Promise.resolve();
-        const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
+        const normPath = canonicalThreadPath(path);
         return dbFollowedGet(normPath).then(item => {
             if (!item) return;
             item.unread = false;
@@ -11045,9 +11041,7 @@
             tx.oncomplete = () => {
                 try {
                     gmSet('smg-watched-unread-count', '0');
-                    if (typeof updateWatchedUnreadBadge === 'function') {
-                        updateWatchedUnreadBadge(0);
-                    }
+                    updateWatchedUnreadBadge(0);
                     window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
                 } catch (e) {}
@@ -11911,7 +11905,7 @@
 
         // 6. Goonbox resolvido em cache
         const smgLink = (img.dataset && img.dataset.smgLink) || '';
-        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        const gbx = goonboxViewer(smgLink);
         if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
@@ -12194,7 +12188,7 @@
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
             card.replaceWith(frag);
-            if (typeof scheduleRun === 'function') scheduleRun();
+            scheduleRun();
         };
         const fetchPage = url => {
             chvTasks.push(() => new Promise(release => {
@@ -12237,8 +12231,7 @@
             // + copiar/abrir, na variante compacta. Só quando o texto do <a> É a própria URL — link com
             // texto próprio no meio de uma frase continua chip inline, senão a frase quebraria em duas.
             const asCard = () => {
-                if (typeof fhCard !== 'function' || typeof pdPlace !== 'function' || typeof fhLogoChain !== 'function') return false;
-                if (typeof fhProvider === 'function' && fhProvider(href)) return false;   // file-host → aquele pass monta (com thumbs/contagem)
+                if (fhProvider(href)) return false;   // file-host → aquele pass monta (com thumbs/contagem)
                 if (!/^https?:\/\//i.test(label)) return false;
                 let u; try { u = new URL(href, location.href); } catch (e) { return false; }
                 const host = u.hostname.replace(/^www\./, '');
@@ -12255,14 +12248,14 @@
                 if (!a.isConnected) return;
                 if (asCard()) return;
                 a.innerHTML = ''; a.classList.add('smg-imglink-fallback'); a.appendChild(chipText());
-                if (typeof fhLinkFavicon === 'function') fhLinkFavicon(a, href);   // ícone do site no lugar do 🔗 genérico
+                fhLinkFavicon(a, href);   // ícone do site no lugar do 🔗 genérico
                 dropChipBreaks(a);
             };
             const linkChip = () => {
                 const lk = document.createElement('a');
                 lk.href = href; lk.target = '_blank'; lk.rel = 'noopener noreferrer';
                 lk.className = 'link link--external smg-imglink-fallback'; lk.appendChild(chipText());
-                if (typeof fhLinkFavicon === 'function') fhLinkFavicon(lk, href);
+                fhLinkFavicon(lk, href);
                 return lk;
             };
             // URL da img: do <noscript> — seja ele DOM (querySelector) ou texto cru (regex)
@@ -13152,7 +13145,7 @@
             }
         }
         const grid = wrap.closest && wrap.closest('.auto-image-grid');
-        if (grid && typeof scheduleRelayout === 'function') {
+        if (grid) {
             scheduleRelayout(grid);
         }
         return true;
@@ -13972,8 +13965,8 @@
                         if (grid) {
                             img.dataset.smgGridded = '1';
                             wrapper.replaceWith(img);
-                            if (typeof cleanupGhosts === 'function') cleanupGhosts(grid);
-                            if (typeof relayoutGrid === 'function') relayoutGrid(grid);
+                            cleanupGhosts(grid);
+                            relayoutGrid(grid);
                         } else {
                             const a = document.createElement('a');
                             a.href = res.img;
@@ -13983,7 +13976,7 @@
                             a.appendChild(img);
                             wrapper.replaceWith(a);
                         }
-                        if (typeof processOneImage === 'function') processOneImage(img);
+                        processOneImage(img);
                         scheduleRun();
                         return;
                     }
@@ -14281,7 +14274,7 @@
                 if (sp) {
                     setTimeout(() => {
                         sp.querySelectorAll('.auto-image-grid').forEach(g => {
-                            if (typeof relayoutGrid === 'function') relayoutGrid(g);
+                            relayoutGrid(g);
                         });
                     }, 50);
                 }
@@ -14384,7 +14377,7 @@
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
-            if (typeof markNavbarReady === 'function') markNavbarReady();
+            markNavbarReady();
             return;
         }
 
@@ -14557,7 +14550,7 @@
             if (typeof window.setNavigatingOut === 'function') window.setNavigatingOut();
             document.documentElement.classList.add('smg-page-pending');
             document.documentElement.classList.remove('smg-page-ready');
-            if (typeof ensurePageSkeleton === 'function') ensurePageSkeleton();
+            ensurePageSkeleton();
             mobilePagePop.classList.remove('open');
             btnMobilePageBtn.classList.remove('smg-active');
             dockGo(jumpUrl(n));
@@ -14608,7 +14601,7 @@
             if (listSortTxtM) listSortTxtM.textContent = getListSortLabel(currentSortOrder);
             if (typeof updateWatchIcon === 'function') updateWatchIcon();
             if (typeof markActiveNav === 'function') markActiveNav();
-            const pj = typeof readPageJump === 'function' ? readPageJump() : null;
+            const pj = readPageJump();
             if (!pj) {
                 pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
@@ -14679,11 +14672,11 @@
                     if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
                     const m = opt.dataset.mode;
                     if (m === 'gallery') {
-                        if (typeof openGallery === 'function') openGallery();
+                        openGallery();
                     } else if (m === 'feed') {
-                        if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true });
+                        openMediaFeed(null, null, { fromStart: true });
                     } else if (m === 'normal') {
-                        if (typeof closeGallery === 'function') closeGallery();
+                        closeGallery();
                         const f = document.getElementById('smg-feed');
                         if (f) f.remove();
                     }
@@ -14782,14 +14775,14 @@
             btnWatched.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (typeof toggleAlertsDock === 'function') toggleAlertsDock('watched');
+                toggleAlertsDock('watched');
             });
         }
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
             btnBell.addEventListener('click', e => {
-                if (typeof toggleAlertsDock !== 'function' || !FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
+                if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
                 e.stopPropagation();
                 toggleAlertsDock('alerts');
@@ -14817,7 +14810,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 const uSheet = document.getElementById('smg-user-sheet');
-                if (uSheet && typeof smgSheetOpen === 'function') {
+                if (uSheet) {
                     smgSheetOpen(uSheet);
                 } else {
                     const tbUser = document.querySelector('.p-navgroup-link--user');
@@ -15126,7 +15119,7 @@
         if (viewModePop) navWrapper.append(viewModePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
-        if (typeof markNavbarReady === 'function') markNavbarReady();
+        markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----
 
@@ -15245,9 +15238,9 @@
                 if (isThread) {
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
-                        sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); if (typeof openGallery === 'function') openGallery(); }),
-                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }),
-                        sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); if (typeof closeGallery === 'function') closeGallery(); }),
+                        sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); openGallery(); }),
+                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); openMediaFeed(null, null, { fromStart: true }); }),
+                        sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); closeGallery(); }),
                     ]);
                     // Sort by date entra DEPOIS de Next page
                     addSection('Navigation', [btnUp, btnDown, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnSort].map(b => b && fromBtn(b)));
@@ -16728,11 +16721,7 @@
                     FEATURES[feat] = inp.checked;
                     saveFeatures();
                     if (feat === 'replaceThumbsWithFull') {
-                        if (typeof applyReplaceThumbsWithFull === 'function') {
-                            applyReplaceThumbsWithFull(inp.checked);
-                        } else if (typeof window !== 'undefined' && typeof window.applyReplaceThumbsWithFull === 'function') {
-                            window.applyReplaceThumbsWithFull(inp.checked);
-                        }
+                        applyReplaceThumbsWithFull(inp.checked);
                     }
                 });
             });
@@ -16879,7 +16868,7 @@
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
                     || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, h3 a');
                 const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
-                const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
+                const badges = extractRowBadges(el);
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
                 const startTime = el.querySelector('.structItem-startDate time, .contentRow-minor time, time');
                 const lastTime = el.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt');
@@ -17794,7 +17783,7 @@
         if (searchRows.length > 0) {
             const badgeMap = new Map();
             searchRows.forEach(row => {
-                const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];
+                const bList = extractRowBadges(row);
                 bList.forEach(b => {
                     const k = b.name.toLowerCase();
                     if (!badgeMap.has(k)) {
@@ -17811,27 +17800,25 @@
                 const applySearchBadgeFilter = () => {
                     const activeSelectedTags = new Set(Array.from(activeSearchBadges).map(normalizeTag));
                     searchRows.forEach(row => {
-                        const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];
+                        const bList = extractRowBadges(row);
                         const threadTags = bList.map(b => normalizeTag(b.name));
                         const match = activeSelectedTags.size === 0 || threadTags.some(t => activeSelectedTags.has(t));
                         row.style.display = match ? '' : 'none';
                     });
                 };
 
-                if (typeof createBadgeMultiselect === 'function') {
-                    const ms = createBadgeMultiselect({
-                        badges: sortedBadges,
-                        activeBadges: activeSearchBadges,
-                        placeholder: i18n('Search tags…'),
-                        buttonLabel: i18n('Tags'),
-                        onChange: () => applySearchBadgeFilter()
-                    });
-                    if (ms) {
-                        const msEl = ms.container || ms;
-                        const toolbar = panel.querySelector('.smg-search-toolbar');
-                        if (toolbar && orderBtn) toolbar.insertBefore(msEl, orderBtn);
-                        else panel.appendChild(msEl);
-                    }
+                const ms = createBadgeMultiselect({
+                    badges: sortedBadges,
+                    activeBadges: activeSearchBadges,
+                    placeholder: i18n('Search tags…'),
+                    buttonLabel: i18n('Tags'),
+                    onChange: () => applySearchBadgeFilter()
+                });
+                if (ms) {
+                    const msEl = ms.container || ms;
+                    const toolbar = panel.querySelector('.smg-search-toolbar');
+                    if (toolbar && orderBtn) toolbar.insertBefore(msEl, orderBtn);
+                    else panel.appendChild(msEl);
                 }
             }
         }
@@ -17856,7 +17843,7 @@
         const href = a ? (a.getAttribute('href') || a.href || '') : '';
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
         const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
-        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        const gbx = goonboxViewer(smgLink);
         if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original) return absUrl(cached.original);
@@ -17889,8 +17876,8 @@
             const targetUrl = imageUrlOf(img);
             openMediaFeed(targetUrl);
             const smgLink = (img.dataset && img.dataset.smgLink) || (img.closest('a') ? img.closest('a').getAttribute('href') : '') || '';
-            const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
-            if (gbx && typeof goonboxResolve === 'function' && !img.dataset.smgFull) {
+            const gbx = goonboxViewer(smgLink);
+            if (gbx && !img.dataset.smgFull) {
                 goonboxResolve(smgLink, res => {
                     if (!res || !res.original) return;
                     img.dataset.smgFull = res.original;
@@ -18935,7 +18922,7 @@
                 a.removeAttribute('data-xf-init');
                 a.removeAttribute('data-preview-url');
             });
-            if (typeof decorateThreadCard === 'function') decorateThreadCard(it);
+            decorateThreadCard(it);
         });
     }
 
@@ -18989,7 +18976,7 @@
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
         setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
-        if (typeof aldockSyncCount === 'function') aldockSyncCount();   // contador do rail de notificações (se estiver docked)
+        aldockSyncCount();   // contador do rail de notificações (se estiver docked)
     }
     function watchNativeBadges() {
         if (badgeObsBound) return;   // o MutationObserver já mantém os badges em sync ao vivo — não varre todo frame
@@ -20671,7 +20658,7 @@
             }
             const pageTitleText = (tv ? tv.textContent : '').replace(/\s+/g, ' ').trim();
             const thumbUrl = (() => {
-                let u = (typeof thumbCacheGet === 'function') ? (thumbCacheGet(location.href, pageTitleText) || '') : '';
+                let u = (thumbCacheGet(location.href, pageTitleText) || '');
                 if (!u) {
                     const holder = document.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img');
                     if (holder) {
@@ -20701,9 +20688,7 @@
                 thumbImg.onerror = () => { thumbSpan.remove(); };
                 thumbSpan.appendChild(thumbImg);
                 hero.appendChild(thumbSpan);
-                if (typeof thumbCachePut === 'function') {
-                    thumbCachePut(location.href, thumbUrl, pageTitleText);
-                }
+                thumbCachePut(location.href, thumbUrl, pageTitleText);
             }
 
             const info = document.createElement('div');
@@ -20932,7 +20917,7 @@
                         btn.title = IS_PT ? 'Seguir tópico' : 'Watch thread';
                         if (path) {
                             fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-                            if (typeof dbFollowedDelete === 'function') dbFollowedDelete(path);
+                            dbFollowedDelete(path);
                             if (typeof followedSet !== 'undefined' && followedSet) followedSet.delete(path);
                         }
                         const t = (titleA?.textContent || '').trim();
@@ -20951,11 +20936,7 @@
                                 thumbnail_url: thumbImg ? (thumbImg.currentSrc || thumbImg.src) : '',
                                 updated_at: Date.now()
                             };
-                            if (typeof dbFollowedPut === 'function') {
-                                dbFollowedPut(itemData);
-                            } else if (typeof dbFollowedUpsert === 'function') {
-                                dbFollowedUpsert(itemData);
-                            }
+                            dbFollowedUpsert(itemData);
                             if (typeof followedSet !== 'undefined' && followedSet) followedSet.add(path);
                         }
                         const t = (titleA?.textContent || '').trim();
@@ -20969,24 +20950,22 @@
     }
 
     let followedSet = new Set();
-    if (typeof dbFollowedGetAll === 'function') {
-        dbFollowedGetAll().then(list => {
-            if (Array.isArray(list)) {
-                list.forEach(it => { if (it && it.path) followedSet.add(canonicalThreadPath(it.path)); });
-                document.querySelectorAll('.structItem--thread').forEach(row => {
-                    const btn = row.querySelector('.smg-thread-unwatch-btn');
-                    if (!btn) return;
-                    const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
-                    const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
-                    if (path && followedSet.has(path) && !btn.classList.contains('is-following')) {
-                        btn.classList.add('is-following');
-                        btn.innerHTML = ICONS.unwatch;
-                        btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch';
-                    }
-                });
-            }
-        }).catch(() => {});
-    }
+    dbFollowedGetAll().then(list => {
+        if (Array.isArray(list)) {
+            list.forEach(it => { if (it && it.path) followedSet.add(canonicalThreadPath(it.path)); });
+            document.querySelectorAll('.structItem--thread').forEach(row => {
+                const btn = row.querySelector('.smg-thread-unwatch-btn');
+                if (!btn) return;
+                const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
+                const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
+                if (path && followedSet.has(path) && !btn.classList.contains('is-following')) {
+                    btn.classList.add('is-following');
+                    btn.innerHTML = ICONS.unwatch;
+                    btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch';
+                }
+            });
+        }
+    }).catch(() => {});
 
     function decorateWatchedThreadRow(row) {
         if (!row) return;
@@ -21022,7 +21001,7 @@
                 fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
             }
 
-            if (typeof dbFollowedDelete === 'function' && path) dbFollowedDelete(path);
+            if (path) dbFollowedDelete(path);
 
             row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
             row.style.opacity = '0';
@@ -21061,12 +21040,7 @@
             const unreadRows = doc.querySelectorAll('.structItem--thread.is-unread, .structItem--thread.structItem--unread');
             const unreadCount = unreadRows.length;
             gmSet('smg-watched-unread-count', String(unreadCount));
-            if (typeof updateWatchedUnreadBadge === 'function') {
-                updateWatchedUnreadBadge(unreadCount);
-            }
-        }
-        if (typeof dbFollowedGetAll !== 'function' || typeof dbFollowedBulkUpsert !== 'function') {
-            return Promise.resolve(0);
+            updateWatchedUnreadBadge(unreadCount);
         }
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
@@ -21087,7 +21061,7 @@
             rows.forEach(it => {
                 const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
                 if (!titleA) return;
-                const path = typeof canonicalThreadPath === 'function' ? canonicalThreadPath(titleA.getAttribute('href')) : (titleA.getAttribute('href') || '');
+                const path = canonicalThreadPath(titleA.getAttribute('href'));
                 if (!path || seenPaths.has(path)) return;
                 seenPaths.add(path);
 
@@ -21100,20 +21074,20 @@
                     const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
                     thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
                 }
-                if (!thumb && typeof feedThumbUrl === 'function') thumb = feedThumbUrl(it);
-                if (!thumb && typeof thumbCacheGet === 'function') thumb = thumbCacheGet(path, title) || '';
+                if (!thumb) thumb = feedThumbUrl(it);
+                if (!thumb) thumb = thumbCacheGet(path, title) || '';
 
                 const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
                 // tags / badges
-                const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(it) : [];
+                const badges = extractRowBadges(it);
                 const tags = badges.map(b => ({ name: b.name, className: b.className }));
                 const forumLink = it.querySelector('.structItem-parts a[href*="/forums/"], a[href*="/forums/"]');
                 const forumName = forumLink ? (forumLink.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                const timeline_skip = typeof timelineContentSkip === 'function' && timelineContentSkip(tags.map(t => t.name).concat(forumName));
+                const timeline_skip = timelineContentSkip(tags.map(t => t.name).concat(forumName));
 
                 // forum_activity_ts
-                const forum_activity_ts = (typeof structItemTs === 'function') ? structItemTs(it) : 0;
+                const forum_activity_ts = structItemTs(it);
 
                 // created_at
                 const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
@@ -21189,14 +21163,10 @@
             const unreadCount = itemsToUpsert.concat((existingList || []).filter(e => e && !seenPaths.has(e.path)))
                 .filter(it => it && Boolean(it.unread)).length;
             gmSet('smg-watched-unread-count', String(unreadCount));
-            if (typeof updateWatchedUnreadBadge === 'function') {
-                updateWatchedUnreadBadge(unreadCount);
-            }
+            updateWatchedUnreadBadge(unreadCount);
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
-                if (typeof indexFollowedThumbs === 'function') {
-                    indexFollowedThumbs(itemsToUpsert);
-                }
+                indexFollowedThumbs(itemsToUpsert);
                 try {
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
                 } catch (e) {}
@@ -21204,7 +21174,7 @@
             }) : Promise.resolve(0);
 
             return upsertPromise.then(count => {
-                if (syncPages && syncCandidates.length && typeof syncThreadPage === 'function') {
+                if (syncPages && syncCandidates.length) {
                     return Promise.all(syncCandidates.map(c => syncThreadPage(c.thread, c.page).catch(() => 0))).then(() => count);
                 }
                 return count;
@@ -21221,7 +21191,7 @@
     }
 
     function fetchWatchedDoc() {
-        const url = (typeof navHref === 'function' && navHref('watchedThreads', 'watched', 'watchedThreads2')) || '/watched/threads';
+        const url = (navHref('watchedThreads', 'watched', 'watchedThreads2')) || '/watched/threads';
         const csrf = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-csrf'))
             || ((typeof document !== 'undefined' && document.querySelector('input[name="_xfToken"]')) || {}).value || '';
         const full = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_xfResponseType=json'
@@ -21260,7 +21230,7 @@
         console.log('[SMG Timeline] Buscando tópicos seguidos em segundo plano...');
         followedFetchInFlight = fetchWatchedDoc()
             .then(doc => {
-                if (doc && typeof ingestWatchedPageToFollowed === 'function') {
+                if (doc) {
                     return ingestWatchedPageToFollowed(doc, syncPages).then(count => {
                         console.log('[SMG Timeline] Ingestão concluída: ' + count + ' tópicos processados na tabela followed.');
                         return count;
@@ -21844,7 +21814,7 @@
                 btn.remove();
                 const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
                 if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-                if (typeof aldockSyncCount === 'function') aldockSyncCount();
+                aldockSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -22037,7 +22007,7 @@
 
     if (location.pathname.includes('/account/alerts')) {
         setTimeout(() => {
-            if (typeof openAlertsDock === 'function') openAlertsDock('alerts', false);
+            openAlertsDock('alerts', false);
         }, 50);
     }
 
@@ -22147,14 +22117,12 @@
                         .map(watchedRow).filter(Boolean);
                     const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
                     const nextHref = nx ? nx.getAttribute('href') : null;
-                    if (typeof ingestWatchedPageToFollowed === 'function') {
-                        return ingestWatchedPageToFollowed(tmp).catch(() => 0).then(() => {
-                            try {
-                                window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
-                            } catch (e) {}
-                            return { rows, next: nextHref, visitorAlerts };
-                        });
-                    }
+                    return ingestWatchedPageToFollowed(tmp).catch(() => 0).then(() => {
+                        try {
+                            window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
+                        } catch (e) {}
+                        return { rows, next: nextHref, visitorAlerts };
+                    });
                     try {
                         window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
                     } catch (e) {}
@@ -22248,12 +22216,10 @@
         const base = (item.path || '').replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
         a.href = safeHref(base + '/latest');
         a.addEventListener('click', () => {
-            if (typeof dbFollowedMarkSeen === 'function') {
-                dbFollowedMarkSeen(item.path);
-            }
+            dbFollowedMarkSeen(item.path);
         });
 
-        const thumbUrl = item.thumbnail_url || (typeof thumbCacheGet === 'function' ? thumbCacheGet(item.path, item.thread_name) : '');
+        const thumbUrl = item.thumbnail_url || (thumbCacheGet(item.path, item.thread_name));
         const th = document.createElement('span');
         th.className = 'smg-rail-wt-thumb';
         if (thumbUrl) {
@@ -22317,7 +22283,7 @@
             const time = document.createElement('time');
             time.className = 'smg-al-time';
             time.setAttribute('data-timestamp', String(ts));
-            time.textContent = (typeof smgRelTime === 'function') ? smgRelTime(ts) : '';
+            time.textContent = smgRelTime(ts);
             meta.appendChild(time);
         }
         if (meta.childNodes.length) body.appendChild(meta);
@@ -22399,34 +22365,12 @@
     function paintUnreadBadge(count, topSel, navSel) {
         const n = Math.max(0, parseInt(count, 10) || 0);
         document.querySelectorAll(topSel).forEach(btn => {
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(btn, n, 'smg-tb-badge');
-            } else {
-                let b = btn.querySelector(':scope > .smg-tb-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-tb-badge'; btn.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
+            setReactiveBadge(btn, n, 'smg-tb-badge');
         });
         const nav = document.querySelector(navSel);
         if (nav) {
             const host = nav.querySelector('.smg-nav-ico') || nav;
-            if (typeof setReactiveBadge === 'function') {
-                setReactiveBadge(host, n, 'smg-nav-badge');
-            } else {
-                let b = host.querySelector(':scope > .smg-nav-badge');
-                if (n > 0) {
-                    const t = n > 99 ? '99+' : String(n);
-                    if (!b) { b = document.createElement('span'); b.className = 'smg-nav-badge'; host.appendChild(b); }
-                    if (b.textContent !== t) b.textContent = t;
-                } else if (b) {
-                    b.remove();
-                }
-            }
+            setReactiveBadge(host, n, 'smg-nav-badge');
         }
     }
     function updateWatchedUnreadBadge(count) {
@@ -22443,9 +22387,7 @@
         const domUnread = (list && list.querySelector('li.alert'))
             ? list.querySelectorAll('li.alert.is-unread').length
             : null;
-        const serverCount = (typeof alertsBadgeCount === 'function')
-            ? alertsBadgeCount()
-            : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
+        const serverCount = alertsBadgeCount();
         const st = aldockState && aldockState.alerts;
         const hasMore = Boolean(st && st.next);
 
@@ -22507,12 +22449,10 @@
                 st.next = next;
                 st.loaded = true;
                 st.dry = 0;
-                if (typeof dbFollowedGetAll === 'function') {
-                    dbFollowedGetAll().then(items => {
-                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
-                        repaintAlertThumbs(list);
-                    }).catch(() => {});
-                }
+                dbFollowedGetAll().then(items => {
+                    indexFollowedThumbs(items);
+                    repaintAlertThumbs(list);
+                }).catch(() => {});
                 repaintAlertThumbs(list);
                 railWarmThumbs();
                 aldockSyncCount();
@@ -22544,7 +22484,7 @@
         if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
 
         if (tab === 'watched') {
-            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            const getFollowed = dbFollowedGetAll();
             return getFollowed.then(items => {
                 clearSkeleton();
                 const list = railList('watched');
@@ -22578,9 +22518,7 @@
                 aldockStatus('watched', '');
 
                 if (!valid.length && first) {
-                    if (typeof fetchAndIngestFollowed === 'function') {
-                        fetchAndIngestFollowed(false, false).catch(() => {});
-                    }
+                    fetchAndIngestFollowed(false, false).catch(() => {});
                 }
             }).catch(() => {
                 clearSkeleton();
@@ -22603,9 +22541,9 @@
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar (só alertas têm contador)
                 if (added && tab === 'alerts') syncAlertBadgeFrom(railList('alerts'));
-                if (tab === 'alerts' && typeof dbFollowedGetAll === 'function') {
+                if (tab === 'alerts') {
                     dbFollowedGetAll().then(items => {
-                        if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
+                        indexFollowedThumbs(items);
                         repaintAlertThumbs(railList('alerts'));
                     }).catch(() => {});
                 }
@@ -22763,7 +22701,7 @@
             '</div>';
         document.body.appendChild(el);
         aldock = el;
-        if (typeof markSidebarReady === 'function') markSidebarReady();
+        markSidebarReady();
 
         const applyMarkAllReadSuccess = () => {
             el.querySelectorAll('li.alert.is-unread').forEach(row => {
@@ -22781,7 +22719,7 @@
             gmSet('smg-alerts-count', '0');
             const nav = document.querySelector('.p-navgroup-link--alerts');
             if (nav) nav.removeAttribute('data-badge');
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            syncReactiveBadges();
             aldockSyncCount();
         };
 
@@ -22823,7 +22761,7 @@
 
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
         el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
-            if (railTab === 'watched' && typeof fetchAndIngestFollowed === 'function') {
+            if (railTab === 'watched') {
                 fetchAndIngestFollowed(false, false).catch(() => {});
             }
             if (railTab === 'alerts') railHardRefresh('alerts');
@@ -22944,17 +22882,15 @@
             // The preference can survive a logout. Remove the early layout
             // reservation when there is no account control to own the dock.
             document.documentElement.classList.remove('smg-aldock-on');
-            if (typeof markSidebarReady === 'function') markSidebarReady();
+            markSidebarReady();
             return;
         }   // deslogado / tema sem sino → não há o que dockar
         aldockBound = true;
 
-        if (typeof dbFollowedGetAll === 'function') {
-            dbFollowedGetAll().then(items => {
-                if (typeof indexFollowedThumbs === 'function') indexFollowedThumbs(items);
-                repaintAlertThumbs(railList('alerts'));
-            }).catch(() => {});
-        }
+        dbFollowedGetAll().then(items => {
+            indexFollowedThumbs(items);
+            repaintAlertThumbs(railList('alerts'));
+        }).catch(() => {});
 
         // (o sino da topbar não existe mais — o botão do painel é o único controle e tem o próprio handler)
 
@@ -22977,7 +22913,7 @@
         window.addEventListener('smg-followed-updated', () => {
             if (aldock && aldockOpen() && railTab === 'watched') {
                 railRefresh('watched', false);
-            } else if (typeof dbFollowedGetUnreadCount === 'function') {
+            } else {
                 dbFollowedGetUnreadCount().then(c => {
                     gmSet('smg-watched-unread-count', String(c));
                     updateWatchedUnreadBadge(c);
@@ -23000,7 +22936,7 @@
         if (aldockWanted() && aldockFits() && !aldockPhone()) {
             openAlertsDock(null, false);
         } else {
-            if (typeof markSidebarReady === 'function') markSidebarReady();
+            markSidebarReady();
         }
     }
 
@@ -23491,7 +23427,7 @@
         document.body.insertBefore(wrap, document.body.firstChild);
         document.documentElement.classList.add('smg-topbar-on');
         if (!loggedIn) document.documentElement.classList.add('smg-guest');   // marcador estático p/ o CSS (esconde o que é de membro)
-        if (typeof markTopbarReady === 'function') markTopbarReady();
+        markTopbarReady();
 
         // ---- abrir/fechar popovers (megamenu: hover troca, clique abre/fecha) ----
         const wirePopovers = () => {
@@ -23598,7 +23534,6 @@
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
                 const followRow = uSheet.querySelector('[data-smg-id="following"]');
                 if (followRow) followRow.addEventListener('click', e => {
-                    if (typeof openAlertsDock !== 'function') return;   // no rail → plain navigation to the list page
                     e.preventDefault();
                     smgSheetClose(uSheet);
                     openAlertsDock('watched', false);
@@ -23933,13 +23868,13 @@
             }
 
             const rawHref = a.getAttribute('href') || '';
-            const isProxy = a.hasAttribute('data-proxy-href') || (typeof isProxyUrl === 'function' ? (isProxyUrl(rawHref) || isProxyUrl(a.href)) : /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href)) || a.hasAttribute('data-smg-unwrap');
+            const isProxy = a.hasAttribute('data-proxy-href') || ((isProxyUrl(rawHref) || isProxyUrl(a.href))) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
 
             if (!isProxy && !isExternal) return;
 
             let real = resolveProxyHref(rawHref) || resolveProxyHref(a.href || '');
-            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (!real || !/^https?:/i.test(real) || (isProxyUrl(real))) {
                 const txt = a.textContent && a.textContent.trim();
                 if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
                     try {
@@ -23949,7 +23884,7 @@
                 }
             }
 
-            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (real && /^https?:/i.test(real) && !(isProxyUrl(real))) {
                 if (a.getAttribute('href') !== real) a.setAttribute('href', real);
                 a.href = real;
                 a.dataset.smgUnwrap = '1';
@@ -23973,7 +23908,7 @@
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
         eachIn(roots, 'a[href*="/goto/link-confirmation"], a[href*="/redirect/"], a[href*="/proxy.php?link="], a[href*="/link-proxy/"], a[data-proxy-href]', a => {
             let real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
-            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (!real || !/^https?:/i.test(real) || (isProxyUrl(real))) {
                 const txt = a.textContent && a.textContent.trim();
                 if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
                     try {
@@ -23982,7 +23917,7 @@
                     } catch (e) {}
                 }
             }
-            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (real && /^https?:/i.test(real) && !(isProxyUrl(real))) {
                 a.href = real;
                 a.setAttribute('href', real);
                 a.dataset.smgUnwrap = '1';
@@ -24000,13 +23935,13 @@
             if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
 
             const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
-            if (realParam && /^https?:/i.test(realParam) && !(typeof isProxyUrl === 'function' && isProxyUrl(realParam)) && realParam !== location.href) {
+            if (realParam && /^https?:/i.test(realParam) && !(isProxyUrl(realParam)) && realParam !== location.href) {
                 location.replace(realParam);
                 return;
             }
 
             const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
-            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(typeof isProxyUrl === 'function' && isProxyUrl(domTarget.href))) {
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(isProxyUrl(domTarget.href))) {
                 location.replace(domTarget.href);
                 return;
             }
@@ -24136,12 +24071,12 @@
                 // FALHA TOTAL (host fora do ar / anti-hotlink): em vez de sumir com tudo (o link cru fica
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
                 const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
-                const nv = (typeof buildNativeVideo === 'function') ? buildNativeVideo(href, location.origin + '/', revive, vlabel) : null;
+                const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
                 const v = nv ? nv.video : document.createElement('video');
                 if (nv) {
                     v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
                     wrap.appendChild(nv.wrap);
-                    if (typeof rgStartUrl === 'function') rgStartUrl(v, href, nv.wrap);
+                    rgStartUrl(v, href, nv.wrap);
                 } else {
                     v.src = href; v.controls = true; v.playsInline = true; v.className = 'smg-dm-video';
                     wrap.appendChild(v);
@@ -24163,7 +24098,7 @@
                 }
                 // ao saber as dimensões: vídeo deitado ganha .smg-wide → não estica no post inteiro
                 v.addEventListener('loadedmetadata', () => {
-                    if (typeof markWide === 'function') markWide(v, v.videoWidth, v.videoHeight);
+                    markWide(v, v.videoWidth, v.videoHeight);
                 }, { once: true });
             } else {
                 const a = document.createElement('a');
@@ -24891,19 +24826,15 @@
                     }
                 };
 
-                if (typeof rgBlob === 'function') {
-                    rgBlob(videoUrl, 'https://x.com/').then(blob => {
-                        if (!vid.isConnected) return;
-                        const blobUrl = URL.createObjectURL(blob);
-                        applySrc(blobUrl, true);
-                    }).catch(err => {
-                        console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
-                        if (!vid.isConnected) return;
-                        applySrc(videoUrl, false);
-                    });
-                } else {
+                rgBlob(videoUrl, 'https://x.com/').then(blob => {
+                    if (!vid.isConnected) return;
+                    const blobUrl = URL.createObjectURL(blob);
+                    applySrc(blobUrl, true);
+                }).catch(err => {
+                    console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
+                    if (!vid.isConnected) return;
                     applySrc(videoUrl, false);
-                }
+                });
             };
 
             playOverlay.addEventListener('click', e => {
@@ -24912,12 +24843,12 @@
             });
 
             vid.addEventListener('play', () => {
-                if (typeof rgSolo === 'function') rgSolo(vid);
+                rgSolo(vid);
                 if (playOverlay.parentNode) playOverlay.remove();
             });
 
             // Pré-carregamento lazy ao aproximar 200% da viewport
-            if (typeof makeLazyIO === 'function' && !(typeof window !== 'undefined' && window.__TEST_MODE__)) {
+            if (!(typeof window !== 'undefined' && window.__TEST_MODE__)) {
                 const lazyObs = makeLazyIO(() => {
                     loadAndPlay(false);
                 }, { rootMargin: '200% 0px' });
@@ -25586,7 +25517,7 @@
         const pageMatch = location.pathname.match(/\/page-(\d+)/) || rawHref.match(/\/page-(\d+)/);
         if (pageMatch) {
             currentPage = parseInt(pageMatch[1], 10) || 1;
-        } else if (typeof readPageJump === 'function') {
+        } else {
             const pj = readPageJump();
             if (pj && pj.cur) currentPage = pj.cur;
         }
@@ -25600,7 +25531,7 @@
 
         // Watch status
         const watchBtn = typeof getWatchButton === 'function' ? getWatchButton() : document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
-        const isWatching = (typeof smgIsWatching === 'function' && watchBtn) ? smgIsWatching(watchBtn) : false;
+        const isWatching = (watchBtn) ? smgIsWatching(watchBtn) : false;
         const ingestKey = path + '|page:' + currentPage;
         if (currentThreadIngestInflight.has(ingestKey)) return currentThreadIngestInflight.get(ingestKey);
         const domSignature = currentThreadDomSignature(path, currentPage) + '|watch:' + (isWatching ? '1' : '0');
@@ -25634,7 +25565,7 @@
                     thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
                 }
             }
-            if (!thumb && typeof thumbCacheGet === 'function') {
+            if (!thumb) {
                 thumb = thumbCacheGet(path, threadTitle) || '';
             }
 
@@ -25689,7 +25620,7 @@
                 path: path,
                 thread_name: threadTitle || (stored && stored.thread_name) || '',
                 thumbnail_url: thumb || (stored && stored.thumbnail_url) || '',
-                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
+                tags: (stored && stored.tags) || (extractRowBadges(document).map(b => ({ name: b.name, className: b.className }))),
                 followed_at: (stored && stored.followed_at) || now,
                 forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
                 updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
@@ -25880,9 +25811,7 @@
         isCronRunning = true;
         const cycleStartTs = Date.now();
 
-        const refreshFollowed = (typeof fetchAndIngestFollowed === 'function')
-            ? fetchAndIngestFollowed()
-            : Promise.resolve(0);
+        const refreshFollowed = fetchAndIngestFollowed();
 
         return refreshFollowed.catch(() => 0).then(() => {
             return syncTimeline().then(added => {
@@ -25928,12 +25857,10 @@
 
             return dbFollowedGetAll().then(allFollowed => {
                 if (!allFollowed || !allFollowed.length) {
-                    if (typeof riverEmptyState === 'function') {
-                        const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
-                            ? 'Nenhum tópico seguido cadastrado na tabela'
-                            : 'No followed threads found in database';
-                        riverEmptyState(emptyMsg);
-                    }
+                    const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
+                        ? 'Nenhum tópico seguido cadastrado na tabela'
+                        : 'No followed threads found in database';
+                    riverEmptyState(emptyMsg);
                     return 0;
                 }
 
@@ -26265,7 +26192,7 @@
         if (!p) return null;
         const postId = p.post_id || p.postId || '';
         if (!postId || (!p.content_html && !p.contentHtml)) return null;
-        if (typeof timelineContentSkip === 'function' && timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
+        if (timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
         const ts = p.created_at || p.ts || 0;
         let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
@@ -26595,9 +26522,7 @@
             markAllBtn.addEventListener('click', () => {
                 saveNewestWatermark();
                 if (riverList) riverList.querySelectorAll('.smg-fp-card.is-unread').forEach(c => c.classList.remove('is-unread'));
-                if (typeof dbFollowedMarkAllSeen === 'function') {
-                    dbFollowedMarkAllSeen();
-                }
+                dbFollowedMarkAllSeen();
             });
             actions.appendChild(markAllBtn);
             actions.appendChild(refBtn);
@@ -26610,9 +26535,7 @@
         riverPill.addEventListener('click', () => {
             refreshTop(true);
             window.scrollTo(0, 0);
-            if (typeof syncTimeline === 'function') {
-                syncTimeline().catch(() => {});
-            }
+            syncTimeline().catch(() => {});
         });
         wrap.appendChild(riverPill);
         const host = riverContainer();
@@ -26749,18 +26672,12 @@
         };
 
         if (cold) {
-            if (typeof fetchAndIngestFollowed === 'function') {
-                fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
-            } else {
-                doSync();
-            }
+            fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
         } else {
-            const getFollowed = (typeof dbFollowedGetAll === 'function') ? dbFollowedGetAll() : Promise.resolve([]);
+            const getFollowed = dbFollowedGetAll();
             getFollowed.then(items => {
                 if (!items || !items.length) {
-                    if (typeof fetchAndIngestFollowed === 'function') {
-                        return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
-                    }
+                    return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
                 }
                 doSync();
             }).catch(() => {
@@ -26851,7 +26768,7 @@
 
     function handleTimelineFocusOrVisibility() {
         if (document.hidden) return;
-        const onTimeline = (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) || (typeof feedViewWanted === 'function' && feedViewWanted());
+        const onTimeline = (riverList && riverList.isConnected && document.documentElement.classList.contains('smg-watched-feed')) || (feedViewWanted());
         if (!onTimeline) return;
         const now = Date.now();
         if (now - lastTimelineSyncTime > 30000) {
@@ -27200,9 +27117,9 @@
             const root = document.documentElement;
             if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
                 isNavigatingOut = false;
-                if (typeof markTopbarReady === 'function') markTopbarReady();
-                if (typeof markSidebarReady === 'function') markSidebarReady();
-                if (typeof markNavbarReady === 'function') markNavbarReady();
+                markTopbarReady();
+                markSidebarReady();
+                markNavbarReady();
                 markContentReady(classifyPaintPage());
             }
         }, PAINT_HARD_TIMEOUT_MS);
@@ -27301,7 +27218,7 @@
     function paintPageSignature(context) {
         const kind = context.kind;
         if (kind === PAINT_PAGE_KINDS.HOME) {
-            return typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : '';
+            return homeLayoutSignature();
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
@@ -27411,7 +27328,7 @@
         }
         if (!content) return true;
 
-        const targetPost = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        const targetPost = (findTargetPost());
 
         // 1. Garante que todas as imagens presentes em posts da thread tenham proporção/tamanho travado
         const imgs = content.querySelectorAll('article.message img.bbImage, article.message .message-content img:not(.smg-emoji):not(.avatar)');
@@ -27499,9 +27416,9 @@
         if (!paintChromeIsReady()) return false;
         if (context.kind === PAINT_PAGE_KINDS.HOME) {
             const hasCategory = !!document.querySelector('.p-body-content .block--category');
-            if (!hasCategory || typeof homeLayoutSignature !== 'function') return false;
-            if (typeof homeComponentsReady === 'function' && !homeComponentsReady()) return false;
-            if (typeof homeNoticesAreReady === 'function' && FEATURES.headerNotices && !homeNoticesAreReady()) return false;
+            if (!hasCategory) return false;
+            if (!homeComponentsReady()) return false;
+            if (FEATURES.headerNotices && !homeNoticesAreReady()) return false;
             return homePassSignature === homeLayoutSignature();
         }
         if (context.kind === PAINT_PAGE_KINDS.THREAD) {
@@ -27658,15 +27575,13 @@
             if (url.pathname + url.search === location.pathname + location.search) return;
 
             // Se for um link de post na mesma página, deixa o scroll suave in-page agir sem recarregar skeleton
-            if (document.documentElement.classList.contains('smg-thread') && typeof resolvePostIdFromHref === 'function' && typeof findPostElementById === 'function') {
+            if (document.documentElement.classList.contains('smg-thread')) {
                 const pid = resolvePostIdFromHref(href);
                 if (pid && findPostElementById(pid)) return;
             }
 
-            if (typeof softNavigate === 'function') {
-                e.preventDefault();
-                softNavigate(url.href);
-            }
+            e.preventDefault();
+            softNavigate(url.href);
         }, { capture: true });
 
         window.addEventListener('pageshow', e => {
@@ -27749,7 +27664,7 @@
         const isAlerts = /\/account\/alerts/i.test(path);
         const isBookmarks = isBookmarksPage();
         const isSearch = /\/search\//i.test(path);
-        const isContentFeed = isThread || isBookmarks || (typeof feedContext === 'function' && feedContext());
+        const isContentFeed = isThread || isBookmarks || (feedContext());
         const contentDirty = fullScan || threadDirty || (isBookmarks && listDirty) || (typeof feedContext === 'function' && feedContext());
 
         if (isContentFeed && contentDirty) {
@@ -27808,7 +27723,7 @@
         // organização por causa dessas mutações irrelevantes.
         if (isHome && FEATURES.headerNotices) safe(setupHeaderNotices);
         const homeCandidate = isHome && (fullScan || rootTouches(roots, '.p-body-content, .p-body-pageContent, .block--category', true));
-        const currentHomeSignature = homeCandidate && typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : null;
+        const currentHomeSignature = homeCandidate ? homeLayoutSignature() : null;
         const homeDirty = homeCandidate
             && (homePassSignature !== currentHomeSignature || rootTouches(roots, '.node--link, .node-subNodesFlat', true));
         if (homeCandidate && !homeSidebarDone) safe(layoutHomeSidebar, roots);
@@ -27819,7 +27734,7 @@
             safe(makeHomeCardsClickable, roots);
             safe(ensureHomeNodeIcons, roots);
             safe(enhanceHomeHubSections, roots);
-            homePassSignature = typeof homeLayoutSignature === 'function' ? homeLayoutSignature() : currentHomeSignature;
+            homePassSignature = homeLayoutSignature();
         }
 
         // 4. Passes de Páginas Específicas
@@ -27913,24 +27828,24 @@
         cls.toggle('smg-home-page', isForumHome); // a URL identifica a home antes do data-template
         const paintContext = classifyPaintPage({ pathname: path, search: location.search, template: tpl });
         ['home', 'thread', 'listing', 'following', 'timeline', 'bookmarks'].forEach(kind => cls.toggle('smg-page-' + kind, paintContext.kind === kind));
-        const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (typeof isContentReady === 'function' && isContentReady());
+        const isContentAlreadyReady = cls.contains('smg-page-ready') || cls.contains('smg-content-ready') || (isContentReady());
         if (paintContext.gated && !isContentAlreadyReady) {
             cls.add('smg-page-pending');
             cls.add('smg-content-pending');
-            if (typeof armPagePaintSafetyTimer === 'function') armPagePaintSafetyTimer();
+            armPagePaintSafetyTimer();
         }
-        const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (typeof isTopbarReady === 'function' && isTopbarReady());
+        const isTopbarAlreadyReady = cls.contains('smg-topbar-ready') || (isTopbarReady());
         if (FEATURES.topBar && !isTopbarAlreadyReady) {
             cls.add('smg-topbar-loading');
             cls.add('smg-topbar-pending');
-        } else if (typeof markTopbarReady === 'function') {
+        } else {
             markTopbarReady();
         }
-        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (typeof isNavbarReady === 'function' && isNavbarReady());
+        const isNavbarAlreadyReady = cls.contains('smg-navbar-ready') || (isNavbarReady());
         if (!isNavbarAlreadyReady) {
             cls.add('smg-navbar-loading');
             cls.add('smg-navbar-pending');
-        } else if (typeof markNavbarReady === 'function') {
+        } else {
             markNavbarReady();
         }
         const showHome = isForumHome && !isFeedView && FEATURES.homeRemake;
@@ -27972,12 +27887,12 @@
     if (FEATURES.alertsDock && typeof aldockWanted === 'function'
         && aldockWanted() && aldockFits() && !aldockPhone()) {
         cls.add('smg-aldock-on');
-        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (typeof isSidebarReady === 'function' && isSidebarReady());
+        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
         if (!isSidebarAlreadyReady) {
             cls.add('smg-sidebar-loading');
             cls.add('smg-sidebar-pending');
         }
-    } else if (typeof markSidebarReady === 'function') {
+    } else {
         markSidebarReady();
     }
     ensurePageSkeleton();
@@ -28009,7 +27924,7 @@
         const hasPathTarget = /\/(?:posts|post)[/-]?\d+/i.test(location.pathname)
             || (location.pathname.includes('/goto/') && /[?&]id=\d+/i.test(location.search));
         if (!hasHashTarget && !hasPathTarget) return;
-        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null)
+        const target = (findTargetPost())
             || (h && (document.getElementById(h) || document.querySelector('[data-content="' + h.replace(/^js-/, '') + '"]')));
         const post = target && (target.closest ? (target.closest('article.message, .message--post, .comment, .message-responseRow') || target) : target);
         if (!post) return;
@@ -28059,7 +27974,7 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (typeof aldockPhone === 'function' && aldockPhone() && typeof closeAlertsDock === 'function') {
+            if (typeof aldockPhone === 'function' && aldockPhone()) {
                 closeAlertsDock();
             }
             try {
@@ -28075,7 +27990,7 @@
 
     document.addEventListener('click', handleInPagePostClick);
     window.addEventListener('hashchange', () => {
-        const target = (typeof findTargetPost === 'function' ? findTargetPost() : null);
+        const target = (findTargetPost());
         if (target && !document.documentElement.classList.contains('smg-page-pending')) {
             try { target.scrollIntoView({ block: 'start', behavior: 'instant' }); } catch (err) {}
         }
@@ -28144,7 +28059,7 @@
         bmBuilt = false;
         infScrollBound = false;
         contentIsReady = false;
-        if (typeof feedStopPoll === 'function' && !feedViewWanted()) feedStopPoll();
+        if (!feedViewWanted()) feedStopPoll();
     }
 
     function softNavigate(url, opts) {
@@ -28153,7 +28068,7 @@
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
         const token = ++softNavToken;
-        if (typeof stopWatchedStream === 'function') stopWatchedStream();
+        stopWatchedStream();
         document.dispatchEvent(new Event('smg-search-close'));
         const root = document.documentElement;
         cancelPagePaintRelease();
@@ -28192,7 +28107,7 @@
             if (title && title.textContent) document.title = title.textContent;
             copyNativeBadge('.p-navgroup-link--alerts', doc);
             copyNativeBadge('.p-navgroup-link--conversations', doc);
-            if (typeof syncReactiveBadges === 'function') syncReactiveBadges();
+            syncReactiveBadges();
             const nextUrl = abs.pathname + abs.search;
             softNavUrl = nextUrl;
             if (opts.push !== false) {

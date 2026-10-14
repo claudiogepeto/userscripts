@@ -174,7 +174,7 @@
         if (searchRows.length > 0) {
             const badgeMap = new Map();
             searchRows.forEach(row => {
-                const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];
+                const bList = extractRowBadges(row);
                 bList.forEach(b => {
                     const k = b.name.toLowerCase();
                     if (!badgeMap.has(k)) {
@@ -191,27 +191,25 @@
                 const applySearchBadgeFilter = () => {
                     const activeSelectedTags = new Set(Array.from(activeSearchBadges).map(normalizeTag));
                     searchRows.forEach(row => {
-                        const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];
+                        const bList = extractRowBadges(row);
                         const threadTags = bList.map(b => normalizeTag(b.name));
                         const match = activeSelectedTags.size === 0 || threadTags.some(t => activeSelectedTags.has(t));
                         row.style.display = match ? '' : 'none';
                     });
                 };
 
-                if (typeof createBadgeMultiselect === 'function') {
-                    const ms = createBadgeMultiselect({
-                        badges: sortedBadges,
-                        activeBadges: activeSearchBadges,
-                        placeholder: i18n('Search tags…'),
-                        buttonLabel: i18n('Tags'),
-                        onChange: () => applySearchBadgeFilter()
-                    });
-                    if (ms) {
-                        const msEl = ms.container || ms;
-                        const toolbar = panel.querySelector('.smg-search-toolbar');
-                        if (toolbar && orderBtn) toolbar.insertBefore(msEl, orderBtn);
-                        else panel.appendChild(msEl);
-                    }
+                const ms = createBadgeMultiselect({
+                    badges: sortedBadges,
+                    activeBadges: activeSearchBadges,
+                    placeholder: i18n('Search tags…'),
+                    buttonLabel: i18n('Tags'),
+                    onChange: () => applySearchBadgeFilter()
+                });
+                if (ms) {
+                    const msEl = ms.container || ms;
+                    const toolbar = panel.querySelector('.smg-search-toolbar');
+                    if (toolbar && orderBtn) toolbar.insertBefore(msEl, orderBtn);
+                    else panel.appendChild(msEl);
                 }
             }
         }
@@ -236,7 +234,7 @@
         const href = a ? (a.getAttribute('href') || a.href || '') : '';
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
         const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
-        const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
+        const gbx = goonboxViewer(smgLink);
         if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original) return absUrl(cached.original);
@@ -269,8 +267,8 @@
             const targetUrl = imageUrlOf(img);
             openMediaFeed(targetUrl);
             const smgLink = (img.dataset && img.dataset.smgLink) || (img.closest('a') ? img.closest('a').getAttribute('href') : '') || '';
-            const gbx = typeof goonboxViewer === 'function' ? goonboxViewer(smgLink) : null;
-            if (gbx && typeof goonboxResolve === 'function' && !img.dataset.smgFull) {
+            const gbx = goonboxViewer(smgLink);
+            if (gbx && !img.dataset.smgFull) {
                 goonboxResolve(smgLink, res => {
                     if (!res || !res.original) return;
                     img.dataset.smgFull = res.original;

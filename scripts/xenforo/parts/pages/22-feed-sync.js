@@ -78,7 +78,7 @@
         const pageMatch = location.pathname.match(/\/page-(\d+)/) || rawHref.match(/\/page-(\d+)/);
         if (pageMatch) {
             currentPage = parseInt(pageMatch[1], 10) || 1;
-        } else if (typeof readPageJump === 'function') {
+        } else {
             const pj = readPageJump();
             if (pj && pj.cur) currentPage = pj.cur;
         }
@@ -92,7 +92,7 @@
 
         // Watch status
         const watchBtn = typeof getWatchButton === 'function' ? getWatchButton() : document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
-        const isWatching = (typeof smgIsWatching === 'function' && watchBtn) ? smgIsWatching(watchBtn) : false;
+        const isWatching = (watchBtn) ? smgIsWatching(watchBtn) : false;
         const ingestKey = path + '|page:' + currentPage;
         if (currentThreadIngestInflight.has(ingestKey)) return currentThreadIngestInflight.get(ingestKey);
         const domSignature = currentThreadDomSignature(path, currentPage) + '|watch:' + (isWatching ? '1' : '0');
@@ -126,7 +126,7 @@
                     thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
                 }
             }
-            if (!thumb && typeof thumbCacheGet === 'function') {
+            if (!thumb) {
                 thumb = thumbCacheGet(path, threadTitle) || '';
             }
 
@@ -181,7 +181,7 @@
                 path: path,
                 thread_name: threadTitle || (stored && stored.thread_name) || '',
                 thumbnail_url: thumb || (stored && stored.thumbnail_url) || '',
-                tags: (stored && stored.tags) || ((typeof extractRowBadges === 'function') ? extractRowBadges(document).map(b => ({ name: b.name, className: b.className })) : []),
+                tags: (stored && stored.tags) || (extractRowBadges(document).map(b => ({ name: b.name, className: b.className }))),
                 followed_at: (stored && stored.followed_at) || now,
                 forum_activity_ts: (stored && stored.forum_activity_ts) || 0,
                 updated_at: Math.max((stored && stored.updated_at) || 0, maxPostTs),
@@ -372,9 +372,7 @@
         isCronRunning = true;
         const cycleStartTs = Date.now();
 
-        const refreshFollowed = (typeof fetchAndIngestFollowed === 'function')
-            ? fetchAndIngestFollowed()
-            : Promise.resolve(0);
+        const refreshFollowed = fetchAndIngestFollowed();
 
         return refreshFollowed.catch(() => 0).then(() => {
             return syncTimeline().then(added => {
@@ -420,12 +418,10 @@
 
             return dbFollowedGetAll().then(allFollowed => {
                 if (!allFollowed || !allFollowed.length) {
-                    if (typeof riverEmptyState === 'function') {
-                        const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
-                            ? 'Nenhum tópico seguido cadastrado na tabela'
-                            : 'No followed threads found in database';
-                        riverEmptyState(emptyMsg);
-                    }
+                    const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
+                        ? 'Nenhum tópico seguido cadastrado na tabela'
+                        : 'No followed threads found in database';
+                    riverEmptyState(emptyMsg);
                     return 0;
                 }
 

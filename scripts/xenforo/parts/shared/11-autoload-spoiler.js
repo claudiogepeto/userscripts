@@ -27,7 +27,7 @@
                 if (sp) {
                     setTimeout(() => {
                         sp.querySelectorAll('.auto-image-grid').forEach(g => {
-                            if (typeof relayoutGrid === 'function') relayoutGrid(g);
+                            relayoutGrid(g);
                         });
                     }, 50);
                 }

@@ -152,7 +152,7 @@
 
     function dbFollowedMarkSeen(path) {
         if (!path) return Promise.resolve();
-        const normPath = (typeof canonicalThreadPath === 'function') ? canonicalThreadPath(path) : path;
+        const normPath = canonicalThreadPath(path);
         return dbFollowedGet(normPath).then(item => {
             if (!item) return;
             item.unread = false;
@@ -182,9 +182,7 @@
             tx.oncomplete = () => {
                 try {
                     gmSet('smg-watched-unread-count', '0');
-                    if (typeof updateWatchedUnreadBadge === 'function') {
-                        updateWatchedUnreadBadge(0);
-                    }
+                    updateWatchedUnreadBadge(0);
                     window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
                     window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
                 } catch (e) {}

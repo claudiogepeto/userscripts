@@ -59,13 +59,13 @@
             }
 
             const rawHref = a.getAttribute('href') || '';
-            const isProxy = a.hasAttribute('data-proxy-href') || (typeof isProxyUrl === 'function' ? (isProxyUrl(rawHref) || isProxyUrl(a.href)) : /[\/?](goto\/link-confirmation|redirect|link-proxy|proxy\.php)/i.test(a.href)) || a.hasAttribute('data-smg-unwrap');
+            const isProxy = a.hasAttribute('data-proxy-href') || ((isProxyUrl(rawHref) || isProxyUrl(a.href))) || a.hasAttribute('data-smg-unwrap');
             const isExternal = a.classList.contains('link--external') || a.classList.contains('smg-fhcard-main') || a.classList.contains('smg-fhcard-open') || a.classList.contains('smg-link-chip') || (a.hostname && a.hostname !== location.hostname);
 
             if (!isProxy && !isExternal) return;
 
             let real = resolveProxyHref(rawHref) || resolveProxyHref(a.href || '');
-            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (!real || !/^https?:/i.test(real) || (isProxyUrl(real))) {
                 const txt = a.textContent && a.textContent.trim();
                 if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
                     try {
@@ -75,7 +75,7 @@
                 }
             }
 
-            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (real && /^https?:/i.test(real) && !(isProxyUrl(real))) {
                 if (a.getAttribute('href') !== real) a.setAttribute('href', real);
                 a.href = real;
                 a.dataset.smgUnwrap = '1';
@@ -99,7 +99,7 @@
         // não-reescrito ainda é garantido pelo capture do bindProxyClick; o full-scan periódico pega o que faltar.
         eachIn(roots, 'a[href*="/goto/link-confirmation"], a[href*="/redirect/"], a[href*="/proxy.php?link="], a[href*="/link-proxy/"], a[data-proxy-href]', a => {
             let real = resolveProxyHref(a.getAttribute('href') || a.getAttribute('data-proxy-href') || '');
-            if (!real || !/^https?:/i.test(real) || (typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (!real || !/^https?:/i.test(real) || (isProxyUrl(real))) {
                 const txt = a.textContent && a.textContent.trim();
                 if (txt && /^https?:\/\/[^\s"'<>]+/i.test(txt)) {
                     try {
@@ -108,7 +108,7 @@
                     } catch (e) {}
                 }
             }
-            if (real && /^https?:/i.test(real) && !(typeof isProxyUrl === 'function' && isProxyUrl(real))) {
+            if (real && /^https?:/i.test(real) && !(isProxyUrl(real))) {
                 a.href = real;
                 a.setAttribute('href', real);
                 a.dataset.smgUnwrap = '1';
@@ -126,13 +126,13 @@
             if (!/[\/?](goto\/link-confirmation|redirect|link-proxy)/i.test(location.pathname + location.search)) return;
 
             const realParam = resolveProxyHref(location.href) || decodeProxyHref(location.href);
-            if (realParam && /^https?:/i.test(realParam) && !(typeof isProxyUrl === 'function' && isProxyUrl(realParam)) && realParam !== location.href) {
+            if (realParam && /^https?:/i.test(realParam) && !(isProxyUrl(realParam)) && realParam !== location.href) {
                 location.replace(realParam);
                 return;
             }
 
             const domTarget = document.querySelector('.simpLinkProxy-targetLink, .linkConfirmation-url, a.button--primary[href^="http"], a.button[href^="http"]:not([href*="login"]):not([href*="register"])');
-            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(typeof isProxyUrl === 'function' && isProxyUrl(domTarget.href))) {
+            if (domTarget && domTarget.href && /^https?:/i.test(domTarget.href) && !domTarget.href.includes(location.hostname) && !(isProxyUrl(domTarget.href))) {
                 location.replace(domTarget.href);
                 return;
             }
@@ -262,12 +262,12 @@
                 // FALHA TOTAL (host fora do ar / anti-hotlink): em vez de sumir com tudo (o link cru fica
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
                 const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
-                const nv = (typeof buildNativeVideo === 'function') ? buildNativeVideo(href, location.origin + '/', revive, vlabel) : null;
+                const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
                 const v = nv ? nv.video : document.createElement('video');
                 if (nv) {
                     v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
                     wrap.appendChild(nv.wrap);
-                    if (typeof rgStartUrl === 'function') rgStartUrl(v, href, nv.wrap);
+                    rgStartUrl(v, href, nv.wrap);
                 } else {
                     v.src = href; v.controls = true; v.playsInline = true; v.className = 'smg-dm-video';
                     wrap.appendChild(v);
@@ -289,7 +289,7 @@
                 }
                 // ao saber as dimensões: vídeo deitado ganha .smg-wide → não estica no post inteiro
                 v.addEventListener('loadedmetadata', () => {
-                    if (typeof markWide === 'function') markWide(v, v.videoWidth, v.videoHeight);
+                    markWide(v, v.videoWidth, v.videoHeight);
                 }, { once: true });
             } else {
                 const a = document.createElement('a');
@@ -1017,19 +1017,15 @@
                     }
                 };
 
-                if (typeof rgBlob === 'function') {
-                    rgBlob(videoUrl, 'https://x.com/').then(blob => {
-                        if (!vid.isConnected) return;
-                        const blobUrl = URL.createObjectURL(blob);
-                        applySrc(blobUrl, true);
-                    }).catch(err => {
-                        console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
-                        if (!vid.isConnected) return;
-                        applySrc(videoUrl, false);
-                    });
-                } else {
+                rgBlob(videoUrl, 'https://x.com/').then(blob => {
+                    if (!vid.isConnected) return;
+                    const blobUrl = URL.createObjectURL(blob);
+                    applySrc(blobUrl, true);
+                }).catch(err => {
+                    console.warn('[smg-tw] rgBlob falhou para vídeo do Twitter, tentando fallback:', err);
+                    if (!vid.isConnected) return;
                     applySrc(videoUrl, false);
-                }
+                });
             };
 
             playOverlay.addEventListener('click', e => {
@@ -1038,12 +1034,12 @@
             });
 
             vid.addEventListener('play', () => {
-                if (typeof rgSolo === 'function') rgSolo(vid);
+                rgSolo(vid);
                 if (playOverlay.parentNode) playOverlay.remove();
             });
 
             // Pré-carregamento lazy ao aproximar 200% da viewport
-            if (typeof makeLazyIO === 'function' && !(typeof window !== 'undefined' && window.__TEST_MODE__)) {
+            if (!(typeof window !== 'undefined' && window.__TEST_MODE__)) {
                 const lazyObs = makeLazyIO(() => {
                     loadAndPlay(false);
                 }, { rootMargin: '200% 0px' });
