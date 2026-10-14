@@ -283,48 +283,45 @@
         'Image grid in posts': 'Grade de imagens nos posts',
         'Replace thumbnails with full images': 'Substituir miniaturas pelas imagens finais', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
         'RedGifs — load automatically': 'RedGifs — carregar automaticamente', 'RedGifs — built-in player': 'RedGifs — player próprio',
-        'Turbo.cr — show videos': 'Turbo.cr — exibir vídeos', 'Turbo.cr — built-in player': 'Turbo.cr — player próprio',
-        'Saint.su — show videos': 'Saint.su — exibir vídeos', 'Direct media from CDNs': 'Mídia direta de CDNs',
+        'Direct media from CDNs': 'Mídia direta de CDNs',
         'Skip external link warning': 'Pular aviso de link externo', 'Gather download links': 'Reunir links de download',
-        'Infinite scroll': 'Rolagem infinita', 'Infinite scroll (global)': 'Rolagem infinita (global)',
+        'Infinite scroll (global)': 'Rolagem infinita (global)',
         'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in timeline': 'Rolagem infinita na timeline',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
         'Infinite scroll in thread': 'Rolagem infinita no tópico',
         'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
         'Keyboard shortcuts': 'Atalhos de teclado', 'Gallery': 'Galeria', 'Expand': 'Maximizar',
-        // saint / turbo / cyberdrop
-        'Open on saint': 'Abrir no saint', 'Open on turbo.cr': 'Abrir no turbo.cr', 'Open on cyberdrop': 'Abrir no cyberdrop',
+        // cyberdrop
+        'Open on cyberdrop': 'Abrir no cyberdrop',
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
         'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
-        'no response': 'sem resposta', 'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
+        'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
         'Error': 'Erro', 'load error': 'erro ao carregar',
         // cards de mídia e galeria
-        'item': 'item', 'items': 'itens', 'Show gallery': 'Ver galeria', 'Open gallery': 'Abrir galeria', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
+        'item': 'item', 'items': 'itens', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
         'Done': 'Pronto',
-        'Copied!': 'Copiado!', 'Filtering': 'Filtrando', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
+        'Copied!': 'Copiado!', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
         'author': 'autor', 'titles only': 'só títulos', 'Nothing here yet.': 'Nada aqui ainda.', 'Couldn’t load.': 'Não foi possível carregar.',
         // dock — thread
-        'Search': 'Buscar', 'Copy post': 'Copiar post', 'Save post': 'Salvar post',
+        'Search': 'Buscar',
         'Copy link to this post': 'Copiar link deste post', 'Bookmark this post': 'Salvar post nos favoritos',
         'Filter threads': 'Filtrar tópicos (tags, autor, status)',
         // post card (reddit) — action bar
         'Share': 'Compartilhar', 'Save': 'Salvar', 'Reply': 'Responder', 'Comment': 'Comentar', 'Comments': 'Comentários',
         'Watch thread': 'Acompanhar tópico', 'Unwatch thread': 'Deixar de acompanhar',
-        'Sort by date': 'Ordenar por data', 'Sort by reactions': 'Ordenar por reações',
         'Date': 'Data', 'Reactions': 'Reações',   // labels curtos do botão de sort (pílula)
         'First page': 'Primeira página', 'Last page': 'Última página',
         'Prev page': 'Página anterior', 'Next page': 'Próxima página', 'Go to page': 'Ir para página',
         'Scroll to top': 'Rolar para o topo', 'Scroll to bottom': 'Rolar para o fim',
-        'Prev post': 'Post anterior', 'Next post': 'Próximo post',
         'Filter': 'Filtrar', 'Filter by author': 'Filtrar por autor',
         'List view': 'Ver em lista', 'Grid view': 'Ver em grade',
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
-        'Account': 'Conta', 'Feed mode': 'Modo feed', 'Gallery mode': 'Modo Galeria', 'Standard mode': 'Modo Padrão', 'View mode': 'Modo de visualização',
+        'Account': 'Conta', 'Feed mode': 'Modo feed', 'View mode': 'Modo de visualização',
         'Mark all as read': 'Marcar tudo como lido',
         'Page navigation': 'Navegação de página',
         'Settings': 'Configurações', 'Options': 'Opções',
-        'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock', 'Reload to apply': 'Recarregar para aplicar',
+        'Hide dock': 'Ocultar dock', 'Show dock': 'Exibir dock',
         'Search setting…': 'Buscar ajuste…', 'No settings found': 'Nenhum ajuste encontrado', 'Restore defaults': 'Restaurar padrões', 'Reload': 'Recarregar', 'Restore default settings?': 'Restaurar as configurações padrão?',
         'Search window (days)': 'Janela de busca (dias)', 'Keep posts for (days)': 'Guardar posts por (dias)', 'Threads on first load': 'Threads no 1º carregamento', 'Deep re-scan every (h)': 'Re-varredura completa a cada (h)',
         // busca
@@ -335,22 +332,20 @@
         'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
-        'threads': 'tópicos', 'posts': 'posts', 'Gathering posts…': 'Reunindo posts…', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
+        'threads': 'tópicos', 'posts': 'posts', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
         'new post': 'post novo', 'new posts': 'novos posts', 'Home': 'Início',
         'Threads': 'Tópicos', 'This forum': 'Este fórum', 'This thread': 'Este tópico',
         'Filters': 'Filtros', 'Titles only': 'Só títulos', 'Author (optional)': 'Autor (opcional)',
-        'Recent searches': 'Buscas recentes', 'Show all': 'Ver todas', 'Show less': 'Ver menos',
+        'Recent searches': 'Buscas recentes', 'Show all': 'Ver todas',
         'Clear': 'Limpar', 'Advanced': 'Avançado', 'Enter to search': 'Enter para buscar',
         'Close': 'Fechar', 'Back': 'Voltar', 'Press Esc to close': 'Pressione Esc para fechar',
         'Search thread titles only (ignores post text)': 'Busca só nos títulos dos tópicos (ignora o texto dos posts)',
         'Clear all recent searches?': 'Limpar todas as buscas recentes?',
         // filtro por autor + filtro da listagem
-        'Filter posts by author': 'Filtrar posts por autor', 'Username…': 'Usuário…', 'Username': 'Usuário',
+        'Username': 'Usuário',
         'Started by': 'Iniciado por', 'Last updated': 'Última atualização', 'Sort by': 'Ordenar por',
-        'Error building the filter.': 'Erro ao montar o filtro.', 'Filter unavailable.': 'Filtro indisponível.',
-        'Error loading the filter.': 'Erro ao carregar o filtro.',
         // estados
-        'Loading…': 'Carregando…', 'Error loading.': 'Erro ao carregar.',
+        'Loading…': 'Carregando…',
         // topbar — Discover
         'Trending': 'Em alta', 'Most popular right now': 'Mais populares agora',
         "What's new": 'Novidades', 'Recently posted': 'Postado recentemente',
@@ -371,38 +366,35 @@
         'Updates': 'Avisos', 'Dismiss': 'Dispensar', 'Dismiss all': 'Dispensar tudo',
         // painel lateral docked (rail à direita: alertas + seguindo)
         'Docked side panel': 'Painel lateral fixo',
-        'Side panel': 'Painel lateral', 'Close panel': 'Fechar painel', 'Mark all read': 'Marcar todas como lidas',
+        'Close panel': 'Fechar painel',
         // visitante (deslogado)
-        'Log in': 'Entrar', 'Register': 'Cadastrar', 'Log in to see this': 'Entre para ver isto',
+        'Log in': 'Entrar', 'Register': 'Cadastrar',
         'Refresh': 'Atualizar', 'All': 'Todas', 'Unread': 'Não lidas', 'Drag to resize': 'Arraste para redimensionar',
-        'Alert preferences': 'Preferências de alerta', 'No notifications yet': 'Nenhuma notificação ainda',
+        'No notifications yet': 'Nenhuma notificação ainda',
         'No unread notifications': 'Nenhuma notificação não lida', 'End of the list': 'Fim da lista',
-        'Mark every notification as read?': 'Marcar todas as notificações como lidas?',
         'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
         'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
         'Previous': 'Anterior', 'Next': 'Próximo', 'Go to new': 'Ir para os novos',
         'Watch': 'Seguir', 'Unwatch': 'Deixar de seguir', 'Translate': 'Traduzir', 'More': 'Mais',
-        'Reactions': 'Reações', 'Date': 'Data', 'Order by': 'Ordenar por', 'click to toggle': 'clique para alternar',
+        'Order by': 'Ordenar por',
         'Relevance': 'Relevância', 'by date': 'por data',
         // feed de mídia
         'No media on this page': 'Sem mídia nesta página', 'Filter media': 'Filtrar mídia',
         'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
-        'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume', 'Back 5s': 'Voltar 5s', 'Forward 5s': 'Avançar 5s',
-        'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador', 'RedGifs unavailable': 'RedGifs indisponível',
+        'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume',
+        'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador',
         'Edit in search bar': 'Editar na barra de busca', 'Search on': 'Buscar no',
         'No results': 'Sem resultados', 'See all results': 'Ver todos os resultados', 'Search failed': 'Busca falhou',
-        'Clear': 'Limpar', 'Search commands': 'Comandos de busca', 'search post text': 'buscar no texto do post', 'Thread': 'Tópico', 'Forum': 'Fórum', 'Search in this thread': 'Buscar neste tópico',
-        'Search defaults': 'Padrões da busca', 'Titles only by default': 'Só títulos por padrão', 'Newest first by default': 'Mais recentes primeiro', 'Match partial words': 'Buscar por parte da palavra', 'Commands (Tab)': 'Comandos (Tab)',
-        'Search by name…': 'Buscar por nome…', 'Search by username…': 'Buscar por @usuário…', 'Search by thread…': 'Buscar por tópico…',
+        'Search commands': 'Comandos de busca', 'search post text': 'buscar no texto do post', 'Thread': 'Tópico', 'Forum': 'Fórum', 'Search in this thread': 'Buscar neste tópico',
+        'Search defaults': 'Padrões da busca', 'Titles only by default': 'Só títulos por padrão', 'Newest first by default': 'Mais recentes primeiro', 'Match partial words': 'Buscar por parte da palavra',
         // aviso único da galeria/feed (navegação própria)
         'Gallery and Feed': 'Galeria e Feed', 'Got it': 'Entendi',
         'Gallery and Feed browse the whole thread with their own pagination — they start at page 1 and page through all the media, independently of where you are reading. Use their own pager and sort.':
             'A Galeria e o Feed percorrem a thread inteira com paginação própria — começam na página 1 e passam por toda a mídia, independente de onde você está lendo. Use o paginador e a ordenação próprios deles.',
         'Filter: all': 'Filtro: tudo', 'Filter: images': 'Filtro: imagens', 'Filter: videos': 'Filtro: vídeos',
         // turbo + misc
-        '⚠ turbo.cr unavailable (404) — use the link below': '⚠ turbo.cr indisponível (404) — use o link abaixo',
     };
     function i18n(s) {
         if (!IS_PT || s == null) return s;
