@@ -462,7 +462,6 @@
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-        if (FEATURES.autoSearchTitleOnly) safe(enableSearchTitlesOnly);
         safe(watchNativeBadges);
         safe(restoreNavMode);
 

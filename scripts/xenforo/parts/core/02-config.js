@@ -9,7 +9,6 @@
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
-        autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)

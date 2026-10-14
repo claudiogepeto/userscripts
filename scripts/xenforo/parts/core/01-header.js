@@ -88,7 +88,6 @@
 //  autoload/spoiler .. autoLoadRedgifs, autoExpandSpoilers
 //  DOCK (nav post) ... setupPostNavigation()  ← GRANDE: pager, goto, filtro de lista, view-toggle,
 //                      sheet mobile, e a BUSCA (history/chips/doSearch)
-//  busca títulos ..... enableSearchTitlesOnly
 //  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
 //                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
 //  LISTAGEM .......... markThreadGridContainer, badges reativos, styleArticleCards, markGridPlaceholders

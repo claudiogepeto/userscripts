@@ -89,7 +89,6 @@
 //  autoload/spoiler .. autoLoadRedgifs, autoExpandSpoilers
 //  DOCK (nav post) ... setupPostNavigation()  ← GRANDE: pager, goto, filtro de lista, view-toggle,
 //                      sheet mobile, e a BUSCA (history/chips/doSearch)
-//  busca títulos ..... enableSearchTitlesOnly
 //  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
 //                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
 //  LISTAGEM .......... markThreadGridContainer, badges reativos, styleArticleCards, markGridPlaceholders
@@ -174,7 +173,6 @@
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
-        autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
@@ -18278,36 +18276,7 @@
         onScrollRaf(pollEndOfList);
     }
 
-    // ── part 13: "search titles only" (enableSearchTitlesOnly) + painel inline na página de resultados (buildSearchResultsPanel) + clique na imagem abre o feed (setupImageClickFeed) ──
-    // =========================================================
-    // FEATURE: auto "search titles only"
-    // =========================================================
-
-    // PERF: roda em todo processAll. Antes fazia um querySelectorAll global a CADA frame mesmo depois de
-    // aplicar (o form do quick-search persiste no DOM, então sempre casava). Agora marca 'done' assim que
-    // processa ao menos um form → o qSA global para de rodar após o boot. Enquanto nenhum form existe ainda
-    // (boot cedo), segue tentando no próximo frame; raríssimo form injetado via AJAX depois é o único caso perdido.
-    let searchTitlesDone = false;
-    function enableSearchTitlesOnly() {
-        if (searchTitlesDone) return;
-        const forms = document.querySelectorAll('form[data-xf-init="quick-search"]');
-        // sem form e DOM completo (guest/tema sem quick-search) → desiste de vez; senão este qSA global rodava TODO frame pra sempre
-        if (!forms.length) { if (document.readyState === 'complete') searchTitlesDone = true; return; }
-        forms.forEach(form => {
-            if (form.dataset.titleOnlyApplied) return;
-            form.dataset.titleOnlyApplied = 'true';
-
-            const checkbox = form.querySelector('input[name="c[title_only]"]');
-
-            if (checkbox && !checkbox.checked) {
-                checkbox.checked = true;
-                // dispara change caso o XenForo escute
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        });
-        searchTitlesDone = true;
-    }
-
+    // ── part 13: painel inline na página de resultados (buildSearchResultsPanel) + clique na imagem abre o feed (setupImageClickFeed) ──
     // =========================================================
     // FEATURE: painel de busca INLINE na página de RESULTADOS (search_results)
     // Input pré-preenchido (edição rápida da query) + filtros direto no header: escopo · ordenar
@@ -29024,7 +28993,6 @@
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-        if (FEATURES.autoSearchTitleOnly) safe(enableSearchTitlesOnly);
         safe(watchNativeBadges);
         safe(restoreNavMode);
 
