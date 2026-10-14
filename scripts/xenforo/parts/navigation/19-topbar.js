@@ -415,7 +415,7 @@
             if (FEATURES.alertsDock) {
                 const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
                 bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
-                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
+                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
                 actions.appendChild(bellBtn);
             }
         } else {
@@ -526,7 +526,7 @@
             };
             const sheetRow = it => it.divider
                 ? '<div class="smg-tb-popdiv"></div>'
-                : '<a class="smg-tb-poprow"' + (it.id ? ' data-smg-id="' + it.id + '"' : '') + ' href="' + safeHref(it.href) + '">' +
+                : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
                     '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
                     (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
@@ -547,17 +547,11 @@
             if (loggedIn) {
                 // mobile-only: Following (watched threads) lives here now, right above Bookmarks
                 const sheetSections = accSections.map((sec, i) => i === 1
-                    ? [{ id: 'following', label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
+                    ? [{ label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
                     : sec);
                 const uBody = sheetSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
                         .map(sec => sec.map(sheetRow).join('')).join('<div class="smg-tb-popdiv"></div>');
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
-                const followRow = uSheet.querySelector('[data-smg-id="following"]');
-                if (followRow) followRow.addEventListener('click', e => {
-                    e.preventDefault();
-                    smgSheetClose(uSheet);
-                    openAlertsDock('watched', false);
-                });
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X

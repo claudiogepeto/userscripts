@@ -163,20 +163,6 @@
         })).catch(() => {}).finally(followedPresenceReset);
     }
 
-    function dbFollowedMarkSeen(path) {
-        if (!path) return Promise.resolve();
-        const normPath = canonicalThreadPath(path);
-        return dbFollowedGet(normPath).then(item => {
-            if (!item) return;
-            item.unread = false;
-            return dbFollowedUpsert(item).then(() => {
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath } }));
-                } catch (e) {}
-            });
-        });
-    }
-
     function dbFollowedMarkAllSeen() {
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction('followed', 'readwrite');
@@ -192,22 +178,9 @@
                 }
                 c.continue();
             };
-            tx.oncomplete = () => {
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
-                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
-                } catch (e) {}
-                resolve();
-            };
+            tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         })).catch(() => {});
-    }
-
-    function dbFollowedGetUnreadCount() {
-        return dbFollowedGetAll().then(items => {
-            if (!Array.isArray(items)) return 0;
-            return items.filter(it => Boolean(it && it.unread)).length;
-        }).catch(() => 0);
     }
 
     // =========================================================
@@ -411,9 +384,7 @@
             dbFollowedGetAll,
             dbFollowedUpsert,
             dbFollowedBulkUpsert,
-            dbFollowedMarkSeen,
             dbFollowedMarkAllSeen,
-            dbFollowedGetUnreadCount,
             dbTimelinePutPosts,
             dbTimelineGetRecent,
             dbTimelineCount,

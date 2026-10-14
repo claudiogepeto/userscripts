@@ -1,4 +1,4 @@
-    // STYLE CONTEXT: Alerts and following dock
+    // STYLE CONTEXT: Alerts dock
     const CSS_ALERTDOCK = `/* ============ NOTIFICAÇÕES DOCKED (rail fixo à direita) ============ */
             /* o painel EMPURRA a página: body ganha padding, a topbar termina onde o rail começa e a
                dock (pílula centralizada) desloca meio-rail pra esquerda → nada fica escondido atrás. */
@@ -64,95 +64,8 @@
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
-            /* abas primárias: Alertas | Seguindo (segmented control) */
-            /* linha de thread seguida: thumb + título + fórum/hora (o structItem largo não cabe no rail) */
-            .smg-rail-wtlist { list-style: none; margin: 0; padding: 0; }
-            .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
-            .smg-rail-wt:last-child { border-bottom: 0; }
-            .smg-rail-wt:hover { background: rgba(255,255,255,0.055); }
-            .smg-rail-wt.is-unread { background: transparent; opacity: 1; }
-            .smg-rail-wt:not(.is-unread) {
-                opacity: 0.55;
-                transition: opacity .15s ease, background .14s ease;
-            }
-            .smg-rail-wt:not(.is-unread):hover {
-                opacity: 1;
-            }
-            .smg-rail-wt-dot {
-                display: inline-block !important;
-                width: 8px !important;
-                height: 8px !important;
-                min-width: 8px !important;
-                min-height: 8px !important;
-                border-radius: 50% !important;
-                background: #54d66a !important;
-                box-shadow: 0 0 0 2.5px rgba(84, 214, 106, 0.22) !important;
-                margin-right: 7px !important;
-                vertical-align: 1px !important;
-                flex-shrink: 0 !important;
-            }
-            .smg-rail-wt:not(.is-unread) .smg-rail-wt-dot {
-                display: none !important;
-            }
-            .smg-rail-wt-link { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; text-decoration: none !important; }
-            .smg-rail-wt-thumb {
-                flex: 0 0 auto; width: 72px; height: 72px; min-width: 72px; border-radius: 12px; aspect-ratio: 1 / 1; overflow: hidden;
-                display: flex; align-items: center; justify-content: center;
-                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            }
-            .smg-rail-wt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            .smg-rail-wt-thumb--ph .smg-ph-word { font-size: 13px; opacity: 0.5; }
-            .smg-rail-wt-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-            .smg-rail-wt .smg-al-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-            .smg-rail-wt .smg-al-tags .smg-al-chip,
-            .smg-rail-wt .smg-al-tags .label,
-            .smg-rail-wt .smg-al-tags .prefix {
-                font-size: 9.5px !important;
-                font-weight: 600 !important;
-                padding: 1px 5px !important;
-                border-radius: 4px !important;
-                line-height: 1.3 !important;
-                letter-spacing: normal !important;
-                white-space: nowrap !important;
-                display: inline-flex !important;
-                align-items: center !important;
-            }
-            .smg-rail-wt-title {
-                font-size: 14.5px; font-weight: 700; line-height: 1.35; color: #fff; letter-spacing: -0.01em;
-                display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-            }
-            .smg-rail-wt:hover .smg-rail-wt-title { text-decoration: underline; text-underline-offset: 2px; }
-            .smg-rail-wt-meta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: rgba(255,255,255,0.42); }
-            .smg-rail-wt .smg-al-time {
-                margin-left: 0 !important;
-                margin-right: auto !important;
-                text-align: left !important;
-                white-space: nowrap !important;
-                color: rgba(255,255,255,0.4) !important;
-                font-size: 11px !important;
-            }
-            #smg-aldock.smg-aldock--unread .smg-rail-wt:not(.is-unread) { display: none; }
-            /* GRADE (só no Seguindo): cards com a thumb em cima — cabe muito mais thread por tela.
-               auto-fill: 2 colunas nos 380px padrão, mais colunas conforme o rail é alargado. */
-            .smg-aldock-body.is-grid .smg-rail-wtlist {
-                display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 10px;
-            }
-            .smg-aldock-body.is-grid .smg-rail-wt {
-                border-bottom: 0; border-radius: 12px; overflow: hidden;
-                background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-            }
-            .smg-aldock-body.is-grid .smg-rail-wt-link { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
-            .smg-aldock-body.is-grid .smg-rail-wt-thumb { width: 100%; height: auto; min-width: 0; aspect-ratio: 1 / 1; border: 0; border-radius: 0; box-shadow: none; }
-            .smg-aldock-body.is-grid .smg-rail-wt-body { padding: 8px 9px 10px; gap: 3px; }
-            .smg-aldock-body.is-grid .smg-rail-wt-title { font-size: 12.5px; }
-            .smg-aldock-body.is-grid .smg-rail-wt-meta { font-size: 10.5px; }
-            .smg-aldock-body.is-grid .smg-al-tags { display: flex; }   /* badges permanecem visíveis nos cards */
-            .smg-aldock-btn[hidden] { display: none !important; }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
-            /* o [hidden] nativo perde pro display:flex acima → a aba inativa precisa sumir explicitamente */
-            .smg-aldock-body[hidden] { display: none !important; }
             .smg-aldock-list { list-style: none; margin: 0; padding: 0; }
             .smg-aldock-skel-row {
                 position: relative; display: flex; align-items: center; gap: 10px; min-height: 74px;

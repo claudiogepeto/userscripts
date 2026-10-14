@@ -1478,14 +1478,10 @@ async function runTests() {
         openAlertsDock,
         closeAlertsDock,
         toggleAlertsDock,
-        railShowTab,
-        watchedRow,
         aldockSyncCount,
         updateAlertsUnreadBadge,
         aldockState,
-        RAIL_SRC,
         aldockWidth,
-        getRailTab,
         getAldock
     } = window.__aldockExports;
 
@@ -1494,11 +1490,6 @@ async function runTests() {
     assert(btnWatchedEl === null, 'Botão #smg-nav-watched (Seguindo na sidebar) não deve existir na dock');
     const btnAlertsEl = document.getElementById('smg-nav-alerts');
     assert(btnAlertsEl === null, 'Botão #smg-nav-alerts NÃO deve existir na barra/dock principal');
-
-    // 9.2 Verificar que o painel lateral é exclusivo para Seguidos (Following)
-    assert(getRailTab() === 'alerts', 'Aba padrão do rail deve ser "alerts"');
-    assert(RAIL_SRC.watched.filter === false, 'RAIL_SRC.watched não deve expor filtro Todas/Não lidas');
-    assert(RAIL_SRC.watched.count === true, 'RAIL_SRC.watched deve ter count: true');
 
     // 9.2.1 A largura salva deve respeitar limites responsivos para não dominar telas grandes.
     window.GM_setValue('smg-alerts-dock-w', '620');
@@ -1532,51 +1523,6 @@ async function runTests() {
     const seeAllLink = dockEl.querySelector('.smg-aldock-seeall');
     assert(seeAllLink !== null, 'Link do rodapé .smg-aldock-seeall deve existir');
     assert(seeAllLink.getAttribute('href').includes('/account/alerts'), `Link do rodapé deve apontar para /account/alerts (obtido: ${seeAllLink.getAttribute('href')})`);
-
-    // 9.4 Testar watchedRow (estrutura do card do modo lista idêntica ao design limpo do alerta)
-    const threadMockHtml = `
-        <div class="structItem structItem--thread is-unread" data-author="TestAuthor">
-            <div class="structItem-iconContainer">
-                <img src="https://example.com/thumb.jpg" alt="" class="avatar" />
-            </div>
-            <div class="structItem-title">
-                <span class="label label--primary">VIP</span>
-                <span class="prefix prefix--yellow">OnlyFans</span>
-                <a href="/threads/modelo-exemplo.99999/">Modelo Exemplo Thread</a>
-            </div>
-            <div class="structItem-parts">
-                <a href="/forums/modelos.10/">Modelos</a>
-            </div>
-            <div class="structItem-cell--latest">
-                <time datetime="2026-09-03T18:00:00Z" class="structItem-latestDate">Hoje às 18:00</time>
-            </div>
-        </div>
-    `;
-    const tmpContainer = document.createElement('div');
-    tmpContainer.innerHTML = threadMockHtml;
-    const threadItem = tmpContainer.firstElementChild;
-
-    const rowLi = watchedRow(threadItem);
-    assert(rowLi !== null, 'watchedRow deve retornar elemento li');
-    assert(rowLi.classList.contains('smg-rail-wt'), 'Elemento deve possuir classe .smg-rail-wt');
-    assert(rowLi.classList.contains('is-unread'), 'Elemento não lido deve possuir classe .is-unread');
-
-    const rowThumb = rowLi.querySelector('.smg-rail-wt-thumb');
-    assert(rowThumb !== null, 'Card deve possuir thumbnail .smg-rail-wt-thumb');
-
-    const rowTags = rowLi.querySelector('.smg-al-tags');
-    assert(rowTags !== null, 'Card deve possuir container de badges .smg-al-tags no topo');
-    const chips = rowTags.querySelectorAll('.smg-al-chip');
-    assert(chips.length === 2, `Badges devem possuir classe .smg-al-chip (encontradas: ${chips.length})`);
-
-    const rowTitle = rowLi.querySelector('.smg-rail-wt-title');
-    assert(rowTitle !== null, 'Card deve possuir título .smg-rail-wt-title');
-    assert(rowTitle.textContent.trim() === 'Modelo Exemplo Thread', `Título deve ser "Modelo Exemplo Thread" (obtido: ${rowTitle.textContent.trim()})`);
-
-    const rowTime = rowLi.querySelector('.smg-al-time');
-    assert(rowTime !== null, 'Card deve possuir data formatada com .smg-al-time');
-    assert(rowLi.querySelector('.smg-rail-wt-forum') === null, 'Row deve exibir somente a data abaixo do título');
-    assert(rowLi.querySelector('.smg-rail-wt-meta')?.children.length === 1, 'Meta da row deve conter somente a data de atualização');
 
     // 9.5 Testar aldockSyncCount e filtro de unread
     {
@@ -1613,18 +1559,10 @@ async function runTests() {
     toggleAlertsDock('alerts');
     assert(!document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("alerts") com painel aberto deve fechar o painel');
 
-    // 9.7 Validar CSS injetado para o novo card de Seguidos
+    // 9.7 Validar CSS injetado dos chips
     const injectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-    assert(injectedStyles.includes('width: 72px') && injectedStyles.includes('height: 72px'), 'CSS deve definir width/height 72px para .smg-rail-wt-thumb');
-    assert(injectedStyles.includes('border-radius: 12px'), 'CSS deve definir border-radius: 12px para .smg-rail-wt-thumb');
-    assert(injectedStyles.includes('font-size: 14.5px'), 'CSS deve definir font-size: 14.5px para .smg-rail-wt-title');
-    assert(injectedStyles.includes('.smg-rail-wt-dot') && injectedStyles.includes('background: #54d66a'), 'CSS deve definir estilos para .smg-rail-wt-dot');
-    assert(injectedStyles.includes('.smg-rail-wt.is-unread { background: transparent; opacity: 1; }'), 'CSS deve manter row não lida sem escurecimento');
-    assert(injectedStyles.includes('.smg-rail-wt:not(.is-unread) {') && injectedStyles.includes('opacity: 0.55;'), 'CSS deve definir opacidade 0.55 para rows lidas');
-    assert(injectedStyles.includes('.smg-rail-wt:not(.is-unread):hover {') && injectedStyles.includes('opacity: 1;'), 'CSS deve restaurar opacidade no hover');
     assert(injectedStyles.includes('padding: 1.5px 5.5px !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
     assert(injectedStyles.includes('font-size: 9.5px !important'), 'CSS deve definir font-size: 9.5px para .label e .smg-badge-chip');
-    assert(!injectedStyles.includes('.smg-aldock-body.is-grid .smg-al-tags { display: none; }'), 'CSS da grade não deve esconder os badges');
 
     // 9.8 Testar railBtn da topbar (classes e contador de seguidos)
     const railBtnEl = document.querySelector('.smg-tb-railbtn');
@@ -1773,11 +1711,7 @@ async function runTests() {
     window.resetCronBackoff();
     window.fetch = prevFetch429;
 
-    // 10.2 Ingestão das threads no IndexedDB a partir do painel de seguidos e disparo de smg-followed-updated
-    const { railFetch } = window.__aldockExports;
-    assert(typeof railFetch === 'function', 'railFetch deve ser função');
-
-    const prevFetch10 = window.fetch;
+    // 10.2 Ingestão das threads da lista de seguidos no IndexedDB
     const watchedPanelHtml = `<html><body>
         <div class="structItem structItem--thread">
             <div class="structItem-title">
@@ -1803,33 +1737,9 @@ async function runTests() {
         </div>
     </body></html>`;
 
-    let followedUpdatedFired = false;
-    let followedUpdatedCount = 0;
-    const onFollowedUpdated = (e) => {
-        followedUpdatedFired = true;
-        followedUpdatedCount = e.detail ? e.detail.count : 0;
-    };
-    window.addEventListener('smg-followed-updated', onFollowedUpdated);
-
-    window.fetch = async (url, opts) => {
-        const urlStr = typeof url === 'string' ? url : (url && url.url) || '';
-        if (urlStr.includes('/watched/threads')) {
-            return {
-                ok: true,
-                status: 200,
-                text: async () => watchedPanelHtml,
-                json: async () => ({}),
-                url: urlStr
-            };
-        }
-        return prevFetch10(url, opts);
-    };
-
-    const railResult = await railFetch('watched', '/watched/threads');
-    assert(railResult !== null && Array.isArray(railResult.rows), 'railFetch deve retornar objeto com array de rows');
-    assert(railResult.rows.length === 2, `railFetch deve processar 2 rows (obtido: ${railResult.rows.length})`);
-    assert(followedUpdatedFired === true, 'Evento smg-followed-updated deve ter sido disparado');
-    assert(followedUpdatedCount === 2, `smg-followed-updated deve reportar 2 tópicos atualizados (obtido: ${followedUpdatedCount})`);
+    const watchedPanelDoc = new JSDOM(watchedPanelHtml).window.document;
+    const ingestedPanel = await window.__filterbarExports.ingestWatchedPageToFollowed(watchedPanelDoc);
+    assert(ingestedPanel === 2, `ingestWatchedPageToFollowed deve gravar 2 tópicos (obtido: ${ingestedPanel})`);
 
     const kira = mockStorage.followed.get('/threads/kira-pregiato.4444/');
     assert(kira !== undefined, 'Kira Pregiato deve estar gravada na tabela followed do IndexedDB');
@@ -1847,11 +1757,8 @@ async function runTests() {
     assert(cubeu.unread === false, 'Cubeu deve ter unread false na primeira ingestão');
     assert(cubeu.last_page === 2, `Cubeu deve ter last_page 2 (obtido: ${cubeu.last_page})`);
 
-    window.removeEventListener('smg-followed-updated', onFollowedUpdated);
-    window.fetch = prevFetch10;
-
-    // smg-followed-updated NUNCA deve iniciar syncTimeline em segundo plano
-    assert(window.__feedSyncExports.timelineSyncRunning === false, 'smg-followed-updated NUNCA deve iniciar syncTimeline em segundo plano');
+    // a ingestão da lista NUNCA deve iniciar syncTimeline em segundo plano
+    assert(window.__feedSyncExports.timelineSyncRunning === false, 'A ingestão de seguidos NUNCA deve iniciar syncTimeline em segundo plano');
 
     // 10.3 Processamento calmo e sequencial de no máximo 8 tópicos prioritários
     while (window.__feedSyncExports.timelineSyncRunning) {
@@ -1999,14 +1906,6 @@ async function runTests() {
         </div>
     </body></html>`;
 
-    let followedEventFired = false;
-    let followedEventCount = 0;
-    const onFollowedEvent = (e) => {
-        followedEventFired = true;
-        followedEventCount = e.detail ? e.detail.count : 0;
-    };
-    window.addEventListener('smg-followed-updated', onFollowedEvent);
-
     const prevFetch11 = window.fetch;
     let autoWatchedFetched = false;
     let autoTopicFetched = false;
@@ -2061,8 +1960,6 @@ async function runTests() {
     const ingestedAutoCount = await window.fetchAndIngestFollowed();
     assert(autoWatchedFetched === true, 'fetchAndIngestFollowed deve requisitar /watched/threads via fetchWatchedDoc');
     assert(ingestedAutoCount === 1, `fetchAndIngestFollowed deve ingerir 1 tópico novo (obtido: ${ingestedAutoCount})`);
-    assert(followedEventFired === true, 'Evento smg-followed-updated deve ter sido disparado por fetchAndIngestFollowed');
-    assert(followedEventCount === 1, `Evento smg-followed-updated deve reportar count = 1 (obtido: ${followedEventCount})`);
 
     const autoModel = mockStorage.followed.get('/threads/auto-model.8888/');
     assert(autoModel !== undefined, 'Tópico auto-model.8888 deve estar gravado na store followed do IndexedDB sem necessidade de navegação');
@@ -2070,8 +1967,6 @@ async function runTests() {
     assert(autoModel.forum_activity_ts === 10500, 'Auto Model deve ter forum_activity_ts 10500');
     assert(autoModel.updated_at === 10500, 'Auto Model deve ter updated_at 10500 inicializado com forum_activity_ts');
     assert(autoModel.unread === false, 'Auto Model deve ter unread false na primeira ingestão');
-
-    window.removeEventListener('smg-followed-updated', onFollowedEvent);
 
     while (window.__feedSyncExports.timelineSyncRunning) {
         await new Promise(r => setTimeout(r, 20));
@@ -3019,42 +2914,8 @@ async function runTests() {
     // =========================================================================
     // TESTE 22: Controle de Visualização/Notificação (last_seen_at) e Sincronização Unificada
     // =========================================================================
-    console.log('--- TESTE 22: last_seen_at, dbFollowedMarkSeen, dbFollowedGetUnreadCount e ordenação ---');
-    const { dbFollowedMarkSeen, dbFollowedGetUnreadCount } = window.__feedDbExports;
-    assert(typeof dbFollowedMarkSeen === 'function', 'dbFollowedMarkSeen deve ser uma função exportada');
-    assert(typeof dbFollowedGetUnreadCount === 'function', 'dbFollowedGetUnreadCount deve ser uma função exportada');
-
-    // 1. dbFollowedMarkSeen(path) limpa unread
-    mockStorage.followed.set('/threads/test-seen.100/', {
-        path: '/threads/test-seen.100/',
-        thread_name: 'Test Seen Thread',
-        updated_at: 5000,
-        unread: true
-    });
-    let seenEventDetail = null;
-    const onSeenEvent = (e) => { seenEventDetail = e.detail; };
-    window.addEventListener('smg-followed-seen', onSeenEvent);
-
-    await dbFollowedMarkSeen('/threads/test-seen.100/');
-    const markedItem = mockStorage.followed.get('/threads/test-seen.100/');
-    assert(markedItem.unread === false, 'dbFollowedMarkSeen deve limpar unread para false');
-    assert(seenEventDetail !== null && seenEventDetail.path === '/threads/test-seen.100/', 'Evento smg-followed-seen deve ser disparado com detalhes corretos');
-    window.removeEventListener('smg-followed-seen', onSeenEvent);
-
-    // 2. dbFollowedGetUnreadCount() retorna a contagem correta apenas quando unread = true
-    mockStorage.followed.clear();
-    mockStorage.followed.set('/threads/unread-1/', { path: '/threads/unread-1/', updated_at: 5000, unread: true });
-    mockStorage.followed.set('/threads/unread-2/', { path: '/threads/unread-2/', updated_at: 6000, unread: true });
-    mockStorage.followed.set('/threads/read-1/', { path: '/threads/read-1/', updated_at: 5000, unread: false });
-    mockStorage.followed.set('/threads/read-2/', { path: '/threads/read-2/', updated_at: 4000, unread: false });
-    mockStorage.followed.set('/threads/zero-updated/', { path: '/threads/zero-updated/', updated_at: 0, unread: false });
-
-    const unreadTotal = await dbFollowedGetUnreadCount();
-    assert(unreadTotal === 2, `dbFollowedGetUnreadCount deve contar apenas tópicos com unread = true (esperado: 2, obtido: ${unreadTotal})`);
-
-    // 3. Ordenação da sidebar de seguidos:
-    // - Tópicos não lidos no topo ordenados por updated_at DESC
-    // - Tópicos lidos abaixo ordenados por updated_at DESC
+    console.log('--- TESTE 22: sincronização unificada dos seguidos ---');
+    // 3. Estado: tópicos seguidos de exemplo
     mockStorage.followed.clear();
     const mockDockItems = [
         { path: '/threads/read-older/', thread_name: 'Read Older', updated_at: 1000, unread: false },
@@ -3065,57 +2926,6 @@ async function runTests() {
         { path: '/threads/read-tie/', thread_name: 'Read Tie', updated_at: 2000, unread: false }
     ];
     mockDockItems.forEach(it => mockStorage.followed.set(it.path, it));
-
-    const { renderFollowedRow, railRefresh } = window.__aldockExports;
-    assert(typeof renderFollowedRow === 'function', 'renderFollowedRow deve estar exposto');
-
-    // Testar renderFollowedRow adicionando .is-unread e .smg-rail-wt-dot condicionalmente
-    const rowUnread = renderFollowedRow(mockDockItems[1]);
-    assert(rowUnread.classList.contains('smg-rail-wt'), 'renderFollowedRow deve ter classe smg-rail-wt');
-    assert(rowUnread.classList.contains('is-unread'), 'renderFollowedRow para tópico não visto deve ter classe is-unread');
-    assert(rowUnread.querySelector('.smg-rail-wt-dot') !== null, 'renderFollowedRow para tópico não visto deve conter .smg-rail-wt-dot');
-
-    const rowRead = renderFollowedRow(mockDockItems[0]);
-    assert(!rowRead.classList.contains('is-unread'), 'renderFollowedRow para tópico já visto NÃO deve ter classe is-unread');
-    assert(rowRead.querySelector('.smg-rail-wt-dot') === null, 'renderFollowedRow para tópico já visto NÃO deve conter .smg-rail-wt-dot');
-
-    // Testar badges coloridas em renderFollowedRow
-    const rowWithTags = renderFollowedRow({
-        path: '/threads/tags-test/',
-        thread_name: 'Tags Test',
-        tags: ['OnlyFans', 'Fansly']
-    });
-    const tagChips = Array.from(rowWithTags.querySelectorAll('.smg-al-chip'));
-    assert(tagChips.length === 2, `renderFollowedRow deve renderizar 2 chips (obtido: ${tagChips.length})`);
-    assert(tagChips[0].classList.contains('label--onlyfans'), '1º chip deve conter a classe label--onlyfans');
-    assert(tagChips[1].classList.contains('label--fansly'), '2º chip deve conter a classe label--fansly');
-
-    // Testar ordenação via railRefresh('watched')
-    const aldockEl = window.__aldockExports.getAldock();
-    const markReadBtn = aldockEl.querySelector('.smg-aldock-markread');
-    assert(markReadBtn !== null, 'Botão .smg-aldock-markread deve existir no alerts dock');
-    assert(markReadBtn.innerHTML.includes('<svg') || markReadBtn.innerHTML.includes('<path'), 'Botão .smg-aldock-markread deve conter o ícone checkAll');
-
-    const listEl = aldockEl.querySelector('.smg-aldock-body[data-tab="watched"] .smg-aldock-list');
-    await railRefresh('watched', true);
-
-    const renderedRows = Array.from(listEl.querySelectorAll('.smg-rail-wt'));
-    assert(renderedRows.length === 6, `railRefresh deve renderizar os 6 tópicos (obtido: ${renderedRows.length})`);
-
-    const renderedKeys = renderedRows.map(r => r.dataset.smgAlKey);
-    // Esperado:
-    // 1. /threads/unread-seen-newer/ (last_seen_at 3000 > 1000)
-    // 2. /threads/unread-seen-older/ (last_seen_at 1000, updated_at 9000 > 4000)
-    // 3. /threads/unread-tie/ (last_seen_at 1000, updated_at 4000)
-    // 4. /threads/read-updated-newer/ (updated_at 3000 > 1000)
-    // 5. /threads/read-older/ (updated_at 1000, last_seen_at 5000 > 2000)
-    // 6. /threads/read-tie/ (updated_at 1000, last_seen_at 2000)
-    assert(renderedKeys[0] === 'wt:/threads/unread-seen-newer', `1º tópico deve ser unread-seen-newer (obtido: ${renderedKeys[0]})`);
-    assert(renderedKeys[1] === 'wt:/threads/unread-seen-older', `2º tópico deve ser unread-seen-older (obtido: ${renderedKeys[1]})`);
-    assert(renderedKeys[2] === 'wt:/threads/unread-tie', `3º tópico deve ser unread-tie (obtido: ${renderedKeys[2]})`);
-    assert(renderedKeys[3] === 'wt:/threads/read-updated-newer', `4º tópico deve ser read-updated-newer (obtido: ${renderedKeys[3]})`);
-    assert(renderedKeys[4] === 'wt:/threads/read-tie', `5º tópico deve ser read-tie (obtido: ${renderedKeys[4]})`);
-    assert(renderedKeys[5] === 'wt:/threads/read-older', `6º tópico deve ser read-older (obtido: ${renderedKeys[5]})`);
 
     // 4. Posts adicionados via syncThreadPage alimentam a timeline E atualizam updated_at para o timestamp do post
     const testSyncThread = {

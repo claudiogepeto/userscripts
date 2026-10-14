@@ -460,14 +460,7 @@
         // bloco por um único botão "Entrar" (antes levava o deslogado pro muro de login em 4 caminhos).
         const dockLoggedIn = isLoggedIn();
         const btnHome = makeDockLink({ id: 'smg-nav-home', icon: ICONS.home, label: 'Home', href: boardBase });
-        const btnWatched = dockLoggedIn ? makeDockLink({ id: 'smg-nav-watched', icon: ICONS.watched, label: 'Following', href: boardBase + 'watched/threads' }) : null;
-        if (btnWatched) {
-            btnWatched.addEventListener('click', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleAlertsDock('watched');
-            });
-        }
+
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
@@ -475,7 +468,7 @@
                 if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
                 e.stopPropagation();
-                toggleAlertsDock('alerts');
+                toggleAlertsDock();
             });
         }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
@@ -510,11 +503,11 @@
         }
         function markActiveNav() {
             const path = location.pathname;
-            [btnHome, btnTimeline, btnWatched, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
+            [btnHome, btnTimeline, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
             const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };
             if (/[?&]view=feed/.test(location.search)) on(btnTimeline);
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
-            else if (/\/watched\//.test(path)) on(btnWatched);
+
             else if (/\/account\/alerts/.test(path)) on(btnBell);
             else if (/\/account(\/|$)/.test(path)) on(btnUser);
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
@@ -526,10 +519,10 @@
         panel.id = 'smg-post-nav-panel';
 
         // navegação principal (+config) — no desktop só sobra a engrenagem; no mobile vira a navbar inferior
-        // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · following · user.
+        // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · alertas · user.
         // Discover fica no DOM (escondido via CSS) → o wireSheet/sheet de opções ainda o alcança.
         // (a engrenagem fica escondida no mobile e some atrás do FAB de opções; no desktop tudo some e sobra ela)
-        const centralBtns = [btnWatched, btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
+        const centralBtns = [btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
         const centralGroup = makeGroup(...centralBtns);
         centralGroup.classList.add('smg-nav-center');
 
@@ -922,9 +915,12 @@
                     fromBtn(btnSettings),
                     sheetItem(ICONS.hide, 'Hide dock', () => { closeSheet(); hideDock(); }),
                 ]);
-                // Discover/Watched saíram da navbar (5 itens) → continuam alcançáveis por aqui
-                // (fromBtn delega o click: Discover abre o sheet do wireSheet; Watched navega pelo href)
-                addSection('Explore', [fromBtn(btnDiscover), fromBtn(btnWatched)]);
+                // Discover/Following saíram da navbar (5 itens) → continuam alcançáveis por aqui
+                // (fromBtn delega o click: Discover abre o sheet do wireSheet; Following abre a página de seguidos)
+                addSection('Explore', [
+                    fromBtn(btnDiscover),
+                    dockLoggedIn ? sheetItem(ICONS.watched, i18n('Following'), () => { closeSheet(); dockGo(boardBase + 'watched/threads'); }) : null,
+                ]);
                 if (isThread) {
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [

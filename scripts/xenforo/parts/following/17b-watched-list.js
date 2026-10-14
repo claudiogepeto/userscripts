@@ -216,9 +216,6 @@
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 indexFollowedThumbs(itemsToUpsert);
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
-                } catch (e) {}
                 return itemsToUpsert.length;
             }) : Promise.resolve(0);
 

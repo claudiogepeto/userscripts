@@ -89,7 +89,7 @@
         return true;
     }
     // re-pinta as linhas que ficaram sem foto — chamado quando o cache ganha thumbs novas
-    // (ex.: a aba Seguindo carregou e trouxe as fotos das threads que você acompanha)
+    // (ex.: a lista de seguidas foi ingerida e trouxe as fotos das threads que você acompanha)
     function repaintAlertThumbs(root) {
         if (!root) return 0;
         let n = 0;
@@ -220,7 +220,7 @@
 
     if (location.pathname.includes('/account/alerts')) {
         setTimeout(() => {
-            openAlertsDock('alerts', false);
+            openAlertsDock(false);
         }, 50);
     }
 

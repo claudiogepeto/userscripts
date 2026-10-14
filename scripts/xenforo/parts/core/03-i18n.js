@@ -48,7 +48,6 @@
         'Prev page': 'Página anterior', 'Next page': 'Próxima página', 'Go to page': 'Ir para página',
         'Scroll to top': 'Rolar para o topo', 'Scroll to bottom': 'Rolar para o fim',
         'Filter': 'Filtrar', 'Filter by author': 'Filtrar por autor',
-        'List view': 'Ver em lista', 'Grid view': 'Ver em grade',
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
         'Account': 'Conta', 'Feed mode': 'Modo feed', 'View mode': 'Modo de visualização',
@@ -63,7 +62,7 @@
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',
         // feed (river de posts na /watched/threads)
         'Feed': 'Feed', 'Open feed': 'Abrir feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
-        'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
+        'No recent posts': 'Nenhum post recente',
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
@@ -98,7 +97,7 @@
         // topbar — misc
         'See all': 'Ver tudo', 'Mark read': 'Marcar como lido', 'Notices': 'Avisos',
         'Updates': 'Avisos', 'Dismiss': 'Dispensar', 'Dismiss all': 'Dispensar tudo',
-        // painel lateral docked (rail à direita: alertas + seguindo)
+        // painel lateral docked (rail à direita: alertas)
         'Docked side panel': 'Painel lateral fixo',
         'Close panel': 'Fechar painel',
         // visitante (deslogado)
@@ -106,7 +105,6 @@
         'Refresh': 'Atualizar', 'All': 'Todas', 'Unread': 'Não lidas', 'Drag to resize': 'Arraste para redimensionar',
         'No notifications yet': 'Nenhuma notificação ainda',
         'No unread notifications': 'Nenhuma notificação não lida', 'End of the list': 'Fim da lista',
-        'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
         'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)

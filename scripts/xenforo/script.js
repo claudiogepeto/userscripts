@@ -303,7 +303,6 @@
         'Prev page': 'Página anterior', 'Next page': 'Próxima página', 'Go to page': 'Ir para página',
         'Scroll to top': 'Rolar para o topo', 'Scroll to bottom': 'Rolar para o fim',
         'Filter': 'Filtrar', 'Filter by author': 'Filtrar por autor',
-        'List view': 'Ver em lista', 'Grid view': 'Ver em grade',
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
         'Account': 'Conta', 'Feed mode': 'Modo feed', 'View mode': 'Modo de visualização',
@@ -318,7 +317,7 @@
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',
         // feed (river de posts na /watched/threads)
         'Feed': 'Feed', 'Open feed': 'Abrir feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
-        'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
+        'No recent posts': 'Nenhum post recente',
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
         'threads': 'tópicos', 'posts': 'posts', 'Remove from saved': 'Remover dos salvos', 'Saved item': 'Item salvo',
@@ -353,7 +352,7 @@
         // topbar — misc
         'See all': 'Ver tudo', 'Mark read': 'Marcar como lido', 'Notices': 'Avisos',
         'Updates': 'Avisos', 'Dismiss': 'Dispensar', 'Dismiss all': 'Dispensar tudo',
-        // painel lateral docked (rail à direita: alertas + seguindo)
+        // painel lateral docked (rail à direita: alertas)
         'Docked side panel': 'Painel lateral fixo',
         'Close panel': 'Fechar painel',
         // visitante (deslogado)
@@ -361,7 +360,6 @@
         'Refresh': 'Atualizar', 'All': 'Todas', 'Unread': 'Não lidas', 'Drag to resize': 'Arraste para redimensionar',
         'No notifications yet': 'Nenhuma notificação ainda',
         'No unread notifications': 'Nenhuma notificação não lida', 'End of the list': 'Fim da lista',
-        'See all watched threads': 'Ver todos os tópicos seguidos',
         // home feed
         'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
@@ -3992,11 +3990,10 @@
 
             /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
                no mobile esses botões continuam (viram a navbar inferior) */
-            /* Following no longer lives in the bottom navbar: it moved into the mobile account sheet (the node stays so the badge sync keeps working) */
-            #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
+
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -9005,7 +9002,7 @@
             .smg-watched-empty { grid-column: 1 / -1; padding: 60px 16px; text-align: center; font-size: 14px; color: rgba(255,255,255,0.45); }
         `;
 
-    // STYLE CONTEXT: Alerts and following dock
+    // STYLE CONTEXT: Alerts dock
     const CSS_ALERTDOCK = `/* ============ NOTIFICAÇÕES DOCKED (rail fixo à direita) ============ */
             /* o painel EMPURRA a página: body ganha padding, a topbar termina onde o rail começa e a
                dock (pílula centralizada) desloca meio-rail pra esquerda → nada fica escondido atrás. */
@@ -9071,95 +9068,8 @@
             /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
-            /* abas primárias: Alertas | Seguindo (segmented control) */
-            /* linha de thread seguida: thumb + título + fórum/hora (o structItem largo não cabe no rail) */
-            .smg-rail-wtlist { list-style: none; margin: 0; padding: 0; }
-            .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
-            .smg-rail-wt:last-child { border-bottom: 0; }
-            .smg-rail-wt:hover { background: rgba(255,255,255,0.055); }
-            .smg-rail-wt.is-unread { background: transparent; opacity: 1; }
-            .smg-rail-wt:not(.is-unread) {
-                opacity: 0.55;
-                transition: opacity .15s ease, background .14s ease;
-            }
-            .smg-rail-wt:not(.is-unread):hover {
-                opacity: 1;
-            }
-            .smg-rail-wt-dot {
-                display: inline-block !important;
-                width: 8px !important;
-                height: 8px !important;
-                min-width: 8px !important;
-                min-height: 8px !important;
-                border-radius: 50% !important;
-                background: #54d66a !important;
-                box-shadow: 0 0 0 2.5px rgba(84, 214, 106, 0.22) !important;
-                margin-right: 7px !important;
-                vertical-align: 1px !important;
-                flex-shrink: 0 !important;
-            }
-            .smg-rail-wt:not(.is-unread) .smg-rail-wt-dot {
-                display: none !important;
-            }
-            .smg-rail-wt-link { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; text-decoration: none !important; }
-            .smg-rail-wt-thumb {
-                flex: 0 0 auto; width: 72px; height: 72px; min-width: 72px; border-radius: 12px; aspect-ratio: 1 / 1; overflow: hidden;
-                display: flex; align-items: center; justify-content: center;
-                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            }
-            .smg-rail-wt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            .smg-rail-wt-thumb--ph .smg-ph-word { font-size: 13px; opacity: 0.5; }
-            .smg-rail-wt-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-            .smg-rail-wt .smg-al-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-            .smg-rail-wt .smg-al-tags .smg-al-chip,
-            .smg-rail-wt .smg-al-tags .label,
-            .smg-rail-wt .smg-al-tags .prefix {
-                font-size: 9.5px !important;
-                font-weight: 600 !important;
-                padding: 1px 5px !important;
-                border-radius: 4px !important;
-                line-height: 1.3 !important;
-                letter-spacing: normal !important;
-                white-space: nowrap !important;
-                display: inline-flex !important;
-                align-items: center !important;
-            }
-            .smg-rail-wt-title {
-                font-size: 14.5px; font-weight: 700; line-height: 1.35; color: #fff; letter-spacing: -0.01em;
-                display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-            }
-            .smg-rail-wt:hover .smg-rail-wt-title { text-decoration: underline; text-underline-offset: 2px; }
-            .smg-rail-wt-meta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: rgba(255,255,255,0.42); }
-            .smg-rail-wt .smg-al-time {
-                margin-left: 0 !important;
-                margin-right: auto !important;
-                text-align: left !important;
-                white-space: nowrap !important;
-                color: rgba(255,255,255,0.4) !important;
-                font-size: 11px !important;
-            }
-            #smg-aldock.smg-aldock--unread .smg-rail-wt:not(.is-unread) { display: none; }
-            /* GRADE (só no Seguindo): cards com a thumb em cima — cabe muito mais thread por tela.
-               auto-fill: 2 colunas nos 380px padrão, mais colunas conforme o rail é alargado. */
-            .smg-aldock-body.is-grid .smg-rail-wtlist {
-                display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 10px;
-            }
-            .smg-aldock-body.is-grid .smg-rail-wt {
-                border-bottom: 0; border-radius: 12px; overflow: hidden;
-                background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-            }
-            .smg-aldock-body.is-grid .smg-rail-wt-link { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
-            .smg-aldock-body.is-grid .smg-rail-wt-thumb { width: 100%; height: auto; min-width: 0; aspect-ratio: 1 / 1; border: 0; border-radius: 0; box-shadow: none; }
-            .smg-aldock-body.is-grid .smg-rail-wt-body { padding: 8px 9px 10px; gap: 3px; }
-            .smg-aldock-body.is-grid .smg-rail-wt-title { font-size: 12.5px; }
-            .smg-aldock-body.is-grid .smg-rail-wt-meta { font-size: 10.5px; }
-            .smg-aldock-body.is-grid .smg-al-tags { display: flex; }   /* badges permanecem visíveis nos cards */
-            .smg-aldock-btn[hidden] { display: none !important; }
             /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
             .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
-            /* o [hidden] nativo perde pro display:flex acima → a aba inativa precisa sumir explicitamente */
-            .smg-aldock-body[hidden] { display: none !important; }
             .smg-aldock-list { list-style: none; margin: 0; padding: 0; }
             .smg-aldock-skel-row {
                 position: relative; display: flex; align-items: center; gap: 10px; min-height: 74px;
@@ -11053,20 +10963,6 @@
         })).catch(() => {}).finally(followedPresenceReset);
     }
 
-    function dbFollowedMarkSeen(path) {
-        if (!path) return Promise.resolve();
-        const normPath = canonicalThreadPath(path);
-        return dbFollowedGet(normPath).then(item => {
-            if (!item) return;
-            item.unread = false;
-            return dbFollowedUpsert(item).then(() => {
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-seen', { detail: { path: normPath } }));
-                } catch (e) {}
-            });
-        });
-    }
-
     function dbFollowedMarkAllSeen() {
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction('followed', 'readwrite');
@@ -11082,22 +10978,9 @@
                 }
                 c.continue();
             };
-            tx.oncomplete = () => {
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-all-seen'));
-                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: 0 } }));
-                } catch (e) {}
-                resolve();
-            };
+            tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         })).catch(() => {});
-    }
-
-    function dbFollowedGetUnreadCount() {
-        return dbFollowedGetAll().then(items => {
-            if (!Array.isArray(items)) return 0;
-            return items.filter(it => Boolean(it && it.unread)).length;
-        }).catch(() => 0);
     }
 
     // =========================================================
@@ -11301,9 +11184,7 @@
             dbFollowedGetAll,
             dbFollowedUpsert,
             dbFollowedBulkUpsert,
-            dbFollowedMarkSeen,
             dbFollowedMarkAllSeen,
-            dbFollowedGetUnreadCount,
             dbTimelinePutPosts,
             dbTimelineGetRecent,
             dbTimelineCount,
@@ -14811,14 +14692,7 @@
         // bloco por um único botão "Entrar" (antes levava o deslogado pro muro de login em 4 caminhos).
         const dockLoggedIn = isLoggedIn();
         const btnHome = makeDockLink({ id: 'smg-nav-home', icon: ICONS.home, label: 'Home', href: boardBase });
-        const btnWatched = dockLoggedIn ? makeDockLink({ id: 'smg-nav-watched', icon: ICONS.watched, label: 'Following', href: boardBase + 'watched/threads' }) : null;
-        if (btnWatched) {
-            btnWatched.addEventListener('click', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleAlertsDock('watched');
-            });
-        }
+
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
@@ -14826,7 +14700,7 @@
                 if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
                 e.stopPropagation();
-                toggleAlertsDock('alerts');
+                toggleAlertsDock();
             });
         }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
@@ -14861,11 +14735,11 @@
         }
         function markActiveNav() {
             const path = location.pathname;
-            [btnHome, btnTimeline, btnWatched, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
+            [btnHome, btnTimeline, btnBell, btnUser, btnDiscover].forEach(b => { if (b) b.classList.remove('smg-nav-active'); });
             const on = btn => { if (btn) btn.classList.add('smg-nav-active'); };
             if (/[?&]view=feed/.test(location.search)) on(btnTimeline);
             else if (document.documentElement.classList.contains('smg-home-page') || path === boardBase || path === '/') on(btnHome);
-            else if (/\/watched\//.test(path)) on(btnWatched);
+
             else if (/\/account\/alerts/.test(path)) on(btnBell);
             else if (/\/account(\/|$)/.test(path)) on(btnUser);
             else if (/\/whats-new(\/|$)/.test(path)) on(btnDiscover);
@@ -14877,10 +14751,10 @@
         panel.id = 'smg-post-nav-panel';
 
         // navegação principal (+config) — no desktop só sobra a engrenagem; no mobile vira a navbar inferior
-        // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · following · user.
+        // navbar mobile = 5 itens (espelha a topbar, que tem a Timeline): início · timeline · buscar · alertas · user.
         // Discover fica no DOM (escondido via CSS) → o wireSheet/sheet de opções ainda o alcança.
         // (a engrenagem fica escondida no mobile e some atrás do FAB de opções; no desktop tudo some e sobra ela)
-        const centralBtns = [btnWatched, btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
+        const centralBtns = [btnHome, btnTimeline, btnSearch, btnBell, btnUser, btnLogin].filter(Boolean);   // busca no centro da navbar; engrenagem saiu daqui → vai pra ESQUERDA da dock; visitante troca alertas/timeline/conta por "Entrar"
         const centralGroup = makeGroup(...centralBtns);
         centralGroup.classList.add('smg-nav-center');
 
@@ -15273,9 +15147,12 @@
                     fromBtn(btnSettings),
                     sheetItem(ICONS.hide, 'Hide dock', () => { closeSheet(); hideDock(); }),
                 ]);
-                // Discover/Watched saíram da navbar (5 itens) → continuam alcançáveis por aqui
-                // (fromBtn delega o click: Discover abre o sheet do wireSheet; Watched navega pelo href)
-                addSection('Explore', [fromBtn(btnDiscover), fromBtn(btnWatched)]);
+                // Discover/Following saíram da navbar (5 itens) → continuam alcançáveis por aqui
+                // (fromBtn delega o click: Discover abre o sheet do wireSheet; Following abre a página de seguidos)
+                addSection('Explore', [
+                    fromBtn(btnDiscover),
+                    dockLoggedIn ? sheetItem(ICONS.watched, i18n('Following'), () => { closeSheet(); dockGo(boardBase + 'watched/threads'); }) : null,
+                ]);
                 if (isThread) {
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
@@ -21247,9 +21124,6 @@
 
             const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 indexFollowedThumbs(itemsToUpsert);
-                try {
-                    window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: itemsToUpsert.length } }));
-                } catch (e) {}
                 return itemsToUpsert.length;
             }) : Promise.resolve(0);
 
@@ -21956,7 +21830,7 @@
         return true;
     }
     // re-pinta as linhas que ficaram sem foto — chamado quando o cache ganha thumbs novas
-    // (ex.: a aba Seguindo carregou e trouxe as fotos das threads que você acompanha)
+    // (ex.: a lista de seguidas foi ingerida e trouxe as fotos das threads que você acompanha)
     function repaintAlertThumbs(root) {
         if (!root) return 0;
         let n = 0;
@@ -22087,7 +21961,7 @@
 
     if (location.pathname.includes('/account/alerts')) {
         setTimeout(() => {
-            openAlertsDock('alerts', false);
+            openAlertsDock(false);
         }, 50);
     }
 
@@ -22104,22 +21978,19 @@
     }
 
     // =========================================================
-    // FEATURE: painel lateral DOCKED (rail fixo à direita) — abas ALERTAS e SEGUINDO
+    // FEATURE: painel lateral DOCKED (rail fixo à direita) — ALERTAS
     // O popover do sino serve pra espiar; ele fecha no primeiro clique e só traz as ~N mais
     // recentes. Aqui o mesmo conteúdo vira uma COLUNA fixa na direita que sobrevive à navegação
     // (estado em GM storage → remonta sozinha na próxima página), com o histórico inteiro em
     // rolagem infinita — dá pra abrir um alerta, ler a thread e continuar descendo a lista.
-    // A aba Seguindo faz o mesmo com as threads acompanhadas (/watched/threads).
     //
     // Layout: EMPURRA o conteúdo (body padding-right + topbar termina antes do rail) em vez de
     // cobrir, e ALARGA a coluna do fórum (--smg-cw sobe) — a margem lateral que sobrava vira texto.
     //
-    // Mapa (Cmd+F): estado/persistência · RAIL_SRC (as 2 fontes) · railFetch (paginação por "next")
-    //   · watchedRow (structItem → linha compacta) · buildAlertsDock (DOM) · railRefresh/railMore
-    //   · open/close/toggle/railShowTab · setupAlertsDock (boot + listeners).
+    // Mapa (Cmd+F): estado/persistência · RAIL_SRC · railFetch (paginação por "next")
+    //   · buildAlertsDock (DOM) · railRefresh/railMore · open/close/toggle · setupAlertsDock (boot + listeners).
     // =========================================================
     const ALDOCK_KEY = 'smg-alerts-dock';        // '1' = painel aberto (persiste entre páginas)
-    const ALDOCK_TAB_KEY = 'smg-side-tab';       // aba ativa ('alerts' | 'watched')
     const ALDOCK_W_KEY = 'smg-alerts-dock-w';    // largura escolhida no arrasto (px)
     const ALDOCK_MIN_W = 300, ALDOCK_MAX_W = 620, ALDOCK_DEF_W = 360;
     const ALDOCK_RESP_MIN_W = 340, ALDOCK_RESP_MAX_W = 460;
@@ -22130,22 +22001,16 @@
     let aldock = null;            // elemento do painel (montado 1×)
     let aldockBound = false;
 
-    // as duas fontes do rail. Cada aba tem a MESMA mecânica (paginar seguindo o "next" nativo,
-    // deduplicar, rolagem infinita) e difere só no cabeçalho/affordances:
-    //   count         → mostra o contador de não lidos da aba
-    //   filter        → filtro opcional da fonte (a sidebar de Seguindo não o exibe)
-    //   view          → grade/lista só em Seguindo (é quem tem thumb; alerta é texto)
+    // a fonte do rail: paginar seguindo o "next" nativo, deduplicar, rolagem infinita.
+    //   count         → mostra o contador de não lidos
+    //   filter        → filtro opcional da fonte
     const RAIL_SRC = {
-        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  filter: true,  view: false, empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
-        watched: { title: 'Following', seeAll: '/watched/threads', count: true,  filter: false, view: true,  empty: 'No watched threads yet', emptyUnread: 'No unread notifications' },
+        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  filter: true,  empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
     };
-    const ALDOCK_VIEW_KEY = tab => 'smg-side-view-' + tab;   // 'grid' | 'list' por aba
-    const railView = tab => (RAIL_SRC[tab].view && gmGet(ALDOCK_VIEW_KEY(tab), 'list') === 'grid') ? 'grid' : 'list';
     // estado por aba — dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas sozinho
     // desde a última ação do usuário (teto pra aba "Não lidas" não varrer o histórico inteiro)
     const mkState = () => ({ url: null, next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0, filter: 'all' });
-    const aldockState = { alerts: mkState(), watched: mkState() };
-    let railTab = 'alerts';
+    const aldockState = { alerts: mkState() };
 
     const aldockViewportMax = () => Math.max(
         ALDOCK_RESP_MIN_W,
@@ -22157,17 +22022,14 @@
         return Math.min(preferred, aldockViewportMax());
     };
     // No CELULAR o mesmo rail vira TELA CHEIA (o sino da navbar abre). É a experiência do desktop
-    // — abas Alertas/Seguindo, filtro Todas/Não lidas, marcar tudo, rolagem infinita — no lugar do
+    // — marcar tudo, rolagem infinita — no lugar do
     // bottom sheet, que só mostrava a lista curta do popup nativo, sem paginação nem filtro.
     // A faixa do meio (601–1099) continua sem rail: lá ele comeria o conteúdo sem virar tela cheia.
     const aldockPhone = () => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px)').matches;
     const aldockFits = () => window.innerWidth >= ALDOCK_MIN_VW || aldockPhone();
     const aldockWanted = () => gmGet(ALDOCK_KEY, '0') === '1';
     const aldockOpen = () => document.documentElement.classList.contains('smg-aldock-on');
-    const railWantedTab = () => 'alerts';
-    const railBaseUrl = tab => tab === 'watched'
-        ? (navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads')
-        : '/account/alerts';
+    const railBaseUrl = () => RAIL_SRC.alerts.seeAll;
 
     // busca UMA página (a `url` já é a próxima, seguindo o link nativo) e devolve as linhas prontas
     // pro rail + o "next". Seguir o <a> de próxima em vez de montar ?page=N funciona nos 2 sites e
@@ -22191,194 +22053,19 @@
                 } catch (e) {}
                 const parsed = new DOMParser().parseFromString('<div id="smg-rail-parse">' + html + '</div>', 'text/html');
                 const tmp = parsed.getElementById('smg-rail-parse') || parsed.body;
-                let rows;
-                if (tab === 'watched') {
-                    rows = Array.prototype.slice.call(tmp.querySelectorAll('.structItem--thread'))
-                        .map(watchedRow).filter(Boolean);
-                    const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
-                    const nextHref = nx ? nx.getAttribute('href') : null;
-                    return ingestWatchedPageToFollowed(tmp).catch(() => 0).then(() => {
-                        try {
-                            window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
-                        } catch (e) {}
-                        return { rows, next: nextHref, visitorAlerts };
-                    });
-                    try {
-                        window.dispatchEvent(new CustomEvent('smg-followed-updated', { detail: { count: rows.length } }));
-                    } catch (e) {}
-                    return { rows, next: nextHref, visitorAlerts };
-                } else {
-                    // a PÁGINA usa <li class="block-row js-alert">, a POPUP usa <li class="alert"> — todo o
-                    // resto (limpeza, CSS, marcar-lido) casa em li.alert, então promovemos a classe aqui.
-                    rows = Array.prototype.slice.call(tmp.querySelectorAll('li.js-alert, li.alert'))
-                        .filter(li => li.querySelector('.contentRow-main'));
-                    rows.forEach(li => { li.classList.add('alert'); li.classList.remove('block-row', 'block-row--separated'); });
-                }
+                // a PÁGINA usa <li class="block-row js-alert">, a POPUP usa <li class="alert"> — todo o
+                // resto (limpeza, CSS, marcar-lido) casa em li.alert, então promovemos a classe aqui.
+                const rows = Array.prototype.slice.call(tmp.querySelectorAll('li.js-alert, li.alert'))
+                    .filter(li => li.querySelector('.contentRow-main'));
+                rows.forEach(li => { li.classList.add('alert'); li.classList.remove('block-row', 'block-row--separated'); });
                 const nx = tmp.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
                 return { rows, next: nx ? nx.getAttribute('href') : null, visitorAlerts };
             });
     }
 
-    // .structItem--thread (linha larga da listagem) → linha compacta do rail: thumb · título · fórum/hora.
-    // Devolve null quando não há título (linha de anúncio/placeholder do tema).
-    function watchedRow(it) {
-        const titleA = it.querySelector('.structItem-title a[href*="/threads/"]')
-            || it.querySelector('.structItem-title a[href]');
-        if (!titleA) return null;
-        const href = titleA.getAttribute('href') || '';
-        if (!href) return null;
-        const base = href.replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
-        const unread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
-
-        const li = document.createElement('li');
-        li.className = 'smg-rail-wt' + (unread ? ' is-unread' : '');
-        const a = document.createElement('a');
-        a.className = 'smg-rail-wt-link';
-        // SEMPRE a última página (/latest = post mais novo). O /unread das não lidas caía no primeiro
-        // post não lido, que numa thread parada há semanas fica lá no meio — quem acompanha quer ver
-        // o que acabou de chegar. Mesma rota que o feed das seguidas já usa.
-        a.href = safeHref(base + '/latest');
-
-        const thumbUrl = threadThumbUrl(it);
-        // alimenta o cache — é daqui que os ALERTAS ganham foto. O título vai junto porque é a única
-        // chave que casa com o alerta (que só traz /posts/N, sem id de thread).
-        if (thumbUrl) thumbCachePut(base, thumbUrl, titleA.textContent);
-        const th = document.createElement('span');
-        th.className = 'smg-rail-wt-thumb';
-        if (thumbUrl) {
-            const im = document.createElement('img');
-            im.src = thumbUrl; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
-            im.addEventListener('error', () => { th.classList.add('smg-rail-wt-thumb--ph'); im.remove(); th.innerHTML = railPhMark(); }, { once: true });
-            th.appendChild(im);
-        } else { th.classList.add('smg-rail-wt-thumb--ph'); th.innerHTML = railPhMark(); }
-        a.appendChild(th);
-
-        const body = document.createElement('span');
-        body.className = 'smg-rail-wt-body';
-        // chips do prefixo (cor da plataforma) — mesma ideia da linha de alerta
-        const chips = Array.prototype.slice.call(it.querySelectorAll('.structItem-title .label, .structItem-title .prefix'));
-        if (chips.length) {
-            const tags = document.createElement('span');
-            tags.className = 'smg-al-tags';
-            chips.forEach(c => { const n = c.cloneNode(true); n.classList.add('smg-al-chip'); tags.appendChild(n); });
-            body.appendChild(tags);
-        }
-        const t = document.createElement('span');
-        t.className = 'smg-rail-wt-title';
-        if (unread) {
-            const dot = document.createElement('span');
-            dot.className = 'smg-rail-wt-dot';
-            dot.setAttribute('aria-hidden', 'true');
-            t.appendChild(dot);
-        }
-        t.appendChild(document.createTextNode((titleA.textContent || '').trim()));
-        body.appendChild(t);
-
-        const meta = document.createElement('span');
-        meta.className = 'smg-rail-wt-meta';
-        const time = it.querySelector('.structItem-latestDate') || it.querySelector('.structItem-cell--latest time');
-        if (time) { const c = time.cloneNode(true); c.className = 'smg-al-time'; meta.appendChild(c); }
-        if (meta.childNodes.length) body.appendChild(meta);
-
-        a.appendChild(body);
-        li.appendChild(a);
-        li.dataset.smgAlKey = 'wt:' + base;
-        return li;
-    }
-
-    function renderFollowedRow(item) {
-        if (!item || !item.path) return null;
-        const isUnread = Boolean(item.unread);
-        const li = document.createElement('li');
-        li.className = 'smg-rail-wt' + (isUnread ? ' is-unread' : '');
-        const a = document.createElement('a');
-        a.className = 'smg-rail-wt-link';
-        const base = (item.path || '').replace(/\/(unread|latest|page-\d+|post-\d+)(?:[/?#].*)?$/, '').replace(/\/$/, '');
-        a.href = safeHref(base + '/latest');
-        a.addEventListener('click', () => {
-            dbFollowedMarkSeen(item.path);
-        });
-
-        const thumbUrl = item.thumbnail_url || (thumbCacheGet(item.path, item.thread_name));
-        const th = document.createElement('span');
-        th.className = 'smg-rail-wt-thumb';
-        if (thumbUrl) {
-            const im = document.createElement('img');
-            im.src = thumbUrl;
-            im.alt = '';
-            im.loading = 'lazy';
-            im.decoding = 'async';
-            im.addEventListener('error', () => {
-                th.classList.add('smg-rail-wt-thumb--ph');
-                im.remove();
-                th.innerHTML = railPhMark();
-            }, { once: true });
-            th.appendChild(im);
-        } else {
-            th.classList.add('smg-rail-wt-thumb--ph');
-            th.innerHTML = railPhMark();
-        }
-        a.appendChild(th);
-
-        const body = document.createElement('span');
-        body.className = 'smg-rail-wt-body';
-
-        if (Array.isArray(item.tags) && item.tags.length) {
-            const tags = document.createElement('span');
-            tags.className = 'smg-al-tags';
-            item.tags.forEach(t => {
-                const name = typeof t === 'string' ? t : (t && t.name ? t.name : '');
-                if (!name) return;
-                const chip = document.createElement('span');
-                const k = name.toLowerCase().trim();
-                let cls = (typeof t === 'object' && t.className)
-                    || (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[k])
-                    || ('label label--' + k.replace(/[^a-z0-9]+/g, '-'));
-                if (!cls.includes('label')) cls = 'label ' + cls;
-                chip.className = 'smg-al-chip ' + cls;
-                if (typeof t === 'object' && t.style) {
-                    chip.setAttribute('style', t.style);
-                }
-                chip.textContent = name;
-                tags.appendChild(chip);
-            });
-            body.appendChild(tags);
-        }
-
-        const t = document.createElement('span');
-        t.className = 'smg-rail-wt-title';
-        if (isUnread) {
-            const dot = document.createElement('span');
-            dot.className = 'smg-rail-wt-dot';
-            dot.setAttribute('aria-hidden', 'true');
-            t.appendChild(dot);
-        }
-        t.appendChild(document.createTextNode((item.thread_name || '').trim()));
-        body.appendChild(t);
-
-        const meta = document.createElement('span');
-        meta.className = 'smg-rail-wt-meta';
-        const ts = item.updated_at || item.forum_activity_ts || 0;
-        if (ts) {
-            const time = document.createElement('time');
-            time.className = 'smg-al-time';
-            time.setAttribute('data-timestamp', String(ts));
-            time.textContent = smgRelTime(ts);
-            meta.appendChild(time);
-        }
-        if (meta.childNodes.length) body.appendChild(meta);
-
-        a.appendChild(body);
-        li.appendChild(a);
-        li.dataset.smgAlKey = 'wt:' + base;
-        return li;
-    }
-    const railPhMark = () => (document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK);
-
     // chave de dedupe — conteúdo novo empurra a lista, então a mesma linha reaparece na página seguinte.
     // Calculada ANTES da limpeza (cleanAlertRow remonta o conteúdo e o texto muda).
     function alertKey(li) {
-        if (li.dataset.smgAlKey) return li.dataset.smgAlKey;   // linha de thread: a chave já veio pronta
         const id = li.getAttribute('data-alert-id');
         if (id) return 'id:' + id;
         const a = li.querySelector('a[href]');
@@ -22418,7 +22105,7 @@
         const el = pane && pane.querySelector('.smg-aldock-status');
         if (!el) return;
         const st = aldockState[tab], src = RAIL_SRC[tab];
-        const rowSel = tab === 'watched' ? '.smg-rail-wt' : 'li.alert';
+        const rowSel = 'li.alert';
         const list = railList(tab);
         if (kind === 'loading' && list && list.querySelector('.smg-aldock-skel-row')) {
             el.hidden = true;
@@ -22553,73 +22240,25 @@
         };
         if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
 
-        if (tab === 'watched') {
-            const getFollowed = dbFollowedGetAll();
-            return getFollowed.then(items => {
-                clearSkeleton();
-                const list = railList('watched');
-                if (!list) return;
-
-                const valid = Array.isArray(items) ? items.filter(it => it && it.path) : [];
-                const unread = valid.filter(t => Boolean(t.unread))
-                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
-                const read = valid.filter(t => !t.unread)
-                    .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
-
-                const sorted = [...unread, ...read];
-                list.innerHTML = '';
-                st.keys.clear();
-                sorted.forEach(item => {
-                    const row = renderFollowedRow(item);
-                    if (row) {
-                        const key = row.dataset.smgAlKey || ('wt:' + item.path);
-                        st.keys.add(key);
-                        list.appendChild(row);
-                        i18nDom(row);
-                    }
-                });
-
-                st.loaded = true;
-                st.next = null;
-
-                aldockSyncCount();
-                aldockStatus('watched', '');
-
-                if (!valid.length && first) {
-                    fetchAndIngestFollowed(false, false).catch(() => {});
-                }
-            }).catch(() => {
-                clearSkeleton();
-                aldockStatus('watched', 'error');
-            }).finally(() => {
-                st.busy = false;
-                aldock.classList.remove('smg-aldock--refreshing');
-            });
-        }
-
         return railFetch(tab, railBaseUrl(tab))
             .then(({ rows, next, visitorAlerts }) => {
                 clearSkeleton();
-                if (tab === 'alerts' && typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
+                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
                     st.serverUnread = visitorAlerts;
                     gmSet('smg-alerts-count', String(visitorAlerts));
                     updateAlertsUnreadBadge(visitorAlerts);
                 }
                 const added = aldockInsertRows(tab, rows, true);
                 if (first) { st.next = next; st.loaded = true; }
-                // recontagem do badge a partir do que acabou de chegar (só alertas têm contador)
-                if (added && tab === 'alerts') syncAlertBadgeFrom(railList('alerts'));
-                if (tab === 'alerts') {
-                    dbFollowedGetAll().then(items => {
-                        indexFollowedThumbs(items);
-                        repaintAlertThumbs(railList('alerts'));
-                    }).catch(() => {});
-                }
-                // toda carga pode ter esquentado o cache (a de seguidas põe foto; a de alertas pode
-                // chegar depois de o cache já ter enchido) → repinta sempre, e só então decide o warm
+                // recontagem do badge a partir do que acabou de chegar
+                if (added) syncAlertBadgeFrom(railList('alerts'));
+                dbFollowedGetAll().then(items => {
+                    indexFollowedThumbs(items);
+                    repaintAlertThumbs(railList('alerts'));
+                }).catch(() => {});
+                // a carga pode chegar depois de o cache já ter enchido → repinta sempre, e só então decide o warm
                 repaintAlertThumbs(railList('alerts'));
-                if (tab !== 'watched') railWarmThumbs();
-                railThumbReport();
+                railWarmThumbs();
                 aldockSyncCount();
                 aldockStatus(tab, '');
             })
@@ -22627,45 +22266,20 @@
             .then(() => { st.busy = false; aldock.classList.remove('smg-aldock--refreshing'); });
     }
 
-    // DIAGNÓSTICO (temporário): fala UMA vez, e só quando a foto falhou em TODAS as linhas depois de
-    // o cache já ter sido alimentado. Diz de onde veio o href do alerta e o que há no cache — é o que
-    // separa "cache vazio" de "id do alerta não bate com o id da listagem". Silencioso quando funciona.
-    let railThumbLogged = false;
-    function railThumbReport() {
-        if (railThumbLogged || !aldockState.watched.loaded) return;   // sem o warm ainda é cedo pra concluir
-        const list = railList('alerts');
-        const icons = list ? list.querySelectorAll('.smg-al-icon[data-smg-thread]') : [];
-        if (!icons.length) return;
-        railThumbLogged = true;
-        if (list.querySelector('.smg-al-icon--thumb')) return;        // pintou alguma → nada a relatar
-        const keys = Object.keys(thumbCacheAll());   // em MEMÓRIA: a gravação é em lote, o storage ainda pode estar vazio
-        console.log('[SMG] thumb dos alertas: 0/' + icons.length
-            + ' · 1º alerta: ' + (icons[0].dataset.smgThread || '(sem href)') + ' “' + (icons[0].dataset.smgTitle || '') + '”'
-            + ' · cache: ' + keys.length + ' threads (ex.: ' + (keys[0] || '—') + ')'
-            + ' · padrão: ' + (gmGet(THUMBTPL_KEY, '') || '(nenhum)'));
-    }
-
-    // Alerta é sobre thread que você ACOMPANHA — e a lista de seguidas traz a foto de todas elas.
-    // Então, quando sobra alerta sem foto, esquentamos o cache com a MESMA busca da aba Seguindo (que
-    // de quebra já fica pré-carregada). Uma página traz ~20 threads, e são ~30 alertas de threads
-    // diferentes: seguimos paginando enquanto faltar foto, até ALDOCK_WARM_PAGES. Continua sendo um
-    // punhado de requisições por PÁGINA — nunca uma por item — e para assim que a cobertura fecha.
-    const ALDOCK_WARM_PAGES = 4;
-    let railWarmDone = false, railWarmPages = 0;
+    // Alerta é sobre thread que você ACOMPANHA — e a lista de seguidas (IndexedDB) traz a foto de
+    // todas elas. Quando sobra alerta sem foto e essa lista ainda está vazia, busca /watched/threads
+    // UMA vez (a ingestão indexa as fotos e repinta o rail sozinha). Nunca uma requisição por item.
+    let railWarmDone = false;
     function railWarmThumbs() {
-        if (railWarmDone || aldockState.watched.busy) return;
+        if (railWarmDone) return;
         const list = railList('alerts');
         if (!list) return;
+        railWarmDone = true;
         const missing = list.querySelectorAll('.smg-al-icon[data-smg-thread]:not([data-smg-thumbed])').length;
-        if (missing < 3) { railWarmDone = true; return; }          // cobertura boa → para
-        if (railWarmPages >= ALDOCK_WARM_PAGES) { railWarmDone = true; return; }
-        const st = aldockState.watched;
-        if (st.loaded && !st.next) { railWarmDone = true; return; }   // acabou a lista de seguidas
-        railWarmPages++;
-        (st.loaded ? railMore('watched') : railRefresh('watched', true)).then(() => {
-            repaintAlertThumbs(railList('alerts'));
-            railWarmThumbs();   // ainda falta foto e há próxima página? busca mais uma
-        });
+        if (missing < 3) return;                                       // cobertura boa → nada a buscar
+        dbFollowedGetAll().then(items => {
+            if (!items.length) return fetchAndIngestFollowed(false, false);
+        }).catch(() => {});
     }
 
     // fim da lista: próxima página do histórico (rolagem infinita)
@@ -22698,47 +22312,23 @@
         if (!aldock || !aldockOpen() || st.busy || !st.next) return;
         if (st.autoFill >= ALDOCK_AUTOFILL) return;
         const pane = railPane(tab), list = railList(tab);
-        if (!pane || tab !== railTab) return;   // aba escondida não tem altura medível → só enche a que está à vista
-        const rowSel = tab === 'watched' ? '.smg-rail-wt' : 'li.alert';
+        if (!pane) return;
+        const rowSel = 'li.alert';
         const visible = st.filter === 'unread'
             ? list.querySelectorAll(rowSel + '.is-unread').length
             : list.querySelectorAll(rowSel).length;
         if (visible < 8 || pane.scrollHeight <= pane.clientHeight + 40) { st.autoFill++; railMore(tab); }
     }
 
-    // grade × lista (só nas abas com `view`): classe no pane + ícone/rótulo do botão viram o MODO OPOSTO
-    function railApplyView(tab) {
-        const pane = railPane(tab), btn = aldock && aldock.querySelector('.smg-aldock-view');
-        if (!pane || !btn) return;
-        const grid = railView(tab) === 'grid';
-        pane.classList.toggle('is-grid', grid);
-        btn.hidden = !RAIL_SRC[tab].view;
-        btn.innerHTML = grid ? ICONS.list : ICONS.gallery;
-        const lbl = i18n(grid ? 'List view' : 'Grid view');
-        btn.title = lbl; btn.setAttribute('aria-label', lbl);
-    }
-
-    // troca a aba visível: cabeçalho, ações, filtro e o "Ver todos os tópicos seguidos"
-    function railShowTab(tab, persist) {
+    // painel aberto: recontagem + conteúdo novo (a 1ª abertura carrega a lista)
+    function railActivate() {
         if (!aldock) return;
-        tab = RAIL_SRC[tab] ? tab : 'alerts';
-        railTab = tab;
-        if (persist !== false) gmSet(ALDOCK_TAB_KEY, tab);
-        const src = RAIL_SRC[tab], st = aldockState[tab];
-        aldock.querySelectorAll('.smg-aldock-body').forEach(b => { b.hidden = b.dataset.tab !== tab; });
-        const titleEl = aldock.querySelector('.smg-aldock-titletext');
-        if (titleEl) titleEl.textContent = i18n(src.title);
-        const seeAll = aldock.querySelector('.smg-aldock-seeall');
-        if (seeAll) {
-            seeAll.href = safeHref(src.seeAll);
-            seeAll.textContent = i18n(src.title === 'Alerts' ? 'See all' : 'See all watched threads');
-        }
+        const st = aldockState.alerts;
         st.filter = 'all';
         aldock.classList.remove('smg-aldock--unread');
-        railApplyView(tab);
         aldockSyncCount();
         st.autoFill = 0;
-        railRefresh(tab, !st.loaded).then(() => { aldockStatus(tab, ''); railFillViewport(tab); });
+        railRefresh('alerts', !st.loaded).then(() => { aldockStatus('alerts', ''); railFillViewport('alerts'); });
     }
 
     function buildAlertsDock() {
@@ -22747,23 +22337,20 @@
         el.id = 'smg-aldock';
         el.setAttribute('aria-label', i18n('Alerts'));
         const alertsSkeleton = '<li class="smg-aldock-skel-row"><span class="smg-aldock-skel-thumb"></span><span class="smg-aldock-skel-copy"><span class="smg-aldock-skel-line"></span><span class="smg-aldock-skel-line short"></span></span></li>'.repeat(6);
-        const pane = tab =>
-            '<div class="smg-aldock-body smg-tb-listbody" data-tab="' + tab + '"' + (tab === 'alerts' ? '' : ' hidden') + '>' +
-                '<ol class="smg-aldock-list ' + (tab === 'alerts' ? 'smg-alert-clean' : 'smg-rail-wtlist') + '">' + alertsSkeleton + '</ol>' +
-                '<div class="smg-aldock-status" hidden></div>' +
-            '</div>';
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
             '<div class="smg-aldock-head">' +
                 '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
-                    '<button type="button" class="smg-aldock-btn smg-aldock-view" hidden></button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-refresh" title="' + i18n('Refresh') + '" aria-label="' + i18n('Refresh') + '">' + ICONS.refresh + '</button>' +
                     '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
                 '</div>' +
             '</div>' +
-            pane('alerts') + pane('watched') +
+            '<div class="smg-aldock-body smg-tb-listbody" data-tab="alerts">' +
+                '<ol class="smg-aldock-list smg-alert-clean">' + alertsSkeleton + '</ol>' +
+                '<div class="smg-aldock-status" hidden></div>' +
+            '</div>' +
             '<div class="smg-aldock-foot">' +
                 '<a class="smg-aldock-seeall" href="/account/alerts">' + i18n('See all') + '</a>' +
             '</div>';
@@ -22828,18 +22415,7 @@
         }
 
         el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
-        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => {
-            if (railTab === 'watched') {
-                fetchAndIngestFollowed(false, false).catch(() => {});
-            }
-            if (railTab === 'alerts') railHardRefresh('alerts');
-            else railRefresh(railTab, true);
-        });
-        el.querySelector('.smg-aldock-view').addEventListener('click', () => {
-            gmSet(ALDOCK_VIEW_KEY(railTab), railView(railTab) === 'grid' ? 'list' : 'grid');
-            railApplyView(railTab);
-            railFillViewport(railTab);   // a grade cabe mais por tela → pode faltar linha pra encher
-        });
+        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => railHardRefresh('alerts'));
 
         const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
         if (alertsBody) {
@@ -22867,22 +22443,21 @@
             });
         }
 
-        // rolagem infinita DENTRO de cada aba (rAF-throttled, passive — mesmo padrão do resto do script)
-        el.querySelectorAll('.smg-aldock-body').forEach(body => {
+        // rolagem infinita DENTRO do painel (rAF-throttled, passive — mesmo padrão do resto do script)
+        if (alertsBody) {
             let ticking = false;
-            body.addEventListener('scroll', () => {
+            alertsBody.addEventListener('scroll', () => {
                 if (ticking) return;
                 ticking = true;
                 requestAnimationFrame(() => {
                     ticking = false;
-                    if (body.scrollTop + body.clientHeight > body.scrollHeight - 400) {
-                        const t = body.dataset.tab;
-                        aldockState[t].autoFill = 0;
-                        railMore(t);
+                    if (alertsBody.scrollTop + alertsBody.clientHeight > alertsBody.scrollHeight - 400) {
+                        aldockState.alerts.autoFill = 0;
+                        railMore('alerts');
                     }
                 });
             }, { passive: true });
-        });
+        }
 
         // arrastar a borda esquerda pra redimensionar (largura fica salva)
         const grip = el.querySelector('.smg-aldock-grip');
@@ -22909,7 +22484,7 @@
         return el;
     }
 
-    function openAlertsDock(tab, persist) {
+    function openAlertsDock(persist) {
         if (!FEATURES.alertsDock || !aldockFits()) return;
         buildAlertsDock();
         document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
@@ -22922,7 +22497,7 @@
             persist = false;
         }
         if (persist !== false) gmSet(ALDOCK_KEY, '1');
-        railShowTab(RAIL_SRC[tab] ? tab : railWantedTab(), persist);
+        railActivate();
     }
     let railPhoneOpen = false;
 
@@ -22936,11 +22511,9 @@
         if (persist !== false) gmSet(ALDOCK_KEY, '0');
     }
 
-    // toggle do sino/atalho: fechado → abre na aba pedida (ou na última usada); aberto numa aba
-    // DIFERENTE da pedida → só troca de aba (fechar aqui seria contraintuitivo); mesma aba → fecha.
-    function toggleAlertsDock(tab) {
-        if (!aldockOpen()) { openAlertsDock(tab); return; }
-        if (tab && RAIL_SRC[tab] && tab !== railTab) { railShowTab(tab); return; }
+    // toggle do sino/atalho: fechado → abre; aberto → fecha.
+    function toggleAlertsDock() {
+        if (!aldockOpen()) { openAlertsDock(); return; }
         closeAlertsDock();
     }
 
@@ -22969,58 +22542,29 @@
                 document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
             }
             if (aldockOpen() && !aldockFits()) closeAlertsDock(false);
-            else if (!aldockOpen() && aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(null, false);
+            else if (!aldockOpen() && aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(false);
         });
         // celular: o "voltar" fecha a tela cheia (par do pushState no openAlertsDock)
         window.addEventListener('popstate', () => { if (railPhoneOpen) closeAlertsDock(false, true); });
 
         // conteúdo novo não avisa: sonda de tempos em tempos e ao voltar pra aba
-        setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh(railTab); }, ALDOCK_POLL_MS);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh(railTab); });
-
-        window.addEventListener('smg-followed-updated', () => {
-            if (aldock && aldockOpen() && railTab === 'watched') railRefresh('watched', false);
-        });
-        window.addEventListener('smg-followed-seen', e => {
-            const path = e && e.detail && e.detail.path;
-            if (path && aldock) {
-                const base = path.replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '');
-                const row = aldock.querySelector(`.smg-rail-wt[data-smg-al-key="wt:${base}"]`);
-                if (row && row.classList.contains('is-unread')) {
-                    row.classList.remove('is-unread');
-                    aldockSyncCount();
-                }
-            }
-        });
-        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
+        setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh('alerts'); }, ALDOCK_POLL_MS);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh('alerts'); });
 
         if (aldockWanted() && aldockFits() && !aldockPhone()) {
-            openAlertsDock(null, false);
+            openAlertsDock(false);
         } else {
             markSidebarReady();
         }
     }
 
-    function onFollowedAllSeen() {
-        if (aldock) {
-            aldock.querySelectorAll('.smg-rail-wt.is-unread').forEach(row => row.classList.remove('is-unread'));
-            const badge = aldock.querySelector('.smg-aldock-n');
-            if (badge) { badge.hidden = true; badge.textContent = ''; }
-            aldockSyncCount();
-        }
-    }
-
     if (typeof window !== 'undefined') {
-        window.addEventListener('smg-followed-all-seen', onFollowedAllSeen);
         if (window.__TEST_MODE__) {
             window.__aldockExports = {
                 buildAlertsDock,
                 openAlertsDock,
                 closeAlertsDock,
                 toggleAlertsDock,
-                railShowTab,
-                watchedRow,
-                renderFollowedRow,
                 aldockSyncCount,
                 updateAlertsUnreadBadge,
                 aldockWidth,
@@ -23028,7 +22572,6 @@
                 RAIL_SRC,
                 railFetch,
                 railRefresh,
-                getRailTab: () => railTab,
                 getAldock: () => aldock
             };
         }
@@ -23451,7 +22994,7 @@
             if (FEATURES.alertsDock) {
                 const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
                 bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
-                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock('alerts'); });
+                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
                 actions.appendChild(bellBtn);
             }
         } else {
@@ -23562,7 +23105,7 @@
             };
             const sheetRow = it => it.divider
                 ? '<div class="smg-tb-popdiv"></div>'
-                : '<a class="smg-tb-poprow"' + (it.id ? ' data-smg-id="' + it.id + '"' : '') + ' href="' + safeHref(it.href) + '">' +
+                : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
                     '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
                     (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
@@ -23583,17 +23126,11 @@
             if (loggedIn) {
                 // mobile-only: Following (watched threads) lives here now, right above Bookmarks
                 const sheetSections = accSections.map((sec, i) => i === 1
-                    ? [{ id: 'following', label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
+                    ? [{ label: 'Following', icon: ICONS.watched, href: watchedHref }, ...sec]
                     : sec);
                 const uBody = sheetSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
                         .map(sec => sec.map(sheetRow).join('')).join('<div class="smg-tb-popdiv"></div>');
                 uSheet = makeSheet('smg-user-sheet', 'Account', uBody, true);
-                const followRow = uSheet.querySelector('[data-smg-id="following"]');
-                if (followRow) followRow.addEventListener('click', e => {
-                    e.preventDefault();
-                    smgSheetClose(uSheet);
-                    openAlertsDock('watched', false);
-                });
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X

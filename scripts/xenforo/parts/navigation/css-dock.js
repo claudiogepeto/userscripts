@@ -89,11 +89,10 @@
 
             /* no desktop a navegação principal vive na topbar; some da dock (mantém engrenagem + ações).
                no mobile esses botões continuam (viram a navbar inferior) */
-            /* Following no longer lives in the bottom navbar: it moved into the mobile account sheet (the node stays so the badge sync keeps working) */
-            #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
+
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
