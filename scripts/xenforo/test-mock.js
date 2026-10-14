@@ -8253,6 +8253,57 @@ async function runTests() {
     }
 
     // =========================================================================
+    // TESTE FEED CRON: só a aba visível roda, e só uma aba por intervalo
+    // =========================================================================
+    console.log('--- TESTE FEED CRON: aba visível e uma aba por vez ---');
+    {
+        const cx = window.__feedSyncExports || {};
+        assert(typeof cx.cronTick === 'function', 'cronTick deve estar exposto em __feedSyncExports');
+        const CRON_KEY = 'smg-feed-cron-last-run';
+        const hiddenDesc = Object.getOwnPropertyDescriptor(document, 'hidden');
+        const setHidden = v => Object.defineProperty(document, 'hidden', { configurable: true, get: () => v });
+        let cronRuns = 0;
+        const onDone = () => { cronRuns++; };
+        window.addEventListener('smg-timeline-sync-done', onDone);
+        const clearCronTimer = () => {
+            if (cx.timelineCronTimer) { clearTimeout(cx.timelineCronTimer); cx.timelineCronTimer = null; }
+        };
+        cx.isCronRunning = false;
+        cx.timelineSyncRunning = false;
+
+        // 1. aba escondida: não sincroniza
+        setHidden(true);
+        window.GM_setValue(CRON_KEY, '0');
+        await cx.cronTick();
+        await new Promise(r => setTimeout(r, 30));
+        assert(cronRuns === 0, `Aba escondida não deve rodar o cron do feed (rodou ${cronRuns}x)`);
+        assert(window.GM_getValue(CRON_KEY) === '0', 'Aba escondida não deve marcar a última execução compartilhada');
+        clearCronTimer();
+
+        // 2. aba visível, mas outra aba rodou há pouco: não sincroniza
+        setHidden(false);
+        window.GM_setValue(CRON_KEY, String(Date.now() - 1000));
+        await cx.cronTick();
+        await new Promise(r => setTimeout(r, 30));
+        assert(cronRuns === 0, `Aba visível deve pular o cron quando outra aba rodou há pouco (rodou ${cronRuns}x)`);
+        clearCronTimer();
+
+        // 3. aba visível e última execução antiga: sincroniza e marca o timestamp compartilhado
+        const before = Date.now();
+        window.GM_setValue(CRON_KEY, String(before - 60 * 60 * 1000));
+        await cx.cronTick();
+        await new Promise(r => setTimeout(r, 30));
+        assert(cronRuns >= 1, `Aba visível com execução antiga deve rodar o cron (rodou ${cronRuns}x)`);   // syncTimeline e o cron emitem o evento
+        assert((parseInt(window.GM_getValue(CRON_KEY), 10) || 0) >= before, 'Cron deve gravar a última execução compartilhada entre abas');
+        clearCronTimer();
+
+        window.removeEventListener('smg-timeline-sync-done', onDone);
+        if (hiddenDesc) Object.defineProperty(document, 'hidden', hiddenDesc);
+        else delete document.hidden;
+        cx.isCronRunning = false;
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
