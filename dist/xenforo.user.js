@@ -11454,19 +11454,6 @@
                 ul.querySelectorAll('.pageNav-page--current').forEach(li => li.classList.remove('pageNav-page--current'));
                 target.classList.add('pageNav-page--current');
             });
-
-            // espelha o "current" + o compacto cur/max na nossa barra única (SMG)
-            document.querySelectorAll('.smg-bar-pages').forEach(pages => {
-                let target = null;
-                pages.querySelectorAll('a[href]').forEach(a => {
-                    const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-                    if ((m ? parseInt(m[1], 10) : 1) === p) target = a;
-                });
-                if (!target) return;
-                pages.querySelectorAll('.smg-bar-btn--current').forEach(a => a.classList.remove('smg-bar-btn--current'));
-                target.classList.add('smg-bar-btn--current');
-            });
-            document.querySelectorAll('.smg-bar-compact').forEach(c => { c.textContent = c.textContent.replace(/^\s*\d+/, p); });
         };
         return syncPage;
     }
@@ -25165,7 +25152,7 @@
         pdPlace(node, fhCard({ key: prov.key, platform: prov.label, label: label, href: url, sub: sub, logo: fhLogoChain(prov, url, unfurlEl), thumbs: thumbs }));
     }
     function processInstagramEmbeds(roots) {
-        eachIn(roots, 'iframe[data-s9e-mediaembed="instagram"], iframe[src*="instagram.min.html"], span[data-s9e-mediaembed="instagram"], span[data-s9e-mediaembed*="instagram"], .smg-ig-embed-wrap, blockquote.instagram-media', el => {
+        eachIn(roots, 'iframe[data-s9e-mediaembed="instagram"], iframe[src*="instagram.min.html"], span[data-s9e-mediaembed="instagram"], span[data-s9e-mediaembed*="instagram"], blockquote.instagram-media', el => {
             if (el.dataset.igDone) return;
             el.dataset.igDone = '1';
             let src = el.getAttribute('src') || el.getAttribute('data-src') || el.getAttribute('data-instgrm-permalink') || '';
@@ -25179,7 +25166,7 @@
             }
             const url = id ? ('https://www.instagram.com/p/' + id + '/') : (src || 'https://www.instagram.com/');
             const card = makeInstagramCard(url, id);
-            const target = el.closest('.smg-ig-embed-wrap, span[data-s9e-mediaembed], .generic2wide-iframe-div') || el;
+            const target = el.closest('span[data-s9e-mediaembed], .generic2wide-iframe-div') || el;
             target.dataset.igDone = '1';
             target.dataset.fhDone = '1';
             target.replaceWith(card);
@@ -25225,7 +25212,7 @@
         eachIn(roots, FH_BARE_SEL, a => {
             a.dataset.fhDone = '1';
             if (a.classList.contains('smg-dead') || a.closest('.smg-dead, .auto-image-grid')) return;
-            if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-ig-embed-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
+            if (a.closest('.bbCodeQuote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-dm-wrap, .bbCodeBlock--unfurl, .smg-twitter-embed, blockquote.instagram-media')) return;
             if (a.querySelector('img.bbImage')) return;   // link de imagem (lightbox)
             const url = absUrl(resolveProxyHref(a.getAttribute('href') || '') || a.href);
             const prov = fhProvider(url);

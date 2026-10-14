@@ -105,19 +105,6 @@
                 ul.querySelectorAll('.pageNav-page--current').forEach(li => li.classList.remove('pageNav-page--current'));
                 target.classList.add('pageNav-page--current');
             });
-
-            // espelha o "current" + o compacto cur/max na nossa barra única (SMG)
-            document.querySelectorAll('.smg-bar-pages').forEach(pages => {
-                let target = null;
-                pages.querySelectorAll('a[href]').forEach(a => {
-                    const m = (a.getAttribute('href') || '').match(/\/page-(\d+)/);
-                    if ((m ? parseInt(m[1], 10) : 1) === p) target = a;
-                });
-                if (!target) return;
-                pages.querySelectorAll('.smg-bar-btn--current').forEach(a => a.classList.remove('smg-bar-btn--current'));
-                target.classList.add('smg-bar-btn--current');
-            });
-            document.querySelectorAll('.smg-bar-compact').forEach(c => { c.textContent = c.textContent.replace(/^\s*\d+/, p); });
         };
         return syncPage;
     }
