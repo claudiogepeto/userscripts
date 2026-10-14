@@ -57,7 +57,13 @@
         return { kind, gated, pathname, template };
     }
 
+    // UM construtor de skeleton pra todo tipo de página (home é só mais um kind): topbar (chrome) e
+    // navbar mobile são as mesmas em todas; muda só o miolo.
     function paintSkeletonMarkup(kind) {
+        const chrome = '<div class="smg-page-skeleton-chrome"><i class="smg-page-skeleton-chrome-logo smg-skeleton-shimmer"></i>'
+            + '<div class="smg-page-skeleton-chrome-nav"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>'
+            + '<div class="smg-page-skeleton-chrome-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>';
+        const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
@@ -87,21 +93,15 @@
                 + '<i class="smg-home-skeleton-notices-badge"></i><span class="smg-home-skeleton-notices-actions"><i></i><i></i></span></div>'
                 + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line"></i>'
                 + '<i class="smg-home-skeleton-notices-line short"></i></div></div>';
-            return '<div class="smg-home-skeleton-topbar"><i class="smg-home-skeleton-topbar-logo"></i>'
-                + '<div class="smg-home-skeleton-topbar-nav"><i></i><i></i><i></i></div>'
-                + '<div class="smg-home-skeleton-topbar-actions"><i></i><i></i><i></i></div></div>'
-                + '<main class="smg-home-skeleton-main">' + notices
+            return chrome + '<main class="smg-home-skeleton-main">' + notices
                 + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
                 + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
-                + '<nav class="smg-home-skeleton-bottom-nav" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></nav>';
+                + bottomNav;
         }
 
         const line = (className, extra) => '<i class="smg-page-skeleton-line smg-skeleton-shimmer'
             + (className ? ' ' + className : '') + '"' + (extra || '') + '></i>';
-        const chrome = '<div class="smg-page-skeleton-chrome"><i class="smg-page-skeleton-chrome-logo smg-skeleton-shimmer"></i>'
-            + '<div class="smg-page-skeleton-chrome-nav"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>'
-            + '<div class="smg-page-skeleton-chrome-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>';
         const header = '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
             + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
             + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
@@ -126,7 +126,6 @@
         } else if (kind === PAINT_PAGE_KINDS.GENERIC) {
             body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(8) + '</div>';
         }
-        const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
@@ -137,18 +136,6 @@
         return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
             + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
             + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';
-    }
-
-    function ensureHomeSkeleton() {
-        const root = document.documentElement;
-        if (root.classList.contains('smg-home-ready') || root.classList.contains('smg-page-ready')) return;
-        if (!root.classList.contains('smg-home-pending') || document.getElementById('smg-home-skeleton')) return;
-        const shell = document.createElement('div');
-        shell.id = 'smg-home-skeleton';
-        shell.className = 'smg-home-skeleton';
-        shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(PAINT_PAGE_KINDS.HOME);
-        root.appendChild(shell);
     }
 
     function ensureSkeletonRail() {
@@ -167,52 +154,37 @@
         root.appendChild(rail);
     }
 
-    function ensurePageSkeleton(overrideKind) {
+    // UM skeleton (#smg-page-skeleton) pra toda página. targetKind: o soft-nav passa o tipo da página
+    // de DESTINO (mostra o skeleton dela durante o fetch, não o da página que está saindo).
+    function ensurePageSkeleton(targetKind) {
         const root = document.documentElement;
-        if (!overrideKind && (root.classList.contains('smg-page-ready') || root.classList.contains('smg-content-ready'))) {
+        if (!targetKind && (root.classList.contains('smg-page-ready') || root.classList.contains('smg-content-ready'))) {
             return;
         }
         const context = classifyPaintPage();
-        if (!context.gated && !overrideKind) return;
-        const kind = overrideKind || context.kind;
-        if (kind === PAINT_PAGE_KINDS.HOME) {
-            ensureHomeSkeleton();
-            ensureSkeletonRail();
-            return;
-        }
+        if (!targetKind && !context.gated) return;
+        const kind = targetKind || context.kind;
         let shell = document.getElementById('smg-page-skeleton');
-        if (shell) {
-            if (overrideKind && !shell.classList.contains('smg-page-skeleton--' + kind)) {
-                shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
-                shell.innerHTML = paintSkeletonMarkup(kind);
-            }
-            ensureSkeletonRail();
-            return;
+        if (!shell) {
+            shell = document.createElement('div');
+            shell.id = 'smg-page-skeleton';
+            shell.setAttribute('aria-hidden', 'true');
+            root.appendChild(shell);
         }
-        shell = document.createElement('div');
-        shell.id = 'smg-page-skeleton';
-        shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
-        shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(kind);
-        document.documentElement.appendChild(shell);
+        if (!shell.classList.contains('smg-page-skeleton--' + kind)) {
+            shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind + (kind === PAINT_PAGE_KINDS.HOME ? ' smg-home-skeleton' : '');
+            shell.innerHTML = paintSkeletonMarkup(kind);
+        }
         ensureSkeletonRail();
-    }
-
-    function releaseHomeSkeleton() {
-        const shell = document.getElementById('smg-home-skeleton');
-        if (!shell) return;
-        if (shell.parentNode) shell.remove();
     }
 
     function releasePageSkeleton() {
         const shell = document.getElementById('smg-page-skeleton');
-        const homeShell = document.getElementById('smg-home-skeleton');
         const rail = document.getElementById('smg-page-skeleton-rail');
-        if (!shell && !homeShell && !rail) return;
+        if (!shell && !rail) return;
 
         const root = document.documentElement;
         if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            releaseHomeSkeleton();
             if (shell && shell.parentNode) shell.remove();
             if (rail && rail.parentNode) rail.remove();
             return;
@@ -220,7 +192,6 @@
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
-            releaseHomeSkeleton();
             if (shell && shell.parentNode) shell.remove();
             if (rail && rail.parentNode) rail.remove();
             root.classList.remove('smg-skeleton-fade-out');

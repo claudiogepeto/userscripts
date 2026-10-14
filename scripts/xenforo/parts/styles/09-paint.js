@@ -47,19 +47,16 @@
                 pointer-events: auto !important;
                 z-index: var(--smg-z-gate) !important;
             }
-            html.smg-topbar-ready .smg-page-skeleton-chrome,
-            html.smg-topbar-ready .smg-home-skeleton-topbar {
+            html.smg-topbar-ready .smg-page-skeleton-chrome {
                 display: none !important;
             }
-            html.smg-topbar-ready #smg-page-skeleton,
-            html.smg-topbar-ready #smg-home-skeleton {
+            html.smg-topbar-ready #smg-page-skeleton {
                 top: 62px !important;
                 min-height: calc(100vh - 62px) !important;
                 min-height: calc(100dvh - 62px) !important;
             }
             @media (max-width: 1100px) {
-                html.smg-topbar-ready #smg-page-skeleton,
-                html.smg-topbar-ready #smg-home-skeleton {
+                html.smg-topbar-ready #smg-page-skeleton {
                     top: 52px !important;
                     min-height: calc(100vh - 52px) !important;
                     min-height: calc(100dvh - 52px) !important;
@@ -78,32 +75,27 @@
                 pointer-events: auto !important;
                 z-index: var(--smg-z-gate-2) !important;
             }
-            html.smg-navbar-ready .smg-page-skeleton-bottom-nav,
-            html.smg-navbar-ready .smg-home-skeleton-bottom-nav {
+            html.smg-navbar-ready .smg-page-skeleton-bottom-nav {
                 display: none !important;
             }
             html.smg-content-ready .p-body-content {
                 visibility: visible !important;
                 pointer-events: auto !important;
             }
-            #smg-page-skeleton,
-            #smg-home-skeleton {
+            #smg-page-skeleton {
                 opacity: 1;
                 transition: opacity var(--smg-dur-12) cubic-bezier(0.2, 0, 0, 1);
                 will-change: opacity;
             }
             html.smg-skeleton-fade-out #smg-page-skeleton,
-            html.smg-skeleton-fade-out #smg-home-skeleton,
             html.smg-skeleton-fade-out #smg-page-skeleton-rail {
                 opacity: 0 !important;
                 pointer-events: none !important;
             }
-            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton,
-            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-home-skeleton {
+            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton {
                 display: none !important;
             }
-            html.smg-content-ready #smg-page-skeleton,
-            html.smg-content-ready #smg-home-skeleton {
+            html.smg-content-ready #smg-page-skeleton {
                 pointer-events: none !important;
             }
             html.smg-thread [data-smg-structure-recorded="1"] {
@@ -204,8 +196,7 @@
                 .smg-page-skeleton-main { width: 100%; max-width: none; padding-left: var(--smg-sp-16); padding-right: var(--smg-sp-16); }
             }
             @media (max-width: 600px) {
-                html.smg-topbar-ready #smg-page-skeleton,
-                html.smg-topbar-ready #smg-home-skeleton {
+                html.smg-topbar-ready #smg-page-skeleton {
                     top: calc(54px + env(safe-area-inset-top)) !important;
                     min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
                     min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;

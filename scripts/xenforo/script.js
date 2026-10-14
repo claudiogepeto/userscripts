@@ -2283,22 +2283,7 @@
             /* Hide the native body tree while the shell is active. Hiding only .p-body-main
                still lets the original header/stream flash through before the first composed frame;
                keep our already-built topbar/dock visible because they are stable custom chrome. */
-            #smg-home-skeleton {
-                position: fixed; inset: 0; z-index: var(--smg-z-topbar); min-height: 100vh; min-height: 100dvh; overflow: hidden; pointer-events: none;
-                background: var(--smg-bg); visibility: visible;
-            }
-            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w); }
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
-            .smg-home-skeleton-topbar {
-                display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-24);
-                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
-                border-bottom: 1px solid var(--smg-w-08); background: var(--smg-bg);
-            }
-            .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: var(--smg-r-8); }
-            .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: var(--smg-sp-32); margin-left: auto; }
-            .smg-home-skeleton-topbar-logo,
-            .smg-home-skeleton-topbar-nav i,
-            .smg-home-skeleton-topbar-actions i,
             .smg-home-skeleton-feed-head i,
             .smg-home-skeleton-feed-head span,
             .smg-home-skeleton-section-divider,
@@ -2308,12 +2293,6 @@
             .smg-home-skeleton-notices-line {
                 position: relative; overflow: hidden; background: var(--smg-w-10);
             }
-            .smg-home-skeleton-topbar-nav i { display: block; width: 88px; height: 13px; border-radius: var(--smg-r-6); }
-            .smg-home-skeleton-topbar-nav i:nth-child(2) { width: 76px; }
-            .smg-home-skeleton-topbar-nav i:nth-child(3) { width: 84px; }
-            .smg-home-skeleton-topbar-actions { display: flex; align-items: center; gap: var(--smg-sp-14); margin-left: var(--smg-sp-32); }
-            .smg-home-skeleton-topbar-actions i { display: block; width: 24px; height: 24px; border-radius: var(--smg-r-round); }
-            .smg-home-skeleton-topbar-actions i:last-child { width: 34px; height: 34px; }
             .smg-home-skeleton-main {
                 width: var(--smg-cw); margin: 0 auto; padding: var(--smg-sp-16) 0 44px;
             }
@@ -2353,9 +2332,6 @@
             .smg-home-skeleton-tile::after,
             .smg-home-skeleton-row::after,
             .smg-home-skeleton-notices-head::after,
-            .smg-home-skeleton-topbar-logo::after,
-            .smg-home-skeleton-topbar-nav i::after,
-            .smg-home-skeleton-topbar-actions i::after,
             .smg-home-skeleton-feed-head i::after,
             .smg-home-skeleton-feed-head span::after,
             .smg-home-skeleton-section-divider::after,
@@ -2388,23 +2364,12 @@
             .smg-home-skeleton-tile::before { content: ""; position: absolute; top: 24px; left: 50%; width: 58px; height: 58px; border-radius: var(--smg-r-16); transform: translateX(-50%); background: var(--smg-w-08); }
             .smg-home-skeleton-tile .smg-home-skeleton-line { position: absolute; top: 101px; left: 20%; width: 60%; margin: 0; }
             .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 124px; left: 30%; width: 40%; }
-            .smg-home-skeleton-bottom-nav { display: none; }
             @media (max-width: 1100px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
             @media (max-width: 800px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-            @media (max-width: 1100px) {
-                .smg-home-skeleton-topbar { height: 52px; padding: 0 var(--smg-sp-14); }
-                .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
-                .smg-home-skeleton-topbar-nav { display: none; }
-                .smg-home-skeleton-topbar-actions { margin-left: auto; gap: var(--smg-sp-10); }
-            }
             @media (max-width: 800px) {
                 .smg-home-skeleton-main { width: 100%; max-width: none; padding-left: var(--smg-sp-16); padding-right: var(--smg-sp-16); }
             }
             @media (max-width: 600px) {
-                .smg-home-skeleton-topbar { height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) var(--smg-sp-14) 0; }
-                .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
-                .smg-home-skeleton-topbar-nav { display: none; }
-                .smg-home-skeleton-topbar-actions { margin-left: auto; gap: var(--smg-sp-10); }
                 .smg-home-skeleton-main { width: 100%; padding: var(--smg-sp-12) var(--smg-sp-12) var(--smg-sp-32); }
                 .smg-home-skeleton-main { padding-bottom: calc(32px + 54px + env(safe-area-inset-bottom)); }
                 .smg-home-skeleton-notices { margin-bottom: var(--smg-sp-16); border-radius: var(--smg-r-12); }
@@ -2421,21 +2386,6 @@
                 .smg-home-skeleton-tile::before { top: 16px; width: 50px; height: 50px; border-radius: var(--smg-r-14); }
                 .smg-home-skeleton-tile .smg-home-skeleton-line { top: 82px; }
                 .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 105px; }
-                .smg-home-skeleton-bottom-nav {
-                    position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-2);
-                    display: flex; align-items: center; justify-content: space-around; gap: var(--smg-sp-2);
-                    height: calc(54px + env(safe-area-inset-bottom)); padding: 0 var(--smg-sp-6) env(safe-area-inset-bottom);
-                    border-top: 1px solid var(--smg-w-08); background: var(--smg-bg);
-                }
-                .smg-home-skeleton-bottom-nav i {
-                    position: relative; display: block; width: 22px; height: 22px; border-radius: var(--smg-r-8); overflow: hidden;
-                    background: var(--smg-w-10);
-                }
-                .smg-home-skeleton-bottom-nav i::after {
-                    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                    background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                    animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-                }
             }
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
@@ -9018,19 +8968,16 @@
                 pointer-events: auto !important;
                 z-index: var(--smg-z-gate) !important;
             }
-            html.smg-topbar-ready .smg-page-skeleton-chrome,
-            html.smg-topbar-ready .smg-home-skeleton-topbar {
+            html.smg-topbar-ready .smg-page-skeleton-chrome {
                 display: none !important;
             }
-            html.smg-topbar-ready #smg-page-skeleton,
-            html.smg-topbar-ready #smg-home-skeleton {
+            html.smg-topbar-ready #smg-page-skeleton {
                 top: 62px !important;
                 min-height: calc(100vh - 62px) !important;
                 min-height: calc(100dvh - 62px) !important;
             }
             @media (max-width: 1100px) {
-                html.smg-topbar-ready #smg-page-skeleton,
-                html.smg-topbar-ready #smg-home-skeleton {
+                html.smg-topbar-ready #smg-page-skeleton {
                     top: 52px !important;
                     min-height: calc(100vh - 52px) !important;
                     min-height: calc(100dvh - 52px) !important;
@@ -9049,32 +8996,27 @@
                 pointer-events: auto !important;
                 z-index: var(--smg-z-gate-2) !important;
             }
-            html.smg-navbar-ready .smg-page-skeleton-bottom-nav,
-            html.smg-navbar-ready .smg-home-skeleton-bottom-nav {
+            html.smg-navbar-ready .smg-page-skeleton-bottom-nav {
                 display: none !important;
             }
             html.smg-content-ready .p-body-content {
                 visibility: visible !important;
                 pointer-events: auto !important;
             }
-            #smg-page-skeleton,
-            #smg-home-skeleton {
+            #smg-page-skeleton {
                 opacity: 1;
                 transition: opacity var(--smg-dur-12) cubic-bezier(0.2, 0, 0, 1);
                 will-change: opacity;
             }
             html.smg-skeleton-fade-out #smg-page-skeleton,
-            html.smg-skeleton-fade-out #smg-home-skeleton,
             html.smg-skeleton-fade-out #smg-page-skeleton-rail {
                 opacity: 0 !important;
                 pointer-events: none !important;
             }
-            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton,
-            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-home-skeleton {
+            html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton {
                 display: none !important;
             }
-            html.smg-content-ready #smg-page-skeleton,
-            html.smg-content-ready #smg-home-skeleton {
+            html.smg-content-ready #smg-page-skeleton {
                 pointer-events: none !important;
             }
             html.smg-thread [data-smg-structure-recorded="1"] {
@@ -9175,8 +9117,7 @@
                 .smg-page-skeleton-main { width: 100%; max-width: none; padding-left: var(--smg-sp-16); padding-right: var(--smg-sp-16); }
             }
             @media (max-width: 600px) {
-                html.smg-topbar-ready #smg-page-skeleton,
-                html.smg-topbar-ready #smg-home-skeleton {
+                html.smg-topbar-ready #smg-page-skeleton {
                     top: calc(54px + env(safe-area-inset-top)) !important;
                     min-height: calc(100vh - 54px - env(safe-area-inset-top)) !important;
                     min-height: calc(100dvh - 54px - env(safe-area-inset-top)) !important;
@@ -26114,7 +26055,13 @@
         return { kind, gated, pathname, template };
     }
 
+    // UM construtor de skeleton pra todo tipo de página (home é só mais um kind): topbar (chrome) e
+    // navbar mobile são as mesmas em todas; muda só o miolo.
     function paintSkeletonMarkup(kind) {
+        const chrome = '<div class="smg-page-skeleton-chrome"><i class="smg-page-skeleton-chrome-logo smg-skeleton-shimmer"></i>'
+            + '<div class="smg-page-skeleton-chrome-nav"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>'
+            + '<div class="smg-page-skeleton-chrome-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>';
+        const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         if (kind === PAINT_PAGE_KINDS.HOME) {
             const feedCards = Array.from({ length: 10 }, () =>
                 '<div class="smg-home-skeleton-card"><div class="smg-home-skeleton-card-thumb"></div>'
@@ -26144,21 +26091,15 @@
                 + '<i class="smg-home-skeleton-notices-badge"></i><span class="smg-home-skeleton-notices-actions"><i></i><i></i></span></div>'
                 + '<div class="smg-home-skeleton-notices-body"><i class="smg-home-skeleton-notices-line"></i>'
                 + '<i class="smg-home-skeleton-notices-line short"></i></div></div>';
-            return '<div class="smg-home-skeleton-topbar"><i class="smg-home-skeleton-topbar-logo"></i>'
-                + '<div class="smg-home-skeleton-topbar-nav"><i></i><i></i><i></i></div>'
-                + '<div class="smg-home-skeleton-topbar-actions"><i></i><i></i><i></i></div></div>'
-                + '<main class="smg-home-skeleton-main">' + notices
+            return chrome + '<main class="smg-home-skeleton-main">' + notices
                 + '<section class="smg-home-skeleton-feed"><div class="smg-home-skeleton-feed-head"><i></i><i></i><span></span></div>'
                 + '<div class="smg-home-skeleton-feed-cards">' + feedCards + '</div></section>'
                 + '<div class="smg-home-skeleton-sections">' + sectionList + sectionGrid + sectionGrid + '</div></main>'
-                + '<nav class="smg-home-skeleton-bottom-nav" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></nav>';
+                + bottomNav;
         }
 
         const line = (className, extra) => '<i class="smg-page-skeleton-line smg-skeleton-shimmer'
             + (className ? ' ' + className : '') + '"' + (extra || '') + '></i>';
-        const chrome = '<div class="smg-page-skeleton-chrome"><i class="smg-page-skeleton-chrome-logo smg-skeleton-shimmer"></i>'
-            + '<div class="smg-page-skeleton-chrome-nav"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>'
-            + '<div class="smg-page-skeleton-chrome-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>';
         const header = '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
             + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
             + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
@@ -26183,7 +26124,6 @@
         } else if (kind === PAINT_PAGE_KINDS.GENERIC) {
             body = filter + '<div class="smg-page-skeleton-list">' + row.repeat(8) + '</div>';
         }
-        const bottomNav = '<nav class="smg-page-skeleton-bottom-nav" aria-hidden="true"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></nav>';
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
@@ -26194,18 +26134,6 @@
         return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
             + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
             + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';
-    }
-
-    function ensureHomeSkeleton() {
-        const root = document.documentElement;
-        if (root.classList.contains('smg-home-ready') || root.classList.contains('smg-page-ready')) return;
-        if (!root.classList.contains('smg-home-pending') || document.getElementById('smg-home-skeleton')) return;
-        const shell = document.createElement('div');
-        shell.id = 'smg-home-skeleton';
-        shell.className = 'smg-home-skeleton';
-        shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(PAINT_PAGE_KINDS.HOME);
-        root.appendChild(shell);
     }
 
     function ensureSkeletonRail() {
@@ -26224,52 +26152,37 @@
         root.appendChild(rail);
     }
 
-    function ensurePageSkeleton(overrideKind) {
+    // UM skeleton (#smg-page-skeleton) pra toda página. targetKind: o soft-nav passa o tipo da página
+    // de DESTINO (mostra o skeleton dela durante o fetch, não o da página que está saindo).
+    function ensurePageSkeleton(targetKind) {
         const root = document.documentElement;
-        if (!overrideKind && (root.classList.contains('smg-page-ready') || root.classList.contains('smg-content-ready'))) {
+        if (!targetKind && (root.classList.contains('smg-page-ready') || root.classList.contains('smg-content-ready'))) {
             return;
         }
         const context = classifyPaintPage();
-        if (!context.gated && !overrideKind) return;
-        const kind = overrideKind || context.kind;
-        if (kind === PAINT_PAGE_KINDS.HOME) {
-            ensureHomeSkeleton();
-            ensureSkeletonRail();
-            return;
-        }
+        if (!targetKind && !context.gated) return;
+        const kind = targetKind || context.kind;
         let shell = document.getElementById('smg-page-skeleton');
-        if (shell) {
-            if (overrideKind && !shell.classList.contains('smg-page-skeleton--' + kind)) {
-                shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
-                shell.innerHTML = paintSkeletonMarkup(kind);
-            }
-            ensureSkeletonRail();
-            return;
+        if (!shell) {
+            shell = document.createElement('div');
+            shell.id = 'smg-page-skeleton';
+            shell.setAttribute('aria-hidden', 'true');
+            root.appendChild(shell);
         }
-        shell = document.createElement('div');
-        shell.id = 'smg-page-skeleton';
-        shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind;
-        shell.setAttribute('aria-hidden', 'true');
-        shell.innerHTML = paintSkeletonMarkup(kind);
-        document.documentElement.appendChild(shell);
+        if (!shell.classList.contains('smg-page-skeleton--' + kind)) {
+            shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind + (kind === PAINT_PAGE_KINDS.HOME ? ' smg-home-skeleton' : '');
+            shell.innerHTML = paintSkeletonMarkup(kind);
+        }
         ensureSkeletonRail();
-    }
-
-    function releaseHomeSkeleton() {
-        const shell = document.getElementById('smg-home-skeleton');
-        if (!shell) return;
-        if (shell.parentNode) shell.remove();
     }
 
     function releasePageSkeleton() {
         const shell = document.getElementById('smg-page-skeleton');
-        const homeShell = document.getElementById('smg-home-skeleton');
         const rail = document.getElementById('smg-page-skeleton-rail');
-        if (!shell && !homeShell && !rail) return;
+        if (!shell && !rail) return;
 
         const root = document.documentElement;
         if (typeof window !== 'undefined' && window.__TEST_MODE__) {
-            releaseHomeSkeleton();
             if (shell && shell.parentNode) shell.remove();
             if (rail && rail.parentNode) rail.remove();
             return;
@@ -26277,7 +26190,6 @@
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
-            releaseHomeSkeleton();
             if (shell && shell.parentNode) shell.remove();
             if (rail && rail.parentNode) rail.remove();
             root.classList.remove('smg-skeleton-fade-out');
@@ -27327,7 +27239,9 @@
         root.classList.add('smg-page-pending', 'smg-content-pending');
         root.classList.remove('smg-page-ready', 'smg-content-ready', 'smg-home-ready');
         contentIsReady = false;
-        ensurePageSkeleton();
+        // skeleton da página de DESTINO durante o fetch (antes: o da página que estava saindo, e nenhum ao sair da home)
+        const target = classifyPaintPage({ pathname: abs.pathname, search: abs.search, template: '' });
+        ensurePageSkeleton(target.gated ? target.kind : PAINT_PAGE_KINDS.GENERIC);
         try { history.scrollRestoration = 'manual'; } catch (e) {}
         try { window.scrollTo(0, 0); } catch (e) {}
         fetchDoc(abs.href, { credentials: 'same-origin' }).then(doc => {
@@ -27344,7 +27258,7 @@
             const freshBody = document.importNode(nextBody, true);
             curBody.replaceWith(freshBody);
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
-            document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river, #smg-home-skeleton').forEach(el => {
+            document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river').forEach(el => {
                 if (!freshBody.contains(el)) el.remove();
             });
             if (doc.body && doc.body.className) document.body.className = doc.body.className;
@@ -27371,11 +27285,7 @@
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
             }
-            const staleSkeleton = document.getElementById('smg-page-skeleton');
-            const staleHomeSkeleton = document.getElementById('smg-home-skeleton');
-            if (staleSkeleton) staleSkeleton.remove();
-            if (staleHomeSkeleton) staleHomeSkeleton.remove();
-            ensurePageSkeleton();
+            ensurePageSkeleton();   // mesmo tipo → mantém o mesmo skeleton (sem piscar); tipo diferente → troca
             if (window.XF && typeof window.XF.activate === 'function') {
                 try { window.XF.activate(document.querySelector('.p-body')); } catch (e) {}
             }

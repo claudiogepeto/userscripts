@@ -19,22 +19,7 @@
             /* Hide the native body tree while the shell is active. Hiding only .p-body-main
                still lets the original header/stream flash through before the first composed frame;
                keep our already-built topbar/dock visible because they are stable custom chrome. */
-            #smg-home-skeleton {
-                position: fixed; inset: 0; z-index: var(--smg-z-topbar); min-height: 100vh; min-height: 100dvh; overflow: hidden; pointer-events: none;
-                background: var(--smg-bg); visibility: visible;
-            }
-            html.smg-aldock-on #smg-home-skeleton { right: var(--smg-ald-w); }
             .smg-home-skeleton *, .smg-home-skeleton *::before, .smg-home-skeleton *::after { box-sizing: border-box; }
-            .smg-home-skeleton-topbar {
-                display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-24);
-                height: 72px; padding: 0 max(18px, calc((100% - var(--smg-cw)) / 2));
-                border-bottom: 1px solid var(--smg-w-08); background: var(--smg-bg);
-            }
-            .smg-home-skeleton-topbar-logo { width: 160px; height: 36px; border-radius: var(--smg-r-8); }
-            .smg-home-skeleton-topbar-nav { display: flex; align-items: center; gap: var(--smg-sp-32); margin-left: auto; }
-            .smg-home-skeleton-topbar-logo,
-            .smg-home-skeleton-topbar-nav i,
-            .smg-home-skeleton-topbar-actions i,
             .smg-home-skeleton-feed-head i,
             .smg-home-skeleton-feed-head span,
             .smg-home-skeleton-section-divider,
@@ -44,12 +29,6 @@
             .smg-home-skeleton-notices-line {
                 position: relative; overflow: hidden; background: var(--smg-w-10);
             }
-            .smg-home-skeleton-topbar-nav i { display: block; width: 88px; height: 13px; border-radius: var(--smg-r-6); }
-            .smg-home-skeleton-topbar-nav i:nth-child(2) { width: 76px; }
-            .smg-home-skeleton-topbar-nav i:nth-child(3) { width: 84px; }
-            .smg-home-skeleton-topbar-actions { display: flex; align-items: center; gap: var(--smg-sp-14); margin-left: var(--smg-sp-32); }
-            .smg-home-skeleton-topbar-actions i { display: block; width: 24px; height: 24px; border-radius: var(--smg-r-round); }
-            .smg-home-skeleton-topbar-actions i:last-child { width: 34px; height: 34px; }
             .smg-home-skeleton-main {
                 width: var(--smg-cw); margin: 0 auto; padding: var(--smg-sp-16) 0 44px;
             }
@@ -89,9 +68,6 @@
             .smg-home-skeleton-tile::after,
             .smg-home-skeleton-row::after,
             .smg-home-skeleton-notices-head::after,
-            .smg-home-skeleton-topbar-logo::after,
-            .smg-home-skeleton-topbar-nav i::after,
-            .smg-home-skeleton-topbar-actions i::after,
             .smg-home-skeleton-feed-head i::after,
             .smg-home-skeleton-feed-head span::after,
             .smg-home-skeleton-section-divider::after,
@@ -124,23 +100,12 @@
             .smg-home-skeleton-tile::before { content: ""; position: absolute; top: 24px; left: 50%; width: 58px; height: 58px; border-radius: var(--smg-r-16); transform: translateX(-50%); background: var(--smg-w-08); }
             .smg-home-skeleton-tile .smg-home-skeleton-line { position: absolute; top: 101px; left: 20%; width: 60%; margin: 0; }
             .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 124px; left: 30%; width: 40%; }
-            .smg-home-skeleton-bottom-nav { display: none; }
             @media (max-width: 1100px) { .smg-home-skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
             @media (max-width: 800px) { .smg-home-skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-            @media (max-width: 1100px) {
-                .smg-home-skeleton-topbar { height: 52px; padding: 0 var(--smg-sp-14); }
-                .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
-                .smg-home-skeleton-topbar-nav { display: none; }
-                .smg-home-skeleton-topbar-actions { margin-left: auto; gap: var(--smg-sp-10); }
-            }
             @media (max-width: 800px) {
                 .smg-home-skeleton-main { width: 100%; max-width: none; padding-left: var(--smg-sp-16); padding-right: var(--smg-sp-16); }
             }
             @media (max-width: 600px) {
-                .smg-home-skeleton-topbar { height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) var(--smg-sp-14) 0; }
-                .smg-home-skeleton-topbar-logo { width: 100px; height: 24px; }
-                .smg-home-skeleton-topbar-nav { display: none; }
-                .smg-home-skeleton-topbar-actions { margin-left: auto; gap: var(--smg-sp-10); }
                 .smg-home-skeleton-main { width: 100%; padding: var(--smg-sp-12) var(--smg-sp-12) var(--smg-sp-32); }
                 .smg-home-skeleton-main { padding-bottom: calc(32px + 54px + env(safe-area-inset-bottom)); }
                 .smg-home-skeleton-notices { margin-bottom: var(--smg-sp-16); border-radius: var(--smg-r-12); }
@@ -157,21 +122,6 @@
                 .smg-home-skeleton-tile::before { top: 16px; width: 50px; height: 50px; border-radius: var(--smg-r-14); }
                 .smg-home-skeleton-tile .smg-home-skeleton-line { top: 82px; }
                 .smg-home-skeleton-tile .smg-home-skeleton-line.short { top: 105px; }
-                .smg-home-skeleton-bottom-nav {
-                    position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-2);
-                    display: flex; align-items: center; justify-content: space-around; gap: var(--smg-sp-2);
-                    height: calc(54px + env(safe-area-inset-bottom)); padding: 0 var(--smg-sp-6) env(safe-area-inset-bottom);
-                    border-top: 1px solid var(--smg-w-08); background: var(--smg-bg);
-                }
-                .smg-home-skeleton-bottom-nav i {
-                    position: relative; display: block; width: 22px; height: 22px; border-radius: var(--smg-r-8); overflow: hidden;
-                    background: var(--smg-w-10);
-                }
-                .smg-home-skeleton-bottom-nav i::after {
-                    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-                    background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
-                    animation: smg-skel-shimmer 1.3s ease-in-out infinite;
-                }
             }
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */

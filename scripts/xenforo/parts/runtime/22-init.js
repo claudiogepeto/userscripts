@@ -459,7 +459,9 @@
         root.classList.add('smg-page-pending', 'smg-content-pending');
         root.classList.remove('smg-page-ready', 'smg-content-ready', 'smg-home-ready');
         contentIsReady = false;
-        ensurePageSkeleton();
+        // skeleton da página de DESTINO durante o fetch (antes: o da página que estava saindo, e nenhum ao sair da home)
+        const target = classifyPaintPage({ pathname: abs.pathname, search: abs.search, template: '' });
+        ensurePageSkeleton(target.gated ? target.kind : PAINT_PAGE_KINDS.GENERIC);
         try { history.scrollRestoration = 'manual'; } catch (e) {}
         try { window.scrollTo(0, 0); } catch (e) {}
         fetchDoc(abs.href, { credentials: 'same-origin' }).then(doc => {
@@ -476,7 +478,7 @@
             const freshBody = document.importNode(nextBody, true);
             curBody.replaceWith(freshBody);
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
-            document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river, #smg-home-skeleton').forEach(el => {
+            document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river').forEach(el => {
                 if (!freshBody.contains(el)) el.remove();
             });
             if (doc.body && doc.body.className) document.body.className = doc.body.className;
@@ -503,11 +505,7 @@
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
             }
-            const staleSkeleton = document.getElementById('smg-page-skeleton');
-            const staleHomeSkeleton = document.getElementById('smg-home-skeleton');
-            if (staleSkeleton) staleSkeleton.remove();
-            if (staleHomeSkeleton) staleHomeSkeleton.remove();
-            ensurePageSkeleton();
+            ensurePageSkeleton();   // mesmo tipo → mantém o mesmo skeleton (sem piscar); tipo diferente → troca
             if (window.XF && typeof window.XF.activate === 'function') {
                 try { window.XF.activate(document.querySelector('.p-body')); } catch (e) {}
             }
