@@ -7,7 +7,7 @@
     //   - bookmarks: keyPath 'postId'
     // =========================================================
     const FDB_NAME = 'smg-feed';
-    const FDB_VERSION = 7;
+    const FDB_VERSION = 8;
     let fdbPromise = null;
 
     function fdbOpen() {
@@ -63,6 +63,24 @@
                 // Store bookmarks
                 if (!db.objectStoreNames.contains('bookmarks')) {
                     db.createObjectStore('bookmarks', { keyPath: 'postId' });
+                }
+                // v8: posts em cache passam a ter UM formato (snake_case) → descarta só o cache de posts.
+                // A lista de seguidos e os salvos ficam intactos; só as marcas de sync (saved_pages/last_sync_at)
+                // zeram, senão o sync acharia as páginas já baixadas e o feed não se reconstruiria.
+                const oldVersion = e.oldVersion || 0;
+                const upTx = req.transaction;
+                if (oldVersion > 0 && oldVersion < 8 && upTx) {
+                    upTx.objectStore('timeline').clear();
+                    const cur = upTx.objectStore('followed').openCursor();
+                    cur.onsuccess = () => {
+                        const c = cur.result;
+                        if (!c) return;
+                        const rec = c.value;
+                        rec.saved_pages = [];
+                        rec.last_sync_at = 0;
+                        c.update(rec);
+                        c.continue();
+                    };
                 }
             };
             req.onsuccess = () => {
@@ -188,8 +206,7 @@
                 const c = cur.result;
                 if (!c || (limit && out.length >= limit)) { resolve(out); return; }
                 const val = c.value;
-                const pid = val.post_id || val.postId;
-                if (!(seen && seen.has(pid))) out.push(val);
+                if (!(seen && seen.has(val.post_id))) out.push(val);
                 c.continue();
             };
             cur.onerror = () => reject(cur.error);
@@ -201,13 +218,7 @@
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction('timeline', 'readwrite');
             const st = tx.objectStore('timeline');
-            posts.forEach(p => {
-                if (p && (p.post_id || p.postId)) {
-                    if (!p.post_id) p.post_id = p.postId;
-                    if (!p.created_at) p.created_at = p.ts || 0;
-                    st.put(p);
-                }
-            });
+            posts.forEach(p => { if (p && p.post_id) st.put(p); });
             tx.oncomplete = () => resolve(posts.length);
             tx.onerror = () => reject(tx.error);
         })).catch(() => 0);

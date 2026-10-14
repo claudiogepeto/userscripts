@@ -48,25 +48,19 @@
         const seenPostIds = new Set();
         const rows = [];
         parsed.forEach(p => {
-            const pid = String(p.postId);
+            const pid = String(p.post_id);
             if (!pid || seenPostIds.has(pid)) return;
             seenPostIds.add(pid);
-            const finalTs = Math.floor(Number(p.ts));
+            const finalTs = Math.floor(Number(p.created_at));
             if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
             if (finalTs > maxPostTs) maxPostTs = finalTs;
-            rows.push({
-                post_id: pid,
-                thread_path: path,
-                thread_name: p.threadTitle || fallbackName,
-                author: p.author || '',
-                author_href: p.authorHref || '',
-                created_at: finalTs,
-                page_num: pageNum,
-                content_html: p.contentHtml || '',
-                permalink: p.permalink || (path + '#post-' + p.postId),
-                prefixes_html: p.prefixesHtml || '',
-                thread_thumb: p.threadThumb || ''
-            });
+            p.post_id = pid;
+            p.created_at = finalTs;
+            p.thread_path = path;
+            p.page_num = pageNum;
+            if (!p.thread_name) p.thread_name = fallbackName;
+            if (!p.permalink) p.permalink = path + '#post-' + pid;
+            rows.push(p);
         });
         return { rows: rows, maxPostTs: maxPostTs, parsed: parsed.length };
     }

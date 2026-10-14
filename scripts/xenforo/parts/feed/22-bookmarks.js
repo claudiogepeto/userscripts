@@ -101,15 +101,24 @@
     function bmFallbackPost(row) {
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
         return {
-            postId: row.postId,
-            ts: row.bmTs || Math.floor(Date.now() / 1000),
+            post_id: row.postId,
+            created_at: row.bmTs || Math.floor(Date.now() / 1000),
             author: row.author || '',
-            authorHref: row.authorHref || '',
-            threadTitle: row.title || i18n('Saved item'),
-            prefixesHtml: '',
-            threadThumb: row.thumb || '',
+            author_href: row.authorHref || '',
+            thread_name: row.title || i18n('Saved item'),
+            prefixes_html: '',
+            thread_thumb: row.thumb || '',
             permalink: postUrl,
-            contentHtml: `<div class="smg-bm-fallback-text"><a href="${postUrl}" class="link link--external" target="_blank">${row.title || postUrl}</a></div>`
+            content_html: `<div class="smg-bm-fallback-text"><a href="${postUrl}" class="link link--external" target="_blank">${row.title || postUrl}</a></div>`
+        };
+    }
+    // salvos gravados antes do formato único (camelCase) continuam no cache: lidos aqui, nunca reescritos
+    function bmPostRow(obj) {
+        if (!obj || obj.post_id || !obj.postId) return obj;
+        return {
+            post_id: obj.postId, created_at: obj.ts || 0, author: obj.author || '', author_href: obj.authorHref || '',
+            thread_name: obj.threadTitle || '', prefixes_html: obj.prefixesHtml || '', thread_thumb: obj.threadThumb || '',
+            permalink: obj.permalink || '', content_html: obj.contentHtml || ''
         };
     }
     // busca o conteúdo do post salvo → objeto serializável do riverParsePost (fallback se sumiu/erro)
@@ -177,9 +186,10 @@
         return card;
     }
     function bmCardFromRec(rec) {
-        const obj = rec.obj && rec.obj.permalink
-            ? { ...rec.obj, permalink: bmCanonicalPostUrl(rec.obj.permalink) || rec.obj.permalink }
-            : rec.obj;
+        const row = bmPostRow(rec.obj);
+        const obj = row && row.permalink
+            ? { ...row, permalink: bmCanonicalPostUrl(row.permalink) || row.permalink }
+            : row;
         return bmCard(obj, { postId: rec.postId, note: rec.note, bmTs: rec.bmTs });
     }
     // insere `node` (tem data-bm-ts) na lista mantendo ordem por bmTs DESC
@@ -229,9 +239,10 @@
                     const c = byId[r.postId];
                     if (!c) return true;
                     // Auto-cura: se o cache foi gravado com erro/tópico quebrado/fallback, re-busca e atualiza
-                    if (c.obj && (c.obj.threadTitle === 'Tópico' || c.obj.threadTitle === 'Thread' || !c.obj.threadTitle
-                        || /\/bookmark\/?$/i.test(c.obj.permalink || '')
-                        || (c.obj.contentHtml && c.obj.contentHtml.includes('smg-bm-fallback-text')))) {
+                    const o = bmPostRow(c.obj);
+                    if (o && (o.thread_name === 'Tópico' || o.thread_name === 'Thread' || !o.thread_name
+                        || /\/bookmark\/?$/i.test(o.permalink || '')
+                        || (o.content_html && o.content_html.includes('smg-bm-fallback-text')))) {
                         return true;
                     }
                     return false;
@@ -291,6 +302,7 @@
             bmFetchAllRows,
             bmFetchPost,
             bmFallbackPost,
+            bmCardFromRec,
             bmUnsave,
             isBookmarksPage,
             get bmBuilt() { return bmBuilt; },

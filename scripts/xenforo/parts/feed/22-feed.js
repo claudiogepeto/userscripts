@@ -178,10 +178,11 @@
         const permA = post.querySelector('.message-attribution a[href*="/post-"], a.message-attribution-gadget[href*="/post-"]');
         if (permA) { try { permalink = new URL(permA.getAttribute('href'), location.href).href; } catch (e) {} }
         else permalink = threadUrl.replace(/[#?].*$/, '').replace(/\/(latest|unread|page-\d+|post-\d+)$/, '') + '#post-' + postId;
+        // MESMO formato da linha da timeline (snake_case): riverCard lê um formato só
         return {
-            postId: postId, ts: finalTs, author: author, authorHref: authorA ? authorA.getAttribute('href') : '',
-            threadTitle: meta.title, prefixesHtml: meta.prefixesHtml || '', threadThumb: meta.thumb || '',
-            permalink: permalink, contentHtml: body.outerHTML || ''
+            post_id: postId, created_at: finalTs, author: author, author_href: authorA ? authorA.getAttribute('href') : '',
+            thread_name: meta.title, prefixes_html: meta.prefixesHtml || '', thread_thumb: meta.thumb || '',
+            permalink: permalink, content_html: body.outerHTML || ''
         };
     }
 
@@ -196,22 +197,22 @@
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
     function riverCard(p, wm) {
         if (!p) return null;
-        const postId = p.post_id || p.postId || '';
-        if (!postId || (!p.content_html && !p.contentHtml)) return null;
-        if (timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
-        const ts = p.created_at || p.ts || 0;
-        let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
+        const postId = p.post_id || '';
+        if (!postId || !p.content_html) return null;
+        if (timelineContentSkip([p.prefixes_html || ''])) return null;
+        const ts = p.created_at || 0;
+        let threadTitle = (p.thread_name || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
         if (/^Editar$/i.test(threadTitle) || !threadTitle) {
             const slug = (p.thread_path || p.permalink || '').match(/\/threads\/([^/]+)\./);
             threadTitle = (slug ? slug[1].replace(/[-_]/g, ' ') : '') || i18n('Thread');
         }
         const author = p.author || '';
-        const authorHref = p.author_href || p.authorHref || '';
-        const contentHtml = p.content_html || p.contentHtml || '';
+        const authorHref = p.author_href || '';
+        const contentHtml = p.content_html;
         const permalink = p.permalink || '#';
-        const prefixesHtml = p.prefixes_html || p.prefixesHtml || '';
-        const threadThumb = p.thread_thumb || p.threadThumb || '';
+        const prefixesHtml = p.prefixes_html || '';
+        const threadThumb = p.thread_thumb || '';
 
         const card = document.createElement('div');
         card.className = 'smg-fp-card' + (ts && ts > wm ? ' is-unread' : '');
@@ -372,7 +373,7 @@
             const frag = document.createDocumentFragment();
             const cards = [];
             posts.forEach(p => {
-                const pid = p.post_id || p.postId;
+                const pid = p.post_id;
                 riverSeen.add(pid);
                 try { const card = riverCard(p, riverOldWm); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
             });
@@ -380,7 +381,7 @@
             markRiverSortDirty();
             ensureRiverSorted();
             const lastP = posts[posts.length - 1];
-            riverLastTs = lastP.created_at || lastP.ts || 0;
+            riverLastTs = lastP.created_at || 0;
             return posts.length;
         }, () => { riverRendering = false; return 0; });
     }
@@ -389,7 +390,7 @@
         if (!riverList || !riverSeen) return Promise.resolve([]);
         const floor = riverLastTs || 0;
         return dbTimelineGetRecent(80, null, floor || null, riverSeen).then(
-            posts => posts.filter(p => !floor || (p.created_at || p.ts || 0) > floor),
+            posts => posts.filter(p => !floor || (p.created_at || 0) > floor),
             () => []
         );
     }
@@ -399,9 +400,9 @@
         const existing = riverList.querySelectorAll('.smg-fp-card');
         let inserted = false;
         posts.forEach(p => {
-            const pid = p.post_id || p.postId;
+            const pid = p.post_id;
             if (!pid) return;
-            const pts = p.created_at || p.ts || 0;
+            const pts = p.created_at || 0;
             if (riverSeen && riverSeen.has(pid)) return;
             if (riverList.querySelector('[data-post-id="' + pid + '"]')) return;
             if (riverSeen) riverSeen.add(pid);
@@ -566,7 +567,7 @@
             kickSync(cutoff, true);
         });
     }
-    function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || top[0].ts || 0); }); }
+    function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || 0); }); }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
     function afterSync() {
         dismissSetup();

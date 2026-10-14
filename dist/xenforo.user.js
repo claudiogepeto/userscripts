@@ -10752,7 +10752,7 @@
     //   - bookmarks: keyPath 'postId'
     // =========================================================
     const FDB_NAME = 'smg-feed';
-    const FDB_VERSION = 7;
+    const FDB_VERSION = 8;
     let fdbPromise = null;
 
     function fdbOpen() {
@@ -10808,6 +10808,24 @@
                 // Store bookmarks
                 if (!db.objectStoreNames.contains('bookmarks')) {
                     db.createObjectStore('bookmarks', { keyPath: 'postId' });
+                }
+                // v8: posts em cache passam a ter UM formato (snake_case) → descarta só o cache de posts.
+                // A lista de seguidos e os salvos ficam intactos; só as marcas de sync (saved_pages/last_sync_at)
+                // zeram, senão o sync acharia as páginas já baixadas e o feed não se reconstruiria.
+                const oldVersion = e.oldVersion || 0;
+                const upTx = req.transaction;
+                if (oldVersion > 0 && oldVersion < 8 && upTx) {
+                    upTx.objectStore('timeline').clear();
+                    const cur = upTx.objectStore('followed').openCursor();
+                    cur.onsuccess = () => {
+                        const c = cur.result;
+                        if (!c) return;
+                        const rec = c.value;
+                        rec.saved_pages = [];
+                        rec.last_sync_at = 0;
+                        c.update(rec);
+                        c.continue();
+                    };
                 }
             };
             req.onsuccess = () => {
@@ -10933,8 +10951,7 @@
                 const c = cur.result;
                 if (!c || (limit && out.length >= limit)) { resolve(out); return; }
                 const val = c.value;
-                const pid = val.post_id || val.postId;
-                if (!(seen && seen.has(pid))) out.push(val);
+                if (!(seen && seen.has(val.post_id))) out.push(val);
                 c.continue();
             };
             cur.onerror = () => reject(cur.error);
@@ -10946,13 +10963,7 @@
         return fdbOpen().then(db => new Promise((resolve, reject) => {
             const tx = db.transaction('timeline', 'readwrite');
             const st = tx.objectStore('timeline');
-            posts.forEach(p => {
-                if (p && (p.post_id || p.postId)) {
-                    if (!p.post_id) p.post_id = p.postId;
-                    if (!p.created_at) p.created_at = p.ts || 0;
-                    st.put(p);
-                }
-            });
+            posts.forEach(p => { if (p && p.post_id) st.put(p); });
             tx.oncomplete = () => resolve(posts.length);
             tx.onerror = () => reject(tx.error);
         })).catch(() => 0);
@@ -24695,15 +24706,24 @@
     function bmFallbackPost(row) {
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
         return {
-            postId: row.postId,
-            ts: row.bmTs || Math.floor(Date.now() / 1000),
+            post_id: row.postId,
+            created_at: row.bmTs || Math.floor(Date.now() / 1000),
             author: row.author || '',
-            authorHref: row.authorHref || '',
-            threadTitle: row.title || i18n('Saved item'),
-            prefixesHtml: '',
-            threadThumb: row.thumb || '',
+            author_href: row.authorHref || '',
+            thread_name: row.title || i18n('Saved item'),
+            prefixes_html: '',
+            thread_thumb: row.thumb || '',
             permalink: postUrl,
-            contentHtml: `<div class="smg-bm-fallback-text"><a href="${postUrl}" class="link link--external" target="_blank">${row.title || postUrl}</a></div>`
+            content_html: `<div class="smg-bm-fallback-text"><a href="${postUrl}" class="link link--external" target="_blank">${row.title || postUrl}</a></div>`
+        };
+    }
+    // salvos gravados antes do formato único (camelCase) continuam no cache: lidos aqui, nunca reescritos
+    function bmPostRow(obj) {
+        if (!obj || obj.post_id || !obj.postId) return obj;
+        return {
+            post_id: obj.postId, created_at: obj.ts || 0, author: obj.author || '', author_href: obj.authorHref || '',
+            thread_name: obj.threadTitle || '', prefixes_html: obj.prefixesHtml || '', thread_thumb: obj.threadThumb || '',
+            permalink: obj.permalink || '', content_html: obj.contentHtml || ''
         };
     }
     // busca o conteúdo do post salvo → objeto serializável do riverParsePost (fallback se sumiu/erro)
@@ -24771,9 +24791,10 @@
         return card;
     }
     function bmCardFromRec(rec) {
-        const obj = rec.obj && rec.obj.permalink
-            ? { ...rec.obj, permalink: bmCanonicalPostUrl(rec.obj.permalink) || rec.obj.permalink }
-            : rec.obj;
+        const row = bmPostRow(rec.obj);
+        const obj = row && row.permalink
+            ? { ...row, permalink: bmCanonicalPostUrl(row.permalink) || row.permalink }
+            : row;
         return bmCard(obj, { postId: rec.postId, note: rec.note, bmTs: rec.bmTs });
     }
     // insere `node` (tem data-bm-ts) na lista mantendo ordem por bmTs DESC
@@ -24823,9 +24844,10 @@
                     const c = byId[r.postId];
                     if (!c) return true;
                     // Auto-cura: se o cache foi gravado com erro/tópico quebrado/fallback, re-busca e atualiza
-                    if (c.obj && (c.obj.threadTitle === 'Tópico' || c.obj.threadTitle === 'Thread' || !c.obj.threadTitle
-                        || /\/bookmark\/?$/i.test(c.obj.permalink || '')
-                        || (c.obj.contentHtml && c.obj.contentHtml.includes('smg-bm-fallback-text')))) {
+                    const o = bmPostRow(c.obj);
+                    if (o && (o.thread_name === 'Tópico' || o.thread_name === 'Thread' || !o.thread_name
+                        || /\/bookmark\/?$/i.test(o.permalink || '')
+                        || (o.content_html && o.content_html.includes('smg-bm-fallback-text')))) {
                         return true;
                     }
                     return false;
@@ -24885,6 +24907,7 @@
             bmFetchAllRows,
             bmFetchPost,
             bmFallbackPost,
+            bmCardFromRec,
             bmUnsave,
             isBookmarksPage,
             get bmBuilt() { return bmBuilt; },
@@ -24942,25 +24965,19 @@
         const seenPostIds = new Set();
         const rows = [];
         parsed.forEach(p => {
-            const pid = String(p.postId);
+            const pid = String(p.post_id);
             if (!pid || seenPostIds.has(pid)) return;
             seenPostIds.add(pid);
-            const finalTs = Math.floor(Number(p.ts));
+            const finalTs = Math.floor(Number(p.created_at));
             if (!finalTs || isNaN(finalTs) || finalTs <= 0) return;
             if (finalTs > maxPostTs) maxPostTs = finalTs;
-            rows.push({
-                post_id: pid,
-                thread_path: path,
-                thread_name: p.threadTitle || fallbackName,
-                author: p.author || '',
-                author_href: p.authorHref || '',
-                created_at: finalTs,
-                page_num: pageNum,
-                content_html: p.contentHtml || '',
-                permalink: p.permalink || (path + '#post-' + p.postId),
-                prefixes_html: p.prefixesHtml || '',
-                thread_thumb: p.threadThumb || ''
-            });
+            p.post_id = pid;
+            p.created_at = finalTs;
+            p.thread_path = path;
+            p.page_num = pageNum;
+            if (!p.thread_name) p.thread_name = fallbackName;
+            if (!p.permalink) p.permalink = path + '#post-' + pid;
+            rows.push(p);
         });
         return { rows: rows, maxPostTs: maxPostTs, parsed: parsed.length };
     }
@@ -25609,10 +25626,11 @@
         const permA = post.querySelector('.message-attribution a[href*="/post-"], a.message-attribution-gadget[href*="/post-"]');
         if (permA) { try { permalink = new URL(permA.getAttribute('href'), location.href).href; } catch (e) {} }
         else permalink = threadUrl.replace(/[#?].*$/, '').replace(/\/(latest|unread|page-\d+|post-\d+)$/, '') + '#post-' + postId;
+        // MESMO formato da linha da timeline (snake_case): riverCard lê um formato só
         return {
-            postId: postId, ts: finalTs, author: author, authorHref: authorA ? authorA.getAttribute('href') : '',
-            threadTitle: meta.title, prefixesHtml: meta.prefixesHtml || '', threadThumb: meta.thumb || '',
-            permalink: permalink, contentHtml: body.outerHTML || ''
+            post_id: postId, created_at: finalTs, author: author, author_href: authorA ? authorA.getAttribute('href') : '',
+            thread_name: meta.title, prefixes_html: meta.prefixesHtml || '', thread_thumb: meta.thumb || '',
+            permalink: permalink, content_html: body.outerHTML || ''
         };
     }
 
@@ -25627,22 +25645,22 @@
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
     function riverCard(p, wm) {
         if (!p) return null;
-        const postId = p.post_id || p.postId || '';
-        if (!postId || (!p.content_html && !p.contentHtml)) return null;
-        if (timelineContentSkip([p.prefixes_html || p.prefixesHtml || ''])) return null;
-        const ts = p.created_at || p.ts || 0;
-        let threadTitle = (p.thread_name || p.threadTitle || '').replace(/\s+/g, ' ').trim();
+        const postId = p.post_id || '';
+        if (!postId || !p.content_html) return null;
+        if (timelineContentSkip([p.prefixes_html || ''])) return null;
+        const ts = p.created_at || 0;
+        let threadTitle = (p.thread_name || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
         if (/^Editar$/i.test(threadTitle) || !threadTitle) {
             const slug = (p.thread_path || p.permalink || '').match(/\/threads\/([^/]+)\./);
             threadTitle = (slug ? slug[1].replace(/[-_]/g, ' ') : '') || i18n('Thread');
         }
         const author = p.author || '';
-        const authorHref = p.author_href || p.authorHref || '';
-        const contentHtml = p.content_html || p.contentHtml || '';
+        const authorHref = p.author_href || '';
+        const contentHtml = p.content_html;
         const permalink = p.permalink || '#';
-        const prefixesHtml = p.prefixes_html || p.prefixesHtml || '';
-        const threadThumb = p.thread_thumb || p.threadThumb || '';
+        const prefixesHtml = p.prefixes_html || '';
+        const threadThumb = p.thread_thumb || '';
 
         const card = document.createElement('div');
         card.className = 'smg-fp-card' + (ts && ts > wm ? ' is-unread' : '');
@@ -25803,7 +25821,7 @@
             const frag = document.createDocumentFragment();
             const cards = [];
             posts.forEach(p => {
-                const pid = p.post_id || p.postId;
+                const pid = p.post_id;
                 riverSeen.add(pid);
                 try { const card = riverCard(p, riverOldWm); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
             });
@@ -25811,7 +25829,7 @@
             markRiverSortDirty();
             ensureRiverSorted();
             const lastP = posts[posts.length - 1];
-            riverLastTs = lastP.created_at || lastP.ts || 0;
+            riverLastTs = lastP.created_at || 0;
             return posts.length;
         }, () => { riverRendering = false; return 0; });
     }
@@ -25820,7 +25838,7 @@
         if (!riverList || !riverSeen) return Promise.resolve([]);
         const floor = riverLastTs || 0;
         return dbTimelineGetRecent(80, null, floor || null, riverSeen).then(
-            posts => posts.filter(p => !floor || (p.created_at || p.ts || 0) > floor),
+            posts => posts.filter(p => !floor || (p.created_at || 0) > floor),
             () => []
         );
     }
@@ -25830,9 +25848,9 @@
         const existing = riverList.querySelectorAll('.smg-fp-card');
         let inserted = false;
         posts.forEach(p => {
-            const pid = p.post_id || p.postId;
+            const pid = p.post_id;
             if (!pid) return;
-            const pts = p.created_at || p.ts || 0;
+            const pts = p.created_at || 0;
             if (riverSeen && riverSeen.has(pid)) return;
             if (riverList.querySelector('[data-post-id="' + pid + '"]')) return;
             if (riverSeen) riverSeen.add(pid);
@@ -25997,7 +26015,7 @@
             kickSync(cutoff, true);
         });
     }
-    function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || top[0].ts || 0); }); }
+    function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || 0); }); }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
     function afterSync() {
         dismissSetup();
