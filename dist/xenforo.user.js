@@ -21960,12 +21960,6 @@
         }
     }
 
-    if (location.pathname.includes('/account/alerts')) {
-        setTimeout(() => {
-            openAlertsDock(false);
-        }, 50);
-    }
-
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.cleanAlertRow = cleanAlertRow;
         window.repaintAlertThumbs = repaintAlertThumbs;
@@ -22027,7 +22021,9 @@
     // bottom sheet, que só mostrava a lista curta do popup nativo, sem paginação nem filtro.
     // A faixa do meio (601–1099) continua sem rail: lá ele comeria o conteúdo sem virar tela cheia.
     const aldockPhone = () => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px)').matches;
-    const aldockFits = () => window.innerWidth >= ALDOCK_MIN_VW || aldockPhone();
+    // na /account/alerts a lista nativa (limpa) é a própria página: o rail só repetiria o conteúdo
+    const aldockOnAlertsPage = () => /\/account\/alerts(?:\/|$)/.test(location.pathname);
+    const aldockFits = () => !aldockOnAlertsPage() && (window.innerWidth >= ALDOCK_MIN_VW || aldockPhone());
     const aldockWanted = () => gmGet(ALDOCK_KEY, '0') === '1';
     const aldockOpen = () => document.documentElement.classList.contains('smg-aldock-on');
     const railBaseUrl = () => RAIL_SRC.alerts.seeAll;
@@ -22512,6 +22508,17 @@
         if (persist !== false) gmSet(ALDOCK_KEY, '0');
     }
 
+    // janela estreitou ou a página virou a /account/alerts → desdocka SEM esquecer a preferência (volta
+    // sozinho ao alargar / sair dela). fromNav: chamado da navegação interna, que já criou a própria
+    // entrada no histórico → fechar a tela cheia do celular não pode dar history.back().
+    function aldockReconcile(fromNav) {
+        if (aldockOpen() && aldockFits() && !aldockPhone()) {
+            document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
+        }
+        if (aldockOpen() && !aldockFits()) closeAlertsDock(false, fromNav);
+        else if (!aldockOpen() && aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(false);
+    }
+
     // toggle do sino/atalho: fechado → abre; aberto → fecha.
     function toggleAlertsDock() {
         if (!aldockOpen()) { openAlertsDock(); return; }
@@ -22538,13 +22545,7 @@
 
         // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
         // No celular não há "volta sozinho": lá o rail é tela cheia e só abre por gesto do usuário.
-        window.addEventListener('resize', () => {
-            if (aldockOpen() && aldockFits() && !aldockPhone()) {
-                document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
-            }
-            if (aldockOpen() && !aldockFits()) closeAlertsDock(false);
-            else if (!aldockOpen() && aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(false);
-        });
+        window.addEventListener('resize', () => aldockReconcile(false));
         // celular: o "voltar" fecha a tela cheia (par do pushState no openAlertsDock)
         window.addEventListener('popstate', () => { if (railPhoneOpen) closeAlertsDock(false, true); });
 
@@ -26855,7 +26856,7 @@
     function paintChromeIsReady() {
         const hasNativeNav = !!document.querySelector('.p-nav');
         const topbarReady = !FEATURES.topBar || !hasNativeNav || !!document.getElementById('smg-topbar-wrap');
-        const dockWanted = typeof aldockWanted === 'function' && aldockWanted();
+        const dockWanted = typeof aldockWanted === 'function' && aldockWanted() && !aldockOnAlertsPage();
         const dockReady = !FEATURES.alertsDock || !dockWanted || !!document.getElementById('smg-aldock');
         return topbarReady && dockReady;
     }
@@ -27801,6 +27802,7 @@
             }
             resetSwappedPage();
             detectPageClasses();
+            if (FEATURES.alertsDock && aldockBound) safe(aldockReconcile, true);   // /account/alerts esconde o rail
             cls.toggle('smg-watched-feed', feedViewWanted());
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));

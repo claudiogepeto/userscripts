@@ -218,12 +218,6 @@
         }
     }
 
-    if (location.pathname.includes('/account/alerts')) {
-        setTimeout(() => {
-            openAlertsDock(false);
-        }, 50);
-    }
-
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.cleanAlertRow = cleanAlertRow;
         window.repaintAlertThumbs = repaintAlertThumbs;

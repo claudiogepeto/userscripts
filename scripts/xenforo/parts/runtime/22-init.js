@@ -504,6 +504,7 @@
             }
             resetSwappedPage();
             detectPageClasses();
+            if (FEATURES.alertsDock && aldockBound) safe(aldockReconcile, true);   // /account/alerts esconde o rail
             cls.toggle('smg-watched-feed', feedViewWanted());
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));

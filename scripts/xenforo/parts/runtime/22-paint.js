@@ -361,7 +361,7 @@
     function paintChromeIsReady() {
         const hasNativeNav = !!document.querySelector('.p-nav');
         const topbarReady = !FEATURES.topBar || !hasNativeNav || !!document.getElementById('smg-topbar-wrap');
-        const dockWanted = typeof aldockWanted === 'function' && aldockWanted();
+        const dockWanted = typeof aldockWanted === 'function' && aldockWanted() && !aldockOnAlertsPage();
         const dockReady = !FEATURES.alertsDock || !dockWanted || !!document.getElementById('smg-aldock');
         return topbarReady && dockReady;
     }
