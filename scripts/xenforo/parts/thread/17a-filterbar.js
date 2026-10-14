@@ -500,7 +500,7 @@
                     }
                 }
                 if (!u) {
-                    const firstPostImg = document.querySelector('.message-inner .message-body img.bbImage, .message-inner .message-body img[src*="attachment"], .message-inner .message-body img:not(.smg-emoji):not(.avatar)');
+                    const firstPostImg = document.querySelector('.message-inner .message-body img.bbImage, .message-inner .message-body img[src*="attachment"], .message-inner .message-body img:not(.smg-emoji):not(.smilie):not(.avatar)');
                     if (firstPostImg) {
                         u = firstPostImg.getAttribute('data-src') || firstPostImg.getAttribute('data-url') || firstPostImg.getAttribute('src') || '';
                     }
