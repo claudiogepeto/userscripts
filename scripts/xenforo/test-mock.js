@@ -8338,6 +8338,16 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SCROLL: linhas de tópico fora da tela não renderizam (listas)
+    // =========================================================================
+    {
+        console.log('\n--- Scroll: content-visibility nas linhas de tópico ---');
+        const listCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        assert(/html\.smg-threadlist :not\(\.smg-sticky-compact-list\) > \.structItem--thread \{\s*content-visibility: auto;\s*contain-intrinsic-size: auto 163px;/.test(listCss), 'Linhas da lista (fora da lista compacta de fixos) devem usar content-visibility:auto com altura estimada');
+        assert(/html\.smg-threadlist\.smg-tv-grid :not\(\.smg-sticky-compact-list\) > \.structItem--thread \{\s*contain-intrinsic-size: auto 450px;/.test(listCss), 'Cards da grade devem estimar a altura do card');
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
