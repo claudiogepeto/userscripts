@@ -357,7 +357,7 @@
             clearTimeout(timelineCronTimer);
             timelineCronTimer = null;
         }
-        timelineCronTimer = setTimeout(cronRefreshFollowedAndTimeline, delayMs);
+        timelineCronTimer = setTimeout(cronTick, delayMs);
     }
 
     if (typeof window !== 'undefined') {
@@ -400,7 +400,36 @@
 
     function startTimelineCron() {
         if (timelineCronTimer) return;
-        timelineCronTimer = setTimeout(cronRefreshFollowedAndTimeline, currentCronIntervalMs);
+        timelineCronTimer = setTimeout(cronTick, currentCronIntervalMs);
+    }
+
+    // Tick do timer: com N abas abertas, cada uma tinha o próprio cron e todas batiam no fórum. Agora só a
+    // aba VISÍVEL roda, e o último run fica num timestamp compartilhado (GM storage) → as outras pulam até
+    // o intervalo vencer. navigator.locks (quando existe) impede duas abas visíveis de rodar juntas.
+    const CRON_LAST_RUN_KEY = 'smg-feed-cron-last-run';
+    function cronTick() {
+        timelineCronTimer = null;
+        if (document.hidden) {
+            scheduleNextCron(currentCronIntervalMs);
+            return Promise.resolve(0);
+        }
+        const since = Date.now() - (parseInt(gmGet(CRON_LAST_RUN_KEY, '0'), 10) || 0);
+        if (since >= 0 && since < currentCronIntervalMs) {
+            scheduleNextCron(currentCronIntervalMs - since);
+            return Promise.resolve(0);
+        }
+        const run = () => {
+            gmSet(CRON_LAST_RUN_KEY, String(Date.now()));
+            return cronRefreshFollowedAndTimeline();
+        };
+        if (typeof navigator !== 'undefined' && navigator.locks && navigator.locks.request) {
+            return navigator.locks.request('smg-feed-cron', { ifAvailable: true }, lock => {
+                if (lock) return run();
+                scheduleNextCron(currentCronIntervalMs);
+                return 0;
+            });
+        }
+        return run();
     }
 
     function syncTimeline(opts) {
@@ -532,6 +561,7 @@
             ingestCurrentThreadPageIfFollowed,
             cronRefreshFollowedAndTimeline,
             startTimelineCron,
+            cronTick,
             CRON_MIN_INTERVAL_MS,
             CRON_MAX_INTERVAL_MS,
             applyCronBackoff,
