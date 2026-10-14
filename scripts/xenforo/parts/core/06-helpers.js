@@ -122,7 +122,6 @@
             return url.replace(/\/\/t(\d*)\.pixhost\.([a-z.]+)\/thumbs\//i, '//img$1.pixhost.$2/images/');
         return url.replace('.md.', '.').replace('.th.', '.');
     }
-    function isImgboxThumb(url) { return /\bimgbox\.com\//i.test(url) && /_t\.(?:jpe?g|png|gif|webp)(?:$|[?#])/i.test(url); }
 
     // inverso do getBigUrl: insere `.md.` antes da extensão → tier MÉDIO dos hosts que seguem a convenção
     // (imgbox/pixhost/…). Usado nos previews da galeria (tile = médio, perf; o feed abre o full no clique).

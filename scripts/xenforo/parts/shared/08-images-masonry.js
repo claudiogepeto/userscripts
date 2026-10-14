@@ -803,9 +803,6 @@
     //   · 4 itens com maioria vertical (3+) → 3 colunas; caso contrário → 2
     //   · 5 ou mais → 3 colunas
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
-    const TALL_RELH = 1.35;  // h/w > 1.35 = muito vertical (stories/prints 9:16, 2:3)
-    const SMG_MEDIA_MAX_VH = 70;
-    const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
         // No masonry (.auto-image-grid), a largura é rigorosamente 100% da coluna (gap de 8px).

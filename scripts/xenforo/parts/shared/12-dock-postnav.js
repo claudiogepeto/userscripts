@@ -92,8 +92,6 @@
         });
 
         // ---- links da página (casados por CLASSE/HREF, não por texto → funcionam em PT, EN, etc.) ----
-        const prevPageLink = document.querySelector('.pageNav-jump--prev, .pageNavSimple-el--prev');
-        const nextPageLink = document.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
         // sort tabs / URLs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
         function getSortHref(wantDate) {
             let dateHref = null, reactHref = null;

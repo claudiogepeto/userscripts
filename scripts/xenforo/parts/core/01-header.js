@@ -81,7 +81,7 @@
 //  POST scroll-inf ... setupInfiniteScroll
 //  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,
 //                      blockRelH, buildPostGallery, buildPostGalleries
-//  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO/getRgPlayIO,
+//  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO,
 //                      rgTasks(fila), rgPlayIfVisible, rgLoad, rgViaDirect/rgViaBlob, rgRestore,
 //                      rgBuild, rgControls, rgStart, buildNativeVideo, rgLoadUrl/rgStartUrl,
 //                      rgHidePlaceholder, applyRedgifsPlayer
@@ -124,9 +124,6 @@
     // skeleton are mounted.
     const SMG_CRITICAL_PAINT_STYLE_ID = 'smg-critical-paint';
     const smgCriticalPaintRoot = document.documentElement;
-    const smgCriticalPaintPath = location.pathname || '/';
-    const smgCriticalPaintSearch = location.search || '';
-    const smgCriticalPaintRoute = true;
     const smgCriticalPaintDisabled = (() => {
         try {
             if (typeof GM_getValue === 'function' && String(GM_getValue('smg-off', '0')) === '1') return true;
@@ -136,7 +133,7 @@
         }
     })();
 
-    if (smgCriticalPaintRoot && smgCriticalPaintRoute && !smgCriticalPaintDisabled) {
+    if (smgCriticalPaintRoot && !smgCriticalPaintDisabled) {
         smgCriticalPaintRoot.classList.add('smg-critical-paint');
         if (!document.getElementById(SMG_CRITICAL_PAINT_STYLE_ID)) {
             const criticalStyle = document.createElement('style');

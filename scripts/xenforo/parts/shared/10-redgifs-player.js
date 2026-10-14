@@ -4,7 +4,7 @@
     //
     // Mapa interno (ver "PIPELINE DE VÍDEO" no índice do topo do arquivo):
     //   API redgifs .. GMX · rgIdFrom · gmGetJSON · rgToken · rgVideo (id → urls.hd/sd + poster)
-    //   infra ........ rgBlob · getRgLoadIO/getRgPlayIO · rgTasks (fila por viewport, máx 3) · rgHost/rgDirect
+    //   infra ........ rgBlob · getRgLoadIO · rgTasks (fila por viewport, máx 3) · rgHost/rgDirect
     //   carga ........ rgLoad → rgViaDirect (streaming) | rgViaBlob (download) · rgRestore (falha → iframe)
     //   player UI .... rgBuild · rgControls (controles próprios) · rgStart · buildNativeVideo
     //   aplica ....... applyRedgifsPlayer (loaders/iframes do fórum → nosso player) · rgHidePlaceholder
@@ -90,7 +90,6 @@
         return rgLoadIO || (rgLoadIO = makeLazyIO(el => { if (!el.dataset.rgLoaded && !el.dataset.rgPrepared) rgEnqueue(() => rgPrepare(el), el); }, { rootMargin: '200% 0px' }));
     }
     function rgAutoOK(v) { return !(v.duration > 60) || v._rgUserPlayed; }   // vídeo >1min NÃO toca sozinho (só no clique); curto (gif/loop) autoplay normal
-    function getRgPlayIO() { return { observe: () => {}, unobserve: () => {} }; }
     // só um com áudio: muta os OUTROS players vivos. O Set self-poda nós detached → sem querySelectorAll no doc a cada play/unmute.
     function rgSolo(video) { rgLiveVideos.forEach(o => { if (!o.isConnected) rgLiveVideos.delete(o); else if (o !== video) o.muted = true; }); }
     // libera os objectURLs dos vídeos que saíram do DOM (ex.: ao fechar o feed) — senão os ≤6 blobs ficam até a próxima evicção da LRU.

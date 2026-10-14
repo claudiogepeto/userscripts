@@ -82,7 +82,7 @@
 //  POST scroll-inf ... setupInfiniteScroll
 //  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,
 //                      blockRelH, buildPostGallery, buildPostGalleries
-//  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO/getRgPlayIO,
+//  REDGIFS + PLAYER .. GMX, rgIdFrom, rgToken, rgVideo, rgBlob, getRgLoadIO,
 //                      rgTasks(fila), rgPlayIfVisible, rgLoad, rgViaDirect/rgViaBlob, rgRestore,
 //                      rgBuild, rgControls, rgStart, buildNativeVideo, rgLoadUrl/rgStartUrl,
 //                      rgHidePlaceholder, applyRedgifsPlayer
@@ -125,9 +125,6 @@
     // skeleton are mounted.
     const SMG_CRITICAL_PAINT_STYLE_ID = 'smg-critical-paint';
     const smgCriticalPaintRoot = document.documentElement;
-    const smgCriticalPaintPath = location.pathname || '/';
-    const smgCriticalPaintSearch = location.search || '';
-    const smgCriticalPaintRoute = true;
     const smgCriticalPaintDisabled = (() => {
         try {
             if (typeof GM_getValue === 'function' && String(GM_getValue('smg-off', '0')) === '1') return true;
@@ -137,7 +134,7 @@
         }
     })();
 
-    if (smgCriticalPaintRoot && smgCriticalPaintRoute && !smgCriticalPaintDisabled) {
+    if (smgCriticalPaintRoot && !smgCriticalPaintDisabled) {
         smgCriticalPaintRoot.classList.add('smg-critical-paint');
         if (!document.getElementById(SMG_CRITICAL_PAINT_STYLE_ID)) {
             const criticalStyle = document.createElement('style');
@@ -10238,7 +10235,6 @@
             return url.replace(/\/\/t(\d*)\.pixhost\.([a-z.]+)\/thumbs\//i, '//img$1.pixhost.$2/images/');
         return url.replace('.md.', '.').replace('.th.', '.');
     }
-    function isImgboxThumb(url) { return /\bimgbox\.com\//i.test(url) && /_t\.(?:jpe?g|png|gif|webp)(?:$|[?#])/i.test(url); }
 
     // inverso do getBigUrl: insere `.md.` antes da extensão → tier MÉDIO dos hosts que seguem a convenção
     // (imgbox/pixhost/…). Usado nos previews da galeria (tile = médio, perf; o feed abre o full no clique).
@@ -13000,9 +12996,6 @@
     //   · 4 itens com maioria vertical (3+) → 3 colunas; caso contrário → 2
     //   · 5 ou mais → 3 colunas
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
-    const TALL_RELH = 1.35;  // h/w > 1.35 = muito vertical (stories/prints 9:16, 2:3)
-    const SMG_MEDIA_MAX_VH = 70;
-    const SMG_MEDIA_MAX_PX = 750;
     function setVerticalMaxWidth(el, w, h, vertical) {
         if (!el || !el.style || !w || !h) return;
         // No masonry (.auto-image-grid), a largura é rigorosamente 100% da coluna (gap de 8px).
@@ -13636,7 +13629,7 @@
     //
     // Mapa interno (ver "PIPELINE DE VÍDEO" no índice do topo do arquivo):
     //   API redgifs .. GMX · rgIdFrom · gmGetJSON · rgToken · rgVideo (id → urls.hd/sd + poster)
-    //   infra ........ rgBlob · getRgLoadIO/getRgPlayIO · rgTasks (fila por viewport, máx 3) · rgHost/rgDirect
+    //   infra ........ rgBlob · getRgLoadIO · rgTasks (fila por viewport, máx 3) · rgHost/rgDirect
     //   carga ........ rgLoad → rgViaDirect (streaming) | rgViaBlob (download) · rgRestore (falha → iframe)
     //   player UI .... rgBuild · rgControls (controles próprios) · rgStart · buildNativeVideo
     //   aplica ....... applyRedgifsPlayer (loaders/iframes do fórum → nosso player) · rgHidePlaceholder
@@ -13722,7 +13715,6 @@
         return rgLoadIO || (rgLoadIO = makeLazyIO(el => { if (!el.dataset.rgLoaded && !el.dataset.rgPrepared) rgEnqueue(() => rgPrepare(el), el); }, { rootMargin: '200% 0px' }));
     }
     function rgAutoOK(v) { return !(v.duration > 60) || v._rgUserPlayed; }   // vídeo >1min NÃO toca sozinho (só no clique); curto (gif/loop) autoplay normal
-    function getRgPlayIO() { return { observe: () => {}, unobserve: () => {} }; }
     // só um com áudio: muta os OUTROS players vivos. O Set self-poda nós detached → sem querySelectorAll no doc a cada play/unmute.
     function rgSolo(video) { rgLiveVideos.forEach(o => { if (!o.isConnected) rgLiveVideos.delete(o); else if (o !== video) o.muted = true; }); }
     // libera os objectURLs dos vídeos que saíram do DOM (ex.: ao fechar o feed) — senão os ≤6 blobs ficam até a próxima evicção da LRU.
@@ -15092,8 +15084,6 @@
         });
 
         // ---- links da página (casados por CLASSE/HREF, não por texto → funcionam em PT, EN, etc.) ----
-        const prevPageLink = document.querySelector('.pageNav-jump--prev, .pageNavSimple-el--prev');
-        const nextPageLink = document.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
         // sort tabs / URLs: a de reação tem ?order=reaction_score no href; a de data é a sem order=
         function getSortHref(wantDate) {
             let dateHref = null, reactHref = null;
