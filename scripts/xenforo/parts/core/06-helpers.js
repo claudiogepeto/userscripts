@@ -131,6 +131,21 @@
         return url.replace(/(\.(?:jpe?g|png|gif|webp|avif|bmp))(\?|#|$)/i, '.md$1$2');
     }
 
+    // copia texto pra área de transferência e chama done() no sucesso. A clipboard API falha em contexto
+    // não-seguro/sem permissão → cai no textarea + execCommand('copy').
+    function copyText(text, done) {
+        const fallback = () => {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                document.execCommand('copy'); ta.remove(); done();
+            } catch (e) {}
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+        else fallback();
+    }
+
     function cleanText(text) {
         return text.replace('.md', '').replace('.th', '');
     }

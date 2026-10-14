@@ -1302,18 +1302,8 @@
                     if (lbl) lbl.textContent = i18n('Share');
                 }, 1200);
             };
-            // clipboard API falha em contexto não-seguro/sem permissão → cai no textarea+execCommand
-            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, () => smgCopyFallback(url, ok));
-            else smgCopyFallback(url, ok);
+            copyText(url, ok);
         }, true);
-    }
-    function smgCopyFallback(text, done) {
-        try {
-            const ta = document.createElement('textarea');
-            ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
-            document.body.appendChild(ta); ta.focus(); ta.select();
-            document.execCommand('copy'); ta.remove(); done();
-        } catch (e) {}
     }
     function smgActLabel(el, text) {   // garante rótulo de texto no botão movido (share/save são só ícone)
         if (el.querySelector('.smg-pc-act-lbl')) return;

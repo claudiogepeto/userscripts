@@ -550,13 +550,9 @@
         a.insertBefore(im, a.firstChild);
         next();
     }
-    function fhCopyFallback(text, done) {
-        try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); ta.remove(); done(); } catch (e) {}
-    }
     function fhCopy(text, btn) {   // copia o link + feedback visual (✓ por ~1.4s) — usa o par share/shareDone que já existe
         const done = () => { btn.classList.add('smg-fhcard-copied'); btn.innerHTML = ICONS.shareDone; setTimeout(() => { btn.classList.remove('smg-fhcard-copied'); btn.innerHTML = ICONS.share; }, 1400); };
-        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => fhCopyFallback(text, done)); return; }
-        fhCopyFallback(text, done);
+        copyText(text, done);
     }
     // contagem → texto "Galeria · N itens" / "Arquivo"
     function fhSub(kind, count) { return count > 1 ? (i18n('Gallery') + ' · ' + count + ' ' + i18n(count === 1 ? 'item' : 'items')) : kind; }
