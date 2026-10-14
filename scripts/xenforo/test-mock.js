@@ -650,7 +650,7 @@ async function runTests() {
     const searchInjectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(searchInjectedStyles.includes('top: max(32px, 4vh);'), 'CSS deve definir top: max(32px, 4vh) para ancoragem de #smg-search-pop');
     assert(searchInjectedStyles.includes('transform: translateX(-50%) scale(0.98);'), 'CSS deve definir transform: translateX(-50%) scale(0.98) para #smg-search-pop');
-    assert(searchInjectedStyles.includes('max-height: calc(90vh - 160px) !important;'), 'CSS deve definir max-height: calc(90vh - 160px) !important para os resultados de busca');
+    assert(searchInjectedStyles.includes('max-height: min(62vh, 560px) !important;'), 'CSS deve definir max-height: min(62vh, 560px) !important para os resultados de busca');
     assert(searchInjectedStyles.includes('width: 780px;'), 'CSS deve definir width: 780px para #smg-search-pop');
     assert(searchInjectedStyles.includes('.smg-search-sentinel'), 'CSS deve definir estilos para .smg-search-sentinel');
     assert(searchInjectedStyles.includes('.smg-search-sentinel.is-loading .smg-loading'), 'CSS deve definir exibição de .smg-loading quando o sentinel tem .is-loading');
@@ -3541,8 +3541,10 @@ async function runTests() {
     assert(reactIc !== null && reactIc.querySelector('svg') !== null, 'O botão de reação tem o ícone SVG .smg-pc-react-ic');
 
     const reactN = reactBtn.querySelector('.smg-pc-react-n');
-    const hasZeroReactions = reactN !== null && (reactN.textContent.includes('0 reações') || reactN.textContent.includes('0 reactions'));
-    assert(hasZeroReactions, 'O texto da reação .smg-pc-react-n contém "0 reações"');
+    const reactNum = reactN ? reactN.querySelector('.smg-react-num') : null;
+    const reactWord = reactN ? reactN.querySelector('.smg-react-w') : null;
+    assert(reactNum !== null && reactNum.textContent === '0', 'A reação .smg-pc-react-n tem .smg-react-num com "0"');
+    assert(reactWord !== null && (reactWord.textContent === 'reações' || reactWord.textContent === 'reactions'), 'A reação .smg-pc-react-n tem .smg-react-w com "reações"');
 
     // 2. Botão Salvar
     const saveBtn = pcActions.querySelector('.smg-pc-act--save');
@@ -7354,7 +7356,8 @@ async function runTests() {
         assert(!scriptCode.includes('<div class="smg-search-badges-slot"></div>'), 'Filtro de tags deve ter sido removido da toolbar do search');
 
         // 3. Toolbar do Search Mobile: Dropdowns monocromáticos icon-only, autor icon-only e tela cheia com barra na base
-        assert(scriptCode.includes('#smg-search-pop {\n                    position: fixed !important; inset: 0 !important;\n                    top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important;\n                    width: 100vw !important; max-width: 100vw !important;\n                    height: 100dvh !important; max-height: 100dvh !important;'), 'Search pop no mobile deve ocupar toda a tela (100dvh)');
+        assert(scriptCode.includes('#smg-search-pop {\n                    position: fixed !important; inset: auto !important;\n                    top: var(--smg-kb-top, 0px) !important; bottom: auto !important; left: 0 !important; right: 0 !important;\n                    width: 100vw !important; max-width: 100vw !important;'), 'Search pop no mobile deve ir de borda a borda a partir do topo do viewport visível');
+        assert(scriptCode.includes('height: var(--smg-kb-h, 100dvh) !important; max-height: var(--smg-kb-h, 100dvh) !important;'), 'Search pop no mobile deve ocupar toda a tela (--smg-kb-h, 100dvh)');
         assert(scriptCode.includes('#smg-search-pop::before { display: none !important; }'), 'Puxador do sheet deve ser removido no mobile');
         assert(scriptCode.includes('#smg-search-pop .smg-search-bar {\n                    order: 3 !important;'), 'Barra de busca no mobile deve ficar na base (order: 3)');
         assert(scriptCode.includes('#smg-search-pop .smg-search-global-toolbar {\n                    order: 2 !important;'), 'Toolbar de filtros no mobile deve ficar acima do input (order: 2)');
