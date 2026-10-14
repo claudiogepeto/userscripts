@@ -164,7 +164,7 @@
         const logoA = document.createElement('a');
         logoA.className = 'smg-tb-logo';
         logoA.href = '/';
-        if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; logoA.classList.add('smg-tb-logo--custom'); }
+        if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; }
         else if (logoImg) { const im = document.createElement('img'); im.src = logoImg.getAttribute('src') || ''; im.alt = ''; logoA.appendChild(im); }
         else logoA.textContent = 'Home';
         // ZONA ESQUERDA: logo + Discover (o logo já é o "Início")
@@ -196,7 +196,7 @@
                 secs[secs.length - 1].rows.push(it);
             });
             const main = secs.filter(s => s.rows.length).map(s =>
-                '<div class="smg-tb-mega-sec">' +
+                '<div>' +
                 (s.title ? '<div class="smg-tb-mega-label">' + s.title + '</div>' : '') +
                 '<div class="smg-tb-mega-grid">' +
                 s.rows.map(it =>
@@ -230,7 +230,7 @@
             if (g.mega) {   // Discover → mega-menu (grid + painel destacado), não a lista simples
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'smg-tb-item smg-tb-trigger';
+                btn.className = 'smg-tb-item';
                 btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
                 const pop = document.createElement('div');
                 pop.className = 'smg-tb-pop smg-tb-pop--mega';
@@ -244,7 +244,7 @@
             if (!items.some(it => !it.divider)) return;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'smg-tb-item smg-tb-trigger';
+            btn.className = 'smg-tb-item';
             btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
             const pop = document.createElement('div');
             pop.className = 'smg-tb-pop';
@@ -289,7 +289,7 @@
         tbActs.className = 'smg-search-acts'; searchBar.appendChild(tbActs);
         const tbClear = document.createElement('button');
         tbClear.type = 'button';
-        tbClear.className = 'smg-tb-search-clear smg-search-clear';
+        tbClear.className = 'smg-search-clear';
         tbClear.setAttribute('aria-label', i18n('Clear search'));
         tbClear.title = i18n('Clear');
         tbClear.hidden = true;

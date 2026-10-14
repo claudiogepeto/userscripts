@@ -57,7 +57,7 @@
                 '</button>' +
                 '<button type="button" class="smg-search-switch" role="switch" title="Search thread titles only (ignores post text)">' +
                     '<span class="smg-search-switch-track"><span class="smg-search-switch-thumb"></span></span>' +
-                    '<span class="smg-search-switch-lbl">Titles only</span>' +
+                    '<span>Titles only</span>' +
                 '</button>' +
                 '<button type="button" class="smg-search-author-btn" aria-label="Author" title="Filter by author">' + svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>') + '</button>' +
                 '<a class="smg-search-adv" title="Advanced" aria-label="Advanced">' + ICONS.sliders + '</a>' +

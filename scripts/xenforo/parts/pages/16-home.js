@@ -563,7 +563,7 @@
             const bucket = hub ? hub.dataset.smgHomeHub : 'categories';
             const blurb = homeNodeBlurb(title, bucket);
             const desc = document.createElement('div');
-            desc.className = 'node-description smg-node-blurb';
+            desc.className = 'node-description';
             desc.textContent = blurb;
             const main = node.querySelector('.node-main') || titleEl.parentElement || node;
             if (titleEl && titleEl.parentElement === main) main.insertBefore(desc, titleEl.nextSibling);
@@ -896,7 +896,7 @@
         const tabsEl = document.createElement('div'); tabsEl.className = 'smg-feed-tabs';
         const tablist = document.createElement('div'); tablist.className = 'smg-feed-tablist';
         const scrollWrap = document.createElement('div'); scrollWrap.className = 'smg-feed-scroll';
-        const panelsEl = document.createElement('div'); panelsEl.className = 'smg-feed-panels';
+        const panelsEl = document.createElement('div');
         scrollWrap.appendChild(panelsEl);
 
         // setas ‹ › (desktop) — rolam o painel ATIVO; somem nas bordas

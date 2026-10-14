@@ -234,7 +234,7 @@
         const onReactions = /[?&]order=reaction/i.test(location.search) || reactLink.classList.contains('is-active');
         // TOGGLE ÚNICO (igual a dock): ícone de ORDENAÇÃO (⇅) + critério atual; clicar leva pro outro
         const curLabel = onReactions ? i18n('Reactions') : i18n('Date');
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-sort';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         const btn = smgBarBtn({
             icon: ICONS.sort,
             label: curLabel,
@@ -261,7 +261,7 @@
 
     // GRUPO 3 — ações PRIMÁRIAS (ícones que PROXY-CLICAM o nativo): ir-pra-nova · seguir · marcar lido · traduzir
     function smgPrimaryActions(bo) {
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-actions';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         let n = 0;
         const jumpNew = bo.querySelector('[data-xf-click="scroll-to"]');
         if (jumpNew) { g.appendChild(smgBarBtn({ icon: ICONS.postDown, title: 'Go to new', onClick: () => jumpNew.click() })); n++; }
@@ -337,7 +337,7 @@
             push(b, (b.querySelector('.button-text') || b).textContent);
         });
         if (!items.length) return null;
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-more';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         const btn = smgBarBtn({ label: '⋯', title: 'More' });
         const pop = document.createElement('div'); pop.className = 'smg-bar-pop';
         items.forEach(it => {
@@ -692,9 +692,9 @@
 
             if (upText || crText) {
                 datesRow.innerHTML = `
-                    ${upText ? `<span class="smg-card-date-item"><span class="smg-card-date-lbl">${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
+                    ${upText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
                     ${upText && crText ? `<span class="smg-card-date-sep">·</span>` : ''}
-                    ${crText ? `<span class="smg-card-date-item"><span class="smg-card-date-lbl">${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
+                    ${crText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
                 `;
                 if (mainCell) mainCell.appendChild(datesRow);
             }
@@ -1458,7 +1458,7 @@
             bar.appendChild(save);
         }
         const translate = footerBar && footerBar.querySelector('.smgTranslator-btn');
-        if (translate) { translate.classList.add('smg-pc-act', 'smg-pc-act--translate'); bar.appendChild(translate); }
+        if (translate) { translate.classList.add('smg-pc-act'); bar.appendChild(translate); }
         const share = attribution && attribution.querySelector('a.message-attribution-gadget[data-xf-init="share-tooltip"]');   // Share = ÚLTIMO (depois do translate)
         if (share) {
             share.classList.add('smg-pc-act', 'smg-pc-act--share');

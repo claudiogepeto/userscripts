@@ -171,7 +171,7 @@
             icon: ICONS.layers,
             label: 'Page navigation',
         });
-        btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
+        btnMobilePageBtn.classList.add('smg-nav-labeled');
         const mobilePageTxt = document.createElement('span');
         mobilePageTxt.className = 'smg-nav-btn-text';
         mobilePageTxt.textContent = pageJump ? `${pageJump.current} / ${pageJump.max}` : '';
@@ -592,11 +592,11 @@
 
             // Grupos para Desktop
             const actionsGroup = makeGroup(btnWatch);
-            actionsGroup.className = 'smg-nav-group smg-side smg-side--acts smg-side--desktop-only';
+            actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
             const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnViewMode);
-            pagenavGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
-            scrollGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
@@ -625,7 +625,7 @@
             if (btnListSort) listBtns.push(btnListSort);
             if (btnViewToggle) listBtns.push(btnViewToggle);
             const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            listGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
@@ -644,7 +644,7 @@
             listBar.append(...[btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean));
             const listBtns = [btnSort, btnWatch, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnListFilter, btnListSort, btnViewToggle];
             const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            listGroup.className = 'smg-nav-group smg-side--desktop-only';
             panel.append(btnSettings, makeDivider(), listBar, centralGroup, makeDivider(), listGroup, btnSheet);
         }
 
@@ -795,7 +795,6 @@
         const sortPop = (isList && btnListSort) ? document.createElement('div') : null;
         if (sortPop) {
             sortPop.id = 'smg-listsort-pop';
-            sortPop.className = 'smg-sort-pop';
             sortPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Ordenar' : 'Sort') + '</span><div class="smg-sort-body"></div>';
         }
 
@@ -2158,7 +2157,7 @@
                 // ===== TOOLBAR UNIFICADA (PAINEL INTEGRADO) =====
                 searchToolbarEl.innerHTML = `
                     <div class="smg-search-tb-row">
-                        <div class="smg-search-select-wrap smg-search-scope-wrap">
+                        <div class="smg-search-select-wrap">
                             <span class="smg-search-select-ic" aria-hidden="true">${ICONS.globe}</span>
                             <select class="smg-search-scope-select" aria-label="${IS_PT ? 'Escopo da busca' : 'Search scope'}">
                                 <option value="everywhere">${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
@@ -2167,7 +2166,7 @@
                                 ${threadId ? `<option value="thread">${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
                             </select>
                         </div>
-                        <div class="smg-search-select-wrap smg-search-sort-wrap">
+                        <div class="smg-search-select-wrap">
                             <span class="smg-search-select-ic" aria-hidden="true">${ICONS.barChart}</span>
                             <select class="smg-search-sort-select" aria-label="${IS_PT ? 'Ordenação' : 'Sort order'}">
                                 <option value="relevance">${IS_PT ? 'Relevância' : 'Relevance'}</option>

@@ -516,7 +516,7 @@
         fhead.innerHTML = '<h1 class="smg-river-title">Timeline</h1><div class="smg-river-head-actions"></div>';
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
-        refBtn.className = 'smg-river-refresh smg-btn smg-btn--ghost';
+        refBtn.className = 'smg-river-refresh';
         refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar timeline' : 'Refresh timeline';
         refBtn.setAttribute('aria-label', refBtn.title);
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
@@ -528,7 +528,6 @@
         if (actions) {
             const markAllBtn = document.createElement('button');
             markAllBtn.type = 'button';
-            markAllBtn.className = 'smg-river-markread smg-btn smg-btn--ghost';
             markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
             markAllBtn.setAttribute('aria-label', markAllBtn.title);
             markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';

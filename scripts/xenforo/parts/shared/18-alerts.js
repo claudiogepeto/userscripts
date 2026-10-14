@@ -111,7 +111,7 @@
         const row = main.parentElement;
         if (row && row.classList.contains('contentRow') && !row.querySelector(':scope > .smg-al-icon')) {
             const ico = document.createElement('span');
-            ico.className = 'smg-al-icon ' + (isComment ? 'smg-al-icon--comment' : 'smg-al-icon--post');
+            ico.className = 'smg-al-icon' + (isComment ? ' smg-al-icon--comment' : '');
             ico.innerHTML = isComment ? ICONS.comment : ICONS.newPost;
             // referência da thread p/ a foto. O alerta do XF linka pro POST (/posts/N) e não cita a
             // thread em lugar nenhum — quando não há link de /threads/, o TÍTULO é o único elo com a

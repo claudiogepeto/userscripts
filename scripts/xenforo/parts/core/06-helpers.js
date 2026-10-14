@@ -1111,7 +1111,7 @@
         btn.className = 'smg-multiselect-btn';
         btn.innerHTML =
             `<span class="smg-multiselect-btn-icon">${ICONS.filter || ICONS.sliders}</span>` +
-            `<span class="smg-multiselect-btn-text">${opts.buttonLabel || i18n('Tags')}</span>` +
+            `<span>${opts.buttonLabel || i18n('Tags')}</span>` +
             `<span class="smg-multiselect-btn-badge" hidden>0</span>` +
             `<span class="smg-multiselect-btn-arrow">${svgIcon('<path d="m6 9 6 6 6-6"/>')}</span>`;
         container.appendChild(btn);

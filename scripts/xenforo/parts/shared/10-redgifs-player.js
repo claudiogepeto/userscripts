@@ -181,7 +181,6 @@
         wrap.style.setProperty('--smg-rg-ratio', String(r));
         const isVertical = (h / w) >= 0.9;
         wrap.classList.toggle('smg-rg-vert', isVertical);
-        wrap.classList.toggle('smg-rg-wide', !isVertical);
         // Quando o teto de altura é atingido, reduz a largura do wrapper na mesma proporção.
         // Em masonry o !important da regra geral de coluna é sobrescrito apenas neste player real.
         const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
@@ -565,7 +564,6 @@
         const volfill = document.createElement('div'); volfill.className = 'smg-rgc-volfill';
         const volbar = document.createElement('div'); volbar.className = 'smg-rgc-volbar'; volbar.setAttribute('role', 'slider'); volbar.setAttribute('aria-label', i18n('Volume')); volbar.appendChild(volfill);
         const volgrp = document.createElement('div');
-        volgrp.className = 'smg-rgc-volgrp';
         volgrp.append(mute, volbar);
         const syncVol = () => { mute.innerHTML = (video.muted || !video.volume) ? ICONS.volumeMute : ICONS.volume; volfill.style.width = ((video.muted ? 0 : video.volume) * 100) + '%'; };
         const setVolFromX = (cx, r) => { if (!r.width) return; const v = Math.max(0, Math.min(1, (cx - r.left) / r.width)); video.volume = v; video.muted = (v === 0); if (v > 0) rgSolo(video); syncVol(); };
@@ -574,7 +572,7 @@
         const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
         const speedBtn = document.createElement('button');
         speedBtn.type = 'button';
-        speedBtn.className = 'smg-rgc-btn smg-rgc-speed';
+        speedBtn.className = 'smg-rgc-speed';
         speedBtn.title = i18n('Playback speed');
         speedBtn.setAttribute('aria-label', i18n('Playback speed'));
         speedBtn.textContent = '1x';

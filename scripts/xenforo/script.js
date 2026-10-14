@@ -10568,7 +10568,7 @@
         btn.className = 'smg-multiselect-btn';
         btn.innerHTML =
             `<span class="smg-multiselect-btn-icon">${ICONS.filter || ICONS.sliders}</span>` +
-            `<span class="smg-multiselect-btn-text">${opts.buttonLabel || i18n('Tags')}</span>` +
+            `<span>${opts.buttonLabel || i18n('Tags')}</span>` +
             `<span class="smg-multiselect-btn-badge" hidden>0</span>` +
             `<span class="smg-multiselect-btn-arrow">${svgIcon('<path d="m6 9 6 6 6-6"/>')}</span>`;
         container.appendChild(btn);
@@ -13132,7 +13132,6 @@
         wrap.style.setProperty('--smg-rg-ratio', String(r));
         const isVertical = (h / w) >= 0.9;
         wrap.classList.toggle('smg-rg-vert', isVertical);
-        wrap.classList.toggle('smg-rg-wide', !isVertical);
         // Quando o teto de altura é atingido, reduz a largura do wrapper na mesma proporção.
         // Em masonry o !important da regra geral de coluna é sobrescrito apenas neste player real.
         const maxWidth = 'min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + r.toFixed(4) + '))';
@@ -13516,7 +13515,6 @@
         const volfill = document.createElement('div'); volfill.className = 'smg-rgc-volfill';
         const volbar = document.createElement('div'); volbar.className = 'smg-rgc-volbar'; volbar.setAttribute('role', 'slider'); volbar.setAttribute('aria-label', i18n('Volume')); volbar.appendChild(volfill);
         const volgrp = document.createElement('div');
-        volgrp.className = 'smg-rgc-volgrp';
         volgrp.append(mute, volbar);
         const syncVol = () => { mute.innerHTML = (video.muted || !video.volume) ? ICONS.volumeMute : ICONS.volume; volfill.style.width = ((video.muted ? 0 : video.volume) * 100) + '%'; };
         const setVolFromX = (cx, r) => { if (!r.width) return; const v = Math.max(0, Math.min(1, (cx - r.left) / r.width)); video.volume = v; video.muted = (v === 0); if (v > 0) rgSolo(video); syncVol(); };
@@ -13525,7 +13523,7 @@
         const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
         const speedBtn = document.createElement('button');
         speedBtn.type = 'button';
-        speedBtn.className = 'smg-rgc-btn smg-rgc-speed';
+        speedBtn.className = 'smg-rgc-speed';
         speedBtn.title = i18n('Playback speed');
         speedBtn.setAttribute('aria-label', i18n('Playback speed'));
         speedBtn.textContent = '1x';
@@ -14489,7 +14487,7 @@
             icon: ICONS.layers,
             label: 'Page navigation',
         });
-        btnMobilePageBtn.classList.add('smg-nav-labeled', 'smg-mobile-page-pill');
+        btnMobilePageBtn.classList.add('smg-nav-labeled');
         const mobilePageTxt = document.createElement('span');
         mobilePageTxt.className = 'smg-nav-btn-text';
         mobilePageTxt.textContent = pageJump ? `${pageJump.current} / ${pageJump.max}` : '';
@@ -14910,11 +14908,11 @@
 
             // Grupos para Desktop
             const actionsGroup = makeGroup(btnWatch);
-            actionsGroup.className = 'smg-nav-group smg-side smg-side--acts smg-side--desktop-only';
+            actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
             const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnViewMode);
-            pagenavGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
-            scrollGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
@@ -14943,7 +14941,7 @@
             if (btnListSort) listBtns.push(btnListSort);
             if (btnViewToggle) listBtns.push(btnViewToggle);
             const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            listGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
@@ -14962,7 +14960,7 @@
             listBar.append(...[btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean));
             const listBtns = [btnSort, btnWatch, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnListFilter, btnListSort, btnViewToggle];
             const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side smg-side--desktop-only';
+            listGroup.className = 'smg-nav-group smg-side--desktop-only';
             panel.append(btnSettings, makeDivider(), listBar, centralGroup, makeDivider(), listGroup, btnSheet);
         }
 
@@ -15113,7 +15111,6 @@
         const sortPop = (isList && btnListSort) ? document.createElement('div') : null;
         if (sortPop) {
             sortPop.id = 'smg-listsort-pop';
-            sortPop.className = 'smg-sort-pop';
             sortPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Ordenar' : 'Sort') + '</span><div class="smg-sort-body"></div>';
         }
 
@@ -16476,7 +16473,7 @@
                 // ===== TOOLBAR UNIFICADA (PAINEL INTEGRADO) =====
                 searchToolbarEl.innerHTML = `
                     <div class="smg-search-tb-row">
-                        <div class="smg-search-select-wrap smg-search-scope-wrap">
+                        <div class="smg-search-select-wrap">
                             <span class="smg-search-select-ic" aria-hidden="true">${ICONS.globe}</span>
                             <select class="smg-search-scope-select" aria-label="${IS_PT ? 'Escopo da busca' : 'Search scope'}">
                                 <option value="everywhere">${IS_PT ? 'Todo o fórum' : 'Everywhere'}</option>
@@ -16485,7 +16482,7 @@
                                 ${threadId ? `<option value="thread">${IS_PT ? 'Neste tópico' : 'This thread'}</option>` : ''}
                             </select>
                         </div>
-                        <div class="smg-search-select-wrap smg-search-sort-wrap">
+                        <div class="smg-search-select-wrap">
                             <span class="smg-search-select-ic" aria-hidden="true">${ICONS.barChart}</span>
                             <select class="smg-search-sort-select" aria-label="${IS_PT ? 'Ordenação' : 'Sort order'}">
                                 <option value="relevance">${IS_PT ? 'Relevância' : 'Relevance'}</option>
@@ -17679,7 +17676,7 @@
                 '</button>' +
                 '<button type="button" class="smg-search-switch" role="switch" title="Search thread titles only (ignores post text)">' +
                     '<span class="smg-search-switch-track"><span class="smg-search-switch-thumb"></span></span>' +
-                    '<span class="smg-search-switch-lbl">Titles only</span>' +
+                    '<span>Titles only</span>' +
                 '</button>' +
                 '<button type="button" class="smg-search-author-btn" aria-label="Author" title="Filter by author">' + svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>') + '</button>' +
                 '<a class="smg-search-adv" title="Advanced" aria-label="Advanced">' + ICONS.sliders + '</a>' +
@@ -19731,7 +19728,7 @@
             const bucket = hub ? hub.dataset.smgHomeHub : 'categories';
             const blurb = homeNodeBlurb(title, bucket);
             const desc = document.createElement('div');
-            desc.className = 'node-description smg-node-blurb';
+            desc.className = 'node-description';
             desc.textContent = blurb;
             const main = node.querySelector('.node-main') || titleEl.parentElement || node;
             if (titleEl && titleEl.parentElement === main) main.insertBefore(desc, titleEl.nextSibling);
@@ -20064,7 +20061,7 @@
         const tabsEl = document.createElement('div'); tabsEl.className = 'smg-feed-tabs';
         const tablist = document.createElement('div'); tablist.className = 'smg-feed-tablist';
         const scrollWrap = document.createElement('div'); scrollWrap.className = 'smg-feed-scroll';
-        const panelsEl = document.createElement('div'); panelsEl.className = 'smg-feed-panels';
+        const panelsEl = document.createElement('div');
         scrollWrap.appendChild(panelsEl);
 
         // setas ‹ › (desktop) — rolam o painel ATIVO; somem nas bordas
@@ -20423,7 +20420,7 @@
         const onReactions = /[?&]order=reaction/i.test(location.search) || reactLink.classList.contains('is-active');
         // TOGGLE ÚNICO (igual a dock): ícone de ORDENAÇÃO (⇅) + critério atual; clicar leva pro outro
         const curLabel = onReactions ? i18n('Reactions') : i18n('Date');
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-sort';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         const btn = smgBarBtn({
             icon: ICONS.sort,
             label: curLabel,
@@ -20450,7 +20447,7 @@
 
     // GRUPO 3 — ações PRIMÁRIAS (ícones que PROXY-CLICAM o nativo): ir-pra-nova · seguir · marcar lido · traduzir
     function smgPrimaryActions(bo) {
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-actions';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         let n = 0;
         const jumpNew = bo.querySelector('[data-xf-click="scroll-to"]');
         if (jumpNew) { g.appendChild(smgBarBtn({ icon: ICONS.postDown, title: 'Go to new', onClick: () => jumpNew.click() })); n++; }
@@ -20526,7 +20523,7 @@
             push(b, (b.querySelector('.button-text') || b).textContent);
         });
         if (!items.length) return null;
-        const g = document.createElement('div'); g.className = 'smg-bar-group smg-bar-more';
+        const g = document.createElement('div'); g.className = 'smg-bar-group';
         const btn = smgBarBtn({ label: '⋯', title: 'More' });
         const pop = document.createElement('div'); pop.className = 'smg-bar-pop';
         items.forEach(it => {
@@ -20881,9 +20878,9 @@
 
             if (upText || crText) {
                 datesRow.innerHTML = `
-                    ${upText ? `<span class="smg-card-date-item"><span class="smg-card-date-lbl">${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
+                    ${upText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
                     ${upText && crText ? `<span class="smg-card-date-sep">·</span>` : ''}
-                    ${crText ? `<span class="smg-card-date-item"><span class="smg-card-date-lbl">${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
+                    ${crText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
                 `;
                 if (mainCell) mainCell.appendChild(datesRow);
             }
@@ -21647,7 +21644,7 @@
             bar.appendChild(save);
         }
         const translate = footerBar && footerBar.querySelector('.smgTranslator-btn');
-        if (translate) { translate.classList.add('smg-pc-act', 'smg-pc-act--translate'); bar.appendChild(translate); }
+        if (translate) { translate.classList.add('smg-pc-act'); bar.appendChild(translate); }
         const share = attribution && attribution.querySelector('a.message-attribution-gadget[data-xf-init="share-tooltip"]');   // Share = ÚLTIMO (depois do translate)
         if (share) {
             share.classList.add('smg-pc-act', 'smg-pc-act--share');
@@ -21930,7 +21927,7 @@
         const row = main.parentElement;
         if (row && row.classList.contains('contentRow') && !row.querySelector(':scope > .smg-al-icon')) {
             const ico = document.createElement('span');
-            ico.className = 'smg-al-icon ' + (isComment ? 'smg-al-icon--comment' : 'smg-al-icon--post');
+            ico.className = 'smg-al-icon' + (isComment ? ' smg-al-icon--comment' : '');
             ico.innerHTML = isComment ? ICONS.comment : ICONS.newPost;
             // referência da thread p/ a foto. O alerta do XF linka pro POST (/posts/N) e não cita a
             // thread em lugar nenhum — quando não há link de /threads/, o TÍTULO é o único elo com a
@@ -23210,7 +23207,7 @@
         const logoA = document.createElement('a');
         logoA.className = 'smg-tb-logo';
         logoA.href = '/';
-        if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; logoA.classList.add('smg-tb-logo--custom'); }
+        if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; }
         else if (logoImg) { const im = document.createElement('img'); im.src = logoImg.getAttribute('src') || ''; im.alt = ''; logoA.appendChild(im); }
         else logoA.textContent = 'Home';
         // ZONA ESQUERDA: logo + Discover (o logo já é o "Início")
@@ -23242,7 +23239,7 @@
                 secs[secs.length - 1].rows.push(it);
             });
             const main = secs.filter(s => s.rows.length).map(s =>
-                '<div class="smg-tb-mega-sec">' +
+                '<div>' +
                 (s.title ? '<div class="smg-tb-mega-label">' + s.title + '</div>' : '') +
                 '<div class="smg-tb-mega-grid">' +
                 s.rows.map(it =>
@@ -23276,7 +23273,7 @@
             if (g.mega) {   // Discover → mega-menu (grid + painel destacado), não a lista simples
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'smg-tb-item smg-tb-trigger';
+                btn.className = 'smg-tb-item';
                 btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
                 const pop = document.createElement('div');
                 pop.className = 'smg-tb-pop smg-tb-pop--mega';
@@ -23290,7 +23287,7 @@
             if (!items.some(it => !it.divider)) return;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'smg-tb-item smg-tb-trigger';
+            btn.className = 'smg-tb-item';
             btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
             const pop = document.createElement('div');
             pop.className = 'smg-tb-pop';
@@ -23335,7 +23332,7 @@
         tbActs.className = 'smg-search-acts'; searchBar.appendChild(tbActs);
         const tbClear = document.createElement('button');
         tbClear.type = 'button';
-        tbClear.className = 'smg-tb-search-clear smg-search-clear';
+        tbClear.className = 'smg-search-clear';
         tbClear.setAttribute('aria-label', i18n('Clear search'));
         tbClear.title = i18n('Clear');
         tbClear.hidden = true;
@@ -26579,7 +26576,7 @@
         fhead.innerHTML = '<h1 class="smg-river-title">Timeline</h1><div class="smg-river-head-actions"></div>';
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
-        refBtn.className = 'smg-river-refresh smg-btn smg-btn--ghost';
+        refBtn.className = 'smg-river-refresh';
         refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar timeline' : 'Refresh timeline';
         refBtn.setAttribute('aria-label', refBtn.title);
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
@@ -26591,7 +26588,6 @@
         if (actions) {
             const markAllBtn = document.createElement('button');
             markAllBtn.type = 'button';
-            markAllBtn.className = 'smg-river-markread smg-btn smg-btn--ghost';
             markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
             markAllBtn.setAttribute('aria-label', markAllBtn.title);
             markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
