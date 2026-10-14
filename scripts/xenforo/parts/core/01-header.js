@@ -92,8 +92,7 @@
 //  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
 //                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
 //  LISTAGEM .......... markThreadGridContainer, badges reativos, styleArticleCards, markGridPlaceholders
-//  HOME (forum_list) . mergeSmallHomeSections, relocateSimpcityNodes/relocateSmgNodes, expandSubForums,
-//                      splitTransSection, sort/reorderHomeSections, makeHomeCardsClickable,
+//  HOME (forum_list) . expandSubForums, makeHomeCardsClickable,
 //                      buildHomeFeed, layoutHomeSidebar
 //  THREAD filter bar . smgBarBtn/Pop/Jump/Pager/Sort/Primary/More, buildFilterBars, fetchXfList
 //  THUMB cache ....... threadThumbUrl, thumbCacheGet/Put, harvestThreadThumbs (foto da thread nos

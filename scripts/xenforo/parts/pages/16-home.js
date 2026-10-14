@@ -2,8 +2,7 @@
     // HOME (forum_list): cards · sections · sub-fóruns · atalhos · sidebar
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)
     //
-    // Mapa: mergeSmallHomeSections · relocateSimpcityNodes(SC)/relocateSmgNodes(SMG) · expandSubForums ·
-    //   splitTransSection(SC) · sortHomeCards · reorderHomeSections · makeHomeCardsClickable ·
+    // Mapa: expandSubForums · makeHomeCardsClickable ·
     //   buildHomeFeed (+feedThumbUrl/feedCard/loadFeed) · layoutHomeSidebar
     // =========================================================
 
@@ -402,64 +401,6 @@
     }
 
     // home: junta sections pequenas (≤3 cards reais) consecutivas numa só
-    // (ex.: Info/Promoção/Requests do simpcity, cada uma com 1 card → 1 section)
-    function mergeSmallHomeSections(roots) {
-        if (!document.documentElement.classList.contains('smg-home')) return;
-        const cats = Array.prototype.slice.call(
-            document.querySelectorAll('.p-body-content .block--category'));
-        if (cats.length < 2) return;
-        // conta só nós "reais" (fórum/categoria), ignora os .node--link (ads, já escondidos)
-        const realCount = b => b.querySelectorAll('.block-body .node:not(.node--link)').length;
-        let i = 0;
-        while (i < cats.length) {
-            if (realCount(cats[i]) === 0 || realCount(cats[i]) > 3) { i++; continue; }
-            const baseBody = cats[i].querySelector('.block-body');
-            let j = i + 1;
-            while (j < cats.length && realCount(cats[j]) > 0 && realCount(cats[j]) <= 3) {
-                const body = cats[j].querySelector('.block-body');
-                if (baseBody && body) {
-                    const moved = document.createDocumentFragment();
-                    while (body.firstChild) moved.appendChild(body.firstChild);
-                    baseBody.appendChild(moved);
-                }
-                cats[j].remove();
-                j++;
-            }
-            i = j;
-        }
-    }
-
-    // simpcity: move OnlyFans / Patreon / ManyVids pra dentro da section "Social Media"
-    function relocateSimpcityNodes(roots) {
-        if (!document.documentElement.classList.contains('smg-sc')
-            || !document.documentElement.classList.contains('smg-home')) return;
-        const cats = document.querySelectorAll('.p-body-content .block--category');
-        if (!cats.length) return;
-        let social = null;
-        cats.forEach(c => {
-            const h = c.querySelector('.block-header');
-            if (h && /social\s*media/i.test(h.textContent || '')) social = c;
-        });
-        if (!social) return;
-        const socialBody = social.querySelector('.block-body');
-        if (!socialBody) return;
-        const moved = document.createDocumentFragment();
-        document.querySelectorAll('.p-body-content .block--category .node:not([data-smg-sc-reloc-checked])').forEach(node => {
-            if (social.contains(node)) return;
-            const a = node.querySelector('.node-title a') || node.querySelector('a[href]');
-            const href = a ? (a.getAttribute('href') || '') : '';
-            // A streamed node can exist before its title/link. Leave it eligible for
-            // the next pass instead of permanently checking an incomplete shell.
-            if (!a || !href) return;
-            node.dataset.smgScRelocChecked = '1';
-            if (/onlyfans|patreon|manyvids/i.test(href)) {
-                node.dataset.smgScRelocated = '1';
-                moved.appendChild(node);
-            }
-        });
-        if (moved.childNodes.length) socialBody.appendChild(moved);
-    }
-
     // home: promove sub-fóruns (node-subNodesFlat) a cards próprios na grade (SMG + simpcity)
     function expandSubForums(roots) {
         if (!document.documentElement.classList.contains('smg-home')) return;
@@ -507,91 +448,6 @@
             parentNode.parentNode.insertBefore(cards, parentNode.nextSibling);
             flat.remove(); // tira a lista de subitems do card pai
         });
-    }
-
-    // simpcity: separa a section "Transgender" por ORIGEM →
-    //   fica: o nó Transgender + os sub-fóruns DELE
-    //   vai pro "Brasil": o nó Brasileiras + sub-fóruns dele (inclui "Trans" e "Trans (Área de Pedidos)")
-    function splitTransSection(roots) {
-        if (!document.documentElement.classList.contains('smg-sc')
-            || !document.documentElement.classList.contains('smg-home')) return;
-        const cats = document.querySelectorAll('.p-body-content .block--category');
-        let transCat = null;
-        cats.forEach(c => {
-            const h = c.querySelector('.block-header');
-            if (h && /trans(gender)?/i.test(h.textContent || '')) transCat = c;
-        });
-        if (!transCat) return;
-        const body = transCat.querySelector('.block-body');
-        if (!body) return;
-        const allNodes = Array.prototype.slice.call(body.querySelectorAll('.node'));
-        // nó pai "Transgender" (real, não subcard)
-        const transNode = allNodes.find(n => !n.classList.contains('smg-subcard')
-            && /transgender/i.test((n.querySelector('.node-title') || {}).textContent || ''));
-        const keepTitle = transNode ? (transNode.querySelector('.node-title').textContent || '').trim() : '';
-        const nonTrans = allNodes.filter(n => {
-            if (n === transNode) return false;                                   // mantém o nó Transgender
-            if (n.classList.contains('smg-subcard')) return n.dataset.smgParentTitle !== keepTitle; // mantém sub-fóruns do Transgender
-            return true;                                                          // outros nós reais (Brasileiras) → Brasil
-        });
-        if (!nonTrans.length) return;
-        let brasil = document.querySelector('.p-body-content .block--category[data-smg-trans-split]');
-        if (!brasil) {
-            brasil = document.createElement('div');
-            brasil.className = 'block block--category';
-            brasil.dataset.smgTransSplit = '1';
-            brasil.innerHTML = '<h2 class="block-header"><div class="uix_categoryStrip-content">'
-                + '<span class="uix_categoryTitle">Brasil</span></div></h2>'
-                + '<div class="block-container"><div class="block-body"></div></div>';
-        }
-        const brasilBody = brasil.querySelector('.block-body');
-        const moved = document.createDocumentFragment();
-        nonTrans.forEach(n => moved.appendChild(n));
-        brasilBody.appendChild(moved);
-        if (!brasil.parentNode) transCat.insertAdjacentElement('afterend', brasil);
-    }
-
-    // home: ordena os cards de cada section em ordem alfabética
-    let homeSortSignature = '';
-    function sortHomeCards(roots) {
-        if (!document.documentElement.classList.contains('smg-home')) return;
-        const bodies = document.querySelectorAll('.p-body-content .block--category .block-body');
-        if (!bodies.length) return;
-        const key = n => ((n.querySelector('.node-title') || {}).textContent || '').trim().toLowerCase();
-        const signature = Array.from(bodies).map(body => Array.from(body.querySelectorAll(':scope > .node')).map(key).join('|')).join('||');
-        if (signature === homeSortSignature) return;
-        homeSortSignature = signature;
-        bodies.forEach(body => {
-            const nodes = Array.prototype.slice.call(body.querySelectorAll(':scope > .node'));
-            if (nodes.length < 2) return;
-            nodes.sort((a, b) => key(a).localeCompare(key(b), 'pt', { numeric: true, sensitivity: 'base' }));
-            const sorted = document.createDocumentFragment();
-            nodes.forEach(n => sorted.appendChild(n));
-            body.appendChild(sorted);
-        });
-    }
-
-    // home: manda "Info and Links" e "Announcements" pro fim (penúltimas sections)
-    let homeSectionOrder = '';
-    function reorderHomeSections(roots) {
-        if (!document.documentElement.classList.contains('smg-home')) return;
-        const cats = Array.prototype.slice.call(document.querySelectorAll('.p-body-content .block--category'));
-        if (cats.length < 2) return;
-        const titleOf = c => ((c.querySelector('.block-header') || {}).textContent || '').trim();
-        const moveRe = /info and links|announcements|informações e links|anúncios/i;
-        const toMove = cats.filter(c => moveRe.test(titleOf(c)));
-        const keep = cats.filter(c => !moveRe.test(titleOf(c)));
-        if (!toMove.length || !keep.length) return;
-        const order = cats.map(c => titleOf(c)).join('|');
-        const desired = keep.concat(toMove).map(c => titleOf(c)).join('|');
-        if (order === desired || homeSectionOrder === desired) return;
-        homeSectionOrder = desired;
-        // manda as sections "Info and links / Announcements" pro FIM (depois da última section normal),
-        // preservando a ordem entre elas — o anchor avança a cada inserção.
-        const anchor = keep[keep.length - 1]; // âncora: última section "normal"
-        const moved = document.createDocumentFragment();
-        toMove.forEach(m => moved.appendChild(m));
-        anchor.parentNode.insertBefore(moved, anchor.nextSibling);
     }
 
     // home: card inteiro clicável (navega pro link do título)
@@ -708,14 +564,6 @@
         pornhub: ['PornHub scenes, models and the videos people request.', 'Cenas do PornHub, modelos e os vídeos que o pessoal pede.'],
         xvideos: ['XVideos scenes and the full sets behind the clips.', 'Cenas do XVideos e os sets completos por trás dos clipes.']
     };
-    const HOME_BUCKET_BLURBS = {
-        sites: ['Creators and uploads from this site.', 'Criadoras e uploads deste site.'],
-        categories: ['Threads filed under this category.', 'Tópicos desta categoria.'],
-        requests: ['Open requests. Post what you are looking for.', 'Pedidos abertos. Publique o que você procura.'],
-        discussions: ['Talk, recommendations and everything that is not a request.', 'Conversa, indicações e o que não é pedido.'],
-        nav: ['Shortcuts and boards gathered in this section.', 'Atalhos e fóruns desta seção.']
-    };
-
     function homeNodeBlurb(title, bucket) {
         const clean = cleanHomeNodeTitle(title).toLowerCase();
         const direct = HOME_NODE_BLURBS[clean];
@@ -781,11 +629,6 @@
     // (/whats-new/posts/, trending), parseia .structItem--thread e monta
     // um grid de cards verticais (thumb + título + último autor · data). Lazy: só busca a aba ativa.
     let homeFeedDone = false;
-    let homeFeedReady = false;
-
-    function markHomeFeedReady() {
-        homeFeedReady = true;
-    }
 
     function homeComponentsReady() {
         return homeSidebarDone && homeFeedDone;
@@ -986,7 +829,6 @@
         const finish = () => {
             if (feed._readyTimer) clearTimeout(feed._readyTimer);
             feed._readyTimer = 0;
-            markHomeFeedReady();
             if (onDone) onDone();
         };
 
@@ -1079,7 +921,6 @@
         ].filter(f => f.url);
         if (!feeds.length) {
             homeFeedDone = true;
-            markHomeFeedReady();
             return;
         }
         homeFeedDone = true;
@@ -1188,50 +1029,6 @@
         document.querySelectorAll('.block:not(.block--category):not(.smg-ad-block)').forEach(b => {
             if (b.querySelector(':scope > .block-container > .block-body > .node--link')) b.classList.add('smg-ad-block');
         });
-    }
-
-    // SMG home: move "ASMR" de "Social Media" para "More Categories" e renomeia a section pra "Categories"
-    function relocateSmgNodes(roots) {
-        if (!document.documentElement.classList.contains('smg-smg')
-            || !document.documentElement.classList.contains('smg-home')) return;
-        const cats = document.querySelectorAll('.p-body-content .block--category');
-        if (!cats.length) return;
-        let moreCat = null;
-        cats.forEach(c => {
-            const h = c.querySelector('.block-header');
-            if (h && /more\s*categories/i.test(h.textContent || '')) moreCat = c;
-        });
-        if (!moreCat) return;
-        const moreBody = moreCat.querySelector('.block-body');
-        if (!moreBody) return;
-        // move ASMR (de qualquer outra section) pra "More Categories"
-        const moved = document.createDocumentFragment();
-        document.querySelectorAll('.p-body-content .block--category .node:not([data-smg-smg-reloc-checked])').forEach(node => {
-            if (moreCat.contains(node)) return;
-            const title = ((node.querySelector('.node-title') || {}).textContent || '').trim();
-            const a = node.querySelector('.node-title a') || node.querySelector('a[href]');
-            const href = a ? (a.getAttribute('href') || '') : '';
-            // Do not consume an incomplete streamed node; its title or href can be
-            // appended in the following mutation batch.
-            if (!title && !href) return;
-            node.dataset.smgSmgRelocChecked = '1';
-            if (/\basmr\b/i.test(title) || /asmr/i.test(href)) {
-                node.dataset.smgSmgRelocated = '1';
-                moved.appendChild(node);
-            }
-        });
-        if (moved.childNodes.length) moreBody.appendChild(moved);
-        // renomeia "More Categories" -> "Categories" (preservando o trigger de collapse)
-        const head = moreCat.querySelector('.block-header');
-        if (head) {
-            const titleEl = head.querySelector('a, .uix_categoryTitle, .block-header-title');
-            if (titleEl) titleEl.textContent = i18n('Categories');
-            else {
-                let done = false;
-                head.childNodes.forEach(n => { if (!done && n.nodeType === 3 && n.textContent.trim()) { n.textContent = i18n('Categories'); done = true; } });
-                if (!done) head.insertBefore(document.createTextNode(i18n('Categories')), head.firstChild);
-            }
-        }
     }
 
     if (typeof window !== 'undefined') {

@@ -503,7 +503,6 @@
         SOFT_PAGE_CLASSES.forEach(name => cls.remove(name));
         homeSidebarDone = false;
         homeFeedDone = false;
-        homeFeedReady = false;
         homePassSignature = null;
         riverSetupDone = false;
         riverBuilt = false;
