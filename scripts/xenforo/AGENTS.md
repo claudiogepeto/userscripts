@@ -101,7 +101,8 @@ toast, pager, skeleton or masonry is a defect even when it works.
   `paintSkeletonMarkup`, readiness, release) with `parts/styles/09-paint.js`.
 - **Masonry**: `parts/media/08a-masonry-engine.js` (`masonryMount`,
   `masonrySchedule`): shortest column, 2 columns up to 600px, 3 above, never
-  more; landscape items span 2. In-post groups and the gallery both use it.
+  more; landscape items span 2, and a group of only landscape items lays out
+  as pairs in 2 columns. In-post groups and the gallery both use it.
 - **Post card and thread card**: `buildPostCard`/`buildCommentCard` in
   `parts/thread/17c-post-cards.js`; `decorateThreadCard` in
   `parts/thread/17a-filterbar.js`.

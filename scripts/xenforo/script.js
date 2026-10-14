@@ -11034,7 +11034,7 @@
     }
 
     // media/08a-masonry-engine.js
-    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2, one ResizeObserver, one rAF.
+    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns), one ResizeObserver, one rAF.
     // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
     // Depends on: nothing.
     // =========================================================
@@ -11064,16 +11064,34 @@
     // opts.spans[i] = columns item i wants (a horizontal image or video wants 2), clamped to the column count. An item
     // spanning k columns starts at the column c that minimises max(height[c..c+k-1]), ties going left, sits at
     // that top, and pushes those k columns to its bottom. With every span at 1 this is plain shortest-column.
+    // Exception: when 3 columns are available and every item of a group of 2+ wants 2, the group is laid out as
+    // pairs (2 columns, span 1, row by row) instead of one wide item per row with the third column empty.
     function masonryPlace(ratios, width, opts) {
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
         const spansIn = (opts && opts.spans) || [];
-        const spanOf = i => Math.max(1, Math.min(want, Math.floor(+spansIn[i]) || 1));
+        const spanOf0 = i => Math.max(1, Math.min(want, Math.floor(+spansIn[i]) || 1));
+        // every item landscape (span 2) with 3 columns available would leave the third column empty:
+        // lay the group out as pairs instead, 2 columns, each item 1 column, row by row
+        const pairs = want > 2 && ratios.length > 1 && ratios.every((_, i) => spanOf0(i) >= 2);
+        const spanOf = pairs ? () => 1 : spanOf0;
         let need = 0;
         for (let i = 0; i < ratios.length; i++) need += spanOf(i);
-        const cols = Math.max(1, Math.min(want, need || 1));   // a small group uses only the columns its spans fill
+        const cols = pairs ? 2 : Math.max(1, Math.min(want, need || 1));   // a small group uses only the columns its spans fill
         const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
         const heights = new Array(cols).fill(0);
+        if (pairs) {
+            // rows of two: each row starts under the taller item of the row above; an odd last item sits alone at the left
+            let rowTop = 0;
+            const boxes = ratios.map((r, i) => {
+                const c = i % 2;
+                if (c === 0 && i > 0) rowTop = Math.max(heights[0], heights[1]);
+                const h = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
+                heights[c] = rowTop + h + gap;
+                return { col: c, span: 1, x: Math.round(c * (colW + gap)), y: Math.round(rowTop), w: Math.round(colW), h };
+            });
+            return { cols, colW, boxes, height: Math.max(0, Math.round(Math.max.apply(null, heights) - gap)) };
+        }
         const boxes = ratios.map((r, i) => {
             const k = Math.min(spanOf(i), cols);
             let c = 0, top = Infinity;
