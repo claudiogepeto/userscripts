@@ -91,7 +91,10 @@
 
     // título = h1 SEM os prefixos e avisos; prefixos viram HTML de chips à parte
     function riverThreadMeta(doc, t) {
-        const titleEl = doc.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
+        // in priority order: one selector list returns the FIRST match in document order, and the .p-title
+        // wrapper comes before its h1 (and after the header rebuild it also holds the script's Media button)
+        const titleEl = doc.querySelector('h1.p-title-value') || doc.querySelector('.p-title-value')
+            || doc.querySelector('h1.contentRow-header') || doc.querySelector('.p-body-header .p-title');
         const meta = extractCleanTitleAndPrefixes(titleEl, t.fallbackTitle);
         return { title: meta.title, prefixesHtml: meta.prefixesHtml, thumb: t.thumb || '' };
     }

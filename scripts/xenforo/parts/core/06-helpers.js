@@ -379,7 +379,7 @@
         if (!rootEl) return { title: fallbackTitle || '', prefixesHtml: '' };
         const clone = rootEl.cloneNode(true);
         // Remove avisos injetados, botões de ação e scripts
-        clone.querySelectorAll('.smg-notices, .smg-notices-collapse, .p-title-pageAction, .button, .action, .menu, .contentRow-badge, .contentRow-extra, .contentRow-actions, .tagList, .js-tagList, .p-title-tagList, .tagList-icon, .structItem-tags, script, style, noscript').forEach(el => el.remove());
+        clone.querySelectorAll('.smg-notices, .smg-notices-collapse, .smg-thead-controls, .smg-thead-actions, .p-title-pageAction, .button, .action, .menu, .contentRow-badge, .contentRow-extra, .contentRow-actions, .tagList, .js-tagList, .p-title-tagList, .tagList-icon, .structItem-tags, script, style, noscript').forEach(el => el.remove());
 
         const PREFIX_SEL = 'a.labelLink, .label, .prefix, [class*="label--"], [class*="prefix"]';
         const seenTexts = new Set();
