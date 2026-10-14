@@ -8185,6 +8185,74 @@ async function runTests() {
 
 
     // =========================================================================
+    // TESTE FEED GATE: só thread SEGUIDA entra no feed (ingest da thread aberta)
+    // =========================================================================
+    console.log('--- TESTE FEED GATE: ingest da thread aberta só quando seguida ---');
+    {
+        const fgx = window.__feedSyncExports || {};
+        assert(typeof fgx.ingestCurrentThreadPageIfFollowed === 'function', 'ingestCurrentThreadPageIfFollowed deve estar exposta em __feedSyncExports');
+        const fgOrigUrl = window.location.href;
+        const fgCanon = document.querySelector('link[rel="canonical"]');
+        const fgCanonHref = fgCanon ? fgCanon.getAttribute('href') : null;
+        const fgWatch = document.querySelector('.buttonGroup a[data-sk-watch][data-sk-unwatch]');
+        const fgWatchParent = fgWatch ? fgWatch.parentNode : null;
+        const fgWatchNext = fgWatch ? fgWatch.nextSibling : null;
+        if (fgWatch) fgWatch.remove();
+        const fgSetPage = path => {
+            window.history.pushState({}, '', path);
+            let c = document.querySelector('link[rel="canonical"]');
+            if (!c) { c = document.createElement('link'); c.rel = 'canonical'; document.head.appendChild(c); }
+            c.setAttribute('href', 'https://forums.socialmediagirls.com' + path);
+        };
+        const fgPost = document.createElement('article');
+        fgPost.className = 'message message--post';
+        fgPost.id = 'js-post-7770001';
+        fgPost.setAttribute('data-content', 'post-7770001');
+        fgPost.setAttribute('data-author', 'FeedGate');
+        fgPost.innerHTML = '<div class="message-inner"><div class="message-cell message-cell--main">'
+            + '<header class="message-attribution"><a href="/threads/x/post-7770001"><time data-timestamp="1700000500">now</time></a></header>'
+            + '<div class="message-userContent"><div class="bbWrapper">Feed gate content</div></div></div></div>';
+        document.body.appendChild(fgPost);
+
+        // 1. thread NÃO seguida: nenhuma varredura de posts (assinatura) e nada escrito no banco do feed
+        const fgUnfollowed = '/threads/feedgate-unfollowed.7770/';
+        mockStorage.followed.delete(fgUnfollowed);
+        fgSetPage(fgUnfollowed);
+        const fgTimelineBefore = new Set(mockStorage.timeline.keys());
+        const fgFollowedBefore = new Set(mockStorage.followed.keys());
+        const fgOrigQsa = document.querySelectorAll;
+        let fgPostScans = 0;
+        document.querySelectorAll = function (sel) {
+            if (typeof sel === 'string' && sel.includes('message--post')) fgPostScans++;
+            return fgOrigQsa.call(this, sel);
+        };
+        let fgR1;
+        try { fgR1 = await fgx.ingestCurrentThreadPageIfFollowed(); } finally { document.querySelectorAll = fgOrigQsa; }
+        assert(fgR1 === 0, `Thread não seguida não deve ingerir posts (obtido: ${fgR1})`);
+        assert(fgPostScans === 0, `Thread não seguida não deve varrer os posts pra assinatura (varreduras: ${fgPostScans})`);
+        assert([...mockStorage.timeline.keys()].every(k => fgTimelineBefore.has(k)), 'Thread não seguida não deve escrever posts no feed');
+        assert([...mockStorage.followed.keys()].every(k => fgFollowedBefore.has(k)) && !mockStorage.followed.has(fgUnfollowed), 'Thread não seguida não deve ser gravada em followed');
+
+        // 2. thread seguida: continua ingerindo os posts da página aberta
+        const fgFollowed = '/threads/feedgate-followed.7771/';
+        mockStorage.followed.set(fgFollowed, { path: fgFollowed, thread_name: 'Feed Gate', saved_pages: [], last_page: 1, updated_at: 0 });
+        fgSetPage(fgFollowed);
+        const fgR2 = await fgx.ingestCurrentThreadPageIfFollowed();
+        assert(fgR2 > 0, `Thread seguida deve ingerir os posts da página (obtido: ${fgR2})`);
+        const fgStored = mockStorage.timeline.get('7770001');
+        assert(!!fgStored && fgStored.thread_path === fgFollowed, 'Post da thread seguida deve ir pro feed com o path da thread');
+
+        // limpeza
+        fgPost.remove();
+        mockStorage.timeline.delete('7770001');
+        mockStorage.followed.delete(fgFollowed);
+        if (fgWatch && fgWatchParent) fgWatchParent.insertBefore(fgWatch, fgWatchNext);
+        const fgC = document.querySelector('link[rel="canonical"]');
+        if (fgCanonHref === null) { if (fgC) fgC.remove(); } else if (fgC) fgC.setAttribute('href', fgCanonHref);
+        window.history.pushState({}, '', fgOrigUrl);
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
