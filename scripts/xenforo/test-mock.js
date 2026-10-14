@@ -2652,7 +2652,7 @@ async function runTests() {
     assert(homeSkeleton19.includes('smg-home-skeleton-section-divider'), 'Skeleton da home deve desenhar dividers nos títulos das seções');
     assert(threadSkeleton19.includes('smg-page-skeleton-post'), 'Skeleton de thread deve reservar cards de post');
     assert(threadSkeleton19.includes('smg-page-skeleton-bottom-nav'), 'Skeleton de thread deve reservar a navbar mobile');
-    assert(homeSkeleton19.includes('smg-home-skeleton-bottom-nav'), 'Skeleton da home deve reservar a navbar mobile');
+    assert(homeSkeleton19.includes('smg-page-skeleton-bottom-nav'), 'Skeleton da home deve reservar a navbar mobile (a mesma das outras páginas)');
     assert(paintRailMarkup().includes('smg-page-skeleton-rail-row'), 'Skeleton deve possuir linhas para a sidebar persistida');
     assert((threadSkeleton19.match(/smg-page-skeleton-post/g) || []).length >= 6, 'Skeleton de thread deve preencher a altura inicial com posts');
     assert((listingSkeleton19.match(/smg-page-skeleton-row/g) || []).length >= 12, 'Skeleton de listagem deve preencher a altura inicial com linhas');
@@ -7473,8 +7473,8 @@ async function runTests() {
     assert(allStyles.includes('max-width: 220px;'), 'Logo deve ter max-width expandido para 220px');
     assert(allStyles.includes('.smg-logo-word {') && allStyles.includes('font-size: var(--smg-fs-28);'), 'Logo SMG deve ter font-size 28px (escala)');
     assert(allStyles.includes('font-weight: 900;'), 'Logo SMG deve ter font-weight 900');
-    assert(allStyles.includes('.smg-home-skeleton-topbar {') && allStyles.includes('height: 72px;'), 'Skeleton da topbar da home deve ter 72px');
-    assert(allStyles.includes('.smg-home-skeleton-topbar-logo { width: 160px; height: 36px;'), 'Skeleton do logo deve ter 160x36px');
+    assert(paintSkeletonMarkup('home').includes('smg-page-skeleton-chrome') && !allStyles.includes('.smg-home-skeleton-topbar {'), 'Skeleton da topbar da home deve ser o mesmo das outras páginas');
+    assert(allStyles.includes('.smg-page-skeleton-chrome {') && allStyles.includes('height: 62px;'), 'Skeleton da topbar (home inclusive) deve ter 62px');
 
     // 2. Carousel de Últimos Posts e Em Alta
     assert(allStyles.includes('width: 295px;'), 'Cards do carousel devem ter largura expandida de 295px');
