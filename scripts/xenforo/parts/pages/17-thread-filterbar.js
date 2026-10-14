@@ -415,7 +415,7 @@
             return b;
         };
         // ícones outline limpos (sem depender de fill): feed = play · galeria = grade. Label só no mobile.
-        if (FEATURES.mediaFeed) bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
+        bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
         bar.appendChild(mk(ICONS.gallery, 'Gallery', 'Gallery', () => openGallery()));
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações

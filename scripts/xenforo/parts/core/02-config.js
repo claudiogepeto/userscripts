@@ -11,8 +11,6 @@
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
-        imageLightbox: true,        // clique na imagem abre o modo feed
-        mediaFeed: true,            // botão "modo feed" (tiktok) com a mídia da thread
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
@@ -23,7 +21,6 @@
         homeRemake: true,           // reformula a home (cards/atalhos/sidebar pro topo) — off = home original
         customFavicon: true,        // troca a favicon pela marca SMG (SMG only)
         headerNotices: true,        // recolhe os avisos (.notices--block) num iconezinho dentro da página
-        lazyEmbeds: true,           // só monta o embed perto da viewport
         unwrapLinks: true,          // pula o aviso de link externo (goto/redirect → URL real)
         revealLikedPosts: true,     // SMG: recarrega o post escondido após reagir (like/medalha)
         imagepondEmbeds: true,      // SMG: troca o iframe do imagepond.net/videos pelo nosso player (scrape do mp4)
@@ -49,9 +46,6 @@
     })();
 
     function saveFeatures() { gmSet(FEATURES_KEY, JSON.stringify(FEATURES)); }
-
-    // sempre ligadas: não aparecem no painel e ignoram qualquer valor salvo antigo
-    ['imageLightbox', 'mediaFeed', 'lazyEmbeds'].forEach(k => { FEATURES[k] = true; });
 
     // toggles do painel de settings — agrupados por categoria, cada um com descrição do impacto.
     // desc é bilíngue inline ({en,pt}); o label é traduzido pelo i18nDom (dicionário).

@@ -351,7 +351,7 @@
             viewModePop.className = 'smg-viewmode-pop';
             viewModePop.innerHTML =
                 `<button type="button" class="smg-vm-opt" data-mode="gallery"><span class="smg-vm-ic">${ICONS.gallery}</span><span>${i18n('Gallery')}</span></button>` +
-                (FEATURES.mediaFeed ? `<button type="button" class="smg-vm-opt" data-mode="feed"><span class="smg-vm-ic">${ICONS.feed}</span><span>${i18n('Feed')}</span></button>` : '') +
+                `<button type="button" class="smg-vm-opt" data-mode="feed"><span class="smg-vm-ic">${ICONS.feed}</span><span>${i18n('Feed')}</span></button>` +
                 `<button type="button" class="smg-vm-opt" data-mode="normal"><span class="smg-vm-ic">${ICONS.list}</span><span>${i18n('Thread')}</span></button>`;
 
             viewModePop.querySelectorAll('.smg-vm-opt').forEach(opt => {
@@ -935,7 +935,7 @@
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
                         sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); if (typeof openGallery === 'function') openGallery(); }),
-                        FEATURES.mediaFeed ? sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }) : null,
+                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }),
                         sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); if (typeof closeGallery === 'function') closeGallery(); }),
                     ]);
                     // Sort by date entra DEPOIS de Next page

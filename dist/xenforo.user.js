@@ -176,8 +176,6 @@
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
         alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         autoSearchTitleOnly: true,  // marca "Search titles only" no quick search
-        imageLightbox: true,        // clique na imagem abre o modo feed
-        mediaFeed: true,            // botão "modo feed" (tiktok) com a mídia da thread
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
@@ -188,7 +186,6 @@
         homeRemake: true,           // reformula a home (cards/atalhos/sidebar pro topo) — off = home original
         customFavicon: true,        // troca a favicon pela marca SMG (SMG only)
         headerNotices: true,        // recolhe os avisos (.notices--block) num iconezinho dentro da página
-        lazyEmbeds: true,           // só monta o embed perto da viewport
         unwrapLinks: true,          // pula o aviso de link externo (goto/redirect → URL real)
         revealLikedPosts: true,     // SMG: recarrega o post escondido após reagir (like/medalha)
         imagepondEmbeds: true,      // SMG: troca o iframe do imagepond.net/videos pelo nosso player (scrape do mp4)
@@ -214,9 +211,6 @@
     })();
 
     function saveFeatures() { gmSet(FEATURES_KEY, JSON.stringify(FEATURES)); }
-
-    // sempre ligadas: não aparecem no painel e ignoram qualquer valor salvo antigo
-    ['imageLightbox', 'mediaFeed', 'lazyEmbeds'].forEach(k => { FEATURES[k] = true; });
 
     // toggles do painel de settings — agrupados por categoria, cada um com descrição do impacto.
     // desc é bilíngue inline ({en,pt}); o label é traduzido pelo i18nDom (dicionário).
@@ -11926,7 +11920,7 @@
                 case 'j': click('smg-post-nav-down'); break;   // próximo post
                 case 'k': click('smg-post-nav-up'); break;     // post anterior
                 case 'g': click('smg-post-goto'); break;       // ir pra página
-                case 'f': if (FEATURES.mediaFeed) openMediaFeed(null, null, { fromStart: true }); break;   // modo feed (navegação própria, página 1)
+                case 'f': openMediaFeed(null, null, { fromStart: true }); break;   // modo feed (navegação própria, página 1)
                 case 'v': click('smg-view-toggle'); break;     // alterna lista/grade
                 case 'n': if (FEATURES.alertsDock) toggleAlertsDock(); break;   // painel de notificações docked (abre/fecha)
                 case '[': click('smg-post-page-prev'); break;  // página anterior
@@ -14654,7 +14648,7 @@
                     restoreIframe();                                        // sem mp4 nem img nem erro específico → iframe nativo
                 });
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
@@ -14778,7 +14772,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = ctx.slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
@@ -14809,7 +14803,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = ctx.slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
@@ -15323,7 +15317,7 @@
             viewModePop.className = 'smg-viewmode-pop';
             viewModePop.innerHTML =
                 `<button type="button" class="smg-vm-opt" data-mode="gallery"><span class="smg-vm-ic">${ICONS.gallery}</span><span>${i18n('Gallery')}</span></button>` +
-                (FEATURES.mediaFeed ? `<button type="button" class="smg-vm-opt" data-mode="feed"><span class="smg-vm-ic">${ICONS.feed}</span><span>${i18n('Feed')}</span></button>` : '') +
+                `<button type="button" class="smg-vm-opt" data-mode="feed"><span class="smg-vm-ic">${ICONS.feed}</span><span>${i18n('Feed')}</span></button>` +
                 `<button type="button" class="smg-vm-opt" data-mode="normal"><span class="smg-vm-ic">${ICONS.list}</span><span>${i18n('Thread')}</span></button>`;
 
             viewModePop.querySelectorAll('.smg-vm-opt').forEach(opt => {
@@ -15907,7 +15901,7 @@
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
                         sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); if (typeof openGallery === 'function') openGallery(); }),
-                        FEATURES.mediaFeed ? sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }) : null,
+                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); if (typeof openMediaFeed === 'function') openMediaFeed(null, null, { fromStart: true }); }),
                         sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); if (typeof closeGallery === 'function') closeGallery(); }),
                     ]);
                     // Sort by date entra DEPOIS de Next page
@@ -21332,7 +21326,7 @@
             return b;
         };
         // ícones outline limpos (sem depender de fill): feed = play · galeria = grade. Label só no mobile.
-        if (FEATURES.mediaFeed) bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
+        bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
         bar.appendChild(mk(ICONS.gallery, 'Gallery', 'Gallery', () => openGallery()));
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
@@ -24970,7 +24964,7 @@
                     if (v.dataset.rgLoaded || v.currentSrc) return;   // o play já assumiu o carregamento
                     try { v.preload = 'metadata'; v.src = href + (/#/.test(href) ? '' : '#t=0.1'); } catch (e) {}
                 };
-                const dio = (FEATURES.lazyEmbeds && typeof getLazyEmbedIO === 'function') ? getLazyEmbedIO() : null;
+                const dio = getLazyEmbedIO();
                 if (dio) {
                     dio.observe(v);
                     setTimeout(() => { if (v._smgActivate) v._smgActivate(); }, 250);
@@ -28810,7 +28804,7 @@
     if (feedViewWanted()) cls.add('smg-watched-feed');   // feed ligado (home ?view=feed) → CSS esconde o conteúdo nativo JÁ, sem flash (smg-watched-feed = "feed on")
     if (FEATURES.autoFullImages) cls.add('smg-masonry-on');   // "Galeria" (full-res + masonry por post) — masonry atrelado à galeria
     if (FEATURES.unwrapLinks) { bindProxyClick(); handleRedirectPage(); }   // liga o intercept de clique JÁ no document-start (antes do XF) + pula página de aviso
-    if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+    safe(setupImageClickFeed);
     safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
     // Reserve the persisted desktop dock before the body and topbar are built.
@@ -29027,7 +29021,7 @@
         if (FEATURES.topBar) safe(buildTopbar);
         if (FEATURES.sidebarNavigation) safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
-        if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+        safe(setupImageClickFeed);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);

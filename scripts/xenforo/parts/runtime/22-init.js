@@ -241,7 +241,7 @@
     if (feedViewWanted()) cls.add('smg-watched-feed');   // feed ligado (home ?view=feed) → CSS esconde o conteúdo nativo JÁ, sem flash (smg-watched-feed = "feed on")
     if (FEATURES.autoFullImages) cls.add('smg-masonry-on');   // "Galeria" (full-res + masonry por post) — masonry atrelado à galeria
     if (FEATURES.unwrapLinks) { bindProxyClick(); handleRedirectPage(); }   // liga o intercept de clique JÁ no document-start (antes do XF) + pula página de aviso
-    if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+    safe(setupImageClickFeed);
     safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
     // Reserve the persisted desktop dock before the body and topbar are built.
@@ -458,7 +458,7 @@
         if (FEATURES.topBar) safe(buildTopbar);
         if (FEATURES.sidebarNavigation) safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
-        if (FEATURES.imageLightbox) safe(setupImageClickFeed);
+        safe(setupImageClickFeed);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);

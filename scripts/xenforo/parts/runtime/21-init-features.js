@@ -304,7 +304,7 @@
                     if (v.dataset.rgLoaded || v.currentSrc) return;   // o play já assumiu o carregamento
                     try { v.preload = 'metadata'; v.src = href + (/#/.test(href) ? '' : '#t=0.1'); } catch (e) {}
                 };
-                const dio = (FEATURES.lazyEmbeds && typeof getLazyEmbedIO === 'function') ? getLazyEmbedIO() : null;
+                const dio = getLazyEmbedIO();
                 if (dio) {
                     dio.observe(v);
                     setTimeout(() => { if (v._smgActivate) v._smgActivate(); }, 250);

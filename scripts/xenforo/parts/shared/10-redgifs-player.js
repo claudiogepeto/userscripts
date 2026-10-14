@@ -1049,7 +1049,7 @@
                     restoreIframe();                                        // sem mp4 nem img nem erro específico → iframe nativo
                 });
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
@@ -1173,7 +1173,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = ctx.slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
@@ -1204,7 +1204,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = FEATURES.lazyEmbeds ? getLazyEmbedIO() : null;
+            const io = getLazyEmbedIO();
             if (io) {
                 const rect = ctx.slot.getBoundingClientRect();
                 if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
