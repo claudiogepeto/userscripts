@@ -3692,8 +3692,7 @@ async function runTests() {
     lazyImg.remove();
 
     // 2. Simular clique na imagem e verificar que a modal lightbox abre
-    let feedEl = document.getElementById('smg-feed');
-    if (feedEl) feedEl.classList.remove('open');
+    window.__mediaExports.closeMedia();
 
     // Spy no stopImmediatePropagation
     let imgClickStopImmediate = false;
@@ -3706,12 +3705,11 @@ async function runTests() {
 
     goonboxImg.dispatchEvent(imgClick);
 
-    feedEl = document.getElementById('smg-feed');
-    assert(feedEl !== null && feedEl.classList.contains('open'), 'Clique na imagem goonbox deve abrir o lightbox (#smg-feed com classe .open)');
+    assert(window.__mediaExports.mediaView() === 'feed', 'Clique na imagem goonbox deve abrir o overlay de mídia na vista Feed');
     assert(imgClick.defaultPrevented, 'Clique na imagem goonbox deve ter defaultPrevented pelo setupImageClickFeed');
 
-    // Fechar feed para próximos testes
-    if (feedEl) feedEl.classList.remove('open');
+    // Fechar o overlay para os próximos testes
+    window.__mediaExports.closeMedia();
 
     // 3. Validar que o bindProxyClick NÃO sequestrou o clique do link que embrulha a imagem
     // Se o bindProxyClick tivesse executado sua interceptação de link externo, ele teria tentado abrir window.open se defaultPrevented
@@ -3840,19 +3838,18 @@ async function runTests() {
     assert(imageUrlOf(testImg30) === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg', 'imageUrlOf deve retornar versão em alta resolução');
 
     // 5. Testar clique na imagem e abertura do feed lightbox
-    let feed30 = document.getElementById('smg-feed');
-    if (feed30) feed30.classList.remove('open');
+    window.__mediaExports.closeMedia();
 
     const clickEv30 = new window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
     testImg30.dispatchEvent(clickEv30);
 
-    feed30 = document.getElementById('smg-feed');
-    assert(feed30 && feed30.classList.contains('open'), 'Clique na imagem goonbox deve abrir o feed lightbox (#smg-feed.open)');
+    const feed30 = document.getElementById('smg-feed');
+    assert(window.__mediaExports.mediaView() === 'feed' && feed30, 'Clique na imagem goonbox deve abrir o overlay de mídia na vista Feed');
     const feedImgs30 = feed30.querySelectorAll('img.smg-feed-media');
     const hasHighRes30 = Array.from(feedImgs30).some(fi => fi.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg' || fi.dataset.src === 'https://simp6.cuckcapital.cr/images4/99643dea-7adc-4a92-a440-d2237586453d.jpg');
     assert(hasHighRes30, 'Feed lightbox deve conter o slide com a imagem de alta resolução');
 
-    if (feed30) feed30.classList.remove('open');
+    window.__mediaExports.closeMedia();
     testA30.remove();
 
     // 6. Testar naked link goonboxEmbed substituindo link pelado por bbImage com resolução original
@@ -7501,6 +7498,126 @@ async function runTests() {
         // controles mantêm o hover
         for (const sel of ['.smg-pc-act:hover', '.smg-nav-btn:not(:disabled):hover', '.smg-tb-item:hover', '.smg-chip:hover', '.smg-thread-unwatch-btn:hover'])
             assert(css.includes(sel), 'Controle mantém hover: ' + sel);
+    }
+
+    // =========================================================================
+    // MODO MÍDIA: um overlay com duas vistas (Galeria / Feed) sobre UMA lista de mídia
+    // =========================================================================
+    {
+        console.log('\n--- Modo mídia: galeria + feed num overlay só ---');
+        const mx = window.__mediaExports;
+        assert(mx && typeof mx.openMedia === 'function' && typeof mx.closeMedia === 'function', 'Os helpers do modo mídia devem estar expostos em __TEST_MODE__');
+        mx.closeMedia();
+        const tick = (ms) => new Promise(r => setTimeout(r, ms || 30));
+        const prevFetchM = window.fetch;
+        let pageFetches = 0;
+        const pageHtml = '<html><body><div class="bbWrapper">'
+            + '<img class="bbImage" src="https://example.com/media/m1.jpg">'
+            + '<img class="bbImage" src="https://example.com/media/m2.jpg">'
+            + '<iframe class="saint-iframe" src="https://turbo.cr/embed/vid123"></iframe>'
+            + '<img class="bbImage" src="https://example.com/media/m3.jpg">'
+            + '</div></body></html>';
+        window.fetch = async (url) => {
+            const u = typeof url === 'string' ? url : (url && url.url) || '';
+            if (/\/threads\/test-thread\.12345\//.test(u)) pageFetches++;
+            return { ok: true, status: 200, text: async () => pageHtml, json: async () => ({}), url: u };
+        };
+
+        // 1. uma entrada só: header e dock
+        const mHeader = document.createElement('div');
+        mHeader.className = 'p-body-header';
+        mHeader.innerHTML = '<div class="p-title"><h1 class="p-title-value">Media thread</h1></div><div class="p-description"><ul class="listInline"></ul></div>';
+        const mBarHost = document.createElement('div');
+        mBarHost.className = 'block-outer';
+        mBarHost.innerHTML = '<div class="smg-bar"></div>';
+        document.body.append(mHeader, mBarHost);
+        window.__processAll([mHeader, mBarHost]);
+        const headBtns = Array.from(document.querySelectorAll('.smg-thead-actions .smg-thead-btn'));
+        assert(headBtns.length === 1, 'O header da thread tem UM botão de mídia (obtido: ' + headBtns.length + ')');
+        assert(/^(Media|Mídia)$/.test(headBtns[0] && headBtns[0].getAttribute('aria-label')), 'O botão do header se chama Media/Mídia');
+        assert(document.querySelector('#smg-thread-media') !== null, 'A dock tem o botão de mídia (#smg-thread-media)');
+        assert(!document.getElementById('smg-viewmode-pop') && !document.getElementById('smg-thread-view-mode'), 'A dock não tem mais o popover Galeria/Feed/Thread');
+
+        // 2. abre na GALERIA
+        headBtns[0].click();
+        await tick(60);
+        const root = document.getElementById('smg-media');
+        assert(root && root.classList.contains('open'), 'O botão abre o overlay #smg-media');
+        assert(mx.mediaView() === 'gallery' && root.dataset.view === 'gallery', 'O overlay abre na vista Galeria');
+        assert(document.querySelectorAll('#smg-media').length === 1 && root.querySelector('#smg-gallery') && root.querySelector('#smg-feed'), 'As duas vistas vivem dentro de UM root');
+        const tiles = root.querySelectorAll('#smg-gallery .smg-gallery-tile');
+        assert(tiles.length === 4, 'A galeria mostra a mídia da página 1 (obtido: ' + tiles.length + ')');
+        assert(pageFetches === 1, 'Abrir busca a página 1 uma vez (obtido: ' + pageFetches + ')');
+        assert(new URL(window.location.href).searchParams.get('view') === 'gallery', 'URL ganha ?view=gallery');
+        const tgGal = document.getElementById('smg-media-view-gallery');
+        const tgFeed = document.getElementById('smg-media-view-feed');
+        assert(tgGal && tgFeed && root.querySelector('.smg-media-dock').contains(tgFeed), 'A dock do overlay tem o seletor Galeria/Feed');
+        assert(tgGal.getAttribute('aria-pressed') === 'true' && tgFeed.getAttribute('aria-pressed') === 'false', 'O seletor marca a vista atual (aria-pressed)');
+
+        // 3. alternar sem nova busca
+        tgFeed.click();
+        await tick();
+        assert(mx.mediaView() === 'feed', 'O seletor troca para a vista Feed');
+        assert(root.querySelectorAll('#smg-feed .smg-feed-slide').length === 4, 'O feed usa a mesma lista (4 slides)');
+        assert(pageFetches === 1, 'Trocar de vista não busca de novo (obtido: ' + pageFetches + ')');
+        assert(new URL(window.location.href).searchParams.get('view') === 'feed', 'Trocar de vista atualiza ?view= no lugar');
+        assert(tgFeed.getAttribute('aria-pressed') === 'true' && tgGal.getAttribute('aria-pressed') === 'false', 'aria-pressed acompanha a vista');
+        tgGal.click();
+        await tick();
+        assert(mx.mediaView() === 'gallery' && pageFetches === 1, 'Voltar à galeria também não busca');
+        assert(root.querySelectorAll('#smg-gallery .smg-gallery-tile').length === 4, 'A galeria continua montada ao voltar');
+        assert(!root.querySelector('#smg-feed iframe, #smg-feed video'), 'Sair do feed para os players dele');
+
+        // 4. tile da galeria abre o feed naquele item
+        root.querySelectorAll('#smg-gallery .smg-gallery-tile--image')[1].click();
+        await tick();
+        assert(mx.mediaView() === 'feed', 'Clicar num tile vai para o Feed');
+        const thumbs = Array.from(root.querySelectorAll('#smg-feed .smg-feed-thumb'));
+        assert(thumbs.findIndex(t => t.classList.contains('active')) === 1, 'O feed abre no item clicado (2º)');
+        assert(root.querySelector('#smg-feed .smg-feed-counter').textContent === '2 / 4', 'Contador do feed no item clicado');
+        // vídeo: botão maximizar do tile abre o feed nele, com player
+        tgGal.click();
+        await tick();
+        root.querySelector('#smg-gallery .smg-gallery-tile--embed .smg-gallery-max').click();
+        await tick();
+        assert(root.querySelector('#smg-feed .smg-feed-counter').textContent === '3 / 4', 'Maximizar o vídeo abre o feed nele');
+        assert(root.querySelectorAll('#smg-feed iframe').length === 1, 'O slide de vídeo ativo monta o player');
+        assert(pageFetches === 1, 'Nenhuma troca de vista buscou de novo');
+
+        // 5. fechar desmonta tudo, por um caminho só
+        assert(!root.querySelector('.smg-feed-close'), 'O feed não tem um botão de fechar próprio');
+        document.getElementById('smg-media-close').click();
+        await tick();
+        assert(!root.classList.contains('open') && mx.mediaView() === null, 'Fechar fecha o overlay inteiro');
+        assert(!root.querySelector('iframe, video') && !root.querySelector('.smg-feed-slide, .smg-gallery-tile'), 'Fechar desmonta players, slides e tiles');
+        assert(document.documentElement.style.overflow === '', 'Fechar devolve o scroll da página');
+        assert(!new URL(window.location.href).searchParams.get('view'), 'Fechar limpa ?view=');
+
+        // Esc fecha (um handler só)
+        mx.openMedia('gallery');
+        await tick(60);
+        document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await tick();
+        assert(mx.mediaView() === null, 'Esc fecha o overlay');
+
+        // 6. ?view=feed abre o overlay no Feed (restauração no F5)
+        window.history.replaceState({}, '', window.location.pathname + '?view=feed');
+        mx.resetRestore();
+        mx.restoreNavMode();
+        await tick(60);
+        assert(mx.mediaView() === 'feed', '?view=feed reabre o overlay na vista Feed');
+        assert(root.querySelectorAll('#smg-feed .smg-feed-slide').length === 4, '?view=feed carrega a mídia da página 1 no feed');
+        mx.closeMedia();
+        window.history.replaceState({}, '', window.location.pathname + '?view=gallery');
+        mx.resetRestore();
+        mx.restoreNavMode();
+        await tick(60);
+        assert(mx.mediaView() === 'gallery', '?view=gallery reabre o overlay na vista Galeria');
+        mx.closeMedia();
+
+        window.fetch = prevFetchM;
+        mHeader.remove(); mBarHost.remove();
+        document.querySelectorAll('.smg-thead-tags-bar').forEach(n => n.remove());
     }
 
     // =========================================================================
