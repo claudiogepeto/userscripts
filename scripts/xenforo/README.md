@@ -41,8 +41,8 @@ readable. A file may continue a function opened by the previous one: `12b` and
 | `core/05-styles` | CSS composer; context-owned CSS lives in `parts/styles/` |
 | `core/06-helpers` | Shared text, URL, UI, pagination, fetch, and thumbnail helpers |
 | `feed/06b-feed-db` | IndexedDB store for followed threads, feed posts, and bookmarks |
-| `thread/07-posts-misc` | Keyboard shortcuts and infinite scrolling |
-| `media/08a-masonry-engine` | Masonry layout engine (shortest column, one ResizeObserver, one rAF) |
+| `thread/07-posts-misc` | Keyboard shortcuts, the shared pager engine (`createPager`: every load-more list), and page infinite scrolling |
+| `media/08a-masonry-engine` | Masonry layout engine (shortest column, 2 columns up to 600px and 3 above, landscape items span 2, one ResizeObserver, one rAF) |
 | `media/08-images-masonry` | Image processing and in-post grouping (runs of images become masonry groups) |
 | `media/10-redgifs-player` | RedGifs, Turbo, ImagePond, and Cyberdrop player pipeline |
 | `media/11-autoload-spoiler` | RedGifs autoloading and spoiler expansion |
