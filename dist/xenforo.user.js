@@ -17643,18 +17643,11 @@
     // absUrl está definido centralmente em 06-helpers.js
 
     // URL da imagem em resolução cheia: href do <a> (se for imagem) senão o src
+    // URL cheia da imagem clicada: o resolver das imagens (08) e, se ele não achar nada melhor, a própria src
+    // (src pode ser um placeholder lazy data:image/gif 1x1 → usa a URL real do data-*)
     function imageUrlOf(img) {
-        if (img.dataset && img.dataset.smgFull) return absUrl(img.dataset.smgFull);
-        const a = img.closest('a');
-        const href = a ? (a.getAttribute('href') || a.href || '') : '';
-        if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
-        const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
-        const gbx = goonboxViewer(smgLink);
-        if (gbx && gbxCache.has(gbx.id)) {
-            const cached = gbxCache.get(gbx.id);
-            if (cached && cached.original) return absUrl(cached.original);
-        }
-        // src pode ser um placeholder lazy (data:image/gif base64 1x1) → usa a URL real do data-*
+        const full = resolveFullImageUrl(img);
+        if (full) return full;
         let src = img.getAttribute('src') || img.src || '';
         if (!src || /^data:/i.test(src)) src = img.getAttribute('data-src') || img.getAttribute('data-url') || img.getAttribute('data-original') || src;
         return absUrl(getBigUrl(src));
