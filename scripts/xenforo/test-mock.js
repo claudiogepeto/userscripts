@@ -7824,6 +7824,99 @@ async function runTests() {
     }
 
     // =========================================================================
+    // RAIL DE ALERTAS: rolagem infinita no motor comum (dedupe, fim por páginas repetidas, falha, refresh)
+    // =========================================================================
+    {
+        console.log('\n--- Rail de alertas: paginação ---');
+        const ax = window.__aldockExports;
+        assert(typeof ax.railMore === 'function' && typeof ax.railHardRefresh === 'function', 'railMore e railHardRefresh devem estar expostos em __TEST_MODE__');
+        const flushR = async () => { for (let i = 0; i < 8; i++) await new Promise(r => setTimeout(r, 0)); };
+        if (!ax.getAldock()) ax.buildAlertsDock();
+        const dock = ax.getAldock();
+        const html = document.documentElement;
+        const wasOn = html.classList.contains('smg-aldock-on');
+        html.classList.add('smg-aldock-on');
+        const st = ax.aldockState.alerts;
+        const list = dock.querySelector('.smg-aldock-body[data-tab="alerts"] .smg-aldock-list');
+        const status = dock.querySelector('.smg-aldock-body[data-tab="alerts"] .smg-aldock-status');
+        const li = id => '<li class="alert" data-alert-id="' + id + '"><div class="contentRow"><div class="contentRow-main"><a href="/threads/r.' + id + '/">Alerta ' + id + '</a><time datetime="2026-01-01T00:00:' + String(id % 60).padStart(2, '0') + 'Z">x</time></div></div></li>';
+        const pages = {};
+        const asked = [];
+        let hold = null;
+        const prevFetchR = window.fetch;
+        window.fetch = (url, opts) => {
+            const u = String(url);
+            const m = u.match(/railpage=(\d+)/);
+            if (!m) return prevFetchR(url, opts);
+            const n = +m[1]; asked.push(n);
+            if (pages[n] === 'fail') return Promise.reject(new TypeError('network'));
+            const body = JSON.stringify({ html: { content: '<ol>' + pages[n].ids.map(li).join('') + '</ol>' + (pages[n].next ? '<a class="pageNav-jump--next" href="/account/alerts?railpage=' + pages[n].next + '">Next</a>' : '') } });
+            const resp = { ok: true, status: 200, text: async () => body };
+            if (hold && hold.page === n) return new Promise(res => { hold.release = () => res(resp); });
+            return Promise.resolve(resp);
+        };
+        const reset = () => { st.keys.clear(); list.replaceChildren(); st.loaded = true; st.busy = false; st.dry = 0; st.autoFill = 99; asked.length = 0; };
+
+        // 1. próxima página entra no fim e o cursor segue o Next dela
+        reset();
+        pages[2] = { ids: [801, 802], next: 3 };
+        st.next = '/account/alerts?railpage=2';
+        await ax.railMore('alerts'); await flushR();
+        assert(list.querySelectorAll('li.alert').length === 2 && /railpage=3/.test(st.next || ''), 'Rail: railMore anexa a página e segue o Next (obtido: ' + list.querySelectorAll('li.alert').length + ', next ' + st.next + ')');
+
+        // 2. duas páginas seguidas só com repetidos = fim de verdade
+        pages[3] = { ids: [801, 802], next: 4 };
+        pages[4] = { ids: [802], next: 5 };
+        await ax.railMore('alerts'); await flushR();
+        assert(st.next && /railpage=4/.test(st.next), 'Rail: UMA página toda repetida ainda não é o fim (o deslocamento da paginação explica)');
+        await ax.railMore('alerts'); await flushR();
+        assert(st.next == null, 'Rail: duas páginas seguidas toda repetidas encerram a lista');
+        assert(status && !status.hidden && /End of the list|Fim da lista/i.test(status.textContent), 'Rail: o status mostra o fim da lista (obtido: ' + (status && status.textContent) + ')');
+
+        // 3. falha de rede encerra (sem retry a cada scroll)
+        reset();
+        pages[6] = 'fail';
+        st.next = '/account/alerts?railpage=6';
+        await ax.railMore('alerts'); await flushR();
+        await ax.railMore('alerts'); await flushR();
+        assert(asked.join(',') === '6' && st.next == null, 'Rail: página que falha encerra a paginação sem re-tentar (obtido: ' + asked.join(',') + ')');
+
+        // 4. refresh total no meio de uma carga: a página velha não entra na lista nova
+        reset();
+        pages[7] = { ids: [701], next: 8 };
+        st.next = '/account/alerts?railpage=7';
+        hold = { page: 7 };
+        const inflight = ax.railMore('alerts');
+        await flushR();
+        const prevBase = ax.RAIL_SRC.alerts.seeAll;
+        ax.RAIL_SRC.alerts.seeAll = '/account/alerts?railpage=1';
+        pages[1] = { ids: [101, 102], next: 2 };
+        await ax.railHardRefresh('alerts'); await flushR();
+        hold.release(); await inflight; await flushR();
+        const ids = Array.from(list.querySelectorAll('li.alert')).map(x => x.getAttribute('data-alert-id')).join(',');
+        assert(ids === '101,102', 'Rail: página que chega depois do refresh total é descartada (obtido: ' + ids + ')');
+        assert(/railpage=2/.test(st.next || ''), 'Rail: depois do refresh o cursor é o Next da 1ª página nova');
+        ax.RAIL_SRC.alerts.seeAll = prevBase;
+        hold = null;
+
+        // 5. o master switch do scroll infinito NÃO vale pro rail (decisão do usuário)
+        reset();
+        pages[9] = { ids: [901], next: null };
+        st.next = '/account/alerts?railpage=9';
+        const FX = window.__configExports.FEATURES;
+        const prevInf = FX.infiniteScroll;
+        const body = dock.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        FX.infiniteScroll = false;
+        body.dispatchEvent(new window.Event('scroll')); await flushR();
+        assert(asked.join(',') === '9', 'Rail: rolar o painel até o fim carrega mesmo com a rolagem infinita da página desligada (obtido: ' + asked.join(',') + ')');
+        FX.infiniteScroll = prevInf;
+
+        window.fetch = prevFetchR;
+        reset(); st.next = null; st.autoFill = 0;
+        if (!wasOn) html.classList.remove('smg-aldock-on');
+    }
+
+    // =========================================================================
     // HOVER: cards de conteúdo não reagem ao hover (só controles reagem)
     // =========================================================================
     {
