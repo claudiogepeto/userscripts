@@ -171,6 +171,7 @@ ${scriptRows}
 - \`scripts/*.user.js\` contains standalone userscript sources.
 - \`scripts/xenforo/parts/*.js\` contains the modular XenForo source.
 - \`scripts/xenforo/script.js\` is assembled from the XenForo parts.
+- \`scripts/xenforo/AGENTS.md\` explains the XenForo build, file owners, and how to change it safely.
 - \`scripts/bypassbr/parts/*.js\` contains the modular BypassBR source.
 - \`scripts/bypassbr/script.js\` is assembled from the BypassBR parts.
 - \`dist/\` contains generated installable files.
