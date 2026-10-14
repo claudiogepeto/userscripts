@@ -478,7 +478,7 @@
                 toggleAlertsDock('alerts');
             });
         }
-        const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Timeline', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
+        const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
         const btnLogin = dockLoggedIn ? null : makeDockLink({ id: 'smg-nav-login', icon: ICONS.login, label: 'Log in', href: loginHref() });
         if (btnLogin) wireAuthClick(btnLogin, 'login');
         // discover/user: só na navbar inferior (mobile); abrem bottom sheets montados no buildTopbar.
@@ -749,12 +749,12 @@
         };
         const dbActionsHtml = `
             <div class="smg-set-sectitle">${IS_PT ? 'Banco de Dados & Cache Local' : 'Database & Local Cache'}</div>
-            <div class="smg-set-action-card" data-q="limpar timeline reset posts feed clear database">
+            <div class="smg-set-action-card" data-q="limpar feed timeline reset posts clear database">
                 <div class="smg-set-text">
-                    <span class="smg-set-label">${IS_PT ? 'Limpar Timeline' : 'Clear Timeline'}</span>
-                    <span class="smg-set-desc">${IS_PT ? 'Remove todos os posts salvos localmente na timeline e redefine as páginas salvas das threads.' : 'Removes all locally saved timeline posts and resets thread saved pages.'}</span>
+                    <span class="smg-set-label">${IS_PT ? 'Limpar feed' : 'Clear feed'}</span>
+                    <span class="smg-set-desc">${IS_PT ? 'Remove todos os posts salvos localmente no feed e redefine as páginas salvas das threads.' : 'Removes all locally saved feed posts and resets thread saved pages.'}</span>
                 </div>
-                <button type="button" class="smg-set-btn-danger smg-btn-clear-timeline">${IS_PT ? 'Limpar Timeline' : 'Clear Timeline'}</button>
+                <button type="button" class="smg-set-btn-danger smg-btn-clear-timeline">${IS_PT ? 'Limpar feed' : 'Clear feed'}</button>
             </div>
             <div class="smg-set-action-card" data-q="limpar seguidos reset cache watched threads clear database">
                 <div class="smg-set-text">
@@ -2439,10 +2439,10 @@
             const btnClearTimeline = settingsPop.querySelector('.smg-btn-clear-timeline');
             if (btnClearTimeline) {
                 btnClearTimeline.addEventListener('click', () => {
-                    if (!confirm(IS_PT ? 'Limpar todos os posts salvos na timeline e resetar páginas salvas?' : 'Clear all saved timeline posts and reset saved pages?')) return;
+                    if (!confirm(IS_PT ? 'Limpar todos os posts salvos no feed e resetar páginas salvas?' : 'Clear all saved feed posts and reset saved pages?')) return;
                     dbClearTimeline().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Timeline limpa com sucesso' : 'Timeline cleared successfully');
-                        else alert(IS_PT ? 'Timeline limpa com sucesso!' : 'Timeline cleared successfully!');
+                        if (typeof toast === 'function') toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
+                        else alert(IS_PT ? 'Feed limpo com sucesso!' : 'Feed cleared successfully!');
                     });
                 });
             }

@@ -122,10 +122,10 @@
         const watchedHref = navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads';
         const groups = [
             { label: 'Discover', mega: true, icon: ICONS.compass, items: discoverItems, featured: {   // mega-menu (grid 2-col + ícones em tile + painel destacado), estilo Vimeo
-                title: 'Timeline', desc: 'Posts from the threads you follow, newest first.', cta: 'Open Timeline',
+                title: 'Feed', desc: 'Posts from the threads you follow, newest first.', cta: 'Open feed',
                 href: '/?view=feed', icon: ICONS.feed,
             } },
-            { label: 'Timeline', icon: ICONS.feed, href: '/?view=feed', member: true },   // ex-"Feed": river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
+            { label: 'Feed', icon: ICONS.feed, href: '/?view=feed', member: true },   // feed: river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
             { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },     // threads que você segue (watched) — ícone Following
         ].filter(g => loggedIn || !g.member);
 

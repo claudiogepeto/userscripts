@@ -485,7 +485,7 @@
             sub.textContent = (IS_PT
                 ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
                 : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e timeline ficam separados.' : 'Nothing is marked read. Alerts and the timeline stay separate.';
+            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e feed ficam separados.' : 'Nothing is marked read. Alerts and the feed stay separate.';
             if (fill) fill.style.width = '12%';
             return;
         }
@@ -513,11 +513,11 @@
 
         const wrap = document.createElement('div'); wrap.id = 'smg-river'; wrap.dataset.smgPaintReady = '0';
         const fhead = document.createElement('div'); fhead.className = 'smg-river-head';
-        fhead.innerHTML = '<h1 class="smg-river-title">Timeline</h1><div class="smg-river-head-actions"></div>';
+        fhead.innerHTML = '<h1 class="smg-river-title">Feed</h1><div class="smg-river-head-actions"></div>';
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
         refBtn.className = 'smg-river-refresh';
-        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar timeline' : 'Refresh timeline';
+        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar feed' : 'Refresh feed';
         refBtn.setAttribute('aria-label', refBtn.title);
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {

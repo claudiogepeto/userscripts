@@ -175,7 +175,7 @@
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
-        infiniteScrollTimeline: true, // rolagem infinita na timeline / feed
+        infiniteScrollTimeline: true, // rolagem infinita no feed (chave persistida: não renomear)
         infiniteScrollWatched: true,  // rolagem infinita em fóruns / tópicos seguidos (watched)
         thumbPlaceholders: true,    // marca no lugar de thumb ausente/quebrada (grid/lista)
         replaceThumbsWithFull: false, // substitui miniaturas pelas imagens finais em resolução completa (desabilitado por padrão)
@@ -236,9 +236,9 @@
             { key: 'groupLinks', label: 'Gather download links', desc: { en: 'Gathers file-host links (GoFile, Bunkr, Pixeldrain…) into a shortcut bar at the end of the post, without touching the text.', pt: 'Agrupa os links de hospedagem (GoFile, Bunkr, Pixeldrain…) numa barra de atalhos ao fim do post, sem mexer no texto.' } },
         ] },
         { section: 'Infinite scroll', items: [
-            { key: 'infiniteScroll', label: 'Infinite scroll (global)', desc: { en: 'Master switch for infinite scrolling across threads, timeline and watched lists.', pt: 'Chave mestre para rolagem infinita em tópicos, timeline e listas de seguidos.' } },
+            { key: 'infiniteScroll', label: 'Infinite scroll (global)', desc: { en: 'Master switch for infinite scrolling across threads, the feed and watched lists.', pt: 'Chave mestre para rolagem infinita em tópicos, no feed e nas listas de seguidos.' } },
             { key: 'infiniteScrollThreads', label: 'Infinite scroll in threads', desc: { en: 'Loads the next thread page automatically when you reach the bottom.', pt: 'Carrega a próxima página do tópico automaticamente ao chegar ao fim.' } },
-            { key: 'infiniteScrollTimeline', label: 'Infinite scroll in timeline', desc: { en: 'Loads older posts automatically when scrolling the timeline/feed.', pt: 'Carrega posts mais antigos automaticamente ao rolar a timeline/feed.' } },
+            { key: 'infiniteScrollTimeline', label: 'Infinite scroll in feed', desc: { en: 'Loads older posts automatically when scrolling the feed.', pt: 'Carrega posts mais antigos automaticamente ao rolar o feed.' } },
             { key: 'infiniteScrollWatched', label: 'Infinite scroll in watched & forums', desc: { en: 'Loads next pages automatically in watched lists and forum thread listings.', pt: 'Carrega as próximas páginas automaticamente em listas de seguidos e fóruns.' } },
         ] },
         { section: 'Thread & reading', items: [
@@ -276,7 +276,7 @@
         'Direct media from CDNs': 'Mídia direta de CDNs',
         'Skip external link warning': 'Pular aviso de link externo', 'Gather download links': 'Reunir links de download',
         'Infinite scroll (global)': 'Rolagem infinita (global)',
-        'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in timeline': 'Rolagem infinita na timeline',
+        'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in feed': 'Rolagem infinita no feed',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
         'Infinite scroll in thread': 'Rolagem infinita no tópico',
         'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
@@ -318,7 +318,7 @@
         'Search the forum…': 'Buscar no fórum…', 'Search in': 'Buscar em', 'Everywhere': 'Em tudo',
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',
         // feed (river de posts na /watched/threads)
-        'Feed': 'Feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
+        'Feed': 'Feed', 'Open feed': 'Abrir feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
         'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
@@ -14787,7 +14787,7 @@
                 toggleAlertsDock('alerts');
             });
         }
-        const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Timeline', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
+        const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
         const btnLogin = dockLoggedIn ? null : makeDockLink({ id: 'smg-nav-login', icon: ICONS.login, label: 'Log in', href: loginHref() });
         if (btnLogin) wireAuthClick(btnLogin, 'login');
         // discover/user: só na navbar inferior (mobile); abrem bottom sheets montados no buildTopbar.
@@ -15058,12 +15058,12 @@
         };
         const dbActionsHtml = `
             <div class="smg-set-sectitle">${IS_PT ? 'Banco de Dados & Cache Local' : 'Database & Local Cache'}</div>
-            <div class="smg-set-action-card" data-q="limpar timeline reset posts feed clear database">
+            <div class="smg-set-action-card" data-q="limpar feed timeline reset posts clear database">
                 <div class="smg-set-text">
-                    <span class="smg-set-label">${IS_PT ? 'Limpar Timeline' : 'Clear Timeline'}</span>
-                    <span class="smg-set-desc">${IS_PT ? 'Remove todos os posts salvos localmente na timeline e redefine as páginas salvas das threads.' : 'Removes all locally saved timeline posts and resets thread saved pages.'}</span>
+                    <span class="smg-set-label">${IS_PT ? 'Limpar feed' : 'Clear feed'}</span>
+                    <span class="smg-set-desc">${IS_PT ? 'Remove todos os posts salvos localmente no feed e redefine as páginas salvas das threads.' : 'Removes all locally saved feed posts and resets thread saved pages.'}</span>
                 </div>
-                <button type="button" class="smg-set-btn-danger smg-btn-clear-timeline">${IS_PT ? 'Limpar Timeline' : 'Clear Timeline'}</button>
+                <button type="button" class="smg-set-btn-danger smg-btn-clear-timeline">${IS_PT ? 'Limpar feed' : 'Clear feed'}</button>
             </div>
             <div class="smg-set-action-card" data-q="limpar seguidos reset cache watched threads clear database">
                 <div class="smg-set-text">
@@ -16748,10 +16748,10 @@
             const btnClearTimeline = settingsPop.querySelector('.smg-btn-clear-timeline');
             if (btnClearTimeline) {
                 btnClearTimeline.addEventListener('click', () => {
-                    if (!confirm(IS_PT ? 'Limpar todos os posts salvos na timeline e resetar páginas salvas?' : 'Clear all saved timeline posts and reset saved pages?')) return;
+                    if (!confirm(IS_PT ? 'Limpar todos os posts salvos no feed e resetar páginas salvas?' : 'Clear all saved feed posts and reset saved pages?')) return;
                     dbClearTimeline().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Timeline limpa com sucesso' : 'Timeline cleared successfully');
-                        else alert(IS_PT ? 'Timeline limpa com sucesso!' : 'Timeline cleared successfully!');
+                        if (typeof toast === 'function') toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
+                        else alert(IS_PT ? 'Feed limpo com sucesso!' : 'Feed cleared successfully!');
                     });
                 });
             }
@@ -20036,7 +20036,7 @@
         const feeds = [
             { key: 'latest', label: 'Latest posts', icon: ICONS.layers, url: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
             { key: 'trending', label: 'Trending', icon: ICONS.flame, url: navHref('trending', 'smgtrending', 'trending2') },
-            // "Following" REMOVIDO daqui: a Timeline (topbar → ?view=feed) já é o feed das seguidas.
+            // "Following" REMOVIDO daqui: o Feed (topbar → ?view=feed) já é o feed das seguidas.
         ].filter(f => f.url);
         if (!feeds.length) {
             homeFeedDone = true;
@@ -23101,10 +23101,10 @@
         const watchedHref = navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads';
         const groups = [
             { label: 'Discover', mega: true, icon: ICONS.compass, items: discoverItems, featured: {   // mega-menu (grid 2-col + ícones em tile + painel destacado), estilo Vimeo
-                title: 'Timeline', desc: 'Posts from the threads you follow, newest first.', cta: 'Open Timeline',
+                title: 'Feed', desc: 'Posts from the threads you follow, newest first.', cta: 'Open feed',
                 href: '/?view=feed', icon: ICONS.feed,
             } },
-            { label: 'Timeline', icon: ICONS.feed, href: '/?view=feed', member: true },   // ex-"Feed": river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
+            { label: 'Feed', icon: ICONS.feed, href: '/?view=feed', member: true },   // feed: river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
             { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },     // threads que você segue (watched) — ícone Following
         ].filter(g => loggedIn || !g.member);
 
@@ -26472,7 +26472,7 @@
             sub.textContent = (IS_PT
                 ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
                 : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e timeline ficam separados.' : 'Nothing is marked read. Alerts and the timeline stay separate.';
+            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e feed ficam separados.' : 'Nothing is marked read. Alerts and the feed stay separate.';
             if (fill) fill.style.width = '12%';
             return;
         }
@@ -26500,11 +26500,11 @@
 
         const wrap = document.createElement('div'); wrap.id = 'smg-river'; wrap.dataset.smgPaintReady = '0';
         const fhead = document.createElement('div'); fhead.className = 'smg-river-head';
-        fhead.innerHTML = '<h1 class="smg-river-title">Timeline</h1><div class="smg-river-head-actions"></div>';
+        fhead.innerHTML = '<h1 class="smg-river-title">Feed</h1><div class="smg-river-head-actions"></div>';
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
         refBtn.className = 'smg-river-refresh';
-        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar timeline' : 'Refresh timeline';
+        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar feed' : 'Refresh feed';
         refBtn.setAttribute('aria-label', refBtn.title);
         refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {

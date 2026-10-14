@@ -12,7 +12,7 @@
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
-        infiniteScrollTimeline: true, // rolagem infinita na timeline / feed
+        infiniteScrollTimeline: true, // rolagem infinita no feed (chave persistida: não renomear)
         infiniteScrollWatched: true,  // rolagem infinita em fóruns / tópicos seguidos (watched)
         thumbPlaceholders: true,    // marca no lugar de thumb ausente/quebrada (grid/lista)
         replaceThumbsWithFull: false, // substitui miniaturas pelas imagens finais em resolução completa (desabilitado por padrão)
@@ -73,9 +73,9 @@
             { key: 'groupLinks', label: 'Gather download links', desc: { en: 'Gathers file-host links (GoFile, Bunkr, Pixeldrain…) into a shortcut bar at the end of the post, without touching the text.', pt: 'Agrupa os links de hospedagem (GoFile, Bunkr, Pixeldrain…) numa barra de atalhos ao fim do post, sem mexer no texto.' } },
         ] },
         { section: 'Infinite scroll', items: [
-            { key: 'infiniteScroll', label: 'Infinite scroll (global)', desc: { en: 'Master switch for infinite scrolling across threads, timeline and watched lists.', pt: 'Chave mestre para rolagem infinita em tópicos, timeline e listas de seguidos.' } },
+            { key: 'infiniteScroll', label: 'Infinite scroll (global)', desc: { en: 'Master switch for infinite scrolling across threads, the feed and watched lists.', pt: 'Chave mestre para rolagem infinita em tópicos, no feed e nas listas de seguidos.' } },
             { key: 'infiniteScrollThreads', label: 'Infinite scroll in threads', desc: { en: 'Loads the next thread page automatically when you reach the bottom.', pt: 'Carrega a próxima página do tópico automaticamente ao chegar ao fim.' } },
-            { key: 'infiniteScrollTimeline', label: 'Infinite scroll in timeline', desc: { en: 'Loads older posts automatically when scrolling the timeline/feed.', pt: 'Carrega posts mais antigos automaticamente ao rolar a timeline/feed.' } },
+            { key: 'infiniteScrollTimeline', label: 'Infinite scroll in feed', desc: { en: 'Loads older posts automatically when scrolling the feed.', pt: 'Carrega posts mais antigos automaticamente ao rolar o feed.' } },
             { key: 'infiniteScrollWatched', label: 'Infinite scroll in watched & forums', desc: { en: 'Loads next pages automatically in watched lists and forum thread listings.', pt: 'Carrega as próximas páginas automaticamente em listas de seguidos e fóruns.' } },
         ] },
         { section: 'Thread & reading', items: [

@@ -884,7 +884,7 @@
         const feeds = [
             { key: 'latest', label: 'Latest posts', icon: ICONS.layers, url: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
             { key: 'trending', label: 'Trending', icon: ICONS.flame, url: navHref('trending', 'smgtrending', 'trending2') },
-            // "Following" REMOVIDO daqui: a Timeline (topbar → ?view=feed) já é o feed das seguidas.
+            // "Following" REMOVIDO daqui: o Feed (topbar → ?view=feed) já é o feed das seguidas.
         ].filter(f => f.url);
         if (!feeds.length) {
             homeFeedDone = true;

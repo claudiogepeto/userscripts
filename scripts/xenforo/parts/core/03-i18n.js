@@ -20,7 +20,7 @@
         'Direct media from CDNs': 'Mídia direta de CDNs',
         'Skip external link warning': 'Pular aviso de link externo', 'Gather download links': 'Reunir links de download',
         'Infinite scroll (global)': 'Rolagem infinita (global)',
-        'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in timeline': 'Rolagem infinita na timeline',
+        'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in feed': 'Rolagem infinita no feed',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
         'Infinite scroll in thread': 'Rolagem infinita no tópico',
         'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
@@ -62,7 +62,7 @@
         'Search the forum…': 'Buscar no fórum…', 'Search in': 'Buscar em', 'Everywhere': 'Em tudo',
         'Search the forum': 'Buscar no fórum', 'Type at least 3 characters to see results': 'Digite ao menos 3 caracteres para ver resultados',
         // feed (river de posts na /watched/threads)
-        'Feed': 'Feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
+        'Feed': 'Feed', 'Open feed': 'Abrir feed', 'List': 'Lista', 'Open in thread': 'Abrir no tópico', 'Load more': 'Carregar mais', 'post by': 'postado por',
         'No watched threads yet': 'Você ainda não segue nenhum tópico', 'No recent posts': 'Nenhum post recente',
         'Saved': 'Salvos', 'Saved state': 'Salvo', 'Nothing saved yet': 'Nada salvo ainda', 'Loading saved posts…': 'Carregando os posts salvos…',
         'Setting up your feed': 'Configurando seu feed', 'Reading the threads you follow…': 'Lendo as threads que você segue…',
