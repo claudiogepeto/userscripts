@@ -981,6 +981,16 @@
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
             html.smg-threadlist.smg-tv-grid .stickySeparatortop,
             html.smg-threadlist.smg-tv-grid .stickySeparatorbottom { display: none !important; }
+            /* PERF: linha/card de tópico fora da tela não é renderizada (sem paint/raster no scroll). A
+               altura estimada é a medida de uma linha (163px) e de um card da grade (450px); "auto" guarda a
+               real depois do 1º render. Fora a lista compacta de fixos (lá o placeholder vaza da linha). */
+            html.smg-threadlist :not(.smg-sticky-compact-list) > .structItem--thread {
+                content-visibility: auto;
+                contain-intrinsic-size: auto 163px;
+            }
+            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread {
+                contain-intrinsic-size: auto 450px;
+            }
             /* ---- GRID DE TÓPICOS IDENTICO AO NOSSO MODELO ---- */
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread {
                 display: flex !important;
