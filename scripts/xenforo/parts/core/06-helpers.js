@@ -151,6 +151,14 @@
         return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
     }
 
+    // posição do 1º padrão que casa com o texto (ordem de prioridade); 999 = nenhum
+    function getPatternOrder(patterns, text) {
+        for (let i = 0; i < patterns.length; i++) {
+            if (patterns[i].test(text)) return i;
+        }
+        return 999;
+    }
+
     function cleanText(text) {
         return text.replace('.md', '').replace('.th', '');
     }

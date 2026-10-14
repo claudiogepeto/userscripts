@@ -10235,6 +10235,14 @@
         return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
     }
 
+    // posição do 1º padrão que casa com o texto (ordem de prioridade); 999 = nenhum
+    function getPatternOrder(patterns, text) {
+        for (let i = 0; i < patterns.length; i++) {
+            if (patterns[i].test(text)) return i;
+        }
+        return 999;
+    }
+
     function cleanText(text) {
         return text.replace('.md', '').replace('.th', '');
     }
@@ -19858,11 +19866,7 @@
     }
 
     function getMainSiteOrder(title) {
-        const clean = cleanHomeNodeTitle(title);
-        for (let i = 0; i < MAIN_SITE_PATTERNS.length; i++) {
-            if (MAIN_SITE_PATTERNS[i].test(clean)) return i;
-        }
-        return 999;
+        return getPatternOrder(MAIN_SITE_PATTERNS, cleanHomeNodeTitle(title));
     }
 
     const MAIN_CATEGORY_PATTERNS = [
@@ -19884,11 +19888,7 @@
     ];
 
     function getMainCategoryOrder(title) {
-        const clean = cleanHomeNodeTitle(title);
-        for (let i = 0; i < MAIN_CATEGORY_PATTERNS.length; i++) {
-            if (MAIN_CATEGORY_PATTERNS[i].test(clean)) return i;
-        }
-        return 999;
+        return getPatternOrder(MAIN_CATEGORY_PATTERNS, cleanHomeNodeTitle(title));
     }
 
     // Classifica um nó da home em:

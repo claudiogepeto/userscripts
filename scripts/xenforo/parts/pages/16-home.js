@@ -48,11 +48,7 @@
     }
 
     function getMainSiteOrder(title) {
-        const clean = cleanHomeNodeTitle(title);
-        for (let i = 0; i < MAIN_SITE_PATTERNS.length; i++) {
-            if (MAIN_SITE_PATTERNS[i].test(clean)) return i;
-        }
-        return 999;
+        return getPatternOrder(MAIN_SITE_PATTERNS, cleanHomeNodeTitle(title));
     }
 
     const MAIN_CATEGORY_PATTERNS = [
@@ -74,11 +70,7 @@
     ];
 
     function getMainCategoryOrder(title) {
-        const clean = cleanHomeNodeTitle(title);
-        for (let i = 0; i < MAIN_CATEGORY_PATTERNS.length; i++) {
-            if (MAIN_CATEGORY_PATTERNS[i].test(clean)) return i;
-        }
-        return 999;
+        return getPatternOrder(MAIN_CATEGORY_PATTERNS, cleanHomeNodeTitle(title));
     }
 
     // Classifica um nó da home em:
