@@ -50,7 +50,7 @@
         'Filter': 'Filtrar', 'Filter by author': 'Filtrar por autor',
         // dock — navegação + geral
         'Home': 'Início', 'Alerts': 'Alertas', 'Watched': 'Seguindo', 'Discover': 'Descobrir', 'Explore': 'Explorar',
-        'Account': 'Conta', 'Feed mode': 'Modo feed', 'View mode': 'Modo de visualização',
+        'Account': 'Conta', 'View mode': 'Modo de visualização',
         'Mark all as read': 'Marcar tudo como lido',
         'Page navigation': 'Navegação de página',
         'Settings': 'Configurações', 'Options': 'Opções',

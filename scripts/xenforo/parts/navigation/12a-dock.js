@@ -130,7 +130,7 @@
         })();
 
         // ---- botões ----
-        let btnWatchM, btnSortM, btnViewModeM, btnListFilterM, btnListSortM, btnViewToggleM;
+        let btnWatchM, btnSortM, btnMediaM, btnListFilterM, btnListSortM, btnViewToggleM;
         const btnSearch = makeDockButton({ id: 'smg-thread-search', icon: ICONS.search, label: 'Search' });
         const btnWatch = makeDockButton({
             id: 'smg-thread-watch',
@@ -338,64 +338,9 @@
             paintMobilePager();
         };
 
-        // Botão de View Mode na Thread (Feed / Galeria / Normal)
-        const btnViewMode = isThread ? makeDockButton({
-            id: 'smg-thread-view-mode',
-            icon: ICONS.gallery,
-            label: 'View mode',
-        }) : null;
-
-        const viewModePop = isThread ? document.createElement('div') : null;
-        if (viewModePop) {
-            viewModePop.id = 'smg-viewmode-pop';
-            viewModePop.className = 'smg-viewmode-pop';
-            viewModePop.innerHTML =
-                `<button type="button" class="smg-vm-opt" data-mode="gallery"><span class="smg-vm-ic">${ICONS.gallery}</span><span>${i18n('Gallery')}</span></button>` +
-                `<button type="button" class="smg-vm-opt" data-mode="feed"><span class="smg-vm-ic">${ICONS.feed}</span><span>${i18n('Feed')}</span></button>` +
-                `<button type="button" class="smg-vm-opt" data-mode="normal"><span class="smg-vm-ic">${ICONS.list}</span><span>${i18n('Thread')}</span></button>`;
-
-            viewModePop.querySelectorAll('.smg-vm-opt').forEach(opt => {
-                opt.addEventListener('click', e => {
-                    e.stopPropagation();
-                    viewModePop.classList.remove('open');
-                    if (btnViewMode) btnViewMode.classList.remove('smg-active');
-                    if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
-                    const m = opt.dataset.mode;
-                    if (m === 'gallery') {
-                        openGallery();
-                    } else if (m === 'feed') {
-                        openMediaFeed(null, null, { fromStart: true });
-                    } else if (m === 'normal') {
-                        closeGallery();
-                        const f = document.getElementById('smg-feed');
-                        if (f) f.remove();
-                    }
-                });
-            });
-
-            if (btnViewMode) {
-                btnViewMode.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const isOpen = viewModePop.classList.toggle('open');
-                    btnViewMode.classList.toggle('smg-active', isOpen);
-                    if (btnViewModeM) btnViewModeM.classList.toggle('smg-active', isOpen);
-                    if (isOpen && mobilePagePop) {
-                        mobilePagePop.classList.remove('open');
-                        if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-                    }
-                });
-            }
-
-            smgPopover({
-                inside: [viewModePop, btnViewMode, btnViewModeM],
-                isOpen: () => viewModePop.classList.contains('open'),
-                close: () => {
-                    viewModePop.classList.remove('open');
-                    if (btnViewMode) btnViewMode.classList.remove('smg-active');
-                    if (btnViewModeM) btnViewModeM.classList.remove('smg-active');
-                },
-            });
-        }
+        // modo mídia: UM botão abre o overlay (Galeria; o seletor da dock dele leva ao Feed)
+        const btnMedia = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
+        if (btnMedia) btnMedia.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
 
         if (mobilePagePop) smgPopover({
             inside: [mobilePagePop, btnMobilePageBtn],
@@ -563,13 +508,8 @@
             btnSortM.appendChild(sortTxtM);
             btnSortM.addEventListener('click', () => btnSort.click());
 
-            btnViewModeM = isThread ? makeDockButton({ id: 'smg-thread-view-mode', icon: ICONS.gallery, label: 'View mode' }) : null;
-            if (btnViewMode && btnViewModeM) {
-                btnViewModeM.addEventListener('click', e => {
-                    e.stopPropagation();
-                    btnViewMode.click();
-                });
-            }
+            btnMediaM = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
+            if (btnMedia && btnMediaM) btnMediaM.addEventListener('click', e => { e.stopPropagation(); btnMedia.click(); });
 
             const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
             btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -579,14 +519,14 @@
 
             const threadBar = document.createElement('div');
             threadBar.className = 'smg-dock-thread-bar';
-            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnViewModeM, btnWatchM].filter(Boolean);
+            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnMediaM, btnWatchM].filter(Boolean);
             threadBtns.push(btnListSortM, btnListFilterM, btnViewToggleM);
             threadBar.append(...threadBtns.filter(Boolean));
 
             // Grupos para Desktop
             const actionsGroup = makeGroup(btnWatch);
             actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnViewMode);
+            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnMedia);
             pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
             scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
@@ -796,7 +736,6 @@
         if (listFilterPop) navWrapper.append(listFilterPop);
         if (sortPop) navWrapper.append(sortPop);
         if (mobilePagePop) navWrapper.append(mobilePagePop);
-        if (viewModePop) navWrapper.append(viewModePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
         markNavbarReady();
@@ -921,9 +860,7 @@
                 if (isThread) {
                     addSection('Post', [btnWatch].map(b => b && fromBtn(b)));
                     addSection('View', [
-                        sheetItem(ICONS.gallery, i18n('Gallery'), () => { closeSheet(); openGallery(); }),
-                        sheetItem(ICONS.feed, i18n('Feed'), () => { closeSheet(); openMediaFeed(null, null, { fromStart: true }); }),
-                        sheetItem(ICONS.list, i18n('Thread view'), () => { closeSheet(); closeGallery(); }),
+                        sheetItem(ICONS.gallery, i18n('Media'), () => { closeSheet(); openMedia('gallery'); }),
                     ]);
                     // Sort by date entra DEPOIS de Next page
                     addSection('Navigation', [btnUp, btnDown, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnSort].map(b => b && fromBtn(b)));
@@ -962,9 +899,7 @@
             navWrapper.classList.remove('goto-open', 'settings-open', 'listfilter-open', 'listsort-open', 'smg-dock-show');
             searchOverlay.classList.remove('open');
             if (mobilePagePop) mobilePagePop.classList.remove('open');
-            if (viewModePop) viewModePop.classList.remove('open');
             if (btnMobilePageBtn) btnMobilePageBtn.classList.remove('smg-active');
-            if (btnViewMode) btnViewMode.classList.remove('smg-active');
         }
         // arrastar pra baixo fecha os sheets/modais mobile (settings · filtro · ordenação têm grip = bottom sheet; goto é popover pequeno → fora)
         const isMobileSheet = () => window.innerWidth <= 600;

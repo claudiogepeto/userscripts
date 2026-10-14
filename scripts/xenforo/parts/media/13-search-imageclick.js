@@ -273,7 +273,7 @@
                     const link = img.closest('a');
                     if (link) link.href = res.original;
                     const feed = document.getElementById('smg-feed');
-                    if (feed && feed.classList.contains('open')) {
+                    if (feed && mediaView() === 'feed') {
                         feed.querySelectorAll('img.smg-feed-media').forEach(fi => {
                             if (fi.dataset.src === targetUrl || fi.dataset.src === res.medium || fi.src === targetUrl || fi.src === res.medium) {
                                 fi.dataset.src = res.original;

@@ -8,7 +8,7 @@
 
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-media { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -126,7 +126,7 @@
             html.smg-thread #smg-view-toggle-m { display: none !important; }
             html:not(.smg-thread) #smg-post-sort-toggle,
             html:not(.smg-thread) #smg-thread-watch,
-            html:not(.smg-thread) #smg-thread-view-mode { display: none !important; }
+            html:not(.smg-thread) #smg-thread-media { display: none !important; }
             #smg-mobile-page-btn.is-off { display: none !important; }
 
             /* ---- dock: container ---- */
@@ -346,7 +346,7 @@
                 display: flex;
             }
 
-            /* ---- goto: número da página dentro do botão (thread + galeria) ---- */
+            /* ---- goto: número da página dentro do botão (thread + galeria do overlay de mídia) ---- */
             #smg-post-goto, #smg-gal-goto {
                 border-radius: var(--smg-r-12) !important; /* rounded-2xl */
                 min-width: 64px !important;
@@ -387,7 +387,7 @@
                 z-index: var(--smg-z-pop);
             }
             #smg-post-nav-wrapper.goto-open #smg-goto-pop,
-            .smg-gallery-dock.goto-open .smg-gallery-goto-pop {
+            .smg-media-dock.goto-open .smg-gallery-goto-pop {
                 visibility: visible;
                 opacity: 1;
                 pointer-events: auto;

@@ -60,8 +60,8 @@
 //  MASONRY: um motor só (08a: masonryMount/masonryPlace — coluna mais curta, colunas pela
 //    largura do container, 1 ResizeObserver + 1 rAF). buildPostGallery() lê o corpo do post
 //    em blocos: runs de 2+ imagens viram um grupo, texto/embed/card ficam onde o autor pôs.
-//    A galeria (#smg-gallery) usa o mesmo motor por página. O visualizador cheio
-//    (tiktok/zoom/slides) = openMediaFeed().
+//    O modo mídia (#smg-media) tem duas vistas sobre UMA lista: Galeria (o mesmo motor, por
+//    página) e Feed (tiktok/zoom/slides). openMedia() = thread desde a pág. 1 · openMediaFeed(url) = clique no post.
 //
 //  GOTCHAS que já queimaram (memória do projeto · [[script-passes-traps]]):
 //    • CSS vive num template `…` (backtick) em injectStyles → NUNCA backtick dentro
@@ -90,8 +90,8 @@
 //  autoload/spoiler .. autoLoadRedgifs, autoExpandSpoilers
 //  DOCK (nav post) ... setupPostNavigation()  ← GRANDE: pager, goto, filtro de lista, view-toggle,
 //                      sheet mobile, e a BUSCA (history/chips/doSearch)
-//  FEED + LIGHTBOX ... setupImageClickFeed, collectMediaFrom, gal* (galeria paginada),
-//                      openMediaFeed()  ← visualizador cheio (slides/zoom/mute)
+//  MODO MÍDIA ....... setupImageClickFeed, collectMediaFrom, mediaState + gal* (lista paginada + Galeria),
+//                      openMedia/openMediaFeed/setMediaView/closeMedia, feedMount()  ← Feed (slides/zoom/mute)
 //  LISTAGEM .......... markThreadGridContainer, badges reativos, styleArticleCards, markGridPlaceholders
 //  HOME (forum_list) . expandSubForums, makeHomeCardsClickable,
 //                      buildHomeFeed, layoutHomeSidebar

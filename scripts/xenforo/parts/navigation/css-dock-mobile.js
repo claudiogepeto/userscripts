@@ -247,13 +247,6 @@
                     color: var(--smg-link) !important;
                 }
 
-                /* Botão de View Mode no Mobile */
-                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-thread-view-mode.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link) !important;
-                    stroke: var(--smg-link) !important;
-                }
-
                 /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
                 .smg-dock-thread-bar #smg-thread-watch.smg-active {
                     background: rgba(255, 119, 178, 0.12) !important;
@@ -407,46 +400,5 @@
             .smg-mp-close svg {
                 width: 14px;
                 height: 14px;
-            }
-            #smg-viewmode-pop {
-                display: none;
-                position: fixed;
-                bottom: calc(var(--smg-navh) + 12px);
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: var(--smg-z-50);
-                background: var(--smg-s2);
-                border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-pop-r);
-                padding: var(--smg-sp-6);
-                box-shadow: var(--smg-pop-shadow);
-                align-items: center;
-                gap: var(--smg-sp-4);
-            }
-            #smg-viewmode-pop.open {
-                display: flex !important;
-            }
-            .smg-vm-opt {
-                display: inline-flex;
-                align-items: center;
-                gap: var(--smg-sp-6);
-                height: 34px;
-                padding: 0 var(--smg-sp-12);
-                border-radius: var(--smg-r-10);
-                background: var(--smg-w-06);
-                color: #fff;
-                border: 0;
-                font-size: var(--smg-fs-13);
-                font-weight: 600;
-                cursor: pointer;
-                transition: background var(--smg-dur-15) ease;
-            }
-            .smg-vm-opt:hover {
-                background: var(--smg-s3);
-            }
-            .smg-vm-ic svg {
-                width: 16px;
-                height: 16px;
-                display: block;
             }
 `;

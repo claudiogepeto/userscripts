@@ -405,7 +405,7 @@
             const t = desc.querySelector('time'); const tl = t && t.closest('li'); if (tl) tl.remove();
             groupThreadTags(desc);
         }
-        // linha de ações no topo do header (feed/galeria), com navegação própria (página 1)
+        // linha de ações no topo do header: o modo mídia (galeria/feed), com navegação própria (página 1)
         const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
         const mk = (icon, title, label, onClick) => {
             const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-thead-btn';
@@ -418,9 +418,8 @@
             b.addEventListener('mouseleave', smgHideTip); b.addEventListener('click', smgHideTip);
             return b;
         };
-        // ícones outline limpos (sem depender de fill): feed = play · galeria = grade. Label só no mobile.
-        bar.appendChild(mk(svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>'), 'Feed mode', 'Feed', () => openMediaFeed(null, null, { fromStart: true })));
-        bar.appendChild(mk(ICONS.gallery, 'Gallery', 'Gallery', () => openGallery()));
+        // UMA entrada: abre o overlay de mídia na Galeria (o Feed fica a um toque, no seletor da dock dele). Label só no mobile.
+        bar.appendChild(mk(ICONS.gallery, 'Media', 'Media', () => openMedia('gallery')));
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
         // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).

@@ -16,8 +16,8 @@
             const t = e.target;
             if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
             if (e.metaKey || e.ctrlKey || e.altKey) return;
-            // feed aberto tem os próprios atalhos (setas/espaço/esc)
-            if (document.getElementById('smg-feed')?.classList.contains('open')) return;
+            // overlay de mídia aberto tem os próprios atalhos (Esc, v, setas/espaço no Feed)
+            if (mediaView()) return;
 
             const click = id => document.getElementById(id)?.click();
 
@@ -25,7 +25,7 @@
                 case 'j': click('smg-post-nav-down'); break;   // próximo post
                 case 'k': click('smg-post-nav-up'); break;     // post anterior
                 case 'g': click('smg-post-goto'); break;       // ir pra página
-                case 'f': openMediaFeed(null, null, { fromStart: true }); break;   // modo feed (navegação própria, página 1)
+                case 'f': openMedia('feed'); break;   // overlay de mídia na vista Feed (navegação própria, página 1)
                 case 'v': click('smg-view-toggle'); break;     // alterna lista/grade
                 case 'n': if (FEATURES.alertsDock) toggleAlertsDock(); break;   // painel de notificações docked (abre/fecha)
                 case '[': click('smg-post-page-prev'); break;  // página anterior
@@ -236,7 +236,7 @@
             }
 
             if (loading || done || !nextUrl) return;
-            if (document.getElementById('smg-feed')?.classList.contains('open')) return; // feed tem o seu próprio
+            if (mediaView()) return; // o overlay de mídia pagina a sua própria lista
             const rest = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
             if (rest > INF_PREFETCH) return;
             if (rest > INF_APPEND) { grab(nextUrl); return; }   // ainda longe do fim: só adianta o download

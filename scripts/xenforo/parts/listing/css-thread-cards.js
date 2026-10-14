@@ -111,7 +111,7 @@
             html.smg-threadlist .articlePreview-replies a { color: var(--smg-w-60) !important; }
 
             /* ---- feed: barra de ferramentas (filtro / mudo) ---- */
-            .smg-feed-tools { position: absolute; top: 18px; right: 84px; z-index: var(--smg-z-6); display: flex; gap: var(--smg-sp-10); }
+            .smg-feed-tools { position: absolute; top: 18px; right: 18px; z-index: var(--smg-z-6); display: flex; gap: var(--smg-sp-10); }
             .smg-feed-tool {
                 width: 46px; height: 46px; font-size: var(--smg-fs-22);
                 display: flex; align-items: center; justify-content: center;
@@ -130,8 +130,9 @@
 
             /* ---- feed: filmstrip (tira de thumbnails) ---- */
             .smg-feed-media { transform-origin: center center; }
+            /* fita SOBRE a dock do overlay (dock: 20px + 62px de altura): a dock fica no mesmo lugar nas duas vistas */
             .smg-feed-strip {
-                position: absolute; left: 0; right: 0; bottom: 0; height: 92px;
+                position: absolute; left: 0; right: 0; bottom: 86px; height: 92px;
                 display: flex; align-items: center; gap: var(--smg-sp-8);
                 padding: var(--smg-sp-10) var(--smg-sp-14); overflow-x: auto; overflow-y: hidden; z-index: var(--smg-z-6);
                 background: linear-gradient(0deg, var(--smg-k-92), rgba(0,0,0,0));
@@ -144,7 +145,7 @@
             #smg-feed.strip-open .smg-feed-strip { transform: translateY(0); }
             /* setas < > de navegação do filmstrip (sobre as pontas, com gradiente; somem nas extremidades) */
             .smg-feed-striparrow {
-                position: absolute; bottom: 0; height: 92px; width: 54px; z-index: var(--smg-z-7);
+                position: absolute; bottom: 86px; height: 92px; width: 54px; z-index: var(--smg-z-7);
                 display: none; align-items: center; border: 0; color: #fff; cursor: pointer; padding: 0;
                 transition: opacity var(--smg-dur-20) ease;
             }
@@ -158,12 +159,12 @@
                 html.smg-threadlist .block--articles .block-body,
                 html.smg-threadlist .smg-article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--smg-sp-10) !important; padding: var(--smg-sp-12) !important; }
                 html.smg-threadlist .articlePreview-title { font-size: var(--smg-fs-13) !important; }
-                .smg-feed-tools { right: 70px; gap: var(--smg-sp-8); }
+                .smg-feed-tools { right: 14px; gap: var(--smg-sp-8); }
                 .smg-feed-tool { width: 40px; height: 40px; font-size: var(--smg-fs-18); } .smg-feed-striparrow { display: none !important; } }   /* mobile: rola por swipe */
-            /* thumbs SEMPRE abertas → imagem/iframe/player sobem ~92px pra não ficar atrás do filmstrip */
+            /* thumbs SEMPRE abertas → imagem/iframe/player sobem pra não ficar atrás da fita (92px) + dock (86px) */
             #smg-feed.strip-open .smg-feed-media,
-            #smg-feed.strip-open .smg-feed-embed iframe { max-height: calc(100vh - 104px); margin-bottom: 92px; }
-            #smg-feed.strip-open .smg-feed-embed .smg-rg { max-height: calc(100vh - 104px) !important; margin-bottom: 92px !important; }
+            #smg-feed.strip-open .smg-feed-embed iframe { max-height: calc(100vh - 190px); margin-bottom: 178px; }
+            #smg-feed.strip-open .smg-feed-embed .smg-rg { max-height: calc(100vh - 190px) !important; margin-bottom: 178px !important; }
             .smg-feed-thumb {
                 flex: 0 0 auto; width: 64px; height: 64px; border-radius: var(--smg-r-8); overflow: hidden;
                 border: 2px solid transparent; background: #1c1c22; cursor: pointer; padding: 0;

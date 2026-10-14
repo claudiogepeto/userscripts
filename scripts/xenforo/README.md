@@ -50,7 +50,7 @@ readable. A file may continue a function opened by the previous one: `12b` and
 | `navigation/12b-dock-search` | Dock search popover |
 | `navigation/12c-dock-settings` | Settings panel, listing filters and sorting, dock wiring |
 | `media/13-search-imageclick` | Search results panel and image-click feed |
-| `media/14-feed-lightbox` | Media feed, gallery, and gestures |
+| `media/14-feed-lightbox` | Media overlay: one media list, gallery and feed views, gestures |
 | `listing/15-listing` | Thread list/grid, badges, and placeholders |
 | `home/16-home` | Forum home layout and sidebar |
 | `thread/17a-filterbar` | Filter bar, thread header, sticky sync, and thread cards |
@@ -77,7 +77,7 @@ composes them in the order below:
 | File | Responsibility |
 |---|---|
 | `styles/01-base` | Theme tokens, layout width, and anti-CLS reset |
-| `media/css-grids` | Masonry items (in-post groups) and the gallery overlay |
+| `media/css-grids` | Masonry items (in-post groups), the media overlay and its gallery view |
 | `media/css-images` | Post images, link chips, and file-host cards |
 | `media/css-social-embeds` | Twitter/X and Instagram embeds |
 | `media/css-players` | Embeds, native video player, dead media, and post links |
@@ -87,7 +87,7 @@ composes them in the order below:
 | `alerts/css-alerts` | Alert list cards |
 | `navigation/css-dock` | Mobile bar, dock, bottom sheet, and goto popover |
 | `navigation/css-search` | Search dialog, results page, advanced search, and dropdown |
-| `media/css-media-feed` | Media feed (TikTok mode) |
+| `media/css-media-feed` | Feed view of the media overlay (TikTok mode) |
 | `navigation/css-dock-mobile` | Mobile navbar dock |
 | `listing/css-listing-controls` | Listing filter and sort popovers |
 | `navigation/css-settings` | Settings panel |

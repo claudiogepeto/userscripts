@@ -88,23 +88,37 @@
                 text-align: center !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; }
-            /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
-            #smg-gallery { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; flex-direction: column; background: var(--smg-bg); }
-            #smg-gallery.open { display: flex; }
-            #smg-gallery svg { fill: none !important; }   /* o CSS do fórum preenche svgs — força outline */
-            #smg-gallery .smg-rg svg[fill="currentColor"] { fill: currentColor !important; }   /* EXCEÇÃO: ícones PREENCHIDOS do player (play/pause) — senão o fill:none acima apaga o triângulo de play */
-            /* DOCK da galeria: IDÊNTICA à dock da thread — mesma pílula do #smg-post-nav-panel + botões .smg-nav-btn (makeDockButton) */
-            .smg-gallery-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: var(--smg-z-6); }
-            .smg-gallery-dock-panel {
+            /* MODO MÍDIA: UM overlay (#smg-media) com duas vistas — Galeria (#smg-gallery, padrão) e Feed (#smg-feed);
+               data-view no root escolhe qual aparece. A dock flutuante é do overlay (as duas vistas). */
+            #smg-media { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; background: var(--smg-bg); }
+            #smg-media.open { display: block; }
+            #smg-media svg { fill: none !important; }   /* o CSS do fórum preenche svgs — força outline */
+            #smg-media .smg-rg svg[fill="currentColor"] { fill: currentColor !important; }   /* EXCEÇÃO: ícones PREENCHIDOS do player (play/pause) — senão o fill:none acima apaga o triângulo de play */
+            /* GALERIA: a mídia numa grade masonry de POUCAS colunas + scroll infinito */
+            #smg-gallery { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--smg-bg); }
+            #smg-media[data-view="feed"] #smg-gallery { display: none; }
+            /* DOCK do overlay: IDÊNTICA à dock da thread — mesma pílula do #smg-post-nav-panel + botões .smg-nav-btn (makeDockButton).
+               Mesmo lugar nas duas vistas (o seletor não foge do polegar); no Feed a fita de miniaturas sobe pra cima dela. */
+            .smg-media-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: var(--smg-z-7); max-width: calc(100vw - 16px); }
+            #smg-media[data-view="feed"] .smg-media-gal-only { display: none !important; }   /* sort + paginação são da Galeria */
+            .smg-media-dock-panel {
                 position: relative; z-index: var(--smg-z-pop-up);   /* (= #smg-post-nav-panel) acima do goto-pop (z 11) p/ os tooltips do hover aparecerem */
                 display: flex; flex-direction: row; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8);
                 border-radius: var(--smg-r-pill); background: rgba(26,26,26,0.95); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
                 box-shadow: var(--smg-hl), var(--smg-shadow-3), var(--smg-shadow-1);
             }
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
-            .smg-gallery-close { width: auto !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-16) !important; gap: var(--smg-sp-8); }
-            .smg-gallery-close-label { font-size: var(--smg-fs-14); font-weight: 600; white-space: nowrap; }
-            .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
+            .smg-media-close { width: auto !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-16) !important; gap: var(--smg-sp-8); }
+            .smg-media-close-label { font-size: var(--smg-fs-14); font-weight: 600; white-space: nowrap; }
+            .smg-media-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
+            /* seletor Galeria/Feed: o segmento da vista atual fica aceso (aria-pressed + .smg-active) */
+            .smg-media-views .smg-nav-btn.smg-active { background: var(--smg-link-strong) !important; border-color: var(--smg-link-strong) !important; color: #fff !important; }
+            @media (max-width: 600px) {
+                .smg-media-close { padding: 0 var(--smg-sp-12) !important; } .smg-media-close-label { display: none; }   /* celular: a pílula vira só o X (cabe o seletor + paginação) */
+                .smg-media-views .smg-nav-btn { flex: 0 0 44px !important; width: 44px !important; border-radius: var(--smg-r-12) !important; }   /* a dock mobile divide a largura por flex:1 — o seletor tem alvo fixo de 44px */
+                .smg-media-dock .smg-nav-divider { margin: 0 var(--smg-sp-4); }
+                .smg-media-dock #smg-gal-sort .smg-nav-btn-text { display: none; }   /* sort só com o ícone (o tooltip/aria diz a ordem) → a dock cabe em 402px */
+            }
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio mosaico (motor 08a; anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
             /* separador de página "PAGE N" — NÃO sticky (rola junto); linha divisória mais grossa */

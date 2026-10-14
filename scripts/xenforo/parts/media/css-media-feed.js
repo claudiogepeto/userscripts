@@ -1,17 +1,13 @@
     // ── CSS: media feed (tiktok mode) ──
     const CSS_MEDIA_FEED = `
-            /* ---- modo feed (tiktok) ---- */
+            /* ---- vista Feed do overlay de mídia (tiktok): aparece com #smg-media[data-view="feed"] ---- */
             #smg-feed {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100vh;
-                z-index: var(--smg-z-overlay-1);
+                position: absolute;
+                inset: 0;
                 display: none;
                 background: #000;
             }
-            #smg-feed.open { display: block; }
+            #smg-media[data-view="feed"] #smg-feed { display: block; }
 
             /* aviso único: galeria/feed têm navegação própria. z-index ACIMA do feed/galeria (scrim cobre tudo). */
             #smg-navnotice { position: fixed; inset: 0; z-index: var(--smg-z-max-1); display: flex; align-items: center; justify-content: center; padding: var(--smg-sp-24); background: var(--smg-k-62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
@@ -82,10 +78,17 @@
             .smg-feed-embed .smg-rgc-over { display: none; }   /* no feed já é o visualizador → esconde o botão "abrir no visualizador" */
             /* no feed o player enche a caixa de 90vh (sizing por ALTURA) — sobrepõe o height:auto/max-height do inline */
             .smg-feed-embed .smg-rg-v { height: 100% !important; max-height: none !important; }
+            /* feed sem slide (carregando / sem mídia): centralizado sobre a pista vazia */
             .smg-feed-empty {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 color: var(--smg-w-60);
                 font-size: var(--smg-fs-16);
             }
+            .smg-feed-empty[hidden] { display: none; }
             .smg-feed-nav {
                 position: absolute;
                 right: 18px;
@@ -108,27 +111,6 @@
             .smg-feed-nav svg { width: 1em; height: 1em; display: block; }
             .smg-feed-prev { top: calc(50% - 56px); }
             .smg-feed-next { top: calc(50% + 8px); }
-            .smg-feed-close {
-                position: absolute;
-                top: 16px;
-                right: 18px;
-                z-index: var(--smg-z-5);
-                width: 54px;
-                height: 54px;
-                font-size: var(--smg-fs-28);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: var(--smg-r-round);
-                cursor: pointer;
-                color: #fff;
-                border: 1px solid var(--smg-w-14);
-                background: rgba(20,20,24,0.82);   /* PERF: era backdrop-filter blur(6px) (repintava a cada frame de scroll do reel) — sólido semi-opaco fica visualmente igual sobre mídia escura */
-                transition: background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
-            }
-            .smg-feed-close:hover { background: rgba(42,42,50,0.85); }
-            .smg-feed-close:active { transform: scale(0.92); }
-            .smg-feed-close svg { width: 1em; height: 1em; display: block; }
             .smg-feed-counter {
                 position: absolute;
                 top: 20px;

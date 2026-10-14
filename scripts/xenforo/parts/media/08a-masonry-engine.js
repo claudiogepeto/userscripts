@@ -139,6 +139,14 @@
         if (container.style.height !== hv) container.style.setProperty('height', hv, 'important');
         return res;
     }
+    // a container coming back from display:none is laid out NOW from its current width (the observer
+    // reports it only after the next layout, too late for a caller that scrolls to an item right away)
+    function masonryRefresh(container) {
+        const st = masonryState.get(container);
+        if (!st || !container.isConnected) return;
+        st.width = Math.round(container.clientWidth || 0);
+        masonryLayout(container);
+    }
     // ratio of an image-like item: loaded pixels, then pipeline/attribute dimensions, then the placeholder
     function masonryImgRatio(img) {
         if (!img) return MASONRY_PH_RELH;

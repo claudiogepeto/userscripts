@@ -1,11 +1,13 @@
     // =========================================================
-    // FEATURE: modo feed (tiktok) — mídia da thread em tela cheia, snap vertical
+    // FEATURE: modo mídia — a mídia da thread num overlay com DUAS vistas sobre UMA lista
     //
     // Mapa interno:
     //   coleta ....... feedEmbedUrl · collectMediaFrom (acha imgs/vídeos/embeds num root)
-    //   galeria ...... gal* (galPageUrl/Observe/Tile/Fetch/RenderPage/JumpTo/…) + openGallery/closeGallery
-    //   visualizador . openMediaFeed() ← GRANDE: slides, zoom, nav (nextVisible/goTo/advance),
-    //                  buildSlide, loadNextPage, mute/filtro
+    //   lista ........ mediaState + galFetch/galRenderPage (páginas da thread → itens, em ordem de post)
+    //   galeria ...... gal* (galPageUrl/Observe/Tile/RenderPage/JumpTo/…) — vista padrão, mosaico por página
+    //   overlay ...... mediaRoot (root + dock + Esc) · openMedia/openMediaFeed/closeMedia · setMediaView
+    //   feed ......... feedBuildShell + feedMount() ← GRANDE: slides, zoom, nav (nextVisible/goTo/advance),
+    //                  buildSlide, addItems, mute/filtro
     // =========================================================
 
     // autoplay + mudo nos players suportados (param na URL; o iframe já tem allow="autoplay")
@@ -92,15 +94,18 @@
         ov.addEventListener('click', e => { if (e.target === ov) close(); });   // clicar no scrim também fecha
     }
 
-    // GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry + SCROLL INFINITO próprio
-    // (puxa as próximas páginas da thread) + header com "ir ao topo" e ordenar (data/reações).
-    // Clicar num tile abre o feed naquele item (por cima). Reusa collectMediaFrom + openMediaFeed.
-    let galState = null;
-    let galDockSortBtn = null, galDockGotoBtn = null;   // botões da dock da galeria (criados 1x) — re-sincronizados a cada abertura
-    // sort = UM botão toggle, IGUAL ao btnSort da thread: o ícone alterna data⇄reações conforme galState.order
+    // MODO MÍDIA: UM overlay (#smg-media) com DUAS vistas sobre UMA lista de mídia (mediaState):
+    //   Galeria (padrão) — mosaico por página (motor 08a), scroll infinito, sort e paginação próprios na dock
+    //   Feed — slides em tela cheia + fita de miniaturas, montado da MESMA lista ao entrar na vista e
+    //          desmontado (players incluídos) ao sair
+    // A lista só cresce por galFetch (página da thread → collectMediaFrom → itens novos); trocar de vista
+    // nunca busca nem coleta de novo.
+    let mediaState = null;
+    let galDockSortBtn = null, galDockGotoBtn = null;   // botões da dock do overlay (criados 1x) — re-sincronizados a cada abertura
+    // sort = UM botão toggle, IGUAL ao btnSort da thread: o ícone alterna data⇄reações conforme mediaState.order
     function galSyncSortBtn() {
-        if (!galDockSortBtn || !galState) return;
-        const isDate = galState.order === 'date';
+        if (!galDockSortBtn || !mediaState) return;
+        const isDate = mediaState.order === 'date';
         setBtnIcon(galDockSortBtn, ICONS.sort);   // idem btnSort: glifo de ordenação fixo
         const sortTip = isDate
             ? (IS_PT ? 'Ordenação atual: por data. Clique para ordenar por reações' : 'Current sort: by date. Click to sort by reactions')
@@ -124,15 +129,14 @@
             history.replaceState(history.state, '', u.toString());
         } catch (e) {}
     }
-    // no boot (e em cada pass até a thread montar): se a URL pede um modo, reabre. Roda 1x só.
+    // no boot (e em cada pass até a thread montar): se a URL pede uma vista, reabre o overlay nela. Roda 1x só.
     let smgNavRestored = false;
     function restoreNavMode() {
         if (smgNavRestored || !document.documentElement.classList.contains('smg-thread')) return;
         smgNavRestored = true;
         const p = new URLSearchParams(location.search);
         const v = p.get('view');
-        if (v === 'gallery') openGallery(p.get('order'));
-        else if (v === 'feed') openMediaFeed(null, null, { fromStart: true });
+        if (v === 'gallery' || v === 'feed') openMedia(v, p.get('order'));
     }
     function galPageUrl(n, order) {
         let b = location.pathname.replace(/\/page-\d+/, '').replace(/\/(unread|latest)$/, '');
@@ -150,6 +154,7 @@
         const tile = document.createElement('div');
         tile.className = 'smg-gallery-tile smg-gallery-tile--' + it.type;
         tile.dataset.page = page;
+        tile.dataset.url = it.url;
         if (it.type === 'image') {
             tile.classList.add('is-loading');   // shimmer até a imagem pintar (some no load/erro)
             const img = document.createElement('img');
@@ -161,7 +166,7 @@
             img.src = med;
             if (img.complete && img.naturalWidth) done();   // já em cache → sem shimmer preso
             tile.appendChild(img);
-            tile.addEventListener('click', () => openMediaFeed(full, galState && galState.items));
+            tile.addEventListener('click', () => setMediaView('feed', { at: full }));   // tile → Feed naquele item
         } else {
             // vídeo: placeholder → carrega o player (preview/poster) ao entrar na viewport · toca inline · botão maximizar abre no feed
             tile.innerHTML = '<span class="smg-gallery-play">' + svgIcon('<polygon points="6 3 20 12 6 21 6 3"/>') + '</span>';
@@ -169,7 +174,7 @@
             maxBtn.type = 'button'; maxBtn.className = 'smg-gallery-max';
             maxBtn.title = i18n('Expand'); maxBtn.setAttribute('aria-label', i18n('Expand'));
             maxBtn.innerHTML = svgIcon('<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>');
-            maxBtn.addEventListener('click', e => { e.stopPropagation(); openMediaFeed(it.url, galState && galState.items); });
+            maxBtn.addEventListener('click', e => { e.stopPropagation(); setMediaView('feed', { at: it.url }); });
             tile.appendChild(maxBtn);
             tile._galLoad = () => {
                 if (tile.dataset.loaded) return;
@@ -241,7 +246,7 @@
     }
     // muta o scroller mantendo `keep` visualmente fixo (corrige scrollTop pela variação de altura acima dele) → sem "pulo"
     function galKeepStable(keep, mutate) {
-        const sc = galState.scroller;
+        const sc = mediaState.scroller;
         if (!keep || !keep.isConnected) { mutate(); return; }
         const before = keep.getBoundingClientRect().top;
         mutate();
@@ -249,13 +254,13 @@
     }
     // retorna true se ADICIONOU mídia nova (o galFetch usa isso: página vazia → pula direto pra próxima)
     function galRenderPage(doc, n, where, sec) {
-        if (!galState || !sec || !sec.isConnected) return false;   // jump/close cancelou esta busca
-        const fresh = collectMediaFrom(doc).filter(it => !galState.seen.has(it.url));
-        fresh.forEach(it => galState.seen.add(it.url));
+        if (!mediaState || !sec || !sec.isConnected) return false;   // jump/close cancelou esta busca
+        const fresh = collectMediaFrom(doc).filter(it => !mediaState.seen.has(it.url));
+        fresh.forEach(it => { mediaState.seen.add(it.url); it.page = n; });
         if (!fresh.length) {   // página sem mídia nova → tira o skeleton (preservando a posição)
             galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => { masonryUnmount(sec.querySelector('.smg-gallery-cols')); sec.remove(); });
-            if (!galState.scroller.querySelector('.smg-gallery-page'))
-                galState.scroller.innerHTML = '<div class="smg-gallery-empty">' + i18n('No media on this page') + '</div>';
+            if (!mediaState.scroller.querySelector('.smg-gallery-page'))
+                mediaState.scroller.innerHTML = '<div class="smg-gallery-empty">' + i18n('No media on this page') + '</div>';
             return false;
         }
         const cols = sec.querySelector('.smg-gallery-cols');
@@ -266,19 +271,22 @@
         const keep = where === 'prepend' ? sec.nextElementSibling : sec;
         // layout SÍNCRONO dentro do mutate: o galKeepStable mede a altura nova logo depois
         galKeepStable(keep, () => { cols.innerHTML = ''; cols.appendChild(frag); sec.classList.remove('is-skel'); masonryLayout(cols); });
-        galState.items = where === 'prepend' ? fresh.concat(galState.items) : galState.items.concat(fresh);
+        mediaState.items = where === 'prepend' ? fresh.concat(mediaState.items) : mediaState.items.concat(fresh);
+        // a vista Feed (se montada) recebe o que entrou no FIM da lista; um prepend ela pega ao ser remontada
+        const fd = where === 'append' && document.getElementById('smg-feed');
+        if (fd && fd._ctrl) fd._ctrl.addItems(fresh);
         return true;
     }
     // carrega a PRÓXIMA página enquanto o paginador disser que tem (hasMore). Encadeado no .then do galFetch →
     // percorre TODAS as páginas da thread automaticamente (páginas vazias no meio são atravessadas). Sem piso por
     // itens nem por altura (heurísticas que travavam): a fonte de verdade é o "Next" do paginador.
     function galEnsureFilledDown() {
-        if (!galState || galState.loading || !galState.hasMore || galState.hi >= 300) return;   // 300 = backstop anti-runaway
-        galFetch(galState.hi + 1, 'append');
+        if (!mediaState || mediaState.loading || !mediaState.hasMore || mediaState.hi >= 300) return;   // 300 = backstop anti-runaway
+        galFetch(mediaState.hi + 1, 'append');
     }
     // ainda não há ~3 telas de conteúdo abaixo do ponto de leitura → vale pré-buscar a próxima página
     function galNeedMoreBelow() {
-        const sc = galState && galState.scroller;
+        const sc = mediaState && mediaState.scroller;
         return !!sc && (sc.scrollHeight - sc.scrollTop - sc.clientHeight) < sc.clientHeight * 3;
     }
     // tem próxima página? segue o link "Next" do paginador (IGUAL ao infinite scroll da thread) — presente em
@@ -288,27 +296,28 @@
         return !!doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next');
     }
     function galFetch(n, where) {
-        if (!galState || galState.loading || n < 1) return;   // sem teto por max: quem decide "tem mais" é o paginador (hasMore)
-        galState.loading = true;
-        const gen = galState.gen;
-        const sc = galState.scroller;
+        if (!mediaState || mediaState.loading || n < 1) return;   // sem teto por max: quem decide "tem mais" é o paginador (hasMore)
+        mediaState.loading = true;
+        const gen = mediaState.gen;
+        const sc = mediaState.scroller;
         const empty = sc.querySelector('.smg-gallery-empty'); if (empty) empty.remove();
         // skeleton imediato, na MESMA posição da seção real → reserva espaço + dá feedback durante o fetch
         const sec = galMakeSection(n, true);
         const cols = sec.querySelector('.smg-gallery-cols');
         for (let i = 0; i < 9; i++) cols.appendChild(galSkelTile(i));
-        if (where === 'prepend') { galKeepStable(sc.firstElementChild, () => sc.insertBefore(sec, sc.firstChild)); galState.lo = n; }
-        else { sc.appendChild(sec); galState.hi = Math.max(galState.hi, n); }
+        if (where === 'prepend') { galKeepStable(sc.firstElementChild, () => sc.insertBefore(sec, sc.firstChild)); mediaState.lo = n; }
+        else { sc.appendChild(sec); mediaState.hi = Math.max(mediaState.hi, n); }
         galUpdatePager();
-        fetchDoc(galPageUrl(n, galState.order), { credentials: 'same-origin' })   // SEM X-Requested-With: garante a página COMPLETA (com paginador), igual ao infinite scroll
+        fetchDoc(galPageUrl(n, mediaState.order), { credentials: 'same-origin' })   // SEM X-Requested-With: garante a página COMPLETA (com paginador), igual ao infinite scroll
             .then(doc => {
-                if (!galState || galState.gen !== gen) return;   // jump/close no meio do caminho
-                galState.hasMore = galHasNext(doc);   // FONTE DE VERDADE: o paginador desta página tem "Next"?
+                if (!mediaState || mediaState.gen !== gen) return;   // jump/close no meio do caminho
+                mediaState.hasMore = galHasNext(doc);   // FONTE DE VERDADE: o paginador desta página tem "Next"?
                 // max é só pro display do goto: o maior entre paginação do doc, DOM vivo e a página atual descoberta.
-                galState.max = Math.max(galState.max, pagerMax(doc), (readPageJump() || {}).max || 0, galState.hi + (galState.hasMore ? 1 : 0));
+                mediaState.max = Math.max(mediaState.max, pagerMax(doc), (readPageJump() || {}).max || 0, mediaState.hi + (mediaState.hasMore ? 1 : 0));
                 const added = galRenderPage(doc, n, where, sec);   // renderiza (ou remove a seção se a página não tiver mídia nova)
-                galState.loading = false;
+                mediaState.loading = false;
                 galUpdatePager();
+                feedSyncEmpty();
                 // append → encadeia a PRÓXIMA: SEMPRE através de página vazia (não adiciona altura, o scroll
                 // não retomaria), e com mídia só enquanto faltar ~3 telas abaixo — o handler de scroll (<900px)
                 // retoma sob demanda. Antes encadeava INCONDICIONAL: abrir a galeria baixava+parseava a thread
@@ -316,398 +325,480 @@
                 if (where === 'append' && (!added || galNeedMoreBelow())) galEnsureFilledDown();
             })
             .catch(() => {
-                if (!galState || galState.gen !== gen) return;
-                galState.loading = false;
+                if (!mediaState || mediaState.gen !== gen) return;
+                mediaState.loading = false;
+                feedSyncEmpty();
                 if (sec.isConnected) galKeepStable(where === 'prepend' ? sec.nextElementSibling : null, () => { masonryUnmount(cols); sec.remove(); });
-                if (where === 'prepend') galState.lo = n + 1; else if (galState.hi === n) galState.hi = n - 1;   // libera p/ tentar de novo no próximo scroll
+                if (where === 'prepend') mediaState.lo = n + 1; else if (mediaState.hi === n) mediaState.hi = n - 1;   // libera p/ tentar de novo no próximo scroll
             });
     }
     function galJumpTo(n) {
-        if (!galState) return;
-        n = Math.max(1, Math.min(galState.max, n));
+        if (!mediaState) return;
+        n = Math.max(1, Math.min(mediaState.max, n));
         if (galIO) galIO.disconnect();   // larga os tiles de vídeo observados (evita refs presas a nós removidos)
-        galState.gen++; galState.seen = new Set(); galState.items = []; galState.loading = false; galState.hasMore = true;
-        galClearScroller(galState.scroller); galState.scroller.scrollTop = 0;
-        galState.lo = n; galState.hi = n - 1;   // hi = n-1 → galFetch(n,'append') seta hi=n
+        mediaState.gen++; mediaState.seen = new Set(); mediaState.items = []; mediaState.loading = false; mediaState.hasMore = true;
+        galClearScroller(mediaState.scroller); mediaState.scroller.scrollTop = 0;
+        mediaState.lo = n; mediaState.hi = n - 1;   // hi = n-1 → galFetch(n,'append') seta hi=n
         galFetch(n, 'append');
     }
     function galUpdatePager() {
-        if (!galState) return;
+        if (!mediaState) return;
         // página real = a última seção cujo cabeçalho está no topo (ou acima) da viewport
-        const ref = galState.scroller.getBoundingClientRect().top + 56;
-        let page = galState.lo;
+        const ref = mediaState.scroller.getBoundingClientRect().top + 56;
+        let page = mediaState.lo;
         // seções em ordem no DOM (top crescente) → a 1ª cujo top passa de ref fixa a página: corta cedo
         // em vez de medir as seções abaixo da viewport a cada frame de scroll da galeria.
-        const secs = galState.scroller.querySelectorAll('.smg-gallery-page');
+        const secs = mediaState.scroller.querySelectorAll('.smg-gallery-page');
         for (let i = 0; i < secs.length; i++) {
             if (secs[i].getBoundingClientRect().top <= ref) page = parseInt(secs[i].dataset.page, 10) || page;
             else break;
         }
-        galState.viewPage = page;
-        if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${page} / ${(galState && galState.max) || page}`);
+        mediaState.viewPage = page;
+        if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${page} / ${(mediaState && mediaState.max) || page}`);
+    }
+    function feedSyncEmpty() {
+        const fd = document.getElementById('smg-feed');
+        if (fd && fd._ctrl) fd._ctrl.syncEmpty();
     }
     function galSetOrder(order) {
-        if (!galState || galState.order === order) return;
-        galState.order = order;
+        if (!mediaState || mediaState.order === order) return;
+        mediaState.order = order;
         galSyncSortBtn();   // troca o ícone/label do botão toggle (data⇄reações)
-        smgSetNavParam('gallery', order);   // persiste a ordem na URL (F5 mantém)
+        smgSetNavParam('gallery', order);   // persiste a ordem na URL (F5 mantém) — o sort só existe na vista Galeria
         galJumpTo(1);   // nova ordem → volta pra página 1 e pro topo (não faz sentido manter a página atual numa ordem diferente)
     }
-    function closeGallery() {
-        const gal = document.getElementById('smg-gallery');
-        if (gal) gal.classList.remove('open');
-        smgSetNavParam(null);   // saiu pro thread → limpa a URL
-        if (galIO) galIO.disconnect();   // solta os tiles de vídeo observados (sem isso, nós removidos ficam presos no IO)
-        // esvazia a grade AGORA (reabrir reconstrói da pág. 1 de qualquer jeito): manter milhares de tiles +
-        // <video> com src vivo num DOM display:none segurava dezenas/centenas de MB até a próxima abertura
-        const grid = gal && gal.querySelector('.smg-gallery-grid');
-        if (grid) { grid.querySelectorAll('video.smg-rg-v').forEach(rgDispose); galClearScroller(grid); }
-        rgReleaseDetachedBlobs();
-        galState = null;
-        const feed = document.getElementById('smg-feed');
-        if (!(feed && feed.classList.contains('open'))) document.documentElement.style.overflow = '';
+    // ---- overlay: UM root, UMA dock, UM Esc ----
+    // #smg-media > #smg-gallery (vista Galeria) + #smg-feed (vista Feed) + .smg-media-dock (flutuante, comum às duas).
+    // Criado 1x; os listeners persistentes falam com mediaState / feed._ctrl (trocados a cada sessão/vista).
+    function mediaView() {
+        const root = document.getElementById('smg-media');
+        return root && root.classList.contains('open') ? (root.dataset.view === 'feed' ? 'feed' : 'gallery') : null;
     }
-    function openGallery(order) {
-        showNavModeNotice();   // aviso único: galeria/feed têm navegação própria (página 1, sort próprio)
-        let gal = document.getElementById('smg-gallery');
-        if (!gal) {
-            gal = document.createElement('div');
-            gal.id = 'smg-gallery';
-            // SEM barra superior: a grade ocupa tudo. Controles numa DOCK flutuante embaixo, IDÊNTICA à da thread:
-            // mesmos botões (makeDockButton/.smg-nav-btn), MESMO sort TOGGLE (data⇄reações no MESMO botão),
-            // MESMA paginação (prev · goto-com-nº · next, ícones ICONS.pagePrev/pageNext) e MESMO stepper de "ir pra página".
-            // + um botão Fechar à direita (label visível). Só a fiação muda: pagina/ordena a GALERIA, não a thread.
-            gal.innerHTML = '<div class="smg-gallery-grid"></div>';
-            const gdock = document.createElement('div'); gdock.className = 'smg-gallery-dock';
-            const gpanel = document.createElement('div'); gpanel.className = 'smg-gallery-dock-panel';
+    function mediaRoot() {
+        let root = document.getElementById('smg-media');
+        if (root) return root;
+        root = document.createElement('div');
+        root.id = 'smg-media';
+        root.dataset.view = 'gallery';
+        const gal = document.createElement('div');
+        gal.id = 'smg-gallery';
+        gal.innerHTML = '<div class="smg-gallery-grid"></div>';
+        const feed = feedBuildShell();
+        const gdock = document.createElement('div'); gdock.className = 'smg-media-dock';
+        const gpanel = document.createElement('div'); gpanel.className = 'smg-media-dock-panel';
 
-            const gSortTip = (galState && galState.order === 'date')
-                ? (IS_PT ? 'Ordenação atual: por data. Clique para ordenar por reações' : 'Current sort: by date. Click to sort by reactions')
-                : (IS_PT ? 'Ordenação atual: por reações. Clique para ordenar por data' : 'Current sort: by reactions. Click to sort by date');
-            const gSort = makeDockButton({ id: 'smg-gal-sort', icon: ICONS.sort, label: gSortTip });   // 1 botão toggle (= btnSort), pílula com texto do critério
-            gSort.classList.add('smg-nav-labeled');
-            const gSortTxt = Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n((galState && galState.order === 'date') ? 'Date' : 'Reactions') });
-            gSort.appendChild(gSortTxt);
-            const gPrev = makeDockButton({ id: 'smg-gal-prev', icon: ICONS.pagePrev, label: IS_PT ? 'Página anterior' : 'Previous page' });
-            const gGoto = makeDockButton({ id: 'smg-gal-goto', icon: (galState && galState.max) ? `1 / ${galState.max}` : '1', label: IS_PT ? 'Pular para página específica' : 'Jump to specific page' });
-            const gNext = makeDockButton({ id: 'smg-gal-next', icon: ICONS.pageNext, label: IS_PT ? 'Próxima página' : 'Next page' });
-            galDockSortBtn = gSort; galDockGotoBtn = gGoto;
+        // seletor de vista: DOIS botões da dock (segmentado), o da vista atual com aria-pressed + .smg-active
+        const vGal = makeDockButton({ id: 'smg-media-view-gallery', icon: ICONS.gallery, label: 'Gallery' });
+        const vFeed = makeDockButton({ id: 'smg-media-view-feed', icon: ICONS.feed, label: 'Feed' });
+        const views = makeGroup(vGal, vFeed);
+        views.classList.add('smg-media-views');
+        views.setAttribute('role', 'group');
+        views.setAttribute('aria-label', i18n('View mode'));
+        vGal.addEventListener('click', () => setMediaView('gallery'));
+        vFeed.addEventListener('click', () => setMediaView('feed'));
 
-            const gClose = makeDockButton({ id: 'smg-gal-close', icon: ICONS.close, label: 'Close' });
-            gClose.classList.add('smg-gallery-close'); gClose.removeAttribute('data-label');   // label fica VISÍVEL (não tooltip)
-            gClose.appendChild(Object.assign(document.createElement('span'), { className: 'smg-gallery-close-label', textContent: i18n('Close') }));
+        // controles SÓ da galeria — idênticos à dock da thread: sort TOGGLE (data⇄reações) + paginação
+        // (prev · goto-com-nº · next) + o mesmo stepper de "ir pra página". Somem na vista Feed.
+        const gSortTip = IS_PT ? 'Ordenação atual: por data. Clique para ordenar por reações' : 'Current sort: by date. Click to sort by reactions';
+        const gSort = makeDockButton({ id: 'smg-gal-sort', icon: ICONS.sort, label: gSortTip });
+        gSort.classList.add('smg-nav-labeled');
+        gSort.appendChild(Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n('Date') }));
+        const gPrev = makeDockButton({ id: 'smg-gal-prev', icon: ICONS.pagePrev, label: IS_PT ? 'Página anterior' : 'Previous page' });
+        const gGoto = makeDockButton({ id: 'smg-gal-goto', icon: '1', label: IS_PT ? 'Pular para página específica' : 'Jump to specific page' });
+        const gNext = makeDockButton({ id: 'smg-gal-next', icon: ICONS.pageNext, label: IS_PT ? 'Próxima página' : 'Next page' });
+        galDockSortBtn = gSort; galDockGotoBtn = gGoto;
+        const gnav = makeGroup(gSort, gPrev, gGoto, gNext);
+        gnav.classList.add('smg-media-gal-only');
+        const gnavDiv = makeDivider();
+        gnavDiv.classList.add('smg-media-gal-only');
 
-            const gnav = makeGroup(gSort, gPrev, gGoto, gNext);   // MESMO grupo único da thread (sort + pagenav juntos, 6px)
-            gpanel.append(gnav, makeDivider(), gClose);
+        // fechar = .smg-nav-btn com label VISÍVEL (pílula) — o ÚNICO caminho de fechar (botão, Esc, puxar no feed)
+        const gClose = makeDockButton({ id: 'smg-media-close', icon: ICONS.close, label: 'Close' });
+        gClose.classList.add('smg-media-close'); gClose.removeAttribute('data-label');
+        gClose.appendChild(Object.assign(document.createElement('span'), { className: 'smg-media-close-label', textContent: i18n('Close') }));
 
-            // stepper "ir pra página" — MESMA estrutura/classes do #smg-goto-pop da thread (só o container é próprio)
-            const gGotoPop = document.createElement('div');
-            gGotoPop.className = 'smg-gallery-goto-pop';
-            gGotoPop.innerHTML =
-                '<span class="smg-goto-title">Go to page</span>' +
-                '<div class="smg-goto-stepper">' +
-                    '<button type="button" class="smg-goto-step" data-dir="-1" aria-label="Decrease">−</button>' +
-                    '<input type="number" class="smg-goto-input" min="1" value="1">' +
-                    '<button type="button" class="smg-goto-step" data-dir="1" aria-label="Increase">+</button>' +
-                '</div>' +
-                '<span class="smg-goto-max"></span>' +
-                '<button type="button" class="smg-goto-btn">Go</button>';
+        gpanel.append(views, makeDivider(), gnav, gnavDiv, gClose);
 
-            gdock.append(gpanel, gGotoPop);
-            gal.appendChild(gdock);
-            document.body.appendChild(gal);
-            i18nDom(gal);
+        const gGotoPop = document.createElement('div');
+        gGotoPop.className = 'smg-gallery-goto-pop';
+        gGotoPop.innerHTML =
+            '<span class="smg-goto-title">Go to page</span>' +
+            '<div class="smg-goto-stepper">' +
+                '<button type="button" class="smg-goto-step" data-dir="-1" aria-label="Decrease">−</button>' +
+                '<input type="number" class="smg-goto-input" min="1" value="1">' +
+                '<button type="button" class="smg-goto-step" data-dir="1" aria-label="Increase">+</button>' +
+            '</div>' +
+            '<span class="smg-goto-max"></span>' +
+            '<button type="button" class="smg-goto-btn">Go</button>';
+        gdock.append(gpanel, gGotoPop);
 
-            // sort: alterna data⇄reações (galSetOrder recarrega na nova ordem; galSyncSortBtn troca o ícone)
-            gSort.addEventListener('click', () => { if (galState) galSetOrder(galState.order === 'date' ? 'reaction' : 'date'); });
-            // paginação: prev/next pulam 1 página
-            gPrev.addEventListener('click', () => galJumpTo((galState ? (galState.viewPage || galState.lo) : 1) - 1));
-            gNext.addEventListener('click', () => galJumpTo((galState ? (galState.viewPage || galState.lo) : 1) + 1));
+        root.append(gal, feed, gdock);
+        document.body.appendChild(root);
+        i18nDom(root);
 
-            // goto stepper (idêntico ao da thread; pula via galJumpTo na própria galeria)
-            const gIn = gGotoPop.querySelector('.smg-goto-input');
-            const gMax = gGotoPop.querySelector('.smg-goto-max');
-            const galClamp = n => { if (!n || n < 1) n = 1; const mx = galState ? galState.max : 1; if (mx && n > mx) n = mx; return n; };
-            const galCloseGoto = () => gdock.classList.remove('goto-open');
-            const galOpenGoto = () => {
-                const mx = galState ? galState.max : 1;
-                gIn.max = mx || '';
-                gIn.value = galState ? (galState.viewPage || galState.lo) : 1;
-                gMax.textContent = mx ? 'of ' + mx + ' pages' : '';
-                gdock.classList.add('goto-open');
-                setTimeout(() => { gIn.focus(); gIn.select(); }, 0);
-            };
-            const galDoGoto = () => { galJumpTo(galClamp(parseInt(gIn.value, 10))); galCloseGoto(); };
-            gGoto.addEventListener('click', e => { e.stopPropagation(); if (gdock.classList.contains('goto-open')) galCloseGoto(); else galOpenGoto(); });
-            gGotoPop.querySelectorAll('.smg-goto-step').forEach(b => b.addEventListener('click', () => { gIn.value = galClamp((parseInt(gIn.value, 10) || 1) + parseInt(b.dataset.dir, 10)); }));
-            gIn.addEventListener('change', () => { gIn.value = galClamp(parseInt(gIn.value, 10)); });
-            gGotoPop.querySelector('.smg-goto-btn').addEventListener('click', galDoGoto);
-            gIn.addEventListener('keydown', e => {
-                if (e.key === 'Enter') { e.preventDefault(); galDoGoto(); }
-                else if (e.key === 'Escape') { e.stopPropagation(); galCloseGoto(); }
-            });
-            smgPopover({   // clique-fora fecha o goto; o Esc fica com o handler da galeria (goto primeiro, depois a galeria)
-                inside: [gGotoPop, gGoto], escape: false,
-                isOpen: () => gdock.classList.contains('goto-open'),
-                close: galCloseGoto,
-            });
+        gSort.addEventListener('click', () => { if (mediaState) galSetOrder(mediaState.order === 'date' ? 'reaction' : 'date'); });
+        gPrev.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) - 1));
+        gNext.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) + 1));
 
-            gClose.addEventListener('click', closeGallery);
-            document.addEventListener('keydown', e => {   // Esc: fecha o goto primeiro; senão a galeria (se o feed estiver POR CIMA, ele trata)
-                if (e.key !== 'Escape' || !gal.classList.contains('open')) return;
-                const fd = document.getElementById('smg-feed');
-                if (fd && fd.classList.contains('open')) return;
+        const gIn = gGotoPop.querySelector('.smg-goto-input');
+        const gMax = gGotoPop.querySelector('.smg-goto-max');
+        const galClamp = n => { if (!n || n < 1) n = 1; const mx = mediaState ? mediaState.max : 1; if (mx && n > mx) n = mx; return n; };
+        const galCloseGoto = () => gdock.classList.remove('goto-open');
+        const galOpenGoto = () => {
+            const mx = mediaState ? mediaState.max : 1;
+            gIn.max = mx || '';
+            gIn.value = mediaState ? (mediaState.viewPage || mediaState.lo) : 1;
+            gMax.textContent = mx ? 'of ' + mx + ' pages' : '';
+            gdock.classList.add('goto-open');
+            setTimeout(() => { gIn.focus(); gIn.select(); }, 0);
+        };
+        const galDoGoto = () => { galJumpTo(galClamp(parseInt(gIn.value, 10))); galCloseGoto(); };
+        gGoto.addEventListener('click', e => { e.stopPropagation(); if (gdock.classList.contains('goto-open')) galCloseGoto(); else galOpenGoto(); });
+        gGotoPop.querySelectorAll('.smg-goto-step').forEach(b => b.addEventListener('click', () => { gIn.value = galClamp((parseInt(gIn.value, 10) || 1) + parseInt(b.dataset.dir, 10)); }));
+        gIn.addEventListener('change', () => { gIn.value = galClamp(parseInt(gIn.value, 10)); });
+        gGotoPop.querySelector('.smg-goto-btn').addEventListener('click', galDoGoto);
+        gIn.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); galDoGoto(); }
+            else if (e.key === 'Escape') { e.stopPropagation(); galCloseGoto(); }
+        });
+        smgPopover({   // clique-fora fecha o goto; o Esc fica com o handler do overlay (goto primeiro, depois o overlay)
+            inside: [gGotoPop, gGoto], escape: false,
+            isOpen: () => gdock.classList.contains('goto-open'),
+            close: galCloseGoto,
+        });
+        gClose.addEventListener('click', closeMedia);
+
+        // TECLADO do overlay inteiro (o da thread se cala enquanto ele está aberto, ver 07-posts-misc):
+        // Esc fecha o goto e depois o overlay · v alterna Galeria/Feed · no Feed: setas/PageUp/PageDown/espaço navegam, m = mudo
+        document.addEventListener('keydown', e => {
+            if (!root.classList.contains('open')) return;
+            if (e.key === 'Escape') {
                 if (gdock.classList.contains('goto-open')) { galCloseGoto(); return; }
-                closeGallery();
+                closeMedia();
+                return;
+            }
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.key === 'v') { setMediaView(root.dataset.view === 'feed' ? 'gallery' : 'feed'); return; }
+            if (root.dataset.view !== 'feed' || !feed._ctrl) return;
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); feed._ctrl.step(1); }
+            else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); feed._ctrl.step(-1); }
+            else if (e.key === 'm') feed._ctrl.toggleMute();
+        });
+
+        const sc = gal.querySelector('.smg-gallery-grid');
+        let galRaf = 0;
+        sc.addEventListener('scroll', () => {
+            if (galRaf) return;
+            galRaf = requestAnimationFrame(() => {
+                galRaf = 0;
+                if (!mediaState) return;
+                if (mediaState.hasMore && sc.scrollHeight - (sc.scrollTop + sc.clientHeight) < 900) galFetch(mediaState.hi + 1, 'append');   // desce → próxima (se houver)
+                if (sc.scrollTop < 500 && mediaState.lo > 1) galFetch(mediaState.lo - 1, 'prepend');                     // sobe → anterior
+                galUpdatePager();
             });
-            const sc = gal.querySelector('.smg-gallery-grid');
-            let galRaf = 0;
-            sc.addEventListener('scroll', () => {
-                if (galRaf) return;
-                galRaf = requestAnimationFrame(() => {
-                    galRaf = 0;
-                    if (!galState) return;
-                    if (galState.hasMore && sc.scrollHeight - (sc.scrollTop + sc.clientHeight) < 900) galFetch(galState.hi + 1, 'append');   // desce → próxima (se houver)
-                    if (sc.scrollTop < 500 && galState.lo > 1) galFetch(galState.lo - 1, 'prepend');                     // sobe → anterior
-                    galUpdatePager();
-                });
-            }, { passive: true });
-        }
-        const scroller = gal.querySelector('.smg-gallery-grid');
-        const head = gal.querySelector('.smg-gallery-dock-panel');
-        galClearScroller(scroller);   // o galFetch insere o skeleton na hora (sem flash de "sem mídia")
-        const pj = readPageJump();
-        order = (order === 'reaction') ? 'reaction' : 'date';   // sort PRÓPRIO ('date' default); restaurado do ?order= no F5
-        const cur = 1;             // SEMPRE página 1 (restaurar a página quebrava a paginação no F5 → percorre tudo desde o começo)
-        const max = pj ? pj.max : 1;   // pagerMax + readPageJump corrigem no 1º fetch
-        galState = { scroller, head, seen: new Set(), items: [], loading: false, hasMore: true, order, lo: cur, hi: cur - 1, max, viewPage: cur, gen: 0 };
-        galSyncSortBtn();          // a dock é criada 1x → sincroniza o toggle com a ordem (data/reações) a cada abertura
-        if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${cur} / ${max}`);
-        galFetch(cur, 'append');   // página 1; o scroll/ensure puxam as próximas (pra baixo)
-        gal.classList.add('open');
+        }, { passive: true });
+        return root;
+    }
+    // desmonta a sessão: players do feed e da galeria, tiles, IO, blobs. Fechar E abrir de novo passam por aqui.
+    function mediaTeardown(root) {
+        feedUnmount();
+        if (galIO) galIO.disconnect();   // solta os tiles de vídeo observados (sem isso, nós removidos ficam presos no IO)
+        // esvazia a grade AGORA: manter milhares de tiles + <video> com src vivo num DOM escondido segurava
+        // dezenas/centenas de MB até a próxima abertura
+        const grid = root.querySelector('.smg-gallery-grid');
+        grid.querySelectorAll('video.smg-rg-v').forEach(rgDispose);
+        galClearScroller(grid);
+        const dock = root.querySelector('.smg-media-dock');
+        if (dock) dock.classList.remove('goto-open');
+        rgReleaseDetachedBlobs();
+        mediaState = null;
+    }
+    function mediaBegin(root, st) {
+        mediaTeardown(root);
+        mediaState = Object.assign({ scroller: root.querySelector('.smg-gallery-grid'), seen: new Set(), items: [], loading: false, gen: 0 }, st);
+        galSyncSortBtn();   // a dock é criada 1x → sincroniza o toggle com a ordem (data/reações) a cada abertura
+        if (galDockGotoBtn) setBtnIcon(galDockGotoBtn, `${mediaState.lo} / ${mediaState.max}`);
+        root.classList.add('open');
         document.documentElement.style.overflow = 'hidden';
-        smgSetNavParam('gallery', order);   // F5 reabre a galeria com a mesma ordem
+    }
+    // header, dock, atalho f e ?view= → a thread INTEIRA desde a página 1, na vista pedida (Galeria por padrão)
+    function openMedia(view, order) {
+        showNavModeNotice();   // aviso único: o modo mídia tem navegação própria (página 1, sort próprio)
+        const root = mediaRoot();
+        const pj = readPageJump();
+        order = (order === 'reaction') ? 'reaction' : 'date';
+        // SEMPRE página 1 (restaurar a página quebrava a paginação no F5 → percorre tudo desde o começo);
+        // pagerMax + readPageJump corrigem o max no 1º fetch
+        mediaBegin(root, { hasMore: true, order, lo: 1, hi: 0, max: pj ? pj.max : 1, viewPage: 1 });
+        setMediaView(view === 'feed' ? 'feed' : 'gallery');
+        galFetch(1, 'append');   // página 1; o scroll da galeria / o fim do feed puxam as próximas
+    }
+    // clique numa imagem/vídeo do post → a mídia da PÁGINA ATUAL (já no DOM, sem buscar), na vista Feed, naquele
+    // item. Transitório: não grava ?view= (trocar de vista depois grava). Com o overlay aberto só leva ao item.
+    function openMediaFeed(startUrl) {
+        if (mediaView() && mediaState) { setMediaView('feed', { at: startUrl }); return; }
+        const root = mediaRoot();
+        const pj = readPageJump();
+        const cur = pj ? pj.cur : 1;
+        mediaBegin(root, { hasMore: !!pj && cur < pj.max, order: 'date', lo: cur, hi: cur, max: pj ? pj.max : 1, viewPage: cur });
+        const sec = galMakeSection(cur, false);
+        mediaState.scroller.appendChild(sec);
+        galRenderPage(document, cur, 'append', sec);
+        setMediaView('feed', { at: startUrl, persist: false });
+    }
+    function closeMedia() {
+        const root = document.getElementById('smg-media');
+        if (!root) return;
+        const wasOpen = root.classList.contains('open');
+        root.classList.remove('open');
+        mediaTeardown(root);
+        if (!wasOpen) return;
+        document.documentElement.style.overflow = '';
+        smgSetNavParam(null);   // saiu pra thread → limpa a URL
+    }
+    // tile da galeria por URL de mídia (só na troca de vista → varrer é barato)
+    function galTileFor(url) {
+        if (!url || !mediaState) return null;
+        const tiles = mediaState.scroller.querySelectorAll('.smg-gallery-tile');
+        for (let i = 0; i < tiles.length; i++) if (tiles[i].dataset.url === url) return tiles[i];
+        return null;
+    }
+    // 1º tile visível no topo da galeria → onde o Feed começa quando se troca pelo seletor (não por um tile)
+    function galFirstVisibleUrl() {
+        if (!mediaState) return null;
+        const top = mediaState.scroller.getBoundingClientRect().top;
+        const tiles = mediaState.scroller.querySelectorAll('.smg-gallery-tile');
+        for (let i = 0; i < tiles.length; i++) if (tiles[i].getBoundingClientRect().bottom > top + 1) return tiles[i].dataset.url || null;
+        return null;
+    }
+    // troca de vista sem tocar na lista: Feed é montado dela (no item `at`, ou no 1º visível da galeria) e
+    // desmontado ao sair (players parados); a Galeria fica montada e volta rolada até o item em que o Feed estava.
+    function setMediaView(view, opts) {
+        opts = opts || {};
+        const root = document.getElementById('smg-media');
+        if (!root || !mediaState) return;
+        view = view === 'feed' ? 'feed' : 'gallery';
+        const from = root.dataset.view;
+        const feed = root.querySelector('#smg-feed');
+        const at = opts.at || (view === 'feed' ? (from === 'feed' ? null : galFirstVisibleUrl()) : (feed._ctrl ? feed._ctrl.curUrl() : null));
+        root.dataset.view = view;
+        [['gallery', 'smg-media-view-gallery'], ['feed', 'smg-media-view-feed']].forEach(([v, id]) => {
+            const b = document.getElementById(id);
+            if (!b) return;
+            b.setAttribute('aria-pressed', v === view ? 'true' : 'false');
+            b.classList.toggle('smg-active', v === view);
+        });
+        const dock = root.querySelector('.smg-media-dock');
+        if (dock) dock.classList.remove('goto-open');
+        if (view === 'feed') {
+            root.querySelectorAll('#smg-gallery video').forEach(v => { try { v.pause(); } catch (e) {} });   // o inline da galeria não toca por baixo
+            feedMount(at);
+        } else {
+            feedUnmount();   // sai do feed → players dele param e são soltos
+            const sc = mediaState.scroller;
+            sc.querySelectorAll('.smg-gallery-cols').forEach(masonryRefresh);   // seções anexadas com a galeria escondida
+            const tile = galTileFor(at);
+            if (tile) sc.scrollTop += tile.getBoundingClientRect().top - sc.getBoundingClientRect().top - sc.clientHeight / 3;
+            galUpdatePager();
+        }
+        if (opts.persist !== false) smgSetNavParam(view, mediaState.order);   // F5 reabre na mesma vista e ordem
     }
 
     // zoom/pan de uma imagem do feed: UM lugar escreve o transform (pinça, arrasto e clique usavam 3 cópias)
     function feedZoomTransform(img, z) { img.style.transform = 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.scale + ')'; }
-    // esvazia os slides e a fita, desmontando os players antes (fechar E reabrir passam por aqui: reabrir
-    // por cima de um feed aberto só limpava o HTML e deixava cada <video> do reel vivo, sem rgDispose)
+    // esvazia os slides e a fita, desmontando os players antes (sair do feed, fechar e reabrir passam por aqui)
     function feedClearReel(feed) {
         const reelEl = feed.querySelector('.smg-feed-reel');
         reelEl.querySelectorAll('video.smg-rg-v').forEach(rgDispose);
         reelEl.innerHTML = '';
         feed.querySelector('.smg-feed-strip').innerHTML = '';
     }
-    function openMediaFeed(startUrl, mediaList, opts) {
-        opts = opts || {};
-        // DOCK/HEADER → feed com navegação PRÓPRIA: começa da página 1 da thread (não de onde você está lendo).
-        // Se não estamos na página 1, busca-a antes e reabre semeando com ela (paginando daí pra frente).
-        if (opts.fromStart && !mediaList && !opts.seed) {
-            smgSetNavParam('feed');   // F5 reabre o feed (dock/header). Feed por clique em imagem é transitório (não persiste).
-            showNavModeNotice();
-            const pj0 = readPageJump();
-            if (pj0 && pj0.cur > 1) {
-                fetchDoc(pj0.tpl.replace('%page%', '1'), { credentials: 'same-origin' })
-                    .then(doc => openMediaFeed(null, null, { seed: collectMediaFrom(doc), startPage: 1 }))
-                    .catch(() => openMediaFeed(null, null, { seed: collectMediaFrom(document), startPage: pj0.cur }));
-                return;
-            }
-            opts.startPage = 1;   // já na página 1 (ou thread de página única) → segue normal
-        }
-        // shell criado uma vez; os listeners persistentes falam com feed._ctrl (setado a cada abertura)
-        let feed = document.getElementById('smg-feed');
-        if (!feed) {
-            feed = document.createElement('div');
-            feed.id = 'smg-feed';
-            feed.innerHTML =
-                '<button class="smg-feed-close" type="button" aria-label="Close">' + ICONS.close + '</button>' +
-                '<div class="smg-feed-tools">' +
-                    '<button class="smg-feed-tool smg-feed-filter" type="button" aria-label="Filter media">' + ICONS.layers + '</button>' +
-                    '<button class="smg-feed-tool smg-feed-mute" type="button" aria-label="Sound">' + ICONS.volumeMute + '</button>' +
-                '</div>' +
-                '<button class="smg-feed-nav smg-feed-prev" type="button" aria-label="Previous">' + svgIcon('<path d="m18 15-6-6-6 6"/>') + '</button>' +
-                '<button class="smg-feed-nav smg-feed-next" type="button" aria-label="Next">' + svgIcon('<path d="m6 9 6 6 6-6"/>') + '</button>' +
-                '<div class="smg-feed-counter"></div>' +
-                '<div class="smg-feed-track"><div class="smg-feed-reel"></div></div>' +
-                '<button class="smg-feed-striparrow smg-feed-striparrow--prev" type="button" aria-label="Previous">' + svgIcon('<path d="m15 18-6-6 6-6"/>') + '</button>' +
-                '<div class="smg-feed-strip"></div>' +
-                '<button class="smg-feed-striparrow smg-feed-striparrow--next" type="button" aria-label="Next">' + svgIcon('<path d="m9 18 6-6-6-6"/>') + '</button>';
-            document.body.appendChild(feed);
-            i18nDom(feed);
+    function feedUnmount() {
+        const feed = document.getElementById('smg-feed');
+        if (!feed || !feed._ctrl) return;
+        feed._ctrl = null;
+        feedClearReel(feed);   // teardown completo dos players antes do wipe
+        rgReleaseDetachedBlobs();   // os <video> do feed saíram do DOM → libera os objectURLs de blob agora
+    }
+    // casca da vista Feed (1x, dentro do #smg-media): sem botão de fechar próprio — fecha pela dock do overlay
+    function feedBuildShell() {
+        const feed = document.createElement('div');
+        feed.id = 'smg-feed';
+        feed.innerHTML =
+            '<div class="smg-feed-tools">' +
+                '<button class="smg-feed-tool smg-feed-filter" type="button" aria-label="Filter media">' + ICONS.layers + '</button>' +
+                '<button class="smg-feed-tool smg-feed-mute" type="button" aria-label="Sound">' + ICONS.volumeMute + '</button>' +
+            '</div>' +
+            '<button class="smg-feed-nav smg-feed-prev" type="button" aria-label="Previous">' + svgIcon('<path d="m18 15-6-6-6 6"/>') + '</button>' +
+            '<button class="smg-feed-nav smg-feed-next" type="button" aria-label="Next">' + svgIcon('<path d="m6 9 6 6 6-6"/>') + '</button>' +
+            '<div class="smg-feed-counter"></div>' +
+            '<div class="smg-feed-track"><div class="smg-feed-reel"></div><div class="smg-feed-empty" hidden></div></div>' +
+            '<button class="smg-feed-striparrow smg-feed-striparrow--prev" type="button" aria-label="Previous">' + svgIcon('<path d="m15 18-6-6 6-6"/>') + '</button>' +
+            '<div class="smg-feed-strip"></div>' +
+            '<button class="smg-feed-striparrow smg-feed-striparrow--next" type="button" aria-label="Next">' + svgIcon('<path d="m9 18 6-6-6-6"/>') + '</button>';
 
-            const trackEl = feed.querySelector('.smg-feed-track');
+        const trackEl = feed.querySelector('.smg-feed-track');
+        feed.querySelector('.smg-feed-prev').addEventListener('click', () => feed._ctrl && feed._ctrl.step(-1));
+        feed.querySelector('.smg-feed-next').addEventListener('click', () => feed._ctrl && feed._ctrl.step(1));
+        feed.querySelector('.smg-feed-mute').addEventListener('click', () => feed._ctrl && feed._ctrl.toggleMute());
+        feed.querySelector('.smg-feed-filter').addEventListener('click', () => feed._ctrl && feed._ctrl.cycleFilter());
 
-            const closeFeed = () => {
-                feed.classList.remove('open');
-                const galOpen = document.getElementById('smg-gallery') && document.getElementById('smg-gallery').classList.contains('open');
-                if (!galOpen) document.documentElement.style.overflow = '';   // galeria por baixo (feed aberto via tile) continua fullscreen
-                feedClearReel(feed);   // teardown completo dos players antes do wipe
-                feed._ctrl = null;
-                rgReleaseDetachedBlobs();   // os <video> do feed saíram do DOM → libera os objectURLs de blob agora
-                smgSetNavParam(galOpen ? 'gallery' : null, galOpen && galState ? galState.order : null);   // volta o param pra gallery (se aberta) ou limpa
-            };
-            feed.querySelector('.smg-feed-close').addEventListener('click', closeFeed);
-            feed.querySelector('.smg-feed-prev').addEventListener('click', () => feed._ctrl && feed._ctrl.step(-1));
-            feed.querySelector('.smg-feed-next').addEventListener('click', () => feed._ctrl && feed._ctrl.step(1));
-            feed.querySelector('.smg-feed-mute').addEventListener('click', () => feed._ctrl && feed._ctrl.toggleMute());
-            feed.querySelector('.smg-feed-filter').addEventListener('click', () => feed._ctrl && feed._ctrl.cycleFilter());
+        // filmstrip (miniaturas) SEMPRE visível por padrão (toggle removido)
+        feed.classList.add('strip-open');
 
-            // filmstrip (miniaturas) SEMPRE visível por padrão (toggle removido)
-            feed.classList.add('strip-open');
+        // setas < > de navegação do filmstrip: rolam a fita ~70% da largura; somem nas pontas
+        const stripEl = feed.querySelector('.smg-feed-strip');
+        const stripPrev = feed.querySelector('.smg-feed-striparrow--prev');
+        const stripNext = feed.querySelector('.smg-feed-striparrow--next');
+        const updateStripArrows = () => {
+            const max = stripEl.scrollWidth - stripEl.clientWidth;
+            stripPrev.classList.toggle('is-hidden', stripEl.scrollLeft <= 2);
+            stripNext.classList.toggle('is-hidden', max <= 2 || stripEl.scrollLeft >= max - 2);
+        };
+        feed._updateStripArrows = updateStripArrows;   // o per-open chama após montar os thumbs (setActive)
+        stripPrev.addEventListener('click', () => stripEl.scrollBy({ left: -stripEl.clientWidth * 0.7, behavior: 'smooth' }));
+        stripNext.addEventListener('click', () => stripEl.scrollBy({ left: stripEl.clientWidth * 0.7, behavior: 'smooth' }));
+        let stripRaf = 0;
+        stripEl.addEventListener('scroll', () => { if (stripRaf) return; stripRaf = requestAnimationFrame(() => { stripRaf = 0; updateStripArrows(); }); }, { passive: true });
 
-            // setas < > de navegação do filmstrip: rolam a fita ~70% da largura; somem nas pontas
-            const stripEl = feed.querySelector('.smg-feed-strip');
-            const stripPrev = feed.querySelector('.smg-feed-striparrow--prev');
-            const stripNext = feed.querySelector('.smg-feed-striparrow--next');
-            const updateStripArrows = () => {
-                const max = stripEl.scrollWidth - stripEl.clientWidth;
-                stripPrev.classList.toggle('is-hidden', stripEl.scrollLeft <= 2);
-                stripNext.classList.toggle('is-hidden', max <= 2 || stripEl.scrollLeft >= max - 2);
-            };
-            feed._updateStripArrows = updateStripArrows;   // o per-open chama após montar os thumbs (setActive)
-            stripPrev.addEventListener('click', () => stripEl.scrollBy({ left: -stripEl.clientWidth * 0.7, behavior: 'smooth' }));
-            stripNext.addEventListener('click', () => stripEl.scrollBy({ left: stripEl.clientWidth * 0.7, behavior: 'smooth' }));
-            let stripRaf = 0;
-            stripEl.addEventListener('scroll', () => { if (stripRaf) return; stripRaf = requestAnimationFrame(() => { stripRaf = 0; updateStripArrows(); }); }, { passive: true });
+        // roda do mouse → 1 slide por vez, suave
+        trackEl.addEventListener('wheel', e => {
+            if (!feed._ctrl) return;
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 6) return;
+            feed._ctrl.step(e.deltaY > 0 ? 1 : -1);
+        }, { passive: false });
 
-            // roda do mouse → 1 slide por vez, suave
-            trackEl.addEventListener('wheel', e => {
+        const setupFeedGestures = () => {
+            // gestos touch: pinça (zoom em imagem) · arrasto p/ pan quando ampliada ·
+            // swipe vertical p/ navegar · puxar pra baixo no topo fecha
+            const dist2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+            let mode = null, dragStartY = 0, dragDy = 0, moved = false;
+            let pinchStart = 0, pinchBase = 1, panSX = 0, panSY = 0, panBX = 0, panBY = 0;
+
+            trackEl.addEventListener('touchstart', e => {
                 if (!feed._ctrl) return;
-                e.preventDefault();
-                if (Math.abs(e.deltaY) < 6) return;
-                feed._ctrl.step(e.deltaY > 0 ? 1 : -1);
+                const img = feed._ctrl.activeImg();
+                const z = img && (img._zoom || (img._zoom = { scale: 1, x: 0, y: 0 }));
+                if (img) img.style.transition = 'none';   // pinch/pan em tempo real (sem o ease do clique)
+                if (e.touches.length === 2 && img) {
+                    mode = 'pinch';
+                    pinchStart = dist2(e.touches);
+                    pinchBase = z.scale;
+                } else if (e.touches.length === 1 && img && z.scale > 1) {
+                    mode = 'pan';
+                    panSX = e.touches[0].clientX; panSY = e.touches[0].clientY;
+                    panBX = z.x; panBY = z.y;
+                } else if (e.touches.length === 1) {
+                    mode = 'nav';
+                    dragStartY = e.touches[0].clientY; dragDy = 0; moved = false;
+                    feed._ctrl.reel.style.transition = 'none';
+                } else {
+                    mode = null;
+                }
+            }, { passive: true });
+
+            trackEl.addEventListener('touchmove', e => {
+                if (!feed._ctrl || !mode) return;
+                const c = feed._ctrl;
+                if (mode === 'pinch') {
+                    const img = c.activeImg();
+                    if (!img || e.touches.length < 2) return;
+                    const z = img._zoom;
+                    z.scale = Math.max(1, Math.min(5, pinchBase * dist2(e.touches) / (pinchStart || 1)));
+                    feedZoomTransform(img, z);
+                    e.preventDefault();
+                } else if (mode === 'pan') {
+                    const img = c.activeImg();
+                    if (!img) return;
+                    const z = img._zoom;
+                    z.x = panBX + (e.touches[0].clientX - panSX);
+                    z.y = panBY + (e.touches[0].clientY - panSY);
+                    feedZoomTransform(img, z);
+                    e.preventDefault();
+                } else { // nav
+                    dragDy = e.touches[0].clientY - dragStartY;
+                    if (Math.abs(dragDy) > 8) moved = true;
+                    let dy = dragDy;
+                    if ((c.cur() === 0 && dy > 0) || (c.cur() === c.len() - 1 && dy < 0)) dy *= 0.3; // resistência nas pontas
+                    c.reel.style.transform = 'translateY(calc(' + (-c.cur() * 100) + 'vh + ' + dy + 'px))';
+                    e.preventDefault();
+                }
             }, { passive: false });
 
-            document.addEventListener('keydown', e => {
-                if (!feed.classList.contains('open')) return;
-                if (e.key === 'Escape') closeFeed();
-                else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); feed._ctrl && feed._ctrl.step(1); }
-                else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); feed._ctrl && feed._ctrl.step(-1); }
-                else if (e.key === 'm') { feed._ctrl && feed._ctrl.toggleMute(); }
+            trackEl.addEventListener('touchend', e => {
+                if (!feed._ctrl) return;
+                const c = feed._ctrl;
+                if (mode === 'pinch' || mode === 'pan') {
+                    const img = c.activeImg();
+                    if (img && img._zoom && img._zoom.scale <= 1.02) { img._zoom = { scale: 1, x: 0, y: 0 }; img.style.transform = ''; }
+                    if (e.touches.length === 0) mode = null;
+                    return;
+                }
+                if (mode === 'nav') {
+                    mode = null;
+                    if (c.cur() === 0 && dragDy >= 110) { closeMedia(); return; } // puxar pra baixo no topo → fecha o overlay
+                    if (dragDy <= -45) c.advance(1);
+                    else if (dragDy >= 45) c.advance(-1);
+                    else c.goTo(c.cur());
+                }
             });
 
-            const setupFeedGestures = () => {
-                // gestos touch: pinça (zoom em imagem) · arrasto p/ pan quando ampliada ·
-                // swipe vertical p/ navegar · puxar pra baixo no topo fecha
-                const dist2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-                let mode = null, dragStartY = 0, dragDy = 0, moved = false;
-                let pinchStart = 0, pinchBase = 1, panSX = 0, panSY = 0, panBX = 0, panBY = 0;
+            // GRAB (desktop): arrasta a imagem AMPLIADA pra deslizar. Limiar distingue drag de clique → não togla zoom no fim do arrasto.
+            let grabbing = false, gMoved = false, gSX = 0, gSY = 0, gBX = 0, gBY = 0, suppressClick = false;
+            trackEl.addEventListener('mousedown', e => {
+                if (e.button !== 0) return;
+                suppressClick = false;
+                if (!feed._ctrl) return;
+                const img = feed._ctrl.activeImg(), z = img && img._zoom;
+                if (!img || !z || z.scale <= 1.02) return;   // só desliza quando ampliada
+                grabbing = true; gMoved = false; gSX = e.clientX; gSY = e.clientY; gBX = z.x; gBY = z.y;
+                img.style.transition = 'none'; img.classList.add('smg-grabbing');
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', e => {
+                if (!grabbing || !feed._ctrl) return;
+                const img = feed._ctrl.activeImg(), z = img && img._zoom;
+                if (!img || !z) return;
+                const dx = e.clientX - gSX, dy = e.clientY - gSY;
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) gMoved = true;
+                z.x = gBX + dx; z.y = gBY + dy;
+                feedZoomTransform(img, z);
+            });
+            window.addEventListener('mouseup', () => {
+                if (!grabbing) return;
+                grabbing = false;
+                const img = feed._ctrl && feed._ctrl.activeImg();
+                if (img) img.classList.remove('smg-grabbing');
+                if (gMoved) suppressClick = true;   // arrastou → o click seguinte é ignorado (não togla zoom)
+            });
 
-                trackEl.addEventListener('touchstart', e => {
-                    if (!feed._ctrl) return;
-                    const img = feed._ctrl.activeImg();
-                    const z = img && (img._zoom || (img._zoom = { scale: 1, x: 0, y: 0 }));
-                    if (img) img.style.transition = 'none';   // pinch/pan em tempo real (sem o ease do clique)
-                    if (e.touches.length === 2 && img) {
-                        mode = 'pinch';
-                        pinchStart = dist2(e.touches);
-                        pinchBase = z.scale;
-                    } else if (e.touches.length === 1 && img && z.scale > 1) {
-                        mode = 'pan';
-                        panSX = e.touches[0].clientX; panSY = e.touches[0].clientY;
-                        panBX = z.x; panBY = z.y;
-                    } else if (e.touches.length === 1) {
-                        mode = 'nav';
-                        dragStartY = e.touches[0].clientY; dragDy = 0; moved = false;
-                        feed._ctrl.reel.style.transition = 'none';
-                    } else {
-                        mode = null;
-                    }
-                }, { passive: true });
+            // tap/click: IMAGEM → cicla zoom no ponto clicado · VÍDEO → libera os controles do player
+            trackEl.addEventListener('click', e => {
+                if (!feed._ctrl) return;
+                if (moved) { moved = false; return; }                   // foi swipe (touch)
+                if (suppressClick) { suppressClick = false; return; }   // foi grab (mouse)
+                if (!feed._ctrl.toggleZoom(e.clientX, e.clientY)) feed._ctrl.toggleLive();
+            });
+        };
+        setupFeedGestures();
+        return feed;
+    }
 
-                trackEl.addEventListener('touchmove', e => {
-                    if (!feed._ctrl || !mode) return;
-                    const c = feed._ctrl;
-                    if (mode === 'pinch') {
-                        const img = c.activeImg();
-                        if (!img || e.touches.length < 2) return;
-                        const z = img._zoom;
-                        z.scale = Math.max(1, Math.min(5, pinchBase * dist2(e.touches) / (pinchStart || 1)));
-                        feedZoomTransform(img, z);
-                        e.preventDefault();
-                    } else if (mode === 'pan') {
-                        const img = c.activeImg();
-                        if (!img) return;
-                        const z = img._zoom;
-                        z.x = panBX + (e.touches[0].clientX - panSX);
-                        z.y = panBY + (e.touches[0].clientY - panSY);
-                        feedZoomTransform(img, z);
-                        e.preventDefault();
-                    } else { // nav
-                        dragDy = e.touches[0].clientY - dragStartY;
-                        if (Math.abs(dragDy) > 8) moved = true;
-                        let dy = dragDy;
-                        if ((c.cur() === 0 && dy > 0) || (c.cur() === c.len() - 1 && dy < 0)) dy *= 0.3; // resistência nas pontas
-                        c.reel.style.transform = 'translateY(calc(' + (-c.cur() * 100) + 'vh + ' + dy + 'px))';
-                        e.preventDefault();
-                    }
-                }, { passive: false });
-
-                trackEl.addEventListener('touchend', e => {
-                    if (!feed._ctrl) return;
-                    const c = feed._ctrl;
-                    if (mode === 'pinch' || mode === 'pan') {
-                        const img = c.activeImg();
-                        if (img && img._zoom && img._zoom.scale <= 1.02) { img._zoom = { scale: 1, x: 0, y: 0 }; img.style.transform = ''; }
-                        if (e.touches.length === 0) mode = null;
-                        return;
-                    }
-                    if (mode === 'nav') {
-                        mode = null;
-                        if (c.cur() === 0 && dragDy >= 110) { closeFeed(); return; } // puxar pra baixo no topo → fecha
-                        if (dragDy <= -45) c.advance(1);
-                        else if (dragDy >= 45) c.advance(-1);
-                        else c.goTo(c.cur());
-                    }
-                });
-
-                // GRAB (desktop): arrasta a imagem AMPLIADA pra deslizar. Limiar distingue drag de clique → não togla zoom no fim do arrasto.
-                let grabbing = false, gMoved = false, gSX = 0, gSY = 0, gBX = 0, gBY = 0, suppressClick = false;
-                trackEl.addEventListener('mousedown', e => {
-                    if (e.button !== 0) return;
-                    suppressClick = false;
-                    if (!feed._ctrl) return;
-                    const img = feed._ctrl.activeImg(), z = img && img._zoom;
-                    if (!img || !z || z.scale <= 1.02) return;   // só desliza quando ampliada
-                    grabbing = true; gMoved = false; gSX = e.clientX; gSY = e.clientY; gBX = z.x; gBY = z.y;
-                    img.style.transition = 'none'; img.classList.add('smg-grabbing');
-                    e.preventDefault();
-                });
-                window.addEventListener('mousemove', e => {
-                    if (!grabbing || !feed._ctrl) return;
-                    const img = feed._ctrl.activeImg(), z = img && img._zoom;
-                    if (!img || !z) return;
-                    const dx = e.clientX - gSX, dy = e.clientY - gSY;
-                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) gMoved = true;
-                    z.x = gBX + dx; z.y = gBY + dy;
-                    feedZoomTransform(img, z);
-                });
-                window.addEventListener('mouseup', () => {
-                    if (!grabbing) return;
-                    grabbing = false;
-                    const img = feed._ctrl && feed._ctrl.activeImg();
-                    if (img) img.classList.remove('smg-grabbing');
-                    if (gMoved) suppressClick = true;   // arrastou → o click seguinte é ignorado (não togla zoom)
-                });
-
-                // tap/click: IMAGEM → cicla zoom no ponto clicado · VÍDEO → libera os controles do player
-                trackEl.addEventListener('click', e => {
-                    if (!feed._ctrl) return;
-                    if (moved) { moved = false; return; }                   // foi swipe (touch)
-                    if (suppressClick) { suppressClick = false; return; }   // foi grab (mouse)
-                    if (!feed._ctrl.toggleZoom(e.clientX, e.clientY)) feed._ctrl.toggleLive();
-                });
-            };
-            setupFeedGestures();
-        }
-
+    // monta a vista Feed a partir da lista do overlay (mediaState.items), começando em startUrl. Novas páginas
+    // chegam pela MESMA lista: perto do fim o feed pede galFetch(próxima) e o galRenderPage entrega os itens via addItems.
+    function feedMount(startUrl) {
+        const feed = document.getElementById('smg-feed');
+        feedUnmount();
         const reel = feed.querySelector('.smg-feed-reel');
         const counter = feed.querySelector('.smg-feed-counter');
         const prevBtn = feed.querySelector('.smg-feed-prev');
         const strip = feed.querySelector('.smg-feed-strip');
         const muteBtn = feed.querySelector('.smg-feed-mute');
         const filterBtn = feed.querySelector('.smg-feed-filter');
+        const emptyEl = feed.querySelector('.smg-feed-empty');
 
         feedClearReel(feed);
         reel.style.transition = 'none';
@@ -721,31 +812,15 @@
         setMuteIcon();
         setFilterIcon();
 
-        const initial = mediaList || opts.seed || collectMediaFrom(document);   // galeria → lista própria · dock/header(fromStart) → página 1 buscada · maximizar → página atual
-        if (!initial.length) {
-            reel.innerHTML = '<div class="smg-feed-slide"><div class="smg-feed-empty">' + i18n('No media on this page') + '</div></div>';
-            feed.classList.add('open');
-            document.documentElement.style.overflow = 'hidden';
-            feed._ctrl = null;
-            return;
-        }
-
         const seen = new Set();
         const slides = [];
         const thumbs = [];
+        const urls = [];
         let startSlideIdx = -1;   // índice do startUrl, capturado no buildSlide
         let current = 0;
         let lastActive = -1;   // último slide ativado: setActive só mexe nele + no novo + vizinhos (não em todos os N)
         let animating = false;
         let navTimer;
-
-        // paginação p/ scroll infinito (busca as próximas páginas da thread)
-        const pj = readPageJump();
-        let loadedPage = opts.startPage || (pj ? pj.cur : 1);   // dock/header(fromStart)=1 · maximizar=página atual
-        const maxPage = pj ? pj.max : loadedPage;
-        let loadingPage = false;
-        const myGen = (feed._gen = (feed._gen || 0) + 1);   // geração desta abertura; loadNextPage abandona fetch de sessão antiga (close+reopen rápido)
-
         // ---- filtro de mídia (tudo / imagens / vídeos) ----
         const mtypeOf = idx => slides[idx] && slides[idx].dataset.mtype; // 'image' | 'embed'
         let visibleIndices = [], visiblePositions = new Map(), visibleCacheDirty = true;
@@ -779,6 +854,7 @@
         // toca SÓ os slides afetados — o anterior (limpa embed/is-live/zoom) + o novo + vizinhos do novo —
         // em vez de iterar os N slides a cada navegação. Invariante: só o slide ativo tem conteúdo no embed.
         function setActive(idx) {
+            if (!slides.length) return;
             current = Math.max(0, Math.min(slides.length - 1, idx));
             const prev = lastActive;
             lastActive = current;
@@ -835,6 +911,7 @@
             if (seen.has(it.url)) return;
             seen.add(it.url);
             const idx = slides.length;
+            urls.push(it.url);
             if (startUrl && startSlideIdx < 0 && it.url === startUrl) startSlideIdx = idx;   // captura aqui → sem o findIndex+querySelector por slide depois (galeria pode semear MILHARES)
 
             const slide = document.createElement('div');
@@ -877,19 +954,32 @@
             thumb.style.display = isVisible(idx) ? '' : 'none';
         }
 
+        // perto do fim → a PRÓXIMA página da thread entra na lista do overlay (galFetch); os itens voltam por addItems
         function loadNextPage() {
-            if (mediaList || loadingPage || !pj || loadedPage >= maxPage) return;   // seedado pela galeria → não pagina sozinho
-            loadingPage = true;
-            const next = loadedPage + 1;
-            fetchDoc(pj.tpl.replace('%page%', next), { credentials: 'same-origin' })
-                .then(doc => {
-                    if (feed._gen !== myGen) return;   // feed fechado/reaberto durante o fetch → essa sessão é obsoleta (closure velha)
-                    if (!feed.classList.contains('open')) { loadingPage = false; return; }   // usuário fechou no meio → não monta slide órfão
-                    collectMediaFrom(doc).forEach(buildSlide);
-                    loadedPage = next;
-                    loadingPage = false;
-                })
-                .catch(() => { loadingPage = false; });
+            if (!mediaState || mediaState.loading || !mediaState.hasMore || mediaState.hi >= 300) return;   // 300 = backstop anti-runaway (= galeria)
+            galFetch(mediaState.hi + 1, 'append');
+        }
+        // itens novos da lista (página anexada): viram slides; o 1º lote de um feed vazio já ativa o slide inicial
+        function addItems(items) {
+            const had = slides.length;
+            items.forEach(buildSlide);
+            if (!had && slides.length) { syncEmpty(); goStart(); return; }
+            if (slides.length !== had) setActive(current);   // contador/seta/próxima página com o total novo
+        }
+        // feed sem slide: "carregando" enquanto a lista busca, "sem mídia" quando acabou
+        function syncEmpty() {
+            const none = !slides.length;
+            emptyEl.hidden = !none;
+            if (none) {
+                emptyEl.textContent = i18n(mediaState && (mediaState.loading || mediaState.hasMore) ? 'Loading…' : 'No media on this page');
+                counter.textContent = '0 / 0';
+            }
+        }
+        function goStart() {
+            current = startSlideIdx >= 0 ? startSlideIdx : 0;   // começa no item pedido (índice capturado no próprio build)
+            reel.style.transition = 'none';
+            reel.style.transform = 'translateY(' + (-current * 100) + 'vh)';
+            setActive(current);
         }
 
         function goTo(i) {
@@ -989,23 +1079,17 @@
         feed._ctrl = {
             cur: () => current, len: () => slides.length, reel,
             goTo, step, advance, toggleLive, toggleZoom, activeImg,
-            toggleMute, cycleFilter,
+            toggleMute, cycleFilter, addItems, syncEmpty,
+            curUrl: () => urls[current] || null,
         };
 
-        initial.forEach(buildSlide);
-
-        // começa na imagem clicada (índice capturado durante o próprio build — ver buildSlide)
-        const startIndex = startSlideIdx >= 0 ? startSlideIdx : 0;
-
-        feed.classList.add('open');
-        document.documentElement.style.overflow = 'hidden';
-        current = startIndex;
-        reel.style.transition = 'none';
-        reel.style.transform = 'translateY(' + (-current * 100) + 'vh)';
-        setActive(current);
+        (mediaState ? mediaState.items : []).forEach(buildSlide);
+        syncEmpty();
+        if (slides.length) goStart();
     }
 
     if (typeof window !== 'undefined' && window.__TEST_MODE__) {
         window.collectMediaFrom = collectMediaFrom;
         window.__galleryExports = { galMakeSection, galTileRatio, galTileSpan, galSkelTile };
+        window.__mediaExports = { openMedia, openMediaFeed, closeMedia, mediaView, setMediaView, restoreNavMode, resetRestore: () => { smgNavRestored = false; } };
     }
