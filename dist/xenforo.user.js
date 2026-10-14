@@ -26555,6 +26555,29 @@
         run();
     }
 
+    // SocialMediaGirls (UIX theme) renders .p-body-header as a sibling BEFORE .p-body, so swapping
+    // .p-body alone kept the previous page's header: its title, image and the pager bar moved into
+    // it, while the new page's pager stayed loose above the posts. Swap the outer header with the body.
+    function swapOuterPageHeader(doc, nextBody, freshBody) {
+        const outside = (root, body) => Array.from(root.querySelectorAll('.p-body-header')).filter(h => !body.contains(h));
+        outside(document, freshBody).forEach(h => h.remove());
+        document.querySelectorAll('.smg-thead-spacer, .smg-thead-sentinel').forEach(el => {
+            if (!freshBody.contains(el)) el.remove();
+        });
+        outside(doc, nextBody).forEach(h => {
+            freshBody.parentNode.insertBefore(document.importNode(h, true), freshBody);
+        });
+    }
+
+    // the <head> metadata the script reads (og:title for a generic page title) follows the page
+    function syncPageMeta(doc) {
+        const sel = 'meta[property="og:title"], meta[name="twitter:title"], meta[property="og:url"], meta[property="og:image"], meta[name="description"], meta[property="og:description"]';
+        const head = document.head;
+        if (!head || !doc.head) return;
+        head.querySelectorAll(sel).forEach(m => m.remove());
+        doc.head.querySelectorAll(sel).forEach(m => head.appendChild(document.importNode(m, true)));
+    }
+
     function softNavigate(url, opts) {
         opts = opts || {};
         let abs;
@@ -26588,6 +26611,7 @@
             const freshBody = document.importNode(nextBody, true);
             curBody.replaceWith(freshBody);
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
+            swapOuterPageHeader(doc, nextBody, freshBody);
             document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river').forEach(el => {
                 if (!freshBody.contains(el)) el.remove();
             });
@@ -26600,6 +26624,7 @@
             if (csrf && window.XF && window.XF.config) window.XF.config.csrf = csrf;
             const title = doc.querySelector('title');
             if (title && title.textContent) document.title = title.textContent;
+            syncPageMeta(doc);
             copyNativeBadge('.p-navgroup-link--alerts', doc);
             syncReactiveBadges();
             const nextUrl = abs.pathname + abs.search;
