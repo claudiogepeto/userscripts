@@ -224,6 +224,8 @@
         }
         .fl-playlist-item:hover { background: rgba(255,255,255,.07); border-color: ${ACCENT}88; transform: translateY(-1px); }
         .fl-playlist-item.is-current { background: rgba(20,184,166,0.14); border-color: ${ACCENT}; }
+        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
+        .fl-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
 
         .fl-playlist-thumb-wrap {
             position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px;

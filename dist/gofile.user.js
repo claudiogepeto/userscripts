@@ -105,6 +105,7 @@
 
         html.gf .gf-card { position: relative !important; display: flex !important; flex-direction: column !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 14px !important; background: #12141a !important; overflow: hidden !important; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; cursor: pointer; }
         html.gf .gf-card.gf-filtered { display: none !important; }
+        html.gf .gf-card { content-visibility: auto; contain-intrinsic-block-size: auto 319px; }
         html.gf .gf-card:hover { transform: translateY(-3px); border-color: ${ACCENT}88 !important; box-shadow: 0 10px 26px rgba(0,0,0,0.5) !important; }
 
         /* Oculta nós nativos internos preservando-os acessíveis para eventos */
@@ -220,6 +221,8 @@
         .gf-playlist-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid transparent; color: #fff; text-decoration: none; transition: background .12s, border-color .12s, transform .1s; position: relative; cursor: pointer; }
         .gf-playlist-item:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); transform: translateX(2px); }
         .gf-playlist-item.is-current { background: rgba(245,196,0,.13); border-color: rgba(245,196,0,.38); }
+        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
+        .gf-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
         .gf-playlist-item.is-current::before { content: none; }
         .gf-playlist-thumb-wrap { position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px; overflow: hidden; background: #181920; }
         .gf-playlist-thumb, .gf-playlist-thumb-wrap > img { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; object-fit: cover !important; object-position: center !important; display: block !important; }

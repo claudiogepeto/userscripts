@@ -221,6 +221,8 @@
         }
         .tb-playlist-item:hover { background: rgba(255,255,255,.07); border-color: rgba(249,115,22,.4); transform: translateY(-1px); }
         .tb-playlist-item.is-current { background: rgba(249,115,22,0.14); border-color: var(--tb-accent, #f97316); }
+        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
+        .tb-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
 
         .tb-playlist-thumb-wrap {
             position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px;

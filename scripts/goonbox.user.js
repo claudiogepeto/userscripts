@@ -346,6 +346,7 @@
         .gbx-thumb img { width: 84px; height: 56px; object-fit: cover; border-radius: 6px; background: #111318; flex: 0 0 auto; }
         .gbx-thumb span { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .gbx-thumb[aria-current="true"] { background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.4); }
+        .gbx-thumb:not([aria-current="true"]) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 56px; }
         .gbx-thumb:hover { background: rgba(255,255,255,.06); }
         @media (max-width: 800px) {
             .gbx-top { flex-wrap: wrap; }

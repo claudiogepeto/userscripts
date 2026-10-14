@@ -586,6 +586,8 @@
         .bunkr-playlist-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid transparent; color: #fff; text-decoration: none; transition: background .12s, border-color .12s, transform .1s; position: relative; }
         .bunkr-playlist-item:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); transform: translateX(2px); }
         .bunkr-playlist-item.is-current { background: rgba(167,139,250,.13); border-color: rgba(167,139,250,.38); }
+        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
+        .bunkr-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
         .bunkr-playlist-item.is-current::before { content: none; }
         .bunkr-playlist-thumb-wrap { position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px; overflow: hidden; background: #181920; }
         .bunkr-playlist-thumb { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }

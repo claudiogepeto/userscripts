@@ -2457,6 +2457,8 @@
         }
         .pdx-playlist-item:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); transform: translateX(2px); }
         .pdx-playlist-item.is-current { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.38); }
+        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
+        .pdx-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
 
         .pdx-playlist-thumb-wrap {
             position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px;
