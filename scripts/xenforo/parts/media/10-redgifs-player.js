@@ -1023,8 +1023,7 @@
                         return;
                     }
                     if (res && res.img) {                                   // IMAGEM (o /videos/ do imagepond às vezes é foto) → troca o embed por <img> (entra no pipeline de img + masonry)
-                        const inGrid = wrapper.closest && wrapper.closest('.auto-image-grid');
-                        const grid = inGrid || null;
+                        const grid = wrapper.closest('.auto-image-grid');
                         const img = document.createElement('img');
                         img.className = 'bbImage';
                         img.src = res.img;

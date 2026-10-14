@@ -113,7 +113,6 @@
         if (decoded && /^https?:/i.test(decoded) && !isProxyUrl(decoded)) {
             return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         }
-        if (/^https?:/i.test(trimmed) && !isProxyUrl(trimmed)) return trimmed;
         return trimmed;
     }
 
@@ -1356,18 +1355,9 @@
         if (!el || el.nodeType !== 1) return false;
 
         // 1. Rejeitar se for comentário ou estiver dentro de container de comentários
-        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment')) {
+        // (closest inclui o próprio elemento)
+        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment, .comment-body')) {
             return false;
-        }
-        if (el.classList) {
-            if (el.classList.contains('comment') ||
-                el.classList.contains('message-responseRow') ||
-                el.classList.contains('smg-cc') ||
-                el.classList.contains('js-quickEditTargetComment') ||
-                el.classList.contains('message-responses') ||
-                el.classList.contains('comment-body')) {
-                return false;
-            }
         }
 
         // 2. Rejeitar se o ID ou data-content indicar comentário

@@ -263,15 +263,10 @@
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
                 const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
                 const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
-                const v = nv ? nv.video : document.createElement('video');
-                if (nv) {
-                    v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
-                    wrap.appendChild(nv.wrap);
-                    rgStartUrl(v, href, nv.wrap);
-                } else {
-                    v.src = href; v.controls = true; v.playsInline = true; v.className = 'smg-dm-video';
-                    wrap.appendChild(v);
-                }
+                const v = nv.video;
+                v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
+                wrap.appendChild(nv.wrap);
+                rgStartUrl(v, href, nv.wrap);
                 v.preload = 'none';
                 // THUMB: arquivo direto não tem poster no host, então a capa é o 1º frame — `#t=0.1` faz o
                 // browser pintá-lo ao ler os metadados. PERF: só quando o item se aproxima (lazyEmbedIO).
@@ -331,9 +326,7 @@
             if (newSrc !== src) {
                 ifr.setAttribute('src', newSrc);
             }
-            if (!ifr.classList.contains('saint-iframe')) {
-                ifr.classList.add('saint-iframe');
-            }
+            ifr.classList.add('saint-iframe');
         });
 
         // Página /v/ID e embed /embed/ID são o mesmo vídeo. O player é sempre o iframe /embed/.
@@ -446,7 +439,6 @@
     }
     function pdPlace(node, card) {   // troca o link/card cru (o unfurl inteiro, se houver) pelo nosso card
         if (!node || !card) return;
-        if (node.classList && node.classList.contains('smg-dead')) return;
         if (node.closest && node.closest('.smg-dead')) return;
         const host = node.closest('.bbCodeBlock--unfurl') || node;
         // TÍTULO DO LINK: quando o <a> tem TEXTO próprio (não a URL crua), ele é a única descrição do
@@ -814,7 +806,6 @@
             sub: sub,
             logo: ['https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png', 'https://instagram.com/favicon.ico']
         });
-        card.dataset.key = 'instagram';
         const th = card.querySelector('.smg-fhcard-thumb');
         if (th) {
             th.className = 'smg-fhcard-thumb smg-fhcard-thumb--instagram';
@@ -839,7 +830,6 @@
             sub: sub,
             logo: ['https://abs.twimg.com/favicons/twitter.3.ico', 'https://x.com/favicon.ico']
         });
-        card.dataset.key = 'x';
         const th = card.querySelector('.smg-fhcard-thumb');
         if (th) {
             th.className = 'smg-fhcard-thumb smg-fhcard-thumb--x';
@@ -911,8 +901,6 @@
         name.href = (tweet.author && tweet.author.url) || tweetUrl;
         name.target = '_blank';
         name.rel = 'noopener noreferrer';
-        name.dataset.fhDone = '1';
-        name.dataset.twDone = '1';
         name.textContent = (tweet.author && tweet.author.name) || 'X User';
 
         const user = document.createElement('a');
@@ -920,8 +908,6 @@
         user.href = (tweet.author && tweet.author.url) || tweetUrl;
         user.target = '_blank';
         user.rel = 'noopener noreferrer';
-        user.dataset.fhDone = '1';
-        user.dataset.twDone = '1';
         user.textContent = (tweet.author && tweet.author.screen_name) ? ('@' + tweet.author.screen_name) : '';
 
         author.append(name, user);
@@ -932,8 +918,6 @@
         xlogo.target = '_blank';
         xlogo.rel = 'noopener noreferrer';
         xlogo.title = 'Open on X';
-        xlogo.dataset.fhDone = '1';
-        xlogo.dataset.twDone = '1';
         xlogo.innerHTML = ICONS.x || '';
 
         head.append(avatar, author, xlogo);
@@ -1096,8 +1080,6 @@
         open.href = tweetUrl;
         open.target = '_blank';
         open.rel = 'noopener noreferrer';
-        open.dataset.fhDone = '1';
-        open.dataset.twDone = '1';
         open.innerHTML = 'Open on 𝕏 ' + (ICONS.rgExternal || '↗');
         foot.appendChild(open);
 

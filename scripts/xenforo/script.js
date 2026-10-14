@@ -9393,7 +9393,6 @@
         if (decoded && /^https?:/i.test(decoded) && !isProxyUrl(decoded)) {
             return decoded.replace(/^https?:\/\/(?:[a-z0-9-]+\.)?(saint2?\.(?:su|to|cr))\b/i, 'https://turbo.cr');
         }
-        if (/^https?:/i.test(trimmed) && !isProxyUrl(trimmed)) return trimmed;
         return trimmed;
     }
 
@@ -10636,18 +10635,9 @@
         if (!el || el.nodeType !== 1) return false;
 
         // 1. Rejeitar se for comentário ou estiver dentro de container de comentários
-        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment')) {
+        // (closest inclui o próprio elemento)
+        if (el.closest && el.closest('.comment, .message-responseRow, .message-responses, .js-messageResponses, .js-commentsList, .smg-cc, .js-quickEditTargetComment, .comment-body')) {
             return false;
-        }
-        if (el.classList) {
-            if (el.classList.contains('comment') ||
-                el.classList.contains('message-responseRow') ||
-                el.classList.contains('smg-cc') ||
-                el.classList.contains('js-quickEditTargetComment') ||
-                el.classList.contains('message-responses') ||
-                el.classList.contains('comment-body')) {
-                return false;
-            }
         }
 
         // 2. Rejeitar se o ID ou data-content indicar comentário
@@ -11957,7 +11947,6 @@
                 const g = img.closest('.auto-image-grid');
                 if (g) scheduleRelayout(g);
             }, { once: true });   // tem dimensões → masonry re-grida
-            img.addEventListener('error', () => {}, { once: true });   // CDN fora → deixa o que estiver (card já foi removido; vira img quebrada rara)
             const link = document.createElement('a'); link.href = full; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.appendChild(img);
             card.replaceWith(link);
             img.src = full;
@@ -13791,8 +13780,7 @@
                         return;
                     }
                     if (res && res.img) {                                   // IMAGEM (o /videos/ do imagepond às vezes é foto) → troca o embed por <img> (entra no pipeline de img + masonry)
-                        const inGrid = wrapper.closest && wrapper.closest('.auto-image-grid');
-                        const grid = inGrid || null;
+                        const grid = wrapper.closest('.auto-image-grid');
                         const img = document.createElement('img');
                         img.className = 'bbImage';
                         img.src = res.img;
@@ -23168,16 +23156,10 @@
     function dcThumbUrl(thumb) {
         if (!thumb) return '';
         const im = thumb.tagName === 'IMG' ? thumb : thumb.querySelector('img');
-        if (!im) {
-            const bg = (thumb.style && thumb.style.backgroundImage) || '';
-            const m = bg.match(/url\(["']?(.*?)["']?\)/i);
-            const url = m ? m[1] : '';
-            if (!url || url.startsWith('data:')) return '';
-            return getBigUrl(url);
-        }
-        const bg = (im.style && im.style.backgroundImage) || '';
+        const el = im || thumb;   // background-image da <img> ou, sem <img>, do próprio container
+        const bg = (el.style && el.style.backgroundImage) || '';
         const m = bg.match(/url\(["']?(.*?)["']?\)/i);
-        const url = m ? m[1] : (im.getAttribute('src') || im.currentSrc || im.getAttribute('data-src') || '');
+        const url = m ? m[1] : (im ? (im.getAttribute('src') || im.currentSrc || im.getAttribute('data-src') || '') : '');
         if (!url || url.startsWith('data:')) return '';
         return getBigUrl(url); // tenta a versão maior (.md/.th → full)
     }
@@ -23447,15 +23429,10 @@
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
                 const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
                 const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
-                const v = nv ? nv.video : document.createElement('video');
-                if (nv) {
-                    v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
-                    wrap.appendChild(nv.wrap);
-                    rgStartUrl(v, href, nv.wrap);
-                } else {
-                    v.src = href; v.controls = true; v.playsInline = true; v.className = 'smg-dm-video';
-                    wrap.appendChild(v);
-                }
+                const v = nv.video;
+                v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
+                wrap.appendChild(nv.wrap);
+                rgStartUrl(v, href, nv.wrap);
                 v.preload = 'none';
                 // THUMB: arquivo direto não tem poster no host, então a capa é o 1º frame — `#t=0.1` faz o
                 // browser pintá-lo ao ler os metadados. PERF: só quando o item se aproxima (lazyEmbedIO).
@@ -23515,9 +23492,7 @@
             if (newSrc !== src) {
                 ifr.setAttribute('src', newSrc);
             }
-            if (!ifr.classList.contains('saint-iframe')) {
-                ifr.classList.add('saint-iframe');
-            }
+            ifr.classList.add('saint-iframe');
         });
 
         // Página /v/ID e embed /embed/ID são o mesmo vídeo. O player é sempre o iframe /embed/.
@@ -23630,7 +23605,6 @@
     }
     function pdPlace(node, card) {   // troca o link/card cru (o unfurl inteiro, se houver) pelo nosso card
         if (!node || !card) return;
-        if (node.classList && node.classList.contains('smg-dead')) return;
         if (node.closest && node.closest('.smg-dead')) return;
         const host = node.closest('.bbCodeBlock--unfurl') || node;
         // TÍTULO DO LINK: quando o <a> tem TEXTO próprio (não a URL crua), ele é a única descrição do
@@ -23998,7 +23972,6 @@
             sub: sub,
             logo: ['https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png', 'https://instagram.com/favicon.ico']
         });
-        card.dataset.key = 'instagram';
         const th = card.querySelector('.smg-fhcard-thumb');
         if (th) {
             th.className = 'smg-fhcard-thumb smg-fhcard-thumb--instagram';
@@ -24023,7 +23996,6 @@
             sub: sub,
             logo: ['https://abs.twimg.com/favicons/twitter.3.ico', 'https://x.com/favicon.ico']
         });
-        card.dataset.key = 'x';
         const th = card.querySelector('.smg-fhcard-thumb');
         if (th) {
             th.className = 'smg-fhcard-thumb smg-fhcard-thumb--x';
@@ -24095,8 +24067,6 @@
         name.href = (tweet.author && tweet.author.url) || tweetUrl;
         name.target = '_blank';
         name.rel = 'noopener noreferrer';
-        name.dataset.fhDone = '1';
-        name.dataset.twDone = '1';
         name.textContent = (tweet.author && tweet.author.name) || 'X User';
 
         const user = document.createElement('a');
@@ -24104,8 +24074,6 @@
         user.href = (tweet.author && tweet.author.url) || tweetUrl;
         user.target = '_blank';
         user.rel = 'noopener noreferrer';
-        user.dataset.fhDone = '1';
-        user.dataset.twDone = '1';
         user.textContent = (tweet.author && tweet.author.screen_name) ? ('@' + tweet.author.screen_name) : '';
 
         author.append(name, user);
@@ -24116,8 +24084,6 @@
         xlogo.target = '_blank';
         xlogo.rel = 'noopener noreferrer';
         xlogo.title = 'Open on X';
-        xlogo.dataset.fhDone = '1';
-        xlogo.dataset.twDone = '1';
         xlogo.innerHTML = ICONS.x || '';
 
         head.append(avatar, author, xlogo);
@@ -24280,8 +24246,6 @@
         open.href = tweetUrl;
         open.target = '_blank';
         open.rel = 'noopener noreferrer';
-        open.dataset.fhDone = '1';
-        open.dataset.twDone = '1';
         open.innerHTML = 'Open on 𝕏 ' + (ICONS.rgExternal || '↗');
         foot.appendChild(open);
 

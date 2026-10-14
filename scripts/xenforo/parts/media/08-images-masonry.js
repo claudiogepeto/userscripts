@@ -596,7 +596,6 @@
                 const g = img.closest('.auto-image-grid');
                 if (g) scheduleRelayout(g);
             }, { once: true });   // tem dimensões → masonry re-grida
-            img.addEventListener('error', () => {}, { once: true });   // CDN fora → deixa o que estiver (card já foi removido; vira img quebrada rara)
             const link = document.createElement('a'); link.href = full; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.appendChild(img);
             card.replaceWith(link);
             img.src = full;
