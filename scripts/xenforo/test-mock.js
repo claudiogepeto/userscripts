@@ -2418,6 +2418,48 @@ async function runTests() {
     assert(mockThreadRow.querySelector('.smg-card-dates').dataset.sentinel === 'keep', 'Segunda execução de decorateThreadCard não deve recriar elementos');
     mockThreadRow.remove();
 
+    // 15.1b Botão de deixar de seguir em /watched/threads: mesmo botão "seguindo" da listagem do fórum + re-filtra a lista
+    const { decorateWatchedThreadRow } = window.__filterbarExports;
+    const prevUrl15 = window.location.href;
+    window.history.pushState({}, '', '/watched/threads');
+    const watchedRow15 = document.createElement('div');
+    watchedRow15.className = 'structItem structItem--thread';
+    watchedRow15.innerHTML = `
+        <div class="structItem-cell structItem-cell--icon"><a href="/threads/watched-row.15/"><img src="thumb.jpg"></a></div>
+        <div class="structItem-cell structItem-cell--main"><div class="structItem-title"><a href="/threads/watched-row.15/">Watched Row</a></div></div>
+    `;
+    document.body.appendChild(watchedRow15);
+    decorateWatchedThreadRow(watchedRow15);
+    const watchedBtn15 = watchedRow15.querySelector('.smg-thread-unwatch-btn');
+    assert(watchedBtn15 && watchedBtn15.classList.contains('is-following'), 'Botão em /watched/threads deve ter o estado "seguindo" (is-following), igual ao do fórum');
+    const prevReapply15 = window.smgReapplyFilters;
+    let reapplied15 = 0;
+    window.smgReapplyFilters = () => { reapplied15++; };
+    watchedBtn15.click();
+    await new Promise(resolve => setTimeout(resolve, 320));
+    window.smgReapplyFilters = prevReapply15;
+    assert(!watchedRow15.isConnected, 'Deixar de seguir em /watched/threads deve remover a linha');
+    assert(reapplied15 > 0, 'Deixar de seguir em /watched/threads deve re-aplicar o filtro da lista (smgReapplyFilters)');
+    window.history.pushState({}, '', prevUrl15);
+
+    // 15.1c Seguir pela listagem grava o registro completo com updated_at em SEGUNDOS
+    const followRow15 = document.createElement('div');
+    followRow15.className = 'structItem structItem--thread';
+    followRow15.innerHTML = `
+        <div class="structItem-cell structItem-cell--icon"><a href="/threads/follow-row.16/"><img src="thumb.jpg"></a></div>
+        <div class="structItem-cell structItem-cell--main"><div class="structItem-title"><a href="/threads/follow-row.16/">Follow Row</a></div></div>
+    `;
+    document.body.appendChild(followRow15);
+    decorateThreadCard(followRow15);
+    const followBtn15 = followRow15.querySelector('.smg-thread-unwatch-btn');
+    assert(followBtn15 && !followBtn15.classList.contains('is-following'), 'Thread não seguida mostra o botão "seguir"');
+    followBtn15.click();
+    await new Promise(resolve => setTimeout(resolve, 20));
+    const followedRec15 = mockStorage.followed.get('/threads/follow-row.16/');
+    assert(followedRec15 && followedRec15.updated_at > 0 && followedRec15.updated_at < 1e11, `Seguir pela listagem deve gravar updated_at em segundos (obtido: ${followedRec15 && followedRec15.updated_at})`);
+    assert(followedRec15 && Array.isArray(followedRec15.saved_pages) && followedRec15.last_page >= 1 && followedRec15.followed_at > 0 && followedRec15.followed_at < 1e11, 'Seguir pela listagem deve gravar o registro completo (saved_pages, last_page, followed_at)');
+    followRow15.remove();
+
     // 15.2 autoExpandSpoilers expande sem getComputedStyle
     const autoExpandSpoilers = window.__autoExpandSpoilers;
     assert(typeof autoExpandSpoilers === 'function', 'autoExpandSpoilers deve ser função');
