@@ -442,11 +442,6 @@
             viewMode = viewMode === 'grid' ? 'list' : 'grid';
             gmSet('smg-threadview', viewMode);
             document.documentElement.classList.toggle('smg-tv-grid', viewMode === 'grid');
-            const wGrid = document.querySelector('.smg-watched-grid');
-            if (wGrid) {
-                wGrid.classList.remove('smg-watched-view--grid', 'smg-watched-view--list');
-                wGrid.classList.add(viewMode === 'list' ? 'smg-watched-view--list' : 'smg-watched-view--grid');
-            }
             [btnViewToggle, btnViewToggleM].filter(Boolean).forEach(b => {
                 setBtnIcon(b, viewMode === 'grid' ? ICONS.list : ICONS.gallery);
                 setBtnLabel(b, getViewToggleLabel(viewMode));
@@ -2543,7 +2538,7 @@
                     || document.querySelector('.p-body-main .block-body');
             }
 
-            const LIST_ITEM_SELECTOR = '.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card';
+            const LIST_ITEM_SELECTOR = '.structItem--thread, .structItem--bookmark, .message--articlePreview';
             const listMetaCache = new WeakMap();
             const parseListCount = text => {
                 if (!text) return 0;
@@ -2566,7 +2561,7 @@
                 const cached = listMetaCache.get(el);
                 if (cached) return cached;
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
-                    || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, .smg-watched-card-title, h3 a');
+                    || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, h3 a');
                 const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
@@ -2831,7 +2826,7 @@
                     let hasVisible = false;
                     let hasAnyItem = false;
                     while (curr && !curr.classList.contains('smg-inf-sep')) {
-                        if (curr.matches('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card')) {
+                        if (curr.matches(LIST_ITEM_SELECTOR)) {
                             hasAnyItem = true;
                             if (curr.style.display !== 'none' && !curr.classList.contains('smg-hidden')) {
                                 hasVisible = true;
@@ -2890,7 +2885,7 @@
                 const topRow = document.createElement('div');
                 topRow.className = 'smg-lf-headrow';
                 const container = getThreadListContainer();
-                const totalItems = container ? container.querySelectorAll('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card').length : 0;
+                const totalItems = container ? container.querySelectorAll(LIST_ITEM_SELECTOR).length : 0;
                 topRow.innerHTML = `
                     <span class="smg-lf-counter">${IS_PT ? `${totalItems} tópicos` : `${totalItems} threads`}</span>
                     <button type="button" class="smg-lf-reset-btn">${i18n('Clear filters')}</button>
@@ -2983,7 +2978,7 @@
                 const topRow = document.createElement('div');
                 topRow.className = 'smg-lf-headrow';
                 const container = getThreadListContainer();
-                const totalItems = container ? container.querySelectorAll('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card').length : 0;
+                const totalItems = container ? container.querySelectorAll(LIST_ITEM_SELECTOR).length : 0;
                 topRow.innerHTML = `
                     <span class="smg-lf-counter">${IS_PT ? `${totalItems} tópicos` : `${totalItems} threads`}</span>
                     <button type="button" class="smg-lf-reset-btn">${i18n('Clear filters')}</button>

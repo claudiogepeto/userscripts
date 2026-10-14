@@ -296,7 +296,7 @@
         // 1. Prefixes / Labels nativos (ignora container labelLink pra pegar o span interno com a classe real)
         row.querySelectorAll('.label, .prefix, [class*="label--"], [class*="prefix--"]').forEach(el => {
             if (el.classList.contains('labelLink') && el.querySelector('.label, .prefix')) return;
-            if (el.closest('.smg-watched-chips, .smg-lf-chips, .smg-thead-tags, .smg-search-chips')) return;
+            if (el.closest('.smg-thead-tags')) return;
             const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
             const k = txt.toLowerCase();
             if (txt && txt.length > 0 && txt.length < 40 && !seen.has(k)) {
@@ -308,7 +308,7 @@
         });
         // 2. Tags (#tag, .tagItem, a[href*="/tags/"])
         row.querySelectorAll('.tagItem, a[href*="/tags/"], .structItem-tags a, .tagList a').forEach(el => {
-            if (el.closest('.smg-watched-chips, .smg-lf-chips, .smg-thead-tags, .smg-search-chips')) return;
+            if (el.closest('.smg-thead-tags')) return;
             const raw = (el.textContent || '').replace(/\s+/g, ' ').trim();
             const txt = raw.replace(/^#/, '').trim();
             const k = txt.toLowerCase();

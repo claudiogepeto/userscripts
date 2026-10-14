@@ -6499,7 +6499,7 @@
             .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
 
             /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
-            .structItem--thread.smg-hidden, .smg-watched-card.smg-hidden, .smg-hidden { display: none !important; }
+            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
             html.smg-threadlist .structItem--thread,
             html.smg-threadlist .contentRow {
                 display: flex !important;
@@ -6788,47 +6788,6 @@
             }
 
             /* BARRA DE FILTRO DE THREADS SEGUIDAS (/watched/threads) */
-            .smg-watched-bar {
-                display: flex; flex-direction: column; gap: 10px;
-                padding: 12px 14px; margin: 0 0 14px 0;
-                background: var(--smg-s1); border: 1px solid var(--smg-bd);
-                border-radius: 12px; box-sizing: border-box;
-            }
-            .smg-watched-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-            .smg-watched-search {
-                display: flex; align-items: center; position: relative;
-                flex: 1 1 240px; min-width: 200px; height: 34px;
-                background: var(--smg-s2); border: 1px solid var(--smg-bd);
-                border-radius: 8px; padding: 0 8px;
-                transition: border-color .15s ease, box-shadow .15s ease;
-            }
-            .smg-watched-search:focus-within {
-                border-color: var(--smg-ac, #ff77b2);
-                box-shadow: 0 0 0 2px rgba(255,119,178,0.18);
-            }
-            .smg-watched-search-ic {
-                display: flex; align-items: center; justify-content: center;
-                width: 18px; height: 18px; color: rgba(255,255,255,0.45);
-                margin-right: 6px; flex-shrink: 0;
-            }
-            .smg-watched-search-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
-            .smg-watched-search-input {
-                flex: 1 1 auto; min-width: 0;
-                background: transparent !important; border: 0 !important; outline: 0 !important;
-                box-shadow: none !important; color: #fff !important; font-size: 13px !important;
-                padding: 0 !important; height: 100% !important;
-            }
-            .smg-watched-search-clear {
-                display: none; background: transparent; border: 0; color: rgba(255,255,255,0.4);
-                cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 4px; line-height: 1;
-            }
-            .smg-watched-search-clear:hover { color: #fff; }
-            .smg-watched-search.has-val .smg-watched-search-clear { display: block; }
-            .smg-watched-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.55); margin-left: auto; }
-            .smg-watched-chips {
-                display: flex; align-items: center; gap: 6px; overflow-x: auto;
-                padding-bottom: 2px; scrollbar-width: thin;
-            }
             .smg-watched-empty {
                 text-align: center; padding: 36px 16px; color: rgba(255,255,255,0.5); font-size: 14px;
             }
@@ -9177,230 +9136,8 @@
             html.smg-threadlist[data-template*="watched_threads"] .pageNavWrapper,
             html.smg-threadlist[data-template*="watched_threads"] .pageNav,
             html.smg-threadlist[data-template*="watched_threads"] .block-outer--after,
-            html.smg-threadlist[data-template*="watched_threads"] .block-outer--top,
-            .smg-watched-local-root ~ .pageNavWrapper,
-            .smg-watched-local-root ~ .pageNav,
-            .smg-watched-local-root ~ .block-outer {
+            html.smg-threadlist[data-template*="watched_threads"] .block-outer--top {
                 display: none !important;
-            }
-            .smg-watched-local-root { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 10px; }
-
-            /* GRID VIEW IDÊNTICO AO NATIVO (5-6 colunas, thumb 1:1) */
-            html.smg-tv-grid .smg-watched-grid,
-            .smg-watched-grid.smg-watched-view--grid {
-                display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min, 230px), calc((100% - 70px) / 6)), 1fr)) !important;
-                gap: 14px !important;
-                padding: 0 !important;
-                align-items: start !important;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 0 !important;
-                padding: 0 !important;
-                border: 1px solid rgba(127,127,127,0.18) !important;
-                border-radius: 12px !important;
-                overflow: hidden !important;
-                background: rgba(127,127,127,0.06) !important;
-                position: relative !important;
-                transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
-                content-visibility: auto;
-                contain-intrinsic-size: auto 320px;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card:hover,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card:hover {
-                border-color: var(--smg-bd2, rgba(255,255,255,0.22)) !important;
-                transform: translateY(-2px) !important;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card-thumb,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card-thumb {
-                width: 100% !important;
-                aspect-ratio: 1 / 1 !important;
-                height: auto !important;
-                overflow: hidden !important;
-                background: rgba(255,255,255,0.04) !important;
-                position: relative !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                flex: 0 0 auto !important;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card-thumb img,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card-thumb img {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: cover !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                display: block !important;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card-thumb.smg-thumb-letter,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card-thumb.smg-thumb-letter {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                font-size: 38px !important;
-                font-weight: 800 !important;
-                color: rgba(255,255,255,0.25) !important;
-                background: radial-gradient(circle at 50% 40%, var(--smg-s3), var(--smg-s1)) !important;
-            }
-            html.smg-tv-grid .smg-watched-grid .smg-watched-card-body,
-            .smg-watched-grid.smg-watched-view--grid .smg-watched-card-body {
-                width: 100% !important;
-                box-sizing: border-box !important;
-                padding: 8px 12px 12px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 0 !important;
-                flex: 1 1 auto !important;
-            }
-            /* Row 1 & Row 2: Badges no topo, Título abaixo */
-            .smg-watched-card-title-wrap {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 0 !important;
-                font-size: 14.5px !important;
-                font-weight: 700 !important;
-                line-height: 1.3 !important;
-            }
-            .smg-watched-card-badges,
-            .smg-watched-card-tags {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 4px !important;
-                align-items: center !important;
-                margin-bottom: 5px !important;
-            }
-            .smg-watched-card-badges .label,
-            .smg-watched-card-tags .label,
-            .smg-watched-card .label {
-                font-size: 9.5px !important;
-                padding: 1.5px 5.5px !important;
-                border-radius: 4px !important;
-                line-height: 1.2 !important;
-            }
-            .smg-watched-card-title {
-                font-size: 14.5px !important;
-                font-weight: 700 !important;
-                color: #fff !important;
-                text-decoration: none !important;
-                word-break: break-word !important;
-                line-height: 1.3 !important;
-            }
-            .smg-watched-card-title:hover {
-                text-decoration: underline !important;
-                color: var(--smg-link, #ff77b2) !important;
-            }
-            /* Row 3: Data (Sem autor, sem nome de fórum) */
-            .smg-watched-card-meta,
-            .smg-watched-card-date {
-                display: flex !important;
-                align-items: center !important;
-                font-size: 11.5px !important;
-                color: rgba(255,255,255,0.45) !important;
-                margin-top: 4px !important;
-            }
-            .smg-watched-card-time {
-                color: rgba(255,255,255,0.45) !important;
-                font-size: 11.5px !important;
-                font-weight: 500 !important;
-            }
-            /* Row 4: Paginação */
-            .smg-watched-card-page-jump {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 3px !important;
-                margin-top: 6px !important;
-            }
-            .smg-watched-card-page-num {
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                font-size: 11px !important;
-                font-weight: 700 !important;
-                padding: 2px 6px !important;
-                border-radius: 4px !important;
-                background: rgba(255,255,255,0.08) !important;
-                color: rgba(255,255,255,0.65) !important;
-                text-decoration: none !important;
-                transition: all .12s ease !important;
-            }
-            .smg-watched-card-page-num:hover {
-                background: var(--smg-link, #ff77b2) !important;
-                color: #000 !important;
-            }
-            .smg-watched-card-unwatch {
-                position: absolute !important;
-                top: 6px !important;
-                right: 6px !important;
-                z-index: 2 !important;
-                width: 28px !important;
-                height: 28px !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                background: rgba(0,0,0,0.6) !important;
-                border: 0 !important;
-                border-radius: 8px !important;
-                color: rgba(255,255,255,0.7) !important;
-                cursor: pointer !important;
-                opacity: 0 !important;
-                transition: opacity .14s ease, background .14s ease, color .14s ease !important;
-            }
-            .smg-watched-card:hover .smg-watched-card-unwatch {
-                opacity: 1 !important;
-            }
-            .smg-watched-card-unwatch:hover {
-                background: rgba(244,63,94,0.85) !important;
-                color: #fff !important;
-            }
-
-            /* MODO LISTA */
-            html:not(.smg-tv-grid) .smg-watched-grid,
-            .smg-watched-grid.smg-watched-view--list {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 10px !important;
-            }
-            html:not(.smg-tv-grid) .smg-watched-grid .smg-watched-card,
-            .smg-watched-grid.smg-watched-view--list .smg-watched-card {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: stretch !important;
-                padding: 0 !important;
-                gap: 0 !important;
-                background: rgba(127,127,127,0.06) !important;
-                border: 1px solid rgba(127,127,127,0.18) !important;
-                border-radius: 10px !important;
-                overflow: hidden !important;
-                contain-intrinsic-size: auto 112px !important;
-            }
-            html:not(.smg-tv-grid) .smg-watched-grid .smg-watched-card-thumb,
-            .smg-watched-grid.smg-watched-view--list .smg-watched-card-thumb {
-                flex: 0 0 210px !important;
-                width: 210px !important;
-                height: 132px !important;
-                aspect-ratio: auto !important;
-            }
-            @media (max-width: 600px) {
-                html:not(.smg-tv-grid) .smg-watched-grid .smg-watched-card-thumb,
-                .smg-watched-grid.smg-watched-view--list .smg-watched-card-thumb {
-                    flex: 0 0 92px !important;
-                    width: 92px !important;
-                    height: 70px !important;
-                }
-            }
-            html:not(.smg-tv-grid) .smg-watched-grid .smg-watched-card-body,
-            .smg-watched-grid.smg-watched-view--list .smg-watched-card-body {
-                flex: 1 1 auto !important;
-                padding: 10px 16px !important;
-                justify-content: center !important;
             }
             .smg-watched-empty { grid-column: 1 / -1; padding: 60px 16px; text-align: center; font-size: 14px; color: rgba(255,255,255,0.45); }
         `;
@@ -10197,7 +9934,7 @@
         // 1. Prefixes / Labels nativos (ignora container labelLink pra pegar o span interno com a classe real)
         row.querySelectorAll('.label, .prefix, [class*="label--"], [class*="prefix--"]').forEach(el => {
             if (el.classList.contains('labelLink') && el.querySelector('.label, .prefix')) return;
-            if (el.closest('.smg-watched-chips, .smg-lf-chips, .smg-thead-tags, .smg-search-chips')) return;
+            if (el.closest('.smg-thead-tags')) return;
             const txt = (el.textContent || '').replace(/\s+/g, ' ').trim();
             const k = txt.toLowerCase();
             if (txt && txt.length > 0 && txt.length < 40 && !seen.has(k)) {
@@ -10209,7 +9946,7 @@
         });
         // 2. Tags (#tag, .tagItem, a[href*="/tags/"])
         row.querySelectorAll('.tagItem, a[href*="/tags/"], .structItem-tags a, .tagList a').forEach(el => {
-            if (el.closest('.smg-watched-chips, .smg-lf-chips, .smg-thead-tags, .smg-search-chips')) return;
+            if (el.closest('.smg-thead-tags')) return;
             const raw = (el.textContent || '').replace(/\s+/g, ' ').trim();
             const txt = raw.replace(/^#/, '').trim();
             const k = txt.toLowerCase();
@@ -15217,11 +14954,6 @@
             viewMode = viewMode === 'grid' ? 'list' : 'grid';
             gmSet('smg-threadview', viewMode);
             document.documentElement.classList.toggle('smg-tv-grid', viewMode === 'grid');
-            const wGrid = document.querySelector('.smg-watched-grid');
-            if (wGrid) {
-                wGrid.classList.remove('smg-watched-view--grid', 'smg-watched-view--list');
-                wGrid.classList.add(viewMode === 'list' ? 'smg-watched-view--list' : 'smg-watched-view--grid');
-            }
             [btnViewToggle, btnViewToggleM].filter(Boolean).forEach(b => {
                 setBtnIcon(b, viewMode === 'grid' ? ICONS.list : ICONS.gallery);
                 setBtnLabel(b, getViewToggleLabel(viewMode));
@@ -17318,7 +17050,7 @@
                     || document.querySelector('.p-body-main .block-body');
             }
 
-            const LIST_ITEM_SELECTOR = '.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card';
+            const LIST_ITEM_SELECTOR = '.structItem--thread, .structItem--bookmark, .message--articlePreview';
             const listMetaCache = new WeakMap();
             const parseListCount = text => {
                 if (!text) return 0;
@@ -17341,7 +17073,7 @@
                 const cached = listMetaCache.get(el);
                 if (cached) return cached;
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
-                    || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, .smg-watched-card-title, h3 a');
+                    || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, h3 a');
                 const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
@@ -17606,7 +17338,7 @@
                     let hasVisible = false;
                     let hasAnyItem = false;
                     while (curr && !curr.classList.contains('smg-inf-sep')) {
-                        if (curr.matches('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card')) {
+                        if (curr.matches(LIST_ITEM_SELECTOR)) {
                             hasAnyItem = true;
                             if (curr.style.display !== 'none' && !curr.classList.contains('smg-hidden')) {
                                 hasVisible = true;
@@ -17665,7 +17397,7 @@
                 const topRow = document.createElement('div');
                 topRow.className = 'smg-lf-headrow';
                 const container = getThreadListContainer();
-                const totalItems = container ? container.querySelectorAll('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card').length : 0;
+                const totalItems = container ? container.querySelectorAll(LIST_ITEM_SELECTOR).length : 0;
                 topRow.innerHTML = `
                     <span class="smg-lf-counter">${IS_PT ? `${totalItems} tópicos` : `${totalItems} threads`}</span>
                     <button type="button" class="smg-lf-reset-btn">${i18n('Clear filters')}</button>
@@ -17758,7 +17490,7 @@
                 const topRow = document.createElement('div');
                 topRow.className = 'smg-lf-headrow';
                 const container = getThreadListContainer();
-                const totalItems = container ? container.querySelectorAll('.structItem--thread, .structItem--bookmark, .message--articlePreview, .smg-watched-card').length : 0;
+                const totalItems = container ? container.querySelectorAll(LIST_ITEM_SELECTOR).length : 0;
                 topRow.innerHTML = `
                     <span class="smg-lf-counter">${IS_PT ? `${totalItems} tópicos` : `${totalItems} threads`}</span>
                     <button type="button" class="smg-lf-reset-btn">${i18n('Clear filters')}</button>

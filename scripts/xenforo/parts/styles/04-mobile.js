@@ -215,7 +215,7 @@
             .smg-inf-sep::before, .smg-inf-sep::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(127,127,127,.4), transparent); }
 
             /* ---- listas (fórum / seguidas / busca): thumb maior + alinhamento ---- */
-            .structItem--thread.smg-hidden, .smg-watched-card.smg-hidden, .smg-hidden { display: none !important; }
+            .structItem--thread.smg-hidden, .smg-hidden { display: none !important; }
             html.smg-threadlist .structItem--thread,
             html.smg-threadlist .contentRow {
                 display: flex !important;

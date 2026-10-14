@@ -129,47 +129,6 @@
             }
 
             /* BARRA DE FILTRO DE THREADS SEGUIDAS (/watched/threads) */
-            .smg-watched-bar {
-                display: flex; flex-direction: column; gap: 10px;
-                padding: 12px 14px; margin: 0 0 14px 0;
-                background: var(--smg-s1); border: 1px solid var(--smg-bd);
-                border-radius: 12px; box-sizing: border-box;
-            }
-            .smg-watched-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-            .smg-watched-search {
-                display: flex; align-items: center; position: relative;
-                flex: 1 1 240px; min-width: 200px; height: 34px;
-                background: var(--smg-s2); border: 1px solid var(--smg-bd);
-                border-radius: 8px; padding: 0 8px;
-                transition: border-color .15s ease, box-shadow .15s ease;
-            }
-            .smg-watched-search:focus-within {
-                border-color: var(--smg-ac, #ff77b2);
-                box-shadow: 0 0 0 2px rgba(255,119,178,0.18);
-            }
-            .smg-watched-search-ic {
-                display: flex; align-items: center; justify-content: center;
-                width: 18px; height: 18px; color: rgba(255,255,255,0.45);
-                margin-right: 6px; flex-shrink: 0;
-            }
-            .smg-watched-search-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
-            .smg-watched-search-input {
-                flex: 1 1 auto; min-width: 0;
-                background: transparent !important; border: 0 !important; outline: 0 !important;
-                box-shadow: none !important; color: #fff !important; font-size: 13px !important;
-                padding: 0 !important; height: 100% !important;
-            }
-            .smg-watched-search-clear {
-                display: none; background: transparent; border: 0; color: rgba(255,255,255,0.4);
-                cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 4px; line-height: 1;
-            }
-            .smg-watched-search-clear:hover { color: #fff; }
-            .smg-watched-search.has-val .smg-watched-search-clear { display: block; }
-            .smg-watched-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.55); margin-left: auto; }
-            .smg-watched-chips {
-                display: flex; align-items: center; gap: 6px; overflow-x: auto;
-                padding-bottom: 2px; scrollbar-width: thin;
-            }
             .smg-watched-empty {
                 text-align: center; padding: 36px 16px; color: rgba(255,255,255,0.5); font-size: 14px;
             }
