@@ -8235,6 +8235,61 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SOFT-NAV: carrega o JS/CSS próprio da página de destino antes do XF.activate
+    // (o editor Froala do quick reply só existe se o JS do editor estiver carregado)
+    // =========================================================================
+    {
+        console.log('\n--- Soft-nav: assets da página de destino + XF.activate ---');
+        const navHtml = `<!DOCTYPE html><html data-template="thread_view"><head><title>Dest</title>
+<script>
+        XF.ready(() =>
+        {
+            XF.extendObject(true, XF.config, {
+                userId: 1,
+                js: {"\/js\/xf\/message.min.js?_v=1":true,"\/js\/xf\/editor-compiled.js?_v=1":true},
+                fullJs: false,
+                css: {"public:message.less":true,"public:editor.less":true},
+                cacheKey: 'x'
+            });
+        });
+</script></head><body><div class="p-body"><div class="p-body-inner"><form class="js-quickReply" action="/threads/dest.77/add-reply">
+<div class="message-editorWrapper"><textarea name="message_html" class="input js-editor" data-xf-init="editor"></textarea></div>
+</form></div></div></body></html>`;
+        const prevFetch = window.fetch;
+        const prevXF = window.XF;
+        const calls = { load: [], activate: [] };
+        let pendingLoad = null;
+        window.XF = {
+            config: { csrf: '' },
+            Loader: { load(js, css, cb) { calls.load.push({ js: Array.from(js || []), css: Array.from(css || []) }); pendingLoad = cb; } },
+            activate(el) { calls.activate.push(el); }
+        };
+        window.fetch = () => Promise.resolve({ ok: true, status: 200, headers: { get: () => null }, text: () => Promise.resolve(navHtml) });
+        window.smgSoftNavigate('/threads/dest.77/');
+        await new Promise(r => setTimeout(r, 80));
+        assert(calls.load.length === 1, `Soft-nav deve pedir ao XF.Loader os assets da página de destino (chamadas: ${calls.load.length})`);
+        const ld = calls.load[0] || { js: [], css: [] };
+        assert(ld.js.includes('/js/xf/editor-compiled.js?_v=1') && ld.js.includes('/js/xf/message.min.js?_v=1'), `Soft-nav deve carregar o JS declarado em XF.config.js do destino (obtido: ${JSON.stringify(ld.js)})`);
+        assert(ld.css.includes('public:editor.less') && ld.css.includes('public:message.less'), `Soft-nav deve carregar o CSS declarado em XF.config.css do destino (obtido: ${JSON.stringify(ld.css)})`);
+        assert(calls.activate.length === 0, 'XF.activate só pode rodar depois que os assets do destino carregaram');
+        if (pendingLoad) pendingLoad();
+        await new Promise(r => setTimeout(r, 20));
+        assert(calls.activate.length === 1, `XF.activate deve rodar uma vez após o carregamento (chamadas: ${calls.activate.length})`);
+        const act = calls.activate[0];
+        assert(!!(act && act.querySelector && act.querySelector('textarea[data-xf-init="editor"]')), 'XF.activate deve receber o .p-body novo, que contém o textarea do editor');
+
+        // sem XF.Loader (XF antigo): ativa direto, como antes
+        calls.activate.length = 0;
+        delete window.XF.Loader;
+        window.smgSoftNavigate('/threads/dest.78/');
+        await new Promise(r => setTimeout(r, 80));
+        assert(calls.activate.length === 1, 'Sem XF.Loader o soft-nav ainda chama XF.activate no .p-body novo');
+
+        window.fetch = prevFetch;
+        if (prevXF === undefined) delete window.XF; else window.XF = prevXF;
+    }
+
+    // =========================================================================
     // RESUMO FINAL
     // =========================================================================
     console.log('=================================================================');
