@@ -481,14 +481,6 @@
         const detail = riverList.querySelector('.smg-fp-setup-detail');
         const fill = riverList.querySelector('.smg-fp-setup-barfill');
         if (!sub) return;
-        if (p.step === 'following' || (!p.total && p.page && !p.thread)) {
-            sub.textContent = (IS_PT
-                ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
-                : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e feed ficam separados.' : 'Nothing is marked read. Alerts and the feed stay separate.';
-            if (fill) fill.style.width = '12%';
-            return;
-        }
         if (p.total) {
             sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' posts';
             if (detail) {

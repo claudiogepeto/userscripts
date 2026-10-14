@@ -25417,7 +25417,6 @@
 
                 let added = 0;
                 let done = 0;
-                let timelineSyncAborted = false;
                 const total = queue.length;
 
                 if (opts.onProgress) {
@@ -25428,7 +25427,7 @@
                 let p = Promise.resolve();
                 queue.forEach((item, idx) => {
                     p = p.then(() => {
-                        if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
+                        if (riverAborted) return 0;
                         const pages = [item.targetPage];
                         if (item.reason === 'new' && item.targetPage > 1) pages.push(item.targetPage - 1);
                         let chain = Promise.resolve(0);
@@ -25454,7 +25453,7 @@
                             });
                         });
                         return chain.then(n => {
-                            if ((typeof riverAborted !== 'undefined' && riverAborted) || timelineSyncAborted) return 0;
+                            if (riverAborted) return 0;
                             added += (n || 0);
                             done++;
                             if (opts.onProgress) {
@@ -25464,7 +25463,7 @@
                                 try { opts.onBatch(n || 0); } catch (e) {}
                             }
                             // Respiro calmo de 1.2s antes do próximo tópico
-                            if (idx < queue.length - 1 && !riverAborted && !timelineSyncAborted) {
+                            if (idx < queue.length - 1 && !riverAborted) {
                                 return new Promise(res => setTimeout(res, delayMs));
                             }
                             return n;
@@ -25472,7 +25471,7 @@
                     });
                 });
                 return p.then(() => {
-                    if (!riverAborted && !timelineSyncAborted) {
+                    if (!riverAborted) {
                         return dbMetaSet('lastTimelineRunTs', now);
                     }
                 }).then(() => {
@@ -26004,14 +26003,6 @@
         const detail = riverList.querySelector('.smg-fp-setup-detail');
         const fill = riverList.querySelector('.smg-fp-setup-barfill');
         if (!sub) return;
-        if (p.step === 'following' || (!p.total && p.page && !p.thread)) {
-            sub.textContent = (IS_PT
-                ? 'Lendo a lista de seguidos… (pág ' + (p.page || 1) + ' · ' + (p.count || 0) + ' tópicos)'
-                : 'Reading followed threads… (page ' + (p.page || 1) + ' · ' + (p.count || 0) + ' threads)');
-            if (detail) detail.textContent = IS_PT ? 'Nada é marcado como lido. Alertas e feed ficam separados.' : 'Nothing is marked read. Alerts and the feed stay separate.';
-            if (fill) fill.style.width = '12%';
-            return;
-        }
         if (p.total) {
             sub.textContent = p.done + '/' + p.total + ' ' + (IS_PT ? 'tópicos' : 'threads') + ' · ' + (p.added || 0) + ' posts';
             if (detail) {
