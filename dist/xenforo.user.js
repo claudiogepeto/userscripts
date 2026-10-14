@@ -24266,7 +24266,7 @@
     function fhNeedsNet(prov, url) {
         if (!GMX) return false;
         if (prov.key === 'pixeldrain') return /pixeldrain\.com\/(?:l|api\/list)\//i.test(url);
-        if (prov.key === 'bunkr') return /\/a\//i.test(url);
+        if (prov.key === 'bunkr' || prov.key === 'goonbox') return /\/a\//i.test(url);
         return false;
     }
     function pdPlace(node, card) {   // troca o link/card cru (o unfurl inteiro, se houver) pelo nosso card
@@ -24495,7 +24495,7 @@
         if (pdInflight.has(listId)) { pdInflight.get(listId).push(updateCard); return; }
         pdInflight.set(listId, [updateCard]);
 
-        gmGetJSON('https://pixeldrain.com/api/list/' + listId).then(j => {
+        return gmGetJSON('https://pixeldrain.com/api/list/' + listId).then(j => {
             const files = (j && j.files) || [];
             pdCache.set(listId, files);
             const cbs = pdInflight.get(listId) || [];
@@ -24539,7 +24539,8 @@
         if (bunkrInflight.has(albumKey)) { bunkrInflight.get(albumKey).push(updateCard); return; }
         bunkrInflight.set(albumKey, [updateCard]);
 
-        GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+        return new Promise(release => GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+            release();
             let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { return; }
             const seen = new Set(), thumbs = [];
             doc.querySelectorAll('img[src*="thumb"], img[data-src*="thumb"], [class*="grid"] img').forEach(im => {
@@ -24554,7 +24555,7 @@
             const cbs = bunkrInflight.get(albumKey) || [];
             bunkrInflight.delete(albumKey);
             cbs.forEach(cb => { try { cb(res); } catch (e) {} });
-        }, onerror: () => bunkrInflight.delete(albumKey), ontimeout: () => bunkrInflight.delete(albumKey) });
+        }, onerror: () => { release(); bunkrInflight.delete(albumKey); }, ontimeout: () => { release(); bunkrInflight.delete(albumKey); } }));
     }
     // GOONBOX: álbum (/a/) → raspa a página por thumbs + contagem (igual bunkr).
     // Arquivo único (/v/, /d/) → foto do figure do unfurl.
@@ -24588,7 +24589,8 @@
         if (goonboxInflight.has(albumKey)) { goonboxInflight.get(albumKey).push(updateCard); return; }
         goonboxInflight.set(albumKey, [updateCard]);
 
-        GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+        return new Promise(release => GMX({ method: 'GET', url: url, timeout: 10000, onload: r => {
+            release();
             let doc; try { doc = new DOMParser().parseFromString(r.responseText || '', 'text/html'); } catch (e) { return; }
             const seen = new Set(), thumbs = [];
             doc.querySelectorAll('img[src*="thumb"], img[data-src*="thumb"], [class*="grid"] img, .file-thumb img, .gallery-item img').forEach(im => {
@@ -24603,7 +24605,7 @@
             const cbs = goonboxInflight.get(albumKey) || [];
             goonboxInflight.delete(albumKey);
             cbs.forEach(cb => { try { cb(res); } catch (e) {} });
-        }, onerror: () => goonboxInflight.delete(albumKey), ontimeout: () => goonboxInflight.delete(albumKey) });
+        }, onerror: () => { release(); goonboxInflight.delete(albumKey); }, ontimeout: () => { release(); goonboxInflight.delete(albumKey); } }));
     }
     // FILESTER: arquivo único (/d/{slug}). A página HTML toma Cloudflare 403, MAS a API pública JSON responde —
     // POST /api/public/view {file_slug} → view_url; mp4 = https://cn1.filester.me{view_url} (mesma engine do site).
@@ -24929,6 +24931,17 @@
         return card;
     }
 
+    const fxTweetCache = new Map();   // tweet id → promise do JSON (falha sai do cache → tenta de novo na próxima)
+    function fxTweet(tweetId) {
+        if (!fxTweetCache.has(tweetId)) {
+            while (fxTweetCache.size >= 128) fxTweetCache.delete(fxTweetCache.keys().next().value);
+            const p = gmGetJSON('https://api.fxtwitter.com/status/' + tweetId);
+            p.catch(() => fxTweetCache.delete(tweetId));
+            fxTweetCache.set(tweetId, p);
+        }
+        return fxTweetCache.get(tweetId);
+    }
+
     function renderTwitterOfficialEmbed(container, tweetId, fallbackUrl, rawLabel, user) {
         if (!container || container.dataset.twEmbedDone || container.closest('.smg-twitter-embed, .smg-tw-card')) return;
         container.dataset.twEmbedDone = '1';
@@ -24944,8 +24957,10 @@
         skel.dataset.twDone = '1';
         container.appendChild(skel);
 
-        // 1. Tenta API do FxTwitter (suporta NSFW, vídeos diretos, fotos e texto)
-        gmGetJSON('https://api.fxtwitter.com/status/' + tweetId).then(data => {
+        // 1. Tenta API do FxTwitter (suporta NSFW, vídeos diretos, fotos e texto). O skeleton já ocupa o
+        // lugar; o request só sai perto da tela, pela fila do fhLater, e cada tweet id busca 1×.
+        fhLater(container, () => fxTweet(tweetId).then(data => {
+            if (!container.isConnected) return;
             if (data && data.tweet) {
                 const cardDom = buildTwitterCardDom(data.tweet, tweetUrl);
                 container.replaceWith(cardDom);
@@ -24965,20 +24980,23 @@
                     }
                 }).catch(() => {});
             });
-        });
+        }));
     }
 
+    // rota com rede → adiada (fhLater: perto da tela + fila por distância); o resto monta na hora.
+    // fhBuildCardNow devolve a promise do request, então o slot da fila só libera quando a rede termina.
     function fhBuildCard(node, url, prov, unfurlEl) {
-        fhBuildCardNow(node, url, prov, unfurlEl);
+        if (fhNeedsNet(prov, url)) fhLater(node, () => fhBuildCardNow(node, url, prov, unfurlEl));
+        else fhBuildCardNow(node, url, prov, unfurlEl);
     }
     function fhBuildCardNow(node, url, prov, unfurlEl) {
         if (!node.isConnected) return;   // o post saiu do DOM (feed paginou) enquanto esperava a vez
         if (!unfurlEl && node.closest) {
             unfurlEl = node.closest('.bbCodeBlock--unfurl');
         }
-        if (prov.key === 'pixeldrain') { fhPixeldrain(node, url, unfurlEl); return; }
-        if (prov.key === 'bunkr') { fhBunkr(node, url, unfurlEl); return; }   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
-        if (prov.key === 'goonbox') { fhGoonbox(node, url, prov, unfurlEl); return; }
+        if (prov.key === 'pixeldrain') return fhPixeldrain(node, url, unfurlEl);
+        if (prov.key === 'bunkr') return fhBunkr(node, url, unfurlEl);   // gofile cai no card genérico abaixo (ZERO requests → sem rate limit)
+        if (prov.key === 'goonbox') return fhGoonbox(node, url, prov, unfurlEl);
         if (prov.key === 'filester') { fhFilester(node, url, prov, unfurlEl); return; }
         if (prov.key === 'instagram') {
             const rawHref = resolveProxyHref(url || (node.getAttribute && (node.getAttribute('data-url') || node.getAttribute('href'))) || node.href || '');
