@@ -89,9 +89,6 @@
             }
             .smg-aldock-foot a { padding: 6px 10px; border-radius: 8px; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 600; text-decoration: none; }
             .smg-aldock-foot a:hover { background: rgba(255,255,255,0.09); color: #fff; }
-            /* leitura confortável na coluna larga (o popover é apertado; aqui sobra espaço) */
-            .smg-aldock-list .smg-al-title { font-size: 14.5px; }
-            .smg-aldock-list li.alert { padding: 14px 15px; }
             /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
             .smg-tb-bellbtn.active,
             html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
@@ -120,8 +117,5 @@
                 /* respeita as barras do sistema (notch em cima, gesto embaixo) */
                 .smg-aldock-head { padding-top: calc(10px + env(safe-area-inset-top)); }
                 .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-                /* leitura e alvos de toque de tela cheia (o rail é dimensionado pra coluna de 380px) */
-                .smg-aldock-list li.alert { padding: 15px 14px; }
-                .smg-aldock-list .smg-al-title { font-size: 15.5px; }
             }
         `;

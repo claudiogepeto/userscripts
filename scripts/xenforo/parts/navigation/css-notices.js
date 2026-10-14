@@ -251,16 +251,7 @@
             .smg-csheet-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; font-size: 15px; font-weight: 700; color: #fff; }
             .smg-csheet-head a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); text-decoration: none; }
             .smg-csheet-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }   /* contain = chegar no fim da lista não "vaza" o scroll pro fundo */
-            /* alertas dentro do sheet (mobile): fonte e respiro bem maiores que o dropdown do desktop */
+            /* sheets (mobile): cabeçalho maior que o dropdown do desktop */
             .smg-sheet .smg-csheet-head { font-size: 18px; padding: 6px 6px 12px; }
             .smg-sheet .smg-csheet-head a { font-size: 14px; }
-            .smg-sheet .smg-tb-listbody .menu-row { padding: 15px 12px; border-radius: 14px; }
-            .smg-sheet .smg-tb-listbody .contentRow { gap: 14px; align-items: flex-start; }
-            .smg-sheet .smg-tb-listbody .contentRow-figure .avatar,
-            .smg-sheet .smg-tb-listbody .contentRow-figure img { width: 44px !important; height: 44px !important; }
-            .smg-sheet .smg-tb-listbody .contentRow-figure .avatar > span,
-            .smg-sheet .smg-tb-listbody .contentRow-figure .avatar > img { width: 44px !important; height: 44px !important; font-size: 19px !important; line-height: 44px !important; }
-            .smg-sheet .smg-tb-listbody .contentRow-main { font-size: 16px !important; line-height: 1.5; }
-            .smg-sheet .smg-tb-listbody .contentRow-main .label { font-size: 9.5px !important; padding: 1.5px 5px !important; border-radius: 4px !important; }
-            .smg-sheet .smg-tb-listbody .contentRow-minor { font-size: 13px !important; margin-top: 4px; }
 `;

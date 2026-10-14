@@ -24,20 +24,6 @@
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--thumb { width: 80px !important; min-height: 80px !important; height: auto !important; aspect-ratio: 1 / 1 !important; border-radius: 12px !important; flex: 0 0 80px !important; align-self: stretch !important; padding: 0; overflow: hidden; background: rgba(255,255,255,0.05); }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--thumb img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 12px; }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread .smg-al-icon--thumb { background: rgba(255,255,255,0.05); }   /* com foto, a tinta do tema só polui */
-            /* no painel lateral e na folha mobile */
-            .smg-tb-listbody .smg-alert-clean .smg-al-icon--thumb,
-            #smg-aldock .smg-alert-clean .smg-al-icon--thumb,
-            .smg-sheet .smg-alert-clean .smg-al-icon--thumb,
-            .smg-tb-listbody .smg-alert-clean .smg-al-icon {
-                width: 80px !important;
-                min-height: 80px !important;
-                height: auto !important;
-                aspect-ratio: 1 / 1 !important;
-                border-radius: 12px !important;
-                flex: 0 0 80px !important;
-                align-self: stretch !important;
-            }
-            .smg-sheet .smg-alert-clean .smg-al-icon svg { width: 24px; height: 24px; }
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow {
                 display: flex !important;
                 align-items: stretch !important;
@@ -55,16 +41,6 @@
                 padding-right: 30px;
                 min-height: 80px !important;
             }
-            /* cabeçalho de seção (Unread / Read) — discreto, em maiúsculas */
-            /* fica GRUDADO no topo enquanto a seção rola (o "Lidas" não some de vista numa lista longa) */
-            .smg-tb-listbody .smg-alert-clean .smg-al-section {
-                position: sticky; top: 0; z-index: 2;
-                list-style: none; border: 0 !important;
-                background: var(--smg-s1, #1c1d22) !important;
-                padding: 13px 14px 7px; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,0.42);
-            }
-            .smg-tb-listbody .smg-alert-clean .smg-al-section:first-child { padding-top: 6px; }
-            .smg-tb-listbody .smg-alert-clean .smg-al-section:hover { background: transparent !important; }
             /* linha do alerta: SEPARADOR entre todas + não-lida com faixa da cor do tema à esquerda */
             .smg-tb-listbody .smg-alert-clean li.alert {
                 position: relative; padding: 13px 14px;
@@ -102,7 +78,6 @@
             .smg-alert-clean .smg-al-tags .prefix,
             #smg-aldock .smg-al-tags .smg-al-chip,
             #smg-aldock .smg-al-tags .label,
-            .smg-sheet .smg-al-tags .smg-al-chip,
             .smg-al-tags .smg-al-chip {
                 font-size: 9.5px !important;
                 font-weight: 600 !important;
@@ -122,11 +97,7 @@
                 justify-content: flex-start !important;
                 width: 100% !important;
             }
-            .smg-al-time,
-            .smg-alert-clean .smg-al-time,
-            .smg-tb-listbody .smg-alert-clean .smg-al-time,
-            #smg-aldock .smg-alert-clean .smg-al-time,
-            .smg-sheet .smg-alert-clean .smg-al-time {
+            .smg-al-time {
                 margin-left: 0 !important;
                 margin-right: auto !important;
                 text-align: left !important;
@@ -151,21 +122,6 @@
             .smg-al-read-txt { display: none; }   /* texto só no mobile (sheet) */
             html.smg-smg .smg-al-read::before { width: 8px; height: 8px; }   /* badge um pouco menor no socialmediagirls */
             html.smg-smg .smg-al-read:hover::before { font-size: 15px; }
-            /* mobile (sheet): tudo um tico maior */
-            .smg-sheet .smg-alert-clean li.alert { padding: 16px 40px 16px 14px; }
-            .smg-sheet .smg-alert-clean .smg-al-section { font-size: 15px; }
-            .smg-sheet .smg-al-title { font-size: 16px; }
-            .smg-sheet .smg-al-by { font-size: 13.5px; }
-            /* mobile (sheet): vira pílula com o texto "Marcar como lido" — mais fácil de tocar */
-            .smg-sheet .smg-alert-clean .contentRow-main { padding-right: 14px; }   /* no mobile o botão é pílula em fluxo, não precisa de gutter */
-            .smg-sheet .smg-al-read {
-                position: static; transform: none; width: auto; height: auto; right: auto; top: auto;
-                margin-top: 4px; padding: 9px 16px; border-radius: 10px;
-                background: rgba(255,255,255,0.08); align-self: flex-start;
-            }
-            .smg-sheet .smg-al-read::before { display: none; }
-            .smg-sheet .smg-al-read:active { transform: scale(0.96); }
-            .smg-sheet .smg-al-read-txt { display: inline; color: var(--smg-link, #ff77b2); font-weight: 700; font-size: 14px; }
 
             /* Estilização de /account/alerts caso renderizada nativamente */
             html[data-template="account_alerts"] .contentRow,

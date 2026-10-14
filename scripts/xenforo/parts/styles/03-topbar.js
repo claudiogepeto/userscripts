@@ -8,7 +8,6 @@
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
             html.smg-topbar-on :target { scroll-margin-top: 86px; }
             @media (max-width: 800px) {
-                html.smg-topbar-on body { padding-top: 50px !important; }
                 html.smg-topbar-on :target { scroll-margin-top: 66px; }
             }
 
@@ -290,7 +289,6 @@
             .smg-tb-listbody .menu-row { display: block; padding: 9px 8px; border: none !important; border-radius: 10px; }
             .smg-tb-listbody .menu-row + .menu-row { border-top: 1px solid rgba(255,255,255,0.06) !important; }
             .smg-tb-listbody .menu-row:hover { background: rgba(255,255,255,0.06); }
-            .smg-tb-listbody .contentRow { display: flex; gap: 10px; align-items: flex-start; }
             .smg-tb-listbody .contentRow-main { min-width: 0; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.88); }
             .smg-tb-listbody .contentRow-minor { font-size: 11.5px; color: rgba(255,255,255,0.45); margin-top: 2px; }
             .smg-tb-listbody a { color: #cdd6e3; }
