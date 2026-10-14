@@ -23,7 +23,7 @@
         'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in feed': 'Rolagem infinita no feed',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
         'Infinite scroll in thread': 'Rolagem infinita no tópico',
-        'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
+        'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Auto-expand spoilers': 'Abrir spoilers automaticamente',
         'Keyboard shortcuts': 'Atalhos de teclado', 'Gallery': 'Galeria', 'Expand': 'Maximizar',
         // cyberdrop
         'Open on cyberdrop': 'Abrir no cyberdrop',

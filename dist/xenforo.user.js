@@ -244,7 +244,7 @@
         ] },
         { section: 'Thread & reading', items: [
             { key: 'revealLikedPosts', label: 'Reveal locked posts on reacting', desc: { en: 'On SMG, reloads a like/medal-locked post on its own as soon as you react — no manual refresh.', pt: 'No SMG, recarrega sozinho o post liberado por curtida/medalha assim que você reage, sem atualizar na mão.' } },
-            { key: 'autoExpandSpoilers', label: 'Open spoilers automatically', desc: { en: 'Expands spoilers without requiring a click.', pt: 'Expande os spoilers sem exigir clique.' } },
+            { key: 'autoExpandSpoilers', label: 'Auto-expand spoilers', desc: { en: 'Opens every spoiler in a post as it loads. When off, spoilers stay closed until you click them.', pt: 'Abre todos os spoilers do post assim que ele carrega. Desligado, os spoilers ficam fechados até você clicar.' } },
             { key: 'keyboardShortcuts', label: 'Keyboard shortcuts', desc: { en: 'j / k posts · [ ] pages · g go to page · v grid/list · f feed mode · n notifications · / search.', pt: 'j / k posts · [ ] páginas · g ir para página · v grade/lista · f modo feed · n notificações · / buscar.' } },
             { key: 'bookmarksFeed', label: 'Bookmarks as a feed', desc: { en: 'Replaces the bookmarks page with a feed of your saved posts (media inline), just like the home feed.', pt: 'Substitui a página de salvos por um feed dos seus posts salvos (mídia inline), igual ao feed da home.' } },
             { key: 'shareDirectLink', label: 'Share copies the direct link', desc: { en: 'Share on a post copies its direct link straight to the clipboard instead of opening the sharing menu.', pt: 'O Compartilhar do post copia o link direto para a área de transferência, em vez de abrir o menu de compartilhamento.' } },
@@ -280,7 +280,7 @@
         'Infinite scroll in threads': 'Rolagem infinita nos tópicos', 'Infinite scroll in feed': 'Rolagem infinita no feed',
         'Infinite scroll in watched & forums': 'Rolagem infinita em seguidos e fóruns',
         'Infinite scroll in thread': 'Rolagem infinita no tópico',
-        'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Open spoilers automatically': 'Abrir spoilers automaticamente',
+        'Reveal locked posts on reacting': 'Revelar posts bloqueados ao reagir', 'Auto-expand spoilers': 'Abrir spoilers automaticamente',
         'Keyboard shortcuts': 'Atalhos de teclado', 'Gallery': 'Galeria', 'Expand': 'Maximizar',
         // cyberdrop
         'Open on cyberdrop': 'Abrir no cyberdrop',
