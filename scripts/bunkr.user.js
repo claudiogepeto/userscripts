@@ -366,9 +366,9 @@
         .theItem:hover .grid-images_box-img { transform: scale(1.04) !important; }
 
         /* Badges sobre a thumbnail */
-        .theItem > span[class*="type-"] { position: absolute !important; top: 8px !important; right: 8px !important; z-index: 2 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 26px !important; height: 26px !important; padding: 0 !important; border-radius: 8px !important; background: rgba(14, 16, 22, 0.75) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; border: 1px solid rgba(255,255,255,.14) !important; box-shadow: 0 2px 8px rgba(0,0,0,.5) !important; }
+        .theItem > span[class*="type-"] { position: absolute !important; top: 8px !important; right: 8px !important; z-index: 2 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 26px !important; height: 26px !important; padding: 0 !important; border-radius: 8px !important; background: rgba(14, 16, 22, 0.9) !important; border: 1px solid rgba(255,255,255,.14) !important; box-shadow: 0 2px 8px rgba(0,0,0,.5) !important; }
         .theItem > span[class*="type-"] img { width: 14px !important; height: 14px !important; filter: brightness(1.2) !important; }
-        .theItem-size-badge { position: absolute; bottom: 8px; right: 8px; z-index: 2; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; padding: 2.5px 6px; border-radius: 5px; pointer-events: none; box-shadow: 0 2px 6px rgba(0,0,0,.6); }
+        .theItem-size-badge { position: absolute; bottom: 8px; right: 8px; z-index: 2; background: rgba(0, 0, 0, 0.86); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; padding: 2.5px 6px; border-radius: 5px; pointer-events: none; box-shadow: 0 2px 6px rgba(0,0,0,.6); }
 
         /* Metadados abaixo da thumbnail (estilo YouTube alinhado à esquerda) */
         .theItem > div.mt-2 { order: 2 !important; display: flex !important; flex-direction: column !important; gap: 4px !important; background: transparent !important; background-color: transparent !important; padding: 10px 2px 4px !important; margin: 0 !important; border-radius: 0 !important; text-align: left !important; }
@@ -1585,16 +1585,21 @@
         newImg.addEventListener("pointerup", end); newImg.addEventListener("pointercancel", end);
     }
 
-    function httpGet(url) {
+    // maxBytes: pede só o começo do arquivo (Range) e nunca devolve mais que isso,
+    // mesmo quando o servidor ignora o Range e manda o arquivo inteiro.
+    function httpGet(url, maxBytes) {
+        const headers = maxBytes ? { Range: `bytes=0-${maxBytes - 1}` } : undefined;
+        const cap = text => (maxBytes && text.length > maxBytes ? text.slice(0, maxBytes) : text);
         return new Promise((resolve, reject) => {
             if (typeof GM_xmlhttpRequest === "function") {
                 try {
                     GM_xmlhttpRequest({
                         method: "GET",
                         url: url,
+                        headers,
                         timeout: 15000,
                         onload: res => {
-                            if (res.status >= 200 && res.status < 400) resolve(res.responseText);
+                            if (res.status >= 200 && res.status < 400) resolve(cap(res.responseText || ""));
                             else reject(new Error("HTTP " + res.status));
                         },
                         onerror: err => reject(err),
@@ -1603,10 +1608,29 @@
                     return;
                 } catch {}
             }
-            fetch(url, { credentials: "omit" })
-                .then(res => {
+            fetch(url, { credentials: "omit", headers })
+                .then(async res => {
                     if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.text();
+                    if (!maxBytes || !res.body || !res.body.getReader) return cap(await res.text());
+                    const reader = res.body.getReader();
+                    const chunks = [];
+                    let total = 0;
+                    while (total < maxBytes) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        total += value.length;
+                    }
+                    reader.cancel().catch(() => {});
+                    const buf = new Uint8Array(Math.min(total, maxBytes));
+                    let off = 0;
+                    for (const c of chunks) {
+                        const part = c.subarray(0, buf.length - off);
+                        buf.set(part, off);
+                        off += part.length;
+                        if (off >= buf.length) break;
+                    }
+                    return new TextDecoder().decode(buf);
                 })
                 .then(resolve)
                 .catch(reject);
@@ -2622,6 +2646,7 @@
     }
 
     let galleryObserver = null;
+    let albumCountUpdate = null;
     let isEnhancingCards = false;
 
     function fixAlbumHeader() {
@@ -2686,6 +2711,35 @@
     }
 
     const txtPreviewCache = new Map();
+    // Preview de .txt nos cards: só quando o card fica visível, 2 por vez, 2 KB por arquivo.
+    const TXT_PREVIEW_BYTES = 2048;
+    const txtPreviewQueue = [];
+    let txtPreviewBusy = 0;
+    let txtPreviewIO = null;
+    function pumpTxtPreviews() {
+        while (txtPreviewBusy < 2 && txtPreviewQueue.length) {
+            const job = txtPreviewQueue.shift();
+            if (!job.body.isConnected) continue;
+            txtPreviewBusy++;
+            loadCardTextPreview(job.link, job.body).finally(() => { txtPreviewBusy--; pumpTxtPreviews(); });
+        }
+    }
+    function queueCardTextPreview(link, body) {
+        if (!link || txtPreviewCache.has(link) || !("IntersectionObserver" in window)) { loadCardTextPreview(link, body); return; }
+        if (!txtPreviewIO) {
+            txtPreviewIO = new IntersectionObserver(entries => {
+                for (const e of entries) {
+                    if (!e.isIntersecting) continue;
+                    txtPreviewIO.unobserve(e.target);
+                    txtPreviewQueue.push({ link: e.target._bunkrTxtLink, body: e.target });
+                }
+                pumpTxtPreviews();
+            }, { rootMargin: "200px" });
+        }
+        body._bunkrTxtLink = link;
+        txtPreviewIO.observe(body);
+    }
+
     async function loadCardTextPreview(link, bodyEl) {
         if (!link) {
             bodyEl.textContent = "Arquivo de texto. Clique para visualizar.";
@@ -2704,13 +2758,16 @@
                 let dlUrl = m[1];
                 if (dlUrl.startsWith("/")) dlUrl = location.origin + dlUrl;
                 try {
-                    let fileData = await httpGet(dlUrl);
+                    const M2 = /href="([^"]*(?:storage\/media|media-files|\.txt)[^"]*)"/i;
+                    let fileData = await httpGet(dlUrl, TXT_PREVIEW_BYTES);
                     if (/^\s*<!DOCTYPE|^\s*<html/i.test(fileData)) {
-                        const m2 = fileData.match(/href="([^"]*(?:storage\/media|media-files|\.txt)[^"]*)"/i);
+                        // Página intermediária: o recorte pode ter cortado o link, então busca inteira.
+                        if (!M2.test(fileData)) fileData = await httpGet(dlUrl);
+                        const m2 = fileData.match(M2);
                         if (m2 && m2[1]) {
                             let dlUrl2 = m2[1];
                             if (dlUrl2.startsWith("/")) dlUrl2 = location.origin + dlUrl2;
-                            fileData = await httpGet(dlUrl2);
+                            fileData = await httpGet(dlUrl2, TXT_PREVIEW_BYTES);
                         }
                     }
                     if (!/^\s*<!DOCTYPE|^\s*<html/i.test(fileData)) {
@@ -2756,7 +2813,7 @@
                 thumbBox.appendChild(prev);
 
                 const link = item.querySelector("a[href]")?.getAttribute("href") || "";
-                loadCardTextPreview(link, body);
+                queueCardTextPreview(link, body);
             }
             return;
         }
@@ -3177,7 +3234,7 @@
                 }
                 setTimeout(() => {
                     enhanceCards();
-                    if (isGroupByType) updateGroupHeadersVisibility();
+                    updateCount();
                 }, 150);
             };
             searchInp.addEventListener("input", syncSearch);
@@ -3236,6 +3293,7 @@
                     setTimeout(() => {
                         enhanceCards();
                         if (isGroupByType) groupGalleryByType(true);
+                        updateCount();
                     }, 200);
                 });
             });
@@ -3244,6 +3302,7 @@
             const btnGroupToggle = bar.querySelector("#bunkrToggleGroup");
             btnGroupToggle.addEventListener("click", () => {
                 groupGalleryByType(!isGroupByType);
+                updateCount();
             });
 
             // Sincroniza toggle de nomes completos
@@ -3280,9 +3339,18 @@
                 if (isGroupByType) updateGroupHeadersVisibility();
             };
             updateCount();
-            if (!grid.dataset.bunkrCountTimer) {
-                grid.dataset.bunkrCountTimer = "1";
-                setInterval(updateCount, 1000);
+            albumCountUpdate = updateCount;
+            // Contagem por evento (filtro/ordem/grupo/novos cards e o contador nativo),
+            // em vez de um setInterval de 1 s que forçava layout para sempre.
+            const counterEl = document.getElementById("resultsCounter");
+            if (counterEl && !counterEl.dataset.bunkrCountObs) {
+                counterEl.dataset.bunkrCountObs = "1";
+                let queued = false;
+                new MutationObserver(() => {
+                    if (queued) return;
+                    queued = true;
+                    requestAnimationFrame(() => { queued = false; if (albumCountUpdate) albumCountUpdate(); });
+                }).observe(counterEl, { childList: true, characterData: true, subtree: true });
             }
         }
 
@@ -3309,6 +3377,7 @@
                 }
                 if (hasNewCards) {
                     enhanceCards();
+                    if (albumCountUpdate) albumCountUpdate();
                 }
             });
             galleryObserver.observe(grid, { childList: true, subtree: false });
