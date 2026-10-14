@@ -922,7 +922,8 @@
         masonryRaf = requestAnimationFrame(() => {
             masonryRaf = 0;
             const gs = masonryDirty; masonryDirty = new Set();
-            gs.forEach(g => { if (g.isConnected) relayoutGrid(g); });
+            const b = gridCols();
+            gs.forEach(g => { if (g.isConnected) relayoutGrid(g, b); });
         });
     }
     // (uma pré-medição com new Image() foi testada aqui e NÃO ajudou: o Image() usa o mesmo download da
@@ -941,7 +942,17 @@
     }
 
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
-    function relayoutGrid(grid) {
+    // --smg-ratio só é escrito quando muda: cada load de imagem relayouta a grade inteira, e reescrever o
+    // mesmo valor em todos os itens invalidava o estilo de todos à toa.
+    function setItemRatio(it) {
+        const rh = blockRelH(it);
+        const v = (rh > 0 ? (1 / rh) : 1).toFixed(4);
+        if (it.style.getPropertyValue('--smg-ratio') !== v) it.style.setProperty('--smg-ratio', v);
+    }
+    // bucket = gridCols() já medido por quem relayouta várias grades no mesmo frame: medir de novo entre
+    // uma grade e outra lia a largura da dock logo depois das escritas da anterior (1 layout forçado por grade).
+    function relayoutGrid(grid, bucket) {
+        const cols = bucket || gridCols();
         const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
         if (!items.length) return;
 
@@ -951,12 +962,10 @@
         const prevBucket = +(grid.dataset.smgBucket || 0);
         const currentWideCount = items.filter(isWideMedia).length;
         const prevWideCount = +(grid.dataset.smgWideCount || -1);
-        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === gridCols() && prevWideCount === currentWideCount) {
+        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === cols && prevWideCount === currentWideCount) {
             // Em True Masonry estável com mesmo bucket e mesma orientação de mídias, atualiza apenas proporções individuais
             items.forEach(it => {
-                const rh = blockRelH(it);
-                const r = rh > 0 ? (1 / rh) : 1;
-                it.style.setProperty('--smg-ratio', r.toFixed(4));
+                setItemRatio(it);
             });
             grid.dataset.smgRelayoutDone = '1';
             return;
@@ -969,9 +978,7 @@
 
         items.forEach(it => {
             it.classList.remove('smg-span-all', 'smg-item-centered', 'smg-span-2', 'smg-span-3');
-            const rh = blockRelH(it);
-            const r = rh > 0 ? (1 / rh) : 1;
-            it.style.setProperty('--smg-ratio', r.toFixed(4));
+            setItemRatio(it);
             if (it.style) {
                 if (it.style.maxWidth) it.style.removeProperty('max-width');
                 if (it.style.width) it.style.removeProperty('width');
@@ -994,7 +1001,7 @@
         // e a quantidade de itens é a mesma para o mesmo bucket de tela, não altera o número de colunas (N) por causa
         // do término do carregamento de imagem individual para evitar que o layout pule!
         let N;
-        const currentBucket = gridCols();
+        const currentBucket = cols;
         if (establishedCols && prevBucket === currentBucket && prevCount === items.length) {
             N = establishedCols;
         } else {
@@ -1318,7 +1325,7 @@
                 const b = gridCols();
                 if (b === masonryBucket) return;   // mesma faixa → o RO já cuida da largura
                 masonryBucket = b;
-                document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);   // recalculate columns + orphan alignment
+                document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));   // recalculate columns + orphan alignment
             }, 200);
         }, { passive: true });
         if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.documentElement) {
@@ -1330,7 +1337,7 @@
                     const b = gridCols();
                     if (b !== masonryBucket) {
                         masonryBucket = b;
-                        document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);
+                        document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));
                     }
                 }
             });

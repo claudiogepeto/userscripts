@@ -251,6 +251,7 @@
     let paintReleaseScheduled = false;
     let paintObservedKind = '';
     let paintObservedSignature = null;
+    let paintObservedHeight = -1;
     let homePassSignature = null;
     let isNavigatingOut = false;
     let navSafetyTimer = 0;
@@ -292,6 +293,7 @@
         paintReleaseScheduled = false;
         paintObservedKind = '';
         paintObservedSignature = null;
+        paintObservedHeight = -1;
         paintMediaDeadline = 0;
     }
 
@@ -364,14 +366,21 @@
         return topbarReady && dockReady;
     }
 
-    function paintPageSignature(context) {
+    // altura do bloco de mensagens = leitura de layout forçada. O settle a lê 1× quando a assinatura
+    // muda e 1× no último frame (pagePaintIsStable final), não a cada frame.
+    function paintMessagesHeight(context) {
+        if (context.kind !== PAINT_PAGE_KINDS.THREAD) return 0;
+        const messages = document.querySelector('.block--messages, .block-body--messages');
+        return messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+    }
+
+    function paintPageSignature(context, withHeight = true) {
         const kind = context.kind;
         if (kind === PAINT_PAGE_KINDS.HOME) {
             return homeLayoutSignature();
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
-            const messages = document.querySelector('.block--messages, .block-body--messages');
             const posts = Array.from(document.querySelectorAll('article.message')).map(post =>
                 (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgGalReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
             ).join('|');
@@ -379,7 +388,7 @@
                 g.children.length + ':' + g.className
             ).join(';');
             const imgsReady = document.querySelectorAll('article.message img.smg-img-ready, article.message img[style*="aspect-ratio"]').length;
-            const messagesH = messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+            const messagesH = withHeight ? paintMessagesHeight(context) : '-';
             return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']{' + grids + '}(imgs:' + imgsReady + ',h:' + messagesH + ')';
         }
         if (kind === PAINT_PAGE_KINDS.LISTING || kind === PAINT_PAGE_KINDS.FOLLOWING) {
@@ -626,14 +635,22 @@
         return true;
     }
 
-    function pagePaintIsStable(context) {
+    function pagePaintIsStable(context, final) {
         if (!context.gated || !paintPageIsReady(context)) return false;
-        const signature = paintPageSignature(context);
+        const signature = paintPageSignature(context, false);
         if (!signature) return false;
         if (paintObservedKind !== context.kind || paintObservedSignature !== signature) {
             paintObservedKind = context.kind;
             paintObservedSignature = signature;
+            paintObservedHeight = paintMessagesHeight(context);
             return false;
+        }
+        if (final) {
+            const h = paintMessagesHeight(context);
+            if (h !== paintObservedHeight) {
+                paintObservedHeight = h;
+                return false;
+            }
         }
         return true;
     }
@@ -674,7 +691,7 @@
                 release();
                 return;
             }
-            const stable = pagePaintIsStable(context);
+            const stable = pagePaintIsStable(context, framesLeft === 0);
             if (stable && framesLeft > 0) {
                 paintRaf = requestAnimationFrame(() => waitForStableFrames(framesLeft - 1));
                 return;

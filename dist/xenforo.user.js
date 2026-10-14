@@ -12491,7 +12491,8 @@
         masonryRaf = requestAnimationFrame(() => {
             masonryRaf = 0;
             const gs = masonryDirty; masonryDirty = new Set();
-            gs.forEach(g => { if (g.isConnected) relayoutGrid(g); });
+            const b = gridCols();
+            gs.forEach(g => { if (g.isConnected) relayoutGrid(g, b); });
         });
     }
     // (uma pré-medição com new Image() foi testada aqui e NÃO ajudou: o Image() usa o mesmo download da
@@ -12510,7 +12511,17 @@
     }
 
     // Recalculate the column count and center a lone item on the last row of a three-column grid.
-    function relayoutGrid(grid) {
+    // --smg-ratio só é escrito quando muda: cada load de imagem relayouta a grade inteira, e reescrever o
+    // mesmo valor em todos os itens invalidava o estilo de todos à toa.
+    function setItemRatio(it) {
+        const rh = blockRelH(it);
+        const v = (rh > 0 ? (1 / rh) : 1).toFixed(4);
+        if (it.style.getPropertyValue('--smg-ratio') !== v) it.style.setProperty('--smg-ratio', v);
+    }
+    // bucket = gridCols() já medido por quem relayouta várias grades no mesmo frame: medir de novo entre
+    // uma grade e outra lia a largura da dock logo depois das escritas da anterior (1 layout forçado por grade).
+    function relayoutGrid(grid, bucket) {
+        const cols = bucket || gridCols();
         const items = Array.prototype.filter.call(grid.children, c => c.nodeType === 1);
         if (!items.length) return;
 
@@ -12520,12 +12531,10 @@
         const prevBucket = +(grid.dataset.smgBucket || 0);
         const currentWideCount = items.filter(isWideMedia).length;
         const prevWideCount = +(grid.dataset.smgWideCount || -1);
-        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === gridCols() && prevWideCount === currentWideCount) {
+        if (isTrueMasonry && establishedCols && prevCount === items.length && prevBucket === cols && prevWideCount === currentWideCount) {
             // Em True Masonry estável com mesmo bucket e mesma orientação de mídias, atualiza apenas proporções individuais
             items.forEach(it => {
-                const rh = blockRelH(it);
-                const r = rh > 0 ? (1 / rh) : 1;
-                it.style.setProperty('--smg-ratio', r.toFixed(4));
+                setItemRatio(it);
             });
             grid.dataset.smgRelayoutDone = '1';
             return;
@@ -12538,9 +12547,7 @@
 
         items.forEach(it => {
             it.classList.remove('smg-span-all', 'smg-item-centered', 'smg-span-2', 'smg-span-3');
-            const rh = blockRelH(it);
-            const r = rh > 0 ? (1 / rh) : 1;
-            it.style.setProperty('--smg-ratio', r.toFixed(4));
+            setItemRatio(it);
             if (it.style) {
                 if (it.style.maxWidth) it.style.removeProperty('max-width');
                 if (it.style.width) it.style.removeProperty('width');
@@ -12563,7 +12570,7 @@
         // e a quantidade de itens é a mesma para o mesmo bucket de tela, não altera o número de colunas (N) por causa
         // do término do carregamento de imagem individual para evitar que o layout pule!
         let N;
-        const currentBucket = gridCols();
+        const currentBucket = cols;
         if (establishedCols && prevBucket === currentBucket && prevCount === items.length) {
             N = establishedCols;
         } else {
@@ -12887,7 +12894,7 @@
                 const b = gridCols();
                 if (b === masonryBucket) return;   // mesma faixa → o RO já cuida da largura
                 masonryBucket = b;
-                document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);   // recalculate columns + orphan alignment
+                document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));   // recalculate columns + orphan alignment
             }, 200);
         }, { passive: true });
         if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.documentElement) {
@@ -12899,7 +12906,7 @@
                     const b = gridCols();
                     if (b !== masonryBucket) {
                         masonryBucket = b;
-                        document.querySelectorAll('.auto-image-grid').forEach(relayoutGrid);
+                        document.querySelectorAll('.auto-image-grid').forEach(g => relayoutGrid(g, b));
                     }
                 }
             });
@@ -27225,6 +27232,7 @@
     let paintReleaseScheduled = false;
     let paintObservedKind = '';
     let paintObservedSignature = null;
+    let paintObservedHeight = -1;
     let homePassSignature = null;
     let isNavigatingOut = false;
     let navSafetyTimer = 0;
@@ -27266,6 +27274,7 @@
         paintReleaseScheduled = false;
         paintObservedKind = '';
         paintObservedSignature = null;
+        paintObservedHeight = -1;
         paintMediaDeadline = 0;
     }
 
@@ -27338,14 +27347,21 @@
         return topbarReady && dockReady;
     }
 
-    function paintPageSignature(context) {
+    // altura do bloco de mensagens = leitura de layout forçada. O settle a lê 1× quando a assinatura
+    // muda e 1× no último frame (pagePaintIsStable final), não a cada frame.
+    function paintMessagesHeight(context) {
+        if (context.kind !== PAINT_PAGE_KINDS.THREAD) return 0;
+        const messages = document.querySelector('.block--messages, .block-body--messages');
+        return messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+    }
+
+    function paintPageSignature(context, withHeight = true) {
         const kind = context.kind;
         if (kind === PAINT_PAGE_KINDS.HOME) {
             return homeLayoutSignature();
         }
         if (kind === PAINT_PAGE_KINDS.THREAD) {
             const header = document.querySelector('.p-body-header');
-            const messages = document.querySelector('.block--messages, .block-body--messages');
             const posts = Array.from(document.querySelectorAll('article.message')).map(post =>
                 (post.id || '') + ':' + (post.dataset.smgCard || '') + ':' + (post.dataset.smgCardReady || '') + ':' + (post.dataset.smgGalReady || '') + ':' + (post.dataset.smgCc || '') + ':' + (post.dataset.smgCcReady || '')
             ).join('|');
@@ -27353,7 +27369,7 @@
                 g.children.length + ':' + g.className
             ).join(';');
             const imgsReady = document.querySelectorAll('article.message img.smg-img-ready, article.message img[style*="aspect-ratio"]').length;
-            const messagesH = messages ? Math.round(messages.scrollHeight || messages.offsetHeight || 0) : 0;
+            const messagesH = withHeight ? paintMessagesHeight(context) : '-';
             return (header ? (header.textContent || '').replace(/\s+/g, ' ').trim() : '') + '[' + posts + ']{' + grids + '}(imgs:' + imgsReady + ',h:' + messagesH + ')';
         }
         if (kind === PAINT_PAGE_KINDS.LISTING || kind === PAINT_PAGE_KINDS.FOLLOWING) {
@@ -27600,14 +27616,22 @@
         return true;
     }
 
-    function pagePaintIsStable(context) {
+    function pagePaintIsStable(context, final) {
         if (!context.gated || !paintPageIsReady(context)) return false;
-        const signature = paintPageSignature(context);
+        const signature = paintPageSignature(context, false);
         if (!signature) return false;
         if (paintObservedKind !== context.kind || paintObservedSignature !== signature) {
             paintObservedKind = context.kind;
             paintObservedSignature = signature;
+            paintObservedHeight = paintMessagesHeight(context);
             return false;
+        }
+        if (final) {
+            const h = paintMessagesHeight(context);
+            if (h !== paintObservedHeight) {
+                paintObservedHeight = h;
+                return false;
+            }
         }
         return true;
     }
@@ -27648,7 +27672,7 @@
                 release();
                 return;
             }
-            const stable = pagePaintIsStable(context);
+            const stable = pagePaintIsStable(context, framesLeft === 0);
             if (stable && framesLeft > 0) {
                 paintRaf = requestAnimationFrame(() => waitForStableFrames(framesLeft - 1));
                 return;
