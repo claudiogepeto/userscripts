@@ -53,6 +53,27 @@ scenario('a forum listing is released once every row is decorated', async t => {
     assert.ok(page.$$('.structItem--thread').every(r => r.dataset.smgDecoratedReady === '1'), 'rows decorated before release');
 });
 
+scenario('lazy thumbnails far below the first screen do not hold a listing behind the skeleton', async t => {
+    const thumb = n => `<a href="/threads/t.${n}/" class="dtt-thread-thumbnail"><img src="https://forums.socialmediagirls.com/data/thumbs/${n}.jpg" loading="lazy" alt=""></a>`;
+    const html = listingPage({ rows: [{ id: 1 }, { id: 2 }, { id: 3 }] })
+        .replace(/<a href="\/members\/starter\.9\/" class="avatar avatar--s"><img [^>]*><\/a>/g, (() => { let n = 0; return () => thumb(++n); })());
+    const page = await firstPaint(t, 'https://forums.socialmediagirls.com/forums/instagram.5/', html);
+    await page.settle(30);
+    const root = page.document.documentElement;
+    const imgs = page.$$('.structItem--thread .dtt-thread-thumbnail img');
+    assert.equal(imgs.length, 3, 'three rows with lazy thumbnails');
+    assert.ok(root.classList.contains('smg-page-pending'), 'pending while the thumbnails are unknown');
+    assert.equal(page.intersect(imgs[0], true), 1, 'the first row is near the first screen');
+    page.intersect(imgs[1], false);
+    page.intersect(imgs[2], false);
+    await page.settle(30);
+    assert.ok(root.classList.contains('smg-page-pending'), 'the near thumbnail still holds the page until it loads');
+    page.loadImage(imgs[0], 300, 200);
+    assert.ok(await page.waitFor(() => root.classList.contains('smg-page-ready'), 3000), 'released without waiting for the far thumbnails');
+    imgs[2].dispatchEvent(new page.window.Event('error'));
+    assert.ok(page.$$('.structItem--thread')[2].classList.contains('smg-no-thumb'), 'a far thumbnail that fails later still gets the placeholder');
+});
+
 scenario('a server error page is shown at once instead of waiting behind the skeleton', async t => {
     // control: a thread page with no posts yet keeps waiting
     const empty = await firstPaint(t, 'https://forums.socialmediagirls.com/threads/sample-thread.100/', threadPage({ posts: [] }));

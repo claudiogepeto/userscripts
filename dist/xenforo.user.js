@@ -18363,8 +18363,31 @@
             } else {
                 img.addEventListener('load', () => { it.dataset.smgPhReady = '1'; }, { once: true });
                 img.addEventListener('error', addPh, { once: true });
+                // thumb lazy longe da 1ª tela nunca carrega enquanto a página está pendente → não segura o paint
+                // gate (senão toda listagem espera PAINT_HARD_TIMEOUT_MS). Quem decide é um IO (sem ler layout);
+                // o load/error acima continuam valendo pra quando ele chegar perto.
+                if (img.getAttribute('loading') === 'lazy') watchFarThumb(img, it);
             }
         });
+    }
+
+    // IO one-shot: o 1º callback diz se o thumb está perto da 1ª tela (até 1.5 viewport). Longe → a linha
+    // fica pronta pro paint gate já; perto → espera o load como antes.
+    let farThumbIO = null;
+    function watchFarThumb(img, row) {
+        if (!('IntersectionObserver' in window)) return;
+        if (!farThumbIO) {
+            farThumbIO = new IntersectionObserver((entries, obs) => {
+                entries.forEach(en => {
+                    obs.unobserve(en.target);
+                    const r = en.target._smgPhRow;
+                    en.target._smgPhRow = null;
+                    if (r && !en.isIntersecting) r.dataset.smgPhReady = '1';
+                });
+            }, { rootMargin: '0px 0px 50% 0px' });
+        }
+        img._smgPhRow = row;
+        farThumbIO.observe(img);
     }
 
     // home/16-home.js
