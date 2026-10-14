@@ -19717,6 +19717,9 @@
         for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
         fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             skels.forEach(s => s.remove());
+            // falha (429/HTTP → null): mantém o _nextUrl pra tentar de novo no próximo scroll. Antes o null
+            // estourava aqui dentro, _loadingMore ficava true e o carrossel parava de paginar pra sempre.
+            if (!doc) { feed._loadingMore = false; if (onDone) onDone(); return; }
             const res = feedRenderPage(doc, feed, panel, true);
             feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
             feed._loadingMore = false;
