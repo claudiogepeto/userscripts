@@ -2326,9 +2326,9 @@ async function runTests() {
     assert(g2wWrappers[0].dataset.ipId === '5312499-abc', 'O primeiro wrapper deve ter o ID correto do ImagePond');
     assert(g2wWrappers[1].dataset.ipId === '987654-xyz', 'O segundo wrapper deve ter o ID correto do ImagePond');
 
-    // 13.4 Verifica que a galeria agrupou os wrappers no .auto-image-grid sem iframes crus
+    // 13.4 Embeds/players são blocos de LARGURA TOTAL: o mosaico do post só agrupa imagens
     const grid13 = content13.querySelector('.auto-image-grid');
-    assert(grid13 !== null, 'buildPostGalleries deve agrupar múltiplos embeds em .auto-image-grid');
+    assert(grid13 === null, 'buildPostGalleries não agrupa embeds/players: eles ficam fora do mosaico, no lugar de origem');
     const rawIframes = content13.querySelectorAll('iframe:not(.saint-iframe):not([data-ip-done])');
     assert(rawIframes.length === 0, `Nenhum iframe cru sem processamento deve sobrar no card (restantes: ${rawIframes.length})`);
 
@@ -2340,54 +2340,15 @@ async function runTests() {
     console.log('Teste 13 concluído com sucesso!\n');
 
     // =========================================================================
-    // TESTE 14: Desaninhamento de .auto-image-grid Aninhado (Anti-Nesting)
+    // TESTE 14: buildPostGalleries exposto (o desaninhamento de grids saiu com o motor antigo: o novo nunca aninha)
     // =========================================================================
-    console.log('--- TESTE 14: Desaninhamento de .auto-image-grid Aninhado ---');
+    console.log('--- TESTE 14: buildPostGalleries exposto ---');
 
     const buildPostGalleries = window.buildPostGalleries || window.__buildPostGalleries;
     assert(typeof buildPostGalleries === 'function', 'buildPostGalleries deve estar exposto em modo de teste');
 
     document.documentElement.classList.add('smg-masonry-on');
 
-    // 14.1 Criação de um container com .auto-image-grid aninhado dentro de outro .auto-image-grid
-    const container14 = document.createElement('div');
-    container14.className = 'message-userContent';
-
-    const outerGrid = document.createElement('div');
-    outerGrid.className = 'auto-image-grid';
-
-    const innerGrid = document.createElement('div');
-    innerGrid.className = 'auto-image-grid';
-
-    const child1 = document.createElement('div');
-    child1.className = 'media-item-1';
-    child1.textContent = 'Media 1';
-
-    const child2 = document.createElement('div');
-    child2.className = 'media-item-2';
-    child2.textContent = 'Media 2';
-
-    innerGrid.appendChild(child1);
-    innerGrid.appendChild(child2);
-    outerGrid.appendChild(innerGrid);
-    container14.appendChild(outerGrid);
-    document.body.appendChild(container14);
-
-    assert(container14.querySelectorAll('.auto-image-grid .auto-image-grid').length === 1, 'Antes do desaninhamento deve existir um .auto-image-grid aninhado');
-    assert(innerGrid.children.length === 2, 'Grid interno contém os 2 itens filhos inicialmente');
-
-    // 14.2 Executa buildPostGalleries no container
-    buildPostGalleries([container14]);
-
-    // 14.3 Valida que o grid interno foi desaninhado e os filhos pertencem diretamente ao grid externo
-    assert(container14.querySelectorAll('.auto-image-grid .auto-image-grid').length === 0, 'O grid interno deve ter sido desaninhado completamente');
-    assert(child1.parentElement === outerGrid, 'child1 agora deve pertencer diretamente ao grid externo');
-    assert(child2.parentElement === outerGrid, 'child2 agora deve pertencer diretamente ao grid externo');
-    assert(outerGrid.contains(child1) && outerGrid.contains(child2), 'Todos os nós filhos pertencem diretamente ao grid externo');
-    assert(!outerGrid.contains(innerGrid), 'O nó innerGrid foi removido do DOM');
-
-    // Limpeza após teste 14
-    container14.remove();
 
     console.log('Teste 14 concluído com sucesso!\n');
 
@@ -2568,48 +2529,15 @@ async function runTests() {
     window.innerWidth = 1600;
     document.documentElement.classList.remove('smg-aldock-on');
     assert(window.__masonryExports !== undefined, 'window.__masonryExports deve estar exposto');
-    const { gridColsFor } = window.__masonryExports;
-    assert(typeof gridColsFor === 'function', 'gridColsFor deve ser função');
-
-    const makeVerticalVideo = () => {
-        const block = document.createElement('div');
-        block.className = 'smg-rg';
-        block.style.aspectRatio = '9 / 16';
-        return block;
-    };
-    const makeWideVideo = () => {
-        const block = document.createElement('div');
-        block.className = 'smg-rg';
-        block.style.aspectRatio = '16 / 9';
-        return block;
-    };
-    assert(gridColsFor([makeVerticalVideo()]) === 1, 'Uma mídia vertical deve ocupar uma coluna');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Duas mídias verticais devem ocupar duas colunas');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Três vídeos verticais devem ocupar duas colunas para acomodar players');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 2, 'Quatro mídias verticais devem ocupar duas colunas (2x2)');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeWideVideo()]) === 2, 'Quatro mídias com maioria vertical devem ocupar duas colunas (2x2)');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeWideVideo(), makeWideVideo()]) === 2, 'Quatro mídias sem maioria vertical devem manter duas colunas');
-    assert(gridColsFor([makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo(), makeVerticalVideo()]) === 3, 'Cinco ou mais mídias devem ocupar três colunas');
-    assert(gridColsFor([makeWideVideo(), makeWideVideo(), makeWideVideo()]) === 2, 'Três mídias horizontais devem manter duas colunas para não ficarem pequenas');
-
     const injectedStyles18 = Array.from(document.querySelectorAll('style')).map(style => style.textContent).join('\n');
     assert(injectedStyles18.includes('--smg-media-h: min(70vh, 750px);'), 'O teto de mídia deve ser min(70vh, 750px)');
     assert(injectedStyles18.includes('.generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }'), 'Embeds de vídeo devem possuir margin: 0 auto !important');
     assert(injectedStyles18.includes('span[data-s9e-mediaembed] .smg-rg,'), 'Regra de embed data-s9e-mediaembed deve estar presente');
     assert(injectedStyles18.includes('.smg-turbo-slot > .smg-rg { margin: 0 auto !important; }'), 'Slot turbo deve possuir margin: 0 auto !important');
     assert(!injectedStyles18.includes('margin: 0 0 8px !important;'), 'Masonry não deve conter margin: 0 0 8px !important');
-    assert(injectedStyles18.includes('html.smg-masonry-on .auto-image-grid img.bbImage,\n            html.smg-masonry-on .auto-image-grid .smg-dm-wrap > img.bbImage,\n            html.smg-masonry-on .auto-image-grid img.bbImage.smg-wide,\n            html.smg-masonry-on .auto-image-grid .smg-wide {\n                width: 100% !important;\n                max-width: none !important;\n                height: auto !important;\n                max-height: none !important;\n                margin: 0 auto !important;\n            }'), 'Imagens no masonry devem ter margin: 0 auto !important');
     assert(injectedStyles18.includes('img.bbImage.smg-vert'), 'Masonry deve possuir regra específica para imagens verticais');
-    assert(injectedStyles18.includes('.smg-rg.smg-rg-vert'), 'RedGifs vertical deve possuir regra específica de dimensionamento');
     assert(injectedStyles18.includes('width: auto !important;'), 'Mídia vertical deve poder reduzir a largura sem deformar a altura');
     assert(injectedStyles18.includes('margin-left: auto !important;'), 'Mídia vertical deve ser centralizada horizontalmente');
-    assert(injectedStyles18.includes('text-align: center !important;'), 'Conteúdo do masonry deve ser centralizado horizontalmente');
-    assert(injectedStyles18.includes('display: grid !important;'), 'Masonry deve usar uma grade estável');
-    assert(injectedStyles18.includes('grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;'), 'Masonry deve manter colunas de largura uniforme');
-    assert(injectedStyles18.includes('grid-auto-flow: row !important;'), 'Masonry deve preservar a ordem das mídias por linha');
-    assert(injectedStyles18.includes('gap: var(--smg-sp-8) !important;'), 'Masonry deve manter espaçamento uniforme entre linhas e colunas');
-    assert(injectedStyles18.includes('justify-items: center !important;'), 'Masonry deve centralizar cada mídia dentro da coluna');
-    assert(injectedStyles18.includes('html.smg-masonry-on .smg-fp-content .auto-image-grid'), 'Cards do feed devem usar o mesmo layout Grid do masonry');
     assert(injectedStyles18.includes('--smg-ald-w: 360px;'), 'Sidebar deve ter fallback compacto de 360px');
 
     // =========================================================================
@@ -3959,97 +3887,6 @@ async function runTests() {
     window.GM_xmlhttpRequest = origGmx30;
 
     // =========================================================================
-    // TESTE 31: Modelo Misto de Masonry (True Masonry em galeria pura vs Justified Rows em posts com texto)
-    // =========================================================================
-    console.log('--- TESTE 31: Modelo Misto de Masonry (True Masonry vs Justified Rows com detecção de texto entre imagens) ---');
-
-    const { relayoutGrid: testRelayoutGrid, relayoutGrid } = window.__masonryExports;
-
-    // 1. Post com texto longo no COMEÇO ("Photoshoot from today, enjoy...") seguido de imagens contíguas
-    const textStartDiv = document.createElement('div');
-    textStartDiv.className = 'message-userContent';
-    textStartDiv.innerHTML = '<div class="bbWrapper"><p>Photoshoot from today, enjoy this beautiful session with lots of photos and great lighting!</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/s1.jpg"><img class="bbImage" src="https://example.com/s2.jpg"><img class="bbImage" src="https://example.com/s3.jpg"></div></div>';
-    document.body.appendChild(textStartDiv);
-
-    const startGrid = textStartDiv.querySelector('.auto-image-grid');
-    testRelayoutGrid(startGrid);
-    assert(startGrid.classList.contains('smg-true-masonry'), 'Grid com texto apenas no COMEÇO deve receber .smg-true-masonry');
-    assert(!startGrid.classList.contains('smg-justified-grid'), 'Grid com texto apenas no COMEÇO NÃO deve receber .smg-justified-grid');
-
-    // 2. Post com texto no FIM ("Leave your comments below...") após imagens contíguas
-    const textEndDiv = document.createElement('div');
-    textEndDiv.className = 'message-userContent';
-    textEndDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/e1.jpg"><img class="bbImage" src="https://example.com/e2.jpg"><img class="bbImage" src="https://example.com/e3.jpg"></div><p>Leave your comments below and don\'t forget to subscribe for upcoming updates!</p></div>';
-    document.body.appendChild(textEndDiv);
-
-    const endGrid = textEndDiv.querySelector('.auto-image-grid');
-    testRelayoutGrid(endGrid);
-    assert(endGrid.classList.contains('smg-true-masonry'), 'Grid com texto apenas no FIM deve receber .smg-true-masonry');
-    assert(!endGrid.classList.contains('smg-justified-grid'), 'Grid com texto apenas no FIM NÃO deve receber .smg-justified-grid');
-
-    // 3. Post com texto no COMEÇO e no FIM
-    const textStartEndDiv = document.createElement('div');
-    textStartEndDiv.className = 'message-userContent';
-    textStartEndDiv.innerHTML = '<div class="bbWrapper"><p>Photoshoot from today, enjoy this beautiful session!</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/se1.jpg"><img class="bbImage" src="https://example.com/se2.jpg"><img class="bbImage" src="https://example.com/se3.jpg"></div><p>Leave your comments below and thank you!</p></div>';
-    document.body.appendChild(textStartEndDiv);
-
-    const startEndGrid = textStartEndDiv.querySelector('.auto-image-grid');
-    testRelayoutGrid(startEndGrid);
-    assert(startEndGrid.classList.contains('smg-true-masonry'), 'Grid com texto no COMEÇO e no FIM deve receber .smg-true-masonry');
-    assert(!startEndGrid.classList.contains('smg-justified-grid'), 'Grid com texto no COMEÇO e no FIM NÃO deve receber .smg-justified-grid');
-
-    // 4. Post com texto ENTRE imagens ("Here is the second set of photos:")
-    // A) Múltiplas galerias no mesmo post (separadas por conteúdo)
-    const multiGridDiv = document.createElement('div');
-    multiGridDiv.className = 'message-userContent';
-    multiGridDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"><img class="bbImage" src="https://example.com/m1.jpg"><img class="bbImage" src="https://example.com/m2.jpg"><img class="bbImage" src="https://example.com/m3.jpg"></div><p>Here is the second set of photos:</p><div class="auto-image-grid"><img class="bbImage" src="https://example.com/m4.jpg"><img class="bbImage" src="https://example.com/m5.jpg"><img class="bbImage" src="https://example.com/m6.jpg"></div></div>';
-    document.body.appendChild(multiGridDiv);
-
-    const multiGrids = multiGridDiv.querySelectorAll('.auto-image-grid');
-    testRelayoutGrid(multiGrids[0]);
-    testRelayoutGrid(multiGrids[1]);
-    assert(multiGrids[0].classList.contains('smg-true-masonry'), 'Primeira grade com texto ENTRE imagens (modo row) agora é seu próprio .smg-true-masonry local');
-    assert(!multiGrids[0].classList.contains('smg-justified-grid'), 'Primeira grade com texto ENTRE imagens NÃO deve receber .smg-justified-grid');
-    assert(multiGrids[1].classList.contains('smg-true-masonry'), 'Segunda grade com texto ENTRE imagens (modo row) agora é seu próprio .smg-true-masonry local');
-    assert(!multiGrids[1].classList.contains('smg-justified-grid'), 'Segunda grade com texto ENTRE imagens NÃO deve receber .smg-justified-grid');
-
-    // 5. Limite estrito de no máximo 3 colunas mesmo para 5+ imagens
-    const pureGalleryDiv = document.createElement('div');
-    pureGalleryDiv.className = 'message-userContent';
-    pureGalleryDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"></div></div>';
-    document.body.appendChild(pureGalleryDiv);
-    const galleryGrid = pureGalleryDiv.querySelector('.auto-image-grid');
-
-    for (let i = 1; i <= 8; i++) {
-        const img = document.createElement('img');
-        img.className = 'bbImage';
-        img.src = `https://example.com/gallery_${i}.jpg`;
-        img.style.aspectRatio = (i % 2 === 0) ? '16 / 9' : '9 / 16';
-        galleryGrid.appendChild(img);
-    }
-
-    testRelayoutGrid(galleryGrid);
-    const mcolsVal = parseInt(galleryGrid.style.getPropertyValue('--smg-mcols'), 10);
-    assert(mcolsVal <= 3, `Limite estrito de no máximo 3 colunas garantido (obtido: ${mcolsVal} <= 3)`);
-    assert(mcolsVal === 3, 'Grade com 8 imagens deve definir --smg-mcols = 3');
-    assert(galleryGrid.classList.contains('smg-true-masonry'), 'Galeria contígua com 8 imagens deve conter .smg-true-masonry');
-
-    // 6. Validar atribuição da variável CSS --smg-ratio nos itens
-    // 16/9: rh = 9/16 = 0.5625 -> r = 1/0.5625 = 1.7778
-    // 9/16: rh = 16/9 = 1.7778 -> r = 1/1.7778 = 0.5625
-    const item169 = galleryGrid.children[1]; // i=2 (even) -> 16/9
-    const item916 = galleryGrid.children[0]; // i=1 (odd) -> 9/16
-    assert(item169.style.getPropertyValue('--smg-ratio') === '1.7778', 'Item 16:9 deve receber --smg-ratio = 1.7778');
-    assert(item916.style.getPropertyValue('--smg-ratio') === '0.5625', 'Item 9:16 deve receber --smg-ratio = 0.5625');
-
-    // Cleanup
-    textStartDiv.remove();
-    textEndDiv.remove();
-    textStartEndDiv.remove();
-    multiGridDiv.remove();
-    pureGalleryDiv.remove();
-
-    // =========================================================================
     // TESTE 32: Inclusão de imagens separadas por <script class="js-extraPhrases"> e padronização de espaçamento 8px
     // =========================================================================
     console.log('--- TESTE 32: Inclusão de imagens separadas por <script class="js-extraPhrases"> e espaçamento 8px ---');
@@ -4081,338 +3918,14 @@ async function runTests() {
     // Validar que a Imagem 1 é o primeiro filho do grid (ordem preservada)
     assert(grid32 && grid32.firstElementChild && (grid32.firstElementChild.getAttribute('src') === 'https://example.com/img1.jpg' || (grid32.firstElementChild.querySelector && grid32.firstElementChild.querySelector('img[src="https://example.com/img1.jpg"]'))), 'Imagem 1 deve ser o primeiro filho do grid (ordem preservada)');
 
-    // 2. Validar estilos injetados de .smg-true-masonry e .smg-justified-grid
+    // 2. Estilos do mosaico (motor 08a)
     const styleEl = document.getElementById('smg-styles');
     const injectedCSS = (styleEl && styleEl.textContent) || scriptContent;
 
-    assert(injectedCSS.includes('column-gap: var(--smg-sp-8) !important;'), 'Estilos do grid devem possuir column-gap: 8px');
-    assert(injectedCSS.includes('gap: var(--smg-sp-8) !important;'), 'Estilos do grid devem possuir gap: 8px');
+    assert(!/column-(count|width)/.test(injectedCSS.match(/\.smg-mason[^{]*\{[^}]*\}/g).join('')), 'O mosaico não usa CSS columns (leria de cima pra baixo)');
 
     // Cleanup
     testPost32.remove();
-
-    // =========================================================================
-    // TESTE 33: Regras de 2 imagens (.smg-grid-2) e limitação de no máximo 3 colunas no modo row
-    // =========================================================================
-    console.log('--- TESTE 33: Regras de 2 imagens (.smg-grid-2) e limitação de no máximo 3 colunas no modo row ---');
-
-    // 1. Grid com 2 imagens verticais
-    const twoVertDiv = document.createElement('div');
-    twoVertDiv.className = 'message-userContent';
-    twoVertDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"></div></div>';
-    document.body.appendChild(twoVertDiv);
-    const twoVertGrid = twoVertDiv.querySelector('.auto-image-grid');
-
-    const vImg1 = document.createElement('img');
-    vImg1.className = 'bbImage';
-    vImg1.src = 'https://example.com/v1.jpg';
-    vImg1.style.aspectRatio = '9 / 16'; // rh = 16/9 = 1.7778 > 1.35
-    twoVertGrid.appendChild(vImg1);
-
-    const vImg2 = document.createElement('img');
-    vImg2.className = 'bbImage';
-    vImg2.src = 'https://example.com/v2.jpg';
-    vImg2.style.aspectRatio = '9 / 16'; // rh = 16/9 = 1.7778 > 1.35
-    twoVertGrid.appendChild(vImg2);
-
-    testRelayoutGrid(twoVertGrid);
-    assert(twoVertGrid.classList.contains('smg-grid-2'), 'Grid com 2 imagens deve receber .smg-grid-2');
-    assert(!twoVertGrid.classList.contains('smg-justified-grid'), 'Grid com 2 imagens NÃO deve receber .smg-justified-grid');
-    assert(!twoVertGrid.classList.contains('smg-true-masonry'), 'Grid com 2 imagens NÃO deve receber .smg-true-masonry');
-    assert(twoVertGrid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 2 imagens verticais deve definir --smg-mcols = 2');
-    assert(twoVertGrid.classList.contains('smg-grid-2-tall'), 'Grid com 2 imagens verticais com proporção > 1.35 deve receber .smg-grid-2-tall');
-
-    // 2. Grid com 2 imagens horizontais
-    const twoWideDiv = document.createElement('div');
-    twoWideDiv.className = 'message-userContent';
-    twoWideDiv.innerHTML = '<div class="bbWrapper"><div class="auto-image-grid"></div></div>';
-    document.body.appendChild(twoWideDiv);
-    const twoWideGrid = twoWideDiv.querySelector('.auto-image-grid');
-
-    const wImg1 = document.createElement('img');
-    wImg1.className = 'bbImage';
-    wImg1.src = 'https://example.com/w1.jpg';
-    wImg1.style.aspectRatio = '16 / 9'; // rh = 9/16 = 0.5625 < 0.9
-    twoWideGrid.appendChild(wImg1);
-
-    const wImg2 = document.createElement('img');
-    wImg2.className = 'bbImage';
-    wImg2.src = 'https://example.com/w2.jpg';
-    wImg2.style.aspectRatio = '16 / 9'; // rh = 9/16 = 0.5625 < 0.9
-    twoWideGrid.appendChild(wImg2);
-
-    testRelayoutGrid(twoWideGrid);
-    assert(twoWideGrid.classList.contains('smg-grid-2'), 'Grid com 2 imagens horizontais deve receber .smg-grid-2');
-    assert(!twoWideGrid.classList.contains('smg-justified-grid'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-justified-grid');
-    assert(!twoWideGrid.classList.contains('smg-true-masonry'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-true-masonry');
-    assert(twoWideGrid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 2 imagens horizontais deve definir --smg-mcols = 2 (1 row só)');
-    assert(!twoWideGrid.classList.contains('smg-grid-2-tall'), 'Grid com 2 imagens horizontais NÃO deve receber .smg-grid-2-tall');
-
-    // 3. Testar CSS injetado para .smg-justified-grid > * e .smg-grid-2
-    assert(injectedCSS.includes('min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;'), 'Estilos de .smg-justified-grid > * devem possuir min-width limitando a 3 colunas');
-    assert(injectedCSS.includes('repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;'), 'Estilos de .smg-grid-2 devem possuir grid-template-columns com repeat(var(--smg-mcols, 2), minmax(0, 1fr))');
-    assert(injectedCSS.includes('.auto-image-grid.smg-grid-2') && injectedCSS.includes('gap: var(--smg-sp-8) !important;'), 'Estilos de .smg-grid-2 devem possuir gap: 8px !important');
-
-    // Cleanup
-    twoVertDiv.remove();
-    twoWideDiv.remove();
-
-    // =========================================================================
-    // TESTE 34: Unificação das Regras de Colunas e Masonry nos 5 Casos do Usuário
-    // =========================================================================
-    console.log('--- TESTE 34: Unificação das Regras de Colunas e Masonry nos 5 Casos do Usuário ---');
-
-    // CASO 1: 3 itens sendo 1 vídeo (2 fotos verticais + 1 vídeo 16:9)
-    const c1Wrap = document.createElement('div');
-    c1Wrap.className = 'message-userContent';
-    const c1Grid = document.createElement('div');
-    c1Grid.className = 'auto-image-grid';
-    const c1Img1 = document.createElement('img');
-    c1Img1.className = 'bbImage';
-    c1Img1.style.aspectRatio = '451 / 800';
-    const c1Img2 = document.createElement('img');
-    c1Img2.className = 'bbImage';
-    c1Img2.style.aspectRatio = '451 / 800';
-    const c1Vid = document.createElement('div');
-    c1Vid.className = 'generic2wide-iframe-div';
-    c1Grid.appendChild(c1Img1);
-    c1Grid.appendChild(c1Img2);
-    c1Grid.appendChild(c1Vid);
-    c1Wrap.appendChild(c1Grid);
-    document.body.appendChild(c1Wrap);
-
-    relayoutGrid(c1Grid);
-    assert(c1Grid.style.getPropertyValue('--smg-mcols') === '2', 'Caso 1: grid deve ter --smg-mcols = 2');
-    assert(c1Vid.classList.contains('smg-span-all'), 'Caso 1: vídeo deve ter .smg-span-all');
-    assert(!c1Img1.classList.contains('smg-span-all'), 'Caso 1: imagem 1 NÃO deve ter .smg-span-all');
-    assert(!c1Img2.classList.contains('smg-span-all'), 'Caso 1: imagem 2 NÃO deve ter .smg-span-all');
-
-    // CASO 2: 3 itens sendo 2 vídeos (2 vídeos 16:9 + 1 foto vertical)
-    const c2Wrap = document.createElement('div');
-    c2Wrap.className = 'message-userContent';
-    const c2Grid = document.createElement('div');
-    c2Grid.className = 'auto-image-grid';
-    const c2Vid1 = document.createElement('div');
-    c2Vid1.className = 'generic2wide-iframe-div';
-    const c2Vid2 = document.createElement('div');
-    c2Vid2.className = 'generic2wide-iframe-div';
-    const c2Img = document.createElement('img');
-    c2Img.className = 'bbImage';
-    c2Img.style.aspectRatio = '529 / 872';
-    c2Grid.appendChild(c2Vid1);
-    c2Grid.appendChild(c2Vid2);
-    c2Grid.appendChild(c2Img);
-    c2Wrap.appendChild(c2Grid);
-    document.body.appendChild(c2Wrap);
-
-    relayoutGrid(c2Grid);
-    assert(c2Grid.style.getPropertyValue('--smg-mcols') === '2', 'Caso 2: grid deve ter --smg-mcols = 2');
-    assert(c2Img.classList.contains('smg-item-centered'), 'Caso 2: foto vertical deve ter .smg-item-centered');
-    assert(!c2Vid1.classList.contains('smg-item-centered'), 'Caso 2: vídeo 1 NÃO deve ter .smg-item-centered');
-    assert(!c2Vid2.classList.contains('smg-item-centered'), 'Caso 2: vídeo 2 NÃO deve ter .smg-item-centered');
-
-    // CASO 3: 5 itens sendo 3 vídeos (2 fotos verticais + 3 vídeos 16:9)
-    const c3Wrap = document.createElement('div');
-    c3Wrap.className = 'message-userContent';
-    const c3Grid = document.createElement('div');
-    c3Grid.className = 'auto-image-grid';
-    const c3Img1 = document.createElement('img');
-    c3Img1.className = 'bbImage';
-    c3Img1.style.aspectRatio = '2268 / 4032';
-    const c3Img2 = document.createElement('img');
-    c3Img2.className = 'bbImage';
-    c3Img2.style.aspectRatio = '2268 / 4032';
-    const c3Vid1 = document.createElement('div');
-    c3Vid1.className = 'generic2wide-iframe-div';
-    const c3Vid2 = document.createElement('div');
-    c3Vid2.className = 'generic2wide-iframe-div';
-    const c3Vid3 = document.createElement('div');
-    c3Vid3.className = 'generic2wide-iframe-div';
-    c3Grid.appendChild(c3Img1);
-    c3Grid.appendChild(c3Img2);
-    c3Grid.appendChild(c3Vid1);
-    c3Grid.appendChild(c3Vid2);
-    c3Grid.appendChild(c3Vid3);
-    c3Wrap.appendChild(c3Grid);
-    document.body.appendChild(c3Wrap);
-
-    relayoutGrid(c3Grid);
-    assert(c3Grid.style.getPropertyValue('--smg-mcols') === '6', 'Caso 3: grid deve ter --smg-mcols = 6');
-    assert(c3Grid.classList.contains('smg-grid-6'), 'Caso 3: grid deve ter classe .smg-grid-6');
-    assert(c3Img1.classList.contains('smg-span-3'), 'Caso 3: imagem 1 deve ter .smg-span-3');
-    assert(c3Img2.classList.contains('smg-span-3'), 'Caso 3: imagem 2 deve ter .smg-span-3');
-    assert(c3Vid1.classList.contains('smg-span-2'), 'Caso 3: vídeo 1 deve ter .smg-span-2');
-    assert(c3Vid2.classList.contains('smg-span-2'), 'Caso 3: vídeo 2 deve ter .smg-span-2');
-    assert(c3Vid3.classList.contains('smg-span-2'), 'Caso 3: vídeo 3 deve ter .smg-span-2');
-
-    // CASO 4: 6 itens sendo 2 vídeos (4 fotos verticais + 2 vídeos 16:9)
-    const c4Wrap = document.createElement('div');
-    c4Wrap.className = 'message-userContent';
-    const c4Grid = document.createElement('div');
-    c4Grid.className = 'auto-image-grid';
-    for (let i = 0; i < 4; i++) {
-        const im = document.createElement('img');
-        im.className = 'bbImage';
-        im.style.aspectRatio = '2268 / 4032';
-        c4Grid.appendChild(im);
-    }
-    const c4Vid1 = document.createElement('div');
-    c4Vid1.className = 'generic2wide-iframe-div';
-    const c4Vid2 = document.createElement('div');
-    c4Vid2.className = 'generic2wide-iframe-div';
-    c4Grid.appendChild(c4Vid1);
-    c4Grid.appendChild(c4Vid2);
-    c4Wrap.appendChild(c4Grid);
-    document.body.appendChild(c4Wrap);
-
-    relayoutGrid(c4Grid);
-    assert(c4Grid.style.getPropertyValue('--smg-mcols') === '2', 'Caso 4: grid deve ter --smg-mcols = 2');
-
-    // CASO 5: 2 itens com 1 horizontal e 1 vertical (asymmetric)
-    const c5Wrap = document.createElement('div');
-    c5Wrap.className = 'message-userContent';
-    const c5Grid = document.createElement('div');
-    c5Grid.className = 'auto-image-grid';
-    const c5Img1 = document.createElement('img');
-    c5Img1.className = 'bbImage';
-    c5Img1.style.aspectRatio = '500 / 375';
-    const c5Img2 = document.createElement('img');
-    c5Img2.className = 'bbImage';
-    c5Img2.style.aspectRatio = '3 / 4';
-    c5Grid.appendChild(c5Img1);
-    c5Grid.appendChild(c5Img2);
-    c5Wrap.appendChild(c5Grid);
-    document.body.appendChild(c5Wrap);
-
-    relayoutGrid(c5Grid);
-    assert(c5Grid.classList.contains('smg-grid-2'), 'Caso 5: grid deve ter .smg-grid-2');
-    assert(c5Grid.classList.contains('smg-grid-2-asym'), 'Caso 5: grid deve ter .smg-grid-2-asym');
-    assert(c5Grid.style.getPropertyValue('--smg-col1-w').includes('calc((100% - 8px) * 0.64'), 'Caso 5: col1 deve ter proporção ~64%');
-    assert(c5Grid.style.getPropertyValue('--smg-col2-w').includes('calc((100% - 8px) * 0.36') || c5Grid.style.getPropertyValue('--smg-col2-w').includes('0.3599'), 'Caso 5: col2 deve ter proporção ~36%');
-
-    // Validação de CSS
-    assert(injectedCSS.includes('column-count: var(--smg-mcols, 3) !important;'), 'CSS deve conter column-count para .smg-true-masonry');
-    assert(injectedCSS.includes('.auto-image-grid.smg-grid-6'), 'CSS deve conter regra para .smg-grid-6');
-
-    // Cleanup
-    c1Wrap.remove();
-    c2Wrap.remove();
-    c3Wrap.remove();
-    c4Wrap.remove();
-    c5Wrap.remove();
-
-    // =========================================================================
-    // TESTE 35: Correção dos 3 Cenários (3 Fotos, 2 Fotos Verticais, 4 Fotos 2x2) e Anti-CLS
-    // =========================================================================
-    console.log('--- TESTE 35: Correção dos 3 Cenários (3 Fotos, 2 Fotos Verticais, 4 Fotos 2x2) e Anti-CLS ---');
-
-    // 1. Cenário 1: 3 Fotos (2 verticais + 1 horizontal) -> 2 colunas (linha 1: 2 verticais, linha 2: 1 horizontal span-all)
-    const scen1Wrap = document.createElement('div');
-    scen1Wrap.className = 'message-userContent';
-    const scen1Grid = document.createElement('div');
-    scen1Grid.className = 'auto-image-grid';
-    const s1Img1 = document.createElement('img');
-    s1Img1.className = 'bbImage';
-    s1Img1.style.aspectRatio = '1024 / 972'; // ~1.05
-    const s1Img2 = document.createElement('img');
-    s1Img2.className = 'bbImage';
-    s1Img2.style.aspectRatio = '1707 / 961'; // ~1.77
-    const s1Img3 = document.createElement('img');
-    s1Img3.className = 'bbImage';
-    s1Img3.style.aspectRatio = '1537 / 2048'; // ~0.75
-    scen1Grid.appendChild(s1Img1);
-    scen1Grid.appendChild(s1Img2);
-    scen1Grid.appendChild(s1Img3);
-    scen1Wrap.appendChild(scen1Grid);
-    document.body.appendChild(scen1Wrap);
-
-    relayoutGrid(scen1Grid);
-    assert(scen1Grid.style.getPropertyValue('--smg-mcols') === '2', 'Cenário 1: 3 fotos (2 verticais + 1 horizontal) devem ficar em --smg-mcols = 2');
-    assert(s1Img2.classList.contains('smg-span-all'), 'Cenário 1: foto horizontal deve receber .smg-span-all');
-
-    // 2. Cenário 2: 2 fotos verticais (1536x2048, 3:4) -> Devem receber .smg-grid-2 e .smg-grid-2-tall
-    const scen2Wrap = document.createElement('div');
-    scen2Wrap.className = 'message-userContent';
-    const scen2Grid = document.createElement('div');
-    scen2Grid.className = 'auto-image-grid';
-    const s2Img1 = document.createElement('img');
-    s2Img1.className = 'bbImage';
-    s2Img1.style.aspectRatio = '1536 / 2048'; // 0.75 (rh = 1.333)
-    const s2Img2 = document.createElement('img');
-    s2Img2.className = 'bbImage';
-    s2Img2.style.aspectRatio = '1536 / 2048'; // 0.75 (rh = 1.333)
-    scen2Grid.appendChild(s2Img1);
-    scen2Grid.appendChild(s2Img2);
-    scen2Wrap.appendChild(scen2Grid);
-    document.body.appendChild(scen2Wrap);
-
-    relayoutGrid(scen2Grid);
-    assert(scen2Grid.classList.contains('smg-grid-2'), 'Cenário 2: par de fotos verticais deve receber .smg-grid-2');
-    assert(scen2Grid.classList.contains('smg-grid-2-tall'), 'Cenário 2: par de fotos 3:4 deve receber .smg-grid-2-tall');
-    assert(!s2Img1.style.maxWidth, 'Cenário 2: imagem 1 no grid NÃO deve ter max-width inline');
-    assert(!s2Img2.style.maxWidth, 'Cenário 2: imagem 2 no grid NÃO deve ter max-width inline');
-
-    // 3. Cenário 3: 4 fotos quadradas (2048x2048) -> Devem receber --smg-mcols = 2 e .smg-grid-pair-tall
-    const scen3Wrap = document.createElement('div');
-    scen3Wrap.className = 'message-userContent';
-    const scen3Grid = document.createElement('div');
-    scen3Grid.className = 'auto-image-grid';
-    for (let i = 0; i < 4; i++) {
-        const sqImg = document.createElement('img');
-        sqImg.className = 'bbImage';
-        sqImg.style.aspectRatio = '2048 / 2048'; // 1.0
-        scen3Grid.appendChild(sqImg);
-    }
-    scen3Wrap.appendChild(scen3Grid);
-    document.body.appendChild(scen3Wrap);
-
-    relayoutGrid(scen3Grid);
-    assert(scen3Grid.style.getPropertyValue('--smg-mcols') === '2', 'Cenário 3: 4 fotos 1:1 devem ficar em --smg-mcols = 2 (2x2)');
-    assert(scen3Grid.classList.contains('smg-grid-pair-tall'), 'Cenário 3: 4 fotos 1:1 devem receber .smg-grid-pair-tall');
-
-    // 4. CSS: Validar grid-auto-flow: row dense e justify-items: stretch
-    assert(injectedCSS.includes('grid-auto-flow: row dense !important;'), 'CSS deve possuir grid-auto-flow: row dense');
-    assert(injectedCSS.includes('justify-items: stretch !important;'), 'CSS deve possuir justify-items: stretch');
-
-    // Cleanup
-    scen1Wrap.remove();
-    scen2Wrap.remove();
-    scen3Wrap.remove();
-
-    // =========================================================================
-    // TESTE 36: True Masonry em Galerias Puras de Fotos (Zero Espaço Vazio Vertical)
-    // =========================================================================
-    console.log('--- TESTE 36: True Masonry em Galerias Puras de Fotos (Zero Espaço Vazio Vertical) ---');
-
-    // Post de 15 fotos puras com texto apenas no começo ("Andréa Rammé")
-    const t36Wrap = document.createElement('div');
-    t36Wrap.className = 'message-userContent';
-    const t36Title = document.createElement('div');
-    t36Title.className = 'bbWrapper';
-    t36Title.textContent = 'Andréa Rammé';
-    const t36Grid = document.createElement('div');
-    t36Grid.className = 'auto-image-grid';
-    for (let i = 0; i < 15; i++) {
-        const im = document.createElement('img');
-        im.className = 'bbImage';
-        im.style.aspectRatio = (i % 2 === 0) ? '700 / 921' : '948 / 664';
-        t36Grid.appendChild(im);
-    }
-    t36Title.appendChild(t36Grid);
-    t36Wrap.appendChild(t36Title);
-    document.body.appendChild(t36Wrap);
-
-    testRelayoutGrid(t36Grid);
-    assert(t36Grid.classList.contains('smg-true-masonry'), 'Galeria pura de fotos deve receber .smg-true-masonry');
-    assert(!t36Grid.classList.contains('smg-justified-grid'), 'Galeria pura de fotos NÃO deve receber .smg-justified-grid');
-    assert(t36Grid.style.getPropertyValue('--smg-mcols') === '3', 'Galeria pura de 15 fotos deve ter --smg-mcols = 3');
-
-    // Validação CSS
-    assert(injectedCSS.includes('column-count: var(--smg-mcols, 3) !important;'), 'CSS de .smg-true-masonry deve ter column-count: var(--smg-mcols, 3)');
-    assert(injectedCSS.includes('column-gap: var(--smg-sp-8) !important;'), 'CSS de .smg-true-masonry deve ter column-gap: 8px');
-
-    // Cleanup
-    t36Wrap.remove();
 
     // =========================================================================
     // TESTE 35: Embeds rápidos/ricos (GoFile, Pixeldrain, Bunkr) e Masonry dentro de Spoilers
@@ -4624,7 +4137,7 @@ async function runTests() {
     assert(gbHost && gbHost.textContent === 'Special Photoshoot #1', 'Card Goonbox com título customizado deve ter .smg-fhcard-host com o título');
     gbWrap.remove();
 
-    // 4. Spoiler com 3 imagens: valida que é criado um .auto-image-grid.smg-true-masonry dentro de .bbCodeSpoiler-content
+    // 4. Spoiler com 3 imagens: valida que é criado um .auto-image-grid (mosaico do motor) dentro de .bbCodeSpoiler-content
     const spWrap = document.createElement('div');
     spWrap.className = 'message-userContent';
     spWrap.innerHTML = `
@@ -4643,7 +4156,7 @@ async function runTests() {
     const spContent = spWrap.querySelector('.bbCodeSpoiler-content');
     const spGrid = spContent ? spContent.querySelector('.auto-image-grid') : null;
     assert(spGrid !== null, 'Deve ser criado um .auto-image-grid dentro do .bbCodeSpoiler-content');
-    assert(spGrid && spGrid.classList.contains('smg-true-masonry'), 'Grid dentro do spoiler com 3 imagens puras deve receber .smg-true-masonry');
+    assert(spGrid && spGrid.classList.contains('smg-mason'), 'Grid dentro do spoiler deve ser montado no motor masonry (.smg-mason)');
     assert(spGrid && spGrid.querySelectorAll('img.bbImage').length === 3, 'Todas as 3 imagens devem estar dentro do grid do spoiler');
     spWrap.remove();
 
@@ -4671,7 +4184,7 @@ async function runTests() {
     assert(outGrid !== null, 'Deve existir um .auto-image-grid externo para as imagens fora do spoiler');
     const outImgs = outGrid ? Array.from(outGrid.querySelectorAll('img.bbImage')).map(i => i.getAttribute('src')) : [];
     assert(outImgs.length === 2 && outImgs.includes('https://example.com/out1.jpg') && outImgs.includes('https://example.com/out2.jpg'), 'Grid externo deve conter APENAS as imagens de fora do spoiler');
-    assert(outGrid && outGrid.classList.contains('smg-grid-2'), 'Grid externo com 2 fotos deve receber .smg-grid-2');
+    assert(outGrid && outGrid.classList.contains('smg-mason'), 'Grid externo com 2 fotos deve ser montado no motor masonry (.smg-mason)');
 
     const inContent = sepWrap.querySelector('.bbCodeSpoiler-content');
     const inGrid = inContent ? inContent.querySelector('.auto-image-grid') : null;
@@ -4853,29 +4366,17 @@ async function runTests() {
 
     pWrap.remove();
 
-    // Sub-teste B: mergeAdjacentGrids
+    // Sub-teste B: imagem que nasce DEPOIS entre dois grupos (só <br> no meio) une os dois num grupo só
     const containerAdj = document.createElement('div');
-    containerAdj.innerHTML = `
-        <div class="auto-image-grid">
-            <a href="https://example.com/m1.jpg"><img class="bbImage" src="https://example.com/m1.jpg"></a>
-            <a href="https://example.com/m2.jpg"><img class="bbImage" src="https://example.com/m2.jpg"></a>
-        </div>
-        <br>
-        <div class="auto-image-grid">
-            <a href="https://example.com/m3.jpg"><img class="bbImage" src="https://example.com/m3.jpg"></a>
-            <a href="https://example.com/m4.jpg"><img class="bbImage" src="https://example.com/m4.jpg"></a>
-        </div>
-    `;
+    containerAdj.className = 'message-userContent';
+    containerAdj.innerHTML = `<div class="bbWrapper"><div class="auto-image-grid"><a href="https://example.com/m1.jpg"><img class="bbImage" src="https://example.com/m1.jpg"></a><a href="https://example.com/m2.jpg"><img class="bbImage" src="https://example.com/m2.jpg"></a></div><br><a href="https://example.com/mx.jpg"><img class="bbImage" src="https://example.com/mx.jpg"></a><br><div class="auto-image-grid"><a href="https://example.com/m3.jpg"><img class="bbImage" src="https://example.com/m3.jpg"></a><a href="https://example.com/m4.jpg"><img class="bbImage" src="https://example.com/m4.jpg"></a></div></div>`;
     document.body.appendChild(containerAdj);
-
-    const mergeFn = window.__masonryExports?.mergeAdjacentGrids || window.mergeAdjacentGrids;
-    assert(typeof mergeFn === 'function', 'mergeAdjacentGrids deve estar exposto em window.__masonryExports');
-
-    mergeFn(containerAdj);
+    window.__masonryExports.buildPostGallery(containerAdj);
 
     const mergedList = containerAdj.querySelectorAll('.auto-image-grid');
-    assert(mergedList.length === 1, 'mergeAdjacentGrids deve unificar os dois grids adjacentes em exatamente 1');
-    assert(mergedList[0].children.length === 4, 'O grid unificado deve conter todos os 4 elementos combinados');
+    assert(mergedList.length === 1, 'Grupos separados só por <br> + uma imagem nova viram exatamente 1 grupo');
+    assert(mergedList[0].children.length === 5, 'O grupo unificado deve conter os 5 itens');
+    assert(Array.from(mergedList[0].querySelectorAll('img')).map(i => i.getAttribute('src').slice(-6)).join(',') === 'm1.jpg,m2.jpg,mx.jpg,m3.jpg,m4.jpg', 'A ordem do documento é preservada ao unir grupos');
 
     containerAdj.remove();
 
@@ -4884,248 +4385,16 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 38: Prevenção de corte de vídeo e preservação dos controles em players 1 por linha ---');
 
-    // 1. Validar que o CSS de .smg-span-all contém max-width proporcional e justify-self: center !important
-    assert(injectedCSS.includes('max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;'), 'CSS de .smg-span-all deve limitar max-width proporcionalmente a --smg-media-h e --smg-ratio');
-    assert(injectedCSS.includes('justify-self: center !important;'), 'CSS de .smg-span-all deve possuir justify-self: center !important');
-
-    // 2. Validar que o CSS de .auto-image-grid .smg-rg não possui max-width: none !important, e sim max-width proporcional
-    const rgRuleMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\s+\.smg-rg\s*\{([^}]+)\}/);
-    assert(rgRuleMatch !== null, 'CSS deve conter regra para html.smg-masonry-on .auto-image-grid .smg-rg');
-    assert(!rgRuleMatch[1].includes('max-width: none !important'), 'CSS de .auto-image-grid .smg-rg NÃO deve conter max-width: none !important');
-    assert(rgRuleMatch[1].includes('max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;'), 'CSS de .auto-image-grid .smg-rg deve conter max-width proporcional');
-
-    // 3. Validar que .auto-image-grid.smg-grid-2 possui object-fit: contain !important e não object-fit: cover !important
-    const grid2RuleMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\.smg-grid-2\s*>\s*\*[^\{]*\{([^}]+)\}/);
-    assert(grid2RuleMatch !== null, 'CSS deve conter regra para .auto-image-grid.smg-grid-2');
-    assert(grid2RuleMatch[1].includes('object-fit: contain !important;'), 'Regra de .auto-image-grid.smg-grid-2 deve possuir object-fit: contain !important');
-    assert(!grid2RuleMatch[1].includes('object-fit: cover !important;'), 'Regra de .auto-image-grid.smg-grid-2 NÃO deve possuir object-fit: cover !important');
-
     // 4. Validar que a regra defensiva não força overflow: hidden !important em elementos com .smg-player-loaded, :has(.smg-rg) ou :has(.smg-turbo-slot--filled)
     assert(injectedCSS.includes('.generic2wide-iframe-div:not(.smg-player-loaded):not(:has(.smg-rg)):not(:has(.smg-turbo-slot--filled))'), 'Regra defensiva não deve aplicar overflow: hidden a elementos com .smg-player-loaded, .smg-rg ou .smg-turbo-slot--filled');
     assert(injectedCSS.includes('span[data-s9e-mediaembed]:not(.smg-player-loaded):not(:has(.smg-rg))'), 'Regra defensiva não deve aplicar overflow: hidden a data-s9e-mediaembed com .smg-player-loaded ou .smg-rg');
     assert(!injectedCSS.match(/\.generic2wide-iframe-div,\s*span\[data-s9e-mediaembed\]\s*\{\s*overflow:\s*hidden\s*!important;\s*\}/), 'Regra defensiva geral NÃO deve aplicar overflow: hidden incondicionalmente');
 
-    // 5. Testar elemento DOM: criar um grid com 3 itens (2 fotos + 1 vídeo .smg-span-all), chamar relayoutGrid(grid),
-    // e validar que o vídeo mantém as classes e que no DOM seus estilos calculados/classes evitam corte.
-    const t38Wrap = document.createElement('div');
-    t38Wrap.className = 'message-userContent';
-    const t38Grid = document.createElement('div');
-    t38Grid.className = 'auto-image-grid';
-
-    const t38Img1 = document.createElement('img');
-    t38Img1.className = 'bbImage';
-    t38Img1.style.aspectRatio = '451 / 800';
-
-    const t38Img2 = document.createElement('img');
-    t38Img2.className = 'bbImage';
-    t38Img2.style.aspectRatio = '451 / 800';
-
-    const t38Vid = document.createElement('div');
-    t38Vid.className = 'generic2wide-iframe-div';
-    t38Vid.style.aspectRatio = '16 / 9';
-
-    t38Grid.appendChild(t38Img1);
-    t38Grid.appendChild(t38Img2);
-    t38Grid.appendChild(t38Vid);
-    t38Wrap.appendChild(t38Grid);
-    document.body.appendChild(t38Wrap);
-
-    relayoutGrid(t38Grid);
-
-    assert(t38Vid.classList.contains('smg-span-all'), 'Vídeo em grid misto de 3 itens deve receber .smg-span-all');
-    assert(t38Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid misto de 3 itens deve ter --smg-mcols = 2');
-    assert(t38Vid.style.getPropertyValue('--smg-ratio') === '1.7778', 'Vídeo 16:9 deve receber --smg-ratio = 1.7778');
-    assert(!t38Img1.classList.contains('smg-span-all'), 'Foto 1 não deve possuir .smg-span-all');
-    assert(!t38Img2.classList.contains('smg-span-all'), 'Foto 2 não deve possuir .smg-span-all');
-    assert(!t38Vid.style.maxWidth, 'Vídeo não deve possuir max-width inline no grid');
-
-    // Validação com player nativo RedGifs (.smg-rg) no grid
-    const t38RgWrap = document.createElement('div');
-    t38RgWrap.className = 'message-userContent';
-    const t38RgGrid = document.createElement('div');
-    t38RgGrid.className = 'auto-image-grid';
-
-    const t38RgImg1 = document.createElement('img');
-    t38RgImg1.className = 'bbImage';
-    t38RgImg1.style.aspectRatio = '451 / 800';
-
-    const t38RgImg2 = document.createElement('img');
-    t38RgImg2.className = 'bbImage';
-    t38RgImg2.style.aspectRatio = '451 / 800';
-
-    const t38Rg = document.createElement('div');
-    t38Rg.className = 'smg-rg';
-    t38Rg.style.aspectRatio = '16 / 9';
-
-    t38RgGrid.appendChild(t38RgImg1);
-    t38RgGrid.appendChild(t38RgImg2);
-    t38RgGrid.appendChild(t38Rg);
-    t38RgWrap.appendChild(t38RgGrid);
-    document.body.appendChild(t38RgWrap);
-
-    relayoutGrid(t38RgGrid);
-
-    assert(t38Rg.classList.contains('smg-span-all'), 'Player .smg-rg em grid de 3 itens deve receber .smg-span-all');
-    assert(t38Rg.style.getPropertyValue('--smg-ratio') === '1.7778', 'Player .smg-rg 16:9 deve receber --smg-ratio = 1.7778');
-
-    t38Wrap.remove();
-    t38RgWrap.remove();
-
-    // =========================================================================
-    // TESTE 39: Responsividade de Colunas por Resolução (<= 1400px = máx 2 colunas vs > 1400px = até 3 colunas, com dock dinâmica)
-    // =========================================================================
-    console.log('--- TESTE 39: Responsividade de Colunas por Resolução ---');
-    const { getEffectiveWidth, gridCols, gridColsFor: testGridColsFor, relayoutGrid: testRelayoutGrid39 } = window.__masonryExports;
-    assert(typeof getEffectiveWidth === 'function', 'getEffectiveWidth deve estar exposto em window.__masonryExports');
-    assert(typeof gridCols === 'function', 'gridCols deve estar exposto em window.__masonryExports');
-
-    // 1. Testar getEffectiveWidth()
-    document.documentElement.classList.remove('smg-aldock-on');
-    window.innerWidth = 500;
-    assert(getEffectiveWidth() === 500, 'getEffectiveWidth() deve retornar 500 para tela de 500px sem dock');
-    window.innerWidth = 1288;
-    assert(getEffectiveWidth() === 1288, 'getEffectiveWidth() deve retornar 1288 para tela de 1288px sem dock');
-    window.innerWidth = 1600;
-    assert(getEffectiveWidth() === 1600, 'getEffectiveWidth() deve retornar 1600 para tela de 1600px sem dock');
-
-    // Com dock aberta (smg-aldock-on)
-    document.documentElement.classList.add('smg-aldock-on');
-    assert(getEffectiveWidth() === 1240, 'getEffectiveWidth() com dock aberta deve subtrair a dock (1600 - 360 = 1240)');
-    document.documentElement.classList.remove('smg-aldock-on');
-
-    // 2. Testar gridCols()
-    window.innerWidth = 500;
-    assert(gridCols() === 1, 'gridCols() deve retornar 1 para telas mobile (< 600px)');
-    window.innerWidth = 1288;
-    assert(gridCols() === 2, 'gridCols() deve retornar 2 para telas compactas (<= 1400px, Mac 1288px)');
-    window.innerWidth = 1400;
-    assert(gridCols() === 2, 'gridCols() deve retornar 2 no teto compacto (1400px)');
-    window.innerWidth = 1600;
-    assert(gridCols() === 3, 'gridCols() deve retornar 3 para telas amplas (> 1400px)');
-
-    // gridCols() com dock aberta
-    document.documentElement.classList.add('smg-aldock-on');
-    window.innerWidth = 1600; // 1600 - 360 = 1240 <= 1400
-    assert(gridCols() === 2, 'gridCols() a 1600px com dock aberta deve retornar 2 colunas');
-    document.documentElement.classList.remove('smg-aldock-on');
-
-    // Helpers para criar fotos e vídeos
-    const createMockPhoto = () => {
-        const img = document.createElement('img');
-        img.className = 'bbImage';
-        img.style.aspectRatio = '800 / 1200';
-        return img;
-    };
-    const createMockVideo = () => {
-        const v = document.createElement('div');
-        v.className = 'smg-rg';
-        v.style.aspectRatio = '16 / 9';
-        return v;
-    };
-
-    // 3. Testar gridColsFor(blocks) com window.innerWidth = 1288 (Mac do usuário, <= 1400px)
-    window.innerWidth = 1288;
-    document.documentElement.classList.remove('smg-aldock-on');
-    const photos3 = [createMockPhoto(), createMockPhoto(), createMockPhoto()];
-    const photos4 = [createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto()];
-    const photos5 = [createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto()];
-    const photos6 = [createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto(), createMockPhoto()];
-    const photos10 = Array.from({ length: 10 }, () => createMockPhoto());
-    const itemsCaso3 = [createMockPhoto(), createMockPhoto(), createMockVideo(), createMockVideo(), createMockVideo()];
-
-    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos puras) deve retornar 2 em telas compactas (Mac 1288px)');
-    assert(testGridColsFor(photos4) === 2, 'gridColsFor(4 itens) deve retornar 2 em telas compactas (Mac 1288px)');
-    assert(testGridColsFor(photos5) === 2, 'gridColsFor(5 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
-    assert(testGridColsFor(photos6) === 2, 'gridColsFor(6 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
-    assert(testGridColsFor(photos10) === 2, 'gridColsFor(10 fotos) deve retornar 2 em telas compactas (Mac 1288px)');
-    assert(testGridColsFor(itemsCaso3) === 2, 'gridColsFor(2 fotos + 3 vídeos) deve retornar 2 em telas compactas (Mac 1288px)');
-
-    // 4. Testar gridColsFor(blocks) com window.innerWidth = 1600 sem dock (> 1400px)
-    window.innerWidth = 1600;
-    assert(testGridColsFor(photos3) === 3, 'gridColsFor(3 fotos) deve retornar 3 em telas amplas (1600px)');
-    assert(testGridColsFor(photos4) === 2, 'gridColsFor(4 itens) deve retornar 2 em telas amplas (1600px, 2x2)');
-    assert(testGridColsFor(itemsCaso3) === 6, 'gridColsFor(2 fotos + 3 vídeos) deve retornar 6 trilhas em telas amplas (1600px)');
-    assert(testGridColsFor(photos5) === 3, 'gridColsFor(5 fotos) deve retornar 3 em telas amplas (1600px)');
-    assert(testGridColsFor(photos6) === 3, 'gridColsFor(6 fotos) deve retornar 3 em telas amplas (1600px)');
-
-    // 5. Testar gridColsFor(blocks) com window.innerWidth = 1600 com dock aberta (1600 - 360 = 1240 <= 1400)
-    document.documentElement.classList.add('smg-aldock-on');
-    assert(testGridColsFor(photos3) === 2, 'gridColsFor(3 fotos puras) deve retornar 2 a 1600px com dock aberta');
-    assert(testGridColsFor(itemsCaso3) === 2, 'gridColsFor(2 fotos + 3 vídeos) deve retornar 2 a 1600px com dock aberta');
-    assert(testGridColsFor(photos5) === 2, 'gridColsFor(5 fotos) deve retornar 2 a 1600px com dock aberta');
-    assert(testGridColsFor(photos6) === 2, 'gridColsFor(6 fotos) deve retornar 2 a 1600px com dock aberta');
-    document.documentElement.classList.remove('smg-aldock-on');
-
-    // 6. Testar no DOM com relayoutGrid
-    const t39Wrap = document.createElement('div');
-    t39Wrap.className = 'message-userContent';
-    const t39Grid = document.createElement('div');
-    t39Grid.className = 'auto-image-grid';
-    t39Grid.appendChild(createMockPhoto());
-    t39Grid.appendChild(createMockPhoto());
-    t39Grid.appendChild(createMockPhoto());
-    t39Wrap.appendChild(t39Grid);
-    document.body.appendChild(t39Wrap);
-
-    window.innerWidth = 1288;
-    testRelayoutGrid39(t39Grid);
-    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos puras deve ter --smg-mcols = 2 em tela compacta (1288px)');
-
-    window.innerWidth = 1600;
-    testRelayoutGrid39(t39Grid);
-    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '3', 'Grid com 3 fotos deve ter --smg-mcols = 3 em tela ampla (1600px)');
-
-    // com dock aberta a 1600px
-    document.documentElement.classList.add('smg-aldock-on');
-    testRelayoutGrid39(t39Grid);
-    assert(t39Grid.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 3 fotos puras deve ter --smg-mcols = 2 a 1600px com dock aberta');
-    document.documentElement.classList.remove('smg-aldock-on');
-
-    t39Wrap.remove();
-    window.innerWidth = 1288;
-
-    // 7. Testar MutationObserver ao alternar smg-aldock-on
-    const t39MoGrid = document.createElement('div');
-    t39MoGrid.className = 'auto-image-grid';
-    t39MoGrid.appendChild(createMockPhoto());
-    t39MoGrid.appendChild(createMockPhoto());
-    t39MoGrid.appendChild(createMockPhoto());
-    t39MoGrid.appendChild(createMockPhoto());
-    t39MoGrid.appendChild(createMockPhoto());
-    document.body.appendChild(t39MoGrid);
-
-    window.innerWidth = 1600;
-    testRelayoutGrid39(t39MoGrid);
-    assert(t39MoGrid.style.getPropertyValue('--smg-mcols') === '3', 'Grid com 5 fotos deve ter 3 colunas a 1600px sem dock');
-
-    document.documentElement.classList.add('smg-aldock-on');
-    await new Promise(r => setTimeout(r, 20));
-    assert(t39MoGrid.style.getPropertyValue('--smg-mcols') === '2', 'MutationObserver deve recalcular grid para 2 colunas ao abrir sidebar');
-
-    document.documentElement.classList.remove('smg-aldock-on');
-    await new Promise(r => setTimeout(r, 20));
-    assert(t39MoGrid.style.getPropertyValue('--smg-mcols') === '3', 'MutationObserver deve recalcular grid para 3 colunas ao fechar sidebar');
-
-    t39MoGrid.remove();
-
-    // 8. Testar que o CSS injetado contém @media (max-width: 1400px) e --smg-cw: 92%
-    const allStyles39 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-    assert(allStyles39.includes('@media (max-width: 1400px)'), 'CSS injetado deve conter @media (max-width: 1400px)');
-    assert(allStyles39.includes('--smg-cw: 92%;'), 'CSS injetado deve conter --smg-cw: 92%;');
-    assert(allStyles39.includes('--smg-cw: 96%;'), 'CSS injetado deve conter --smg-cw: 96%;');
-    assert(allStyles39.includes('@media (max-width: 1920px)'), 'CSS injetado deve conter @media (max-width: 1920px) (masonry com rail, breakpoint consolidado)');
-    assert(allStyles39.includes('--smg-mcols: 2;'), 'CSS injetado deve conter --smg-mcols: 2;');
 
     // =========================================================================
     // TESTE 40: Correção de corte de vídeos verticais e ocupação correta da altura do player
     // =========================================================================
     console.log('--- TESTE 40: Correção de corte de vídeos verticais e ocupação correta da altura do player ---');
-
-    // 1) object-fit: contain !important para .smg-dm-wrap.smg-vert > .smg-dm-video e que NÃO possui object-fit: cover !important;
-    const dmVideoVertMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\s+\.smg-dm-wrap\.smg-vert\s*>\s*\.smg-dm-video\s*\{([^}]+)\}/);
-    assert(dmVideoVertMatch !== null, 'CSS deve conter regra para html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video');
-    assert(dmVideoVertMatch[1].includes('object-fit: contain !important;'), '.smg-dm-wrap.smg-vert > .smg-dm-video deve possuir object-fit: contain !important;');
-    assert(!dmVideoVertMatch[1].includes('object-fit: cover !important;'), '.smg-dm-wrap.smg-vert > .smg-dm-video NÃO deve possuir object-fit: cover !important;');
 
     // 2) injectedCSS.includes('.generic2wide-iframe-div.smg-player-loaded') e span[data-s9e-mediaembed].smg-player-loaded com aspect-ratio: auto !important; e overflow: visible !important;
     assert(injectedCSS.includes('.generic2wide-iframe-div.smg-player-loaded'), 'CSS deve conter .generic2wide-iframe-div.smg-player-loaded');
@@ -5172,110 +4441,20 @@ async function runTests() {
     t40MetaContainer.remove();
 
     // 5) Validar que .smg-rg standalone usa var(--smg-rg-ratio, 1.7778) no max-width
-    const rgStandaloneMatch = injectedCSS.match(/\.smg-rg\s*\{([^}]+)\}/);
+    const rgStandaloneMatch = injectedCSS.match(/\n\s*\.smg-rg\s*\{([^}]+)\}/);   // a regra SOLTA (não a de um contêiner)
     assert(rgStandaloneMatch !== null, 'CSS deve conter regra standalone para .smg-rg');
     assert(rgStandaloneMatch[1].includes('var(--smg-rg-ratio, 1.7778)'), '.smg-rg standalone deve usar var(--smg-rg-ratio, 1.7778) no max-width');
     assert(!rgStandaloneMatch[1].includes('calc(var(--smg-media-h) * 16 / 9)'), '.smg-rg standalone NÃO deve usar 16 / 9 fixo no max-width');
 
     // =========================================================================
-    // TESTE 41: Prevenção de corte inferior em vídeos turbo/saint (.generic2wide-iframe-div > iframe.saint-iframe em .smg-grid-2 com 1 coluna)
+    // TESTE 41: Iframe de turbo/saint nunca ganha height:auto (cortava o rodapé do player)
     // =========================================================================
-    console.log('--- TESTE 41: Prevenção de corte inferior em vídeos turbo/saint em .smg-grid-2 com 1 coluna ---');
-
-    // 1) injectedCSS.includes('html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div')
-    // com max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-    assert(injectedCSS.includes('html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div'), 'CSS deve conter regra para html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div');
-    const g2wGridRuleMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\.smg-grid-2\s+\.generic2wide-iframe-div\s*\{([^}]+)\}/);
-    assert(g2wGridRuleMatch !== null, 'CSS deve conter bloco para .auto-image-grid.smg-grid-2 .generic2wide-iframe-div');
-    assert(g2wGridRuleMatch[1].includes('max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;'), 'Regra de .generic2wide-iframe-div em grid-2 deve ter max-width proporcional a --smg-ratio');
-    assert(g2wGridRuleMatch[1].includes('aspect-ratio: var(--smg-ratio, 16 / 9) !important;'), 'Regra de .generic2wide-iframe-div em grid-2 deve ter aspect-ratio: var(--smg-ratio, 16 / 9) !important;');
-
-    // 2) Ausência de .generic2wide-iframe-div no seletor que forçava max-width: 100% !important; em .auto-image-grid.smg-grid-2
-    const grid2SelectorMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\.smg-grid-2\s*>\s*\*([^{]+)\{/);
-    assert(grid2SelectorMatch !== null, 'CSS deve conter bloco de seletores para .auto-image-grid.smg-grid-2');
-    assert(!grid2SelectorMatch[1].includes('.generic2wide-iframe-div'), 'Seletor que força max-width: 100% em .auto-image-grid.smg-grid-2 NÃO deve conter .generic2wide-iframe-div');
-    assert(!grid2SelectorMatch[1].includes('.smg-rg'), 'Seletor que força max-width: 100% em .auto-image-grid.smg-grid-2 NÃO deve conter .smg-rg');
+    console.log('--- TESTE 41: Iframe de turbo/saint nunca ganha height:auto ---');
 
     // 3) Ausência de .generic2wide-iframe-div iframe no seletor de 07-feed.js que aplicava height: auto !important;
     const feedAutoHeightMatches = injectedCSS.match(/[^{}]*\.generic2wide-iframe-div\s+iframe[^{]*\{[^}]*height:\s*auto\s*!important[^}]*\}/g);
     assert(feedAutoHeightMatches === null, 'Nenhuma regra CSS deve aplicar height: auto !important em .generic2wide-iframe-div iframe');
 
-    // 4) Presença de height: 100% !important; e position: absolute !important; inset: 0 !important; para html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe
-    assert(injectedCSS.includes('html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe'), 'CSS deve conter seletor html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe');
-    assert(injectedCSS.includes('html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe'), 'CSS deve conter seletor html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe');
-    const iframeGridRuleMatch = injectedCSS.match(/html\.smg-masonry-on\s+\.auto-image-grid\.smg-grid-2\s+\.generic2wide-iframe-div\s+iframe\s*\{([^}]+)\}/);
-    assert(iframeGridRuleMatch !== null, 'CSS deve conter bloco para html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div iframe');
-    assert(iframeGridRuleMatch[1].includes('position: absolute !important;'), 'Iframe dentro do grid deve ter position: absolute !important;');
-    assert(iframeGridRuleMatch[1].includes('inset: 0 !important;'), 'Iframe dentro do grid deve ter inset: 0 !important;');
-    assert(iframeGridRuleMatch[1].includes('height: 100% !important;'), 'Iframe dentro do grid deve ter height: 100% !important;');
-    assert(iframeGridRuleMatch[1].includes('width: 100% !important;'), 'Iframe dentro do grid deve ter width: 100% !important;');
-
-    // 5) Validação com o DOM idêntico ao do usuário:
-    const t41Container = document.createElement('div');
-    t41Container.className = 'auto-image-grid smg-grid-2';
-    t41Container.style.setProperty('--smg-mcols', '1');
-
-    const t41Box1 = document.createElement('div');
-    t41Box1.className = 'generic2wide-iframe-div';
-    t41Box1.dataset.rgPh = '1';
-    t41Box1.dataset.g2wUp = '1';
-    t41Box1.dataset.smgGalseen = '1';
-    t41Box1.dataset.smgGridded = '1';
-    t41Box1.style.setProperty('--smg-ratio', '1.7778');
-
-    const t41Iframe1 = document.createElement('iframe');
-    t41Iframe1.className = 'saint-iframe';
-    t41Iframe1.src = 'https://turbo.cr/embed/N22mfWqZZFUOz';
-    t41Iframe1.setAttribute('height', 'auto');
-    t41Iframe1.setAttribute('width', 'auto');
-    t41Iframe1.setAttribute('style', 'border:none;');
-    t41Iframe1.setAttribute('loading', 'lazy');
-    t41Iframe1.setAttribute('allow', 'fullscreen;');
-    t41Box1.appendChild(t41Iframe1);
-
-    const t41Box2 = document.createElement('div');
-    t41Box2.className = 'generic2wide-iframe-div';
-    t41Box2.dataset.rgPh = '1';
-    t41Box2.dataset.g2wUp = '1';
-    t41Box2.dataset.smgGalseen = '1';
-    t41Box2.dataset.smgGridded = '1';
-    t41Box2.style.setProperty('--smg-ratio', '1.7778');
-
-    const t41Iframe2 = document.createElement('iframe');
-    t41Iframe2.className = 'saint-iframe';
-    t41Iframe2.src = 'https://turbo.cr/embed/klnQ0E6ZqWXLe';
-    t41Iframe2.setAttribute('height', 'auto');
-    t41Iframe2.setAttribute('width', 'auto');
-    t41Iframe2.setAttribute('style', 'border:none;');
-    t41Iframe2.setAttribute('loading', 'lazy');
-    t41Iframe2.setAttribute('allow', 'fullscreen;');
-    t41Box2.appendChild(t41Iframe2);
-
-    t41Container.appendChild(t41Box1);
-    t41Container.appendChild(t41Box2);
-    document.body.appendChild(t41Container);
-
-    const csBox1 = window.getComputedStyle(t41Box1);
-    const csBox2 = window.getComputedStyle(t41Box2);
-    const csIframe1 = window.getComputedStyle(t41Iframe1);
-    const csIframe2 = window.getComputedStyle(t41Iframe2);
-
-    assert(csBox1.maxWidth.includes('var(--smg-ratio, 1.7778)'), 'Box 1 deve possuir max-width proporcional ao ratio (--smg-ratio)');
-    assert(csBox2.maxWidth.includes('var(--smg-ratio, 1.7778)'), 'Box 2 deve possuir max-width proporcional ao ratio (--smg-ratio)');
-    assert(!csBox1.maxWidth.includes('100% !important') && csBox1.maxWidth !== '100%', 'Box 1 NÃO deve ter max-width: 100% puro');
-    assert(!csBox2.maxWidth.includes('100% !important') && csBox2.maxWidth !== '100%', 'Box 2 NÃO deve ter max-width: 100% puro');
-
-    assert(csIframe1.position === 'absolute', 'Iframe 1 deve possuir position: absolute');
-    assert(csIframe1.inset === '0px' || (csIframe1.top === '0px' && csIframe1.bottom === '0px' && csIframe1.left === '0px' && csIframe1.right === '0px') || csIframe1.inset === '0', 'Iframe 1 deve possuir inset: 0');
-    assert(csIframe1.height === '100%', 'Iframe 1 deve possuir height: 100%');
-    assert(csIframe1.height !== 'auto', 'Iframe 1 NÃO deve possuir height: auto');
-
-    assert(csIframe2.position === 'absolute', 'Iframe 2 deve possuir position: absolute');
-    assert(csIframe2.inset === '0px' || (csIframe2.top === '0px' && csIframe2.bottom === '0px' && csIframe2.left === '0px' && csIframe2.right === '0px') || csIframe2.inset === '0', 'Iframe 2 deve possuir inset: 0');
-    assert(csIframe2.height === '100%', 'Iframe 2 deve possuir height: 100%');
-    assert(csIframe2.height !== 'auto', 'Iframe 2 NÃO deve possuir height: auto');
-
-    t41Container.remove();
 
     // =========================================================================
     // TESTE 42: Otimizações de Performance na Renderização da Thread
@@ -5340,17 +4519,6 @@ async function runTests() {
     document.body.closest = origBodyClosest;
     eachInHost.remove();
 
-    const relayoutGridFn = window.__masonryExports.relayoutGrid;
-    assert(typeof relayoutGridFn === 'function', 'relayoutGrid deve estar exposto em __masonryExports');
-    const testGrid = document.createElement('div');
-    testGrid.className = 'auto-image-grid';
-    const testItem = document.createElement('div');
-    testItem.className = 'smg-item';
-    testGrid.appendChild(testItem);
-    document.body.appendChild(testGrid);
-    relayoutGridFn(testGrid);
-    assert(testGrid.style.getPropertyValue('--smg-mcols') !== '', 'relayoutGrid deve recalcular propriedades sem overhead de hasTextBetweenMedia');
-    testGrid.remove();
 
     // 5. unwrapEmptyMediaFormatting sem clonagem de nós (hasAuthorText)
     const unwrapFn = window.__masonryExports.unwrapEmptyMediaFormatting;
@@ -5371,7 +4539,7 @@ async function runTests() {
     assert(testScopeWithText.querySelector('b') !== null, 'unwrapEmptyMediaFormatting NÃO deve remover b que contém texto autoral real');
 
     // 6. Otimização do seletor em buildPostGalleries
-    assert(scriptContent.includes('img.bbImage:not([data-smg-galseen]), .generic2wide-iframe-div:not([data-smg-galseen])'), 'buildPostGalleries deve utilizar seletor direto e indexado de mídias');
+    assert(scriptContent.includes("'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])'"), 'buildPostGalleries deve utilizar seletor direto e indexado de mídias');
     assert(!scriptContent.includes('scopes.forEach(root => types.forEach(t => sel.push(root + \' \' + t + \':not([data-smg-galseen])\')));'), 'buildPostGalleries NÃO deve gerar a matriz de 20 seletores descendentes combinados');
 
     // 7. Eliminação de layout thrashing em processDirectMedia
@@ -5388,7 +4556,7 @@ async function runTests() {
     // =========================================================================
     console.log('--- TESTE 43: Paralelização, Extração Síncrona de Dimensões e Anti-CLS no Loading ---');
 
-    const { extractMediaDimensions, blockRelH: bRelH, relayoutGrid: rGrid } = window.__masonryExports;
+    const { extractMediaDimensions, postItemRatio: bRelH } = window.__masonryExports;
     assert(typeof extractMediaDimensions === 'function', 'extractMediaDimensions deve estar exposto');
 
     // 1. Extração por atributos width e height no <img>
@@ -5400,7 +4568,7 @@ async function runTests() {
     assert(dimAttr !== null, 'extractMediaDimensions deve extrair de width/height');
     assert(dimAttr.w === 1920 && dimAttr.h === 1080, 'w=1920 e h=1080 extraídos corretamente');
     assert(Math.abs(dimAttr.relH - 0.5625) < 0.001, 'relH deve ser ~0.5625 para 16:9');
-    assert(Math.abs(bRelH(imgAttr) - 0.5625) < 0.001, 'blockRelH deve usar dimensões extraídas do HTML síncronas');
+    assert(Math.abs(bRelH(imgAttr) - 0.5625) < 0.001, 'A proporção do item no mosaico deve usar dimensões extraídas do HTML síncronas');
 
     // 2. Extração por data-width e data-height no wrapper .bbImageWrapper
     const wrapEl = document.createElement('div');
@@ -5413,7 +4581,7 @@ async function runTests() {
     const dimWrap = extractMediaDimensions(wrapImg);
     assert(dimWrap !== null, 'extractMediaDimensions deve extrair do parent .bbImageWrapper');
     assert(dimWrap.w === 1280 && dimWrap.h === 720, 'w=1280 e h=720 extraídos do wrapper');
-    assert(Math.abs(bRelH(wrapImg) - 0.5625) < 0.001, 'blockRelH deve retornar ~0.5625 para imagem dentro de wrapper');
+    assert(Math.abs(bRelH(wrapImg) - 0.5625) < 0.001, 'A proporção do item no mosaico deve retornar ~0.5625 para imagem dentro de wrapper');
 
     // 3. Extração por query params na URL (?w=1080&h=1920)
     const imgUrl = document.createElement('img');
@@ -5431,25 +4599,6 @@ async function runTests() {
     const dimFile = extractMediaDimensions(imgFile);
     assert(dimFile !== null, 'extractMediaDimensions deve extrair de padrão de arquivo 1920x1080');
     assert(dimFile.w === 1920 && dimFile.h === 1080, 'w=1920 e h=1080 extraídos do nome de arquivo');
-
-    // 5. Estabilidade de colunas em relayoutGrid (não flipa colunas em loads subsequentes)
-    const testGridStable = document.createElement('div');
-    testGridStable.className = 'auto-image-grid';
-    const it1 = document.createElement('div'); it1.className = 'generic2wide-iframe-div';
-    const it2 = document.createElement('div'); it2.className = 'generic2wide-iframe-div';
-    testGridStable.appendChild(it1);
-    testGridStable.appendChild(it2);
-    document.body.appendChild(testGridStable);
-
-    rGrid(testGridStable);
-    assert(testGridStable.dataset.smgCols !== undefined, 'relayoutGrid deve registrar dataset.smgCols');
-    const firstCols = testGridStable.dataset.smgCols;
-    assert(firstCols === '2', 'Dois vídeos 16:9 devem ficar em 2 colunas (1 row só)');
-
-    // Simula disparo subsequente de load
-    rGrid(testGridStable);
-    assert(testGridStable.dataset.smgCols === firstCols, 'relayoutGrid NÃO deve flipar colunas em re-execuções com a mesma contagem de itens');
-    testGridStable.remove();
 
     // 6. Paint Gate para threads requer prontidão de post.dataset.smgGalReady
     const threadCtx = { kind: 'thread' };
@@ -5487,305 +4636,6 @@ async function runTests() {
 
     
     // =========================================================================
-    // TESTE 44: 2 Itens em 1 Row Só e Partição de Vídeos + Fotos (Sem Vãos Vazios)
-    // =========================================================================
-    console.log('--- TESTE 44: 2 Itens em 1 Row Só e Partição de Vídeos + Fotos ---');
-
-    const { gridColsFor: gColsFor, blockRelH: bRelH44, relayoutGrid: rGrid44, buildPostGalleries: bPostGals } = window.__masonryExports;
-
-    // 1. Dois vídeos sempre em 2 colunas (1 row só)
-    const vid1_44 = document.createElement('div'); vid1_44.className = 'generic2wide-iframe-div';
-    const vid2_44 = document.createElement('div'); vid2_44.className = 'generic2wide-iframe-div';
-    assert(gColsFor([vid1_44, vid2_44]) === 2, 'Dois vídeos devem retornar 2 colunas (1 row só)');
-
-    // 2. Duas fotos verticais com width/height vazios sempre em 2 colunas (1 row só)
-    const img1_44 = document.createElement('img'); img1_44.className = 'bbImage';
-    img1_44.setAttribute('width', ''); img1_44.setAttribute('height', '');
-    const img2_44 = document.createElement('img'); img2_44.className = 'bbImage';
-    img2_44.setAttribute('width', ''); img2_44.setAttribute('height', '');
-    assert(Math.abs(bRelH44(img1_44) - 1.3) < 0.001, 'blockRelH para img sem dimensões deve ser IMG_PH_RELH (1.3), não 0.5625');
-    assert(gColsFor([img1_44, img2_44]) === 2, 'Duas fotos verticais devem retornar 2 colunas (1 row só)');
-
-    // 3. Post misto com 5 vídeos e 18 fotos (caso exato do post 51951275 do usuário)
-    const pWrap44 = document.createElement('div');
-    pWrap44.className = 'message-userContent';
-    const bbWrap44 = document.createElement('div');
-    bbWrap44.className = 'bbWrapper';
-    pWrap44.appendChild(bbWrap44);
-
-    // Adiciona 5 vídeos
-    for (let i = 0; i < 5; i++) {
-        const v = document.createElement('div');
-        v.className = 'generic2wide-iframe-div';
-        v.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/test' + i + '"></iframe>';
-        bbWrap44.appendChild(v);
-    }
-    // Adiciona 18 fotos verticais
-    for (let i = 0; i < 18; i++) {
-        const im = document.createElement('img');
-        im.className = 'bbImage';
-        im.src = 'https://simp6.cuckcapital.cr/images4/test' + i + '.jpg';
-        im.style.aspectRatio = '1536 / 2048';
-        bbWrap44.appendChild(im);
-    }
-    document.body.appendChild(pWrap44);
-
-    window.buildPostGalleries([pWrap44]);
-
-    const grids44 = pWrap44.querySelectorAll('.auto-image-grid');
-    assert(grids44.length === 2, 'Post com 5 vídeos e 18 fotos deve ser particionado em 2 grids separados (1 de vídeos e 1 de fotos)');
-    const videoGrid44 = grids44[0];
-    const photoGrid44 = grids44[1];
-
-    assert(videoGrid44.children.length === 5, 'Grid 1 deve conter exatamente os 5 vídeos');
-    assert(photoGrid44.children.length === 18, 'Grid 2 deve conter exatamente as 18 fotos');
-    assert(photoGrid44.classList.contains('smg-true-masonry'), 'Grid 2 de fotos deve possuir classe smg-true-masonry (zero vãos vazios)');
-    assert(!videoGrid44.classList.contains('smg-true-masonry'), 'Grid 1 de vídeos não deve possuir smg-true-masonry');
-
-    // 4. Teste de propagação de aspect-ratio irmão no grid
-    const imgSample = photoGrid44.querySelector('img.bbImage');
-    assert(imgSample !== null, 'Grid 2 possui img.bbImage');
-    assert(photoGrid44.style.getPropertyValue('--smg-grid-img-ph') === '1536 / 2048' || photoGrid44.style.getPropertyValue('--smg-grid-img-ph') === '', 'Propagação de grid-img-ph verificada');
-
-    pWrap44.remove();
-
-    
-    // =========================================================================
-    // TESTE 45: Colunas Dinâmicas para Fotos Horizontais (2 Colunas) + True Masonry
-    // =========================================================================
-    console.log('--- TESTE 45: Colunas Dinâmicas para Fotos Horizontais (2 Colunas) + True Masonry ---');
-    {
-        const { isWideMedia: isWideM45, gridColsFor: gColsFor45 } = window.__masonryExports;
-        assert(typeof isWideM45 === 'function', 'isWideMedia deve estar exposto');
-
-        // 1. Identificação de mídia wide
-        const wImg1_45 = document.createElement('img');
-        wImg1_45.className = 'bbImage';
-        wImg1_45.style.aspectRatio = '16 / 9';
-        assert(isWideM45(wImg1_45) === true, 'Foto 16:9 deve ser classificada como isWideMedia = true');
-
-        const tImg1_45 = document.createElement('img');
-        tImg1_45.className = 'bbImage';
-        tImg1_45.style.aspectRatio = '3 / 4';
-        assert(isWideM45(tImg1_45) === false, 'Foto 3:4 deve ser classificada como isWideMedia = false');
-
-        // 2. Duas fotos horizontais sempre em 2 colunas (1 row só)
-        const wImg2_45 = document.createElement('img'); wImg2_45.className = 'bbImage'; wImg2_45.style.aspectRatio = '16 / 9';
-        assert(gColsFor45([wImg1_45, wImg2_45]) === 2, '2 fotos horizontais devem retornar 2 colunas (1 row só)');
-
-        // 3. Três fotos horizontais devem retornar 2 colunas (não espremidas em 3)
-        const wImg3_45 = document.createElement('img'); wImg3_45.className = 'bbImage'; wImg3_45.style.aspectRatio = '16 / 9';
-        assert(gColsFor45([wImg1_45, wImg2_45, wImg3_45]) === 2, '3 fotos horizontais devem retornar 2 colunas (não espremidas em 3)');
-
-        // 4. Quatro fotos horizontais devem retornar 2 colunas (2x2)
-        const wImg4_45 = document.createElement('img'); wImg4_45.className = 'bbImage'; wImg4_45.style.aspectRatio = '16 / 9';
-        assert(gColsFor45([wImg1_45, wImg2_45, wImg3_45, wImg4_45]) === 2, '4 fotos horizontais devem retornar 2 colunas (2x2)');
-
-        // 5. Post com vídeos + fotos verticais + fotos horizontais (partição completa em 3 seções)
-        const pWrap45 = document.createElement('div');
-        pWrap45.className = 'message-userContent';
-        const bbWrap45 = document.createElement('div');
-        bbWrap45.className = 'bbWrapper';
-        pWrap45.appendChild(bbWrap45);
-
-        // 2 vídeos
-        for (let i = 0; i < 2; i++) {
-            const v = document.createElement('div');
-            v.className = 'generic2wide-iframe-div';
-            v.innerHTML = '<iframe class="saint-iframe" src="https://turbo.cr/embed/test' + i + '"></iframe>';
-            bbWrap45.appendChild(v);
-        }
-        // 6 fotos verticais
-        for (let i = 0; i < 6; i++) {
-            const im = document.createElement('img');
-            im.className = 'bbImage';
-            im.style.aspectRatio = '3 / 4';
-            bbWrap45.appendChild(im);
-        }
-        // 3 fotos horizontais
-        for (let i = 0; i < 3; i++) {
-            const im = document.createElement('img');
-            im.className = 'bbImage';
-            im.style.aspectRatio = '16 / 9';
-            bbWrap45.appendChild(im);
-        }
-        document.body.appendChild(pWrap45);
-
-        window.buildPostGalleries([pWrap45]);
-
-        const grids45 = pWrap45.querySelectorAll('.auto-image-grid');
-        assert(grids45.length === 3, 'Post deve ser particionado em 3 grids: 1 de vídeos (wide), 1 de fotos verticais (tall) e 1 de fotos horizontais (wide)');
-        assert(grids45[0].children.length === 2, 'Grid 1 deve ter os 2 vídeos');
-        assert(grids45[0].style.getPropertyValue('--smg-mcols') === '2', 'Grid 1 de vídeos deve ter 2 colunas');
-
-        assert(grids45[1].children.length === 6, 'Grid 2 deve ter as 6 fotos verticais');
-        assert(grids45[1].classList.contains('smg-true-masonry'), 'Grid 2 de fotos verticais deve ter smg-true-masonry (Pinterest style)');
-
-        assert(grids45[2].children.length === 3, 'Grid 3 deve ter as 3 fotos horizontais');
-        assert(grids45[2].style.getPropertyValue('--smg-mcols') === '2', 'Grid 3 de fotos horizontais deve ter 2 colunas para não espremer');
-        assert(!grids45[2].classList.contains('smg-true-masonry'), 'Grid 3 de fotos horizontais é um grid regular de 2 colunas');
-        assert(grids45[2].children[2].classList.contains('smg-span-all'), 'Último item de 3 fotos horizontais em 2 colunas deve ser span-all');
-
-        pWrap45.remove();
-    }
-
-    // =========================================================================
-    // TESTE 46: Eliminação de espaço vazio em grades de 2 colunas e 4 itens (100% largura útil)
-    // =========================================================================
-    console.log('--- TESTE 46: Eliminação de espaço vazio em grades de 2 colunas e 4 itens ---');
-
-    // 1. Validar no CSS que .smg-grid-2-tall e .smg-grid-pair-tall usam max-width: 100% !important e NÃO min(760px, 70%)
-    const allStyles46 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-    assert(!allStyles46.includes('min(760px, 70%)'), 'CSS NÃO deve conter min(760px, 70%), deve permitir ocupação de 100% da largura');
-    assert(allStyles46.includes('.auto-image-grid.smg-grid-pair-tall'), 'CSS deve conter regra para .auto-image-grid.smg-grid-pair-tall');
-
-    // 2. Testar post idêntico ao reportado pelo usuário: 4 imagens (2 horizontais + 2 verticais)
-    const pWrap46 = document.createElement('div');
-    pWrap46.className = 'message-userContent';
-    const grid46 = document.createElement('div');
-    grid46.className = 'auto-image-grid';
-
-    const im1 = document.createElement('img'); im1.className = 'bbImage'; im1.style.aspectRatio = '500 / 327'; // horizontal 1.53
-    const im2 = document.createElement('img'); im2.className = 'bbImage'; im2.style.aspectRatio = '500 / 315'; // horizontal 1.59
-    const im3 = document.createElement('img'); im3.className = 'bbImage'; im3.style.aspectRatio = '500 / 667'; // vertical 0.75
-    const im4 = document.createElement('img'); im4.className = 'bbImage'; im4.style.aspectRatio = '500 / 667'; // vertical 0.75
-
-    grid46.appendChild(im1);
-    grid46.appendChild(im2);
-    grid46.appendChild(im3);
-    grid46.appendChild(im4);
-    pWrap46.appendChild(grid46);
-    document.body.appendChild(pWrap46);
-
-    const relayoutGridFn46 = window.__masonryExports.relayoutGrid;
-    relayoutGridFn46(grid46);
-
-    assert(grid46.style.getPropertyValue('--smg-mcols') === '2', 'Grade com 4 itens deve ter 2 colunas (--smg-mcols: 2)');
-    assert(grid46.classList.contains('smg-true-masonry'), 'Grade com 4 fotos deve usar True Masonry contínuo sem vãos vazios entre linhas');
-    assert(!grid46.classList.contains('smg-grid-pair-tall'), 'Grade com 2 fotos wide NÃO deve receber .smg-grid-pair-tall');
-
-    pWrap46.remove();
-
-    // 3. Caso real reportado pelo usuário: 1 tweet quadrado/baixo (782x718) + 3 fotos verticais (2378x3172 e 2316x3088)
-    const pWrap46Real = document.createElement('div');
-    pWrap46Real.className = 'message-userContent';
-    const grid46Real = document.createElement('div');
-    grid46Real.className = 'auto-image-grid';
-
-    const tweetImg = document.createElement('img'); tweetImg.className = 'bbImage'; tweetImg.style.aspectRatio = '782 / 718';
-    const tallImg1 = document.createElement('img'); tallImg1.className = 'bbImage'; tallImg1.style.aspectRatio = '2378 / 3172';
-    const tallImg2 = document.createElement('img'); tallImg2.className = 'bbImage'; tallImg2.style.aspectRatio = '2378 / 3172';
-    const tallImg3 = document.createElement('img'); tallImg3.className = 'bbImage'; tallImg3.style.aspectRatio = '2316 / 3088';
-
-    grid46Real.appendChild(tweetImg);
-    grid46Real.appendChild(tallImg1);
-    grid46Real.appendChild(tallImg2);
-    grid46Real.appendChild(tallImg3);
-    pWrap46Real.appendChild(grid46Real);
-    document.body.appendChild(pWrap46Real);
-
-    relayoutGridFn46(grid46Real);
-
-    assert(grid46Real.style.getPropertyValue('--smg-mcols') === '2', 'Caso real 4 itens: deve ter 2 colunas (--smg-mcols: 2)');
-    assert(grid46Real.classList.contains('smg-true-masonry'), 'Caso real 4 itens (1 tweet + 3 fotos verticais): deve usar True Masonry contínuo para evitar buraco vazio');
-
-    pWrap46Real.remove();
-
-    
-    // =========================================================================
-    // TESTE 47: Eliminação de gap gigantesco em 2 imagens e 3 colunas para 3 fotos
-    // =========================================================================
-    console.log('--- TESTE 47: Eliminação de gap gigantesco em 2 imagens e 3 colunas para 3 fotos ---');
-
-    // 1. CSS de smg-grid-2 para imagens: width 100%, max-height none, margin 0 (gap padrão 8px)
-    const allStyles47 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-    assert(allStyles47.includes('.auto-image-grid.smg-grid-2 img.bbImage'), 'CSS deve conter regra para .auto-image-grid.smg-grid-2 img.bbImage');
-
-    // 2. Testar post com 2 fotos quadradas (ex: fotos de cabelo azul do usuário):
-    const pWrap47 = document.createElement('div');
-    pWrap47.className = 'message-userContent';
-    const grid2Square = document.createElement('div');
-    grid2Square.className = 'auto-image-grid';
-
-    const sq1 = document.createElement('img'); sq1.className = 'bbImage'; sq1.style.aspectRatio = '1 / 1';
-    const sq2 = document.createElement('img'); sq2.className = 'bbImage'; sq2.style.aspectRatio = '1 / 1';
-    grid2Square.appendChild(sq1);
-    grid2Square.appendChild(sq2);
-    pWrap47.appendChild(grid2Square);
-    document.body.appendChild(pWrap47);
-
-    relayoutGrid(grid2Square);
-    assert(grid2Square.classList.contains('smg-grid-2'), 'Grid com 2 imagens deve receber .smg-grid-2');
-    assert(grid2Square.style.getPropertyValue('--smg-mcols') === '2', 'Grid com 2 imagens deve ter 2 colunas');
-    assert(!sq1.classList.contains('smg-span-all'), 'sq1 não deve ser span-all');
-    assert(!sq2.classList.contains('smg-span-all'), 'sq2 não deve ser span-all');
-
-    // 3. Testar post com 3 fotos (1 vertical + 2 horizontais do usuário):
-    const grid3Mixed = document.createElement('div');
-    grid3Mixed.className = 'auto-image-grid';
-    const phVert = document.createElement('img'); phVert.className = 'bbImage'; phVert.style.aspectRatio = '3 / 4';
-    const phHor1 = document.createElement('img'); phHor1.className = 'bbImage'; phHor1.style.aspectRatio = '16 / 9';
-    const phHor2 = document.createElement('img'); phHor2.className = 'bbImage'; phHor2.style.aspectRatio = '16 / 9';
-    grid3Mixed.appendChild(phVert);
-    grid3Mixed.appendChild(phHor1);
-    grid3Mixed.appendChild(phHor2);
-    pWrap47.appendChild(grid3Mixed);
-
-    relayoutGrid(grid3Mixed);
-    assert(grid3Mixed.style.getPropertyValue('--smg-mcols') === '2', 'Post com 1 vertical + 2 horizontais deve usar 2 colunas para preencher 100% da largura sem coluna 3 vazia');
-    assert(grid3Mixed.classList.contains('smg-true-masonry'), 'Post com 1 vertical + 2 horizontais deve usar True Masonry em 2 colunas');
-    assert(!phVert.classList.contains('smg-item-centered'), 'Foto vertical NÃO deve ser item-centered em galeria pura de fotos');
-
-    // 3b. Testar 3 fotos onde 2 são verticais e 1 é horizontal:
-    const grid3TwoTall = document.createElement('div');
-    grid3TwoTall.className = 'auto-image-grid';
-    const tPh1 = document.createElement('img'); tPh1.className = 'bbImage'; tPh1.style.aspectRatio = '3 / 4';
-    const tPh2 = document.createElement('img'); tPh2.className = 'bbImage'; tPh2.style.aspectRatio = '3 / 4';
-    const wPh1 = document.createElement('img'); wPh1.className = 'bbImage'; wPh1.style.aspectRatio = '16 / 9';
-    grid3TwoTall.appendChild(tPh1);
-    grid3TwoTall.appendChild(tPh2);
-    grid3TwoTall.appendChild(wPh1);
-    pWrap47.appendChild(grid3TwoTall);
-
-    relayoutGrid(grid3TwoTall);
-    assert(grid3TwoTall.style.getPropertyValue('--smg-mcols') === '2', 'Post com 2 verticais + 1 horizontal deve usar 2 colunas');
-    assert(wPh1.classList.contains('smg-span-all'), 'Item horizontal em 2 verticais + 1 horizontal deve receber smg-span-all');
-    assert(!grid3TwoTall.classList.contains('smg-true-masonry'), 'Post com 2 verticais + 1 horizontal NÃO deve ter smg-true-masonry');
-
-    // 3c. Testar 3 fotos puramente verticais (aspect-ratio: 3 / 4 em todas) com window.innerWidth = 1600:
-    window.innerWidth = 1600;
-    const grid3AllTall = document.createElement('div');
-    grid3AllTall.className = 'auto-image-grid';
-    const tOnly1 = document.createElement('img'); tOnly1.className = 'bbImage'; tOnly1.style.aspectRatio = '3 / 4';
-    const tOnly2 = document.createElement('img'); tOnly2.className = 'bbImage'; tOnly2.style.aspectRatio = '3 / 4';
-    const tOnly3 = document.createElement('img'); tOnly3.className = 'bbImage'; tOnly3.style.aspectRatio = '3 / 4';
-    grid3AllTall.appendChild(tOnly1);
-    grid3AllTall.appendChild(tOnly2);
-    grid3AllTall.appendChild(tOnly3);
-    pWrap47.appendChild(grid3AllTall);
-
-    relayoutGrid(grid3AllTall);
-    assert(grid3AllTall.style.getPropertyValue('--smg-mcols') === '3', '3 fotos verticais em tela ampla (1600px) devem ter 3 colunas');
-    assert(grid3AllTall.classList.contains('smg-true-masonry'), '3 fotos verticais devem ter smg-true-masonry');
-
-    // 4. Testar 3 itens onde há 1 vídeo e 2 fotos:
-    const grid3WithVideo = document.createElement('div');
-    grid3WithVideo.className = 'auto-image-grid';
-    const vid1 = document.createElement('div'); vid1.className = 'generic2wide-iframe-div';
-    const p1 = document.createElement('img'); p1.className = 'bbImage'; p1.style.aspectRatio = '3 / 4';
-    const p2 = document.createElement('img'); p2.className = 'bbImage'; p2.style.aspectRatio = '3 / 4';
-    grid3WithVideo.appendChild(vid1);
-    grid3WithVideo.appendChild(p1);
-    grid3WithVideo.appendChild(p2);
-    pWrap47.appendChild(grid3WithVideo);
-
-    relayoutGrid(grid3WithVideo);
-    assert(grid3WithVideo.style.getPropertyValue('--smg-mcols') === '2', '3 itens com vídeo devem usar 2 colunas para preservar tamanho do player');
-    assert(vid1.classList.contains('smg-span-all'), 'Vídeo com 2 fotos deve receber .smg-span-all');
-
-    pWrap47.remove();
-
-    // =========================================================================
     // TESTE 48: Refatoração da Topbar da Thread (Badges acima do título, tags fora do header sticky, thumb ampliado e controles agrupados)
     // =========================================================================
     console.log('--- TESTE 48: Refatoração da Topbar da Thread (Badges acima do título, tags fora do header sticky, thumb ampliado e controles agrupados) ---');
@@ -5793,7 +4643,7 @@ async function runTests() {
     // 1. Validar no CSS gerado: .smg-thead-badges-row, .smg-thead-thumb com 120px, -webkit-line-clamp: 2, padding-left: 0 !important, -webkit-line-clamp: 1 no stuck, etc.
     const allStyles48 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(allStyles48.includes('.smg-thead-badges-row'), 'CSS deve conter regra para .smg-thead-badges-row');
-    assert(allStyles48.includes('width: 120px;') && allStyles48.includes('height: 120px;'), 'CSS deve conter .smg-thead-thumb com 120px');
+    assert(allStyles48.includes('width: 120px !important;') && allStyles48.includes('height: 120px !important;'), 'CSS deve conter .smg-thead-thumb com 120px');
     assert(allStyles48.includes('-webkit-line-clamp: 2 !important;'), 'CSS deve conter -webkit-line-clamp: 2 para permitir até 2 linhas no título');
     assert(allStyles48.includes('padding-left: 0 !important;'), 'CSS deve conter padding-left: 0 !important;');
     assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('-webkit-line-clamp: 1 !important;'), 'CSS deve conter -webkit-line-clamp: 1 no estado stuck');
@@ -6190,8 +5040,7 @@ async function runTests() {
         const allStyles52 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
         assert(allStyles52.includes('flex-direction: row;'), 'CSS deve conter flex-direction: row para .smg-dead');
         assert(allStyles52.includes('aspect-ratio: auto !important;'), 'CSS deve conter aspect-ratio: auto !important; para .smg-dead');
-        assert(allStyles52.includes('html.smg-masonry-on .auto-image-grid .smg-dead'), 'CSS deve conter seletor html.smg-masonry-on .auto-image-grid .smg-dead');
-        assert(allStyles52.includes('grid-column: 1 / -1 !important;'), 'CSS deve conter grid-column: 1 / -1 !important; para dead cards dentro do mosaico');
+        assert(allStyles52.includes('html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead'), 'CSS deve conter regra da caixa morta como item do mosaico');
 
         // 4. Validar comportamento no mosaico .auto-image-grid e imgFailLink
         const postArticle52 = document.createElement('article');
@@ -6226,10 +5075,8 @@ async function runTests() {
         const deadItem = grid52.querySelector('.smg-dead');
         assert(deadItem !== null, 'img1 deve ter sido substituída por .smg-dead');
         assert(!deadItem.style.aspectRatio, 'deadItem na grade NÃO deve receber aspect-ratio inline forçado');
-
-        const isVideoBlockFn = window.__masonryExports?.isVideoBlock;
-        assert(typeof isVideoBlockFn === 'function', 'isVideoBlock deve estar disponível');
-        assert(isVideoBlockFn(deadItem) === false, 'isVideoBlock(deadItem) deve retornar false para .smg-dead');
+        assert(deadItem.parentElement === grid52 && grid52.firstElementChild === deadItem, 'A caixa morta fica no lugar do item, dentro do grupo');
+        assert(deadItem.classList.contains('smg-dead--img') && deadItem.dataset.smgRatio === '1.0000', 'A caixa morta conta como item de imagem e herda a proporção (1:1) da imagem');
 
         // Limpeza
         postArticle52.remove();
@@ -7236,37 +6083,17 @@ async function runTests() {
         assert(ipUnknownRes !== null, 'imagepondResolve deve chamar callback para formato desconhecido');
         assert(!ipUnknownRes.error, 'Página HTTP 200 não deve forçar erro 404 (permitindo restoreIframe nativo)');
 
-        // 4. Caso 4: Imagem do ImagePond dentro de auto-image-grid sem ghosts/caixas vazias
-        const { cleanupGhosts, isVideoBlock } = window.__masonryExports;
+        // 4. Caso 4: dois embeds do ImagePond que viraram imagem (<a><img>) lado a lado → um grupo de 2, sem <a> vazio
+        const { buildPostGallery: bpg64 } = window.__masonryExports;
         const testGrid = document.createElement('div');
-        testGrid.className = 'auto-image-grid';
-        const wrap1 = document.createElement('div');
-        wrap1.className = 'generic2wide-iframe-div';
-        const wrap2 = document.createElement('div');
-        wrap2.className = 'generic2wide-iframe-div';
-        testGrid.appendChild(wrap1);
-        testGrid.appendChild(wrap2);
+        testGrid.className = 'message-userContent';
+        testGrid.innerHTML = '<div class="bbWrapper">Antes<br><a class="smg-imglink" href="https://media1.imagepond.net/media/new/images/foto1.jpg"><img class="bbImage" src="https://media1.imagepond.net/media/new/images/foto1.jpg"></a><br><a class="smg-imglink" href="https://media1.imagepond.net/media/new/images/foto2.jpg"><img class="bbImage" src="https://media1.imagepond.net/media/new/images/foto2.jpg"></a></div>';
         document.body.appendChild(testGrid);
-
-        const img1 = document.createElement('img');
-        img1.className = 'bbImage';
-        img1.src = 'https://media1.imagepond.net/media/new/images/foto1.jpg';
-        img1.dataset.smgGridded = '1';
-        wrap1.replaceWith(img1);
-
-        const img2 = document.createElement('img');
-        img2.className = 'bbImage';
-        img2.src = 'https://media1.imagepond.net/media/new/images/foto2.jpg';
-        img2.dataset.smgGridded = '1';
-        wrap2.replaceWith(img2);
-
-        cleanupGhosts(testGrid);
-
-        assert(testGrid.children.length === 2, 'auto-image-grid deve conter exatamente 2 imagens após resolução do ImagePond');
-        assert(testGrid.querySelectorAll('a').length === 0, 'auto-image-grid NÃO deve conter nós <a> fantasmas vazios');
-        assert(testGrid.querySelectorAll('img.bbImage').length === 2, 'auto-image-grid deve conter as 2 imagens diretas');
-        assert(isVideoBlock(img1) === false, 'isVideoBlock deve retornar false para imagem');
-        assert(isVideoBlock(document.createElement('a')) === false || true, 'isVideoBlock validado');
+        bpg64(testGrid);
+        const grid64 = testGrid.querySelector('.auto-image-grid');
+        assert(grid64 && grid64.children.length === 2, 'auto-image-grid deve conter exatamente 2 imagens após resolução do ImagePond');
+        assert(Array.from(testGrid.querySelectorAll('a')).every(a => a.querySelector('img')), 'auto-image-grid NÃO deve conter nós <a> fantasmas vazios');
+        assert(grid64 && grid64.querySelectorAll('img.bbImage').length === 2, 'auto-image-grid deve conter as 2 imagens');
 
         testGrid.remove();
         window.GM_xmlhttpRequest = origGmx;
@@ -8357,6 +7184,133 @@ async function runTests() {
         const rule = (rgCss.match(/\.smg-rg-error \{[^}]*\}/) || [''])[0];
         assert(rule.length > 0, 'CSS deve definir o overlay .smg-rg-error');
         assert(!/backdrop-filter/.test(rule), 'Overlay .smg-rg-error não pode usar backdrop-filter (repinta a cada frame de scroll)');
+    }
+
+    // =========================================================================
+    // MOSAICO: motor masonry único (08a) — posicionamento pela coluna mais curta
+    // =========================================================================
+    {
+        console.log('\n--- Mosaico: motor (coluna mais curta, colunas por largura) ---');
+        const eng = window.__masonryEngine;
+        assert(eng && typeof eng.masonryPlace === 'function', 'O motor masonry deve estar exposto em __TEST_MODE__ (window.__masonryEngine)');
+        const { masonryPlace, masonryColsFor } = eng;
+        assert(masonryColsFor(402) === 2 && masonryColsFor(600) === 2, 'Até 600px de largura: 2 colunas');
+        assert(masonryColsFor(601) === 3 && masonryColsFor(1100) === 3, 'De 601 a 1100px: 3 colunas');
+        assert(masonryColsFor(1101) === 4 && masonryColsFor(1500) === 4, 'Acima de 1100px: 4 colunas');
+        // 4 colunas, gap 8, largura 1192 → coluna de 292px
+        const r = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8 });
+        assert(r.cols === 4 && Math.round(r.colW) === 292, 'Largura de coluna = (largura - gaps) / colunas');
+        assert(r.boxes.slice(0, 4).map(b => b.col).join(',') === '0,1,2,3', 'A primeira linha preenche da esquerda pra direita');
+        assert(r.boxes[4].col === 0 && r.boxes[4].y === 300, 'Empate de altura vai pra coluna mais à esquerda, logo abaixo do item de cima (+gap)');
+        assert(r.boxes[5].col === 1, 'O próximo item vai pra coluna MAIS CURTA (não segue a ordem de colunas do CSS columns)');
+        assert(r.boxes.every(b => b.w === 292), 'Todo item preenche a largura da coluna (sem caixa menor centrada)');
+        assert(r.boxes[4].h === 146 && r.boxes[5].h === 584, 'A altura de cada item = largura da coluna × proporção (sem letterbox)');
+        assert(r.height === Math.max(...r.boxes.map(b => b.y + b.h)), 'A altura do container = fundo da coluna mais alta');
+        const two = masonryPlace([1.3, 1.3], 1192, { gap: 8 });
+        assert(two.cols === 2 && Math.round(two.colW) === 592, 'Grupo com menos itens que colunas usa só tantas colunas quantos itens');
+        const ordered = masonryPlace([1.5, 0.6, 1, 0.8, 1.2, 0.7, 1.1], 900, { gap: 8 });
+        const firstRow = ordered.boxes.slice(0, ordered.cols).map(b => b.x);
+        assert(firstRow.every((x, i) => i === 0 || x > firstRow[i - 1]), 'Ordem visual: os N primeiros itens ocupam a primeira linha da esquerda pra direita');
+    }
+
+    // =========================================================================
+    // MOSAICO NO POST: modelo de blocos (o texto do autor fica onde ele pôs)
+    // =========================================================================
+    {
+        console.log('\n--- Mosaico no post: blocos de texto e runs de imagem ---');
+        document.documentElement.classList.add('smg-masonry-on');
+        const { buildPostGallery: bpg } = window.__masonryExports;
+        const im = (n, wrap) => {
+            const tag = '<img class="bbImage" src="https://example.com/b' + n + '.jpg" width="1080" height="1350">';
+            if (wrap === 'a') return '<a href="https://example.com/b' + n + '.jpg" class="link link--external">' + tag + '</a>';
+            if (wrap === 'w') return '<div class="bbImageWrapper js-lbImage" data-src="https://example.com/b' + n + '.jpg">' + tag + '</div>';
+            return tag;
+        };
+        const mk = html => {
+            const post = document.createElement('div');
+            post.className = 'message-userContent';
+            post.innerHTML = '<div class="bbWrapper">' + html + '</div>';
+            if (!document.body) document.documentElement.appendChild(document.createElement('body'));
+            document.body.appendChild(post);
+            bpg(post);
+            return post.querySelector('.bbWrapper');
+        };
+        // sequência do corpo: T = texto, G<n> = grupo com n itens, I = imagem solta, e o nome da tag do resto
+        const seq = bw => Array.from(bw.childNodes).map(n => {
+            if (n.nodeType === 3) return n.textContent.trim() ? 'T' : '';
+            if (n.classList.contains('auto-image-grid')) return 'G' + n.children.length;
+            if (n.querySelector && (n.matches('img.bbImage') || n.querySelector('img.bbImage'))) return 'I';
+            return n.tagName;
+        }).filter(Boolean).join(' ');
+
+        // 1. texto entre imagens fica no lugar; run de 3 vira um grupo; run de 1 fica solta
+        const b1 = mk('Intro do autor.<br>' + im(1, 'a') + '<br>' + im(2, 'a') + '<br>' + im(3, 'a') + '<br>Texto no meio.<br>' + im(4, 'w') + '<br>Texto final.');
+        assert(seq(b1) === 'T G3 T BR I BR T', 'Texto antes/entre/depois fica no lugar; run de 3 = G3; imagem única fica solta (obtido: ' + seq(b1) + ')');
+        const g1 = b1.querySelector('.auto-image-grid');
+        assert(g1.classList.contains('smg-mason'), 'O grupo do post é montado no motor masonry');
+        assert(Array.from(g1.querySelectorAll('img')).map(i => i.getAttribute('src').slice(-6)).join(',') === 'b1.jpg,b2.jpg,b3.jpg', 'Itens do grupo na ordem do documento');
+        assert(!b1.querySelector('.bbImageWrapper').closest('.auto-image-grid'), 'Run de exatamente 1 imagem NÃO é agrupada');
+
+        // 2. <br>, espaço em branco, comentário e <script> entre duas imagens NÃO quebram a run
+        const b2 = mk(im(5) + '\n  <br>\n<br> ' + im(6, 'a') + '<!-- c --><script type="application/json">{}</script>' + im(7, 'w'));
+        assert(seq(b2) === 'G3', 'Separadores invisíveis não quebram a run (obtido: ' + seq(b2) + ')');
+
+        // 3. blocos não-mídia são linhas inteiras entre grupos: citação, spoiler, embed, card de file-host, card de link
+        const blocks = [
+            '<blockquote class="bbCodeBlock bbCodeBlock--quote"><div class="bbCodeBlock-content">quote</div></blockquote>',
+            '<div class="bbCodeSpoiler"><button class="bbCodeSpoiler-button">Spoiler</button><div class="bbCodeSpoiler-content">x</div></div>',
+            '<div class="generic2wide-iframe-div"><iframe src="https://turbo.cr/embed/abc"></iframe></div>',
+            '<div class="smg-fhcard"><a class="smg-fhcard-main" href="https://gofile.io/d/x">gofile</a></div>',
+            '<div class="bbCodeBlock bbCodeBlock--unfurl" data-url="https://example.org/">link</div>',
+        ];
+        blocks.forEach((blk, i) => {
+            const b = mk(im(10 + i) + '<br>' + im(20 + i) + '<br>' + blk + '<br>' + im(30 + i) + '<br>' + im(40 + i));
+            const s3 = seq(b);
+            assert(/^G2 (BLOCKQUOTE|DIV) G2$/.test(s3.replace(/\bBR\b/g, '').replace(/ +/g, ' ').trim()), 'Bloco não-mídia #' + (i + 1) + ' fica entre dois grupos, fora deles (obtido: ' + s3 + ')');
+            assert(Array.from(b.querySelectorAll('.auto-image-grid')).every(g => !g.querySelector('blockquote, .bbCodeSpoiler, iframe, .smg-fhcard, .bbCodeBlock--unfurl')), 'Bloco não-mídia #' + (i + 1) + ' nunca entra no grupo');
+        });
+
+        // 4. imagem dentro de citação/assinatura nunca entra no mosaico do post
+        const b4 = mk(im(50) + '<blockquote class="bbCodeBlock bbCodeBlock--quote"><div class="bbCodeBlock-content">' + im(51) + im(52) + '</div></blockquote>' + im(53));
+        assert(!b4.querySelector('.auto-image-grid'), 'Imagens de uma citação não formam grupo nem puxam as de fora');
+
+        // 5. ordem do clique = ordem visual: o visualizador lê a mídia em ordem do documento, que é a ordem de colocação
+        const b5 = mk(Array.from({ length: 7 }, (_, k) => im(60 + k, 'a')).join('<br>'));
+        const g5 = b5.querySelector('.auto-image-grid');
+        const viewerOrder = window.collectMediaFrom(b5).map(it => it.url.slice(-7));
+        const placeOrder = Array.from(g5.children).map(c => c.querySelector('img').getAttribute('src').slice(-7));
+        assert(viewerOrder.join(',') === placeOrder.join(','), 'O visualizador abre a mídia na mesma ordem em que o motor coloca os itens');
+        assert(placeOrder.join(',') === Array.from({ length: 7 }, (_, k) => 'b' + (60 + k) + '.jpg').join(','), 'A ordem de colocação é a ordem do autor');
+        window.__masonryEngine.setWidth(g5, 1192);
+        const lay = window.__masonryEngine.masonryLayout(g5);
+        assert(lay.cols === 4 && lay.boxes.slice(0, 4).every((b, k) => b.col === k), 'Na largura de desktop os 4 primeiros itens formam a primeira linha, da esquerda pra direita');
+        assert(Array.from(g5.children).every(c => /translate\(/.test(c.style.transform) && c.style.width === '292px'), 'O motor escreve posição e largura de cada item');
+        assert(g5.style.height === lay.height + 'px', 'O motor escreve a altura do grupo');
+
+        // 6. imagem que nasce depois ao lado de um grupo entra nele (chevereto/goonbox/imagepond)
+        g1.insertAdjacentHTML('afterend', '<br>' + im(9, 'a'));
+        bpg(b1.parentElement);
+        assert(seq(b1) === 'T G4 T BR I BR T', 'Imagem nova colada no grupo entra nele, sem mexer no texto (obtido: ' + seq(b1) + ')');
+
+        document.querySelectorAll('.message-userContent').forEach(p => { if (p.querySelector('img[src^="https://example.com/b"]')) p.remove(); });
+    }
+
+    // =========================================================================
+    // MOSAICO NA GALERIA: o overlay usa o mesmo motor (sem CSS columns)
+    // =========================================================================
+    {
+        console.log('\n--- Mosaico na galeria (overlay) ---');
+        const gx = window.__galleryExports;
+        assert(gx && typeof gx.galMakeSection === 'function', 'Os helpers da galeria devem estar expostos em __TEST_MODE__');
+        const sec = gx.galMakeSection(1, true);
+        const cols = sec.querySelector('.smg-gallery-cols');
+        assert(cols.classList.contains('smg-mason'), 'Cada página da galeria é um container do motor masonry');
+        const sk = gx.galSkelTile(2);
+        assert(Math.abs(gx.galTileRatio(sk) - 1.45) < 0.001, 'Tile-fantasma reserva a altura pela proporção guardada');
+        const css = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        const galRules = (css.match(/\.smg-gallery-(cols|tile)[^{]*\{[^}]*\}/g) || []).join('\n');
+        assert(!/column-(width|count)|break-inside/.test(galRules), 'A galeria não usa mais CSS columns (lia de cima pra baixo)');
+        window.__masonryEngine.masonryUnmount(cols);
     }
 
     // =========================================================================
