@@ -2807,7 +2807,6 @@
                 if (!container) return;
                 const items = Array.from(container.querySelectorAll(LIST_ITEM_SELECTOR));
                 const q = clientFilterQuery.toLowerCase().trim();
-                const normalizeTag = s => (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
                 const activeSelectedTags = new Set(Array.from(activeClientBadges).map(normalizeTag));
 
                 let visible = 0;

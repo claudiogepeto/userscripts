@@ -189,7 +189,6 @@
                 const sortedBadges = Array.from(badgeMap.values()).sort((a, b) => b.count - a.count);
 
                 const applySearchBadgeFilter = () => {
-                    const normalizeTag = s => (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
                     const activeSelectedTags = new Set(Array.from(activeSearchBadges).map(normalizeTag));
                     searchRows.forEach(row => {
                         const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];

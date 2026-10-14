@@ -146,6 +146,11 @@
         else fallback();
     }
 
+    // tag comparável: minúscula, sem '#' nem espaço nas pontas
+    function normalizeTag(s) {
+        return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
+    }
+
     function cleanText(text) {
         return text.replace('.md', '').replace('.th', '');
     }

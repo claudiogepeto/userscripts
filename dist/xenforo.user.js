@@ -10230,6 +10230,11 @@
         else fallback();
     }
 
+    // tag comparável: minúscula, sem '#' nem espaço nas pontas
+    function normalizeTag(s) {
+        return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
+    }
+
     function cleanText(text) {
         return text.replace('.md', '').replace('.th', '');
     }
@@ -17752,7 +17757,6 @@
                 if (!container) return;
                 const items = Array.from(container.querySelectorAll(LIST_ITEM_SELECTOR));
                 const q = clientFilterQuery.toLowerCase().trim();
-                const normalizeTag = s => (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
                 const activeSelectedTags = new Set(Array.from(activeClientBadges).map(normalizeTag));
 
                 let visible = 0;
@@ -18449,7 +18453,6 @@
                 const sortedBadges = Array.from(badgeMap.values()).sort((a, b) => b.count - a.count);
 
                 const applySearchBadgeFilter = () => {
-                    const normalizeTag = s => (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
                     const activeSelectedTags = new Set(Array.from(activeSearchBadges).map(normalizeTag));
                     searchRows.forEach(row => {
                         const bList = (typeof extractRowBadges === 'function') ? extractRowBadges(row) : [];
