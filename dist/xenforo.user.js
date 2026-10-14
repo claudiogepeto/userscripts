@@ -24361,6 +24361,7 @@
         return t.includes('bookmarks') || /\/account\/bookmarks|\/bookmarks\//i.test(location.pathname);
     }
     function bmNextLink(doc) {
+        if (!doc) return null;
         const a = doc.querySelector('a.pageNav-jump--next[href], link[rel="next"][href], a[rel="next"][href]');
         const h = a && a.getAttribute('href');
         if (!h) return null;
@@ -24443,11 +24444,15 @@
         const next = bmNextLink(document);
         if (!next) return Promise.resolve(rows);
         const seen = new Set(rows.map(r => r.postId));
+        // página N falhou (rede, 429, HTTP != 2xx → fetchDoc devolve null): devolve o que já leu marcado
+        // como INCOMPLETO. Antes o null estourava em bmNextLink e a tela dizia "Nothing saved yet".
+        const partial = () => { rows.incomplete = true; return rows; };
         const walk = (url, depth) => fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
+            if (!doc) return partial();
             bmParseRows(doc).forEach(r => { if (!seen.has(r.postId)) { seen.add(r.postId); rows.push(r); } });
             const n = bmNextLink(doc);
             return (n && depth < 40) ? walk(n, depth + 1) : rows;
-        }, () => rows);
+        }, partial);
         return walk(next, 1);
     }
     function bmFallbackPost(row) {
@@ -24575,8 +24580,8 @@
             bmFetchAllRows().then(rows => {
                 if (!list.isConnected) return;
                 const live = Object.create(null); rows.forEach(r => { live[r.postId] = r; });
-                // removidos dos salvos (em outro dispositivo/aba) → tira do cache e da tela (apenas se rows obtido com sucesso)
-                if (rows.length > 0) {
+                // removidos dos salvos (em outro dispositivo/aba) → tira do cache e da tela (só com a lista COMPLETA)
+                if (rows.length > 0 && !rows.incomplete) {
                     cached.forEach(c => {
                         if (!live[c.postId]) {
                             dbBookmarksDelete(c.postId);
@@ -24599,7 +24604,14 @@
                     }
                     return false;
                 });
-                if (!hadCache) { if (!rows.length) { list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>'; markBookmarksPaintReady(list); return; } list.innerHTML = ''; }
+                if (!hadCache) {
+                    if (!rows.length) {
+                        list.innerHTML = '<div class="smg-fp-empty">' + i18n(rows.incomplete ? 'Couldn’t load.' : 'Nothing saved yet') + '</div>';
+                        markBookmarksPaintReady(list);
+                        return;
+                    }
+                    list.innerHTML = '';
+                }
                 const jobs = fresh.map(r => {
                     let ph = list.querySelector('[data-bm-id="' + r.postId + '"]');
                     if (!ph) {
@@ -24616,7 +24628,7 @@
                 });
                 Promise.all(jobs).finally(() => markBookmarksPaintReady(list));
             }, () => {
-                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('Nothing saved yet') + '</div>';
+                if (!hadCache && list.isConnected) list.innerHTML = '<div class="smg-fp-empty">' + i18n('Couldn’t load.') + '</div>';
                 markBookmarksPaintReady(list);
             });
         });
@@ -27189,6 +27201,7 @@
         const staleRiver = document.getElementById('smg-river');
         if (staleRiver) staleRiver.remove();
         bmBuilt = false;
+        bmRendered = false;   // 2ª visita aos Salvos via soft-nav: sem isso o render nunca rodava e a lista ficava vazia
         disposeInfiniteScroll();
         disposeStickySyncs();
         smgPopPrune();

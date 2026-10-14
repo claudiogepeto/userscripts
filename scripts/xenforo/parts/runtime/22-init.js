@@ -439,6 +439,7 @@
         const staleRiver = document.getElementById('smg-river');
         if (staleRiver) staleRiver.remove();
         bmBuilt = false;
+        bmRendered = false;   // 2ª visita aos Salvos via soft-nav: sem isso o render nunca rodava e a lista ficava vazia
         disposeInfiniteScroll();
         disposeStickySyncs();
         smgPopPrune();
