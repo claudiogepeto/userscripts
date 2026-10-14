@@ -93,7 +93,7 @@
 //  LISTAGEM .......... markThreadGridContainer, badges reativos, styleArticleCards, markGridPlaceholders
 //  HOME (forum_list) . expandSubForums, makeHomeCardsClickable,
 //                      buildHomeFeed, layoutHomeSidebar
-//  THREAD filter bar . smgBarBtn/Pop/Jump/Pager/Sort/Primary/More, buildFilterBars, fetchXfList
+//  THREAD filter bar . smgBarBtn/Pop/Jump/Pager/Sort/Primary/More, buildFilterBars
 //  THUMB cache ....... threadThumbUrl, thumbCacheGet/Put, harvestThreadThumbs (foto da thread nos
 //                      alertas, colhida das listagens que já passam pela tela — sem request extra)
 //  ALERTAS ........... markAlertRead, paintAlertThumb/repaintAlertThumbs, cleanAlertRow, groupAlerts, cleanAlertList

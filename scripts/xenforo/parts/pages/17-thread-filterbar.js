@@ -4,7 +4,7 @@
     // PROXY-CLICA os botões nativos (que ficam escondidos no DOM, igual a dock faz):
     // watch/mark-read/translate/jump-to-new/menu seguem com o comportamento AJAX do XF.
     // O .block-outer nativo é escondido (fonte de dados pro scroll infinito + page-jump).
-    // Mapa: smgBarBtn/smgPopHost/smgJumpHost (blocos) · smgPagerGroup/smgSortGroup/smgPrimaryActions/smgMoreButton (grupos) · buildFilterBars (monta tudo) · fetchXfList (AJAX da listagem).
+    // Mapa: smgBarBtn/smgPopHost/smgJumpHost (blocos) · smgPagerGroup/smgSortGroup/smgPrimaryActions/smgMoreButton (grupos) · buildFilterBars (monta tudo).
     // =========================================================
     const SMG_ICO = {   // ⚠️ ícones SÓ do filtro-bar (paths crus p/ svgIcon()). check saiu → usar ICONS.shareDone (era idêntico)
         globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
@@ -1606,24 +1606,6 @@
     }
 
     // (THREAD header restyle removido — era dead code, nunca chamado; buildFilterBars cobre pager/ordenar/ações nos 2 sites)
-
-    // carrega um popup de lista do XF (alertas/mensagens) e devolve o nó da lista;
-    // _xfResponseType=json → só o conteúdo já preenchido · _xfToken → evita "Security error"
-    function fetchXfList(fetchUrl) {
-        const csrf = document.documentElement.getAttribute('data-csrf')
-            || (document.querySelector('input[name="_xfToken"]') || {}).value || '';
-        const url = fetchUrl + (fetchUrl.indexOf('?') >= 0 ? '&' : '?') + '_xfResponseType=json'
-            + (csrf ? '&_xfToken=' + encodeURIComponent(csrf) : '');
-        return fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text())
-            .then(t => {
-                let html = t;
-                try { const j = JSON.parse(t); html = (j.html && (j.html.content || j.html)) || j.content || t; } catch (e) {}
-                const tmp = document.createElement('div');
-                tmp.innerHTML = html;
-                return tmp.querySelector('.listPlain') || tmp.querySelector('.js-alertsMenuBody') || tmp.querySelector('.js-convMenuBody') || tmp;
-            });
-    }
 
     if (typeof window !== 'undefined') {
         window.fetchWatchedDoc = fetchWatchedDoc;
