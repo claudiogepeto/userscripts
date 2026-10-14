@@ -1489,6 +1489,7 @@
                 border-top-color: var(--smg-w-85);
                 animation: smg-spin 0.8s linear infinite;
             }
+            .smg-loading.smg-loading-idle::after { animation: none; }   /* slot lazy ainda não ativado: anel estático, sem recalc por frame */
             @keyframes smg-spin {
                 to { transform: rotate(360deg); }
             }
@@ -13236,7 +13237,7 @@
             // PARA O PLAYER VELHO JÁ: detacha o iframe nativo (mata rede/áudio do imagepond) e põe spinner no lugar.
             const wrapper = document.createElement('div'); wrapper.className = 'generic2wide-iframe-div'; wrapper.dataset.ipId = id;
             const slot = document.createElement('div'); slot.className = 'smg-turbo-slot';
-            const loading = document.createElement('div'); loading.className = 'smg-loading';
+            const loading = document.createElement('div'); loading.className = 'smg-loading smg-loading-idle';   // anel parado até o activate (off-screen não anima)
             slot.appendChild(loading);
             wrapper.appendChild(slot);
             ifr.replaceWith(wrapper);
@@ -13253,6 +13254,7 @@
             const activate = () => {
                 if (slot.dataset.ipActivated) return;   // run-once (turboIO E o masonry podem chamar)
                 slot.dataset.ipActivated = '1'; slot._smgActivate = null;
+                loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
                 queueEmbedResolve(slot, done => imagepondResolve(pageUrl, done), res => {
                     if (wrapper.querySelector('.smg-rg')) return;
                     if (res && res.mp4) {                                   // VÍDEO → nosso player
@@ -13383,7 +13385,7 @@
         if (wrapper.querySelector('.smg-rg, .smg-turbo-slot')) return null;   // já tem player/slot nosso aqui
         wrapper.dataset.cdId = slug;
         const slot = document.createElement('div'); slot.className = 'smg-turbo-slot';
-        const loading = document.createElement('div'); loading.className = 'smg-loading';
+        const loading = document.createElement('div'); loading.className = 'smg-loading smg-loading-idle';   // anel parado até o activate (off-screen não anima)
         slot.appendChild(loading);
         const esc = document.createElement('a');
         esc.className = 'smg-turbo-fallback'; esc.dataset.cdDone = '1';   // :not([data-cd-done]) → o próprio escape não re-entra no pass
@@ -13395,6 +13397,7 @@
         return { wrapper, slot, loading, esc };
     }
     function cyberdropMount(ctx, host, slug, origHref, restore) {
+        ctx.loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
         queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
             if (!res) { restore(); return; }

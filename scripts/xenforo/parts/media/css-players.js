@@ -96,6 +96,7 @@
                 border-top-color: var(--smg-w-85);
                 animation: smg-spin 0.8s linear infinite;
             }
+            .smg-loading.smg-loading-idle::after { animation: none; }   /* slot lazy ainda não ativado: anel estático, sem recalc por frame */
             @keyframes smg-spin {
                 to { transform: rotate(360deg); }
             }
