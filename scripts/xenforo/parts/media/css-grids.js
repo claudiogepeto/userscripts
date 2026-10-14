@@ -45,10 +45,39 @@
                 border-radius: var(--smg-img-r) !important;
                 aspect-ratio: auto !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-mason > * > * {
+            html.smg-masonry-on .auto-image-grid.smg-mason > :not(.smg-mvid) > * {
                 width: 100% !important;
                 height: 100% !important;
                 margin: 0 !important;
+            }
+            /* VÍDEO no mosaico (.smg-mvid = a caixa do player): o motor dá a caixa na proporção do vídeo (2 colunas
+               se deitado); slot, player, iframe e o span do s9e preenchem ela. Teto de altura/16:9 do player solto
+               não valem aqui. O player nunca sai do lugar no DOM: só o motor muda posição e tamanho. */
+            html.smg-masonry-on .auto-image-grid.smg-mason.smg-mason > .smg-mvid {
+                background: #000 !important;
+                aspect-ratio: auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid[data-s9e-mediaembed] > span,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid iframe {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                max-height: none !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                aspect-ratio: auto !important;
+                border-radius: inherit !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg { overflow: hidden !important; }
+            /* link de escape do turbo/cyberdrop (só aparece na falha): por cima do slot, no canto */
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid > .smg-turbo-fallback {
+                position: absolute !important; left: var(--smg-sp-8); bottom: var(--smg-sp-8); z-index: var(--smg-z-3);
             }
             /* caixa de imagem morta no mosaico: ocupa o lugar da imagem, conteúdo centrado */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead {

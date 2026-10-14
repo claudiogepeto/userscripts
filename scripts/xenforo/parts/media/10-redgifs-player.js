@@ -193,6 +193,7 @@
             parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
             parentBox.style.setProperty('overflow', 'visible', 'important');
         }
+        relayoutPostGroupOf(wrap);   // vídeo num grupo do post: a proporção real decide o span (2 colunas se deitado) — só estilo, o player não sai do lugar
         return true;
     }
     function rgSetPoster(video, url) {

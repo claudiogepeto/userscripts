@@ -859,10 +859,39 @@
                 border-radius: var(--smg-img-r) !important;
                 aspect-ratio: auto !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-mason > * > * {
+            html.smg-masonry-on .auto-image-grid.smg-mason > :not(.smg-mvid) > * {
                 width: 100% !important;
                 height: 100% !important;
                 margin: 0 !important;
+            }
+            /* VÍDEO no mosaico (.smg-mvid = a caixa do player): o motor dá a caixa na proporção do vídeo (2 colunas
+               se deitado); slot, player, iframe e o span do s9e preenchem ela. Teto de altura/16:9 do player solto
+               não valem aqui. O player nunca sai do lugar no DOM: só o motor muda posição e tamanho. */
+            html.smg-masonry-on .auto-image-grid.smg-mason.smg-mason > .smg-mvid {
+                background: #000 !important;
+                aspect-ratio: auto !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid[data-s9e-mediaembed] > span,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid iframe {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                max-height: none !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                aspect-ratio: auto !important;
+                border-radius: inherit !important;
+            }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg { overflow: hidden !important; }
+            /* link de escape do turbo/cyberdrop (só aparece na falha): por cima do slot, no canto */
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid > .smg-turbo-fallback {
+                position: absolute !important; left: var(--smg-sp-8); bottom: var(--smg-sp-8); z-index: var(--smg-z-3);
             }
             /* caixa de imagem morta no mosaico: ocupa o lugar da imagem, conteúdo centrado */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead {
@@ -11867,14 +11896,20 @@
     }
 
     // MOSAICO NO POST (html.smg-masonry-on). O corpo do post é uma sequência de blocos, lida em ordem:
-    //   · RUN de mídia = imagens consecutivas (img.bbImage, o <a>/.bbImageWrapper que só embrulha uma, a caixa
-    //     de imagem morta). <br>, espaço em branco e nós invisíveis entre duas imagens NÃO quebram a run.
-    //   · qualquer outra coisa (texto, citação, spoiler, player/embed, card de file-host, card de link) é um
-    //     bloco de LARGURA TOTAL e fica exatamente onde o autor pôs.
-    // Run de 2+ → um .auto-image-grid (motor masonry, 08a). Run de 1 → imagem solta (markWide: largura do
-    // conteúdo, altura limitada). Incremental: imagem que nasce depois (chevereto/goonbox/imagepond) ao lado
-    // de um grupo entra nele.
+    //   · RUN de mídia = imagens e vídeos consecutivos (img.bbImage, o <a>/.bbImageWrapper que só embrulha uma,
+    //     a caixa de imagem morta, a caixa de um player de vídeo). <br>, espaço em branco e nós invisíveis entre
+    //     dois itens NÃO quebram a run.
+    //   · qualquer outra coisa (texto, citação, spoiler, card de file-host, card de link) é um bloco de LARGURA
+    //     TOTAL e fica exatamente onde o autor pôs.
+    // Run de 2+ → um .auto-image-grid (motor masonry, 08a); vídeo deitado ocupa 2 colunas, em pé/quadrado 1.
+    // Run de 1 → mídia solta (imagem: markWide, largura do conteúdo, altura limitada; vídeo: o player como já é).
+    // Incremental: mídia que nasce depois (chevereto/goonbox/imagepond) ao lado de um grupo entra nele.
     const MEDIA_ITEM_SEL = 'img.bbImage, .smg-dead--img';
+    // caixa de player de vídeo que o script monta ou reestiliza: direto (.smg-dm-wrap), redgifs/turbo/saint/
+    // imagepond/cyberdrop (.generic2wide-iframe-div), embed s9e de vídeo, ou o nosso player solto (.smg-rg)
+    const VIDEO_BOX_SEL = '.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .smg-rg';
+    const VIDEO_S9E_RE = /^(redgifs|gifs|youtube|vimeo|streamable|dailymotion|tiktok|twitch)$/i;
+    const VIDEO_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .bbCodeBlock--unfurl';
     const MEDIA_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-rg, span[data-s9e-mediaembed], .bbCodeBlock--unfurl';
     // filho "vazio" de um wrapper de imagem: espaço, comentário, <noscript>/<br> → não conta como conteúdo
     function isInertNode(n) {
@@ -11947,8 +11982,55 @@
     function isPostGroup(n) {
         return !!(n && n.nodeType === 1 && n.classList.contains('auto-image-grid'));
     }
-    // altura/largura de um item do grupo: a imagem dele, ou a proporção guardada na caixa morta
+    // esta caixa é um player de VÍDEO? (.smg-dm-wrap de imagem e embed s9e que não é vídeo ficam de fora)
+    function isVideoBox(el) {
+        if (!el || el.nodeType !== 1) return false;
+        if (el.classList.contains('smg-rg')) return true;
+        if (el.classList.contains('smg-dm-wrap')) return !!el.querySelector('.smg-rg, video');
+        if (el.hasAttribute('data-s9e-mediaembed')) return VIDEO_S9E_RE.test(el.getAttribute('data-s9e-mediaembed') || '') || !!el.querySelector('.smg-rg');
+        if (el.classList.contains('generic2wide-iframe-div')) return !!el.querySelector('.smg-rg, .smg-turbo-slot, video, iframe') || /redgifs/i.test(el.getAttribute('onclick') || '');
+        return false;
+    }
+    // o nó que senta no fluxo por este player: a caixa de vídeo MAIS EXTERNA (o .smg-rg dentro do slot dentro
+    // do .generic2wide é um item só), depois os wrappers que só a embrulham
+    function videoFlowNode(el) {
+        let box = el;
+        for (let up = box.parentElement && box.parentElement.closest(VIDEO_BOX_SEL); up; up = up.parentElement && up.parentElement.closest(VIDEO_BOX_SEL)) {
+            if (isPostGroup(up)) break;
+            box = up;
+        }
+        return mediaFlowNode(box);
+    }
+    // h/w de "a / b" (style.aspectRatio)
+    function relHOfAspect(s) {
+        const m = (s || '').match(/([\d.]+)\D+([\d.]+)/);
+        return (m && +m[1] && +m[2]) ? (+m[2]) / (+m[1]) : 0;
+    }
+    // altura/largura de um vídeo: o que o player já sabe (rgAspect: API do redgifs, metadata, poster), o
+    // <video> com metadata, o tamanho que o embed declara (data-width/height, width/height do iframe, o
+    // padding-bottom do s9e); senão 16:9. O motor re-coloca quando o player descobre (rgAspect → relayout).
+    function videoBoxRatio(box) {
+        const rg = box.classList.contains('smg-rg') ? box : box.querySelector('.smg-rg');
+        const fromPlayer = rg ? relHOfAspect(rg.style.aspectRatio) : 0;
+        if (fromPlayer) return fromPlayer;
+        const v = box.querySelector('video');
+        if (v && v.videoWidth && v.videoHeight) return v.videoHeight / v.videoWidth;
+        const plausible = r => r > 1 / 2.8 && r < 1 / 0.3;
+        const ifr = box.querySelector('iframe');
+        for (const el of [box, ifr]) {
+            if (!el) continue;
+            const w = +(el.getAttribute('data-width') || el.getAttribute('width') || 0);
+            const h = +(el.getAttribute('data-height') || el.getAttribute('height') || 0);
+            if (w > 0 && h > 0 && plausible(h / w)) return h / w;
+        }
+        const pad = box.querySelector('span[style*="padding-bottom"]');
+        const pm = pad && (pad.getAttribute('style') || '').match(/padding-bottom:\s*([\d.]+)%/i);
+        if (pm && plausible(+pm[1] / 100)) return +pm[1] / 100;
+        return 9 / 16;
+    }
+    // altura/largura de um item do grupo: o vídeo, a imagem dele, ou a proporção guardada na caixa morta
     function postItemRatio(item) {
+        if (item.classList.contains('smg-mvid')) return videoBoxRatio(item);
         if (item.classList.contains('smg-dead')) return +item.dataset.smgRatio || 0.75;
         const img = item.tagName === 'IMG' ? item : item.querySelector('img.bbImage, img');
         if (!img) return MASONRY_PH_RELH;
@@ -11957,8 +12039,12 @@
         const dim = extractMediaDimensions(img);
         return dim ? dim.relH : MASONRY_PH_RELH;
     }
+    // colunas do item: vídeo deitado 2, o resto 1
+    function postItemSpan(item, relH) {
+        return item.classList.contains('smg-mvid') ? masonryVideoSpan(relH) : 1;
+    }
     function mountPostGroup(grid) {
-        masonryMount(grid, { getRatio: postItemRatio });
+        masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan });
     }
     // dissolve formatação SEM texto em volta de imagens (<b><img><img></b>, <span>…) → as imagens ficam
     // irmãs do texto em volta e a run enxerga todas
@@ -11969,6 +12055,7 @@
             if (node.nodeType !== 1) return false;
             if (/^(IMG|IFRAME|VIDEO|BR|NOSCRIPT|SCRIPT|STYLE)$/i.test(node.tagName)) return false;
             if (node.classList && (node.classList.contains('auto-image-grid') || node.classList.contains('smg-dead'))) return false;
+            if (node.matches && node.matches(VIDEO_BOX_SEL) && isVideoBox(node)) return false;   // o texto do placeholder do player não é do autor
             for (let c = node.firstChild; c; c = c.nextSibling) if (hasAuthorText(c)) return true;
             return false;
         };
@@ -11979,7 +12066,7 @@
             for (let i = cands.length - 1; i >= 0; i--) {
                 const el = cands[i];
                 if (!el.parentNode || el.closest(MEDIA_SKIP_SEL)) continue;
-                if (!el.querySelector(MEDIA_ITEM_SEL + ', .auto-image-grid') || hasAuthorText(el)) continue;
+                if (!el.querySelector(MEDIA_ITEM_SEL + ', .auto-image-grid, ' + VIDEO_BOX_SEL) || hasAuthorText(el)) continue;
                 el.replaceWith(...el.childNodes);
                 changed = true;
             }
@@ -11995,7 +12082,9 @@
             let count = 0;
             items.forEach(it => { count += it.grid ? it.grid.children.length : 1; });
             if (count < 2 || !items.some(it => it.flow)) return;   // nada novo, ou 1 imagem só → fica solta
-            const target = (items.find(it => it.grid) || {}).grid || document.createElement('div');
+            // alvo = um grupo já existente; de preferência o que tem player (mover iframe recarrega, mover vídeo pausa)
+            const grids = items.filter(it => it.grid).map(it => it.grid);
+            const target = grids.find(g => g.querySelector(':scope > .smg-mvid')) || grids[0] || document.createElement('div');
             if (!target.parentNode) {
                 target.className = 'auto-image-grid';
                 parent.insertBefore(target, items[0].flow);
@@ -12007,16 +12096,20 @@
                 if (n !== target && !items.some(it => it.flow === n || it.grid === n) && isInertNode(n)) n.remove();
                 n = nx;
             }
-            // ordem do documento: cada item (ou o conteúdo de cada grupo) entra no fim do alvo, na sequência
+            // ordem do documento: cada item (ou o conteúdo de cada grupo) vai pra sua posição no alvo. Só MOVE
+            // quem não está lá: os itens que o alvo já tinha ficam parados (um player não é tirado do DOM).
             const ordered = [];
             items.forEach(it => { if (it.grid) ordered.push.apply(ordered, Array.from(it.grid.children)); else ordered.push(it.flow); });
-            ordered.forEach(n => {
-                n.dataset.smgGridded = '1';
-                // o tamanho de imagem SOLTA (inline !important) brigaria com o do motor
-                [n].concat(Array.from(n.querySelectorAll ? n.querySelectorAll('img') : [])).forEach(el => {
-                    if (el.style) { el.style.removeProperty('width'); el.style.removeProperty('max-width'); }
-                });
-                target.appendChild(n);
+            const kids = target.children;
+            ordered.forEach((n, i) => {
+                if (n.dataset.smgGridded !== '1') {
+                    n.dataset.smgGridded = '1';
+                    // o tamanho de mídia SOLTA (inline !important) brigaria com o do motor
+                    [n].concat(Array.from(n.querySelectorAll ? n.querySelectorAll('img') : [])).forEach(el => {
+                        if (el.style) { el.style.removeProperty('width'); el.style.removeProperty('max-width'); }
+                    });
+                }
+                if (kids[i] !== n) target.insertBefore(n, kids[i] || null);
             });
             items.forEach(it => { if (it.grid && it.grid !== target) { masonryUnmount(it.grid); it.grid.remove(); } });
             // separadores que sobraram colados ANTES do grupo empurravam o grupo pra baixo
@@ -12038,13 +12131,22 @@
     function buildPostGallery(scope) {
         unwrapEmptyMediaFormatting(scope);
         const byParent = new Map();   // pai no fluxo → Set(flow nodes ainda fora de grupo)
-        scope.querySelectorAll(MEDIA_ITEM_SEL).forEach(el => {
-            if (el.closest(MEDIA_SKIP_SEL)) return;
-            const flow = mediaFlowNode(el);
+        const add = flow => {
             const parent = flow.parentElement;
             if (!parent || isPostGroup(parent)) return;   // já está num grupo
             if (!byParent.has(parent)) byParent.set(parent, new Set());
             byParent.get(parent).add(flow);
+        };
+        scope.querySelectorAll(MEDIA_ITEM_SEL).forEach(el => {
+            if (el.closest(MEDIA_SKIP_SEL)) return;
+            add(mediaFlowNode(el));
+        });
+        scope.querySelectorAll(VIDEO_BOX_SEL).forEach(el => {
+            if (el.closest(VIDEO_SKIP_SEL) || !isVideoBox(el)) return;
+            const flow = videoFlowNode(el);
+            if (flow.closest(VIDEO_SKIP_SEL)) return;
+            if (!flow.classList.contains('smg-mvid')) flow.classList.add('smg-mvid');
+            add(flow);
         });
         byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
     }
@@ -12054,7 +12156,9 @@
         // inteiro, NÃO só o .bbWrapper: no SMG o embed às vezes entra como IRMÃO do .bbWrapper.
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
         const bodies = new Set();
-        eachIn(roots, 'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])', el => {
+        const imgSeen = 'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])';
+        const videoSeen = '.generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), .smg-rg:not([data-smg-galseen])';
+        eachIn(roots, imgSeen + ', ' + videoSeen, el => {
             el.dataset.smgGalseen = '1';
             if (el.closest('.bbCodeQuote, .message-signature')) return;
             const b = el.closest('.message-userContent, .comment-body, .bbWrapper');
@@ -12087,7 +12191,7 @@
         if (window.__TEST_MODE__) {
             window.buildPostGalleries = buildPostGalleries;
             window.__buildPostGalleries = buildPostGalleries;
-            window.__masonryExports = { extractMediaDimensions, markWide, buildPostGallery, postItemRatio, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, imgFailLink, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
+            window.__masonryExports = { extractMediaDimensions, markWide, buildPostGallery, postItemRatio, postItemSpan, videoBoxRatio, isVideoBox, goonboxViewer, goonboxResolve, gbxCache, gbxInflight, gbxTasks, processOneImage, processImages, goonboxEmbed, unwrapEmptyMediaFormatting, imgFailLink, getThumbIO, getMedIO, getFullIO, swapImgSrc, resolveFullImageUrl, applyReplaceThumbsWithFull };
             window.processOneImage = processOneImage;
             window.processImages = processImages;
             window.goonboxEmbed = goonboxEmbed;
@@ -12289,6 +12393,7 @@
             parentBox.style.setProperty('aspect-ratio', 'auto', 'important');
             parentBox.style.setProperty('overflow', 'visible', 'important');
         }
+        relayoutPostGroupOf(wrap);   // vídeo num grupo do post: a proporção real decide o span (2 colunas se deitado) — só estilo, o player não sai do lugar
         return true;
     }
     function rgSetPoster(video, url) {
@@ -22623,7 +22728,7 @@
                 let vlabel = ''; try { vlabel = new URL(href).hostname.replace(/^www\./, ''); } catch (e) {}
                 // FALHA TOTAL (host fora do ar / anti-hotlink): em vez de sumir com tudo (o link cru fica
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
-                const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
+                const revive = () => { try { link.style.removeProperty('display'); const g = wrap.closest('.auto-image-grid'); wrap.remove(); if (g) masonrySchedule(g); } catch (e) {} };
                 const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
                 const v = nv.video;
                 v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo

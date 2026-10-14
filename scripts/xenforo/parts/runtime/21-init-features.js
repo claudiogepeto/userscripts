@@ -261,7 +261,7 @@
                 let vlabel = ''; try { vlabel = new URL(href).hostname.replace(/^www\./, ''); } catch (e) {}
                 // FALHA TOTAL (host fora do ar / anti-hotlink): em vez de sumir com tudo (o link cru fica
                 // display:none quando embedamos), devolve o link — sempre sobra algo clicável no post.
-                const revive = () => { try { link.style.removeProperty('display'); wrap.remove(); } catch (e) {} };
+                const revive = () => { try { link.style.removeProperty('display'); const g = wrap.closest('.auto-image-grid'); wrap.remove(); if (g) masonrySchedule(g); } catch (e) {} };
                 const nv = buildNativeVideo(href, location.origin + '/', revive, vlabel);
                 const v = nv.video;
                 v._rgExt = href;                        // botão "abrir em nova guia" → o arquivo
