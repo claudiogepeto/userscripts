@@ -597,8 +597,11 @@
     // um grid de cards verticais (thumb + título + último autor · data). Lazy: só busca a aba ativa.
     let homeFeedDone = false;
 
+    // UM skeleton por região: a home só solta o skeleton da página quando o carrossel já tem a 1ª leva
+    // (cards, "nada aqui" ou erro). Antes soltava com o carrossel ainda nos próprios skeletons → 2 trocas.
+    // (o prazo de 3,2 s do loadFeed e o teto geral da pintura seguem valendo)
     function homeComponentsReady() {
-        return homeSidebarDone && homeFeedDone;
+        return homeSidebarDone && homeFeedDone && !document.querySelector('.smg-feed-panel.is-active .smg-feed-skel');
     }
     // monta dados serializáveis de 1 card a partir de um .structItem--thread
     function extractFeedItemData(it) {
