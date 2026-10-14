@@ -20,8 +20,9 @@ const path = require('path');
 const PARTS = path.join(__dirname, 'parts');
 const OUT = path.join(__dirname, 'script.js');
 
-// The files are grouped by ownership, but execution order remains explicit because
-// the fragments share one IIFE scope and some late sections depend on earlier helpers.
+// Folders group the files by feature; execution order stays explicit here because the
+// fragments share one IIFE scope and some late sections depend on earlier helpers.
+// A file may start mid-function (12b/12c continue setupPostNavigation from 12a).
 const PART_FILES = [
     'core/01-header.js',
     'core/02-config.js',
@@ -38,25 +39,29 @@ const PART_FILES = [
     'styles/08-alertdock.js',
     'styles/09-paint.js',
     'core/06-helpers.js',
-    'core/06b-feed-db.js',
-    'shared/07-posts-misc.js',
-    'shared/08-images-masonry.js',
-    'shared/10-redgifs-player.js',
-    'shared/11-autoload-spoiler.js',
-    'shared/12-dock-postnav.js',
-    'shared/13-search-imageclick.js',
-    'shared/14-feed-lightbox.js',
-    'pages/15-listing.js',
-    'pages/16-home.js',
-    'pages/17-thread-filterbar.js',
-    'shared/18-alerts.js',
-    'shared/19-alerts-dock.js',
-    'shared/19-topbar.js',
-    'shared/20-hover-preview.js',
+    'feed/06b-feed-db.js',
+    'thread/07-posts-misc.js',
+    'media/08-images-masonry.js',
+    'media/10-redgifs-player.js',
+    'media/11-autoload-spoiler.js',
+    'navigation/12a-dock.js',
+    'navigation/12b-dock-search.js',
+    'navigation/12c-dock-settings.js',
+    'media/13-search-imageclick.js',
+    'media/14-feed-lightbox.js',
+    'listing/15-listing.js',
+    'home/16-home.js',
+    'thread/17a-filterbar.js',
+    'following/17b-watched-list.js',
+    'thread/17c-post-cards.js',
+    'alerts/18-alerts.js',
+    'alerts/19-alerts-dock.js',
+    'navigation/19-topbar.js',
+    'navigation/20-thumb-url.js',
     'runtime/21-init-features.js',
-    'pages/22-bookmarks.js',
-    'pages/22-feed-sync.js',
-    'pages/22-feed.js',
+    'feed/22-bookmarks.js',
+    'feed/22-feed-sync.js',
+    'feed/22-feed.js',
     'runtime/22-paint.js',
     'runtime/22-init.js',
 ];

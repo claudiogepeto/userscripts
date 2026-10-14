@@ -27,37 +27,44 @@ edit `script.js` directly.
 ## Source layout
 
 Each file in `parts/` contributes one section to the same userscript IIFE. The
-manifest in `build.js` determines concatenation order; folders show ownership,
-while the numeric prefix keeps the historical execution order readable.
+manifest in `build.js` determines concatenation order; folders group the files
+by feature, while the numeric prefix keeps the historical execution order
+readable. A file may continue a function opened by the previous one: `12b` and
+`12c` are the rest of `setupPostNavigation` from `12a`.
 
 | Part | Responsibility |
 |---|---|
-| `01-header` | Userscript metadata, runtime model, and IIFE opening |
-| `02-config` | Feature flags, storage helpers, and settings metadata |
-| `03-i18n` | Language helpers, navigation, and authentication UI |
-| `04-icons` | Icons, logos, placeholders, and favicon |
-| `05-styles` | CSS composer; context-owned CSS lives in `parts/styles/` |
-| `06-helpers` | Shared text, URL, UI, pagination, fetch, and thumbnail helpers |
-| `07-posts-misc` | Author filters, keyboard shortcuts, and infinite scrolling |
-| `08-images-masonry` | Image processing and media gallery grouping |
-| `10-redgifs-player` | RedGifs and Turbo player pipeline |
-| `11-autoload-spoiler` | RedGifs autoloading and spoiler expansion |
-| `12-dock-postnav` | Post navigation dock, search, settings, and filters |
-| `13-search-imageclick` | Search result filtering and image-click feed |
-| `14-feed-lightbox` | Media feed, gallery, gestures, and downloads |
-| `15-listing` | Thread list/grid, badges, and placeholders |
-| `16-home` | Forum home layout, feed, and sidebar |
-| `17-thread-filterbar` | Thread filter and sorting controls |
-| `18-alerts` | Alert cleanup and grouping |
-| `19-alerts-dock` | Following rail and notification dock |
-| `19-topbar` | Topbar and mobile sheets |
-| `20-hover-preview` | Thread thumbnail hover previews |
-| `21-init-features` | Redirects, downloads, media links, and other feature setup |
-| `22-paint` | Page context, skeletons, readiness checks, and stable paint handoff |
-| `22-bookmarks` | Bookmark feed replacement |
-| `22-feed` | Timeline/feed rendering |
-| `22-feed-sync` | Timeline database synchronization |
-| `22-init` | Page detection, scheduling, boot, and IIFE closing |
+| `core/01-header` | Userscript metadata, runtime model, and IIFE opening |
+| `core/02-config` | Feature flags, storage helpers, and settings metadata |
+| `core/03-i18n` | Language helpers, navigation, and authentication UI |
+| `core/04-icons` | Icons, logos, placeholders, and favicon |
+| `core/05-styles` | CSS composer; context-owned CSS lives in `parts/styles/` |
+| `core/06-helpers` | Shared text, URL, UI, pagination, fetch, and thumbnail helpers |
+| `feed/06b-feed-db` | IndexedDB store for followed threads, feed posts, and bookmarks |
+| `thread/07-posts-misc` | Author filter, keyboard shortcuts, and infinite scrolling |
+| `media/08-images-masonry` | Image processing and media gallery grouping |
+| `media/10-redgifs-player` | RedGifs, Turbo, ImagePond, and Cyberdrop player pipeline |
+| `media/11-autoload-spoiler` | RedGifs autoloading and spoiler expansion |
+| `navigation/12a-dock` | Post navigation dock: buttons, global links, mobile sheet, goto |
+| `navigation/12b-dock-search` | Dock search popover |
+| `navigation/12c-dock-settings` | Settings panel, listing filters and sorting, dock wiring |
+| `media/13-search-imageclick` | Search results panel and image-click feed |
+| `media/14-feed-lightbox` | Media feed, gallery, and gestures |
+| `listing/15-listing` | Thread list/grid, badges, and placeholders |
+| `home/16-home` | Forum home layout and sidebar |
+| `thread/17a-filterbar` | Filter bar, thread header, sticky sync, and thread cards |
+| `following/17b-watched-list` | Followed-thread list: rows, sync to the database, streaming |
+| `thread/17c-post-cards` | Post and comment cards |
+| `alerts/18-alerts` | Alert cleanup and grouping |
+| `alerts/19-alerts-dock` | Following rail and notification dock |
+| `navigation/19-topbar` | Topbar and mobile sheets |
+| `navigation/20-thumb-url` | Large thumbnail URL helper |
+| `runtime/21-init-features` | Redirects, media links, file-host cards, and other feature setup |
+| `feed/22-bookmarks` | Bookmark feed replacement |
+| `feed/22-feed-sync` | Feed database synchronization and cron |
+| `feed/22-feed` | Feed rendering |
+| `runtime/22-paint` | Page context, skeletons, readiness checks, and stable paint handoff |
+| `runtime/22-init` | Page detection, scheduling, boot, and IIFE closing |
 
 ### CSS contexts
 
@@ -72,7 +79,7 @@ single template literal:
 | `styles/04-mobile` | Mobile navigation and search |
 | `styles/05-filterbar` | Listing/thread filter controls |
 | `styles/06-thread` | Thread header, posts and comments |
-| `styles/07-feed` | Timeline and bookmark feed |
+| `styles/07-feed` | Feed and bookmark feed |
 | `styles/08-alertdock` | Alerts/following rail |
 | `styles/09-paint` | Shared paint gate and non-home skeletons |
 
