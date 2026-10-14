@@ -21343,6 +21343,16 @@
             });
         }
     }
+    // "⋯": botão (classe do post ou do comentário) + popover com as ações nativas MOVIDAS (preserva AJAX)
+    function smgMoreMenu(items, actCls) {
+        const wrap = document.createElement('div'); wrap.className = 'smg-pc-morewrap';
+        const btn = document.createElement('button'); btn.type = 'button'; btn.className = actCls + ' ' + actCls + '--more'; btn.setAttribute('aria-label', i18n('More')); btn.textContent = '⋯';
+        const pop = document.createElement('div'); pop.className = 'smg-pc-morepop';
+        items.forEach(el => { el.classList.add('smg-pc-morerow'); pop.appendChild(el); });
+        btn.addEventListener('click', e => { e.stopPropagation(); smgToggleMore(wrap); });
+        wrap.append(btn, pop);
+        return wrap;
+    }
     // inner/main: achados por buildPostCards (post padrão; deletado/placeholder fica nativo lá)
     function buildPostCard(post, inner, main) {
         post.dataset.smgCard = '1';
@@ -21466,14 +21476,7 @@
         const mq = footerBar && footerBar.querySelector('.js-multiQuote'); if (mq) moreItems.push(mq);
         if (comment && reply) moreItems.push(reply);
         const report = footerBar && footerBar.querySelector('.actionBar-action--report'); if (report) moreItems.push(report);
-        if (moreItems.length) {
-            const moreWrap = document.createElement('div'); moreWrap.className = 'smg-pc-morewrap';
-            const moreBtn = document.createElement('button'); moreBtn.type = 'button'; moreBtn.className = 'smg-pc-act smg-pc-act--more'; moreBtn.setAttribute('aria-label', i18n('More')); moreBtn.textContent = '⋯';
-            const pop = document.createElement('div'); pop.className = 'smg-pc-morepop';
-            moreItems.forEach(el => { el.classList.add('smg-pc-morerow'); pop.appendChild(el); });
-            moreBtn.addEventListener('click', e => { e.stopPropagation(); smgToggleMore(moreWrap); });
-            moreWrap.append(moreBtn, pop); bar.appendChild(moreWrap);
-        }
+        if (moreItems.length) bar.appendChild(smgMoreMenu(moreItems, 'smg-pc-act'));
         const content = messageMain.querySelector('.message-content');
         if (content) content.insertAdjacentElement('afterend', bar); else messageMain.appendChild(bar);
         post.dataset.smgCardReady = '1';
@@ -21542,14 +21545,7 @@
         const moreItems = [];
         const cShare = cwrap && cwrap.querySelector('.uw_fcs_comment_share'); if (cShare) moreItems.push(cShare);
         [footerBar && footerBar.querySelector('.actionBar-action--reply'), footerBar && footerBar.querySelector('.actionBar-action--report'), footerBar && footerBar.querySelector('.smgTranslator-btn')].forEach(el => { if (el) moreItems.push(el); });
-        if (moreItems.length) {
-            const mw = document.createElement('div'); mw.className = 'smg-pc-morewrap';
-            const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'smg-cc-act smg-cc-act--more'; mb.setAttribute('aria-label', i18n('More')); mb.textContent = '⋯';
-            const pop = document.createElement('div'); pop.className = 'smg-pc-morepop';
-            moreItems.forEach(el => { el.classList.add('smg-pc-morerow'); pop.appendChild(el); });
-            mb.addEventListener('click', e => { e.stopPropagation(); smgToggleMore(mw); });
-            mw.append(mb, pop); bar.appendChild(mw);
-        }
+        if (moreItems.length) bar.appendChild(smgMoreMenu(moreItems, 'smg-cc-act'));
         const body = comment.querySelector('.comment-body');
         if (body) body.insertAdjacentElement('afterend', bar); else (comment.querySelector('.js-quickEditTargetComment') || cinner).appendChild(bar);
         comment.dataset.smgCcReady = '1';
