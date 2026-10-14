@@ -9782,37 +9782,12 @@
     // mesma leva; manter todos faz a mesma subárvore ser percorrida repetidamente. A raiz mais externa
     // cobre os descendentes e, portanto, torna o custo previsível mesmo quando o XF injeta lotes aninhados.
     function normalizeRoots(roots) {
-        if (!roots) {
-            const res = [document.body];
-            res._normalized = true;
-            return res;
-        }
+        const mark = res => { res._normalized = true; return res; };
+        if (!roots) return mark([document.body]);
         if (roots._normalized) return roots;
         const raw = roots.nodeType ? [roots] : Array.from(roots);
-        if (!raw.length) {
-            const res = [];
-            res._normalized = true;
-            return res;
-        }
-        if (raw.length === 1) {
-            const r = raw[0];
-            if (r && r.nodeType === 1) {
-                const res = [r];
-                res._normalized = true;
-                return res;
-            }
-            const res = [];
-            res._normalized = true;
-            return res;
-        }
-        for (let i = 0; i < raw.length; i++) {
-            const r = raw[i];
-            if (r === document.body || r === document.documentElement) {
-                const res = [document.body];
-                res._normalized = true;
-                return res;
-            }
-        }
+        if (raw.length <= 1) return mark(raw[0] && raw[0].nodeType === 1 ? [raw[0]] : []);
+        if (raw.some(r => r === document.body || r === document.documentElement)) return mark([document.body]);
         const valid = raw.filter(root => root && root.nodeType === 1);
         const depthMap = new Map();
         const depthOf = node => {
@@ -9829,8 +9804,7 @@
             if (result.some(parent => parent === root || parent.contains(root))) return;
             result.push(root);
         });
-        result._normalized = true;
-        return result;
+        return mark(result);
     }
 
     // roda fn em cada elemento que casa `selector` DENTRO dos roots dados (incluindo cada root, se ele
