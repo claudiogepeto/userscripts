@@ -443,6 +443,10 @@
         });
     }
 
+    // cabeçalhos de PREFETCH: o fórum marca o alerta como lido em qualquer GET normal da thread;
+    // buscas em segundo plano (sync da timeline, posts salvos) não podem consumir a notificação.
+    const XF_PREFETCH_HEADERS = { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' };
+
     // GET same-origin → parseia a resposta HTML num Document. `opts` passam direto pro fetch:
     // alguns callers OMITEM X-Requested-With de propósito (querem a página inteira, não o parcial
     // AJAX do XF); outros mandam (querem o parcial). O .text()→parse é que era repetido em toda parte.

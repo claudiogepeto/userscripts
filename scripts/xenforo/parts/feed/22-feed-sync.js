@@ -218,7 +218,7 @@
         // A sync da timeline e do Seguindo não pode consumir a notificação.
         return fetchDoc(url, {
             credentials: 'same-origin',
-            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+            headers: XF_PREFETCH_HEADERS
         }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });

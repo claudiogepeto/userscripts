@@ -118,7 +118,7 @@
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
         return fetchDoc(postUrl, {
             credentials: 'same-origin',
-            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+            headers: XF_PREFETCH_HEADERS
         }).then(doc => {
             if (!doc) return bmFallbackPost(row);
             let postEl = null;

@@ -9779,6 +9779,10 @@
         });
     }
 
+    // cabeçalhos de PREFETCH: o fórum marca o alerta como lido em qualquer GET normal da thread;
+    // buscas em segundo plano (sync da timeline, posts salvos) não podem consumir a notificação.
+    const XF_PREFETCH_HEADERS = { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' };
+
     // GET same-origin → parseia a resposta HTML num Document. `opts` passam direto pro fetch:
     // alguns callers OMITEM X-Requested-With de propósito (querem a página inteira, não o parcial
     // AJAX do XF); outros mandam (querem o parcial). O .text()→parse é que era repetido em toda parte.
@@ -24767,7 +24771,7 @@
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
         return fetchDoc(postUrl, {
             credentials: 'same-origin',
-            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+            headers: XF_PREFETCH_HEADERS
         }).then(doc => {
             if (!doc) return bmFallbackPost(row);
             let postEl = null;
@@ -25169,7 +25173,7 @@
         // A sync da timeline e do Seguindo não pode consumir a notificação.
         return fetchDoc(url, {
             credentials: 'same-origin',
-            headers: { 'X-Moz': 'prefetch', 'X-Purpose': 'prefetch', 'Purpose': 'prefetch' }
+            headers: XF_PREFETCH_HEADERS
         }).then(doc => {
             if (!doc) return 0;
             const meta = riverThreadMeta(doc, { fallbackTitle: thread.thread_name, thumb: thread.thumbnail_url });
