@@ -7699,6 +7699,44 @@ async function runTests() {
     }
 
     // =========================================================================
+    // SALVOS: a lista completa de bookmarks percorre as páginas (motor comum) e marca falha como incompleta
+    // =========================================================================
+    {
+        console.log('\n--- Salvos: percorre as páginas de bookmarks ---');
+        const bx = window.__bookmarkExports;
+        const row = id => '<div class="contentRow"><div class="contentRow-main"><h3 class="contentRow-header"><a href="/posts/' + id + '/">Post ' + id + '</a></h3></div></div>';
+        const pageHtml = (ids, next) => '<!DOCTYPE html><html><body><div class="block-body">' + ids.map(row).join('') + '</div>' + (next ? '<a class="pageNav-jump pageNav-jump--next" href="' + next + '">Next</a>' : '') + '</body></html>';
+        const host = document.createElement('div');
+        host.innerHTML = '<div class="block-body">' + row(9001) + '</div><a class="pageNav-jump pageNav-jump--next" href="/account/bookmarks?page=2">Next</a>';
+        document.body.appendChild(host);
+        const prevFetchBm = window.fetch;
+        const asked = [];
+        let failPage = 0, endless = false;
+        window.fetch = async (url) => {
+            const u = String(url);
+            const m = u.match(/[?&]page=(\d+)/);
+            if (!/account\/bookmarks/.test(u) || !m) return prevFetchBm(url);
+            const n = +m[1];
+            asked.push(n);
+            if (n === failPage) return { ok: false, status: 500, text: async () => '', headers: { get: () => null } };
+            const next = endless || n < 3 ? '/account/bookmarks?page=' + (n + 1) : null;
+            return { ok: true, status: 200, text: async () => pageHtml([9000 + n * 10, 9001], next), headers: { get: () => null } };
+        };
+        const all = await bx.bmFetchAllRows();
+        assert(all.map(r => r.postId).join(',') === '9001,9020,9030', 'Salvos: lê a página atual e segue o Next até o fim, sem repetir post (obtido: ' + all.map(r => r.postId).join(',') + ')');
+        assert(!all.incomplete, 'Salvos: lista lida até o fim não é incompleta');
+        assert(asked.join(',') === '2,3', 'Salvos: páginas buscadas em sequência (obtido: ' + asked.join(',') + ')');
+        asked.length = 0; failPage = 3;
+        const part = await bx.bmFetchAllRows();
+        assert(part.incomplete === true && part.map(r => r.postId).join(',') === '9001,9020', 'Salvos: página que falha devolve o que já leu marcado como incompleto');
+        asked.length = 0; failPage = 0; endless = true;
+        await bx.bmFetchAllRows();
+        assert(asked.length === 40, 'Salvos: no máximo 40 páginas além da atual (obtido: ' + asked.length + ')');
+        window.fetch = prevFetchBm;
+        host.remove();
+    }
+
+    // =========================================================================
     // HOVER: cards de conteúdo não reagem ao hover (só controles reagem)
     // =========================================================================
     {
