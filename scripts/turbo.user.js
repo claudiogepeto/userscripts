@@ -1210,6 +1210,27 @@
     }
 
     let playlistGen = 0;
+    let playlistKey = "";
+    const itemsKey = items => items.map(it => it.id).join("|");
+    // Re-renderiza a playlist quando os relacionados da página mudam — mas só se a
+    // lista de itens mudou de fato e nunca por mutações do próprio stage.
+    function watchRelated() {
+        const rel = document.querySelector("aside") || (document.querySelector("a.related") || {}).parentElement || document.body;
+        const check = debounce(async () => {
+            const albumFiles = await loadAlbumFiles();
+            if (albumFiles.length) return;
+            if (itemsKey(parseSidebarItems()) !== playlistKey) renderPlaylist();
+        }, 250);
+        try {
+            new MutationObserver(recs => {
+                for (const r of recs) {
+                    if (r.target.closest && r.target.closest(".tb-stage")) continue;
+                    check();
+                    return;
+                }
+            }).observe(rel, { childList: true, subtree: true });
+        } catch (e) {}
+    }
     async function renderPlaylist() {
         if (!stSidebarEl) return;
         const listEl = stSidebarEl.querySelector(".tb-playlist-list");
@@ -1235,6 +1256,7 @@
         });
         listEl.textContent = "";
         playlistItems = allItems;
+        playlistKey = itemsKey(allItems);
         applyListPosition(allItems);
         const q = (stSidebarEl.querySelector(".tb-sidebar-search-in")?.value || "").trim().toLowerCase();
         const activeTab = prefs.sidebarTab || "all";
@@ -1546,8 +1568,7 @@
         // Monta Sidebar da Playlist
         setupSidebar(stage);
 
-        const aside = document.querySelector("aside") || document.body;
-        try { new MutationObserver(debounce(() => renderPlaylist(), 250)).observe(aside, { childList: true, subtree: true }); } catch (e) {}
+        watchRelated();
         return stage;
     }
 
