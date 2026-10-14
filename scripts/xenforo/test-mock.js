@@ -346,6 +346,9 @@ async function runTests() {
     const navIds = navCenter ? Array.from(navCenter.children).map(el => el.id) : [];
     assert(navIds.includes('smg-thread-search'), 'Navbar mobile deve conter o botão de busca');
     assert(navIds.indexOf('smg-thread-search') === Math.floor(navIds.length / 2), 'Busca deve ocupar a posição central da navbar mobile');
+    // modo mídia: a dock da thread tem UM botão de mídia, sem o popover Galeria/Feed/Thread
+    assert(document.querySelector('#smg-thread-media') !== null, 'A dock tem o botão de mídia (#smg-thread-media)');
+    assert(!document.getElementById('smg-viewmode-pop') && !document.getElementById('smg-thread-view-mode'), 'A dock não tem mais o popover Galeria/Feed/Thread');
 
     const uiThreadHeader = document.createElement('div');
     uiThreadHeader.className = 'p-body-header';
@@ -7520,7 +7523,7 @@ async function runTests() {
             + '</div></body></html>';
         window.fetch = async (url) => {
             const u = typeof url === 'string' ? url : (url && url.url) || '';
-            if (/\/threads\/test-thread\.12345\//.test(u)) pageFetches++;
+            if (/\/threads\//.test(u)) pageFetches++;
             return { ok: true, status: 200, text: async () => pageHtml, json: async () => ({}), url: u };
         };
 
@@ -7536,8 +7539,6 @@ async function runTests() {
         const headBtns = Array.from(document.querySelectorAll('.smg-thead-actions .smg-thead-btn'));
         assert(headBtns.length === 1, 'O header da thread tem UM botão de mídia (obtido: ' + headBtns.length + ')');
         assert(/^(Media|Mídia)$/.test(headBtns[0] && headBtns[0].getAttribute('aria-label')), 'O botão do header se chama Media/Mídia');
-        assert(document.querySelector('#smg-thread-media') !== null, 'A dock tem o botão de mídia (#smg-thread-media)');
-        assert(!document.getElementById('smg-viewmode-pop') && !document.getElementById('smg-thread-view-mode'), 'A dock não tem mais o popover Galeria/Feed/Thread');
 
         // 2. abre na GALERIA
         headBtns[0].click();
