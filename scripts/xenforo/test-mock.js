@@ -7189,9 +7189,11 @@ async function runTests() {
         const { masonryPlace, masonryColsFor } = eng;
         assert(masonryColsFor(402) === 2 && masonryColsFor(600) === 2, 'Até 600px de largura: 2 colunas');
         assert(masonryColsFor(601) === 3 && masonryColsFor(1100) === 3, 'De 601 a 1100px: 3 colunas');
-        assert(masonryColsFor(1101) === 4 && masonryColsFor(1500) === 4, 'Acima de 1100px: 4 colunas');
-        // 4 colunas, gap 8, largura 1192 → coluna de 292px
-        const r = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8 });
+        assert(masonryColsFor(1101) === 3 && masonryColsFor(1500) === 3 && masonryColsFor(2560) === 3, 'Acima de 600px: no máximo 3 colunas, em qualquer largura');
+        const wide = masonryPlace([1, 1, 1, 1], 1192, { gap: 8 });
+        assert(wide.cols === 3 && Math.round(wide.colW) === 392, 'Desktop 1192px: 3 colunas de 392px (obtido: ' + wide.cols + ' de ' + Math.round(wide.colW) + ')');
+        // algoritmo com 4 colunas forçadas, gap 8, largura 1192 → coluna de 292px
+        const r = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8, cols: 4 });
         assert(r.cols === 4 && Math.round(r.colW) === 292, 'Largura de coluna = (largura - gaps) / colunas');
         assert(r.boxes.slice(0, 4).map(b => b.col).join(',') === '0,1,2,3', 'A primeira linha preenche da esquerda pra direita');
         assert(r.boxes[4].col === 0 && r.boxes[4].y === 300, 'Empate de altura vai pra coluna mais à esquerda, logo abaixo do item de cima (+gap)');
@@ -7276,8 +7278,8 @@ async function runTests() {
         assert(placeOrder.join(',') === Array.from({ length: 7 }, (_, k) => 'b' + (60 + k) + '.jpg').join(','), 'A ordem de colocação é a ordem do autor');
         window.__masonryEngine.setWidth(g5, 1192);
         const lay = window.__masonryEngine.masonryLayout(g5);
-        assert(lay.cols === 4 && lay.boxes.slice(0, 4).every((b, k) => b.col === k), 'Na largura de desktop os 4 primeiros itens formam a primeira linha, da esquerda pra direita');
-        assert(Array.from(g5.children).every(c => /translate\(/.test(c.style.transform) && c.style.width === '292px'), 'O motor escreve posição e largura de cada item');
+        assert(lay.cols === 3 && lay.boxes.slice(0, 3).every((b, k) => b.col === k), 'Na largura de desktop os 3 primeiros itens formam a primeira linha, da esquerda pra direita');
+        assert(Array.from(g5.children).every(c => /translate\(/.test(c.style.transform) && c.style.width === '392px'), 'O motor escreve posição e largura de cada item');
         assert(g5.style.height === lay.height + 'px', 'O motor escreve a altura do grupo');
 
         // 6. imagem que nasce depois ao lado de um grupo entra nele (chevereto/goonbox/imagepond)
@@ -7296,7 +7298,7 @@ async function runTests() {
         const { masonryPlace } = window.__masonryEngine;
         // (c) span escolhe o PAR de colunas adjacentes mais baixo (menor máximo), empate à esquerda
         //     4 colunas de 292px: alturas depois da 1ª linha = 300, 66, 96, 154
-        const sp = masonryPlace([1, 0.2, 0.3, 0.5, 9 / 16], 1192, { gap: 8, spans: [1, 1, 1, 1, 2] });
+        const sp = masonryPlace([1, 0.2, 0.3, 0.5, 9 / 16], 1192, { gap: 8, cols: 4, spans: [1, 1, 1, 1, 2] });
         const v = sp.boxes[4];
         assert(sp.cols === 4, 'Span não muda a contagem de colunas pela largura (obtido: ' + sp.cols + ')');
         assert(v.col === 1 && v.span === 2, 'Item de span 2 começa na coluna cujo par adjacente tem o menor máximo (obtido: col ' + v.col + ', span ' + v.span + ')');
@@ -7305,10 +7307,10 @@ async function runTests() {
         assert(v.h === 333, 'Altura do item de span 2 = sua largura × proporção (obtido: ' + v.h + ')');
         assert(sp.height === Math.max(...sp.boxes.map(b => b.y + b.h)), 'Altura do container cobre o item de span 2');
         // empate entre pares → o da esquerda
-        const tie = masonryPlace([0.5, 0.5, 0.5, 0.5, 9 / 16], 1192, { gap: 8, spans: [1, 1, 1, 1, 2] });
+        const tie = masonryPlace([0.5, 0.5, 0.5, 0.5, 9 / 16], 1192, { gap: 8, cols: 4, spans: [1, 1, 1, 1, 2] });
         assert(tie.boxes[4].col === 0, 'Empate entre pares de colunas vai pro par mais à esquerda (obtido: ' + tie.boxes[4].col + ')');
         // depois do span, as duas colunas cobertas começam no fundo dele
-        const after = masonryPlace([9 / 16, 1, 1], 1192, { gap: 8, spans: [2, 1, 1] });
+        const after = masonryPlace([9 / 16, 1, 1], 1192, { gap: 8, cols: 4, spans: [2, 1, 1] });
         assert(after.boxes[0].col === 0 && after.boxes[1].col === 2 && after.boxes[2].col === 3, 'Itens seguintes ocupam as colunas livres ao lado do span, na ordem');
         // a contagem de colunas soma os spans: imagem + vídeo deitado no desktop = 3 colunas (1 + 2), não 2
         const pair = masonryPlace([1.25, 9 / 16], 1192, { gap: 8, spans: [1, 2] });
@@ -7320,7 +7322,7 @@ async function runTests() {
         const one = masonryPlace([9 / 16, 1], 300, { gap: 8, cols: 1, spans: [2, 1] });
         assert(one.cols === 1 && one.boxes[0].w === 300 && one.boxes[0].h === 169, 'Com 1 coluna o span é limitado a ela (largura inteira)');
         // sem spans, nada muda (todo item = 1 coluna)
-        const plain = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8 });
+        const plain = masonryPlace([1, 1, 1, 1, 0.5, 2], 1192, { gap: 8, cols: 4 });
         assert(plain.boxes.every(b => b.span === 1 && b.w === 292), 'Sem spans todo item ocupa 1 coluna');
     }
     {
@@ -7364,12 +7366,12 @@ async function runTests() {
         assert(gb && gb.children.length === 5, 'Run de imagens e vídeos de tipos diferentes vira um grupo de 5 (obtido: ' + seq(b) + ')');
         eng.setWidth(gb, 1192);
         const lb = eng.masonryLayout(gb);
-        assert(lb.cols === 4 && Math.round(lb.colW) === 292, 'Desktop: 4 colunas de 292px');
-        assert(lb.boxes[1].w === 592, 'Vídeo horizontal ocupa 2 colunas (obtido: ' + lb.boxes[1].w + ')');
-        assert(lb.boxes[2].w === 292, 'Vídeo vertical ocupa 1 coluna (obtido: ' + lb.boxes[2].w + ')');
-        assert([0, 3, 4].every(i => lb.boxes[i].w === 292), 'Imagens continuam ocupando 1 coluna');
+        assert(lb.cols === 3 && Math.round(lb.colW) === 392, 'Desktop: 3 colunas de 392px');
+        assert(lb.boxes[1].w === 792, 'Vídeo horizontal ocupa 2 colunas (obtido: ' + lb.boxes[1].w + ')');
+        assert(lb.boxes[2].w === 392, 'Vídeo vertical ocupa 1 coluna (obtido: ' + lb.boxes[2].w + ')');
+        assert([0, 3, 4].every(i => lb.boxes[i].w === 392), 'Imagens verticais continuam ocupando 1 coluna');
         assert(Math.abs(lb.boxes[1].h / lb.boxes[1].w - 1080 / 1920) < 0.01, 'A caixa do vídeo tem a proporção do vídeo (sem letterbox)');
-        assert(gb.children[1].style.width === '592px', 'O motor escreve a largura de 2 colunas no item do vídeo');
+        assert(gb.children[1].style.width === '792px', 'O motor escreve a largura de 2 colunas no item do vídeo');
 
         // proporção desconhecida (iframe do turbo) → assume 16:9 deitado; s9e redgifs em pé → 1 coluna
         const c = mk(im(6) + '<br>' + turbo('xyz') + '<br>' + s9eRg(1080, 1350) + '<br>' + im(7));
@@ -7377,8 +7379,8 @@ async function runTests() {
         assert(gc && gc.children.length === 4, 'Embed do turbo e redgifs do s9e entram na run (obtido: ' + seq(c) + ')');
         eng.setWidth(gc, 1192);
         const lc = eng.masonryLayout(gc);
-        assert(lc.boxes[1].w === 592 && Math.abs(lc.boxes[1].h / lc.boxes[1].w - 9 / 16) < 0.01, 'Vídeo sem proporção conhecida assume 16:9 e ocupa 2 colunas');
-        assert(lc.boxes[2].w === 292, 'Redgifs em pé (s9e) ocupa 1 coluna');
+        assert(lc.boxes[1].w === 792 && Math.abs(lc.boxes[1].h / lc.boxes[1].w - 9 / 16) < 0.01, 'Vídeo sem proporção conhecida assume 16:9 e ocupa 2 colunas');
+        assert(lc.boxes[2].w === 392, 'Redgifs em pé (s9e) ocupa 1 coluna');
 
         // o player revela a proporção depois → o MESMO nó é re-posicionado (não recriado nem movido)
         const vidBox = gc.children[1];
@@ -7392,7 +7394,7 @@ async function runTests() {
         eng.masonryLayout(gc);
         assert(gc.children[1] === vidBox && vidBox.contains(slot), 'Re-colocar não recria nem move o nó do player');
         assert(mo.takeRecords().length === 0, 'Re-colocar não mexe na árvore do DOM (só estilo)');
-        assert(vidBox.style.width === '292px', 'Ao saber que é vertical, o vídeo passa a ocupar 1 coluna (obtido: ' + vidBox.style.width + ')');
+        assert(vidBox.style.width === '392px', 'Ao saber que é vertical, o vídeo passa a ocupar 1 coluna (obtido: ' + vidBox.style.width + ')');
         mo.disconnect();
 
         // imagem que chega depois ao lado de um grupo com vídeo entra nele SEM mover o player
@@ -7425,6 +7427,29 @@ async function runTests() {
         const quoteVid = mk(im(12) + '<blockquote class="bbCodeBlock bbCodeBlock--quote"><div class="bbCodeBlock-content">' + direct(1920, 1080) + '</div></blockquote>' + im(13));
         assert(!quoteVid.querySelector('.auto-image-grid'), 'Vídeo dentro de citação não entra no mosaico nem junta as imagens de fora');
 
+        // (g) imagens pela orientação, com a mesma regra dos vídeos: deitada 2 colunas, em pé / quadrada / quase quadrada 1
+        const imWH = (n, w, h) => '<a href="https://example.com/v' + n + '.jpg" class="link link--external"><img class="bbImage" src="https://example.com/v' + n + '.jpg" width="' + w + '" height="' + h + '"></a>';
+        const g = mk(imWH(20, 1080, 1350) + '<br>' + imWH(21, 1920, 1080) + '<br>' + imWH(22, 1000, 1000) + '<br>' + imWH(23, 1080, 1072) + '<br>' + imWH(24, 1080, 1920));
+        const gg = g.querySelector('.auto-image-grid');
+        assert(gg && gg.children.length === 5, 'Run de 5 imagens vira um grupo (obtido: ' + seq(g) + ')');
+        eng.setWidth(gg, 1192);
+        const lg = eng.masonryLayout(gg);
+        assert(lg.cols === 3, 'Grupo de imagens no desktop: 3 colunas (obtido: ' + lg.cols + ')');
+        assert(lg.boxes[1].w === 792 && lg.boxes[1].span === 2, 'Imagem horizontal ocupa 2 colunas, como o vídeo horizontal (obtido: ' + lg.boxes[1].w + ')');
+        assert(lg.boxes[0].w === 392 && lg.boxes[4].w === 392, 'Imagem vertical ocupa 1 coluna');
+        assert(lg.boxes[2].w === 392 && lg.boxes[3].w === 392, 'Imagem quadrada e quase quadrada (1080x1072) ocupam 1 coluna');
+        assert(Math.abs(lg.boxes[1].h / lg.boxes[1].w - 1080 / 1920) < 0.01, 'A caixa da imagem horizontal tem a proporção dela');
+        eng.setWidth(gg, 402);
+        const lgm = eng.masonryLayout(gg);
+        assert(lgm.cols === 2 && lgm.boxes[1].w === 402 && lgm.boxes[1].x === 0, 'Em 2 colunas a imagem horizontal ocupa a linha inteira (obtido: x ' + lgm.boxes[1].x + ', w ' + lgm.boxes[1].w + ')');
+        assert(lgm.boxes[1].y >= lgm.boxes[0].y + lgm.boxes[0].h, 'Em 2 colunas a imagem horizontal fica abaixo da imagem anterior');
+        // grupo de 2 imagens: horizontal + vertical somam 3 colunas; duas verticais usam 2
+        const g2 = mk(imWH(25, 1080, 1350) + '<br>' + imWH(26, 1920, 1080));
+        const gg2 = g2.querySelector('.auto-image-grid');
+        eng.setWidth(gg2, 1192);
+        const lg2 = eng.masonryLayout(gg2);
+        assert(lg2.cols === 3 && lg2.boxes[1].span === 2, 'Grupo vertical + horizontal usa 3 colunas (1 + 2) (obtido: ' + lg2.cols + ')');
+
         const css = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
         assert(/\.auto-image-grid\.smg-mason[^{]*\.smg-rg[^{]*\{[^}]*height:\s*100%/.test(css), 'CSS: o player preenche a caixa que o motor deu ao item');
 
@@ -7456,15 +7481,15 @@ async function runTests() {
         tileOf('image', '1.25'); const vUnknown = tileOf('embed'); const vVert = tileOf('embed', '1.7778'); tileOf('image', '1.5');
         window.__masonryEngine.setWidth(vcols, 1192);
         const gl = window.__masonryEngine.masonryLayout(vcols);
-        assert(gl.boxes[1].w === 592, 'Galeria: vídeo de proporção desconhecida assume 16:9 e ocupa 2 colunas (obtido: ' + gl.boxes[1].w + ')');
-        assert(gl.boxes[2].w === 292 && gl.boxes[0].w === 292 && gl.boxes[3].w === 292, 'Galeria: vídeo vertical e imagens ocupam 1 coluna');
+        assert(gl.boxes[1].w === 792, 'Galeria: vídeo de proporção desconhecida assume 16:9 e ocupa 2 colunas (obtido: ' + gl.boxes[1].w + ')');
+        assert(gl.boxes[2].w === 392 && gl.boxes[0].w === 392 && gl.boxes[3].w === 392, 'Galeria: vídeo vertical e imagens verticais ocupam 1 coluna');
         // o player revela a proporção (API do redgifs / metadata) → o tile guarda e é re-colocado
         const { wrap: gw } = window.__redgifsExports.rgBuild('galtest');
         vUnknown.appendChild(gw);
         window.__redgifsExports.rgAspect(gw, 1080, 1920);
         assert(Math.abs(+vUnknown.dataset.relh - 1920 / 1080) < 0.001, 'Galeria: a proporção que o player descobre vai pro tile (obtido: ' + vUnknown.dataset.relh + ')');
         const gl2 = window.__masonryEngine.masonryLayout(vcols);
-        assert(gl2.boxes[1].w === 292 && vUnknown.contains(gw), 'Galeria: vídeo que se revela vertical passa a 1 coluna, mesmo player no mesmo tile');
+        assert(gl2.boxes[1].w === 392 && vUnknown.contains(gw), 'Galeria: vídeo que se revela vertical passa a 1 coluna, mesmo player no mesmo tile');
         window.__masonryEngine.setWidth(vcols, 402);
         const gl3 = window.__masonryEngine.masonryLayout(vcols);
         vVert.dataset.relh = '0.5625';
@@ -7472,6 +7497,27 @@ async function runTests() {
         assert(gl3.cols === 2 && gl4.boxes[2].w === 402, 'Galeria em 2 colunas: vídeo deitado ocupa a largura inteira (obtido: ' + gl4.boxes[2].w + ')');
         window.__masonryEngine.masonryUnmount(vcols);
         vsec.remove();
+
+        // imagens na galeria: deitada = 2 colunas, em pé / quadrada / quase quadrada = 1 coluna
+        const isec = gx.galMakeSection(3, false);
+        const icols = isec.querySelector('.smg-gallery-cols');
+        document.body.appendChild(isec);
+        const imgTile = relh => { const t = document.createElement('div'); t.className = 'smg-gallery-tile smg-gallery-tile--image'; t.dataset.relh = relh; icols.appendChild(t); return t; };
+        imgTile('1.25'); imgTile('0.5625'); imgTile('1'); imgTile(String(1072 / 1080)); imgTile('1.5');
+        window.__masonryEngine.setWidth(icols, 1192);
+        const il = window.__masonryEngine.masonryLayout(icols);
+        assert(il.cols === 3, 'Galeria desktop: 3 colunas (obtido: ' + il.cols + ')');
+        assert(il.boxes[1].w === 792 && il.boxes[1].span === 2, 'Galeria: imagem horizontal ocupa 2 colunas (obtido: ' + il.boxes[1].w + ')');
+        assert([0, 2, 3, 4].every(i => il.boxes[i].w === 392), 'Galeria: imagem vertical, quadrada e quase quadrada ocupam 1 coluna (obtido: ' + il.boxes.map(b => b.w).join(',') + ')');
+        window.__masonryEngine.setWidth(icols, 402);
+        const il2 = window.__masonryEngine.masonryLayout(icols);
+        assert(il2.cols === 2 && il2.boxes[1].w === 402 && il2.boxes[1].x === 0, 'Galeria em 2 colunas: imagem horizontal ocupa a linha inteira (obtido: x ' + il2.boxes[1].x + ', w ' + il2.boxes[1].w + ')');
+        assert(il2.boxes[2].w === Math.round(il2.colW), 'Galeria em 2 colunas: imagem quadrada continua com 1 coluna');
+        const sk2 = gx.galSkelTile(1); sk2.dataset.relh = '0.5'; icols.appendChild(sk2);
+        const il3 = window.__masonryEngine.masonryLayout(icols);
+        assert(il3.boxes[5].span === 1, 'Galeria: tile-fantasma ocupa sempre 1 coluna');
+        window.__masonryEngine.masonryUnmount(icols);
+        isec.remove();
     }
 
     // =========================================================================
