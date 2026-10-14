@@ -483,11 +483,29 @@
             v.src = job.url;
         }
     }
-    function gfProbeDur(key, url) {
+    // Sonda a duração só quando o item fica visível (watchEl = elemento observado).
+    let gfProbeDurIO = null;
+    function gfProbeDurNow(key, url) {
         if (!key || !url || gfCachedDur(key) || gfDurPending.has(key)) return;
         gfDurPending.add(key);
         gfDurQueue.push({ key, url });
         gfPumpDur();
+    }
+    function gfProbeDur(key, url, watchEl) {
+        if (!key || !url || gfCachedDur(key) || gfDurPending.has(key)) return;
+        if (!watchEl || !("IntersectionObserver" in window)) { gfProbeDurNow(key, url); return; }
+        if (!gfProbeDurIO) {
+            gfProbeDurIO = new IntersectionObserver(entries => {
+                for (const e of entries) {
+                    if (!e.isIntersecting) continue;
+                    gfProbeDurIO.unobserve(e.target);
+                    gfProbeDurNow(e.target._durKey, e.target._durUrl);
+                }
+            }, { rootMargin: "200px" });
+        }
+        watchEl._durKey = key;
+        watchEl._durUrl = url;
+        gfProbeDurIO.observe(watchEl);
     }
 
     function vbtn(icon, label, opts) {
@@ -896,7 +914,7 @@
             durEl.dataset.durKey = durKey;
             durEl.hidden = !known;
             thumbWrap.appendChild(durEl);
-            gfProbeDur(durKey, durUrl);
+            gfProbeDur(durKey, durUrl, thumbWrap);
         }
 
         const info = el("div", { class: "gf-playlist-info" });
