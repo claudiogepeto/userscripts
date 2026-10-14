@@ -1577,8 +1577,8 @@ async function runTests() {
 
     // 9.7 Validar CSS injetado dos chips
     const injectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
-    assert(injectedStyles.includes('padding: 1.5px 5.5px !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
-    assert(injectedStyles.includes('font-size: 9.5px !important'), 'CSS deve definir font-size: 9.5px para .label e .smg-badge-chip');
+    assert(injectedStyles.includes('padding: var(--smg-sp-2) var(--smg-sp-6) !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
+    assert(injectedStyles.includes('font-size: var(--smg-fs-10) !important'), 'CSS deve definir font-size 10px (escala) para .label e .smg-badge-chip');
 
     // 9.8 Testar railBtn da topbar (classes e contador de seguidos)
     const railBtnEl = document.querySelector('.smg-tb-railbtn');
@@ -1663,8 +1663,8 @@ async function runTests() {
     assert(injectedStyles.includes('.smg-notices-collapse-head'), 'CSS deve definir estilos para .smg-notices-collapse-head');
     assert(injectedStyles.includes('.smg-notices-collapse-badge'), 'CSS deve definir estilos para .smg-notices-collapse-badge');
     assert(injectedStyles.includes('.smg-notices-collapse-chevron'), 'CSS deve definir estilos para .smg-notices-collapse-chevron');
-    assert(injectedStyles.includes('border-radius: 14px !important'), 'CSS deve definir border-radius: 14px para .smg-notices-collapse');
-    assert(injectedStyles.includes('margin: 16px 0 !important'), 'CSS deve definir margin: 16px 0 !important para .smg-notices-collapse');
+    assert(injectedStyles.includes('border-radius: var(--smg-r-14) !important'), 'CSS deve definir border-radius: 14px para .smg-notices-collapse');
+    assert(injectedStyles.includes('margin: var(--smg-sp-16) 0 !important'), 'CSS deve definir margin: 16px 0 !important para .smg-notices-collapse');
     noticeBlockMock.remove();
 
     console.log('Teste 9 concluído com sucesso!\n');
@@ -2609,7 +2609,7 @@ async function runTests() {
     assert(injectedStyles18.includes('display: grid !important;'), 'Masonry deve usar uma grade estável');
     assert(injectedStyles18.includes('grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;'), 'Masonry deve manter colunas de largura uniforme');
     assert(injectedStyles18.includes('grid-auto-flow: row !important;'), 'Masonry deve preservar a ordem das mídias por linha');
-    assert(injectedStyles18.includes('gap: 8px !important;'), 'Masonry deve manter espaçamento uniforme entre linhas e colunas');
+    assert(injectedStyles18.includes('gap: var(--smg-sp-8) !important;'), 'Masonry deve manter espaçamento uniforme entre linhas e colunas');
     assert(injectedStyles18.includes('justify-items: center !important;'), 'Masonry deve centralizar cada mídia dentro da coluna');
     assert(injectedStyles18.includes('html.smg-masonry-on .smg-fp-content .auto-image-grid'), 'Cards do feed devem usar o mesmo layout Grid do masonry');
     assert(injectedStyles18.includes('--smg-ald-w: 360px;'), 'Sidebar deve ter fallback compacto de 360px');
@@ -2677,7 +2677,7 @@ async function runTests() {
     assert(paintCss19.includes('min-height: 100dvh'), 'Skeleton deve ocupar a altura útil da viewport');
     assert(paintCss19.includes('@media (max-width: 800px)'), 'Skeleton deve acompanhar o breakpoint mobile da topbar');
     assert(paintCss19.includes('position: absolute; left: 0; right: 0; bottom: 0'), 'Navbar do skeleton deve ocupar a base inteira do shell');
-    assert(paintCss19.includes('z-index: 1000'), 'Skeleton deve ficar acima da página nativa durante a composição');
+    assert(paintCss19.includes('z-index: var(--smg-z-topbar)'), 'Skeleton deve ficar acima da página nativa durante a composição');
 
     // -------------------------------------------------------------------------
     // Paint Gate Fallback & Setup State no River
@@ -4087,8 +4087,8 @@ async function runTests() {
     const styleEl = document.getElementById('smg-styles');
     const injectedCSS = (styleEl && styleEl.textContent) || scriptContent;
 
-    assert(injectedCSS.includes('column-gap: 8px !important;'), 'Estilos do grid devem possuir column-gap: 8px');
-    assert(injectedCSS.includes('gap: 8px !important;'), 'Estilos do grid devem possuir gap: 8px');
+    assert(injectedCSS.includes('column-gap: var(--smg-sp-8) !important;'), 'Estilos do grid devem possuir column-gap: 8px');
+    assert(injectedCSS.includes('gap: var(--smg-sp-8) !important;'), 'Estilos do grid devem possuir gap: 8px');
 
     // Cleanup
     testPost32.remove();
@@ -4153,7 +4153,7 @@ async function runTests() {
     // 3. Testar CSS injetado para .smg-justified-grid > * e .smg-grid-2
     assert(injectedCSS.includes('min-width: calc((100% - 16px) / var(--smg-mcols, 3)) !important;'), 'Estilos de .smg-justified-grid > * devem possuir min-width limitando a 3 colunas');
     assert(injectedCSS.includes('repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;'), 'Estilos de .smg-grid-2 devem possuir grid-template-columns com repeat(var(--smg-mcols, 2), minmax(0, 1fr))');
-    assert(injectedCSS.includes('.auto-image-grid.smg-grid-2') && injectedCSS.includes('gap: 8px !important;'), 'Estilos de .smg-grid-2 devem possuir gap: 8px !important');
+    assert(injectedCSS.includes('.auto-image-grid.smg-grid-2') && injectedCSS.includes('gap: var(--smg-sp-8) !important;'), 'Estilos de .smg-grid-2 devem possuir gap: 8px !important');
 
     // Cleanup
     twoVertDiv.remove();
@@ -4411,7 +4411,7 @@ async function runTests() {
 
     // Validação CSS
     assert(injectedCSS.includes('column-count: var(--smg-mcols, 3) !important;'), 'CSS de .smg-true-masonry deve ter column-count: var(--smg-mcols, 3)');
-    assert(injectedCSS.includes('column-gap: 8px !important;'), 'CSS de .smg-true-masonry deve ter column-gap: 8px');
+    assert(injectedCSS.includes('column-gap: var(--smg-sp-8) !important;'), 'CSS de .smg-true-masonry deve ter column-gap: 8px');
 
     // Cleanup
     t36Wrap.remove();
@@ -5802,7 +5802,7 @@ async function runTests() {
     assert(allStyles48.includes('.smg-thead-controls') && allStyles48.includes('margin-left: auto') && allStyles48.includes('flex-shrink: 0'), 'CSS deve conter .smg-thead-controls com margin-left: auto e flex-shrink: 0');
     assert(allStyles48.includes('.smg-thead-unified.is-stuck .smg-thead-badges-row') && allStyles48.includes('display: none !important;'), 'CSS deve ocultar .smg-thead-badges-row quando o header estiver stuck');
     assert(allStyles48.includes('.smg-thead-spacer') && allStyles48.includes('overflow-anchor: none !important;'), 'CSS deve conter .smg-thead-spacer com overflow-anchor: none !important;');
-    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('font-size: 14.5px !important;'), 'CSS deve conter font-size: 14.5px !important; no estado stuck');
+    assert(allStyles48.includes('.smg-thead-unified.is-stuck .p-title-value') && allStyles48.includes('font-size: var(--smg-fs-15) !important;'), 'CSS deve conter font-size 15px (escala) no estado stuck');
 
     // 2. Criar header mockado com thumb, badges (.label), título longo e tags (.p-description)
     document.documentElement.classList.add('smg-thread');
@@ -6063,7 +6063,7 @@ async function runTests() {
     // 1. Validar CSS gerado para SMG tagsBar
     const allStyles51 = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar'), 'CSS deve conter regra para html.smg-smg.smg-thread .smg-thead-tags-bar');
-    assert(allStyles51.includes('margin: 6px auto 14px auto !important;'), 'CSS deve conter margin: 6px auto 14px auto !important; para SMG tagsBar');
+    assert(allStyles51.includes('margin: var(--smg-sp-6) auto var(--smg-sp-14) auto !important;'), 'CSS deve conter margin: 6px auto 14px auto !important; para SMG tagsBar');
     assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent'), 'CSS deve conter regra para html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent');
     assert(allStyles51.includes('html.smg-smg.smg-thread .smg-thead-tags-bar:not(:has(.pageContent))'), 'CSS deve conter fallback para quando não houver .pageContent');
     assert(allStyles51.includes('.smg-thead-tags-bar > .pageContent') && allStyles51.includes('max-width: var(--smg-cw) !important;'), 'CSS desktop deve conter .smg-thead-tags-bar > .pageContent com max-width: var(--smg-cw)');
@@ -7018,7 +7018,7 @@ async function runTests() {
         // 2. Proteção do CSS contra cortes secos e flickers
         const paintCss = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
         assert(paintCss.includes('smg-skeleton-fade-out'), 'CSS deve conter classe de saída smg-skeleton-fade-out');
-        assert(paintCss.includes('transition: opacity 0.12s'), 'Skeleton deve possuir transição suave de opacidade');
+        assert(paintCss.includes('transition: opacity var(--smg-dur-12)'), 'Skeleton deve possuir transição suave de opacidade');
         assert(paintCss.includes('html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton'), 'CSS deve manter skeleton durante fade-out sem corte display:none');
 
         // 3. Blindagem contra re-criação de skeleton se página já estiver pronta
@@ -7055,8 +7055,8 @@ async function runTests() {
         assert(scriptCode.includes("scrollBottom: svgIcon('<path d=\"m6 7 6 6 6-6\"/><path d=\"M6 17h12\"/>')"), 'scrollBottom deve estar perfeitamente centralizado em Y=12.0');
 
         // 2. Dock desktop mais alta e menos espaçada horizontalmente ("gordinha")
-        assert(scriptCode.includes('padding: 9px 10px;'), 'Dock desktop deve ter padding vertical maior');
-        assert(scriptCode.includes('margin: 0 6px;'), 'Divisores da dock devem ter espaçamento horizontal reduzido');
+        assert(scriptCode.includes('padding: var(--smg-sp-10) var(--smg-sp-10);'), 'Dock desktop deve ter padding vertical maior');
+        assert(scriptCode.includes('margin: 0 var(--smg-sp-6);'), 'Divisores da dock devem ter espaçamento horizontal reduzido');
         assert(scriptCode.includes('width: 44px;\n                height: 44px;') || scriptCode.includes('width: 44px; height: 44px;'), 'Botões da dock desktop devem ter 44px');
 
         // 3. Ordem de ícones na dock mobile: up | down | pages | sort | mode | notification
@@ -7120,7 +7120,7 @@ async function runTests() {
 
         // 3. Regras CSS de desacoplamento da navbar
         assert(scriptCode.includes('html.smg-page-pending #smg-post-nav-wrapper {\n                visibility: hidden !important;'), 'CSS deve ocultar navbar quando página estiver pending');
-        assert(scriptCode.includes('html.smg-navbar-ready #smg-post-nav-wrapper {\n                visibility: visible !important;\n                pointer-events: auto !important;\n                z-index: 1102 !important;'), 'CSS deve exibir navbar imediatamente quando smg-navbar-ready');
+        assert(scriptCode.includes('html.smg-navbar-ready #smg-post-nav-wrapper {\n                visibility: visible !important;\n                pointer-events: auto !important;\n                z-index: var(--smg-z-gate-2) !important;'), 'CSS deve exibir navbar imediatamente quando smg-navbar-ready');
         assert(scriptCode.includes('html.smg-navbar-ready .smg-page-skeleton-bottom-nav'), 'CSS deve ocultar bottom-nav do skeleton quando smg-navbar-ready');
     }
 
@@ -7153,11 +7153,11 @@ async function runTests() {
         }
 
         // 2. Toolbar do Search Desktop: ícones monocromáticos, altura uniforme de 34px e autor icon-only com row expansível
-        assert(scriptCode.includes('height: 34px;\n                padding: 0 28px 0 31px;\n                border-radius: 9px;'), 'Selects do desktop devem ter altura 34px e padding 31px à esquerda para o ícone monocromático');
+        assert(scriptCode.includes('height: 34px;\n                padding: 0 var(--smg-sp-28) 0 var(--smg-sp-32);\n                border-radius: var(--smg-r-10);'), 'Selects do desktop devem ter altura 34px e padding 32px (escala) à esquerda para o ícone monocromático');
         assert(scriptCode.includes('.smg-search-author-trigger {\n                display: inline-flex;\n                align-items: center;\n                justify-content: center;\n                width: 34px;\n                height: 34px;'), 'Botão do autor no desktop deve ser icon-only de 34px');
         assert(scriptCode.includes('.smg-search-global-toolbar.author-open .smg-search-tb-row {\n                display: none !important;\n            }'), 'Ao abrir autor, a row normal de filtros é oculta');
-        assert(scriptCode.includes('.smg-search-author-row {\n                display: flex;\n                align-items: center;\n                gap: 9px;\n                width: 100%;\n                height: 34px;'), 'A row de autor expansível ocupa a largura total no lugar da toolbar');
-        assert(scriptCode.includes('.smg-search-tb-row .smg-search-adv, .smg-search-tb-right .smg-search-adv {\n                display: inline-flex;\n                align-items: center;\n                gap: 7px;\n                height: 34px;'), 'Botão de filtro avançado no desktop deve ter altura 34px');
+        assert(scriptCode.includes('.smg-search-author-row {\n                display: flex;\n                align-items: center;\n                gap: var(--smg-sp-10);\n                width: 100%;\n                height: 34px;'), 'A row de autor expansível ocupa a largura total no lugar da toolbar');
+        assert(scriptCode.includes('.smg-search-tb-row .smg-search-adv, .smg-search-tb-right .smg-search-adv {\n                display: inline-flex;\n                align-items: center;\n                gap: var(--smg-sp-8);\n                height: 34px;'), 'Botão de filtro avançado no desktop deve ter altura 34px');
         assert(!scriptCode.includes('<div class="smg-search-badges-slot"></div>'), 'Filtro de tags deve ter sido removido da toolbar do search');
 
         // 3. Toolbar do Search Mobile: Dropdowns monocromáticos icon-only, autor icon-only e tela cheia com barra na base
@@ -7471,7 +7471,7 @@ async function runTests() {
     assert(allStyles.includes('.smg-tb-logo {') && allStyles.includes('height: 48px;'), '.smg-tb-logo deve ter 48px de altura');
     assert(allStyles.includes('.smg-tb-logo img {') && allStyles.includes('height: 42px;'), '.smg-tb-logo img deve ter 42px de altura');
     assert(allStyles.includes('max-width: 220px;'), 'Logo deve ter max-width expandido para 220px');
-    assert(allStyles.includes('.smg-logo-word {') && allStyles.includes('font-size: 26px;'), 'Logo SMG deve ter font-size 26px');
+    assert(allStyles.includes('.smg-logo-word {') && allStyles.includes('font-size: var(--smg-fs-28);'), 'Logo SMG deve ter font-size 28px (escala)');
     assert(allStyles.includes('font-weight: 900;'), 'Logo SMG deve ter font-weight 900');
     assert(allStyles.includes('.smg-home-skeleton-topbar {') && allStyles.includes('height: 72px;'), 'Skeleton da topbar da home deve ter 72px');
     assert(allStyles.includes('.smg-home-skeleton-topbar-logo { width: 160px; height: 36px;'), 'Skeleton do logo deve ter 160x36px');
@@ -7554,7 +7554,7 @@ async function runTests() {
         assert(allStyles.includes('.smg-hub-category-divider'), 'CSS deve conter estilo para o divisor de categorias .smg-hub-category-divider');
         assert(allStyles.includes('.p-body-header.smg-thead-unified') && allStyles.includes('top: 60px;'), 'Header sticky da thread deve respeitar top: 60px');
         assert(allStyles.includes('.p-body-header.smg-thead-unified') && allStyles.includes('justify-content: space-between !important;'), 'Header sticky da thread deve manter layout horizontal space-between');
-        assert(allStyles.includes('.p-body-header.smg-thead-unified.is-stuck') && allStyles.includes('padding: 8px 0 !important;'), 'Header sticky no estado stuck deve ter padding simétrico 8px');
+        assert(allStyles.includes('.p-body-header.smg-thead-unified.is-stuck') && allStyles.includes('padding: var(--smg-sp-8) 0 !important;'), 'Header sticky no estado stuck deve ter padding simétrico 8px');
 
         // Testar classifyHomeNode
         assert(typeof classifyHomeNode === 'function', 'classifyHomeNode deve ser função');
@@ -7910,7 +7910,7 @@ async function runTests() {
         assert(allStyles.includes('.smg-sticky-compact-list'), 'CSS deve conter estilos para .smg-sticky-compact-list');
         assert(allStyles.includes('html.smg-threadlist.smg-tv-grid .smg-tl-grid') && allStyles.includes('align-items: stretch !important;'), 'Grid de tópicos deve esticar cards uniformemente (align-items: stretch)');
         assert(allStyles.includes('min-height: 2.6em !important;') && allStyles.includes('-webkit-line-clamp: 2 !important;'), 'Títulos na grade devem reservar 2 linhas uniformes (min-height: 2.6em)');
-        assert(allStyles.includes('margin-top: auto !important;') && allStyles.includes('padding-top: 8px !important;'), 'Datas no card devem colar na base uniformemente (margin-top: auto)');
+        assert(allStyles.includes('margin-top: auto !important;') && allStyles.includes('padding-top: var(--smg-sp-8) !important;'), 'Datas no card devem colar na base uniformemente (margin-top: auto)');
         assert(allStyles.includes('clip-path: inset(0 -100vmax 0) !important;'), 'Subtopbar fixa deve cortar borda exatamente no limite (clip-path: inset(0 -100vmax 0))');
         assert(allStyles.includes('iframe[src*="turbo.cr"]::before') && allStyles.includes('display: none !important;'), 'Shimmer/loading deve ser suprimido em iframes do turbo.cr');
         assert(allStyles.includes('.tooltip--preview { display: none !important; }'), 'Tooltip nativo de preview deve ser ocultado no CSS');
