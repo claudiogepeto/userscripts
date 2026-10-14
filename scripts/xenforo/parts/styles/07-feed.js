@@ -132,38 +132,32 @@
             .smg-river-pill[hidden] { display: none; }
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-            /* card = mesmo visual do post (.smg-pc): coluna, surface s1, rounded 18, hover com sombra */
+            /* card do Feed/Salvos = a pele do post (.smg-pc, em css-post-cards); aqui só o que é do feed */
             .smg-fp-card {
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
+                overflow: hidden;
             }
-            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-card-r); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-card-shadow); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px var(--smg-w-18); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }
             @media (prefers-reduced-motion: reduce) { .smg-fp-card.smg-fp-enter { animation: none; } }
-            html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície do SimpCity (igual o post card) */
             /* HEADER: [foto da thread]  ·  tags / nome do tópico / postado por — divisor border-b */
-            .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-16); padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-16); border-bottom: 1px solid var(--smg-bd); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: var(--smg-r-12); overflow: hidden; background: var(--smg-w-06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
-            .smg-fp-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-fp-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
             .smg-fp-tags > * { font-size: var(--smg-fs-11) !important; line-height: 1; vertical-align: middle; }   /* prefixo = chip (mantém a cor nativa do label, injetado via innerHTML) */
             .smg-fp-tname { font-size: var(--smg-fs-16); font-weight: 700; color: #fff; text-decoration: none; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-fp-tname:hover { text-decoration: underline; }
-            .smg-fp-by { font-size: var(--smg-fs-13); color: var(--smg-w-50); }
             .smg-fp-share { flex: 0 0 auto; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; margin: -2px -6px 0 var(--smg-sp-4); border: 0; border-radius: var(--smg-r-10); background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
             .smg-fp-share:hover { background: var(--smg-link-soft); color: #fff; }
             .smg-fp-share.is-done { color: var(--smg-link); }
             .smg-fp-share svg { width: 17px; height: 17px; fill: none !important; }
             .smg-fp-byname { color: var(--smg-w-72); font-weight: 600; text-decoration: none; }
             .smg-fp-byname:hover { color: #fff; text-decoration: underline; }
-            .smg-fp-dot { color: var(--smg-w-30); }
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
-            .smg-fp-content { padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-14); font-size: var(--smg-fs-16); line-height: 1.6; color: var(--smg-w-95); word-break: break-word; }
+            .smg-fp-content { color: var(--smg-w-95); word-break: break-word; }
             /* Não forçar display: o card de file-host esconde o unfurl nativo
                com style inline. display:block !important trazia a URL e o preview
                de volta, duplicados em cima do nosso card. */

@@ -8003,10 +8003,14 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; margin: 0 0 var(--smg-sp-14); overflow: visible; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; contain: style; overflow-anchor: auto !important; }
-            html.smg-thread .smg-pc:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
+            /* POST CARD: UMA pele pro post da thread (.smg-pc) e pros cards do Feed/Salvos (.smg-fp-card, o
+               modificador "feed": thumb da thread + título como contexto, ver 07-feed). Superfície, header e
+               conteúdo moram aqui; 07-feed só tem o que é do feed. */
+            html.smg-thread .smg-pc, .smg-fp-card { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
+            html.smg-thread .smg-pc { margin: 0 0 var(--smg-sp-14); overflow: visible; contain: style; overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc:hover, .smg-fp-card:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
-            html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
+            html.smg-smg .smg-pc, html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
             /* QUOTES / unfurl dentro do post: inset escuro (recuado) + border + rounded — !important p/ vencer o cinza claro do tema */
             html.smg-thread .smg-pc .bbCodeBlock { background: var(--smg-k-25) !important; border: 1px solid var(--smg-w-08) !important; border-radius: var(--smg-r-12) !important; }
             html.smg-thread .smg-pc .bbCodeBlock .contentRow, html.smg-thread .smg-pc .bbCodeBlock-content { background: transparent !important; }
@@ -8187,19 +8191,19 @@
             html.smg-thread .smg-pc .message-cell--main { width: 100%; max-width: none; border: 0 !important; padding: 0 !important; }
             html.smg-thread .smg-pc .message-attribution { display: none !important; }                  /* tempo/#/share/bookmark movidos */
             html.smg-thread .smg-pc .message-actionBar { display: none !important; }                    /* react/comentar/quote/report movidos */
-            html.smg-thread .smg-pc .message-content { padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-10); }
+            html.smg-thread .smg-pc .message-content, .smg-fp-content { padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-10); }
             /* HEADER (com divisor border-b) */
-            html.smg-thread .smg-pc-head { display: flex; align-items: flex-start; gap: var(--smg-sp-12); padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }
+            html.smg-thread .smg-pc-head, .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-12); padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--smg-r-round); overflow: hidden; }
             html.smg-thread .smg-pc-avatar img, html.smg-thread .smg-pc-avatar span { width: 100% !important; height: 100% !important; object-fit: cover; display: flex; align-items: center; justify-content: center; }
-            html.smg-thread .smg-pc-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
+            html.smg-thread .smg-pc-meta, .smg-fp-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             html.smg-thread .smg-pc-row1 { display: flex; align-items: center; gap: var(--smg-sp-8); }
             html.smg-thread .smg-pc-idline { display: flex; align-items: baseline; gap: var(--smg-sp-6); min-width: 0; flex-wrap: wrap; }
             html.smg-thread .smg-pc-name { margin: 0; font-size: var(--smg-fs-14); font-weight: 700; }
             html.smg-thread .smg-pc-name a { text-decoration: none; }                                   /* mantém a cor nativa do username (identidade) */
             html.smg-thread .smg-pc-name a:hover { text-decoration: underline; }
-            html.smg-thread .smg-pc-dot { color: var(--smg-w-40); }
-            html.smg-thread .smg-pc-time { color: var(--smg-w-50); font-size: var(--smg-fs-13); }
+            html.smg-thread .smg-pc-dot, .smg-fp-dot { color: var(--smg-w-40); }
+            html.smg-thread .smg-pc-time, .smg-fp-by { color: var(--smg-w-50); font-size: var(--smg-fs-13); }
             html.smg-thread .smg-pc-num { margin-left: auto; flex: 0 0 auto; color: var(--smg-w-40); font-size: var(--smg-fs-13); text-decoration: none; }
             html.smg-thread .smg-pc-num:hover { color: var(--smg-w-72); }
             html.smg-thread .smg-pc-row2 { display: flex; align-items: center; flex-wrap: wrap; gap: var(--smg-sp-6) var(--smg-sp-8); }
@@ -8255,7 +8259,7 @@
             html.smg-thread .smg-pc-act--react > i, html.smg-thread .smg-pc-act--react .reaction-sprite, html.smg-thread .smg-pc-act--react .reaction-image, html.smg-thread .smg-pc-act--react .reaction-text,
             html.smg-thread .smg-cc-act--react > i, html.smg-thread .smg-cc-act--react .reaction-sprite, html.smg-thread .smg-cc-act--react .reaction-image, html.smg-thread .smg-cc-act--react .reaction-text { display: none !important; }
             /* CONTENT: texto maior que a action bar (hierarquia) */
-            html.smg-thread .smg-pc .message-content, html.smg-thread .smg-pc .message-content .bbWrapper { font-size: var(--smg-fs-15); line-height: 1.55; }
+            html.smg-thread .smg-pc .message-content, html.smg-thread .smg-pc .message-content .bbWrapper, .smg-fp-content { font-size: var(--smg-fs-15); line-height: 1.55; }
             /* PILLS de reação ESCONDIDAS (escolha do user): misturam joypixels + emojione (medal) = impossível alinhar a arte.
                O contador "N reações" na action bar já mostra o total (lê as contagens do DOM, que continua aqui em display:none). */
             html.smg-thread .smg-pc .reactionsBar, html.smg-thread .smg-pc .comment-reactions { display: none !important; }
@@ -8564,38 +8568,32 @@
             .smg-river-pill[hidden] { display: none; }
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-            /* card = mesmo visual do post (.smg-pc): coluna, surface s1, rounded 18, hover com sombra */
+            /* card do Feed/Salvos = a pele do post (.smg-pc, em css-post-cards); aqui só o que é do feed */
             .smg-fp-card {
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
+                overflow: hidden;
             }
-            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-card-r); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-card-shadow); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px var(--smg-w-18); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }
             @media (prefers-reduced-motion: reduce) { .smg-fp-card.smg-fp-enter { animation: none; } }
-            html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície do SimpCity (igual o post card) */
             /* HEADER: [foto da thread]  ·  tags / nome do tópico / postado por — divisor border-b */
-            .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-16); padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-16); border-bottom: 1px solid var(--smg-bd); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: var(--smg-r-12); overflow: hidden; background: var(--smg-w-06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
-            .smg-fp-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-fp-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
             .smg-fp-tags > * { font-size: var(--smg-fs-11) !important; line-height: 1; vertical-align: middle; }   /* prefixo = chip (mantém a cor nativa do label, injetado via innerHTML) */
             .smg-fp-tname { font-size: var(--smg-fs-16); font-weight: 700; color: #fff; text-decoration: none; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-fp-tname:hover { text-decoration: underline; }
-            .smg-fp-by { font-size: var(--smg-fs-13); color: var(--smg-w-50); }
             .smg-fp-share { flex: 0 0 auto; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; margin: -2px -6px 0 var(--smg-sp-4); border: 0; border-radius: var(--smg-r-10); background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
             .smg-fp-share:hover { background: var(--smg-link-soft); color: #fff; }
             .smg-fp-share.is-done { color: var(--smg-link); }
             .smg-fp-share svg { width: 17px; height: 17px; fill: none !important; }
             .smg-fp-byname { color: var(--smg-w-72); font-weight: 600; text-decoration: none; }
             .smg-fp-byname:hover { color: #fff; text-decoration: underline; }
-            .smg-fp-dot { color: var(--smg-w-30); }
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
-            .smg-fp-content { padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-14); font-size: var(--smg-fs-16); line-height: 1.6; color: var(--smg-w-95); word-break: break-word; }
+            .smg-fp-content { color: var(--smg-w-95); word-break: break-word; }
             /* Não forçar display: o card de file-host esconde o unfurl nativo
                com style inline. display:block !important trazia a URL e o preview
                de volta, duplicados em cima do nosso card. */
