@@ -78,8 +78,7 @@
             let note = ((row.querySelector('.contentRow-snippet, .structItem-snippet') || {}).textContent || '').replace(/\s+/g, ' ').trim();
             if (/^no bookmark note\.?$/i.test(note)) note = '';
             const te = row.querySelector('.contentRow-minor time, .structItem-minor time, time');   // data do bookmark → ordenação (desc) e diff
-            let bmTs = te ? (parseInt(te.getAttribute('data-timestamp') || te.getAttribute('data-time') || '0', 10) || 0) : 0;
-            if (!bmTs && te) { const dt = te.getAttribute('datetime'); if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) bmTs = Math.floor(ms / 1000); } }
+            const bmTs = timeTs(te);
             let postUrl = bmCanonicalPostUrl(href);
             if (!postUrl) postUrl = postId.startsWith('t-') ? ('/threads/' + postId.slice(2) + '/') : ('/posts/' + postId + '/');
             out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: /^data:/.test(thumb) ? '' : thumb, note: note, bmTs: bmTs });

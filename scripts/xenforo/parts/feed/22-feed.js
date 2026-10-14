@@ -162,13 +162,7 @@
         let ts = 0;
         const postTimeEl = post.querySelector('.message-attribution time, .message-attribution-main time, header.message-attribution time, .message-date time')
             || Array.from(post.querySelectorAll('time.u-dt, time')).find(t => !t.closest('.bbCodeQuote, .message-signature'));
-        if (postTimeEl) {
-            ts = parseInt(postTimeEl.getAttribute('data-timestamp') || postTimeEl.getAttribute('data-time') || '0', 10) || 0;
-            if (!ts) {
-                const dt = postTimeEl.getAttribute('datetime');
-                if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) ts = Math.floor(ms / 1000); }
-            }
-        }
+        if (postTimeEl) ts = timeTs(postTimeEl);
         if (!ts) {
             const wrapTs = post.getAttribute('data-timestamp') || post.getAttribute('data-time');
             if (wrapTs) ts = parseInt(wrapTs, 10) || 0;

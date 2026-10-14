@@ -144,15 +144,7 @@
                 const forum_activity_ts = structItemTs(it);
 
                 // created_at
-                const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
-                let created_at = 0;
-                if (crTime) {
-                    created_at = parseInt(crTime.getAttribute('data-timestamp') || crTime.getAttribute('data-time') || '0', 10) || 0;
-                    if (!created_at) {
-                        const dt = crTime.getAttribute('datetime');
-                        if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) created_at = Math.floor(ms / 1000); }
-                    }
-                }
+                const created_at = timeTs(it.querySelector('.structItem-cell--main time, .structItem-startDate time'));
 
                 // author
                 const authorEl = it.querySelector('.structItem-parts .username, .structItem-parts a, .username');

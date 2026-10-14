@@ -9506,13 +9506,18 @@
         }
     }
 
+    // <time> do XF → epoch em segundos (data-timestamp/data-time; senão o ISO do datetime). 0 se não houver.
+    function timeTs(t) {
+        if (!t) return 0;
+        const ts = parseInt(t.getAttribute('data-timestamp') || t.getAttribute('data-time') || '0', 10) || 0;
+        if (ts) return ts;
+        const ms = Date.parse(t.getAttribute('datetime') || '');
+        return isNaN(ms) ? 0 : Math.floor(ms / 1000);
+    }
+
     function structItemTs(it) {
         if (!it || !it.querySelector) return 0;
-        const t = it.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt');
-        if (!t) return 0;
-        let ts = parseInt(t.getAttribute('data-timestamp') || t.getAttribute('data-time') || '0', 10) || 0;
-        if (!ts) { const dt = t.getAttribute('datetime'); if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) ts = Math.floor(ms / 1000); } }
-        return ts;
+        return timeTs(it.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt'));
     }
 
     const KNOWN_XF_PREFIXES = {
@@ -20971,15 +20976,7 @@
                 const forum_activity_ts = structItemTs(it);
 
                 // created_at
-                const crTime = it.querySelector('.structItem-cell--main time, .structItem-startDate time');
-                let created_at = 0;
-                if (crTime) {
-                    created_at = parseInt(crTime.getAttribute('data-timestamp') || crTime.getAttribute('data-time') || '0', 10) || 0;
-                    if (!created_at) {
-                        const dt = crTime.getAttribute('datetime');
-                        if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) created_at = Math.floor(ms / 1000); }
-                    }
-                }
+                const created_at = timeTs(it.querySelector('.structItem-cell--main time, .structItem-startDate time'));
 
                 // author
                 const authorEl = it.querySelector('.structItem-parts .username, .structItem-parts a, .username');
@@ -24674,8 +24671,7 @@
             let note = ((row.querySelector('.contentRow-snippet, .structItem-snippet') || {}).textContent || '').replace(/\s+/g, ' ').trim();
             if (/^no bookmark note\.?$/i.test(note)) note = '';
             const te = row.querySelector('.contentRow-minor time, .structItem-minor time, time');   // data do bookmark → ordenação (desc) e diff
-            let bmTs = te ? (parseInt(te.getAttribute('data-timestamp') || te.getAttribute('data-time') || '0', 10) || 0) : 0;
-            if (!bmTs && te) { const dt = te.getAttribute('datetime'); if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) bmTs = Math.floor(ms / 1000); } }
+            const bmTs = timeTs(te);
             let postUrl = bmCanonicalPostUrl(href);
             if (!postUrl) postUrl = postId.startsWith('t-') ? ('/threads/' + postId.slice(2) + '/') : ('/posts/' + postId + '/');
             out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: /^data:/.test(thumb) ? '' : thumb, note: note, bmTs: bmTs });
@@ -25596,13 +25592,7 @@
         let ts = 0;
         const postTimeEl = post.querySelector('.message-attribution time, .message-attribution-main time, header.message-attribution time, .message-date time')
             || Array.from(post.querySelectorAll('time.u-dt, time')).find(t => !t.closest('.bbCodeQuote, .message-signature'));
-        if (postTimeEl) {
-            ts = parseInt(postTimeEl.getAttribute('data-timestamp') || postTimeEl.getAttribute('data-time') || '0', 10) || 0;
-            if (!ts) {
-                const dt = postTimeEl.getAttribute('datetime');
-                if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) ts = Math.floor(ms / 1000); }
-            }
-        }
+        if (postTimeEl) ts = timeTs(postTimeEl);
         if (!ts) {
             const wrapTs = post.getAttribute('data-timestamp') || post.getAttribute('data-time');
             if (wrapTs) ts = parseInt(wrapTs, 10) || 0;

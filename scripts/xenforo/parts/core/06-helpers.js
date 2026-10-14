@@ -175,13 +175,18 @@
         }
     }
 
+    // <time> do XF → epoch em segundos (data-timestamp/data-time; senão o ISO do datetime). 0 se não houver.
+    function timeTs(t) {
+        if (!t) return 0;
+        const ts = parseInt(t.getAttribute('data-timestamp') || t.getAttribute('data-time') || '0', 10) || 0;
+        if (ts) return ts;
+        const ms = Date.parse(t.getAttribute('datetime') || '');
+        return isNaN(ms) ? 0 : Math.floor(ms / 1000);
+    }
+
     function structItemTs(it) {
         if (!it || !it.querySelector) return 0;
-        const t = it.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt');
-        if (!t) return 0;
-        let ts = parseInt(t.getAttribute('data-timestamp') || t.getAttribute('data-time') || '0', 10) || 0;
-        if (!ts) { const dt = t.getAttribute('datetime'); if (dt) { const ms = Date.parse(dt); if (!isNaN(ms)) ts = Math.floor(ms / 1000); } }
-        return ts;
+        return timeTs(it.querySelector('.structItem-latestDate, .structItem-cell--latest time, .structItem-latestDate time, .structItem-cell--latest .u-dt'));
     }
 
     const KNOWN_XF_PREFIXES = {
