@@ -848,15 +848,15 @@
         document.addEventListener("keydown", e => {
             if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
             if (e.key === "Escape" && stage.classList.contains("open")) closeStage();
-            else if ((e.key === "p" || e.key === "P") && stage.classList.contains("open")) {
+            else if (e.shiftKey && (e.key === "P" || e.key === "p") && stage.classList.contains("open")) {
                 e.preventDefault();
-                toggleSidebar();
+                navStage(-1);
             } else if (e.shiftKey && (e.key === "N" || e.key === "n") && stage.classList.contains("open")) {
                 e.preventDefault();
                 navStage(1);
-            } else if (e.shiftKey && (e.key === "P" || e.key === "p") && stage.classList.contains("open")) {
+            } else if ((e.key === "p" || e.key === "P") && stage.classList.contains("open")) {
                 e.preventDefault();
-                navStage(-1);
+                toggleSidebar();
             }
         });
     }
