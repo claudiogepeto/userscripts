@@ -3027,7 +3027,7 @@
             .smg-badge-chip.tagItem {
                 border-radius: 4px !important;
                 background: rgba(255,255,255,0.06) !important;
-                color: var(--smg-tx, #cbd9ff) !important;
+                color: #cbd9ff !important;
                 font-weight: 600 !important;
             }
             /* Cores dos Prefixos Nativos e Customizados Xenforo */

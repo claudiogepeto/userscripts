@@ -1658,7 +1658,7 @@
                 width: 20px !important;
                 height: 20px !important;
                 flex-shrink: 0 !important;
-                color: var(--smg-tx2, rgba(255,255,255,0.6)) !important;
+                color: rgba(255,255,255,0.6) !important;
                 transition: transform .2s ease, color .15s ease !important;
             }
             .bbCodeSpoiler-button.is-active .smg-spoiler-arrow,

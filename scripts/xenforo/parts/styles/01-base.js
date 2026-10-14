@@ -16,20 +16,21 @@
                 --smg-s1: hsl(0 0% 12.5%);         /* superfície: popovers, sheets, dock, cards */
                 --smg-s2: hsl(0 0% 16%);           /* hover / inputs / header de card */
                 --smg-s3: hsl(0 0% 21%);           /* ativo / selecionado / botão primário / switch on */
-                --smg-s3-hover: hsl(0 0% 26%);     /* hover do estado ativo */
                 --smg-bd: rgba(255,255,255,0.10);  /* borda padrão */
                 --smg-bd2: rgba(255,255,255,0.17); /* borda em destaque/ativo */
-                --smg-card: rgba(255,255,255,0.035); /* superfície sutil sobre o bg do site (cards) */
-                --smg-card-head: rgba(255,255,255,0.06);
                 --smg-scrim: rgba(0,0,0,0.66);      /* backdrop de overlays */
                 --smg-media-h: min(70vh, 750px);    /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
+                --smg-tx: #e7e7ea;                  /* texto principal */
+                --smg-tx2: rgba(255,255,255,0.5);   /* texto secundário */
+                --smg-ac: #ff77b2;                  /* acento fixo (rosa) */
+                --smg-mono: -apple-system, monospace;
+                --smg-target-h: 320px;              /* altura-alvo da linha justificada (flex-basis) */
             }
             html.smg-smg {
                 --smg-bg: #1a1a1a;                  /* cor da topbar do socialmediagirls */
                 --smg-s1: hsl(0 0% 13.5%);
                 --smg-s2: hsl(0 0% 17%);
                 --smg-s3: hsl(0 0% 22%);
-                --smg-s3-hover: hsl(0 0% 27%);
             }
             /* ACENTO do tema, POR SITE: VERDE no SimpCity, ROSA no SocialMediaGirls. Usa o linkColor real do
                fórum quando exposto; senão cai no fallback da marca. Todo var(--smg-link, ...) passa a seguir isto. */
@@ -39,7 +40,7 @@
             /* O tema do SMG pinta .block-container de rosa (#ff77b2). A superfície do script é neutra. */
             html.smg-smg .block-container {
                 background: var(--smg-s1, #222) !important;
-                color: var(--smg-tx, #fff) !important;
+                color: #fff !important;
             }
             /* SMG: o tema pinta a página de cinza-azulado. A superfície do script é cinza neutro. */
             html.smg-smg body,
@@ -663,7 +664,7 @@
             .smg-fhcard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
             .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link, #ff77b2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
             .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx, #e7e7ea); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-fhcard-sub { font-size: 12px; color: var(--smg-tx2, rgba(255,255,255,0.55)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-fhcard-sub { font-size: 12px; color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* DENTRO DE LISTA/TABELA: uma linha por item. O card cheio (tile de 96px) repetido em cada
                <li> de uma lista de 80 links viraria uma página quilométrica — aqui ele vira uma pílula. */
             .smg-fhcard--inline { margin: 2px 0; padding: 2px 4px; border-radius: 9px; gap: 2px; }
