@@ -1120,11 +1120,24 @@
             return Array.isArray(files) ? files : [];
         } catch { return []; }
     }
+    // Lê FILES direto do <script> da página (sem serializar o documento inteiro);
+    // o resultado é guardado assim que aparece.
+    let pageFiles = null;
+    function readPageFiles() {
+        if (pageFiles) return pageFiles;
+        for (const sc of document.scripts) {
+            const t = sc.textContent || "";
+            if (t.indexOf("const FILES") === -1) continue;
+            const files = parseFilesText(t);
+            if (files.length) { pageFiles = files; return files; }
+        }
+        return [];
+    }
     let albumFilesPromise = null;
     function loadAlbumFiles() {
         if (albumFilesPromise) return albumFilesPromise;
         albumFilesPromise = (async () => {
-            if (isAlbum) return parseFilesText(document.documentElement.innerHTML);
+            if (isAlbum) return readPageFiles();
             const a = document.querySelector('a[href*="/a/"]');
             if (!a) return [];
             try {
@@ -1597,7 +1610,7 @@
 
     function buildAlbumGrid() {
         if (document.querySelector(".tb-grid")) return true;
-        const files = parseFilesText(document.documentElement.innerHTML);
+        const files = readPageFiles();
         const tbody = document.getElementById("fileTbody");
         const rows = tbody ? Array.from(tbody.querySelectorAll("tr.file-row")) : [];
         if (!files.length && !rows.length) return false;
@@ -1717,10 +1730,12 @@
             return { d, card };
         });
 
+        const empty = el("div", { class: "tb-empty" }, "Nenhum arquivo encontrado");
+        let groupHeaders = [];
+        // Ordenação e agrupamento remontam a grade; a busca só esconde cards.
         function render() {
-            const q = (((document.getElementById("searchInput") || {}).value) || "").toLowerCase().trim();
             const sort = ((document.getElementById("sortSelect") || {}).value) || "name_asc";
-            let list = cards.filter(c => !q || c.d.name.toLowerCase().indexOf(q) !== -1);
+            let list = cards;
             const cmp = {
                 name_asc: (a, b) => a.d.name.localeCompare(b.d.name),
                 name_desc: (a, b) => b.d.name.localeCompare(a.d.name),
@@ -1731,11 +1746,12 @@
             }[sort];
             if (cmp) list = list.slice().sort(cmp);
             grid.textContent = "";
-
-            if (!list.length) { grid.append(el("div", { class: "tb-empty" }, "Nenhum arquivo encontrado")); return; }
+            groupHeaders = [];
 
             if (!isAlbumGrouped) {
                 list.forEach(c => grid.append(c.card));
+                grid.append(empty);
+                applySearch();
                 return;
             }
 
@@ -1754,19 +1770,38 @@
 
             defs.forEach(def => {
                 if (!def.items.length) return;
+                const countEl = el("span", { class: "tb-album-group-count" });
                 const hdr = el("div", { class: "tb-album-group-header" },
                     el("div", { class: "tb-album-group-title" },
                         el("span", { html: def.icon }),
                         el("span", null, def.title)
                     ),
-                    el("span", { class: "tb-album-group-count" }, `${def.items.length} ${def.items.length === 1 ? "item" : "itens"}`)
+                    countEl
                 );
+                groupHeaders.push({ hdr, countEl, items: def.items });
                 grid.appendChild(hdr);
                 def.items.forEach(c => grid.appendChild(c.card));
             });
+            grid.append(empty);
+            applySearch();
+        }
+        function applySearch() {
+            const q = (((document.getElementById("searchInput") || {}).value) || "").toLowerCase().trim();
+            let shown = 0;
+            cards.forEach(c => {
+                c.match = !q || c.d.name.toLowerCase().indexOf(q) !== -1;
+                c.card.style.display = c.match ? "" : "none";
+                if (c.match) shown++;
+            });
+            groupHeaders.forEach(g => {
+                const n = g.items.filter(c => c.match).length;
+                g.countEl.textContent = `${n} ${n === 1 ? "item" : "itens"}`;
+                g.hdr.style.display = n ? "" : "none";
+            });
+            empty.style.display = shown ? "none" : "";
         }
 
-        const si = document.getElementById("searchInput"); if (si) si.addEventListener("input", render);
+        const si = document.getElementById("searchInput"); if (si) si.addEventListener("input", debounce(applySearch, 150));
         const ss = document.getElementById("sortSelect"); if (ss) ss.addEventListener("change", render);
         render();
         return true;
