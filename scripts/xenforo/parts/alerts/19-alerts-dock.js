@@ -202,11 +202,8 @@
         aldock.classList.add('smg-aldock--refreshing');
         railHardFlight = railFetch(tab, railBaseUrl(tab))
             .then(({ rows, next, visitorAlerts }) => {
-                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
-                    st.serverUnread = visitorAlerts;
-                    gmSet('smg-alerts-count', String(visitorAlerts));
-                    updateAlertsUnreadBadge(visitorAlerts);
-                }
+                // o contador do servidor; aldockSyncCount (fim desta mesma carga) grava e pinta
+                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) st.serverUnread = visitorAlerts;
                 st.keys.clear();
                 const frag = document.createDocumentFragment();
                 (rows || []).forEach(li => {
@@ -262,11 +259,8 @@
         return railFetch(tab, railBaseUrl(tab))
             .then(({ rows, next, visitorAlerts }) => {
                 clearSkeleton();
-                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) {
-                    st.serverUnread = visitorAlerts;
-                    gmSet('smg-alerts-count', String(visitorAlerts));
-                    updateAlertsUnreadBadge(visitorAlerts);
-                }
+                // o contador do servidor; aldockSyncCount (fim desta mesma carga) grava e pinta
+                if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) st.serverUnread = visitorAlerts;
                 const added = aldockInsertRows(tab, rows, true);
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar
@@ -378,18 +372,12 @@
                 row.classList.add('smg-al-old');
                 row.querySelectorAll('.smg-al-read').forEach(b => b.remove());
             });
-            const badge = el.querySelector('.smg-aldock-n');
-            if (badge) {
-                badge.hidden = true;
-                badge.textContent = '';
-            }
-            const st = aldockState && aldockState.alerts;
-            if (st && typeof st.serverUnread === 'number') st.serverUnread = 0;
+            const st = aldockState.alerts;
+            if (typeof st.serverUnread === 'number') st.serverUnread = 0;
             gmSet('smg-alerts-count', '0');
             const nav = document.querySelector('.p-navgroup-link--alerts');
             if (nav) nav.removeAttribute('data-badge');
-            syncReactiveBadges();
-            aldockSyncCount();
+            syncReactiveBadges();   // termina no aldockSyncCount → pílula do painel + sinos
         };
 
         const markReadBtn = el.querySelector('.smg-aldock-markread');
