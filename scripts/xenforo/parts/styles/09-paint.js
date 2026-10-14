@@ -33,14 +33,16 @@
                 position: fixed; inset: 0; z-index: var(--smg-z-topbar); display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
                 pointer-events: none; background: var(--smg-bg); color: #fff;
             }
-            html.smg-page-pending #smg-page-skeleton { display: block; }
+            /* o fade de saída (120 ms) vale pra TODA página: o skeleton segue visível enquanto smg-skeleton-fade-out */
+            html.smg-page-pending #smg-page-skeleton, html.smg-skeleton-fade-out #smg-page-skeleton { display: block; }
             html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w); }
             #smg-page-skeleton-rail {
                 position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--smg-z-topbar-up); display: none; width: var(--smg-ald-w);
                 overflow: hidden; pointer-events: none; background: var(--smg-bg); color: #fff;
                 border-left: 1px solid var(--smg-w-10); box-shadow: -10px 0 30px var(--smg-k-25);
             }
-            html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail { display: block; }
+            html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail,
+            html.smg-skeleton-fade-out.smg-aldock-on #smg-page-skeleton-rail { display: block; }
             /* Component-level loading states & decoupling: */
             html.smg-topbar-ready #smg-topbar-wrap {
                 visibility: visible !important;
@@ -82,7 +84,7 @@
                 visibility: visible !important;
                 pointer-events: auto !important;
             }
-            #smg-page-skeleton {
+            #smg-page-skeleton, #smg-page-skeleton-rail {
                 opacity: 1;
                 transition: opacity var(--smg-dur-12) cubic-bezier(0.2, 0, 0, 1);
                 will-change: opacity;
