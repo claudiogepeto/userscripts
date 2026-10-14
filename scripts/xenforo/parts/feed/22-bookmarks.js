@@ -160,7 +160,7 @@
     }
     // card do feed (riverCard) + a nota do bookmark por cima do conteúdo + botão "remover dos salvos"
     function bmCard(obj, row) {
-        const card = riverCard(obj, 0);   // wm=0 → nunca marca "novo"
+        const card = riverCard(obj);
         card.dataset.bmId = row.postId; card.dataset.bmTs = String(row.bmTs || 0);
         if (row.note) {
             const n = document.createElement('div'); n.className = 'smg-bm-note'; n.textContent = row.note;

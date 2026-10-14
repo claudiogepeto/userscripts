@@ -294,10 +294,7 @@
                     cur.continue();
                 }
             };
-            tx.oncomplete = () => {
-                try { gmSet('smg-river-wm-' + location.hostname, '0'); } catch (e) {}
-                resolve();
-            };
+            tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         }));
     }

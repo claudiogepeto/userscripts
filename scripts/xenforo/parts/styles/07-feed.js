@@ -149,7 +149,6 @@
             }
             .smg-fp-card { background: var(--smg-s1, #16171b); border: 1px solid rgba(255,255,255,0.11); border-radius: 18px; overflow: hidden; transition: border-color .16s ease, box-shadow .16s ease; }
             .smg-fp-card:hover { border-color: rgba(255,255,255,0.22); box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
-            .smg-fp-card.is-unread { border-color: rgba(255,255,255,0.11); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px rgba(255,255,255,0.16); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }

@@ -8747,7 +8747,6 @@
             }
             .smg-fp-card { background: var(--smg-s1, #16171b); border: 1px solid rgba(255,255,255,0.11); border-radius: 18px; overflow: hidden; transition: border-color .16s ease, box-shadow .16s ease; }
             .smg-fp-card:hover { border-color: rgba(255,255,255,0.22); box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
-            .smg-fp-card.is-unread { border-color: rgba(255,255,255,0.11); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px rgba(255,255,255,0.16); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }
@@ -11039,10 +11038,7 @@
                     cur.continue();
                 }
             };
-            tx.oncomplete = () => {
-                try { gmSet('smg-river-wm-' + location.hostname, '0'); } catch (e) {}
-                resolve();
-            };
+            tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         }));
     }
@@ -24765,7 +24761,7 @@
     }
     // card do feed (riverCard) + a nota do bookmark por cima do conteúdo + botão "remover dos salvos"
     function bmCard(obj, row) {
-        const card = riverCard(obj, 0);   // wm=0 → nunca marca "novo"
+        const card = riverCard(obj);
         card.dataset.bmId = row.postId; card.dataset.bmTs = String(row.bmTs || 0);
         if (row.note) {
             const n = document.createElement('div'); n.className = 'smg-bm-note'; n.textContent = row.note;
@@ -25543,11 +25539,6 @@
         return new Promise(resolve => { riverQueue.push(() => job().then(resolve, () => resolve(null))); riverPump(); });
     }
 
-    // watermark por host: na próxima visita só os posts mais novos que ISSO ganham o destaque "novo"
-    const RIVER_WM_KEY = 'smg-river-wm-' + location.hostname;
-    function riverWatermark() { return parseInt(gmGet(RIVER_WM_KEY, '0'), 10) || 0; }
-    function riverSetWatermark(ts) { if (ts) gmSet(RIVER_WM_KEY, String(ts)); }
-
     // título = h1 SEM os prefixos e avisos; prefixos viram HTML de chips à parte
     function riverThreadMeta(doc, t) {
         const titleEl = doc.querySelector('h1.p-title-value, .p-title-value, h1.contentRow-header, .p-body-header .p-title');
@@ -25643,7 +25634,7 @@
         return a;
     }
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
-    function riverCard(p, wm) {
+    function riverCard(p) {
         if (!p) return null;
         const postId = p.post_id || '';
         if (!postId || !p.content_html) return null;
@@ -25663,7 +25654,7 @@
         const threadThumb = p.thread_thumb || '';
 
         const card = document.createElement('div');
-        card.className = 'smg-fp-card' + (ts && ts > wm ? ' is-unread' : '');
+        card.className = 'smg-fp-card';
         card.dataset.ts = String(ts || 0);
         card.dataset.postId = String(postId);
 
@@ -25752,7 +25743,7 @@
     // ---- RENDER (lê do banco; o sync enche em background) ----
     const RIVER_CHUNK = 15;   // posts pintados por bloco (scroll)
     let feedSyncRunning = false;
-    let riverBuilt = false, riverList = null, riverSeen = null, riverLastTs = null, riverOldWm = 0,
+    let riverBuilt = false, riverList = null, riverSeen = null, riverLastTs = null,
         riverMoreEl = null, riverMoreIO = null, riverNoMore = false, riverRendering = false,
         riverPill = null, riverFirstPainted = false, riverSortDirty = true;
 
@@ -25823,7 +25814,7 @@
             posts.forEach(p => {
                 const pid = p.post_id;
                 riverSeen.add(pid);
-                try { const card = riverCard(p, riverOldWm); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
+                try { const card = riverCard(p); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
             });
             if (riverMoreEl && riverMoreEl.parentNode === riverList) riverList.insertBefore(frag, riverMoreEl); else riverList.appendChild(frag);
             markRiverSortDirty();
@@ -25854,7 +25845,7 @@
             if (riverSeen && riverSeen.has(pid)) return;
             if (riverList.querySelector('[data-post-id="' + pid + '"]')) return;
             if (riverSeen) riverSeen.add(pid);
-            let card; try { card = riverCard(p, riverOldWm); } catch (e) { return; }
+            let card; try { card = riverCard(p); } catch (e) { return; }
             if (!card) return;
             card.classList.add('smg-fp-enter');   // entrada animada (só os recém-chegados; some após a animação)
             setTimeout(() => card.classList.remove('smg-fp-enter'), 1300);
@@ -25902,7 +25893,6 @@
         hidePill();
         if (!riverMoreEl) mountSentinel();
         renderMore();
-        saveNewestWatermark();   // o usuário está vendo o topo → marca os novos como vistos
     }
     // 1ª vez (cache vazio): em vez de um spinner mudo, mostra "Configurando seu feed" + progresso enquanto o sync
     function showSetupState() {
@@ -25967,8 +25957,6 @@
             markAllBtn.setAttribute('aria-label', markAllBtn.title);
             markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
             markAllBtn.addEventListener('click', () => {
-                saveNewestWatermark();
-                if (riverList) riverList.querySelectorAll('.smg-fp-card.is-unread').forEach(c => c.classList.remove('is-unread'));
                 dbFollowedMarkAllSeen();
             });
             actions.appendChild(markAllBtn);
@@ -25988,7 +25976,7 @@
         const host = riverContainer();
         host.appendChild(wrap);
 
-        riverSeen = new Set(); riverLastTs = null; riverNoMore = false; riverOldWm = riverWatermark();
+        riverSeen = new Set(); riverLastTs = null; riverNoMore = false;
         const cutoff = Math.floor(Date.now() / 1000) - RIVER_WINDOW_DAYS * 86400;
 
         showSetupState();
@@ -26015,7 +26003,6 @@
             kickSync(cutoff, true);
         });
     }
-    function saveNewestWatermark() { dbTimelineGetRecent(1, null, null).then(top => { if (top.length) riverSetWatermark(top[0].created_at || 0); }); }
     // depois de cada sync: pinta o cache se estava vazio; senão detecta NOVIDADES
     function afterSync() {
         dismissSetup();
@@ -26036,7 +26023,6 @@
                         riverEmptyState(emptyMsg);
                     } else {
                         ensureRiverSorted();
-                        saveNewestWatermark();
                     }
                     markRiverPaintReady();
                 });
@@ -26051,8 +26037,8 @@
                     if (cardsCount > 0 || riverList?.querySelector('.smg-fp-empty')) markRiverPaintReady();
                     return;
                 }
-                if (riverNearTop()) { insertFreshPosts(fresh); saveNewestWatermark(); }   // insere em ordem (preserva scroll + cards de baixo)
-                else showPill(fresh.length);   // longe do topo → pílula (não marca visto → highlight preservado)
+                if (riverNearTop()) insertFreshPosts(fresh);   // insere em ordem (preserva scroll + cards de baixo)
+                else showPill(fresh.length);   // longe do topo → pílula
                 ensureRiverSorted();
             });
         });
@@ -26219,7 +26205,6 @@
             if (!fresh || !fresh.length) return;
             if (riverNearTop()) {
                 insertFreshPosts(fresh);
-                saveNewestWatermark();
             } else {
                 showPill(fresh.length);
             }
