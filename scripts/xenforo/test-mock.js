@@ -7494,7 +7494,8 @@ async function runTests() {
             ['.smg-set-action-card:hover', 'card de ação das configurações'],
         ];
         for (const [sel, what] of cardHovers) assert(!css.includes(sel), 'Sem hover em ' + what + ' (' + sel + ')');
-        assert(!/\.structItem--thread:hover,/.test(css.replace(/\.structItem--thread:hover \.smg-thread-unwatch-btn,/g, '')), 'Sem hover nas linhas compactas de thread');
+        assert(!/\.structItem--thread:hover/.test(css), 'Sem hover nas linhas/cards de thread (nem para revelar o botão de seguir)');
+        assert(!/\.structItem-cell--icon:hover/.test(css), 'A thumb do card não revela nada no hover');
         // controles mantêm o hover
         for (const sel of ['.smg-pc-act:hover', '.smg-nav-btn:not(:disabled):hover', '.smg-tb-item:hover', '.smg-chip:hover', '.smg-thread-unwatch-btn:hover'])
             assert(css.includes(sel), 'Controle mantém hover: ' + sel);
