@@ -27835,7 +27835,10 @@
         // organização por causa dessas mutações irrelevantes.
         if (isHome && FEATURES.headerNotices) safe(setupHeaderNotices);
         const homeCandidate = isHome && (fullScan || rootTouches(roots, '.p-body-content, .p-body-pageContent, .block--category', true));
-        const currentHomeSignature = homeCandidate ? homeLayoutSignature() : null;
+        // a assinatura (clone de cada header + todos os nós) só é refeita quando a mutação tocou uma
+        // categoria ou um nó; o resto do miolo da home reaproveita a última.
+        const homeTouched = homeCandidate && (fullScan || homePassSignature === null || rootTouches(roots, '.block--category, .node', true));
+        const currentHomeSignature = homeTouched ? homeLayoutSignature() : homePassSignature;
         const homeDirty = homeCandidate
             && (homePassSignature !== currentHomeSignature || rootTouches(roots, '.node--link, .node-subNodesFlat', true));
         if (homeCandidate && !homeSidebarDone) safe(layoutHomeSidebar, roots);
