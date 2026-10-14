@@ -7466,12 +7466,8 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
                 justify-content: flex-start !important;
                 text-align: left !important;
-                gap: 10px !important;
                 padding: 6px 10px !important;
                 border: 0 !important;
                 border-radius: 8px !important;
@@ -7530,18 +7526,7 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-cell--main,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-cell--main {
-                flex: 1 1 auto !important;
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
                 text-align: left !important;
-                gap: 8px !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                min-width: 0 !important;
-                width: auto !important;
-                overflow: hidden !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-statuses,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-statuses {
@@ -7549,16 +7534,11 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-title,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-title {
-                display: inline-flex !important;
                 flex-direction: row !important;
-                align-items: center !important;
                 justify-content: flex-start !important;
                 text-align: left !important;
-                flex-wrap: nowrap !important;
-                gap: 6px !important;
                 font-size: 13.5px !important;
                 font-weight: 600 !important;
-                min-width: 0 !important;
                 white-space: nowrap !important;
                 margin: 0 !important;
                 padding: 0 !important;
@@ -7582,7 +7562,6 @@
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-title a[href*="/threads/"],
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-title a:not(.label):not(.labelLink),
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-title a:not(.label):not(.labelLink) {
-                display: inline !important;
                 width: auto !important;
                 min-height: 0 !important;
                 line-height: 1.3 !important;
@@ -7608,7 +7587,6 @@
                 flex-direction: row !important;
                 align-items: center !important;
                 gap: 3px !important;
-                margin: 0 0 0 6px !important;
                 padding: 0 !important;
                 flex-shrink: 0 !important;
                 width: auto !important;
@@ -7628,13 +7606,6 @@
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .smg-card-dates,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .smg-card-dates {
-                margin-left: auto !important;
-                margin-top: 0 !important;
-                padding: 0 !important;
-                flex-shrink: 0 !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: 5px !important;
                 font-size: 11px !important;
                 color: rgba(255,255,255,0.4) !important;
                 white-space: nowrap !important;
