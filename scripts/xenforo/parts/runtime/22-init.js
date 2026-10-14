@@ -129,16 +129,45 @@
     // O observer dispara em QUALQUER mutação do DOM. Como o próprio processAll
     // muta o DOM, sem coalescer ele se re-dispara num flood de microtasks que
     // não cede pro render e trava a aba. Solução: no máximo 1 execução por frame.
-    // Coleta os subtrees ADICIONADOS → os passes de conteúdo varrem só eles (scope), não o documento
-    // inteiro a cada frame. A cada FULL_SCAN_EVERY runs (ou quando não houve adição) faz 1 full-scan de
-    // segurança — pega nós que o scope não enxergou (ex.: match por atributo que mudou depois).
-    let scheduled = false, dirtyRoots = new Set(), runCount = 0, fullPending = false, fullT = 0;
-    const FULL_SCAN_EVERY = 60;   // PERF: reduz a frequência de varredura global do body inteiro para 60 ticks, mantendo passes escopados nos dirtyRoots
+    // Raízes = só os subtrees ADICIONADOS. O alvo de um registro só entra quando o registro é remoção
+    // pura, e nunca quando o alvo é um container de posts (senão uma remoção dentro do post/lista
+    // re-varreria todos os posts). Quem insere conteúdo por fora passa o nó: scheduleRun(node).
+    // Backstop: UM full-scan em tempo ocioso (no máximo 1 a cada FULL_SCAN_GAP_MS) pega nós que o
+    // scope não enxergou (ex.: match por atributo que mudou depois).
+    let scheduled = false, dirtyRoots = new Set(), idleFullArmed = false, lastFullScanTs = 0;
+    const FULL_SCAN_GAP_MS = 2000;
+    const POST_CONTAINER_SEL = 'article.message, .message--post, .block-body, .structItemContainer, .p-body, .p-body-main, .p-body-pageContent';
 
-    function scheduleRun(mutations) {
-        if (mutations) for (const m of mutations) {
-            if (m.target && m.target.nodeType === 1) dirtyRoots.add(m.target);
-            for (const n of m.addedNodes) if (n.nodeType === 1) dirtyRoots.add(n);
+    function addRoot(n) {
+        if (n && n.nodeType === 1) dirtyRoots.add(n);
+    }
+
+    function armIdleFullScan() {
+        if (idleFullArmed) return;
+        idleFullArmed = true;
+        const wait = Math.max(0, FULL_SCAN_GAP_MS - (Date.now() - lastFullScanTs));
+        setTimeout(() => {
+            const run = () => {
+                idleFullArmed = false;
+                lastFullScanTs = Date.now();
+                if (document.body) processAll([document.body]);
+            };
+            if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 3000 });
+            else run();
+        }, wait);
+    }
+
+    function scheduleRun(input) {
+        if (input && input.nodeType === 1) {
+            addRoot(input);
+        } else if (input) {
+            for (const m of input) {
+                if (m.addedNodes && m.addedNodes.length) {
+                    for (const n of m.addedNodes) addRoot(n);
+                } else if (m.target && m.target.nodeType === 1 && !(m.target.matches && m.target.matches(POST_CONTAINER_SEL))) {
+                    addRoot(m.target);
+                }
+            }
         }
         if (scheduled) return;
         scheduled = true;
@@ -156,19 +185,11 @@
             if (!document.getElementById('smg-post-nav-wrapper') && document.body) {
                 safe(setupPostNavigation);
             }
-            const full = (++runCount % FULL_SCAN_EVERY === 0) || fullPending;
-            // frame SEM nó adicionado (remoção pura — spinner/freeze do feed — ou troca de text node):
-            // não há nada novo pra processar; o full-scan imediato aqui varria o body INTEIRO a cada
-            // tick (ex.: scroll no feed congelando cards = vários full-scans/s). Backstop preservado:
-            // agenda UM full-scan coalescido (máx 1 a cada ~600ms) p/ os casos raros de match por atributo.
-            if (!full && !dirtyRoots.size) {
-                if (!fullT) fullT = setTimeout(() => { fullT = 0; fullPending = true; scheduleRun(); }, 600);
-                return;
-            }
-            fullPending = false;
-            const roots = full ? [document.body] : [...dirtyRoots];
+            if (!dirtyRoots.size) return;
+            const roots = [...dirtyRoots];
             dirtyRoots = new Set();
             processAll(roots);
+            armIdleFullScan();
         });
     }
 

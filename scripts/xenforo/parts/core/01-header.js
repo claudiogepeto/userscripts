@@ -41,7 +41,7 @@
 //  CICLO DE VIDA (o coração de tudo):
 //    boot() → processAll() roda TODAS as features 1× e instala um MutationObserver
 //    no body. QUALQUER mutação do DOM → scheduleRun() → requestAnimationFrame →
-//    processAll() DE NOVO (no máx 1×/frame). Como o próprio processAll muta o DOM,
+//    processAll(nós adicionados) DE NOVO (no máx 1×/frame; full-scan só em idle). Como o próprio processAll muta o DOM,
 //    ele roda quase todo frame enquanto a página muda/scrolla.
 //    ⇒ REGRA DE OURO: todo pass PRECISA sair BARATO quando não há nada novo.
 //      Padrão: seletor com `:not([data-marcador])` + SETAR o marcador ANTES de

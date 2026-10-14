@@ -641,8 +641,9 @@
                 }, { once: true });
                 a.appendChild(img); img.src = u; frag.appendChild(a);
             });
+            const host = card.parentElement;
             card.replaceWith(frag);
-            scheduleRun();
+            scheduleRun(host);
         };
         const fetchPage = url => {
             chvTasks.push(() => new Promise(release => {

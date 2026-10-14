@@ -1032,7 +1032,7 @@
                             wrapper.replaceWith(a);
                         }
                         processOneImage(img);
-                        scheduleRun();
+                        scheduleRun(img.parentElement || img);
                         return;
                     }
                     if (res && res.error) {

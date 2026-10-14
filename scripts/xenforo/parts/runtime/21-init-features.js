@@ -174,7 +174,7 @@
                     const stillHidden = !fresh || fresh.querySelector('.hidethanks');
                     if (!stillHidden) {
                         const cur = mainBody(post);
-                        if (cur) { cur.replaceWith(fresh); scheduleRun(); }   // reprocessa imagens/embeds do conteúdo novo
+                        if (cur) { cur.replaceWith(fresh); scheduleRun(fresh); }   // reprocessa imagens/embeds do conteúdo novo
                         markRevealing(post, false); delete post.dataset.smgRevealing;
                     } else if (attempt < 3) {
                         revealPost(post, attempt + 1);
@@ -312,7 +312,7 @@
                     if (absUrl(uf.getAttribute('data-url') || '') === absUrl(href)) uf.style.display = 'none';
                 }
             }
-            if (isImg) scheduleRun();
+            if (isImg) scheduleRun(wrap);
         });
     }
 
