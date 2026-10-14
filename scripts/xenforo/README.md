@@ -1,7 +1,9 @@
 # XenForo userscript
 
 This directory contains the modular source for the SimpCity and
-SocialMediaGirls redesign.
+SocialMediaGirls redesign. Agents (and anyone changing the code) start with
+[AGENTS.md](AGENTS.md): build model, gates, which file owns what, names that
+must never change, and recipes.
 
 ## Quick start
 
@@ -110,6 +112,9 @@ composes them in the order below:
 - CSS fragments are constants consumed by `core/05-styles.js`; keep their order
   in the build manifest and put page-only rules in the matching context.
 - Run the build, syntax check, and scenario suite before committing.
+- The build fails when two parts declare the same top-level name, or when a
+  CSS part other than `styles/01-base.js` uses a raw colour literal that is not
+  in `color-allowlist.json` (see AGENTS.md).
 
 ## Tests
 
