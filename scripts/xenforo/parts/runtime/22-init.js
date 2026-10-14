@@ -395,7 +395,6 @@
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
         safe(watchNativeBadges);
         safe(restoreNavMode);
-        safe(setupScrollHoverGuard);
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);

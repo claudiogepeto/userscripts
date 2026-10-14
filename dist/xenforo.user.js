@@ -783,13 +783,6 @@
                 .smg-toast, .smg-toast.is-out { transform: none; transition: opacity var(--smg-dur-12) linear; }
             }
 
-            /* PERF: durante a rolagem com mouse o conteúdo NÃO faz hit-test de hover — cada post/linha que
-               passava sob o cursor disparava :hover (borda, sombra, transform com transição) e repintava a
-               página a cada frame. html.smg-scrolling sai ~150ms depois do último scroll (setupScrollHoverGuard). */
-            @media (hover: hover) and (pointer: fine) {
-                html.smg-scrolling .p-body { pointer-events: none !important; }
-                html.smg-scrolling .p-body * { pointer-events: none !important; }   /* cards têm pointer-events:auto explícito */
-            }
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
                embeds, vídeos) têm overflow-anchor: none para não disputarem a âncora enquanto carregam. */
@@ -9348,21 +9341,6 @@
         };
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
-    }
-
-    // PERF: marca html.smg-scrolling enquanto a página rola (o CSS desliga o hover do .p-body nesse meio
-    // tempo, ver 01-base). Sai 150ms depois do último evento de scroll.
-    let scrollHoverGuardBound = false;
-    function setupScrollHoverGuard() {
-        if (scrollHoverGuardBound) return;
-        scrollHoverGuardBound = true;
-        const root = document.documentElement;
-        let timer = 0;
-        window.addEventListener('scroll', () => {
-            if (!root.classList.contains('smg-scrolling')) root.classList.add('smg-scrolling');
-            clearTimeout(timer);
-            timer = setTimeout(() => root.classList.remove('smg-scrolling'), 150);
-        }, { passive: true });
     }
 
     // =========================================================
@@ -26528,7 +26506,6 @@
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
         safe(watchNativeBadges);
         safe(restoreNavMode);
-        safe(setupScrollHoverGuard);
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);

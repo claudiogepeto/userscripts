@@ -599,21 +599,6 @@
         return () => window.removeEventListener('scroll', onScroll);
     }
 
-    // PERF: marca html.smg-scrolling enquanto a página rola (o CSS desliga o hover do .p-body nesse meio
-    // tempo, ver 01-base). Sai 150ms depois do último evento de scroll.
-    let scrollHoverGuardBound = false;
-    function setupScrollHoverGuard() {
-        if (scrollHoverGuardBound) return;
-        scrollHoverGuardBound = true;
-        const root = document.documentElement;
-        let timer = 0;
-        window.addEventListener('scroll', () => {
-            if (!root.classList.contains('smg-scrolling')) root.classList.add('smg-scrolling');
-            clearTimeout(timer);
-            timer = setTimeout(() => root.classList.remove('smg-scrolling'), 150);
-        }, { passive: true });
-    }
-
     // =========================================================
     // HELPERS: ui builders
     // =========================================================
