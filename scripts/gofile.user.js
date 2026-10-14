@@ -1481,20 +1481,21 @@
     /* ===================== AGRUPAMENTO POR TIPO NA GALERIA ===================== */
     let isGroupByType = localStorage.getItem("gf_group_by_type") === "1";
 
-    function groupGalleryByType(enable) {
+    function groupGalleryByType(enable, persist) {
         isGroupByType = enable;
-        try { localStorage.setItem("gf_group_by_type", enable ? "1" : "0"); } catch (e) {}
+        if (persist) { try { localStorage.setItem("gf_group_by_type", enable ? "1" : "0"); } catch (e) {} }
 
         const grid = document.querySelector("#fm-list > div, #fm-list [role='list'], #filemanager_itemslist, [role='list'][aria-label*='Folder' i]");
         if (!grid) return;
 
-        // Remove cabeçalhos de grupos existentes
-        grid.querySelectorAll(".gf-gallery-group-header").forEach(h => h.remove());
-
         const items = Array.from(grid.querySelectorAll(".gf-card"));
-        if (!items.length) return;
+        if (!items.length) {
+            grid.querySelectorAll(".gf-gallery-group-header").forEach(h => h.remove());
+            return;
+        }
 
         if (!enable) {
+            grid.querySelectorAll(".gf-gallery-group-header").forEach(h => h.remove());
             items.sort((a, b) => (+a.dataset.gfOrigIdx || 0) - (+b.dataset.gfOrigIdx || 0));
             items.forEach(it => grid.appendChild(it));
             return;
@@ -1524,6 +1525,19 @@
             { key: "other", title: "Documentos & Outros", icon: IC.file, list: groups.other },
         ];
 
+        // Só reordena quando chegaram cards novos ou a ordem atual difere da agrupada:
+        // reanexar tudo a cada scan gera mutações que disparam o observer de novo.
+        const want = [];
+        defs.forEach(def => {
+            if (!def.list.length) return;
+            want.push(def.key + ":" + def.list.length);
+            def.list.forEach(it => want.push(it));
+        });
+        const have = Array.from(grid.children).filter(c => c.classList.contains("gf-card") || c.classList.contains("gf-gallery-group-header"));
+        const inOrder = have.length === want.length && have.every((c, i) => typeof want[i] === "string" ? c.dataset.gfGroup === want[i] : c === want[i]);
+        if (inOrder) return;
+
+        grid.querySelectorAll(".gf-gallery-group-header").forEach(h => h.remove());
         defs.forEach(def => {
             if (!def.list.length) return;
             const hdr = el("div", { class: "gf-gallery-group-header" },
@@ -1533,6 +1547,7 @@
                 ),
                 el("span", { class: "gf-gallery-group-count" }, `${def.list.length} ${def.list.length === 1 ? "item" : "itens"}`)
             );
+            hdr.dataset.gfGroup = def.key + ":" + def.list.length;
             grid.appendChild(hdr);
             def.list.forEach(it => grid.appendChild(it));
         });
@@ -2004,7 +2019,7 @@
             type: "button",
             title: "Agrupar arquivos por tipo (Vídeos, Fotos, etc.)",
             onClick: () => {
-                groupGalleryByType(!isGroupByType);
+                groupGalleryByType(!isGroupByType, true);
                 btn.classList.toggle("is-active", isGroupByType);
                 const lbl = btn.querySelector("span");
                 if (lbl) lbl.textContent = isGroupByType ? "Desagrupar" : "Agrupar por Tipo";
@@ -2052,17 +2067,35 @@
         });
     }
 
+    // Observa só o container do app (não o <html> inteiro) e ignora mutações
+    // causadas pelos próprios nós do script (stage, barra, cabeçalhos de grupo).
+    // Um card já processado que continua no documento só foi movido pelo agrupamento.
+    const isOwnNode = n => n.nodeType !== 1 || (n.classList && (n.classList.contains("gf-gallery-group-header") || (n.classList.contains("gf-card") && !!n._gf && n.isConnected)));
+    const isOwnRecord = r => {
+        if ((stage && stage.contains(r.target)) || (bulkBar && bulkBar.contains(r.target))) return true;
+        if (!r.addedNodes.length && !r.removedNodes.length) return false;
+        for (const n of r.addedNodes) if (!isOwnNode(n)) return false;
+        for (const n of r.removedNodes) if (!isOwnNode(n)) return false;
+        return true;
+    };
+    let rootObserver = null, observedRoot = null;
+    function appRoot() {
+        return document.getElementById("app") || document.getElementById("index_app") || document.body;
+    }
     function observeRoot() {
         try {
-            const rootTarget = document.documentElement || document.body;
-            if (!rootTarget) return;
-            new MutationObserver(recs => {
+            const rootTarget = appRoot();
+            if (!rootTarget || (rootTarget === observedRoot && rootTarget.isConnected)) return;
+            if (rootObserver) rootObserver.disconnect();
+            observedRoot = rootTarget;
+            rootObserver = new MutationObserver(recs => {
                 for (const r of recs) {
-                    if (stage && stage.contains(r.target)) continue;
+                    if (isOwnRecord(r)) continue;
                     requestScan();
                     return;
                 }
-            }).observe(rootTarget, { childList: true, subtree: true });
+            });
+            rootObserver.observe(rootTarget, { childList: true, subtree: true });
         } catch (e) {}
     }
 
@@ -2077,6 +2110,7 @@
         autoExpandedUrl = null;
         if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
         closeStage();
+        observeRoot();
         requestScan();
     }
     window.addEventListener("popstate", onRoute);
@@ -2097,6 +2131,7 @@
         start();
         let n = 0;
         const id = setInterval(() => {
+            observeRoot();
             buildTopbar();
             scan();
             if (++n > 30) clearInterval(id);
