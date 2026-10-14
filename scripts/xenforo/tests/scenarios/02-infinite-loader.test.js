@@ -91,3 +91,46 @@ scenario('turning infinite scroll off for threads stops the loader at once', asy
     await page.settle(50);
     assert.equal(page.requested(/page-\d/).length, 0);
 });
+
+scenario('a thread post far from the screen lets go of its iframes and videos and gets them back when it returns', async t => {
+    const MEDIA = '<iframe class="far-ifr" src="https://example.com/embed/1" loading="lazy"></iframe><video class="far-vid" preload="metadata" src="https://example.com/v.mp4"></video>';
+    const page = await t.open({
+        url: SMG + THREAD,
+        html: threadPage({ posts: [{ id: 101, body: MEDIA }], page: 1, of: 2 }),
+        routes: threadSite({ 2: [{ id: 201, body: '<iframe class="far-ifr2" src="https://example.com/embed/2"></iframe>' }] }),
+    });
+    await page.settle(50);
+    const post = page.$('#js-post-101');
+    const ifr = page.$('iframe.far-ifr');
+    const vid = page.$('video.far-vid');
+    assert.ok(post && ifr && vid, 'control: the first post has its media');
+    let paused = 0;
+    vid.addEventListener('pause', () => { paused++; });
+    assert.ok(page.intersect(post, false) > 0, 'posts of the first page are watched');
+    await page.settle(10);
+    assert.equal(post.dataset.smgFar, '1', 'the post is marked far');
+    assert.ok(!ifr.isConnected, 'the iframe left the document');
+    const ph = post.querySelector('.smg-far-ph');
+    assert.ok(ph, 'a placeholder holds its place');
+    assert.match(ph.style.getPropertyValue('height'), /px$/, 'the placeholder keeps a measured height');
+    assert.equal(ph.style.getPropertyPriority('height'), 'important');
+    assert.equal(vid.getAttribute('src'), null, 'the video let go of its source');
+    assert.ok(paused >= 1, 'and was paused');
+    assert.match(vid.style.getPropertyValue('height'), /px$/, 'the video box is held at its measured size');
+    assert.ok(page.$('#js-post-101'), 'the post itself stays in the DOM');
+
+    page.intersect(post, true);
+    await page.settle(10);
+    assert.equal(post.dataset.smgFar, undefined, 'back near: no longer far');
+    assert.equal(post.querySelector('iframe.far-ifr'), ifr, 'the same iframe is back');
+    assert.equal(post.querySelector('.smg-far-ph'), null, 'the placeholder is gone');
+    assert.equal(vid.getAttribute('src'), 'https://example.com/v.mp4', 'the video source is back');
+    vid.dispatchEvent(new page.window.Event('loadedmetadata'));
+    assert.equal(vid.style.getPropertyValue('height'), '', 'the size hold is released once the video knows its size');
+
+    const appended = page.$('#js-post-201');
+    assert.ok(appended, 'control: page 2 was appended');
+    assert.ok(page.intersect(appended, false) > 0, 'appended posts are watched too');
+    await page.settle(10);
+    assert.ok(!page.$('iframe.far-ifr2') && appended.querySelector('.smg-far-ph'), 'an appended post far away releases its iframe');
+});

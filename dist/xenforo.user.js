@@ -10636,7 +10636,7 @@
 
     // thread/07-posts-misc.js
     // Owns: keyboard shortcuts, offscreen banner pausing, THE pager engine (createPager) and thread/listing infinite scroll.
-    // Exposes: createPager, setupInfiniteScroll, disposeInfiniteScroll, setupKeyboardShortcuts, smgUpdateDockPage.
+    // Exposes: createPager, setupInfiniteScroll, disposeInfiniteScroll, watchFarMedia, setupKeyboardShortcuts, smgUpdateDockPage.
     // Depends on: core/06-helpers (fetchDoc, onScrollRaf), core/03-i18n.
     // ── part 07-posts-misc: atalhos de teclado · scroll infinito ──
     // setado pela dock; o scroll infinito chama pra atualizar o número da página exibido
@@ -10830,6 +10830,116 @@
     }
 
     // =========================================================
+    // SCROLL INFINITO: posts longe da tela soltam a mídia pesada
+    // =========================================================
+    // Sem isto cada página anexada ficava com tudo vivo (9 páginas: 57 iframes, 26 vídeos, nada solto).
+    // Post a mais de ~3 telas da viewport: <video> pausa e solta o src; <iframe> sai do DOM e um placeholder
+    // do MESMO tamanho fica no lugar. Voltou pra perto → tudo volta. Os posts nunca saem do DOM.
+    // ALTURA EXATA: o scroll anchoring está desligado de propósito, então qualquer pixel a mais ou a menos
+    // acima da tela vira um pulo. Cada elemento tem a caixa medida e travada ANTES de soltar, e a medição é em
+    // lote dentro do callback do IO (lê tudo, depois escreve tudo); nunca num handler de scroll.
+    const FAR_MEDIA_MARGIN = '300% 0px';
+    const FAR_LOCK_PROPS = ['box-sizing', 'width', 'height', 'min-width', 'min-height'];
+    let farMediaIO = null;
+    function farLock(el, w, h) {
+        el._smgFarStyle = FAR_LOCK_PROPS.map(p => [p, el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]);
+        el.style.setProperty('box-sizing', 'border-box', 'important');
+        el.style.setProperty('width', w + 'px', 'important');
+        el.style.setProperty('height', h + 'px', 'important');
+        el.style.setProperty('min-width', w + 'px', 'important');
+        el.style.setProperty('min-height', h + 'px', 'important');
+    }
+    function farUnlock(el) {
+        const prev = el._smgFarStyle;
+        if (!prev) return;
+        el._smgFarStyle = null;
+        prev.forEach(([p, v, pr]) => { if (v) el.style.setProperty(p, v, pr); else el.style.removeProperty(p); });
+    }
+    // fase de leitura: o que cada mídia do post precisa pra ser trocada sem mudar a caixa
+    function farMeasure(post, out) {
+        post.querySelectorAll('video, iframe').forEach(el => {
+            if (el._smgFarStyle) return;
+            if (el.tagName === 'VIDEO' && !el.getAttribute('src') && !el.querySelector('source')) return;   // só poster: nada pesado pra soltar
+            const r = el.getBoundingClientRect();
+            const m = { el, w: r.width, h: r.height };
+            if (el.tagName === 'IFRAME') {
+                const cs = getComputedStyle(el);
+                m.box = {
+                    display: cs.display === 'inline' ? 'inline-block' : cs.display,
+                    position: cs.position, top: cs.top, right: cs.right, bottom: cs.bottom, left: cs.left,
+                    float: cs.float, 'vertical-align': cs.verticalAlign,
+                    'margin-top': cs.marginTop, 'margin-right': cs.marginRight, 'margin-bottom': cs.marginBottom, 'margin-left': cs.marginLeft,
+                };
+            }
+            out.push(m);
+        });
+    }
+    // fase de escrita
+    function farRelease(m) {
+        const el = m.el;
+        if (!el.isConnected) return;
+        if (el.tagName === 'IFRAME') {
+            const ph = document.createElement('div');
+            ph.className = 'smg-far-ph';
+            Object.keys(m.box).forEach(k => ph.style.setProperty(k, m.box[k], 'important'));
+            farLock(ph, m.w, m.h);
+            ph._smgFarIframe = el;
+            el.replaceWith(ph);
+            return;
+        }
+        farLock(el, m.w, m.h);
+        if (rgLiveVideos.has(el)) { rgUnload(el); return; }   // nosso player: volta pro poster; o play recarrega
+        try { el.pause(); } catch (e) {}
+        const sources = Array.from(el.querySelectorAll('source'));
+        el._smgFarSrc = { src: el.getAttribute('src'), sources };
+        sources.forEach(s => s.remove());
+        if (el.hasAttribute('src')) el.removeAttribute('src');
+        try { el.load(); } catch (e) {}
+    }
+    function farRestore(post) {
+        post.querySelectorAll('.smg-far-ph').forEach(ph => {
+            const ifr = ph._smgFarIframe;
+            ph._smgFarIframe = null;
+            if (ifr) ph.replaceWith(ifr); else ph.remove();
+        });
+        post.querySelectorAll('video').forEach(v => {
+            const st = v._smgFarSrc;
+            if (!st) { farUnlock(v); return; }   // nosso player: a caixa vem do aspect-ratio do wrap, não do src
+            v._smgFarSrc = null;
+            st.sources.forEach(s => v.appendChild(s));
+            if (st.src) v.setAttribute('src', st.src);
+            try { v.load(); } catch (e) {}
+            // vídeo nativo: o tamanho intrínseco só volta com o metadata → a trava fica até lá (senão encolhe pra 300×150 e a página pula)
+            if (v.readyState >= 1) farUnlock(v);
+            else v.addEventListener('loadedmetadata', () => farUnlock(v), { once: true });
+        });
+    }
+    function farMediaObserver() {
+        if (farMediaIO || typeof IntersectionObserver !== 'function') return farMediaIO;
+        farMediaIO = trackObserver(new IntersectionObserver(entries => {
+            const plan = [], back = [];
+            entries.forEach(en => {
+                const post = en.target;
+                if (!post.isConnected) { farMediaIO.unobserve(post); return; }
+                if (en.isIntersecting) { if (post.dataset.smgFar === '1') back.push(post); }
+                else if (post.dataset.smgFar !== '1') { post.dataset.smgFar = '1'; farMeasure(post, plan); }
+            });
+            plan.forEach(farRelease);
+            back.forEach(post => { delete post.dataset.smgFar; farRestore(post); });
+        }, { rootMargin: FAR_MEDIA_MARGIN }));
+        return farMediaIO;
+    }
+    function watchFarMedia(posts) {
+        const io = farMediaObserver();
+        if (io) posts.forEach(p => io.observe(p));
+    }
+    function disposeFarMedia() {
+        if (!farMediaIO) return;
+        farMediaIO.disconnect();
+        document.querySelectorAll('.message--post[data-smg-far="1"]').forEach(post => { delete post.dataset.smgFar; farRestore(post); });
+    }
+
+    // =========================================================
     // FEATURE: scroll infinito na thread (anexa as próximas páginas)
     // =========================================================
 
@@ -10965,6 +11075,9 @@
 
         infScrollBound = true;
         let lastNum = startPage;
+        // thread: posts longe da tela soltam a mídia pesada (vale pros da 1ª página também)
+        const farMedia = itemSelector === '.message--post';
+        if (farMedia) watchFarMedia(Array.from(container.querySelectorAll(itemSelector)));
         // dedup (article view): registra as threads já presentes pra não repetir os sticky em cada página
         const seen = new Set();
         if (keyOf) container.querySelectorAll(itemSelector).forEach(el => { const k = keyOf(el); if (k) seen.add(k); });
@@ -11009,14 +11122,17 @@
             const frag = document.createDocumentFragment();
             frag.appendChild(sep);
             let added = 0;
+            const nodes = [];
             items.forEach(p => {
                 if (keyOf) { const k = keyOf(p); if (k && seen.has(k)) return; if (k) seen.add(k); }  // pula thread repetida (sticky)
                 const node = document.importNode(p, true);
                 if (decorate) safe(decorate, node);
                 frag.appendChild(node);
+                nodes.push(node);
                 added++;
             });
             container.appendChild(frag);
+            if (farMedia) watchFarMedia(nodes);
 
             lastNum = num;
             if (typeof window.smgReapplyFilters === 'function') {
@@ -11046,7 +11162,7 @@
 
         if (infScrollDispose) infScrollDispose();
         const unScroll = onScrollRaf(() => { pager.check(); syncPage(); });
-        infScrollDispose = () => { unScroll(); pager.dispose(); };
+        infScrollDispose = () => { unScroll(); pager.dispose(); if (farMedia) disposeFarMedia(); };
 
         pager.check();
     }
@@ -12258,7 +12374,7 @@
 
     // media/10-redgifs-player.js
     // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
-    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
+    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, rgUnload, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
     // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
@@ -12677,6 +12793,14 @@
         for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
         if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
         rgLiveVideos.delete(video);
+    }
+    // volta um player pro estado "só poster" (o mesmo da evicção da LRU): pausa, revoga o blob, solta o src.
+    // O play seguinte recarrega pelo caminho normal (rgLoaded vazio). Usado pelo scroll infinito em posts longe.
+    function rgUnload(video) {
+        try { video.pause(); } catch (e) {}
+        for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
+        if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
+        video.dataset.rgLoaded = '';
     }
     // soft-nav: o .p-body que sai leva junto os players. Solta decoder/buffer/blob de cada <video>/<audio>
     // dele e tira os nossos do rgLiveVideos, senão o Set (e o elemento de mídia) seguram o body antigo vivo.

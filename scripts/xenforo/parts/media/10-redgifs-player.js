@@ -1,6 +1,6 @@
     // media/10-redgifs-player.js
     // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
-    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
+    // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, rgUnload, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
     // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
@@ -419,6 +419,14 @@
         for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
         if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
         rgLiveVideos.delete(video);
+    }
+    // volta um player pro estado "só poster" (o mesmo da evicção da LRU): pausa, revoga o blob, solta o src.
+    // O play seguinte recarrega pelo caminho normal (rgLoaded vazio). Usado pelo scroll infinito em posts longe.
+    function rgUnload(video) {
+        try { video.pause(); } catch (e) {}
+        for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
+        if (video.getAttribute('src')) { video.removeAttribute('src'); try { video.load(); } catch (e) {} }
+        video.dataset.rgLoaded = '';
     }
     // soft-nav: o .p-body que sai leva junto os players. Solta decoder/buffer/blob de cada <video>/<audio>
     // dele e tira os nossos do rgLiveVideos, senão o Set (e o elemento de mídia) seguram o body antigo vivo.
