@@ -1340,21 +1340,16 @@
                     return likeify(raw);
                 }
 
-                const likeifyPart = part => {
-                    if (!cfgLike || !part || /[*"+\-]/.test(part)) return part;
-                    return part.split(/\s+/).map(w => (w.length >= 3 && /^[\wÀ-ſ]+$/.test(w)) ? w + '*' : w).join(' ');
-                };
-
                 const variants = new Set();
                 const addVariantGroup = text => {
                     if (!text) return;
-                    variants.add(likeifyPart(text));
+                    variants.add(likeify(text));
 
                     // 1. Termo com espaços → gera versão unificada sem espaços
                     if (/\s+/.test(text)) {
                         const unspaced = text.replace(/[\s\-_.]+/g, '');
                         if (unspaced.length >= 3) {
-                            variants.add(likeifyPart(unspaced));
+                            variants.add(likeify(unspaced));
                         }
                     }
 
@@ -1362,11 +1357,11 @@
                     if (/[\-_.]/.test(text)) {
                         const spaced = text.replace(/[\-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
                         if (spaced && spaced !== text) {
-                            variants.add(likeifyPart(spaced));
+                            variants.add(likeify(spaced));
                         }
                         const unspaced = text.replace(/[\s\-_.]+/g, '');
                         if (unspaced.length >= 3) {
-                            variants.add(likeifyPart(unspaced));
+                            variants.add(likeify(unspaced));
                         }
                     }
 
@@ -1374,7 +1369,7 @@
                     if (/[a-z][A-Z]/.test(text)) {
                         const deCamel = text.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
                         if (deCamel && deCamel !== text) {
-                            variants.add(likeifyPart(deCamel));
+                            variants.add(likeify(deCamel));
                         }
                     }
                 };
