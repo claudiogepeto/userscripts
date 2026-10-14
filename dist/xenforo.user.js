@@ -27127,6 +27127,89 @@
         contentIsReady = false;
     }
 
+    // ── XF depois da troca do .p-body ──
+    // O XF 2.3 declara no <head> de cada página o JS/CSS PRÓPRIO dela (XF.config.js / XF.config.css:
+    // message.js, o editor Froala, quick-reply…). A soft-nav troca só o .p-body, então esses assets
+    // nunca carregavam: o XF.activate achava textarea[data-xf-init="editor"] sem handler registrado e
+    // não fazia nada (sobrava a moldura do quick reply, sem toolbar nem área editável). Agora o
+    // XF.Loader carrega o que falta (ele ignora o que já está carregado) e só então ativa o .p-body.
+    function xfPageAssets(doc) {
+        const out = { js: [], css: [] };
+        if (!doc) return out;
+        const scripts = doc.querySelectorAll('script:not([src])');
+        for (const s of scripts) {
+            const text = s.textContent || '';
+            if (text.indexOf('XF.config') < 0) continue;
+            let found = false;
+            ['js', 'css'].forEach(key => {
+                const m = text.match(new RegExp('^\\s*' + key + ':\\s*(\\{.*\\}),?\\s*$', 'm'));
+                if (!m) return;
+                try { out[key] = Object.keys(JSON.parse(m[1])); found = true; } catch (e) {}
+            });
+            if (found) break;
+        }
+        return out;
+    }
+
+    // A ativação roda no mundo da PÁGINA: com @grant o gerenciador pode isolar o script e esconder
+    // window.XF. A ponte é um <script> inline (a CSP desses fóruns só tem upgrade-insecure-requests).
+    const XF_BRIDGE_ATTR = 'data-smg-xf-bridge';
+    const XF_BRIDGE_SRC = `(function () {
+        if (document.documentElement.hasAttribute('${XF_BRIDGE_ATTR}')) return;
+        document.documentElement.setAttribute('${XF_BRIDGE_ATTR}', '1');
+        document.addEventListener('smg-xf-activate', function (ev) {
+            var req = {};
+            try { req = JSON.parse(ev.detail || '{}') || {}; } catch (e) {}
+            var XF = window.XF;
+            if (!XF || typeof XF.activate !== 'function') return;
+            var run = function () {
+                var body = document.querySelector('.p-body');
+                if (!body || document.documentElement.getAttribute('data-smg-xf-nav') !== String(req.token)) return;
+                try { XF.activate(body); } catch (e) { console.warn('[SMG] XF.activate falhou após a navegação:', e); }
+            };
+            var js = req.js || [], css = req.css || [];
+            if ((js.length || css.length) && XF.Loader && typeof XF.Loader.load === 'function') {
+                try { XF.Loader.load(js, css, run); return; } catch (e) { console.warn('[SMG] XF.Loader falhou:', e); }
+            }
+            run();
+        });
+    })();`;
+
+    function ensureXfBridge() {
+        const root = document.documentElement;
+        if (root.hasAttribute(XF_BRIDGE_ATTR)) return true;
+        try {
+            const s = document.createElement('script');
+            s.textContent = XF_BRIDGE_SRC;
+            (document.head || root).appendChild(s);
+            s.remove();
+        } catch (e) {}
+        return root.hasAttribute(XF_BRIDGE_ATTR);
+    }
+
+    function activateXfPage(doc, token) {
+        const assets = xfPageAssets(doc);
+        document.documentElement.setAttribute('data-smg-xf-nav', String(token));
+        if (ensureXfBridge()) {
+            document.dispatchEvent(new CustomEvent('smg-xf-activate', {
+                detail: JSON.stringify({ js: assets.js, css: assets.css, token: token })
+            }));
+            return;
+        }
+        // sem ponte (script inline bloqueado): mesmo caminho, direto do sandbox
+        const XF = window.XF;
+        if (!XF || typeof XF.activate !== 'function') return;
+        const run = () => {
+            const body = document.querySelector('.p-body');
+            if (token !== softNavToken || !body) return;
+            try { XF.activate(body); } catch (e) { console.warn('[SMG] XF.activate falhou após a navegação:', e); }
+        };
+        if ((assets.js.length || assets.css.length) && XF.Loader && typeof XF.Loader.load === 'function') {
+            try { XF.Loader.load(assets.js, assets.css, run); return; } catch (e) {}
+        }
+        run();
+    }
+
     function softNavigate(url, opts) {
         opts = opts || {};
         let abs;
@@ -27188,9 +27271,7 @@
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
             }
             ensurePageSkeleton();   // mesmo tipo → mantém o mesmo skeleton (sem piscar); tipo diferente → troca
-            if (window.XF && typeof window.XF.activate === 'function') {
-                try { window.XF.activate(document.querySelector('.p-body')); } catch (e) {}
-            }
+            activateXfPage(doc, token);
             if (feedContext()) safe(setupFeedView);
             if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
             if (FEATURES.headerNotices) safe(setupHeaderNotices);
@@ -27216,6 +27297,7 @@
         window.buildPostGalleries = buildPostGalleries;
         window.__buildPostGalleries = buildPostGalleries;
         window.detectPageClasses = detectPageClasses;
+        window.__xfPageAssets = xfPageAssets;
     }
 
     if (document.readyState === 'loading') {
