@@ -65,7 +65,6 @@
                 safe(buildCommentCards, roots);
                 safe(buildCommentBar, roots);
             }
-            if (authorFilter) safe(applyAuthorFilter);
         }
 
         // 2. Passes específicos de LISTAGENS & FÓRUNS

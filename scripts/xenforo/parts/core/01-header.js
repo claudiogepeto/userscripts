@@ -76,7 +76,6 @@
 //  CSS ............... injectStyles() + parts/styles/*  ← fragmentos por contexto, montados em ordem
 //  HELP texto/url .... getBigUrl, cleanText, smgIsWatching, waitForElement
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump
-//  POST filtro ....... applyAuthorFilter
 //  POST teclado ...... setupKeyboardShortcuts
 //  POST scroll-inf ... setupInfiniteScroll
 //  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,

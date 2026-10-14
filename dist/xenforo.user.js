@@ -77,7 +77,6 @@
 //  CSS ............... injectStyles() + parts/styles/*  ← fragmentos por contexto, montados em ordem
 //  HELP texto/url .... getBigUrl, cleanText, smgIsWatching, waitForElement
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump
-//  POST filtro ....... applyAuthorFilter
 //  POST teclado ...... setupKeyboardShortcuts
 //  POST scroll-inf ... setupInfiniteScroll
 //  IMG + MASONRY ..... getThumbIO/getFullIO, processImages, collectGalleryBlocks,
@@ -11286,25 +11285,9 @@
         };
     }
 
-    // ── part 07-posts-misc: filtro por autor · atalhos de teclado · scroll infinito ──
-    // =========================================================
-    // FEATURE: filtrar posts por autor
-    // =========================================================
-
-    let authorFilter = null; // username em minúsculas, ou null = mostrar todos
-
+    // ── part 07-posts-misc: atalhos de teclado · scroll infinito ──
     // setado pela dock; o scroll infinito chama pra atualizar o número da página exibido
     let smgUpdateDockPage = null;
-
-    function applyAuthorFilter(full) {
-        // por frame (scroll infinito) processa só os posts NOVOS; full=true (ao TROCAR o filtro) re-avalia todos
-        const sel = full ? '.message--post' : '.message--post:not([data-smg-filt])';
-        document.querySelectorAll(sel).forEach(p => {
-            p.dataset.smgFilt = '1';
-            const a = (p.getAttribute('data-author') || '').toLowerCase();
-            p.style.display = (!authorFilter || a === authorFilter) ? '' : 'none';
-        });
-    }
 
     // =========================================================
     // FEATURE: atalhos de teclado (j/k navegação · g goto · / busca · f feed)
@@ -11549,7 +11532,6 @@
                     lastNum = num;
                     nextUrl = nextLink(doc); // segue o "Next" da página recém-buscada
                     if (!nextUrl) done = true;
-                    if (authorFilter) applyAuthorFilter();
                     if (typeof window.smgReapplyFilters === 'function') {
                         window.smgReapplyFilters();
                     }
@@ -27849,7 +27831,6 @@
                 safe(buildCommentCards, roots);
                 safe(buildCommentBar, roots);
             }
-            if (authorFilter) safe(applyAuthorFilter);
         }
 
         // 2. Passes específicos de LISTAGENS & FÓRUNS
