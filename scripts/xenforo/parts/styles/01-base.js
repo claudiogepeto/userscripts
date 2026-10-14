@@ -174,6 +174,12 @@
                 .smg-toast, .smg-toast.is-out { transform: none; transition: opacity var(--smg-dur-12) linear; }
             }
 
+            /* PERF: durante a rolagem com mouse o conteúdo NÃO faz hit-test de hover — cada post/linha que
+               passava sob o cursor disparava :hover (borda, sombra, transform com transição) e repintava a
+               página a cada frame. html.smg-scrolling sai ~150ms depois do último scroll (setupScrollHoverGuard). */
+            @media (hover: hover) and (pointer: fine) {
+                html.smg-scrolling .p-body { pointer-events: none !important; }
+            }
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
                embeds, vídeos) têm overflow-anchor: none para não disputarem a âncora enquanto carregam. */
