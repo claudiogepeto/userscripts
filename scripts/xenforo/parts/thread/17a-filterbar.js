@@ -711,7 +711,7 @@
     }
 
     // botão seguir/deixar de seguir sobre a thumb de uma linha de listagem (fórum e /watched/threads: o MESMO botão).
-    // opts: isFollowed, threadIdsUnwatch (unwatch pelo form da lista de seguidos), flash (aviso nativo do XF), onUnfollowed.
+    // opts: isFollowed, threadIdsUnwatch (unwatch pelo form da lista de seguidos), onUnfollowed.
     function threadFollowButton(row, opts) {
         const thumb = row.querySelector('.structItem-cell--icon') || row.querySelector('.dcThumbnail') || row.firstElementChild;
         if (!thumb) return;
@@ -726,10 +726,6 @@
             btn.innerHTML = following ? ICONS.unwatch : (ICONS.watch || ICONS.star);
         };
         paint(!!opts.isFollowed);
-        const notify = msg => {
-            if (typeof toast === 'function') toast(msg);
-            else if (opts.flash && window.XF && typeof XF.flashMessage === 'function') XF.flashMessage(msg, 3000);
-        };
         const post = (url, body) => fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
         btn.addEventListener('click', e => {
             e.preventDefault();
@@ -753,7 +749,7 @@
                     dbFollowedDelete(path);
                     followedSet.delete(path);
                 }
-                notify((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (title || (IS_PT ? 'Tópico' : 'Thread')));
+                toast((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (title || (IS_PT ? 'Tópico' : 'Thread')));
                 if (opts.onUnfollowed) opts.onUnfollowed();
             } else {
                 paint(true);
@@ -768,7 +764,7 @@
                     });
                     followedSet.add(path);
                 }
-                notify((IS_PT ? 'Seguindo: ' : 'Following: ') + title);
+                toast((IS_PT ? 'Seguindo: ' : 'Following: ') + title);
             }
         });
         thumb.appendChild(btn);

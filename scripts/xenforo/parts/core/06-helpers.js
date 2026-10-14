@@ -152,6 +152,45 @@
         else fallback();
     }
 
+    // TOAST: confirmação curta e não bloqueante. Um único container (role=status, aria-live=polite)
+    // empilha as mensagens no centro de baixo — acima da dock quando ela existe —, cada uma some
+    // sozinha em ~2,5 s, e o hover pausa a contagem. kind: 'success' (padrão) | 'info' | 'error'.
+    const TOAST_MS = 2500, TOAST_MAX = 4;
+    function toast(msg, kind) {
+        if (!msg || !document.body) return null;
+        kind = kind === 'error' || kind === 'info' ? kind : 'success';
+        let box = document.getElementById('smg-toasts');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'smg-toasts';
+            box.className = 'smg-toasts';
+            box.setAttribute('role', 'status');
+            box.setAttribute('aria-live', 'polite');
+            document.body.appendChild(box);
+        }
+        box.classList.toggle('is-over-dock', !!document.getElementById('smg-post-nav-wrapper'));
+        const el = document.createElement('div');
+        el.className = 'smg-toast smg-toast--' + kind;
+        el.innerHTML = '<span class="smg-toast-ic">' + (kind === 'error' ? ICONS.warn : kind === 'info' ? ICONS.info : ICONS.shareDone) + '</span><span class="smg-toast-msg"></span>';
+        el.querySelector('.smg-toast-msg').textContent = String(msg);
+        const close = () => {
+            if (el.classList.contains('is-out')) return;
+            clearTimeout(el._smgT);
+            el.classList.remove('is-in');
+            el.classList.add('is-out');
+            setTimeout(() => el.remove(), 220);
+        };
+        let left = TOAST_MS, started = 0;
+        const arm = () => { started = Date.now(); el._smgT = setTimeout(close, left); };
+        el.addEventListener('mouseenter', () => { clearTimeout(el._smgT); left = Math.max(600, left - (Date.now() - started)); });
+        el.addEventListener('mouseleave', arm);
+        box.appendChild(el);
+        while (box.children.length > TOAST_MAX) box.firstElementChild.remove();
+        requestAnimationFrame(() => el.classList.add('is-in'));
+        arm();
+        return el;
+    }
+
     // tag comparável: minúscula, sem '#' nem espaço nas pontas
     function normalizeTag(s) {
         return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();

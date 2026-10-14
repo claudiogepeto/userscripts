@@ -257,9 +257,8 @@
         share.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
             const url = permalink || location.href;
-            const done = () => { share.innerHTML = ICONS.shareDone; share.classList.add('is-done'); setTimeout(() => { share.innerHTML = ICONS.share; share.classList.remove('is-done'); }, 1400); };
-            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => window.prompt('Copy link:', url));
-            else window.prompt('Copy link:', url);
+            const done = () => { toast(i18n('Link copied')); share.innerHTML = ICONS.shareDone; share.classList.add('is-done'); setTimeout(() => { share.innerHTML = ICONS.share; share.classList.remove('is-done'); }, 1400); };
+            copyText(url, done);
         });
         head.appendChild(share);
         card.appendChild(head);

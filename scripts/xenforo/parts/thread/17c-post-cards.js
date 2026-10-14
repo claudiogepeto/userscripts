@@ -52,6 +52,7 @@
             e.preventDefault(); e.stopImmediatePropagation();
             const lbl = a.querySelector('.smg-pc-act-lbl');
             const ok = () => {
+                toast(i18n('Link copied'));
                 a.classList.add('smg-pc-act--copied');
                 smgSwapIcon(a, ICONS.shareDone);
                 if (lbl) lbl.textContent = i18n('Copied!');

@@ -34,7 +34,7 @@
         // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
         'Done': 'Pronto',
-        'Copied!': 'Copiado!', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
+        'Copied!': 'Copiado!', 'Link copied': 'Link copiado', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
         'author': 'autor', 'titles only': 'só títulos', 'Nothing here yet.': 'Nada aqui ainda.', 'Couldn’t load.': 'Não foi possível carregar.',
         // dock — thread
         'Search': 'Buscar',

@@ -117,11 +117,11 @@
             if (e.key === '>' || (e.key === '.' && e.shiftKey)) {
                 const next = SPEEDS.find(s => s > cur + 0.05) || SPEEDS[SPEEDS.length - 1];
                 v.playbackRate = next;
-                if (typeof toast === 'function') toast(next + 'x');
+                toast(next + 'x', 'info');
             } else {
                 const prev = [...SPEEDS].reverse().find(s => s < cur - 0.05) || SPEEDS[0];
                 v.playbackRate = prev;
-                if (typeof toast === 'function') toast(prev + 'x');
+                toast(prev + 'x', 'info');
             }
         });
     }

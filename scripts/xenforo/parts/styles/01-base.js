@@ -142,6 +142,38 @@
             html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
             html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
 
+            /* ===== TOAST (toast() em core/06-helpers.js): superfície AMOLED, ícone por tipo, empilha no
+               centro de baixo, acima da dock (desktop: pílula da thread · mobile: navbar) ===== */
+            .smg-toasts {
+                position: fixed; left: 50%; bottom: var(--smg-sp-24); transform: translateX(-50%);
+                z-index: var(--smg-z-max-1); display: flex; flex-direction: column; align-items: center;
+                gap: var(--smg-sp-8); width: max-content; max-width: min(420px, calc(100vw - 32px));
+                pointer-events: none;
+            }
+            .smg-toasts.is-over-dock { bottom: 96px; }
+            @media (max-width: 600px) {
+                .smg-toasts, .smg-toasts.is-over-dock { bottom: calc(var(--smg-navh) + var(--smg-sp-12) + env(safe-area-inset-bottom)); }
+            }
+            .smg-toast {
+                display: flex; align-items: center; gap: var(--smg-sp-10); max-width: 100%;
+                padding: var(--smg-sp-10) var(--smg-sp-16) var(--smg-sp-10) var(--smg-sp-12);
+                border-radius: var(--smg-pop-r); border: 1px solid var(--smg-bd);
+                background: var(--smg-s1); color: var(--smg-tx); box-shadow: var(--smg-pop-shadow);
+                font-size: var(--smg-fs-14); font-weight: 600; line-height: 1.35;
+                pointer-events: auto; opacity: 0; transform: translateY(8px) scale(0.98);
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease;
+            }
+            .smg-toast.is-in { opacity: 1; transform: none; }
+            .smg-toast.is-out { opacity: 0; transform: translateY(4px) scale(0.98); }
+            .smg-toast-ic { display: inline-flex; flex: 0 0 auto; font-size: var(--smg-fs-18); color: var(--smg-link); }
+            .smg-toast--info .smg-toast-ic { color: var(--smg-w-72); }
+            .smg-toast--error { border-color: rgba(244,63,94,0.45); }
+            .smg-toast--error .smg-toast-ic { color: #f43f5e; }
+            .smg-toast-msg { min-width: 0; overflow-wrap: anywhere; }
+            @media (prefers-reduced-motion: reduce) {
+                .smg-toast, .smg-toast.is-out { transform: none; transition: opacity var(--smg-dur-12) linear; }
+            }
+
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
                embeds, vídeos) têm overflow-anchor: none para não disputarem a âncora enquanto carregam. */

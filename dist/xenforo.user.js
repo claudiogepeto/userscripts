@@ -290,7 +290,7 @@
         // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
         'Done': 'Pronto',
-        'Copied!': 'Copiado!', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
+        'Copied!': 'Copiado!', 'Link copied': 'Link copiado', 'Decrease': 'Diminuir', 'Increase': 'Aumentar', 'Go': 'Ir', 'Remove': 'Remover',
         'author': 'autor', 'titles only': 'só títulos', 'Nothing here yet.': 'Nada aqui ainda.', 'Couldn’t load.': 'Não foi possível carregar.',
         // dock — thread
         'Search': 'Buscar',
@@ -523,6 +523,7 @@
         rgPause: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
         rgExpand: svgIcon('<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'),
         rgExternal: svgIcon('<path d="M7 17 17 7"/><path d="M8 7h9v9"/>'),
+        info: svgIcon('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
         warn: svgIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>'),
         gallery: svgIcon('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
         typeImage: svgIcon('<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
@@ -726,6 +727,38 @@
                só esconde (não remove do DOM): o JS ainda lê o link /forums/ pra achar o fórum pai */
             html.smg-sc .breadcrumb, html.smg-smg .breadcrumb,
             html.smg-sc .p-breadcrumbs, html.smg-smg .p-breadcrumbs { display: none !important; }
+
+            /* ===== TOAST (toast() em core/06-helpers.js): superfície AMOLED, ícone por tipo, empilha no
+               centro de baixo, acima da dock (desktop: pílula da thread · mobile: navbar) ===== */
+            .smg-toasts {
+                position: fixed; left: 50%; bottom: var(--smg-sp-24); transform: translateX(-50%);
+                z-index: var(--smg-z-max-1); display: flex; flex-direction: column; align-items: center;
+                gap: var(--smg-sp-8); width: max-content; max-width: min(420px, calc(100vw - 32px));
+                pointer-events: none;
+            }
+            .smg-toasts.is-over-dock { bottom: 96px; }
+            @media (max-width: 600px) {
+                .smg-toasts, .smg-toasts.is-over-dock { bottom: calc(var(--smg-navh) + var(--smg-sp-12) + env(safe-area-inset-bottom)); }
+            }
+            .smg-toast {
+                display: flex; align-items: center; gap: var(--smg-sp-10); max-width: 100%;
+                padding: var(--smg-sp-10) var(--smg-sp-16) var(--smg-sp-10) var(--smg-sp-12);
+                border-radius: var(--smg-pop-r); border: 1px solid var(--smg-bd);
+                background: var(--smg-s1); color: var(--smg-tx); box-shadow: var(--smg-pop-shadow);
+                font-size: var(--smg-fs-14); font-weight: 600; line-height: 1.35;
+                pointer-events: auto; opacity: 0; transform: translateY(8px) scale(0.98);
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease;
+            }
+            .smg-toast.is-in { opacity: 1; transform: none; }
+            .smg-toast.is-out { opacity: 0; transform: translateY(4px) scale(0.98); }
+            .smg-toast-ic { display: inline-flex; flex: 0 0 auto; font-size: var(--smg-fs-18); color: var(--smg-link); }
+            .smg-toast--info .smg-toast-ic { color: var(--smg-w-72); }
+            .smg-toast--error { border-color: rgba(244,63,94,0.45); }
+            .smg-toast--error .smg-toast-ic { color: #f43f5e; }
+            .smg-toast-msg { min-width: 0; overflow-wrap: anywhere; }
+            @media (prefers-reduced-motion: reduce) {
+                .smg-toast, .smg-toast.is-out { transform: none; transition: opacity var(--smg-dur-12) linear; }
+            }
 
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
@@ -9334,6 +9367,45 @@
         else fallback();
     }
 
+    // TOAST: confirmação curta e não bloqueante. Um único container (role=status, aria-live=polite)
+    // empilha as mensagens no centro de baixo — acima da dock quando ela existe —, cada uma some
+    // sozinha em ~2,5 s, e o hover pausa a contagem. kind: 'success' (padrão) | 'info' | 'error'.
+    const TOAST_MS = 2500, TOAST_MAX = 4;
+    function toast(msg, kind) {
+        if (!msg || !document.body) return null;
+        kind = kind === 'error' || kind === 'info' ? kind : 'success';
+        let box = document.getElementById('smg-toasts');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'smg-toasts';
+            box.className = 'smg-toasts';
+            box.setAttribute('role', 'status');
+            box.setAttribute('aria-live', 'polite');
+            document.body.appendChild(box);
+        }
+        box.classList.toggle('is-over-dock', !!document.getElementById('smg-post-nav-wrapper'));
+        const el = document.createElement('div');
+        el.className = 'smg-toast smg-toast--' + kind;
+        el.innerHTML = '<span class="smg-toast-ic">' + (kind === 'error' ? ICONS.warn : kind === 'info' ? ICONS.info : ICONS.shareDone) + '</span><span class="smg-toast-msg"></span>';
+        el.querySelector('.smg-toast-msg').textContent = String(msg);
+        const close = () => {
+            if (el.classList.contains('is-out')) return;
+            clearTimeout(el._smgT);
+            el.classList.remove('is-in');
+            el.classList.add('is-out');
+            setTimeout(() => el.remove(), 220);
+        };
+        let left = TOAST_MS, started = 0;
+        const arm = () => { started = Date.now(); el._smgT = setTimeout(close, left); };
+        el.addEventListener('mouseenter', () => { clearTimeout(el._smgT); left = Math.max(600, left - (Date.now() - started)); });
+        el.addEventListener('mouseleave', arm);
+        box.appendChild(el);
+        while (box.children.length > TOAST_MAX) box.firstElementChild.remove();
+        requestAnimationFrame(() => el.classList.add('is-in'));
+        arm();
+        return el;
+    }
+
     // tag comparável: minúscula, sem '#' nem espaço nas pontas
     function normalizeTag(s) {
         return (s || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim();
@@ -12750,11 +12822,11 @@
             if (e.key === '>' || (e.key === '.' && e.shiftKey)) {
                 const next = SPEEDS.find(s => s > cur + 0.05) || SPEEDS[SPEEDS.length - 1];
                 v.playbackRate = next;
-                if (typeof toast === 'function') toast(next + 'x');
+                toast(next + 'x', 'info');
             } else {
                 const prev = [...SPEEDS].reverse().find(s => s < cur - 0.05) || SPEEDS[0];
                 v.playbackRate = prev;
-                if (typeof toast === 'function') toast(prev + 'x');
+                toast(prev + 'x', 'info');
             }
         });
     }
@@ -16432,8 +16504,7 @@
                 btnClearTimeline.addEventListener('click', () => {
                     if (!confirm(IS_PT ? 'Limpar todos os posts salvos no feed e resetar páginas salvas?' : 'Clear all saved feed posts and reset saved pages?')) return;
                     dbClearTimeline().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
-                        else alert(IS_PT ? 'Feed limpo com sucesso!' : 'Feed cleared successfully!');
+                        toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
                     });
                 });
             }
@@ -16442,8 +16513,7 @@
                 btnClearFollowed.addEventListener('click', () => {
                     if (!confirm(IS_PT ? 'Limpar a tabela local de tópicos seguidos? (Isso NÃO deixará de seguir nada no fórum)' : 'Clear local cache of followed threads? (This will NOT unfollow anything on the forum)')) return;
                     dbClearFollowed().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso' : 'Followed threads cache cleared successfully');
-                        else alert(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso!' : 'Followed threads cache cleared successfully!');
+                        toast(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso' : 'Followed threads cache cleared successfully');
                     });
                 });
             }
@@ -20538,7 +20608,7 @@
     }
 
     // botão seguir/deixar de seguir sobre a thumb de uma linha de listagem (fórum e /watched/threads: o MESMO botão).
-    // opts: isFollowed, threadIdsUnwatch (unwatch pelo form da lista de seguidos), flash (aviso nativo do XF), onUnfollowed.
+    // opts: isFollowed, threadIdsUnwatch (unwatch pelo form da lista de seguidos), onUnfollowed.
     function threadFollowButton(row, opts) {
         const thumb = row.querySelector('.structItem-cell--icon') || row.querySelector('.dcThumbnail') || row.firstElementChild;
         if (!thumb) return;
@@ -20553,10 +20623,6 @@
             btn.innerHTML = following ? ICONS.unwatch : (ICONS.watch || ICONS.star);
         };
         paint(!!opts.isFollowed);
-        const notify = msg => {
-            if (typeof toast === 'function') toast(msg);
-            else if (opts.flash && window.XF && typeof XF.flashMessage === 'function') XF.flashMessage(msg, 3000);
-        };
         const post = (url, body) => fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
         btn.addEventListener('click', e => {
             e.preventDefault();
@@ -20580,7 +20646,7 @@
                     dbFollowedDelete(path);
                     followedSet.delete(path);
                 }
-                notify((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (title || (IS_PT ? 'Tópico' : 'Thread')));
+                toast((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (title || (IS_PT ? 'Tópico' : 'Thread')));
                 if (opts.onUnfollowed) opts.onUnfollowed();
             } else {
                 paint(true);
@@ -20595,7 +20661,7 @@
                     });
                     followedSet.add(path);
                 }
-                notify((IS_PT ? 'Seguindo: ' : 'Following: ') + title);
+                toast((IS_PT ? 'Seguindo: ' : 'Following: ') + title);
             }
         });
         thumb.appendChild(btn);
@@ -20677,7 +20743,6 @@
         threadFollowButton(row, {
             isFollowed: true,
             threadIdsUnwatch: true,
-            flash: true,
             onUnfollowed: () => {
                 row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
                 row.style.opacity = '0';
@@ -21097,6 +21162,7 @@
             e.preventDefault(); e.stopImmediatePropagation();
             const lbl = a.querySelector('.smg-pc-act-lbl');
             const ok = () => {
+                toast(i18n('Link copied'));
                 a.classList.add('smg-pc-act--copied');
                 smgSwapIcon(a, ICONS.shareDone);
                 if (lbl) lbl.textContent = i18n('Copied!');
@@ -23574,7 +23640,7 @@
         next();
     }
     function fhCopy(text, btn) {   // copia o link + feedback visual (✓ por ~1.4s) — usa o par share/shareDone que já existe
-        const done = () => { btn.classList.add('smg-fhcard-copied'); btn.innerHTML = ICONS.shareDone; setTimeout(() => { btn.classList.remove('smg-fhcard-copied'); btn.innerHTML = ICONS.share; }, 1400); };
+        const done = () => { toast(i18n('Link copied')); btn.classList.add('smg-fhcard-copied'); btn.innerHTML = ICONS.shareDone; setTimeout(() => { btn.classList.remove('smg-fhcard-copied'); btn.innerHTML = ICONS.share; }, 1400); };
         copyText(text, done);
     }
     // contagem → texto "Galeria · N itens" / "Arquivo"
@@ -25459,9 +25525,8 @@
         share.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
             const url = permalink || location.href;
-            const done = () => { share.innerHTML = ICONS.shareDone; share.classList.add('is-done'); setTimeout(() => { share.innerHTML = ICONS.share; share.classList.remove('is-done'); }, 1400); };
-            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => window.prompt('Copy link:', url));
-            else window.prompt('Copy link:', url);
+            const done = () => { toast(i18n('Link copied')); share.innerHTML = ICONS.shareDone; share.classList.add('is-done'); setTimeout(() => { share.innerHTML = ICONS.share; share.classList.remove('is-done'); }, 1400); };
+            copyText(url, done);
         });
         head.appendChild(share);
         card.appendChild(head);

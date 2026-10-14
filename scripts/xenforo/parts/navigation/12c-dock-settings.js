@@ -42,8 +42,7 @@
                 btnClearTimeline.addEventListener('click', () => {
                     if (!confirm(IS_PT ? 'Limpar todos os posts salvos no feed e resetar páginas salvas?' : 'Clear all saved feed posts and reset saved pages?')) return;
                     dbClearTimeline().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
-                        else alert(IS_PT ? 'Feed limpo com sucesso!' : 'Feed cleared successfully!');
+                        toast(IS_PT ? 'Feed limpo com sucesso' : 'Feed cleared successfully');
                     });
                 });
             }
@@ -52,8 +51,7 @@
                 btnClearFollowed.addEventListener('click', () => {
                     if (!confirm(IS_PT ? 'Limpar a tabela local de tópicos seguidos? (Isso NÃO deixará de seguir nada no fórum)' : 'Clear local cache of followed threads? (This will NOT unfollow anything on the forum)')) return;
                     dbClearFollowed().then(() => {
-                        if (typeof toast === 'function') toast(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso' : 'Followed threads cache cleared successfully');
-                        else alert(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso!' : 'Followed threads cache cleared successfully!');
+                        toast(IS_PT ? 'Cache de tópicos seguidos limpo com sucesso' : 'Followed threads cache cleared successfully');
                     });
                 });
             }

@@ -23,7 +23,6 @@
         threadFollowButton(row, {
             isFollowed: true,
             threadIdsUnwatch: true,
-            flash: true,
             onUnfollowed: () => {
                 row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
                 row.style.opacity = '0';
