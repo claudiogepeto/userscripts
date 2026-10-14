@@ -2538,32 +2538,6 @@
             || document.querySelector(".rounded-lg section > div.mx-auto")
             || [...document.querySelectorAll(".rounded-lg")].find(b => !b.closest("header"));   // ignora a nav do header (tbm é .rounded-lg)
     }
-    function addMirrorSwitch() {
-        const box = mediaBox();
-        if (!box || box.querySelector(":scope > .bunkr-mirror")) return;
-        if (getComputedStyle(box).position === "static") box.style.position = "relative";
-        box.classList.add("bunkr-has-mirror");   // o hover dele revela o botão
-        const cur = location.hostname.replace(/^www\./, "");
-        const wrap = document.createElement("div"); wrap.className = "bunkr-mirror";
-        const btn = document.createElement("button"); btn.type = "button"; btn.className = "bunkr-mirror-btn";
-        btn.innerHTML = '<span class="bunkr-mirror-spin" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 6h18"/><path d="m7 22-4-4 4-4"/><path d="M21 18H3"/></svg><span>Mirror</span>';
-        const menu = document.createElement("div"); menu.className = "bunkr-mirror-menu"; menu.hidden = true;
-        menu.innerHTML = '<div class="bunkr-mirror-head">Trocar de mirror · <b>' + cur + '</b></div><div class="bunkr-mirror-grid"></div>';
-        const grid = menu.querySelector(".bunkr-mirror-grid");
-        MIRRORS.forEach(d => {
-            const a = document.createElement("a"); a.className = "bunkr-mirror-item" + (d === cur ? " is-current" : "");
-            a.textContent = d;
-            if (d === cur) a.addEventListener("click", e => e.preventDefault());   // já estou nele
-            else a.href = location.protocol + "//" + d + location.pathname + location.search;
-            grid.appendChild(a);
-        });
-        const setOpen = open => { menu.hidden = !open; wrap.classList.toggle("is-open", open); };   // is-open mantém o botão visível mesmo saindo do hover
-        btn.addEventListener("click", e => { e.preventDefault(); setOpen(menu.hidden); });
-        document.addEventListener("click", e => { if (!wrap.contains(e.target)) setOpen(false); });   // fecha clicando FORA
-        wrap.append(btn, menu);
-        box.appendChild(wrap);
-    }
-
     function nextMirror() {
         const cur = location.hostname.replace(/^www\./, "");
         const i = MIRRORS.indexOf(cur);
@@ -2634,7 +2608,6 @@
         v.src = src; (document.body || document.documentElement).appendChild(v); v.load();
     }
 
-    function addSearch() {}
 
     // ===== v2.9 — GALERIA MODERNA ESTILO YOUTUBE (ÁLBUM) =====
     function killOldCounter() {
@@ -3411,7 +3384,7 @@
     const isFile = () => !/\/a\//.test(location.pathname) && location.pathname !== "/" && location.pathname !== "";
     function apply() {
         checkPageType();
-        simplifyHeader(); addSearch(); killBanner();   // header/busca valem pro ÁLBUM; na página de arquivo o stage cobre por cima
+        simplifyHeader(); killBanner();   // header/busca valem pro ÁLBUM; na página de arquivo o stage cobre por cima
         if (!isFile()) setupModernGallery();
     }
     function onReady(fn) {
