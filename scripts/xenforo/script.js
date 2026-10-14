@@ -15759,8 +15759,10 @@
                 searchIsLoadingMore = true;
                 if (searchSentinelEl) searchSentinelEl.classList.add('is-loading');
                 const urlToFetch = currentSearchNextUrl;
+                const seq = searchSeq;   // nova busca no meio do fetch → esta página é de OUTRA busca: descarta
                 return fetchDoc(urlToFetch, { credentials: 'same-origin' })
                     .then(doc => {
+                        if (seq !== searchSeq) return;
                         if (!doc) throw new Error('No doc');
                         const moreResults = parseSearchResults(doc);
                         let moreFiltered = moreResults;
@@ -15799,6 +15801,7 @@
                         }
                     })
                     .catch(err => {
+                        if (seq !== searchSeq) return;
                         if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
                         if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
                         searchSentinelEl = null;
