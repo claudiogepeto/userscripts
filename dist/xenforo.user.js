@@ -15062,11 +15062,7 @@
             function closeSearch(fromPop) {   // fromPop === true: o "voltar" já consumiu o estado do modal
                 closeCfg();
                 unbindDropPositioning();
-                if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
-                if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
-                searchSentinelEl = null;
-                if (searchResultsEl) searchResultsEl.onscroll = null;
-                if (searchPop) searchPop.onscroll = null;
+                removeSearchSentinel();
                 searchOverlay.classList.remove('open');
                 if (searchLocked) { searchLocked = false; smgModalClose(searchPop, fromPop === true); }
                 document.documentElement.classList.remove('smg-search-open');
@@ -15128,10 +15124,53 @@
             }
             // === busca INLINE: faz o fetch dos resultados e mostra NO PRÓPRIO dropdown (em vez de navegar) ===
             let searchSeq = 0, searchAbort = null;
-            let currentSearchNextUrl = null;
-            let searchIsLoadingMore = false;
             let searchSentinelEl = null;
-            let searchSentinelIO = null;
+            function removeSearchSentinel() {
+                if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
+                searchSentinelEl = null;
+            }
+            // "carregar mais" no motor comum (createPager, 07): a lista de resultados rola (no celular, o popover),
+            // a próxima página entra antes da sentinela, falha encerra (sem retry a cada scroll). Cada lista nova
+            // (paintResults/clearResults/nova busca) faz reset: a página de uma busca anterior que chega depois é
+            // descartada e a request dela abortada. Rolar a busca não é rolar a página: o master switch não vale aqui.
+            const searchPager = createPager({
+                root: [searchResultsEl, searchPop],
+                near: 350,
+                load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
+                apply: (doc, urlFetched) => {
+                    const moreResults = parseSearchResults(doc);
+                    let moreFiltered = moreResults;
+                    if (activeSearchBadges && activeSearchBadges.size > 0) {
+                        const activeLower = Array.from(activeSearchBadges).map(b => b.toLowerCase().trim());
+                        moreFiltered = moreResults.filter(r => {
+                            const labelTexts = (r.labels || []).map(l => (l.textContent || '').toLowerCase().replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim());
+                            const hasLabel = activeLower.some(ab => labelTexts.some(lt => lt === ab || lt.includes(ab) || ab.includes(lt)));
+                            if (hasLabel) return true;
+                            const tLower = (r.title || '').toLowerCase();
+                            return activeLower.some(ab => tLower.includes(ab));
+                        });
+                    }
+                    const curTerms = hlTerms();
+                    const targetList = searchResultsEl.querySelector('.smg-search-results-list') || searchResultsEl;
+                    moreFiltered.forEach(r => {
+                        const card = renderSearchCard(r, curTerms);
+                        if (searchSentinelEl && searchSentinelEl.parentNode === targetList) targetList.insertBefore(card, searchSentinelEl);
+                        else targetList.appendChild(card);
+                    });
+                    const nextEl = doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
+                    let nextUrl = nextEl ? nextEl.getAttribute('href') : null;
+                    if (nextUrl) {
+                        try { nextUrl = new URL(nextUrl, urlFetched).href; } catch (e) {}
+                    }
+                    return { next: nextUrl, added: moreFiltered.length };
+                },
+                enabled: () => !!searchSentinelEl && searchSentinelEl.isConnected,
+                onFail: () => 'stop',
+                onState: kind => {
+                    if (searchSentinelEl) searchSentinelEl.classList.toggle('is-loading', kind === 'loading');
+                    if (kind === 'end') removeSearchSentinel();
+                },
+            });
 
             function renderSearchCard(r, terms) {
                 const a = document.createElement('a');
@@ -15156,68 +15195,13 @@
             }
 
             function loadMoreSearchResults() {
-                if (searchIsLoadingMore || !currentSearchNextUrl) return Promise.resolve();
-                searchIsLoadingMore = true;
-                if (searchSentinelEl) searchSentinelEl.classList.add('is-loading');
-                const urlToFetch = currentSearchNextUrl;
-                const seq = searchSeq;   // nova busca no meio do fetch → esta página é de OUTRA busca: descarta
-                return fetchDoc(urlToFetch, { credentials: 'same-origin' })
-                    .then(doc => {
-                        if (seq !== searchSeq) return;
-                        if (!doc) throw new Error('No doc');
-                        const moreResults = parseSearchResults(doc);
-                        let moreFiltered = moreResults;
-                        if (activeSearchBadges && activeSearchBadges.size > 0) {
-                            const activeLower = Array.from(activeSearchBadges).map(b => b.toLowerCase().trim());
-                            moreFiltered = moreResults.filter(r => {
-                                const labelTexts = (r.labels || []).map(l => (l.textContent || '').toLowerCase().replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim());
-                                const hasLabel = activeLower.some(ab => labelTexts.some(lt => lt === ab || lt.includes(ab) || ab.includes(lt)));
-                                if (hasLabel) return true;
-                                const tLower = (r.title || '').toLowerCase();
-                                return activeLower.some(ab => tLower.includes(ab));
-                            });
-                        }
-                        const curTerms = hlTerms();
-                        const targetList = searchResultsEl.querySelector('.smg-search-results-list') || searchResultsEl;
-                        moreFiltered.forEach(r => {
-                            const card = renderSearchCard(r, curTerms);
-                            if (searchSentinelEl && searchSentinelEl.parentNode === targetList) {
-                                targetList.insertBefore(card, searchSentinelEl);
-                            } else {
-                                targetList.appendChild(card);
-                            }
-                        });
-                        const nextEl = doc.querySelector('.pageNav-jump--next, .pageNavSimple-el--next, a[rel="next"]');
-                        let nextUrl = nextEl ? nextEl.getAttribute('href') : null;
-                        if (nextUrl) {
-                            try { nextUrl = new URL(nextUrl, urlToFetch).href; } catch (e) {}
-                        }
-                        currentSearchNextUrl = nextUrl;
-                        if (!currentSearchNextUrl) {
-                            if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
-                            if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
-                            searchSentinelEl = null;
-                            searchResultsEl.onscroll = null;
-                            if (searchPop) searchPop.onscroll = null;
-                        }
-                    })
-                    .catch(err => {
-                        if (seq !== searchSeq) return;
-                        if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
-                        if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
-                        searchSentinelEl = null;
-                        searchResultsEl.onscroll = null;
-                        if (searchPop) searchPop.onscroll = null;
-                    })
-                    .finally(() => {
-                        if (searchSentinelEl) searchSentinelEl.classList.remove('is-loading');
-                        searchIsLoadingMore = false;
-                    });
+                return searchPager.more();
             }
 
             function runSearchInline(fields) {
                 refreshPrefixHarvest();
                 const seq = ++searchSeq;
+                searchPager.reset(null);   // a página que ainda carregava é da busca anterior: descarta e aborta
                 if (searchAbort) searchAbort.abort();   // mata o POST anterior (full-text é caro no servidor; o seq só descartava a RESPOSTA — a request continuava rodando)
                 const ctrl = searchAbort = (typeof AbortController === 'function') ? new AbortController() : null;
                 searchHistEl.hidden = true;   // esconde o histórico enquanto mostra resultados
@@ -15347,14 +15331,9 @@
             let currentTagFilter = '';
             function paintResults(results, nextUrl) {
                 searchResultsEl.innerHTML = '';
-                currentSearchNextUrl = nextUrl || null;
-                searchIsLoadingMore = false;
+                searchPager.reset(nextUrl || null);
                 currentTagFilter = '';
-                if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
-                if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
-                searchSentinelEl = null;
-                searchResultsEl.onscroll = null;
-                if (searchPop) searchPop.onscroll = null;
+                removeSearchSentinel();
 
                 const terms = hlTerms();
 
@@ -15455,33 +15434,13 @@
                 searchResultsEl.appendChild(listContainer);
                 renderCardsForList(filtered);
 
-                if (currentSearchNextUrl) {
+                if (!searchPager.ended) {
                     searchSentinelEl = document.createElement('div');
                     searchSentinelEl.className = 'smg-search-sentinel';
                     searchSentinelEl.innerHTML = '<span class="smg-loading"></span>';
                     searchResultsEl.appendChild(searchSentinelEl);
-
-                    if (typeof IntersectionObserver !== 'undefined') {
-                        if (searchSentinelIO) searchSentinelIO.disconnect();
-                        searchSentinelIO = new IntersectionObserver((entries) => {
-                            if (entries.some(e => e.isIntersecting)) {
-                                loadMoreSearchResults();
-                            }
-                        }, {
-                            root: searchResultsEl,
-                            rootMargin: '250px'
-                        });
-                        searchSentinelIO.observe(searchSentinelEl);
-                    }
-
-                    const checkScroll = (target) => {
-                        if (!target || searchIsLoadingMore || !currentSearchNextUrl) return;
-                        if (target.scrollHeight - target.scrollTop - target.clientHeight <= 350) {
-                            loadMoreSearchResults();
-                        }
-                    };
-                    searchResultsEl.onscroll = () => checkScroll(searchResultsEl);
-                    if (searchPop) searchPop.onscroll = () => checkScroll(searchPop);
+                    // a lista curta já mostra a sentinela: puxa a 2ª página depois do layout, sem esperar um scroll
+                    requestAnimationFrame(() => searchPager.check());
                 }
 
                 searchResultsEl.hidden = false;
@@ -15496,13 +15455,8 @@
                 });
             }
             function clearResults() {   // volta pro histórico — sem re-render se ele JÁ está na tela (era rebuild por keystroke)
-                currentSearchNextUrl = null;
-                searchIsLoadingMore = false;
-                if (searchSentinelIO) { searchSentinelIO.disconnect(); searchSentinelIO = null; }
-                if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
-                searchSentinelEl = null;
-                searchResultsEl.onscroll = null;
-                if (searchPop) searchPop.onscroll = null;
+                searchPager.reset(null);
+                removeSearchSentinel();
                 if (!searchResultsEl.hidden) { searchResultsEl.hidden = true; searchResultsEl.innerHTML = ''; }
                 if (searchHistEl.hidden && searchEmptyEl.hidden) renderHistory();
                 updateSearchClearButtons();
@@ -15760,9 +15714,8 @@
                     getSearchInput,
                     parseSearchResults,
                     loadMoreSearchResults,
-                    get currentSearchNextUrl() { return currentSearchNextUrl; },
+                    get currentSearchNextUrl() { return searchPager.cursor; },
                     get searchSentinelEl() { return searchSentinelEl; },
-                    get searchSentinelIO() { return searchSentinelIO; },
                     renderSearchCard,
                     clearResults,
                     openSearch,
