@@ -1948,7 +1948,6 @@
             }
             .smg-search-author-btn:hover { background: rgba(255,255,255,0.09); color: #fff; }
             .smg-search-author-btn.open { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); color: #fff; }
-            .smg-search-author-btn.has-value { background: #fff; color: #141414; border-color: #fff; }
             .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
             /* footer: busca avançada (esq) · dica · botão Buscar primário (branco) */
@@ -2470,7 +2469,6 @@
 
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */
             @media (max-width: 600px) {
-                .smg-dock-thread-bar { display: flex !important; }
                 .smg-side--desktop-only { display: none !important; }
                 html { --smg-navh: 54px; }
                 /* Thread/list docks add a second mobile row. Use page classes already
@@ -2586,14 +2584,6 @@
                 }
                 /* search no mobile */
                 #smg-search-pop { gap: 14px; padding: 16px; border-radius: 18px; }
-                #smg-search-pop .smg-search-bar {
-                    height: auto !important;
-                    min-height: 48px;
-                    flex-wrap: wrap !important;
-                    padding: 8px 10px;
-                    gap: 8px;
-                    border-radius: 13px;
-                }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 160px;
                     min-width: 120px;

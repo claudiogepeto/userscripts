@@ -173,12 +173,9 @@
             }
             html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 32px; padding: 0; }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
                e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
-            .smg-thead-unified.is-stuck .smg-thead-thumb { display: none !important; }
-            .smg-thead-unified.is-stuck .smg-thead-badges-row { display: none !important; }
             .smg-thead-unified.is-stuck .smg-thead-tags,
             .smg-thead-unified.is-stuck .p-description,
             .smg-thead-unified.is-stuck .smg-thead-tags-bar { display: none !important; }

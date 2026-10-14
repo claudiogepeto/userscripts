@@ -124,9 +124,4 @@
                 .smg-bar-btn { height: 28px; font-size: 12.5px; gap: 4px; }
             }
 
-            /* BARRA DE FILTRO DE THREADS SEGUIDAS (/watched/threads) */
-            .smg-watched-empty {
-                text-align: center; padding: 36px 16px; color: rgba(255,255,255,0.5); font-size: 14px;
-            }
-
             `;

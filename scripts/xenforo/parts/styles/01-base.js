@@ -329,18 +329,6 @@
                 margin: 0 !important;
                 display: block !important;
             }
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                margin: 0 auto !important;
-                display: block !important;
-                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
-                position: relative !important;
-                border-radius: 0 !important;
-                background: #000;
-            }
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div.smg-player-loaded,
             html.smg-masonry-on .auto-image-grid span[data-s9e-mediaembed].smg-player-loaded,
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
@@ -352,17 +340,6 @@
                 overflow: visible !important;
                 background: transparent !important;
                 max-width: 100% !important;
-                display: block !important;
-            }
-            .smg-fp-content iframe,
-            .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe {
-                width: 100% !important;
-                max-width: 100% !important;
-                aspect-ratio: 16 / 9 !important;
-                height: auto !important;
-                border: none !important;
-                border-radius: 8px !important;
                 display: block !important;
             }
             html.smg-masonry-on .auto-image-grid img.bbImage,
@@ -396,16 +373,6 @@
                 margin: 0 auto !important;
             }
             /* Verticais no masonry: preenchem 100% da largura da coluna, garantindo gap de 8px exato */
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                object-fit: cover !important;
-                margin: 0 !important;
-            }
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -596,11 +563,6 @@
                 border-color: rgba(255, 255, 255, 0.25);
                 background: var(--smg-s2, #232323);
                 box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-            }
-            .smg-fhcard,
-            .smg-fhcard * {
-                text-decoration: none !important;
-                filter: none !important;
             }
             .smg-fhcard-main {
                 display: flex;
@@ -955,9 +917,6 @@
                 overflow: hidden;
                 border-radius: 10px;
                 background: #000;
-            }
-            .bbCodeBlock--unfurl {
-                max-width: 720px;
             }
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,

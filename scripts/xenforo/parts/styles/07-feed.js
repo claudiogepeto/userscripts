@@ -65,7 +65,6 @@
             @media (max-width: 600px) { .smg-river-head { margin-top: 16px; } }
             .smg-river-title { margin: 0; padding: 0; font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-            .smg-fp-list { display: flex; flex-direction: column; gap: 14px; }
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
             .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }

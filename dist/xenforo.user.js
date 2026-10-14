@@ -917,18 +917,6 @@
                 margin: 0 !important;
                 display: block !important;
             }
-            html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
-            html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
-                width: 100% !important;
-                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-ratio, 1.7778))) !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                margin: 0 auto !important;
-                display: block !important;
-                aspect-ratio: var(--smg-ratio, 16 / 9) !important;
-                position: relative !important;
-                border-radius: 0 !important;
-                background: #000;
-            }
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div.smg-player-loaded,
             html.smg-masonry-on .auto-image-grid span[data-s9e-mediaembed].smg-player-loaded,
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div:has(.smg-turbo-slot--filled),
@@ -940,17 +928,6 @@
                 overflow: visible !important;
                 background: transparent !important;
                 max-width: 100% !important;
-                display: block !important;
-            }
-            .smg-fp-content iframe,
-            .smg-fp-content .auto-image-grid iframe,
-            html.smg-masonry-on .auto-image-grid > iframe {
-                width: 100% !important;
-                max-width: 100% !important;
-                aspect-ratio: 16 / 9 !important;
-                height: auto !important;
-                border: none !important;
-                border-radius: 8px !important;
                 display: block !important;
             }
             html.smg-masonry-on .auto-image-grid img.bbImage,
@@ -984,16 +961,6 @@
                 margin: 0 auto !important;
             }
             /* Verticais no masonry: preenchem 100% da largura da coluna, garantindo gap de 8px exato */
-            html.smg-masonry-on .auto-image-grid img.bbImage.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert,
-            html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > img.bbImage {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
-                object-fit: cover !important;
-                margin: 0 !important;
-            }
             html.smg-masonry-on .auto-image-grid .smg-dm-wrap.smg-vert > .smg-dm-video {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -1184,11 +1151,6 @@
                 border-color: rgba(255, 255, 255, 0.25);
                 background: var(--smg-s2, #232323);
                 box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-            }
-            .smg-fhcard,
-            .smg-fhcard * {
-                text-decoration: none !important;
-                filter: none !important;
             }
             .smg-fhcard-main {
                 display: flex;
@@ -1543,9 +1505,6 @@
                 overflow: hidden;
                 border-radius: 10px;
                 background: #000;
-            }
-            .bbCodeBlock--unfurl {
-                max-width: 720px;
             }
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,
@@ -4953,7 +4912,6 @@
             }
             .smg-search-author-btn:hover { background: rgba(255,255,255,0.09); color: #fff; }
             .smg-search-author-btn.open { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.28); color: #fff; }
-            .smg-search-author-btn.has-value { background: #fff; color: #141414; border-color: #fff; }
             .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
             /* footer: busca avançada (esq) · dica · botão Buscar primário (branco) */
@@ -5475,7 +5433,6 @@
 
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */
             @media (max-width: 600px) {
-                .smg-dock-thread-bar { display: flex !important; }
                 .smg-side--desktop-only { display: none !important; }
                 html { --smg-navh: 54px; }
                 /* Thread/list docks add a second mobile row. Use page classes already
@@ -5591,14 +5548,6 @@
                 }
                 /* search no mobile */
                 #smg-search-pop { gap: 14px; padding: 16px; border-radius: 18px; }
-                #smg-search-pop .smg-search-bar {
-                    height: auto !important;
-                    min-height: 48px;
-                    flex-wrap: wrap !important;
-                    padding: 8px 10px;
-                    gap: 8px;
-                    border-radius: 13px;
-                }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 160px;
                     min-width: 120px;
@@ -6559,16 +6508,6 @@
                 font-size: 14px; font-weight: 600; text-decoration: none !important; line-height: 1;
                 transition: background .14s ease, color .14s ease, border-color .14s ease;
             }
-            html.smg-threadlist .pageNav-page > a:hover,
-            html.smg-threadlist .pageNav-jump:hover,
-            html.smg-threadlist .pageNavSimple-el:hover {
-                background: rgba(255,255,255,0.12) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important;
-            }
-            html.smg-threadlist .pageNav-page--current > a {
-                background: var(--smg-s3) !important;
-                border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--skip > a { background: transparent !important; border-color: transparent !important; }
             /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
             html.smg-threadlist .pageNavWrapper .pageNav-page,
             html.smg-threadlist .pageNavWrapper .pageNav-page--current,
@@ -6606,9 +6545,6 @@
             html.smg-threadlist .pageNav-jump:hover,
             html.smg-threadlist .pageNavSimple-el:hover {
                 background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--current > a {
-                background: #fff !important; color: #141414 !important; border-color: #fff !important;
             }
             html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
             /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
@@ -6752,11 +6688,6 @@
                 /* NÃO espremer os grupos (era o que clipava "3/39" → "/"): mantêm o tamanho e a barra ROLA */
                 .smg-bar > * { flex: 0 0 auto; }
                 .smg-bar-btn { height: 28px; font-size: 12.5px; gap: 4px; }
-            }
-
-            /* BARRA DE FILTRO DE THREADS SEGUIDAS (/watched/threads) */
-            .smg-watched-empty {
-                text-align: center; padding: 36px 16px; color: rgba(255,255,255,0.5); font-size: 14px;
             }
 
             `;
@@ -6936,12 +6867,9 @@
             }
             html.smg-thread .smg-thead-unified .smg-bar { padding: 3px; border-radius: 12px; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; padding: 0 9px; font-size: 13px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 32px; padding: 0; }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
                e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
-            .smg-thead-unified.is-stuck .smg-thead-thumb { display: none !important; }
-            .smg-thead-unified.is-stuck .smg-thead-badges-row { display: none !important; }
             .smg-thead-unified.is-stuck .smg-thead-tags,
             .smg-thead-unified.is-stuck .p-description,
             .smg-thead-unified.is-stuck .smg-thead-tags-bar { display: none !important; }
@@ -8766,7 +8694,6 @@
             @media (max-width: 600px) { .smg-river-head { margin-top: 16px; } }
             .smg-river-title { margin: 0; padding: 0; font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-            .smg-fp-list { display: flex; flex-direction: column; gap: 14px; }
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
             .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }

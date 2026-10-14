@@ -293,16 +293,6 @@
                 font-size: 14px; font-weight: 600; text-decoration: none !important; line-height: 1;
                 transition: background .14s ease, color .14s ease, border-color .14s ease;
             }
-            html.smg-threadlist .pageNav-page > a:hover,
-            html.smg-threadlist .pageNav-jump:hover,
-            html.smg-threadlist .pageNavSimple-el:hover {
-                background: rgba(255,255,255,0.12) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important;
-            }
-            html.smg-threadlist .pageNav-page--current > a {
-                background: var(--smg-s3) !important;
-                border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--skip > a { background: transparent !important; border-color: transparent !important; }
             /* mata o "tracinho/indicador verde" do tema na página atual (fica no <li>, ::after e/ou borda) */
             html.smg-threadlist .pageNavWrapper .pageNav-page,
             html.smg-threadlist .pageNavWrapper .pageNav-page--current,
@@ -340,9 +330,6 @@
             html.smg-threadlist .pageNav-jump:hover,
             html.smg-threadlist .pageNavSimple-el:hover {
                 background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; color: #fff !important;
-            }
-            html.smg-threadlist .pageNav-page--current > a {
-                background: #fff !important; color: #141414 !important; border-color: #fff !important;
             }
             html.smg-threadlist .pageNav-page--skip > a { background: var(--smg-s1) !important; border-color: var(--smg-bd) !important; }
             /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
