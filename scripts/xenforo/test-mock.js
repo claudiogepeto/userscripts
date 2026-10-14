@@ -668,9 +668,6 @@ async function runTests() {
     assert(sentinelEl !== null, 'Sentinel .smg-search-sentinel deve existir quando há próxima página');
     assert(sentinelEl.querySelector('.smg-loading') !== null, 'Sentinel deve conter o elemento .smg-loading');
     assert(!sentinelEl.classList.contains('is-loading'), 'Sentinel não deve ter .is-loading inicialmente');
-    assert(typeof searchResultsEl.onscroll === 'function', 'onscroll deve estar registrado em searchResultsEl');
-    assert(window.__dockSearchExports.searchSentinelIO !== null, 'searchSentinelIO deve estar inicializado');
-    assert(window.__dockSearchExports.searchSentinelIO.elements.has(sentinelEl), 'searchSentinelIO deve estar observando sentinelEl');
     assert(window.__dockSearchExports.currentSearchNextUrl === nextPageUrl, 'currentSearchNextUrl deve conter o link da próxima página');
 
     const page2Html = `<!DOCTYPE html>
@@ -706,16 +703,45 @@ async function runTests() {
     assert(page2Item !== undefined, 'Item da página 2 deve estar presente no DOM');
     assert(window.__dockSearchExports.currentSearchNextUrl === null, 'currentSearchNextUrl deve ser null quando a última página não tiver mais próximo link');
     assert(searchResultsEl.querySelector('.smg-search-sentinel') === null, 'Sentinel deve ser removido após término das páginas');
-    assert(window.__dockSearchExports.searchSentinelIO === null, 'searchSentinelIO deve ser null após término das páginas');
-    assert(searchResultsEl.onscroll === null, 'onscroll deve ser limpo após término das páginas');
 
-    // Testar clearResults limpando estado e IntersectionObserver
+    // Testar clearResults limpando estado e sentinela
     paintResults(mockResults, nextPageUrl);
-    assert(window.__dockSearchExports.searchSentinelIO !== null, 'searchSentinelIO deve ser recriado com nova página');
+    assert(searchResultsEl.querySelector('.smg-search-sentinel') !== null, 'Nova busca com próxima página recria a sentinela');
     clearResults();
     assert(searchResultsEl.innerHTML === '', 'clearResults deve limpar o conteúdo de searchResultsEl');
     assert(window.__dockSearchExports.currentSearchNextUrl === null, 'clearResults deve zerar currentSearchNextUrl');
-    assert(window.__dockSearchExports.searchSentinelIO === null, 'clearResults deve desconectar searchSentinelIO');
+    assert(searchResultsEl.querySelector('.smg-search-sentinel') === null, 'clearResults tira a sentinela');
+
+    const flushS = async () => { for (let i = 0; i < 8; i++) await new Promise(r => setTimeout(r, 0)); };
+    const page2Of = n => ({ ok: true, status: 200, text: async () => page2Html.replace('Page 2 Infinite Thread', 'Page ' + n + ' Infinite Thread'), json: async () => ({}), url: 'x', headers: { get: () => null } });
+
+    // rolar a lista de resultados até perto do fim carrega a próxima página (o jsdom não faz layout: resta 0)
+    paintResults(mockResults, nextPageUrl);
+    await flushS();
+    searchResultsEl.dispatchEvent(new window.Event('scroll'));
+    await flushS();
+    assert(searchResultsEl.querySelectorAll('.smg-search-result').length === 5, 'Busca: rolar a lista até o fim anexa a próxima página (obtido: ' + searchResultsEl.querySelectorAll('.smg-search-result').length + ')');
+
+    // página de uma busca ANTERIOR que chega depois da nova busca é descartada (guard de sequência)
+    let releaseStale = null;
+    window.fetch = (url) => String(url).includes('page=7') ? new Promise(res => { releaseStale = () => res(page2Of(7)); }) : prevFetch(url);
+    paintResults(mockResults, 'https://forums.socialmediagirls.com/search/12345/?page=7');
+    const staleLoad = loadMoreSearchResults();
+    await flushS();
+    paintResults(mockResults.slice(0, 2), null);   // nova busca no meio da carga
+    releaseStale(); await staleLoad; await flushS();
+    const afterStale = Array.from(searchResultsEl.querySelectorAll('.smg-search-result'));
+    assert(afterStale.length === 2 && !afterStale.some(el => el.textContent.includes('Page 7')), 'Busca: página da busca anterior não entra nos resultados da nova (obtido: ' + afterStale.length + ')');
+
+    // página que falha encerra a paginação (sem retry a cada scroll) e tira a sentinela
+    let failAsked = 0;
+    window.fetch = (url) => { if (String(url).includes('page=8')) { failAsked++; return Promise.resolve({ ok: false, status: 500, text: async () => '', headers: { get: () => null } }); } return prevFetch(url); };
+    paintResults(mockResults, 'https://forums.socialmediagirls.com/search/12345/?page=8');
+    await loadMoreSearchResults(); await flushS();
+    searchResultsEl.dispatchEvent(new window.Event('scroll')); await flushS();
+    assert(failAsked === 1, 'Busca: página que falhou não é re-tentada a cada scroll (obtido: ' + failAsked + ')');
+    assert(searchResultsEl.querySelector('.smg-search-sentinel') === null && window.__dockSearchExports.currentSearchNextUrl === null, 'Busca: falha encerra a paginação e tira a sentinela');
+    clearResults();
 
     window.fetch = prevFetch;
 
