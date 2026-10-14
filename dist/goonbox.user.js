@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Goonbox — Theater Gallery & Image Stage
 // @namespace    goonbox-theater
-// @version      1.1.0
+// @version      1.1.1
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/goonbox.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/goonbox.user.js
 // @description  AMOLED gallery and zoomable theater stage for Goonbox. Loads the whole album from the public API, with search, sort, keyboard navigation, and prev/next across album images.

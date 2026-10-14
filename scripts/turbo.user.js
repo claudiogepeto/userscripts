@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Turbo — Native Player & Theater Stage (embed bypass)
 // @namespace    turbo-theater
-// @version      2.4.0
+// @version      2.4.1
 // @description  Native player and theater stage for Turbo with signed-media playback, YouTube-style AMOLED player, playlist sidebar with tabs and placeholders, adjacent prev/next controls, flat 1x speed, responsive mobile layout, and media grouping in albums.
 // @author       claudiogepeto
 // @match        *://turbo.cr/*
