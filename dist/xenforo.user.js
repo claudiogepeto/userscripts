@@ -10996,8 +10996,8 @@
             if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
-            [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
-                .forEach(r => { if (r && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(r); });
+            const dock = document.getElementById('smg-aldock');
+            if (dock && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(dock);
         }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
@@ -11011,10 +11011,10 @@
             if (u && thumbCachePut(a.getAttribute('href'), u, a.textContent)) fresh++;
         });
         // colheu foto nova → os alertas JÁ na tela que esperavam por ela pintam agora (sem refresh).
-        // Escopado no painel/sheet: é onde alerta mora, e evita varrer o documento a cada pass.
+        // Escopado no painel: é onde alerta mora, e evita varrer o documento a cada pass.
         if (!fresh) return;
-        [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
-            .forEach(r => { if (r) repaintAlertThumbs(r); });
+        const dock = document.getElementById('smg-aldock');
+        if (dock) repaintAlertThumbs(dock);
     }
 
     // IntersectionObserver "once": ao entrar na viewport (rootMargin/threshold em opts), des-observa o
@@ -12123,7 +12123,6 @@
             if (!FEATURES.infiniteScroll) return;   // desligar no settings para na hora (o observer fica, mas não carrega mais)
 
             const isFeed = document.documentElement.classList.contains('smg-watched-feed')
-                || document.documentElement.classList.contains('smg-feed-on')
                 || (new URLSearchParams(location.search).get('view') === 'feed');
             const isThread = document.documentElement.classList.contains('smg-thread')
                 || (!isFeed && !!document.querySelector('.message--post'));
@@ -13732,7 +13731,7 @@
         document.addEventListener('keydown', e => {
             if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
             if (e.key !== '>' && e.key !== '<' && !(e.shiftKey && (e.key === '.' || e.key === ','))) return;
-            const activeWrap = document.querySelector('.smg-rgc-wrap:hover, .smg-rgc-wrap:focus-within, .smg-feed-slide.active .smg-rgc-wrap, .smg-rg:hover, .smg-rg:focus-within, .smg-feed-slide.active .smg-rg');
+            const activeWrap = document.querySelector('.smg-rg:hover, .smg-rg:focus-within, .smg-feed-slide.active .smg-rg');
             if (!activeWrap) return;
             const v = activeWrap.querySelector('video.smg-rg-v');
             if (!v) return;
@@ -15500,7 +15499,7 @@
                 if (uSheet && typeof smgSheetOpen === 'function') {
                     smgSheetOpen(uSheet);
                 } else {
-                    const tbUser = document.querySelector('.smg-tb-avatar, .p-navgroup-link--user');
+                    const tbUser = document.querySelector('.p-navgroup-link--user');
                     if (tbUser) tbUser.click();
                 }
             });
@@ -16422,8 +16421,6 @@
                 getSearchInput().value = entryToBar(e);
                 if (authorInput) {
                     authorInput.value = e.by || '';
-                    const box = authorInput.closest('.smg-search-author-box');
-                    if (box) box.classList.toggle('has-value', !!e.by);
                 }
                 if (toggleTitleOnly) {
                     toggleTitleOnly.checked = !!e.titles;
@@ -17566,7 +17563,7 @@
                 if (cached) return cached;
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
                     || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, .smg-watched-card-title, h3 a');
-                const userA = el.querySelector('.username, [data-user-id], .structItem-parts a, .smg-watched-card-author');
+                const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
                 const startTime = el.querySelector('.structItem-startDate time, .contentRow-minor time, time');
@@ -17856,8 +17853,6 @@
                     if (popCount) popCount.textContent = countText;
                 }
 
-                const watchedBarCount = document.querySelector('.smg-watched-count');
-                if (watchedBarCount) watchedBarCount.textContent = countText;
 
                 let emptyEl = container.querySelector('.smg-watched-empty');
                 if (visible === 0 && items.length > 0) {
@@ -19709,7 +19704,7 @@
     function syncReactiveBadges() {
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
-        setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico, #smg-nav-alerts .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
+        setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
         if (typeof aldockSyncCount === 'function') aldockSyncCount();   // contador do rail de notificações (se estiver docked)
     }
     function watchNativeBadges() {
@@ -22871,12 +22866,12 @@
 
     // as duas fontes do rail. Cada aba tem a MESMA mecânica (paginar seguindo o "next" nativo,
     // deduplicar, rolagem infinita) e difere só no cabeçalho/affordances:
-    //   count/markAll → só alertas (o XF não expõe contador nem "marcar tudo" pra threads seguidas)
+    //   count         → mostra o contador de não lidos da aba
     //   filter        → filtro opcional da fonte (a sidebar de Seguindo não o exibe)
     //   view          → grade/lista só em Seguindo (é quem tem thumb; alerta é texto)
     const RAIL_SRC = {
-        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  markAll: true,  filter: true,  view: false, empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
-        watched: { title: 'Following', seeAll: '/watched/threads', count: true,  markAll: false, filter: false, view: true,  empty: 'No watched threads yet', emptyUnread: 'No unread notifications' },
+        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  filter: true,  view: false, empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
+        watched: { title: 'Following', seeAll: '/watched/threads', count: true,  filter: false, view: true,  empty: 'No watched threads yet', emptyUnread: 'No unread notifications' },
     };
     const ALDOCK_VIEW_KEY = tab => 'smg-side-view-' + tab;   // 'grid' | 'list' por aba
     const railView = tab => (RAIL_SRC[tab].view && gmGet(ALDOCK_VIEW_KEY(tab), 'list') === 'grid') ? 'grid' : 'list';
@@ -23234,7 +23229,7 @@
                 }
             }
         });
-        const navAlerts = document.querySelector('#smg-nav-alerts, #smg-nav-bell');
+        const navAlerts = document.querySelector('#smg-nav-bell');
         if (navAlerts) {
             const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
             if (typeof setReactiveBadge === 'function') {
@@ -23538,8 +23533,6 @@
         aldock.querySelectorAll('.smg-aldock-body').forEach(b => { b.hidden = b.dataset.tab !== tab; });
         const titleEl = aldock.querySelector('.smg-aldock-titletext');
         if (titleEl) titleEl.textContent = i18n(src.title);
-        const markAll = aldock.querySelector('.smg-aldock-markall');
-        if (markAll) markAll.hidden = !src.markAll;
         const seeAll = aldock.querySelector('.smg-aldock-seeall');
         if (seeAll) {
             seeAll.href = safeHref(src.seeAll);
@@ -23961,24 +23954,6 @@
             return e ? e.getAttribute('href') : null;
         })();
 
-        // carrega a lista nativa do XF (alertas/etc) dentro de `body`: conteúdo → erro.
-        // rethrow no catch p/ quem chamou resetar seu próprio flag de "já carregou".
-        // keepOnError: numa RE-carga já existe lista na tela — falhar a rede não pode apagá-la.
-        const loadXfListInto = (body, url, cleanAlerts, keepOnError) =>
-            fetchXfList(url)
-                .then(node => { body.innerHTML = ''; body.appendChild(node); if (cleanAlerts) { cleanAlertList(node); syncAlertBadgeFrom(node); } })
-                .catch(err => { if (!keepOnError) body.innerHTML = '<div class="smg-tb-loading">' + i18n('Error loading.') + '</div>'; throw err; });
-        // RE-CARREGA a cada abertura (antes carregava 1× por sessão → alerta novo só aparecia dando F5).
-        // A lista atual continua na tela enquanto busca — só a barrinha de "atualizando" aparece.
-        const refreshXfList = (body, url, cleanAlerts, state) => {
-            if (!body || state.busy) return Promise.resolve();
-            state.busy = true;
-            if (state.loaded) body.classList.add('smg-tb-listbody--refreshing');
-            return loadXfListInto(body, url, cleanAlerts, state.loaded)
-                .then(() => { state.loaded = true; }, () => {})
-                .then(() => { state.busy = false; body.classList.remove('smg-tb-listbody--refreshing'); });
-        };
-
         // topbar em 3 zonas: ESQUERDA (logo + Discover) · CENTRO (search bar) · DIREITA (Seguindo · Notificações · User)
         // a navbar inferior (mobile) segue com os mesmos destinos via dock
         const discoverItems = [
@@ -24386,39 +24361,8 @@
         onScrollRaf(syncDock);
         syncDock();
 
-        // ---- mobile: bottom sheets (sino/Discover/User) — concern separada do topbar desktop ----
+        // ---- mobile: bottom sheets (Discover/User) — concern separada do topbar desktop ----
         const buildMobileSheets = () => {
-            // o sino da navbar inferior abre um SHEET com os alertas — só de MEMBRO (visitante não tem
-            // alerta nem conta; os botões correspondentes da navbar nem existem pra ele)
-            let aSheet = null;
-            if (loggedIn) {
-                aSheet = document.createElement('div');
-                aSheet.id = 'smg-alerts-sheet';
-                aSheet.className = 'smg-sheet';
-                aSheet.innerHTML =
-                    '<div class="smg-csheet-panel">' +
-                        '<div class="smg-sheet-grip"></div>' +
-                        '<div class="smg-csheet-head"><span>Alerts</span><a href="/account/alerts">See all</a></div>' +
-                        '<div class="smg-csheet-body smg-tb-listbody"><div class="smg-tb-loading">Loading…</div></div>' +
-                    '</div>';
-                document.body.appendChild(aSheet);
-                const aSheetState = { loaded: false, busy: false };
-                const openAlertsSheet = () => {
-                    smgSheetOpen(aSheet);
-                    refreshXfList(aSheet.querySelector('.smg-csheet-body'), '/account/alerts-popup', true, aSheetState);   // sempre busca o que há de novo
-                };
-                const navBell = document.getElementById('smg-nav-alerts');
-                if (navBell) navBell.addEventListener('click', e => {
-                    if (!window.matchMedia('(max-width: 600px)').matches) return;
-                    e.preventDefault();
-                    // o sino continua o mesmo; o que ele abre é o RAIL em tela cheia (abas, filtro,
-                    // marcar tudo, scroll infinito) — o mesmo do desktop. Sem o rail (feature off),
-                    // cai no bottom sheet antigo, que só traz a lista curta do popup nativo.
-                    if (FEATURES.alertsDock && typeof openAlertsDock === 'function') openAlertsDock('alerts', false);
-                    else openAlertsSheet();
-                });
-            }
-
             // helper genérico de bottom sheet (Discover / User)
             // full = dialog de TELA CHEIA (sem alça, sem cantos): pra listas longas o drawer só
             // mostrava metade e ainda disputava o arrasto com a rolagem da própria lista.
@@ -24495,15 +24439,15 @@
                 wireSheet('smg-nav-user', uSheet);
             }
 
-            return { aSheet, dSheet, uSheet };
+            return { dSheet, uSheet };
         };
-        const { aSheet, dSheet, uSheet } = buildMobileSheets();
-        // scrim + arrastar pra baixo + Esc nos sheets de alerts / profile / discover
-        [aSheet, uSheet, dSheet].filter(Boolean).forEach(s => wireSheetClose(s, s.querySelector('.smg-csheet-panel')));
+        const { dSheet, uSheet } = buildMobileSheets();
+        // scrim + arrastar pra baixo + Esc nos sheets de profile / discover
+        [uSheet, dSheet].filter(Boolean).forEach(s => wireSheetClose(s, s.querySelector('.smg-csheet-panel')));
 
-        // traduz TODA a UI da topbar + sheets mobile (Discover/User/Alertas) de uma vez.
+        // traduz TODA a UI da topbar + sheets mobile (Discover/User) de uma vez.
         // só casa chaves em inglês → nome de usuário e conteúdo nativo passam intactos.
-        [wrap, aSheet, dSheet, uSheet].filter(Boolean).forEach(i18nDom);
+        [wrap, dSheet, uSheet].filter(Boolean).forEach(i18nDom);
         syncMobileThreadbar();
     }
 
@@ -28160,8 +28104,6 @@
         const root = document.documentElement;
         root.classList.remove('smg-topbar-loading', 'smg-topbar-pending');
         root.classList.add('smg-topbar-ready');
-        const topSkel = document.getElementById('smg-topbar-skeleton');
-        if (topSkel) topSkel.remove();
     }
 
     function markSidebarReady() {
@@ -28570,7 +28512,7 @@
             if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
             const xfClick = a.getAttribute('data-xf-click') || '';
             if (xfClick && xfClick !== 'scroll-to' && xfClick !== 'preview-click') return;
-            if (a.closest('.smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
+            if (a.closest('.smg-viewmode-pop, [data-xf-init="tooltip"]')) return;
 
             let url;
             try { url = new URL(a.href, location.href); } catch (err) { return; }

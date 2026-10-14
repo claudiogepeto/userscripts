@@ -107,7 +107,7 @@
         document.addEventListener('keydown', e => {
             if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
             if (e.key !== '>' && e.key !== '<' && !(e.shiftKey && (e.key === '.' || e.key === ','))) return;
-            const activeWrap = document.querySelector('.smg-rgc-wrap:hover, .smg-rgc-wrap:focus-within, .smg-feed-slide.active .smg-rgc-wrap, .smg-rg:hover, .smg-rg:focus-within, .smg-feed-slide.active .smg-rg');
+            const activeWrap = document.querySelector('.smg-rg:hover, .smg-rg:focus-within, .smg-feed-slide.active .smg-rg');
             if (!activeWrap) return;
             const v = activeWrap.querySelector('video.smg-rg-v');
             if (!v) return;

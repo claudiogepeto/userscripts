@@ -883,8 +883,8 @@
             if (typeof thumbCachePut === 'function' && thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
-            [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
-                .forEach(r => { if (r && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(r); });
+            const dock = document.getElementById('smg-aldock');
+            if (dock && typeof repaintAlertThumbs === 'function') repaintAlertThumbs(dock);
         }
     }
     // pass do processAll: colhe as thumbs das listagens que aparecerem (guard por elemento → idle é NodeList vazia)
@@ -898,10 +898,10 @@
             if (u && thumbCachePut(a.getAttribute('href'), u, a.textContent)) fresh++;
         });
         // colheu foto nova → os alertas JÁ na tela que esperavam por ela pintam agora (sem refresh).
-        // Escopado no painel/sheet: é onde alerta mora, e evita varrer o documento a cada pass.
+        // Escopado no painel: é onde alerta mora, e evita varrer o documento a cada pass.
         if (!fresh) return;
-        [document.getElementById('smg-aldock'), document.getElementById('smg-alerts-sheet')]
-            .forEach(r => { if (r) repaintAlertThumbs(r); });
+        const dock = document.getElementById('smg-aldock');
+        if (dock) repaintAlertThumbs(dock);
     }
 
     // IntersectionObserver "once": ao entrar na viewport (rootMargin/threshold em opts), des-observa o

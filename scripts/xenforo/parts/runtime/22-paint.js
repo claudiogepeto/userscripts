@@ -318,8 +318,6 @@
         const root = document.documentElement;
         root.classList.remove('smg-topbar-loading', 'smg-topbar-pending');
         root.classList.add('smg-topbar-ready');
-        const topSkel = document.getElementById('smg-topbar-skeleton');
-        if (topSkel) topSkel.remove();
     }
 
     function markSidebarReady() {
@@ -728,7 +726,7 @@
             if (a.classList.contains('js-overlay') || a.classList.contains('menuTrigger') || a.classList.contains('smg-dead')) return;
             const xfClick = a.getAttribute('data-xf-click') || '';
             if (xfClick && xfClick !== 'scroll-to' && xfClick !== 'preview-click') return;
-            if (a.closest('.smg-viewmode-pop, [data-xf-init="tooltip"], .smg-tooltip')) return;
+            if (a.closest('.smg-viewmode-pop, [data-xf-init="tooltip"]')) return;
 
             let url;
             try { url = new URL(a.href, location.href); } catch (err) { return; }

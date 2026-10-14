@@ -99,24 +99,6 @@
             return e ? e.getAttribute('href') : null;
         })();
 
-        // carrega a lista nativa do XF (alertas/etc) dentro de `body`: conteúdo → erro.
-        // rethrow no catch p/ quem chamou resetar seu próprio flag de "já carregou".
-        // keepOnError: numa RE-carga já existe lista na tela — falhar a rede não pode apagá-la.
-        const loadXfListInto = (body, url, cleanAlerts, keepOnError) =>
-            fetchXfList(url)
-                .then(node => { body.innerHTML = ''; body.appendChild(node); if (cleanAlerts) { cleanAlertList(node); syncAlertBadgeFrom(node); } })
-                .catch(err => { if (!keepOnError) body.innerHTML = '<div class="smg-tb-loading">' + i18n('Error loading.') + '</div>'; throw err; });
-        // RE-CARREGA a cada abertura (antes carregava 1× por sessão → alerta novo só aparecia dando F5).
-        // A lista atual continua na tela enquanto busca — só a barrinha de "atualizando" aparece.
-        const refreshXfList = (body, url, cleanAlerts, state) => {
-            if (!body || state.busy) return Promise.resolve();
-            state.busy = true;
-            if (state.loaded) body.classList.add('smg-tb-listbody--refreshing');
-            return loadXfListInto(body, url, cleanAlerts, state.loaded)
-                .then(() => { state.loaded = true; }, () => {})
-                .then(() => { state.busy = false; body.classList.remove('smg-tb-listbody--refreshing'); });
-        };
-
         // topbar em 3 zonas: ESQUERDA (logo + Discover) · CENTRO (search bar) · DIREITA (Seguindo · Notificações · User)
         // a navbar inferior (mobile) segue com os mesmos destinos via dock
         const discoverItems = [
@@ -524,39 +506,8 @@
         onScrollRaf(syncDock);
         syncDock();
 
-        // ---- mobile: bottom sheets (sino/Discover/User) — concern separada do topbar desktop ----
+        // ---- mobile: bottom sheets (Discover/User) — concern separada do topbar desktop ----
         const buildMobileSheets = () => {
-            // o sino da navbar inferior abre um SHEET com os alertas — só de MEMBRO (visitante não tem
-            // alerta nem conta; os botões correspondentes da navbar nem existem pra ele)
-            let aSheet = null;
-            if (loggedIn) {
-                aSheet = document.createElement('div');
-                aSheet.id = 'smg-alerts-sheet';
-                aSheet.className = 'smg-sheet';
-                aSheet.innerHTML =
-                    '<div class="smg-csheet-panel">' +
-                        '<div class="smg-sheet-grip"></div>' +
-                        '<div class="smg-csheet-head"><span>Alerts</span><a href="/account/alerts">See all</a></div>' +
-                        '<div class="smg-csheet-body smg-tb-listbody"><div class="smg-tb-loading">Loading…</div></div>' +
-                    '</div>';
-                document.body.appendChild(aSheet);
-                const aSheetState = { loaded: false, busy: false };
-                const openAlertsSheet = () => {
-                    smgSheetOpen(aSheet);
-                    refreshXfList(aSheet.querySelector('.smg-csheet-body'), '/account/alerts-popup', true, aSheetState);   // sempre busca o que há de novo
-                };
-                const navBell = document.getElementById('smg-nav-alerts');
-                if (navBell) navBell.addEventListener('click', e => {
-                    if (!window.matchMedia('(max-width: 600px)').matches) return;
-                    e.preventDefault();
-                    // o sino continua o mesmo; o que ele abre é o RAIL em tela cheia (abas, filtro,
-                    // marcar tudo, scroll infinito) — o mesmo do desktop. Sem o rail (feature off),
-                    // cai no bottom sheet antigo, que só traz a lista curta do popup nativo.
-                    if (FEATURES.alertsDock && typeof openAlertsDock === 'function') openAlertsDock('alerts', false);
-                    else openAlertsSheet();
-                });
-            }
-
             // helper genérico de bottom sheet (Discover / User)
             // full = dialog de TELA CHEIA (sem alça, sem cantos): pra listas longas o drawer só
             // mostrava metade e ainda disputava o arrasto com a rolagem da própria lista.
@@ -633,15 +584,15 @@
                 wireSheet('smg-nav-user', uSheet);
             }
 
-            return { aSheet, dSheet, uSheet };
+            return { dSheet, uSheet };
         };
-        const { aSheet, dSheet, uSheet } = buildMobileSheets();
-        // scrim + arrastar pra baixo + Esc nos sheets de alerts / profile / discover
-        [aSheet, uSheet, dSheet].filter(Boolean).forEach(s => wireSheetClose(s, s.querySelector('.smg-csheet-panel')));
+        const { dSheet, uSheet } = buildMobileSheets();
+        // scrim + arrastar pra baixo + Esc nos sheets de profile / discover
+        [uSheet, dSheet].filter(Boolean).forEach(s => wireSheetClose(s, s.querySelector('.smg-csheet-panel')));
 
-        // traduz TODA a UI da topbar + sheets mobile (Discover/User/Alertas) de uma vez.
+        // traduz TODA a UI da topbar + sheets mobile (Discover/User) de uma vez.
         // só casa chaves em inglês → nome de usuário e conteúdo nativo passam intactos.
-        [wrap, aSheet, dSheet, uSheet].filter(Boolean).forEach(i18nDom);
+        [wrap, dSheet, uSheet].filter(Boolean).forEach(i18nDom);
         syncMobileThreadbar();
     }
 

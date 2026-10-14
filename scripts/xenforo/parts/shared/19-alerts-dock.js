@@ -27,12 +27,12 @@
 
     // as duas fontes do rail. Cada aba tem a MESMA mecânica (paginar seguindo o "next" nativo,
     // deduplicar, rolagem infinita) e difere só no cabeçalho/affordances:
-    //   count/markAll → só alertas (o XF não expõe contador nem "marcar tudo" pra threads seguidas)
+    //   count         → mostra o contador de não lidos da aba
     //   filter        → filtro opcional da fonte (a sidebar de Seguindo não o exibe)
     //   view          → grade/lista só em Seguindo (é quem tem thumb; alerta é texto)
     const RAIL_SRC = {
-        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  markAll: true,  filter: true,  view: false, empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
-        watched: { title: 'Following', seeAll: '/watched/threads', count: true,  markAll: false, filter: false, view: true,  empty: 'No watched threads yet', emptyUnread: 'No unread notifications' },
+        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  filter: true,  view: false, empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
+        watched: { title: 'Following', seeAll: '/watched/threads', count: true,  filter: false, view: true,  empty: 'No watched threads yet', emptyUnread: 'No unread notifications' },
     };
     const ALDOCK_VIEW_KEY = tab => 'smg-side-view-' + tab;   // 'grid' | 'list' por aba
     const railView = tab => (RAIL_SRC[tab].view && gmGet(ALDOCK_VIEW_KEY(tab), 'list') === 'grid') ? 'grid' : 'list';
@@ -390,7 +390,7 @@
                 }
             }
         });
-        const navAlerts = document.querySelector('#smg-nav-alerts, #smg-nav-bell');
+        const navAlerts = document.querySelector('#smg-nav-bell');
         if (navAlerts) {
             const host = navAlerts.querySelector('.smg-nav-ico') || navAlerts;
             if (typeof setReactiveBadge === 'function') {
@@ -694,8 +694,6 @@
         aldock.querySelectorAll('.smg-aldock-body').forEach(b => { b.hidden = b.dataset.tab !== tab; });
         const titleEl = aldock.querySelector('.smg-aldock-titletext');
         if (titleEl) titleEl.textContent = i18n(src.title);
-        const markAll = aldock.querySelector('.smg-aldock-markall');
-        if (markAll) markAll.hidden = !src.markAll;
         const seeAll = aldock.querySelector('.smg-aldock-seeall');
         if (seeAll) {
             seeAll.href = safeHref(src.seeAll);

@@ -508,7 +508,7 @@
                 if (uSheet && typeof smgSheetOpen === 'function') {
                     smgSheetOpen(uSheet);
                 } else {
-                    const tbUser = document.querySelector('.smg-tb-avatar, .p-navgroup-link--user');
+                    const tbUser = document.querySelector('.p-navgroup-link--user');
                     if (tbUser) tbUser.click();
                 }
             });
@@ -1430,8 +1430,6 @@
                 getSearchInput().value = entryToBar(e);
                 if (authorInput) {
                     authorInput.value = e.by || '';
-                    const box = authorInput.closest('.smg-search-author-box');
-                    if (box) box.classList.toggle('has-value', !!e.by);
                 }
                 if (toggleTitleOnly) {
                     toggleTitleOnly.checked = !!e.titles;
@@ -2574,7 +2572,7 @@
                 if (cached) return cached;
                 const titleA = el.querySelector('.structItem-title a[href*="/threads/"]')
                     || el.querySelector('.structItem-title a, .contentRow-title a, .articlePreview-title a, .smg-watched-card-title, h3 a');
-                const userA = el.querySelector('.username, [data-user-id], .structItem-parts a, .smg-watched-card-author');
+                const userA = el.querySelector('.username, [data-user-id], .structItem-parts a');
                 const badges = (typeof extractRowBadges === 'function') ? extractRowBadges(el) : [];
                 const tags = badges.map(b => (b.name || '').toLowerCase().replace(/^[#\s]+|[#\s]+$/g, '').trim());
                 const startTime = el.querySelector('.structItem-startDate time, .contentRow-minor time, time');
@@ -2864,8 +2862,6 @@
                     if (popCount) popCount.textContent = countText;
                 }
 
-                const watchedBarCount = document.querySelector('.smg-watched-count');
-                if (watchedBarCount) watchedBarCount.textContent = countText;
 
                 let emptyEl = container.querySelector('.smg-watched-empty');
                 if (visible === 0 && items.length > 0) {

@@ -219,7 +219,6 @@
             if (!FEATURES.infiniteScroll) return;   // desligar no settings para na hora (o observer fica, mas não carrega mais)
 
             const isFeed = document.documentElement.classList.contains('smg-watched-feed')
-                || document.documentElement.classList.contains('smg-feed-on')
                 || (new URLSearchParams(location.search).get('view') === 'feed');
             const isThread = document.documentElement.classList.contains('smg-thread')
                 || (!isFeed && !!document.querySelector('.message--post'));
