@@ -441,9 +441,6 @@
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
             html.smg-masonry-on .auto-image-grid .smg-rg,
             html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
-            /* PAR vertical/misto (2 itens, 2 colunas lado a lado): ocupam o máximo de espaço, mas com altura máx de 75vh. O par horizontal cai em 1 coluna (full width) pela lógica do JS. */
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-dm-wrap > .smg-dm-video,
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: var(--smg-media-h) !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
             #smg-gallery { position: fixed; inset: 0; z-index: 2147483600; display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }
@@ -684,20 +681,20 @@
                 width: 15px !important;
                 height: 15px !important;
             }
-            .smg-fhcard-thumb--x, .smg-fhcard-thumb--twitter {
+            .smg-fhcard-thumb--x {
                 background: #000 !important;
                 border: 1px solid rgba(255,255,255,0.15) !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
             }
-            .smg-fhcard-thumb--x svg, .smg-fhcard-thumb--twitter svg {
+            .smg-fhcard-thumb--x svg {
                 width: 22px !important;
                 height: 22px !important;
                 color: #fff !important;
                 fill: #fff !important;
             }
-            .smg-fhcard--inline .smg-fhcard-thumb--x svg, .smg-fhcard--inline .smg-fhcard-thumb--twitter svg {
+            .smg-fhcard--inline .smg-fhcard-thumb--x svg {
                 width: 13px !important;
                 height: 13px !important;
             }
@@ -738,8 +735,7 @@
             }
 
             /* ---- Embeds Oficiais (Twitter / X e Instagram) ---- */
-            .smg-twitter-embed,
-            .smg-ig-embed-wrap {
+            .smg-twitter-embed {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
@@ -940,7 +936,6 @@
             .smg-tw-open:hover {
                 text-decoration: underline !important;
             }
-            .smg-ig-embed-wrap iframe,
             blockquote.instagram-media {
                 margin-left: auto !important;
                 margin-right: auto !important;
@@ -1544,9 +1539,7 @@
             .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
             /* VOLUME: mute + barra que expande no hover (YouTube) */
-            .smg-rgc-vol { display: flex; align-items: center; }
             .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.35); cursor: pointer; opacity: 0; transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease; touch-action: none; }
-            .smg-rgc-vol:hover .smg-rgc-volbar { width: 60px; opacity: 1; margin: 0 6px 0 2px; }
             .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
             .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 3px; pointer-events: none; }
             /* TEMPO (atual / duração) */

@@ -1029,9 +1029,6 @@
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div iframe,
             html.smg-masonry-on .auto-image-grid .smg-rg,
             html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
-            /* PAR vertical/misto (2 itens, 2 colunas lado a lado): ocupam o máximo de espaço, mas com altura máx de 75vh. O par horizontal cai em 1 coluna (full width) pela lógica do JS. */
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-dm-wrap > .smg-dm-video,
-            html.smg-masonry-on .auto-image-grid.smg-grid-pair-port .smg-rg { max-height: var(--smg-media-h) !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
             #smg-gallery { position: fixed; inset: 0; z-index: 2147483600; display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }
@@ -1272,20 +1269,20 @@
                 width: 15px !important;
                 height: 15px !important;
             }
-            .smg-fhcard-thumb--x, .smg-fhcard-thumb--twitter {
+            .smg-fhcard-thumb--x {
                 background: #000 !important;
                 border: 1px solid rgba(255,255,255,0.15) !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
             }
-            .smg-fhcard-thumb--x svg, .smg-fhcard-thumb--twitter svg {
+            .smg-fhcard-thumb--x svg {
                 width: 22px !important;
                 height: 22px !important;
                 color: #fff !important;
                 fill: #fff !important;
             }
-            .smg-fhcard--inline .smg-fhcard-thumb--x svg, .smg-fhcard--inline .smg-fhcard-thumb--twitter svg {
+            .smg-fhcard--inline .smg-fhcard-thumb--x svg {
                 width: 13px !important;
                 height: 13px !important;
             }
@@ -1326,8 +1323,7 @@
             }
 
             /* ---- Embeds Oficiais (Twitter / X e Instagram) ---- */
-            .smg-twitter-embed,
-            .smg-ig-embed-wrap {
+            .smg-twitter-embed {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
@@ -1528,7 +1524,6 @@
             .smg-tw-open:hover {
                 text-decoration: underline !important;
             }
-            .smg-ig-embed-wrap iframe,
             blockquote.instagram-media {
                 margin-left: auto !important;
                 margin-right: auto !important;
@@ -2132,9 +2127,7 @@
             .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
             /* VOLUME: mute + barra que expande no hover (YouTube) */
-            .smg-rgc-vol { display: flex; align-items: center; }
             .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.35); cursor: pointer; opacity: 0; transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease; touch-action: none; }
-            .smg-rgc-vol:hover .smg-rgc-volbar { width: 60px; opacity: 1; margin: 0 6px 0 2px; }
             .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
             .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 3px; pointer-events: none; }
             /* TEMPO (atual / duração) */
@@ -4031,7 +4024,7 @@
             #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-alerts, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-watched, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -4254,16 +4247,6 @@
             /* ---- dock: botão com label VISÍVEL (pílula) — ex.: sort mostrando "Data"/"Reações" nas 2 docks ---- */
             .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: 22px !important; padding: 0 14px 0 12px !important; gap: 6px; }
             .smg-nav-btn-text { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
-
-            /* ---- dock: botão Ocultar (secundário, mais discreto) ---- */
-            #smg-dock-hide {
-                background: rgba(255,255,255,0.02);
-                color: rgba(255,255,255,0.5);
-            }
-            #smg-dock-hide:not(:disabled):hover {
-                background: rgba(255,255,255,0.13);
-                color: #fff;
-            }
 
             /* ---- dock: handle/aba pra reabrir quando oculta ---- */
             #smg-dock-handle {
@@ -4911,7 +4894,6 @@
             .smg-search-scope-chev { display: inline-flex; opacity: 0.55; transition: transform .18s ease; }
             .smg-search-scope-chev svg { width: 14px; height: 14px; fill: none; }
             .smg-search-scope-btn.open .smg-search-scope-chev { transform: rotate(180deg); }
-               /* menu de escopo aberto → pop não corta o dropdown (overflow do scroll cortava) */
             .smg-search-scope-list {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
                 min-width: 180px; padding: 6px;
@@ -6289,7 +6271,6 @@
             @media (max-width: 600px) {
                 /* scrim aparece quando um popover do dock está aberto */
                 #smg-post-nav-wrapper.settings-open .smg-dock-backdrop,
-                #smg-post-nav-wrapper.filter-open .smg-dock-backdrop,
                 #smg-post-nav-wrapper.listfilter-open .smg-dock-backdrop,
                 #smg-post-nav-wrapper.listsort-open .smg-dock-backdrop {
                     opacity: 1; visibility: visible; pointer-events: auto;
@@ -6633,16 +6614,6 @@
             /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
             html.smg-threadlist .pageNav { align-items: center !important; }
             html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
-            /* setas ‹ › em ícone (igual thread): quadrado 36, esconde texto/ícone nativo */
-            html.smg-threadlist .smg-iconified {
-                width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: 0 0 36px !important;
-                height: 36px !important; min-height: 36px !important; padding: 0 !important; gap: 0 !important;
-                display: inline-flex !important; align-items: center !important; justify-content: center !important;
-            }
-            html.smg-threadlist .smg-iconified .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
-            html.smg-threadlist .smg-iconified .smg-ic svg { width: 18px !important; height: 18px !important; display: block; fill: none !important; }
-            html.smg-threadlist .smg-iconified .button-text,
-            html.smg-threadlist .smg-iconified > i { display: none !important; }
             /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
             html.smg-threadlist .block-outer-opposite .button {
                 min-height: 36px !important; border-radius: 10px !important;
@@ -6702,8 +6673,6 @@
             .smg-bar-tip.show { opacity: 1; }
             .smg-bar-ic { display: inline-flex; align-items: center; justify-content: center; }
             .smg-bar-btn svg, .smg-bar-ic svg { width: 18px; height: 18px; display: block; fill: none; stroke-width: 2.1; }
-            .smg-bar-pages { display: inline-flex; align-items: center; gap: 4px; }
-            .smg-bar-compact { display: inline-flex; align-items: center; height: 30px; padding: 0 6px; color: rgba(255,255,255,0.85); font-size: 13.5px; font-weight: 700; }
             /* Pager circular/compacto de 5 botões: [|<] [<<] [ 1 ] [>>] [>|] */
             .smg-bar-pager { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px; min-width: 0; }
             .smg-bar-pager .smg-bar-btn,
@@ -6760,7 +6729,6 @@
                 transform: scale(0.92);
             }
             .smg-bar-curhost { display: inline-flex; }
-            .smg-bar-jump { letter-spacing: 1px; font-weight: 700; }
             /* popover (ir pra página / mais): position FIXED — escapa o overflow:hidden da barra
                (era por isso que o •••/… não apareciam). Coords setadas no JS (acima do botão). */
             .smg-bar-pophost { display: inline-flex; }
@@ -6783,7 +6751,6 @@
                 .smg-bar::-webkit-scrollbar { display: none; }
                 /* NÃO espremer os grupos (era o que clipava "3/39" → "/"): mantêm o tamanho e a barra ROLA */
                 .smg-bar > * { flex: 0 0 auto; }
-                .smg-bar-compact { white-space: nowrap; }
                 .smg-bar-btn { height: 28px; font-size: 12.5px; gap: 4px; }
             }
 
@@ -6800,8 +6767,7 @@
                ============================================================ */
             /* breadcrumb removido por completo */
             html.smg-thread .breadcrumb,
-            html.smg-thread .p-breadcrumbs,
-            html.smg-thread .smg-thread-back { display: none !important; }
+            html.smg-thread .p-breadcrumbs { display: none !important; }
             /* tags da thread (tamanho médio) */
             html.smg-thread .p-description .tagList .tagItem,
             html.smg-thread .p-description .tagItem {
@@ -7558,44 +7524,12 @@
                 border-radius: 10px !important; border: none !important;
                 background: #fff !important; color: #141414 !important;
             }
-            /* PADRONIZA botões de ÍCONE (sino · calendário · estrela): quadrados idênticos, ícone 18px centralizado */
-            html.smg-thread .smg-iconified {
-                width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: 0 0 36px !important;
-                height: 36px !important; min-height: 36px !important; padding: 0 !important; gap: 0 !important;
-                display: inline-flex !important; align-items: center !important; justify-content: center !important;
-            }
-            html.smg-thread .smg-iconified .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
-            html.smg-thread .smg-iconified .smg-ic svg { width: 18px !important; height: 18px !important; display: block; fill: none !important; }
-            html.smg-thread .smg-iconified .button-text { display: none !important; }
             /* mata baseline/borda/pseudo nativos das tabs (o "1px fantasma" na barra) */
             html.smg-thread .block-outer-opposite .tabs { border: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
             html.smg-thread .block-outer-opposite .tabs::before,
             html.smg-thread .block-outer-opposite .tabs::after,
             html.smg-thread .block-outer-opposite .tabs-tab::before,
             html.smg-thread .block-outer-opposite .tabs-tab::after { content: none !important; display: none !important; border: 0 !important; }
-
-            /* ORDENAR (data ⇄ reações): SWITCH segmentado — container = pílula; opção ATIVA = knob
-               branco (o "indicador q dá pra mudar"); cada opção tem ícone + label (não é só ícone).
-               scoped com .block-outer-opposite p/ vencer o estilo de pílula genérico das .tabs-tab */
-            html.smg-thread .block-outer-opposite .smg-sortseg {
-                display: inline-flex !important; align-items: center !important; gap: 3px !important;
-                height: 36px !important; min-height: 36px !important; box-sizing: border-box !important;
-                padding: 3px !important; margin: 0 !important;
-                background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
-                border-radius: 10px !important; box-shadow: none !important;
-            }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab {
-                display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
-                height: 28px !important; min-height: 28px !important; padding: 0 12px !important; margin: 0 !important;
-                border: 0 !important; border-radius: 7px !important; background: transparent !important;
-                color: rgba(255,255,255,0.6) !important; font-size: 13px !important; font-weight: 600 !important;
-                box-shadow: none !important; transition: background .15s ease, color .15s ease;
-            }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab:hover { color: #fff !important; background: var(--smg-s3) !important; }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab.is-active { background: #fff !important; color: #141414 !important; }
-            html.smg-thread .smg-sortseg .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; }
-            html.smg-thread .smg-sortseg .smg-ic svg { width: 15px !important; height: 15px !important; display: block; fill: none !important; }
-            html.smg-thread .smg-sortseg .smg-seg-label { line-height: 1; white-space: nowrap; }
 
             /* mobile: TUDO numa linha só, alinhado à direita; paginador compacto */
             @media (max-width: 600px) {
@@ -7608,7 +7542,6 @@
                 html.smg-thread .block-outer-main { margin: 0 !important; flex: 0 0 auto !important; }
                 html.smg-thread .block-outer-opposite { width: auto !important; flex: 0 0 auto !important; }
                 html.smg-thread .block-outer-opposite .tabs { width: auto !important; overflow: visible; }
-                html.smg-thread .smg-thread-back { display: inline-flex; }
                 /* paginador: só o simples e SEM ‹‹ ›› (primeiro/último), bem compacto */
                 html.smg-thread .pageNavWrapper .pageNav { display: none !important; }
                 html.smg-thread .pageNavWrapper .pageNavSimple { display: flex !important; }
@@ -7620,11 +7553,6 @@
                 html.smg-thread .block-outer-opposite .button--link,
                 html.smg-thread .block-outer-opposite .smgTranslator-globalBtn,
                 html.smg-thread .block-outer-opposite .tabs-tab { min-height: 34px !important; padding: 0 11px !important; font-size: 13px !important; }
-                /* botões de ícone quadrados 34x34 (mesmo tamanho dos demais) */
-                html.smg-thread .smg-iconified { width: 34px !important; min-width: 34px !important; max-width: 34px !important; flex: 0 0 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important; }
-                /* switch de ordenação: 34px (bate com os outros) */
-                html.smg-thread .block-outer-opposite .smg-sortseg { height: 34px !important; min-height: 34px !important; }
-                html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab { height: 26px !important; min-height: 26px !important; padding: 0 10px !important; font-size: 12.5px !important; }
             }
 
             /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
@@ -8179,7 +8107,6 @@
             .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: rgba(255,255,255,0.25); text-align: center; }
             .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
             .smg-ph-word { font-size: 14px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; }
-            .smg-ph-g { color: rgba(255,77,141,0.55); }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
@@ -8331,8 +8258,7 @@
             .smg-bar-btn--current,
             .smg-bar-go,
             html.smg-thread .pageNav-page--current > a,
-            html.smg-threadlist .pageNav-page--current > a,
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab.is-active {
+            html.smg-threadlist .pageNav-page--current > a {
                 background: var(--smg-link-strong, #d14d8f) !important;
                 color: #fff !important;
                 border-color: var(--smg-link-strong, #d14d8f) !important;
@@ -8550,10 +8476,6 @@
             html.smg-thread .smg-pc-row2 .userBanner { margin: 0; font-size: 10px; padding: 1px 6px; }
             html.smg-thread .smg-pc-row2 .featuredBadges { display: inline-flex; flex-wrap: wrap; gap: 3px; margin: 0; }
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
-            html.smg-thread .smg-pc-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; }
-            html.smg-thread .smg-pc-stats dl { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0; font-size: 11px; color: rgba(255,255,255,0.38); }
-            html.smg-thread .smg-pc-stats dt, html.smg-thread .smg-pc-stats dd { margin: 0; }
-            html.smg-thread .smg-pc-stats svg, html.smg-thread .smg-pc-stats .fa--xf { width: 11px; height: 11px; opacity: 0.55; }
             /* ACTION BAR */
             html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); }
             html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: 7px; height: 34px; margin: 0 !important; padding: 0 13px !important; border-radius: 9px; border: 0; background: transparent; color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }
@@ -8812,8 +8734,6 @@
             html.smg-watched-feed .block--category,
             html.smg-watched-feed .uix_nodeList,
             html.smg-watched-feed .node-list,
-            html.smg-watched-feed .smg-home-feed,
-            html.smg-watched-feed #smg-home-root,
             html.smg-watched-feed .p-body-header,
             html.smg-watched-feed .p-breadcrumbs,
             html.smg-watched-feed .notices--block,
@@ -8821,8 +8741,6 @@
             html.smg-page-timeline .block--category,
             html.smg-page-timeline .uix_nodeList,
             html.smg-page-timeline .node-list,
-            html.smg-page-timeline .smg-home-feed,
-            html.smg-page-timeline #smg-home-root,
             html.smg-page-timeline .p-body-header,
             html.smg-page-timeline .p-breadcrumbs,
             html.smg-page-timeline .notices--block,
@@ -8849,7 +8767,6 @@
             .smg-river-title { margin: 0; padding: 0; font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
             .smg-fp-list { display: flex; flex-direction: column; gap: 14px; }
-            .smg-fp-loading { position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 60px 0; }   /* position:relative → o .smg-loading (absolute/inset:0) centraliza AQUI, não na viewport */
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
             .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }
@@ -8928,8 +8845,6 @@
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
             /* card = mesmo visual do post (.smg-pc): coluna, surface s1, rounded 18, hover com sombra */
-            .smg-feed-post,
-            .smg-river-item,
             .smg-fp-card {
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
@@ -8988,7 +8903,6 @@
             .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {
                 display: none !important;
             }
-            .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {
                 display: grid !important;
@@ -9024,7 +8938,6 @@
                 border-radius: 8px !important;
                 display: block !important;
             }
-            .smg-fp-cloading { display: flex; align-items: center; justify-content: center; padding: 24px 0; }
             /* FOOTER: "abrir no tópico" com divisor em cima (= action bar do post) */
             .smg-fp-open { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 12px 22px 14px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--smg-link, #ff77b2); transition: gap .14s ease; }
             .smg-fp-open:hover { gap: 10px; }
@@ -9112,7 +9025,6 @@
             }
             .smg-multiselect-group-header:hover { background: rgba(255,255,255,0.04); }
             .smg-multiselect-group-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: rgba(255,255,255,0.5); }
-            .smg-multiselect-group-count { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.3); }
             .smg-multiselect-group.is-collapsed .smg-multiselect-group-items { display: none; }
             .smg-multiselect-group-items { display: flex; flex-direction: column; padding: 2px 0; }
 
@@ -9125,11 +9037,6 @@
                 accent-color: var(--smg-link, #ff77b2); width: 14px; height: 14px; margin: 0; cursor: pointer;
             }
             .smg-multiselect-item .smg-badge-chip { font-size: 10px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important; }
-            .smg-multiselect-item-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.35); }
-            .smg-multiselect-group-count,
-            .smg-multiselect-item-count {
-                display: none !important;
-            }
             .smg-multiselect-empty { padding: 24px; text-align: center; color: rgba(255,255,255,0.4); font-size: 13px; }
 
             /* ===== Paginação em /watched/threads (gerenciada via scroll infinito) ===== */
@@ -9197,12 +9104,8 @@
             .smg-aldock-acts svg *,
             .smg-aldock-acts button svg,
             .smg-aldock-acts button svg *,
-            #smg-aldock .smg-aldock-swico svg,
-            #smg-aldock .smg-aldock-swico svg *,
             .smg-nav-ico svg,
             .smg-nav-ico svg *,
-            .smg-dock-btn svg,
-            .smg-dock-btn svg *,
             svg.smg-svg-lucide,
             svg.smg-svg-lucide * {
                 fill: none !important;
@@ -9213,16 +9116,6 @@
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
             /* abas primárias: Alertas | Seguindo (segmented control) */
-            .smg-aldock-switch { flex: 0 0 auto; display: flex; gap: 4px; padding: 8px 10px 0; }
-            .smg-aldock-swtab {
-                flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-                padding: 8px 10px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.6); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-                -webkit-appearance: none; appearance: none; transition: background .15s ease, color .15s ease;
-            }
-            .smg-aldock-swtab:hover { background: rgba(255,255,255,0.1); color: #fff; }
-            .smg-aldock-swtab.active { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
-            .smg-aldock-swico { display: inline-flex; font-size: 15px; }
             /* linha de thread seguida: thumb + título + fórum/hora (o structItem largo não cabe no rail) */
             .smg-rail-wtlist { list-style: none; margin: 0; padding: 0; }
             .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
@@ -9368,7 +9261,6 @@
                 /* leitura e alvos de toque de tela cheia (o rail é dimensionado pra coluna de 380px) */
                 .smg-aldock-list li.alert { padding: 15px 14px; }
                 .smg-aldock-list .smg-al-title { font-size: 15.5px; }
-                .smg-aldock-tab { padding: 8px 15px; font-size: 13.5px; }
             }
         `;
 
@@ -9553,7 +9445,7 @@
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(3) { width: 76%; }
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(4) { width: 42%; margin-top: 24px; }
             .smg-page-skeleton-line { display: block; width: 100%; height: 11px; border-radius: 5px; }
-            .smg-page-skeleton-feed-card, .smg-page-skeleton-bookmark-card { display: flex; gap: 14px; min-height: 146px; padding: 14px; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.045); }
+            .smg-page-skeleton-feed-card { display: flex; gap: 14px; min-height: 146px; padding: 14px; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.045); }
             .smg-page-skeleton-card-thumb { flex: 0 0 132px; height: 116px; border-radius: 11px; }
             .smg-page-skeleton-card-copy { flex: 1 1 auto; min-width: 0; padding: 8px 0; }
             .smg-page-skeleton-card-copy .smg-page-skeleton-line + .smg-page-skeleton-line { margin-top: 11px; }
@@ -9602,7 +9494,7 @@
                 .smg-page-skeleton-post { min-height: 230px; border-radius: 14px; }
                 .smg-page-skeleton-post-head { padding: 13px 14px; }
                 .smg-page-skeleton-post-body { padding: 18px 14px 22px; }
-                .smg-page-skeleton-feed-card, .smg-page-skeleton-bookmark-card { min-height: 112px; padding: 10px; gap: 10px; }
+                .smg-page-skeleton-feed-card { min-height: 112px; padding: 10px; gap: 10px; }
                 .smg-page-skeleton-card-thumb { flex-basis: 92px; width: 92px; height: 90px; }
                 .smg-page-skeleton-card-copy { padding: 4px 0; }
                 .smg-page-skeleton-row { min-height: 76px; padding: 9px 10px; gap: 10px; }

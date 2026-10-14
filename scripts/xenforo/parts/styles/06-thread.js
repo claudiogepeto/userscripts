@@ -4,8 +4,7 @@
                ============================================================ */
             /* breadcrumb removido por completo */
             html.smg-thread .breadcrumb,
-            html.smg-thread .p-breadcrumbs,
-            html.smg-thread .smg-thread-back { display: none !important; }
+            html.smg-thread .p-breadcrumbs { display: none !important; }
             /* tags da thread (tamanho médio) */
             html.smg-thread .p-description .tagList .tagItem,
             html.smg-thread .p-description .tagItem {
@@ -762,44 +761,12 @@
                 border-radius: 10px !important; border: none !important;
                 background: #fff !important; color: #141414 !important;
             }
-            /* PADRONIZA botões de ÍCONE (sino · calendário · estrela): quadrados idênticos, ícone 18px centralizado */
-            html.smg-thread .smg-iconified {
-                width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: 0 0 36px !important;
-                height: 36px !important; min-height: 36px !important; padding: 0 !important; gap: 0 !important;
-                display: inline-flex !important; align-items: center !important; justify-content: center !important;
-            }
-            html.smg-thread .smg-iconified .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
-            html.smg-thread .smg-iconified .smg-ic svg { width: 18px !important; height: 18px !important; display: block; fill: none !important; }
-            html.smg-thread .smg-iconified .button-text { display: none !important; }
             /* mata baseline/borda/pseudo nativos das tabs (o "1px fantasma" na barra) */
             html.smg-thread .block-outer-opposite .tabs { border: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
             html.smg-thread .block-outer-opposite .tabs::before,
             html.smg-thread .block-outer-opposite .tabs::after,
             html.smg-thread .block-outer-opposite .tabs-tab::before,
             html.smg-thread .block-outer-opposite .tabs-tab::after { content: none !important; display: none !important; border: 0 !important; }
-
-            /* ORDENAR (data ⇄ reações): SWITCH segmentado — container = pílula; opção ATIVA = knob
-               branco (o "indicador q dá pra mudar"); cada opção tem ícone + label (não é só ícone).
-               scoped com .block-outer-opposite p/ vencer o estilo de pílula genérico das .tabs-tab */
-            html.smg-thread .block-outer-opposite .smg-sortseg {
-                display: inline-flex !important; align-items: center !important; gap: 3px !important;
-                height: 36px !important; min-height: 36px !important; box-sizing: border-box !important;
-                padding: 3px !important; margin: 0 !important;
-                background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
-                border-radius: 10px !important; box-shadow: none !important;
-            }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab {
-                display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
-                height: 28px !important; min-height: 28px !important; padding: 0 12px !important; margin: 0 !important;
-                border: 0 !important; border-radius: 7px !important; background: transparent !important;
-                color: rgba(255,255,255,0.6) !important; font-size: 13px !important; font-weight: 600 !important;
-                box-shadow: none !important; transition: background .15s ease, color .15s ease;
-            }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab:hover { color: #fff !important; background: var(--smg-s3) !important; }
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab.is-active { background: #fff !important; color: #141414 !important; }
-            html.smg-thread .smg-sortseg .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; }
-            html.smg-thread .smg-sortseg .smg-ic svg { width: 15px !important; height: 15px !important; display: block; fill: none !important; }
-            html.smg-thread .smg-sortseg .smg-seg-label { line-height: 1; white-space: nowrap; }
 
             /* mobile: TUDO numa linha só, alinhado à direita; paginador compacto */
             @media (max-width: 600px) {
@@ -812,7 +779,6 @@
                 html.smg-thread .block-outer-main { margin: 0 !important; flex: 0 0 auto !important; }
                 html.smg-thread .block-outer-opposite { width: auto !important; flex: 0 0 auto !important; }
                 html.smg-thread .block-outer-opposite .tabs { width: auto !important; overflow: visible; }
-                html.smg-thread .smg-thread-back { display: inline-flex; }
                 /* paginador: só o simples e SEM ‹‹ ›› (primeiro/último), bem compacto */
                 html.smg-thread .pageNavWrapper .pageNav { display: none !important; }
                 html.smg-thread .pageNavWrapper .pageNavSimple { display: flex !important; }
@@ -824,11 +790,6 @@
                 html.smg-thread .block-outer-opposite .button--link,
                 html.smg-thread .block-outer-opposite .smgTranslator-globalBtn,
                 html.smg-thread .block-outer-opposite .tabs-tab { min-height: 34px !important; padding: 0 11px !important; font-size: 13px !important; }
-                /* botões de ícone quadrados 34x34 (mesmo tamanho dos demais) */
-                html.smg-thread .smg-iconified { width: 34px !important; min-width: 34px !important; max-width: 34px !important; flex: 0 0 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important; }
-                /* switch de ordenação: 34px (bate com os outros) */
-                html.smg-thread .block-outer-opposite .smg-sortseg { height: 34px !important; min-height: 34px !important; }
-                html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab { height: 26px !important; min-height: 26px !important; padding: 0 10px !important; font-size: 12.5px !important; }
             }
 
             /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
@@ -1383,7 +1344,6 @@
             .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: rgba(255,255,255,0.25); text-align: center; }
             .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
             .smg-ph-word { font-size: 14px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.3); line-height: 1; user-select: none; }
-            .smg-ph-g { color: rgba(255,77,141,0.55); }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
@@ -1535,8 +1495,7 @@
             .smg-bar-btn--current,
             .smg-bar-go,
             html.smg-thread .pageNav-page--current > a,
-            html.smg-threadlist .pageNav-page--current > a,
-            html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab.is-active {
+            html.smg-threadlist .pageNav-page--current > a {
                 background: var(--smg-link-strong, #d14d8f) !important;
                 color: #fff !important;
                 border-color: var(--smg-link-strong, #d14d8f) !important;
@@ -1754,10 +1713,6 @@
             html.smg-thread .smg-pc-row2 .userBanner { margin: 0; font-size: 10px; padding: 1px 6px; }
             html.smg-thread .smg-pc-row2 .featuredBadges { display: inline-flex; flex-wrap: wrap; gap: 3px; margin: 0; }
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
-            html.smg-thread .smg-pc-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; }
-            html.smg-thread .smg-pc-stats dl { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0; font-size: 11px; color: rgba(255,255,255,0.38); }
-            html.smg-thread .smg-pc-stats dt, html.smg-thread .smg-pc-stats dd { margin: 0; }
-            html.smg-thread .smg-pc-stats svg, html.smg-thread .smg-pc-stats .fa--xf { width: 11px; height: 11px; opacity: 0.55; }
             /* ACTION BAR */
             html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 12px 18px 14px; margin-top: 8px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); }
             html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: 7px; height: 34px; margin: 0 !important; padding: 0 13px !important; border-radius: 9px; border: 0; background: transparent; color: rgba(255,255,255,0.72); font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .12s ease, color .12s ease; }

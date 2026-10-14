@@ -179,7 +179,7 @@
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(3) { width: 76%; }
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(4) { width: 42%; margin-top: 24px; }
             .smg-page-skeleton-line { display: block; width: 100%; height: 11px; border-radius: 5px; }
-            .smg-page-skeleton-feed-card, .smg-page-skeleton-bookmark-card { display: flex; gap: 14px; min-height: 146px; padding: 14px; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.045); }
+            .smg-page-skeleton-feed-card { display: flex; gap: 14px; min-height: 146px; padding: 14px; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.045); }
             .smg-page-skeleton-card-thumb { flex: 0 0 132px; height: 116px; border-radius: 11px; }
             .smg-page-skeleton-card-copy { flex: 1 1 auto; min-width: 0; padding: 8px 0; }
             .smg-page-skeleton-card-copy .smg-page-skeleton-line + .smg-page-skeleton-line { margin-top: 11px; }
@@ -228,7 +228,7 @@
                 .smg-page-skeleton-post { min-height: 230px; border-radius: 14px; }
                 .smg-page-skeleton-post-head { padding: 13px 14px; }
                 .smg-page-skeleton-post-body { padding: 18px 14px 22px; }
-                .smg-page-skeleton-feed-card, .smg-page-skeleton-bookmark-card { min-height: 112px; padding: 10px; gap: 10px; }
+                .smg-page-skeleton-feed-card { min-height: 112px; padding: 10px; gap: 10px; }
                 .smg-page-skeleton-card-thumb { flex-basis: 92px; width: 92px; height: 90px; }
                 .smg-page-skeleton-card-copy { padding: 4px 0; }
                 .smg-page-skeleton-row { min-height: 76px; padding: 9px 10px; gap: 10px; }

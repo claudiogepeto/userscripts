@@ -43,8 +43,6 @@
             .smg-bar-tip.show { opacity: 1; }
             .smg-bar-ic { display: inline-flex; align-items: center; justify-content: center; }
             .smg-bar-btn svg, .smg-bar-ic svg { width: 18px; height: 18px; display: block; fill: none; stroke-width: 2.1; }
-            .smg-bar-pages { display: inline-flex; align-items: center; gap: 4px; }
-            .smg-bar-compact { display: inline-flex; align-items: center; height: 30px; padding: 0 6px; color: rgba(255,255,255,0.85); font-size: 13.5px; font-weight: 700; }
             /* Pager circular/compacto de 5 botões: [|<] [<<] [ 1 ] [>>] [>|] */
             .smg-bar-pager { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px; min-width: 0; }
             .smg-bar-pager .smg-bar-btn,
@@ -101,7 +99,6 @@
                 transform: scale(0.92);
             }
             .smg-bar-curhost { display: inline-flex; }
-            .smg-bar-jump { letter-spacing: 1px; font-weight: 700; }
             /* popover (ir pra página / mais): position FIXED — escapa o overflow:hidden da barra
                (era por isso que o •••/… não apareciam). Coords setadas no JS (acima do botão). */
             .smg-bar-pophost { display: inline-flex; }
@@ -124,7 +121,6 @@
                 .smg-bar::-webkit-scrollbar { display: none; }
                 /* NÃO espremer os grupos (era o que clipava "3/39" → "/"): mantêm o tamanho e a barra ROLA */
                 .smg-bar > * { flex: 0 0 auto; }
-                .smg-bar-compact { white-space: nowrap; }
                 .smg-bar-btn { height: 28px; font-size: 12.5px; gap: 4px; }
             }
 

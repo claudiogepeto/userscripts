@@ -33,8 +33,6 @@
             html.smg-watched-feed .block--category,
             html.smg-watched-feed .uix_nodeList,
             html.smg-watched-feed .node-list,
-            html.smg-watched-feed .smg-home-feed,
-            html.smg-watched-feed #smg-home-root,
             html.smg-watched-feed .p-body-header,
             html.smg-watched-feed .p-breadcrumbs,
             html.smg-watched-feed .notices--block,
@@ -42,8 +40,6 @@
             html.smg-page-timeline .block--category,
             html.smg-page-timeline .uix_nodeList,
             html.smg-page-timeline .node-list,
-            html.smg-page-timeline .smg-home-feed,
-            html.smg-page-timeline #smg-home-root,
             html.smg-page-timeline .p-body-header,
             html.smg-page-timeline .p-breadcrumbs,
             html.smg-page-timeline .notices--block,
@@ -70,7 +66,6 @@
             .smg-river-title { margin: 0; padding: 0; font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #fff; }
             .smg-river-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
             .smg-fp-list { display: flex; flex-direction: column; gap: 14px; }
-            .smg-fp-loading { position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 60px 0; }   /* position:relative → o .smg-loading (absolute/inset:0) centraliza AQUI, não na viewport */
             .smg-fp-empty { padding: 60px 16px; text-align: center; font-size: 14.5px; color: rgba(255,255,255,0.45); }
             /* 1ª configuração do feed (cache vazio): estado rico (spinner rosa + título + subtítulo) em vez de spinner mudo */
             .smg-fp-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 72vh; padding: 64px 28px; text-align: center; }
@@ -149,8 +144,6 @@
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
             /* card = mesmo visual do post (.smg-pc): coluna, surface s1, rounded 18, hover com sombra */
-            .smg-feed-post,
-            .smg-river-item,
             .smg-fp-card {
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
@@ -209,7 +202,6 @@
             .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {
                 display: none !important;
             }
-            .smg-fp-content--empty { padding: 16px 22px; color: rgba(255,255,255,0.4); font-style: italic; }
             .smg-fp-content img { max-width: 100% !important; height: auto; border-radius: 8px; }
             html.smg-masonry-on .smg-fp-content .auto-image-grid {
                 display: grid !important;
@@ -245,7 +237,6 @@
                 border-radius: 8px !important;
                 display: block !important;
             }
-            .smg-fp-cloading { display: flex; align-items: center; justify-content: center; padding: 24px 0; }
             /* FOOTER: "abrir no tópico" com divisor em cima (= action bar do post) */
             .smg-fp-open { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 12px 22px 14px; border-top: 1px solid var(--smg-bd, rgba(255,255,255,0.07)); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--smg-link, #ff77b2); transition: gap .14s ease; }
             .smg-fp-open:hover { gap: 10px; }
@@ -333,7 +324,6 @@
             }
             .smg-multiselect-group-header:hover { background: rgba(255,255,255,0.04); }
             .smg-multiselect-group-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: rgba(255,255,255,0.5); }
-            .smg-multiselect-group-count { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.3); }
             .smg-multiselect-group.is-collapsed .smg-multiselect-group-items { display: none; }
             .smg-multiselect-group-items { display: flex; flex-direction: column; padding: 2px 0; }
 
@@ -346,11 +336,6 @@
                 accent-color: var(--smg-link, #ff77b2); width: 14px; height: 14px; margin: 0; cursor: pointer;
             }
             .smg-multiselect-item .smg-badge-chip { font-size: 10px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important; }
-            .smg-multiselect-item-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.35); }
-            .smg-multiselect-group-count,
-            .smg-multiselect-item-count {
-                display: none !important;
-            }
             .smg-multiselect-empty { padding: 24px; text-align: center; color: rgba(255,255,255,0.4); font-size: 13px; }
 
             /* ===== Paginação em /watched/threads (gerenciada via scroll infinito) ===== */

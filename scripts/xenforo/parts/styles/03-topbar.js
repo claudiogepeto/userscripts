@@ -1019,7 +1019,7 @@
             #smg-post-nav-panel #smg-nav-watched, #smg-nav-watched { display: none !important; }
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-watched, #smg-nav-alerts, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-mobile-page-toggle, #smg-thread-view-mode { display: none !important; }
+                #smg-nav-watched, #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-view-mode { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -1242,16 +1242,6 @@
             /* ---- dock: botão com label VISÍVEL (pílula) — ex.: sort mostrando "Data"/"Reações" nas 2 docks ---- */
             .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: 22px !important; padding: 0 14px 0 12px !important; gap: 6px; }
             .smg-nav-btn-text { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
-
-            /* ---- dock: botão Ocultar (secundário, mais discreto) ---- */
-            #smg-dock-hide {
-                background: rgba(255,255,255,0.02);
-                color: rgba(255,255,255,0.5);
-            }
-            #smg-dock-hide:not(:disabled):hover {
-                background: rgba(255,255,255,0.13);
-                color: #fff;
-            }
 
             /* ---- dock: handle/aba pra reabrir quando oculta ---- */
             #smg-dock-handle {
@@ -1899,7 +1889,6 @@
             .smg-search-scope-chev { display: inline-flex; opacity: 0.55; transition: transform .18s ease; }
             .smg-search-scope-chev svg { width: 14px; height: 14px; fill: none; }
             .smg-search-scope-btn.open .smg-search-scope-chev { transform: rotate(180deg); }
-               /* menu de escopo aberto → pop não corta o dropdown (overflow do scroll cortava) */
             .smg-search-scope-list {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
                 min-width: 180px; padding: 6px;

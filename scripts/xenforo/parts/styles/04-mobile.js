@@ -5,7 +5,6 @@
             @media (max-width: 600px) {
                 /* scrim aparece quando um popover do dock está aberto */
                 #smg-post-nav-wrapper.settings-open .smg-dock-backdrop,
-                #smg-post-nav-wrapper.filter-open .smg-dock-backdrop,
                 #smg-post-nav-wrapper.listfilter-open .smg-dock-backdrop,
                 #smg-post-nav-wrapper.listsort-open .smg-dock-backdrop {
                     opacity: 1; visibility: visible; pointer-events: auto;
@@ -349,16 +348,6 @@
             /* alinhamento vertical: números e seta centrados na mesma linha (mata o offset do <li>/<ul>) */
             html.smg-threadlist .pageNav { align-items: center !important; }
             html.smg-threadlist .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
-            /* setas ‹ › em ícone (igual thread): quadrado 36, esconde texto/ícone nativo */
-            html.smg-threadlist .smg-iconified {
-                width: 36px !important; min-width: 36px !important; max-width: 36px !important; flex: 0 0 36px !important;
-                height: 36px !important; min-height: 36px !important; padding: 0 !important; gap: 0 !important;
-                display: inline-flex !important; align-items: center !important; justify-content: center !important;
-            }
-            html.smg-threadlist .smg-iconified .smg-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
-            html.smg-threadlist .smg-iconified .smg-ic svg { width: 18px !important; height: 18px !important; display: block; fill: none !important; }
-            html.smg-threadlist .smg-iconified .button-text,
-            html.smg-threadlist .smg-iconified > i { display: none !important; }
             /* botões de ação (Mark read / Watch) no MESMO tamanho/raio da thread */
             html.smg-threadlist .block-outer-opposite .button {
                 min-height: 36px !important; border-radius: 10px !important;

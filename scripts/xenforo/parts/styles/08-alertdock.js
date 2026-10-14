@@ -53,12 +53,8 @@
             .smg-aldock-acts svg *,
             .smg-aldock-acts button svg,
             .smg-aldock-acts button svg *,
-            #smg-aldock .smg-aldock-swico svg,
-            #smg-aldock .smg-aldock-swico svg *,
             .smg-nav-ico svg,
             .smg-nav-ico svg *,
-            .smg-dock-btn svg,
-            .smg-dock-btn svg *,
             svg.smg-svg-lucide,
             svg.smg-svg-lucide * {
                 fill: none !important;
@@ -69,16 +65,6 @@
             #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
             @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
             /* abas primárias: Alertas | Seguindo (segmented control) */
-            .smg-aldock-switch { flex: 0 0 auto; display: flex; gap: 4px; padding: 8px 10px 0; }
-            .smg-aldock-swtab {
-                flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-                padding: 8px 10px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.6); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-                -webkit-appearance: none; appearance: none; transition: background .15s ease, color .15s ease;
-            }
-            .smg-aldock-swtab:hover { background: rgba(255,255,255,0.1); color: #fff; }
-            .smg-aldock-swtab.active { background: var(--smg-link-soft, rgba(255,119,178,0.16)); color: var(--smg-link, #ff77b2); }
-            .smg-aldock-swico { display: inline-flex; font-size: 15px; }
             /* linha de thread seguida: thumb + título + fórum/hora (o structItem largo não cabe no rail) */
             .smg-rail-wtlist { list-style: none; margin: 0; padding: 0; }
             .smg-rail-wt { position: relative; border-bottom: 1px solid rgba(255,255,255,0.085); transition: background .14s ease; }
@@ -224,6 +210,5 @@
                 /* leitura e alvos de toque de tela cheia (o rail é dimensionado pra coluna de 380px) */
                 .smg-aldock-list li.alert { padding: 15px 14px; }
                 .smg-aldock-list .smg-al-title { font-size: 15.5px; }
-                .smg-aldock-tab { padding: 8px 15px; font-size: 13.5px; }
             }
         `;
