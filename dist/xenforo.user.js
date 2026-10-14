@@ -23873,22 +23873,27 @@
         });
         return out;
     }
-    // lista COMPLETA de bookmarks: página atual (document) + segue a paginação (sequencial)
+    // lista COMPLETA de bookmarks: página atual (document) + o resto pelo motor comum (createPager, 07), que segue o
+    // "Next" de página em página até o fim (teto de 40). Página N falhou (rede, 429, HTTP != 2xx → fetchDoc devolve
+    // null): devolve o que já leu marcado como INCOMPLETO — a tela nunca diz "Nothing saved yet" por uma falha.
     function bmFetchAllRows() {
         const rows = bmParseRows(document);
-        const next = bmNextLink(document);
-        if (!next) return Promise.resolve(rows);
         const seen = new Set(rows.map(r => r.postId));
-        // página N falhou (rede, 429, HTTP != 2xx → fetchDoc devolve null): devolve o que já leu marcado
-        // como INCOMPLETO. Antes o null estourava em bmNextLink e a tela dizia "Nothing saved yet".
-        const partial = () => { rows.incomplete = true; return rows; };
-        const walk = (url, depth) => fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
-            if (!doc) return partial();
-            bmParseRows(doc).forEach(r => { if (!seen.has(r.postId)) { seen.add(r.postId); rows.push(r); } });
-            const n = bmNextLink(doc);
-            return (n && depth < 40) ? walk(n, depth + 1) : rows;
-        }, partial);
-        return walk(next, 1);
+        const pager = createPager({
+            cursor: bmNextLink(document),
+            load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
+            apply: doc => {
+                let added = 0;
+                bmParseRows(doc).forEach(r => { if (!seen.has(r.postId)) { seen.add(r.postId); rows.push(r); added++; } });
+                return { next: bmNextLink(doc), added };
+            },
+            onFail: () => 'stop',
+            listen: false,
+        });
+        return pager.drain(40).then(res => {
+            if (!res.complete) rows.incomplete = true;
+            return rows;
+        });
     }
     function bmFallbackPost(row) {
         const postUrl = bmCanonicalPostUrl(row.postUrl) || row.postUrl;
