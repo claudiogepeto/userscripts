@@ -295,8 +295,7 @@
     const RIVER_CHUNK = 15;   // posts pintados por bloco (scroll)
     let feedSyncRunning = false;
     let riverBuilt = false, riverList = null, riverSeen = null, riverLastTs = null,
-        riverMoreEl = null, riverMoreIO = null, riverNoMore = false, riverRendering = false,
-        riverPill = null, riverFirstPainted = false, riverSortDirty = true;
+        riverMoreEl = null, riverPill = null, riverFirstPainted = false, riverSortDirty = true;
 
     function markRiverPaintReady() {
         const river = document.getElementById('smg-river');
@@ -312,9 +311,11 @@
     }
     function hidePill() { if (riverPill) riverPill.hidden = true; }
 
-    function riverEmptyState(msg) {
-        if (riverMoreIO) { riverMoreIO.disconnect(); riverMoreIO = null; }
+    function removeRiverSentinel() {
         if (riverMoreEl) { riverMoreEl.remove(); riverMoreEl = null; }
+    }
+    function riverEmptyState(msg) {
+        removeRiverSentinel();
         if (riverList) riverList.innerHTML = '<div class="smg-fp-empty">' + msg + '</div>';
     }
     // 1ª pintura real: troca o spinner grande (.smg-fp-loading) pela lista + monta a sentinela. Idempotente.
@@ -352,28 +353,39 @@
         riverSortDirty = false;
     }
 
-    // pinta o próximo bloco do BANCO. >0 = pintou; 0 = banco esgotado; -1 = pulado (já renderizando/fim)
-    function renderNextChunk() {
-        if (riverRendering || riverNoMore || !riverList) return Promise.resolve(-1);
-        riverRendering = true;
-        return dbTimelineGetRecent(RIVER_CHUNK, riverLastTs, null, riverSeen).then(posts => {
-            riverRendering = false;
-            if (!posts.length) return 0;
-            firstPaint();   // só limpa o loader QUANDO há conteúdo de fato (senão o spinner segue girando)
-            const frag = document.createDocumentFragment();
-            const cards = [];
-            posts.forEach(p => {
-                const pid = p.post_id;
-                riverSeen.add(pid);
-                try { const card = riverCard(p); if (card) { cards.push(card); frag.appendChild(card); } } catch (e) {}
-            });
-            if (riverMoreEl && riverMoreEl.parentNode === riverList) riverList.insertBefore(frag, riverMoreEl); else riverList.appendChild(frag);
-            markRiverSortDirty();
-            ensureRiverSorted();
-            const lastP = posts[posts.length - 1];
-            riverLastTs = lastP.created_at || 0;
-            return posts.length;
-        }, () => { riverRendering = false; return 0; });
+    // o Feed no motor comum (createPager, 07): a fonte é o BANCO (IndexedDB), não uma página buscada. O cursor
+    // só diz "tem mais" ('db'); a posição real é riverLastTs + riverSeen. Banco esgotado com o sync rodando NÃO é
+    // fim (o sync pode trazer mais): para de puxar sozinho até o próximo scroll/clique. Sem o sync, é fim.
+    let riverPagerInst = null;
+    let riverDry = false;   // banco esgotado com o sync rodando: o scroll não relê o banco a cada frame; só um pedido explícito
+    function riverPager() {
+        if (riverPagerInst) return riverPagerInst;
+        riverPagerInst = createPager({
+            cursor: 'db',
+            load: () => dbTimelineGetRecent(RIVER_CHUNK, riverLastTs, null, riverSeen).then(posts => posts || [], () => []),
+            apply: posts => {
+                if (!riverList) return { next: 'db', added: 0 };
+                riverDry = !posts.length;
+                if (!posts.length) return { next: feedSyncRunning ? 'db' : null, added: 0 };
+                firstPaint();   // só limpa o loader QUANDO há conteúdo de fato (senão o spinner segue girando)
+                const frag = document.createDocumentFragment();
+                posts.forEach(p => {
+                    riverSeen.add(p.post_id);
+                    try { const card = riverCard(p); if (card) frag.appendChild(card); } catch (e) {}
+                });
+                if (riverMoreEl && riverMoreEl.parentNode === riverList) riverList.insertBefore(frag, riverMoreEl); else riverList.appendChild(frag);
+                markRiverSortDirty();
+                ensureRiverSorted();
+                riverLastTs = posts[posts.length - 1].created_at || 0;
+                return { next: 'db', added: posts.length };
+            },
+            near: 1200,
+            fill: true,   // render local = barato: enche até passar a viewport
+            // scroll da PÁGINA → obedece o master switch e o toggle do Feed (o botão "Load more" não)
+            enabled: () => FEATURES.infiniteScroll && FEATURES.infiniteScrollTimeline && !riverDry && !!riverMoreEl && riverMoreEl.isConnected,
+            onState: kind => { if (kind === 'end') removeRiverSentinel(); },
+        });
+        return riverPagerInst;
     }
     // NOVIDADES (otimização de novos itens): pega os posts UNSEEN que pertencem à janela já renderizada
     function fetchFreshPosts() {
@@ -409,38 +421,24 @@
         });
         if (inserted) { markRiverSortDirty(); ensureRiverSorted(); }
     }
+    // pinta o próximo bloco do banco. >0 = pintou; 0 = nada (banco esgotado, já carregando ou fim)
     function renderMore() {
-        return renderNextChunk().then(n => {
-            if (n === 0) {
-                if (!feedSyncRunning) { riverNoMore = true; if (riverMoreIO) { riverMoreIO.disconnect(); riverMoreIO = null; } if (riverMoreEl) { riverMoreEl.remove(); riverMoreEl = null; } }
-            } else if (n > 0 && riverMoreEl && riverMoreIO) {
-                riverMoreIO.unobserve(riverMoreEl); riverMoreIO.observe(riverMoreEl);   // re-observa: enche até passar a viewport (render local = barato)
-            }
-            return n;
-        });
+        if (!riverList) return Promise.resolve(0);
+        return riverPager().more();
     }
     function mountSentinel() {
         riverMoreEl = document.createElement('button'); riverMoreEl.type = 'button'; riverMoreEl.className = 'smg-river-more';
         riverMoreEl.innerHTML = '<span class="smg-loading"></span><span class="smg-river-more-t">' + i18n('Load more') + '</span>';
         if (feedSyncRunning) riverMoreEl.classList.add('is-loading');   // montou DURANTE o sync (firstPaint roda após o kickSync) → já nasce girando
         riverMoreEl.addEventListener('click', renderMore);
-        riverList.appendChild(riverMoreEl);
-        riverMoreIO = new IntersectionObserver(ents => {
-            ents.forEach(e => {
-                if (e.isIntersecting) {
-                    if (!FEATURES.infiniteScroll || !FEATURES.infiniteScrollTimeline) return;
-                    renderMore();
-                }
-            });
-        }, { rootMargin: '1200px 0px' });
-        riverMoreIO.observe(riverMoreEl);
+        riverList.appendChild(riverMoreEl);   // quem monta pinta logo em seguida, e o fill do pager enche a viewport
     }
     // recarrega o topo do banco (após o sync trazer novidades) — só se o usuário está perto do topo
     function refreshTop(force) {
         if (!riverList || (!force && (window.scrollY || document.documentElement.scrollTop || 0) > 600)) return;
         Array.prototype.slice.call(riverList.querySelectorAll('.smg-fp-card')).forEach(el => el.remove());
         markRiverSortDirty();
-        riverSeen = new Set(); riverLastTs = null; riverNoMore = false;
+        riverSeen = new Set(); riverLastTs = null; riverPager().reset('db'); riverDry = false;
         hidePill();
         if (!riverMoreEl) mountSentinel();
         renderMore();
@@ -527,7 +525,7 @@
         const host = riverContainer();
         host.appendChild(wrap);
 
-        riverSeen = new Set(); riverLastTs = null; riverNoMore = false;
+        riverSeen = new Set(); riverLastTs = null; riverPager().reset('db'); riverDry = false;
 
         showSetupState();
 
@@ -621,12 +619,12 @@
         const doSync = () => {
             return syncTimeline(opts)
                 .then(() => {
-                    feedSyncRunning = false;
+                    feedSyncRunning = false; riverDry = false;   // sync acabou: o scroll volta a puxar do banco
                     if (riverMoreEl) riverMoreEl.classList.remove('is-loading');
                     return afterSync();
                 })
                 .catch(() => {
-                    feedSyncRunning = false;
+                    feedSyncRunning = false; riverDry = false;   // sync acabou: o scroll volta a puxar do banco
                     if (riverMoreEl) riverMoreEl.classList.remove('is-loading');
                     // The custom setup state is a valid terminal view when the
                     // network is unavailable; never fall back to the native page.
