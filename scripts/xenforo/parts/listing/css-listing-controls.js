@@ -89,7 +89,7 @@
                 vertical-align: middle !important;
                 border: 1px solid var(--smg-w-12) !important;
                 background: var(--smg-w-08);
-                color: #e7e7ea;
+                color: var(--smg-tx);
                 transition: transform var(--smg-dur-12) ease, box-shadow var(--smg-dur-12) ease, filter var(--smg-dur-12) ease !important;
             }
             .smg-badge-chip:hover {

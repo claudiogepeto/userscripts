@@ -446,7 +446,7 @@
             }
             .smg-rg-error-btn--open { background: var(--smg-link); color: #fff !important; border: 0; }
             .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
-            .smg-rg-error-btn--retry { background: var(--smg-w-08); color: #e7e7ea !important; border: 1px solid var(--smg-w-18); }
+            .smg-rg-error-btn--retry { background: var(--smg-w-08); color: var(--smg-tx) !important; border: 1px solid var(--smg-w-18); }
             .smg-rg-error-btn--retry:hover { background: var(--smg-w-14); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
                poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
