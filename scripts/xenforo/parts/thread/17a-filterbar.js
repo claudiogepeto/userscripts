@@ -710,6 +710,70 @@
         return syncStuck;
     }
 
+    // botão seguir/deixar de seguir sobre a thumb de uma linha de listagem (fórum e /watched/threads: o MESMO botão).
+    // opts: isFollowed, threadIdsUnwatch (unwatch pelo form da lista de seguidos), flash (aviso nativo do XF), onUnfollowed.
+    function threadFollowButton(row, opts) {
+        const thumb = row.querySelector('.structItem-cell--icon') || row.querySelector('.dcThumbnail') || row.firstElementChild;
+        if (!thumb) return;
+        thumb.style.setProperty('position', 'relative', 'important');
+        const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
+        const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const paint = following => {
+            btn.className = 'smg-thread-unwatch-btn' + (following ? ' is-following' : '');
+            btn.title = following ? (IS_PT ? 'Deixar de seguir' : 'Unwatch') : (IS_PT ? 'Seguir tópico' : 'Watch thread');
+            btn.innerHTML = following ? ICONS.unwatch : (ICONS.watch || ICONS.star);
+        };
+        paint(!!opts.isFollowed);
+        const notify = msg => {
+            if (typeof toast === 'function') toast(msg);
+            else if (opts.flash && window.XF && typeof XF.flashMessage === 'function') XF.flashMessage(msg, 3000);
+        };
+        const post = (url, body) => fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+        btn.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            const token = document.querySelector('input[name="_xfToken"]')?.value || (window.XF && window.XF.config && window.XF.config.csrf) || '';
+            const title = (titleA?.textContent || '').trim();
+            if (btn.classList.contains('is-following')) {
+                paint(false);
+                const cb = row.querySelector('input[name="thread_ids[]"]');
+                const threadId = opts.threadIdsUnwatch ? (cb ? cb.value : ((path.match(/\.(\d+)\/?$/) || [])[1])) : '';
+                if (threadId) {
+                    const fd = new FormData();
+                    fd.append('_xfToken', token);
+                    fd.append('state', 'delete');
+                    fd.append('thread_ids[]', threadId);
+                    post('/watched/threads/update', fd);
+                } else if (path) {
+                    post(path + 'watch', new URLSearchParams({ _xfToken: token, stop: '1' }));
+                }
+                if (path) {
+                    dbFollowedDelete(path);
+                    followedSet.delete(path);
+                }
+                notify((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (title || (IS_PT ? 'Tópico' : 'Thread')));
+                if (opts.onUnfollowed) opts.onUnfollowed();
+            } else {
+                paint(true);
+                if (path) {
+                    post(path + 'watch', new URLSearchParams({ _xfToken: token, email_subscribe: '0' }));
+                    // registro COMPLETO (mesmo formato da lista de seguidos), tempos em segundos
+                    const now = Math.floor(Date.now() / 1000);
+                    dbFollowedGet(path).then(prev => {
+                        const rec = followedRecordFromRow(row, path, prev, now);
+                        if (!rec.updated_at) rec.updated_at = now;
+                        return dbFollowedUpsert(rec);
+                    });
+                    followedSet.add(path);
+                }
+                notify((IS_PT ? 'Seguindo: ' : 'Following: ') + title);
+            }
+        });
+        thumb.appendChild(btn);
+    }
+
     function decorateThreadCard(row) {
         if (!row || row.dataset.smgDecorated) return;
         row.dataset.smgDecorated = '1';
@@ -753,63 +817,10 @@
         }
 
         if (!location.pathname.includes('/watched/threads') && !row.querySelector('.smg-thread-unwatch-btn')) {
-            const thumb = row.querySelector('.structItem-cell--icon') || row.querySelector('.dcThumbnail') || row.firstElementChild;
-            if (thumb) {
-                thumb.style.setProperty('position', 'relative', 'important');
-                const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
-                const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
-
-                const isWatchedNative = row.classList.contains('is-watched') || !!row.querySelector('.structItem-status--watched');
-                let isFollowed = isWatchedNative;
-                if (typeof followedSet !== 'undefined' && followedSet && path) {
-                    isFollowed = isFollowed || followedSet.has(path);
-                }
-
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'smg-thread-unwatch-btn' + (isFollowed ? ' is-following' : '');
-                btn.title = isFollowed ? (IS_PT ? 'Deixar de seguir' : 'Unwatch') : (IS_PT ? 'Seguir tópico' : 'Watch thread');
-                btn.innerHTML = isFollowed ? ICONS.unwatch : (ICONS.watch || ICONS.star);
-
-                btn.addEventListener('click', e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const token = document.querySelector('input[name="_xfToken"]')?.value || (window.XF && window.XF.config && window.XF.config.csrf) || '';
-                    if (btn.classList.contains('is-following')) {
-                        // Unwatch
-                        btn.classList.remove('is-following');
-                        btn.innerHTML = ICONS.watch || ICONS.star;
-                        btn.title = IS_PT ? 'Seguir tópico' : 'Watch thread';
-                        if (path) {
-                            fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-                            dbFollowedDelete(path);
-                            if (typeof followedSet !== 'undefined' && followedSet) followedSet.delete(path);
-                        }
-                        const t = (titleA?.textContent || '').trim();
-                        if (typeof toast === 'function') toast((IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + t);
-                    } else {
-                        // Watch
-                        btn.classList.add('is-following');
-                        btn.innerHTML = ICONS.unwatch;
-                        btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch';
-                        if (path) {
-                            fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, email_subscribe: '0' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-                            const thumbImg = row.querySelector('.structItem-cell--icon img, .dcThumbnail img');
-                            const itemData = {
-                                path: path,
-                                thread_name: (titleA?.textContent || '').trim(),
-                                thumbnail_url: thumbImg ? (thumbImg.currentSrc || thumbImg.src) : '',
-                                updated_at: Date.now()
-                            };
-                            dbFollowedUpsert(itemData);
-                            if (typeof followedSet !== 'undefined' && followedSet) followedSet.add(path);
-                        }
-                        const t = (titleA?.textContent || '').trim();
-                        if (typeof toast === 'function') toast((IS_PT ? 'Seguindo: ' : 'Following: ') + t);
-                    }
-                });
-                thumb.appendChild(btn);
-            }
+            const titleA = row.querySelector('.structItem-title a[href*="/threads/"]') || row.querySelector('.structItem-title a');
+            const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
+            const isWatchedNative = row.classList.contains('is-watched') || !!row.querySelector('.structItem-status--watched');
+            threadFollowButton(row, { isFollowed: isWatchedNative || (!!path && followedSet.has(path)) });
         }
         row.dataset.smgDecoratedReady = '1';
     }

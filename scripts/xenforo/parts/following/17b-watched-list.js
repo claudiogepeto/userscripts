@@ -20,53 +20,20 @@
         if (!row) return;
         decorateThreadCard(row);
         if (row.querySelector('.smg-thread-unwatch-btn')) return;
-        const thumb = row.querySelector('.structItem-cell--icon') || row.querySelector('.dcThumbnail') || row.firstElementChild;
-        if (!thumb) return;
-        thumb.style.setProperty('position', 'relative', 'important');
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'smg-thread-unwatch-btn';
-        btn.title = IS_PT ? 'Deixar de seguir' : 'Unwatch thread';
-        btn.innerHTML = ICONS.unwatch;
-
-        btn.addEventListener('click', e => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const titleA = row.querySelector('.structItem-title a');
-            const path = titleA ? canonicalThreadPath(titleA.getAttribute('href')) : '';
-            const cb = row.querySelector('input[name="thread_ids[]"]');
-            const threadId = cb ? cb.value : ((path.match(/\.(\d+)\/?$/) || [])[1]);
-
-            const token = document.querySelector('input[name="_xfToken"]')?.value || (window.XF && window.XF.config && window.XF.config.csrf) || '';
-            if (threadId) {
-                const fd = new FormData();
-                fd.append('_xfToken', token);
-                fd.append('state', 'delete');
-                fd.append('thread_ids[]', threadId);
-                fetch('/watched/threads/update', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-            } else if (path) {
-                fetch(path + 'watch', { method: 'POST', body: new URLSearchParams({ _xfToken: token, stop: '1' }), credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+        threadFollowButton(row, {
+            isFollowed: true,
+            threadIdsUnwatch: true,
+            flash: true,
+            onUnfollowed: () => {
+                row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'scale(0.92)';
+                setTimeout(() => {
+                    row.remove();
+                    if (typeof window.smgReapplyFilters === 'function') window.smgReapplyFilters();   // dono do filtro da lista (12c)
+                }, 240);
             }
-
-            if (path) dbFollowedDelete(path);
-
-            row.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
-            row.style.opacity = '0';
-            row.style.transform = 'scale(0.92)';
-            setTimeout(() => {
-                row.remove();
-                if (typeof applyLocalFilter === 'function') applyLocalFilter();
-            }, 240);
-
-            const threadTitle = (titleA ? titleA.textContent : '').trim();
-            const toastMsg = (IS_PT ? 'Deixou de seguir: ' : 'Unfollowed: ') + (threadTitle || (IS_PT ? 'Tópico' : 'Thread'));
-            if (typeof toast === 'function') toast(toastMsg);
-            else if (window.XF && typeof XF.flashMessage === 'function') XF.flashMessage(toastMsg, 3000);
         });
-
-        thumb.appendChild(btn);
     }
 
     const watchedPageStates = new WeakMap();
@@ -91,6 +58,68 @@
             });
         }
         return savedButtonObs;
+    }
+
+    // registro do banco `followed` a partir de uma linha de listagem (fórum ou /watched/threads). prev = o já gravado.
+    function followedRecordFromRow(it, path, prev, now) {
+        const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
+        const title = ((titleA && titleA.textContent) || '').replace(/\s+/g, ' ').trim();
+
+        // thumbnail
+        let thumb = '';
+        const thEl = it.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, .structItem-cell--icon img');
+        if (thEl) {
+            const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
+            thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
+        }
+        if (!thumb) thumb = feedThumbUrl(it);
+        if (!thumb) thumb = thumbCacheGet(path, title) || '';
+
+        const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
+
+        // tags / badges
+        const badges = extractRowBadges(it);
+        const tags = badges.map(b => ({ name: b.name, className: b.className }));
+        const forumLink = it.querySelector('.structItem-parts a[href*="/forums/"], a[href*="/forums/"]');
+        const forumName = forumLink ? (forumLink.textContent || '').replace(/\s+/g, ' ').trim() : '';
+        const timeline_skip = timelineContentSkip(tags.map(t => t.name).concat(forumName));
+
+        // forum_activity_ts
+        const forum_activity_ts = structItemTs(it);
+
+        // created_at
+        const created_at = timeTs(it.querySelector('.structItem-cell--main time, .structItem-startDate time'));
+
+        // author
+        const authorEl = it.querySelector('.structItem-parts .username, .structItem-parts a, .username');
+        const author = (authorEl ? authorEl.textContent : '').replace(/\s+/g, ' ').trim();
+
+        // last_page
+        let last_page = 1;
+        const pageJumps = it.querySelectorAll('.structItem-pageJump a');
+        if (pageJumps.length) {
+            const lastJump = pageJumps[pageJumps.length - 1];
+            const pNum = parseInt((lastJump.textContent || '').trim(), 10);
+            if (pNum && !isNaN(pNum)) last_page = pNum;
+        }
+
+        const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
+        return {
+            path: path,
+            thread_name: title || (prev && prev.thread_name) || '',
+            thumbnail_url: thumb || (prev && prev.thumbnail_url) || '',
+            tags: (tags && tags.length) ? tags : ((prev && prev.tags) || []),
+            followed_at: (prev && prev.followed_at) || now,
+            forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
+            updated_at: effectiveUpdatedAt,
+            created_at: created_at || (prev && prev.created_at) || 0,
+            author: author || (prev && prev.author) || '',
+            last_page: Math.max((prev && prev.last_page) || 1, last_page),
+            saved_pages: (prev && prev.saved_pages) || [],
+            last_sync_at: (prev && prev.last_sync_at) || 0,
+            unread: domUnread,
+            timeline_skip: timeline_skip
+        };
     }
 
     function ingestWatchedPageToFollowed(doc) {
@@ -118,65 +147,8 @@
                 const path = canonicalThreadPath(titleA.getAttribute('href'));
                 if (!path || seenPaths.has(path)) return;
                 seenPaths.add(path);
-
-                const title = (titleA.textContent || '').replace(/\s+/g, ' ').trim();
-
-                // thumbnail
-                let thumb = '';
-                const thEl = it.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, .structItem-cell--icon img');
-                if (thEl) {
-                    const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
-                    thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
-                }
-                if (!thumb) thumb = feedThumbUrl(it);
-                if (!thumb) thumb = thumbCacheGet(path, title) || '';
-
-                const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
-
-                // tags / badges
-                const badges = extractRowBadges(it);
-                const tags = badges.map(b => ({ name: b.name, className: b.className }));
-                const forumLink = it.querySelector('.structItem-parts a[href*="/forums/"], a[href*="/forums/"]');
-                const forumName = forumLink ? (forumLink.textContent || '').replace(/\s+/g, ' ').trim() : '';
-                const timeline_skip = timelineContentSkip(tags.map(t => t.name).concat(forumName));
-
-                // forum_activity_ts
-                const forum_activity_ts = structItemTs(it);
-
-                // created_at
-                const created_at = timeTs(it.querySelector('.structItem-cell--main time, .structItem-startDate time'));
-
-                // author
-                const authorEl = it.querySelector('.structItem-parts .username, .structItem-parts a, .username');
-                const author = (authorEl ? authorEl.textContent : '').replace(/\s+/g, ' ').trim();
-
-                // last_page
-                let last_page = 1;
-                const pageJumps = it.querySelectorAll('.structItem-pageJump a');
-                if (pageJumps.length) {
-                    const lastJump = pageJumps[pageJumps.length - 1];
-                    const pNum = parseInt((lastJump.textContent || '').trim(), 10);
-                    if (pNum && !isNaN(pNum)) last_page = pNum;
-                }
-
                 const prev = existingMap.get(path);
-                const effectiveUpdatedAt = (prev && prev.updated_at) || forum_activity_ts || 0;
-                const item = {
-                    path: path,
-                    thread_name: title || (prev && prev.thread_name) || '',
-                    thumbnail_url: thumb || (prev && prev.thumbnail_url) || '',
-                    tags: (tags && tags.length) ? tags : ((prev && prev.tags) || []),
-                    followed_at: (prev && prev.followed_at) || now,
-                    forum_activity_ts: forum_activity_ts || (prev && prev.forum_activity_ts) || 0,
-                    updated_at: effectiveUpdatedAt,
-                    created_at: created_at || (prev && prev.created_at) || 0,
-                    author: author || (prev && prev.author) || '',
-                    last_page: Math.max((prev && prev.last_page) || 1, last_page),
-                    saved_pages: (prev && prev.saved_pages) || [],
-                    last_sync_at: (prev && prev.last_sync_at) || 0,
-                    unread: domUnread,
-                    timeline_skip: timeline_skip
-                };
+                const item = followedRecordFromRow(it, path, prev, now);
 
                 existingMap.set(path, item);
                 const changed = !prev
