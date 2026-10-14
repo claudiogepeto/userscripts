@@ -383,12 +383,12 @@
 
     function syncTimeline(opts) {
         opts = opts || {};
-        if (typeof riverPauseUntil !== 'undefined' && Date.now() < riverPauseUntil) {
+        if (Date.now() < riverPauseUntil) {
             const waitSec = Math.ceil((riverPauseUntil - Date.now()) / 1000);
             console.warn(`[SMG Timeline] Cooldown de rate limit ativo. Próxima sincronização bloqueada por mais ${waitSec}s.`);
             return Promise.resolve(0);
         }
-        if (typeof riverAborted !== 'undefined') riverAborted = false;
+        riverAborted = false;
         if (typeof window !== 'undefined') window.__riverAborted = false;
 
         if (timelineSyncRunning) return Promise.resolve(0);
@@ -400,7 +400,7 @@
 
             return dbFollowedGetAll().then(allFollowed => {
                 if (!allFollowed || !allFollowed.length) {
-                    const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
+                    const emptyMsg = IS_PT
                         ? 'Nenhum tópico seguido cadastrado na tabela'
                         : 'No followed threads found in database';
                     riverEmptyState(emptyMsg);

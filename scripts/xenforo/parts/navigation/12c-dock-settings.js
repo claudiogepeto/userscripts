@@ -378,7 +378,7 @@
                 if (serverPrefixMap && serverPrefixMap.size > 0) {
                     serverPrefixMap.forEach((prefixId, nameKey) => {
                         if (!badgeMap.has(nameKey)) {
-                            let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[nameKey]) ? KNOWN_XF_PREFIXES[nameKey] : 'label label--misc';
+                            let cls = KNOWN_XF_PREFIXES[nameKey] ? KNOWN_XF_PREFIXES[nameKey] : 'label label--misc';
                             if (!cls.includes('label')) cls = 'label ' + cls;
                             const displayName = nameKey.charAt(0).toUpperCase() + nameKey.slice(1);
                             badgeMap.set(nameKey, { name: displayName, type: 'prefix', className: cls, style: '', count: 0 });

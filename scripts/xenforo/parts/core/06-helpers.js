@@ -839,7 +839,7 @@
         const canon = (href) ? canonicalThreadPath(href) : '';
 
         // 1. In-memory followed thumbs (IndexedDB)
-        if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
+        if (followedThumbsMap.size) {
             if (id && followedThumbsMap.has(id)) return followedThumbsMap.get(id);
             if (canon && followedThumbsMap.has(canon)) return followedThumbsMap.get(canon);
             if (slug && followedThumbsMap.has(slug)) return followedThumbsMap.get(slug);

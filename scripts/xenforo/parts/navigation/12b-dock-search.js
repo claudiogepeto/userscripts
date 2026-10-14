@@ -1087,7 +1087,7 @@
                             const lower = k.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;
@@ -1100,7 +1100,7 @@
                             const lower = nameKey.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;
@@ -1113,7 +1113,7 @@
                             const lower = nameKey.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;

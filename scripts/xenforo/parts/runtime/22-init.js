@@ -270,7 +270,7 @@
     // Reserve the persisted desktop dock before the body and topbar are built.
     // The panel itself is mounted during boot, but this class prevents its
     // late padding-right from moving the home after the first visible frame.
-    if (FEATURES.alertsDock && typeof aldockWanted === 'function'
+    if (FEATURES.alertsDock
         && aldockWanted() && aldockFits() && !aldockPhone()) {
         cls.add('smg-aldock-on');
         const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
@@ -360,7 +360,7 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (typeof aldockPhone === 'function' && aldockPhone()) {
+            if (aldockPhone()) {
                 closeAlertsDock();
             }
             try {
@@ -439,7 +439,7 @@
         riverSetupDone = false;
         riverBuilt = false;
         riverList = null;
-        if (typeof riverHost !== 'undefined') riverHost = null;
+        riverHost = null;
         const staleRiver = document.getElementById('smg-river');
         if (staleRiver) staleRiver.remove();
         bmBuilt = false;

@@ -495,9 +495,9 @@
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
         refBtn.className = 'smg-river-refresh';
-        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar feed' : 'Refresh feed';
+        refBtn.title = IS_PT ? 'Atualizar feed' : 'Refresh feed';
         refBtn.setAttribute('aria-label', refBtn.title);
-        refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
+        refBtn.innerHTML = ICONS.refresh ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {
             console.log('[SMG Timeline] Botão de atualizar clicado.');
             kickSync(true);
@@ -506,9 +506,9 @@
         if (actions) {
             const markAllBtn = document.createElement('button');
             markAllBtn.type = 'button';
-            markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
+            markAllBtn.title = IS_PT ? 'Marcar tudo como lido' : 'Mark all as read';
             markAllBtn.setAttribute('aria-label', markAllBtn.title);
-            markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
+            markAllBtn.innerHTML = ICONS.checkAll ? ICONS.checkAll : '✓✓';
             markAllBtn.addEventListener('click', () => {
                 dbFollowedMarkAllSeen();
             });

@@ -360,7 +360,7 @@
         // 6. Goonbox resolvido em cache
         const smgLink = (img.dataset && img.dataset.smgLink) || '';
         const gbx = goonboxViewer(smgLink);
-        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+        if (gbx && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
         }

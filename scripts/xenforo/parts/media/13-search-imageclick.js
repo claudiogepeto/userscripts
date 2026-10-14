@@ -235,7 +235,7 @@
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
         const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
         const gbx = goonboxViewer(smgLink);
-        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+        if (gbx && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original) return absUrl(cached.original);
         }

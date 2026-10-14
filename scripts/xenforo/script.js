@@ -10119,7 +10119,7 @@
         const canon = (href) ? canonicalThreadPath(href) : '';
 
         // 1. In-memory followed thumbs (IndexedDB)
-        if (typeof followedThumbsMap !== 'undefined' && followedThumbsMap.size) {
+        if (followedThumbsMap.size) {
             if (id && followedThumbsMap.has(id)) return followedThumbsMap.get(id);
             if (canon && followedThumbsMap.has(canon)) return followedThumbsMap.get(canon);
             if (slug && followedThumbsMap.has(slug)) return followedThumbsMap.get(slug);
@@ -11711,7 +11711,7 @@
         // 6. Goonbox resolvido em cache
         const smgLink = (img.dataset && img.dataset.smgLink) || '';
         const gbx = goonboxViewer(smgLink);
-        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+        if (gbx && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original && absUrl(cached.original) !== absUrl(src)) return absUrl(cached.original);
         }
@@ -16220,7 +16220,7 @@
                             const lower = k.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;
@@ -16233,7 +16233,7 @@
                             const lower = nameKey.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;
@@ -16246,7 +16246,7 @@
                             const lower = nameKey.toLowerCase().trim();
                             if (!badgeMap.has(lower)) {
                                 const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-                                let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[lower])
+                                let cls = KNOWN_XF_PREFIXES[lower]
                                     ? KNOWN_XF_PREFIXES[lower]
                                     : 'label label--misc';
                                 if (!cls.includes('label')) cls = 'label ' + cls;
@@ -16892,7 +16892,7 @@
                 if (serverPrefixMap && serverPrefixMap.size > 0) {
                     serverPrefixMap.forEach((prefixId, nameKey) => {
                         if (!badgeMap.has(nameKey)) {
-                            let cls = (typeof KNOWN_XF_PREFIXES !== 'undefined' && KNOWN_XF_PREFIXES[nameKey]) ? KNOWN_XF_PREFIXES[nameKey] : 'label label--misc';
+                            let cls = KNOWN_XF_PREFIXES[nameKey] ? KNOWN_XF_PREFIXES[nameKey] : 'label label--misc';
                             if (!cls.includes('label')) cls = 'label ' + cls;
                             const displayName = nameKey.charAt(0).toUpperCase() + nameKey.slice(1);
                             badgeMap.set(nameKey, { name: displayName, type: 'prefix', className: cls, style: '', count: 0 });
@@ -17649,7 +17649,7 @@
         if (/\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(href)) return absUrl(href);
         const smgLink = (img.dataset && img.dataset.smgLink) || href || '';
         const gbx = goonboxViewer(smgLink);
-        if (gbx && typeof gbxCache !== 'undefined' && gbxCache.has(gbx.id)) {
+        if (gbx && gbxCache.has(gbx.id)) {
             const cached = gbxCache.get(gbx.id);
             if (cached && cached.original) return absUrl(cached.original);
         }
@@ -25185,12 +25185,12 @@
 
     function syncTimeline(opts) {
         opts = opts || {};
-        if (typeof riverPauseUntil !== 'undefined' && Date.now() < riverPauseUntil) {
+        if (Date.now() < riverPauseUntil) {
             const waitSec = Math.ceil((riverPauseUntil - Date.now()) / 1000);
             console.warn(`[SMG Timeline] Cooldown de rate limit ativo. Próxima sincronização bloqueada por mais ${waitSec}s.`);
             return Promise.resolve(0);
         }
-        if (typeof riverAborted !== 'undefined') riverAborted = false;
+        riverAborted = false;
         if (typeof window !== 'undefined') window.__riverAborted = false;
 
         if (timelineSyncRunning) return Promise.resolve(0);
@@ -25202,7 +25202,7 @@
 
             return dbFollowedGetAll().then(allFollowed => {
                 if (!allFollowed || !allFollowed.length) {
-                    const emptyMsg = (typeof IS_PT !== 'undefined' && IS_PT)
+                    const emptyMsg = IS_PT
                         ? 'Nenhum tópico seguido cadastrado na tabela'
                         : 'No followed threads found in database';
                     riverEmptyState(emptyMsg);
@@ -25828,9 +25828,9 @@
         const refBtn = document.createElement('button');
         refBtn.type = 'button';
         refBtn.className = 'smg-river-refresh';
-        refBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Atualizar feed' : 'Refresh feed';
+        refBtn.title = IS_PT ? 'Atualizar feed' : 'Refresh feed';
         refBtn.setAttribute('aria-label', refBtn.title);
-        refBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.refresh) ? ICONS.refresh : '↻';
+        refBtn.innerHTML = ICONS.refresh ? ICONS.refresh : '↻';
         refBtn.addEventListener('click', () => {
             console.log('[SMG Timeline] Botão de atualizar clicado.');
             kickSync(true);
@@ -25839,9 +25839,9 @@
         if (actions) {
             const markAllBtn = document.createElement('button');
             markAllBtn.type = 'button';
-            markAllBtn.title = (typeof IS_PT !== 'undefined' && IS_PT) ? 'Marcar tudo como lido' : 'Mark all as read';
+            markAllBtn.title = IS_PT ? 'Marcar tudo como lido' : 'Mark all as read';
             markAllBtn.setAttribute('aria-label', markAllBtn.title);
-            markAllBtn.innerHTML = (typeof ICONS !== 'undefined' && ICONS.checkAll) ? ICONS.checkAll : '✓✓';
+            markAllBtn.innerHTML = ICONS.checkAll ? ICONS.checkAll : '✓✓';
             markAllBtn.addEventListener('click', () => {
                 dbFollowedMarkAllSeen();
             });
@@ -27174,7 +27174,7 @@
     // Reserve the persisted desktop dock before the body and topbar are built.
     // The panel itself is mounted during boot, but this class prevents its
     // late padding-right from moving the home after the first visible frame.
-    if (FEATURES.alertsDock && typeof aldockWanted === 'function'
+    if (FEATURES.alertsDock
         && aldockWanted() && aldockFits() && !aldockPhone()) {
         cls.add('smg-aldock-on');
         const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
@@ -27264,7 +27264,7 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (typeof aldockPhone === 'function' && aldockPhone()) {
+            if (aldockPhone()) {
                 closeAlertsDock();
             }
             try {
@@ -27343,7 +27343,7 @@
         riverSetupDone = false;
         riverBuilt = false;
         riverList = null;
-        if (typeof riverHost !== 'undefined') riverHost = null;
+        riverHost = null;
         const staleRiver = document.getElementById('smg-river');
         if (staleRiver) staleRiver.remove();
         bmBuilt = false;
