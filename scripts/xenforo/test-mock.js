@@ -1559,6 +1559,13 @@ async function runTests() {
     toggleAlertsDock('alerts');
     assert(!document.documentElement.classList.contains('smg-aldock-on'), 'toggleAlertsDock("alerts") com painel aberto deve fechar o painel');
 
+    // 9.6.1 Na /account/alerts a lista nativa é a própria página: o rail lateral não abre
+    const pathBeforeAlertsPage = window.location.pathname;
+    window.history.pushState({}, '', '/account/alerts');
+    openAlertsDock(false);
+    assert(!document.documentElement.classList.contains('smg-aldock-on'), 'Na /account/alerts o rail lateral não deve abrir');
+    window.history.pushState({}, '', pathBeforeAlertsPage);
+
     // 9.7 Validar CSS injetado dos chips
     const injectedStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
     assert(injectedStyles.includes('padding: 1.5px 5.5px !important'), 'CSS deve definir padding compacto para .label e .smg-badge-chip');
