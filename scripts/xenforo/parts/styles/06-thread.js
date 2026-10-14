@@ -831,15 +831,6 @@
                 html.smg-thread .block-outer-opposite .smg-sortseg .tabs-tab { height: 26px !important; min-height: 26px !important; padding: 0 10px !important; font-size: 12.5px !important; }
             }
 
-            /* ---- preview da thumbnail no hover ---- */
-            #smg-thumb-pop {
-                position: fixed; z-index: 1000002; display: none; pointer-events: none;
-                border-radius: 12px; overflow: hidden; background: #0d0e12;
-                border: 1px solid rgba(255,255,255,0.18);
-                box-shadow: 0 20px 55px rgba(0,0,0,0.65);
-            }
-            #smg-thumb-pop img { display: block; max-width: min(620px, 46vw); max-height: 84vh; object-fit: contain; }
-
             /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
             .tooltip--preview { display: none !important; }
 

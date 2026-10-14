@@ -102,7 +102,7 @@
 //                      open/close/toggleAlertsDock, setupAlertsDock
 //                      (painel fixo à direita: abas Alertas + Seguindo)
 //  TOPBAR ............ buildTopbar()  ← GRANDE: logo, nav, popovers, sheets mobile
-//  HOVER preview ..... dcThumbUrl, setupThumbPreview
+//  HOVER preview ..... dcThumbUrl
 //  PAINT runtime ..... classifyPaintPage, skeletons, readiness e handoff estável por página
 //  — daqui pra baixo: features definidas tarde no arquivo + o INIT —
 //  favicon (SMG) ..... setFavicon
