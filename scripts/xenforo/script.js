@@ -10614,6 +10614,137 @@
     }
 
     // =========================================================
+    // PAGER: o motor comum de "carregar a próxima leva", usado por toda lista que cresce no fim (thread,
+    // listagens, Feed, Salvos, carrossel da home, busca da dock, rail de alertas). Cada lista dá a FONTE
+    // (load: página HTML, JSON, IndexedDB…) e o DESTINO (apply: pinta e diz qual é o próximo cursor); o motor
+    // cuida do resto, igual pra todas:
+    //   · gatilho por distância da borda — a página (window) ou um elemento rolável, vertical ou horizontal;
+    //   · uma carga por vez; pré-busca opcional de UMA página (o download começa antes do gatilho de append);
+    //   · falhas: padrão tenta de novo no próximo pedido e encerra depois de 3 seguidas (onFail decide outra coisa);
+    //   · fim da lista: apply devolve next null;
+    //   · guard de sequência: reset() troca a lista (nova busca, refresh) e descarta + aborta a carga no ar.
+    // cfg: { cursor, load(cursor, signal) → Promise<página|null>, apply(página, cursor) → { next, added },
+    //        root (elemento ou lista deles; ausente = a página), axis 'y'|'x', near (px), prefetch (px),
+    //        enabled() (só barra o gatilho de scroll; more() explícito passa), onFail(err, n) → 'retry'|'stop',
+    //        maxFailures, fill (página que acrescentou algo e ainda está perto do fim puxa a próxima),
+    //        onState('loading'|'idle'|'error'|'end'), listen (false = sem listener de scroll; quem chama dá check()) }
+    // =========================================================
+    function createPager(cfg) {
+        const roots = [].concat(cfg.root || []);
+        const axisX = cfg.axis === 'x';
+        const near = cfg.near != null ? cfg.near : 1400;
+        const maxFailures = cfg.maxFailures || 3;
+        let cursor = cfg.cursor != null ? cfg.cursor : null;
+        let seq = 0, busy = false, failures = 0, failed = false, pre = null, disposed = false;
+        const unlisten = [];
+
+        const restOf = el => {
+            if (!el) {
+                const de = document.documentElement;
+                return de.scrollHeight - ((window.scrollY || de.scrollTop || 0) + window.innerHeight);
+            }
+            return axisX ? el.scrollWidth - el.clientWidth - el.scrollLeft : el.scrollHeight - el.scrollTop - el.clientHeight;
+        };
+        const emit = kind => { if (cfg.onState) { try { cfg.onState(kind); } catch (e) {} } };
+        // UMA página adiantada no máximo: a mesma carga serve a pré-busca e o append
+        const fetchPage = cur => {
+            if (pre && pre.cursor === cur) return pre.promise;
+            const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+            let promise;
+            try { promise = Promise.resolve(cfg.load(cur, ctrl ? ctrl.signal : undefined)); } catch (e) { promise = Promise.reject(e); }
+            pre = { cursor: cur, ctrl, promise };
+            return promise;
+        };
+        const dropPre = () => { if (pre && pre.ctrl) { try { pre.ctrl.abort(); } catch (e) {} } pre = null; };
+
+        function more() {
+            if (disposed || busy || cursor == null) return Promise.resolve(0);
+            busy = true;
+            const my = seq, cur = cursor;
+            emit('loading');
+            return fetchPage(cur)
+                .then(page => {
+                    if (my !== seq) return 0;
+                    if (page == null) throw new Error('page load failed');   // fetchDoc devolve null em 429/HTTP != 2xx
+                    pre = null;
+                    failures = 0;
+                    const r = cfg.apply(page, cur) || {};
+                    cursor = r.next != null ? r.next : null;
+                    return Math.max(0, +r.added || 0);
+                })
+                .catch(err => {
+                    if (my !== seq) return 0;
+                    if (pre && pre.cursor === cur) pre = null;   // falhou: joga fora a promessa, senão a mesma falha ficaria em cache
+                    failures++;
+                    const verdict = cfg.onFail ? cfg.onFail(err, failures) : (failures >= maxFailures ? 'stop' : 'retry');
+                    if (verdict === 'stop') { cursor = null; failed = true; }
+                    return -1;
+                })
+                .then(n => {
+                    if (my !== seq) return 0;
+                    busy = false;
+                    emit(cursor == null ? 'end' : (n < 0 ? 'error' : 'idle'));
+                    if (n > 0 && cfg.fill && cursor != null) check();
+                    return n;
+                });
+        }
+        // gatilho: perto o bastante do fim → append; na faixa de pré-busca → só adianta o download
+        function check(el) {
+            if (disposed || busy || cursor == null) return;
+            if (cfg.enabled && !cfg.enabled()) return;
+            const rest = restOf(el || roots[0] || null);
+            if (rest <= near) { more(); return; }
+            if (cfg.prefetch && rest <= cfg.prefetch) fetchPage(cursor);
+        }
+        function reset(next) {
+            seq++;
+            busy = false; failures = 0; failed = false;
+            dropPre();
+            cursor = next != null ? next : null;
+        }
+        // percorre a lista em sequência até o fim (ou `max` páginas): pra quem precisa dela inteira
+        function drain(max) {
+            let pages = 0;
+            const step = () => {
+                if (disposed || cursor == null || (max && pages >= max)) return { complete: !failed };
+                pages++;
+                return more().then(step);
+            };
+            return Promise.resolve().then(step);
+        }
+        function dispose() {
+            disposed = true;
+            seq++;
+            busy = false;
+            dropPre();
+            unlisten.splice(0).forEach(fn => fn());
+        }
+
+        if (cfg.listen !== false) {
+            if (!roots.length) unlisten.push(onScrollRaf(() => check()));
+            roots.forEach(el => {
+                let tick = false;
+                const onScroll = () => {
+                    if (tick) return;
+                    tick = true;
+                    requestAnimationFrame(() => { tick = false; check(el); });
+                };
+                el.addEventListener('scroll', onScroll, { passive: true });
+                unlisten.push(() => el.removeEventListener('scroll', onScroll));
+            });
+        }
+
+        return {
+            check, more, reset, drain, dispose,
+            get cursor() { return cursor; },
+            get busy() { return busy; },
+            get ended() { return cursor == null; },
+            get failed() { return failed; },
+        };
+    }
+    if (typeof window !== 'undefined' && window.__TEST_MODE__) window.__pagerExports = { createPager };
+
+    // =========================================================
     // FEATURE: scroll infinito na thread (anexa as próximas páginas)
     // =========================================================
 
@@ -10740,38 +10871,23 @@
             return m ? parseInt(m[1], 10) : null;
         };
 
-        let nextUrl = nextLink(document);
-        if (!nextUrl) { settle(); return; } // página única ou já na última
+        const firstUrl = nextLink(document);
+        if (!firstUrl) { settle(); return; } // página única ou já na última
 
         const pj = readPageJump();
         const startPage = pj ? pj.cur : 1;
         const originalUrl = location.pathname + location.search;
 
         infScrollBound = true;
-        let loading = false;
-        let done = false;
-        let failures = 0;   // falhas seguidas (rede/429/HTTP): 3 → para, em vez de re-tentar a cada frame de scroll
         let lastNum = startPage;
         // dedup (article view): registra as threads já presentes pra não repetir os sticky em cada página
         const seen = new Set();
         if (keyOf) container.querySelectorAll(itemSelector).forEach(el => { const k = keyOf(el); if (k) seen.add(k); });
 
-        // PRÉ-BUSCA de UMA página: o download começa a INF_PREFETCH do fim, muito antes do gatilho de
-        // append (INF_APPEND). Antes, "chegar no fim" e "o conteúdo aparecer" eram separados pela latência
-        // inteira da rede; agora o documento já está na mão quando o gatilho bate e a página entra na hora.
-        const INF_APPEND = 1400, INF_PREFETCH = 4000;
-        let pre = null;   // { url, promise } — 1 página adiantada, no máximo
-        const grab = url => {
-            let abs;
-            try { abs = new URL(url, location.href).href; } catch (e) { abs = url; }
-            if (pre && pre.url === abs) return pre.promise;
-            pre = { url: abs, promise: fetchDoc(abs, { credentials: 'same-origin' }) };
-            return pre.promise;
-        };
-
-        const check = () => {
-            if (gen !== infScrollGen || !container.isConnected) return;
-            if (!FEATURES.infiniteScroll) return;   // desligar no settings para na hora (o observer fica, mas não carrega mais)
+        // o master switch e os toggles por contexto valem pro SCROLL da página; desligar no settings para na hora
+        const enabled = () => {
+            if (gen !== infScrollGen || !container.isConnected) return false;
+            if (!FEATURES.infiniteScroll) return false;
 
             const isFeed = document.documentElement.classList.contains('smg-watched-feed')
                 || (new URLSearchParams(location.search).get('view') === 'feed');
@@ -10782,71 +10898,72 @@
                 || (!isFeed && !isThread && !!document.querySelector('.structItem--thread, .smg-article-grid, [data-template="search_results"]'));
 
             if (isFeed) {
-                if (!FEATURES.infiniteScrollTimeline) return;
+                if (!FEATURES.infiniteScrollTimeline) return false;
             } else if (isThread) {
-                if (!FEATURES.infiniteScrollThreads) return;
+                if (!FEATURES.infiniteScrollThreads) return false;
             } else if (isWatchedOrList) {
-                if (!FEATURES.infiniteScrollWatched) return;
+                if (!FEATURES.infiniteScrollWatched) return false;
             }
+            return !mediaView();   // o overlay de mídia pagina a sua própria lista
+        };
 
-            if (loading || done || !nextUrl) return;
-            if (mediaView()) return; // o overlay de mídia pagina a sua própria lista
-            const rest = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
-            if (rest > INF_PREFETCH) return;
-            if (rest > INF_APPEND) { grab(nextUrl); return; }   // ainda longe do fim: só adianta o download
-
-            loading = true;
-            const url = nextUrl;
+        // anexa a página buscada: separador + itens num fragmento → UM reflow e UM lote de mutação
+        const apply = (doc, url) => {
+            if (onPage) safe(onPage, doc);
+            const items = fetchScope(doc).querySelectorAll(itemSelector);
+            if (!items.length) return { next: null, added: 0 };
             const num = pageNumOf(url) || (lastNum + 1);
 
-            grab(url)
-                .then(doc => {
-                    if (!doc) throw new Error('page fetch failed');   // fetchDoc devolve null em 429/HTTP != 2xx
-                    failures = 0;
-                    if (onPage) safe(onPage, doc);
-                    const items = fetchScope(doc).querySelectorAll(itemSelector);
-                    if (!items.length) { done = true; nextUrl = null; return; }
+            // separador como <li> se o container for lista (ol/ul), senão <div>
+            const sep = document.createElement(/^(OL|UL)$/.test(container.tagName) ? 'li' : 'div');
+            sep.className = 'smg-inf-sep';
+            sep.dataset.page = num;  // p/ sincronizar o paginador
+            sep.dataset.url = url;   // URL real dessa página (p/ replaceState)
+            sep.textContent = i18n('Page') + ' ' + num;
 
-                    // separador como <li> se o container for lista (ol/ul), senão <div>
-                    const sep = document.createElement(/^(OL|UL)$/.test(container.tagName) ? 'li' : 'div');
-                    sep.className = 'smg-inf-sep';
-                    sep.dataset.page = num;  // p/ sincronizar o paginador
-                    sep.dataset.url = url;   // URL real dessa página (p/ replaceState)
-                    sep.textContent = i18n('Page') + ' ' + num;
+            const frag = document.createDocumentFragment();
+            frag.appendChild(sep);
+            let added = 0;
+            items.forEach(p => {
+                if (keyOf) { const k = keyOf(p); if (k && seen.has(k)) return; if (k) seen.add(k); }  // pula thread repetida (sticky)
+                const node = document.importNode(p, true);
+                if (decorate) safe(decorate, node);
+                frag.appendChild(node);
+                added++;
+            });
+            container.appendChild(frag);
 
-                    // tudo num fragmento → UM reflow e UM lote de mutação (antes: um append por post,
-                    // cada um invalidando layout no meio de uma thread já grande)
-                    const frag = document.createDocumentFragment();
-                    frag.appendChild(sep);
-                    items.forEach(p => {
-                        if (keyOf) { const k = keyOf(p); if (k && seen.has(k)) return; if (k) seen.add(k); }  // pula thread repetida (sticky)
-                        const node = document.importNode(p, true);
-                        if (decorate) safe(decorate, node);
-                        frag.appendChild(node);
-                    });
-                    container.appendChild(frag);
-
-                    lastNum = num;
-                    nextUrl = nextLink(doc); // segue o "Next" da página recém-buscada
-                    if (!nextUrl) done = true;
-                    if (typeof window.smgReapplyFilters === 'function') {
-                        window.smgReapplyFilters();
-                    }
-                })
-                .catch(() => {
-                    if (pre && pre.url === url) pre = null;   // falhou: joga fora a promessa, senão a mesma falha ficaria em cache pra sempre
-                    if (++failures >= 3) done = true;
-                })
-                .finally(() => { loading = false; });
+            lastNum = num;
+            if (typeof window.smgReapplyFilters === 'function') {
+                window.smgReapplyFilters();
+            }
+            return { next: nextLink(doc), added };   // segue o "Next" da página recém-buscada
         };
+
+        // PRÉ-BUSCA de UMA página: o download começa a 4000px do fim, muito antes do gatilho de append
+        // (1400px) → o documento já está na mão quando o gatilho bate e a página entra na hora.
+        const pager = createPager({
+            cursor: firstUrl,
+            load: (url, signal) => {
+                let abs;
+                try { abs = new URL(url, location.href).href; } catch (e) { abs = url; }
+                return fetchDoc(abs, { credentials: 'same-origin', signal });
+            },
+            apply,
+            near: 1400,
+            prefetch: 4000,
+            enabled,
+            listen: false,
+        });
 
         // ---- sincroniza o paginador com o que está na tela (URL + número da dock + "X of Y") ----
         const syncPage = makePagerSync(startPage, originalUrl);
 
         if (infScrollDispose) infScrollDispose();
-        infScrollDispose = onScrollRaf(() => { check(); syncPage(); });
+        const unScroll = onScrollRaf(() => { pager.check(); syncPage(); });
+        infScrollDispose = () => { unScroll(); pager.dispose(); };
 
-        check();
+        pager.check();
     }
 
     // =========================================================
