@@ -26,10 +26,36 @@
     const RAIL_SRC = {
         alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  empty: 'No notifications yet' },
     };
-    // estado — dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas sozinho
-    // desde a última ação do usuário (teto pra rolagem automática não varrer o histórico inteiro)
-    const mkState = () => ({ next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0 });
-    const aldockState = { alerts: mkState() };
+    // estado — busy: refresh do topo no ar · dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas
+    // sozinho desde a última ação do usuário (teto pra rolagem automática não varrer o histórico inteiro).
+    // A rolagem infinita é o motor comum (createPager, 07): st.next É o cursor dele — gravar st.next troca a lista
+    // (reset), e a página que ainda carregava pra lista anterior é descartada. Rolar o rail não é rolar a página:
+    // o master switch do scroll infinito não vale aqui.
+    const mkState = tab => {
+        const st = { busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0 };
+        st.pager = createPager({
+            near: 400,
+            load: url => railFetch(tab, url),
+            apply: ({ rows, next }) => {
+                const added = aldockInsertRows(tab, rows, false);
+                // conteúdo novo desloca a paginação → a página seguinte pode voltar só repetida. Uma tudo-repetida
+                // é normal nesse deslocamento; DUAS seguidas = fim de verdade (e corta o loop de request à toa).
+                st.dry = added ? 0 : st.dry + 1;
+                aldockSyncCount();
+                return { next: st.dry >= 2 ? null : next, added };
+            },
+            enabled: () => !!aldock && aldockOpen() && !st.busy && st.loaded,
+            onFail: () => 'stop',   // erro de rede não vira loop de retry a cada scroll
+            onState: kind => {
+                aldockStatus(tab, kind === 'loading' ? 'loading' : '');
+                if (kind !== 'loading') railFillViewport(tab);
+            },
+            listen: false,   // o painel nasce depois (buildAlertsDock): o listener de scroll dele chama check()
+        });
+        Object.defineProperty(st, 'next', { enumerable: true, get: () => st.pager.cursor, set: v => { st.pager.reset(v); } });
+        return st;
+    };
+    const aldockState = { alerts: mkState('alerts') };
 
     const aldockViewportMax = () => Math.max(
         ALDOCK_RESP_MIN_W,
@@ -238,7 +264,7 @@
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
     function railRefresh(tab, force) {
         const st = aldockState[tab];
-        if (!aldock || st.busy) return Promise.resolve();
+        if (!aldock || st.busy || st.pager.busy) return Promise.resolve();
         const now = Date.now();
         if (!force && now - st.lastFetch < 15000) return Promise.resolve();   // clique nervoso/foco repetido não vira rajada de request
         st.busy = true;
@@ -284,23 +310,8 @@
     // fim da lista: próxima página do histórico (rolagem infinita)
     function railMore(tab) {
         const st = aldockState[tab];
-        if (!aldock || !aldockOpen() || st.busy || !st.loaded || !st.next) return Promise.resolve();
-        st.busy = true;
-        aldockStatus(tab, 'loading');
-        const url = st.next;
-        return railFetch(tab, url)
-            .then(({ rows, next }) => {
-                st.next = next;
-                const added = aldockInsertRows(tab, rows, false);
-                // conteúdo novo desloca a paginação → a página seguinte pode voltar só repetida. Uma tudo-repetida
-                // é normal nesse deslocamento; DUAS seguidas = fim de verdade (e corta o loop de request à toa).
-                st.dry = added ? 0 : st.dry + 1;
-                if (st.dry >= 2) st.next = null;
-                aldockSyncCount();
-                aldockStatus(tab, '');
-            })
-            .catch(() => { st.next = null; aldockStatus(tab, ''); })   // erro de rede não vira loop de retry a cada scroll
-            .then(() => { st.busy = false; railFillViewport(tab); });
+        if (!aldock || !aldockOpen() || st.busy || !st.loaded) return Promise.resolve();
+        return st.pager.more();
     }
 
     // poucas linhas pra encher o painel → puxa mais até ter o que mostrar (ou acabar).
@@ -308,7 +319,7 @@
     // inteiro numa rajada. Rolar até o fim continua puxando o resto normalmente.
     function railFillViewport(tab) {
         const st = aldockState[tab];
-        if (!aldock || !aldockOpen() || st.busy || !st.next) return;
+        if (!aldock || !aldockOpen() || st.busy || st.pager.busy || !st.next) return;
         if (st.autoFill >= ALDOCK_AUTOFILL) return;
         const pane = railPane(tab), list = railList(tab);
         if (!pane) return;
@@ -439,10 +450,8 @@
                 ticking = true;
                 requestAnimationFrame(() => {
                     ticking = false;
-                    if (alertsBody.scrollTop + alertsBody.clientHeight > alertsBody.scrollHeight - 400) {
-                        aldockState.alerts.autoFill = 0;
-                        railMore('alerts');
-                    }
+                    aldockState.alerts.autoFill = 0;   // rolar é ação do usuário: zera o teto do auto-preenchimento
+                    aldockState.alerts.pager.check(alertsBody);
                 });
             }, { passive: true });
         }
@@ -563,6 +572,8 @@
                 RAIL_SRC,
                 railFetch,
                 railRefresh,
+                railMore,
+                railHardRefresh,
                 getAldock: () => aldock
             };
         }
