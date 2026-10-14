@@ -1660,8 +1660,8 @@ async function runTests() {
         <div class="structItem structItem--thread"><div class="structItem-title"><a href="/threads/t-read.2/">Read Thread</a></div></div>
     `;
     window.__filterbarExports.ingestWatchedPageToFollowed(docMock);
-    assert(window.GM_getValue('smg-watched-unread-count') === '1', `ingestWatchedPageToFollowed deve salvar contagem "1" (obtido: ${window.GM_getValue('smg-watched-unread-count')})`);
-    assert(railBtnEl.querySelector('.smg-tb-badge')?.textContent === '1', 'ingestWatchedPageToFollowed deve atualizar badge do railBtn para 1');
+    assert(!window.GM_getValue('smg-watched-unread-count'), `ingestWatchedPageToFollowed não deve gravar smg-watched-unread-count (obtido: ${window.GM_getValue('smg-watched-unread-count')})`);
+    assert(railBtnEl.querySelector('.smg-tb-badge') === null, 'O sino de alertas não deve exibir a contagem de seguidos após a ingestão');
 
     // 9.10 Testar Componente de Avisos (.smg-notices-collapse) com cabeçalho "Avisos", toggle e dismiss
     const noticeBlockMock = document.createElement('div');
