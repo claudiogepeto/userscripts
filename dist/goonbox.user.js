@@ -165,9 +165,12 @@
         return data ?? {};
     }
 
-    function rememberAlbum(model) {
+    // Ids cujo índice gbx-img:<id> já foi gravado nesta sessão (evita regravar a cada visita).
+    const storedImageKeys = new Set();
+    function rememberAlbum(model, persist = true) {
         albums.set(model.albumId, model);
         for (const image of model.images) imageAlbum.set(image.id, model.albumId);
+        if (!persist) return;
         try {
             const slim = {
                 albumId: model.albumId,
@@ -190,7 +193,12 @@
             const json = JSON.stringify(slim);
             if (json.length < 1500000) {
                 sessionStorage.setItem(`gbx-album:${model.albumId}`, json);
-                for (const image of model.images) sessionStorage.setItem(`gbx-img:${image.id}`, model.albumId);
+                for (const image of model.images) {
+                    const key = `${model.albumId}:${image.id}`;
+                    if (storedImageKeys.has(key)) continue;
+                    sessionStorage.setItem(`gbx-img:${image.id}`, model.albumId);
+                    storedImageKeys.add(key);
+                }
             }
         } catch { /* quota or private mode */ }
     }
@@ -438,7 +446,71 @@
         if (query) {
             list = images.filter(image => image.name.toLowerCase().includes(query) || image.id.toLowerCase().includes(query));
         }
-        const sorted = list.slice();
+        return orderedSort(list);
+    }
+
+    function paintStatus(panel, text) {
+        panel.replaceChildren(el("div", { class: "gbx-top" }, logoLink()), el("p", { class: "gbx-note", role: "status" }, text));
+    }
+
+    function galleryCard(model, image) {
+        if (!model.cards) model.cards = new Map();
+        let card = model.cards.get(image.id);
+        if (card) return card;
+        const media = el("span", { class: "gbx-card-media" });
+        if (image.width && image.height) media.style.aspectRatio = `${image.width} / ${image.height}`;
+        const pic = el("img", { src: image.thumb, alt: "", loading: "lazy" });
+        media.append(pic);
+        const subParts = [formatBytes(image.bytes), image.width && image.height ? `${image.width}×${image.height}` : ""].filter(Boolean);
+        card = el("button", { class: "gbx-card", type: "button", "aria-label": `Open ${image.name}` },
+            media,
+            el("span", { class: "gbx-card-name", title: image.name }, image.name),
+            el("span", { class: "gbx-card-sub" }, subParts.join(" · "))
+        );
+        card.addEventListener("click", () => goImage(image.id, false));
+        model.cards.set(image.id, card);
+        return card;
+    }
+
+    function galleryCountLabel(model) {
+        const loaded = model.images.length;
+        const total = model.total || loaded;
+        return loaded === total ? `${total} images` : `${loaded} / ${total} images`;
+    }
+
+    // Filtro sem reconstruir a grade: só alterna a visibilidade dos cards já montados.
+    function applyGalleryFilter(model) {
+        const view = galleryPanel && galleryPanel._gbxView;
+        if (!view || view.model !== model) return;
+        const list = orderedImages(model);
+        model.viewIds = list.map(image => image.id);
+        const visible = new Set(model.viewIds);
+        for (const image of model.images) {
+            const card = model.cards && model.cards.get(image.id);
+            if (card) card.style.display = visible.has(image.id) ? "" : "none";
+        }
+        view.empty.textContent = list.length ? "" : (model.images.length ? "No images match that filter." : "This album has no images.");
+        view.empty.style.display = list.length ? "none" : "";
+    }
+
+    // Página nova da API: acrescenta só os cards novos à grade já pintada.
+    function growGallery(model, added) {
+        const view = galleryPanel && galleryPanel._gbxView;
+        if (!view || view.model !== model || !view.grid.isConnected || parseAlbum(location.pathname) !== model.albumId) {
+            paintGallery(model);
+            return;
+        }
+        view.count.textContent = galleryCountLabel(model);
+        // Em "order" basta anexar os novos no fim; nas outras ordens os cards
+        // existentes são movidos (não recriados) para a posição ordenada.
+        const frag = document.createDocumentFragment();
+        for (const image of uiSort === "order" ? added : orderedSort(model.images)) frag.append(galleryCard(model, image));
+        view.grid.append(frag);
+        applyGalleryFilter(model);
+    }
+
+    function orderedSort(images) {
+        const sorted = images.slice();
         if (uiSort === "newest") sorted.sort((a, b) => String(b.created).localeCompare(String(a.created)));
         else if (uiSort === "oldest") sorted.sort((a, b) => String(a.created).localeCompare(String(b.created)));
         else if (uiSort === "largest") sorted.sort((a, b) => b.bytes - a.bytes);
@@ -446,10 +518,6 @@
         else if (uiSort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
         else sorted.sort((a, b) => a.order - b.order);
         return sorted;
-    }
-
-    function paintStatus(panel, text) {
-        panel.replaceChildren(el("div", { class: "gbx-top" }, logoLink()), el("p", { class: "gbx-note", role: "status" }, text));
     }
 
     function paintGallery(model) {
@@ -460,20 +528,16 @@
             uiQuery = "";
             uiSort = "order";
         }
-        const list = orderedImages(model);
-        model.viewIds = list.map(image => image.id);
         const album = model.album ?? {};
         const user = album.user ?? null;
         const username = user?.username || "";
         const title = album.title || "Album";
-        const loaded = model.images.length;
-        const total = model.total || loaded;
-        const countLabel = loaded === total ? `${total} images` : `${loaded} / ${total} images`;
 
         const heading = el("div", { class: "gbx-title" });
         heading.append(el("strong", { title: title }, title));
         const meta = el("span");
-        meta.append(document.createTextNode(countLabel));
+        const count = document.createTextNode(galleryCountLabel(model));
+        meta.append(count);
         if (username) {
             meta.append(document.createTextNode(" · "));
             const profile = el("a", { href: `/u/${encodeURIComponent(username)}` }, displayName(user));
@@ -487,15 +551,13 @@
         heading.append(meta);
 
         const search = el("input", { class: "gbx-input", type: "search", placeholder: "Filter images", "aria-label": "Filter images", value: uiQuery });
+        let searchTimer = 0;
         search.addEventListener("input", () => {
-            uiQuery = search.value;
-            paintGallery(model);
-            const next = galleryPanel.querySelector(".gbx-input");
-            if (next) {
-                next.focus();
-                const pos = next.value.length;
-                try { next.setSelectionRange(pos, pos); } catch { /* search inputs on some browsers */ }
-            }
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                uiQuery = search.value;
+                applyGalleryFilter(model);
+            }, 150);
         });
 
         const sort = el("select", { class: "gbx-select", "aria-label": "Sort images" });
@@ -513,26 +575,16 @@
         const previousScroll = galleryPanel.querySelector(".gbx-scroll");
         const scrollTop = previousScroll ? previousScroll.scrollTop : 0;
         const grid = el("div", { class: "gbx-grid" });
-        if (!list.length) {
-            grid.append(el("p", { class: "gbx-note" }, model.images.length ? "No images match that filter." : "This album has no images."));
-        }
-        for (const image of list) {
-            const media = el("span", { class: "gbx-card-media" });
-            if (image.width && image.height) media.style.aspectRatio = `${image.width} / ${image.height}`;
-            const pic = el("img", { src: image.thumb, alt: "", loading: "lazy" });
-            media.append(pic);
-            const subParts = [formatBytes(image.bytes), image.width && image.height ? `${image.width}×${image.height}` : ""].filter(Boolean);
-            const card = el("button", { class: "gbx-card", type: "button", "aria-label": `Open ${image.name}` },
-                media,
-                el("span", { class: "gbx-card-name", title: image.name }, image.name),
-                el("span", { class: "gbx-card-sub" }, subParts.join(" · "))
-            );
-            card.addEventListener("click", () => goImage(image.id, false));
-            grid.append(card);
-        }
+        const empty = el("p", { class: "gbx-note" });
+        grid.append(empty);
+        const frag = document.createDocumentFragment();
+        for (const image of orderedSort(model.images)) frag.append(galleryCard(model, image));
+        grid.append(frag);
         const scroll = el("div", { class: "gbx-scroll" }, grid);
         if (album.description) galleryPanel.replaceChildren(top, el("p", { class: "gbx-note" }, album.description), scroll);
         else galleryPanel.replaceChildren(top, scroll);
+        galleryPanel._gbxView = { model, grid, empty, count };
+        applyGalleryFilter(model);
         scroll.scrollTop = scrollTop;
         showPanel("gallery");
     }
@@ -708,9 +760,11 @@
             if (!viewport.querySelector(".gbx-note")) viewport.append(el("p", { class: "gbx-note" }, "Could not load this image."));
         });
 
-        const strip = model.viewIds && model.viewIds.includes(image.id)
-            ? model.viewIds.map(id => model.images.find(item => item.id === id)).filter(Boolean)
-            : model.images;
+        let strip = model.images;
+        if (model.viewIds && model.viewIds.includes(image.id)) {
+            const byId = new Map(model.images.map(item => [item.id, item]));
+            strip = model.viewIds.map(id => byId.get(id)).filter(Boolean);
+        }
         const side = el("div", { class: "gbx-side" });
         const head = el("div", { class: "gbx-side-head" });
         if (albumId) {
@@ -790,19 +844,44 @@
             };
             takeImages(model, first.images);
             let last = Math.min(first.pagination?.last_page || 1, MAX_PAGES);
-            rememberAlbum(model);
+            rememberAlbum(model, false);
             paintGallery(model);
-            for (let page = 2; page <= last; page += 1) {
-                const data = await api(`/api/albums/${encodeURIComponent(albumId)}/images?page=${page}&per_page=${PAGE}`);
-                if (job !== albumJob) return;
-                last = Math.min(data.pagination?.last_page || last, MAX_PAGES);
-                model.total = data.pagination?.total || model.total;
-                const added = takeImages(model, data.images);
-                model.at = Date.now();
-                rememberAlbum(model);
-                paintGallery(model);
-                if (added === 0) break;
-            }
+            // Páginas restantes com até 3 requisições em paralelo, aplicadas na ordem;
+            // sessionStorage é gravado uma vez só, quando o álbum termina de carregar.
+            const pending = new Map();
+            let nextFetch = 2, nextApply = 2, stop = false, failure = null;
+            const applyReady = () => {
+                while (!stop && pending.has(nextApply)) {
+                    const data = pending.get(nextApply);
+                    pending.delete(nextApply);
+                    nextApply += 1;
+                    last = Math.min(data.pagination?.last_page || last, MAX_PAGES);
+                    model.total = data.pagination?.total || model.total;
+                    const before = model.images.length;
+                    const added = takeImages(model, data.images);
+                    model.at = Date.now();
+                    rememberAlbum(model, false);
+                    growGallery(model, model.images.slice(before));
+                    if (added === 0) stop = true;
+                }
+            };
+            const worker = async () => {
+                while (!stop && !failure && nextFetch <= last) {
+                    const page = nextFetch++;
+                    try {
+                        const data = await api(`/api/albums/${encodeURIComponent(albumId)}/images?page=${page}&per_page=${PAGE}`);
+                        if (job !== albumJob) { stop = true; return; }
+                        pending.set(page, data);
+                        applyReady();
+                    } catch (error) {
+                        failure = failure || error;
+                    }
+                }
+            };
+            await Promise.all([worker(), worker(), worker()]);
+            if (job !== albumJob) return;
+            if (failure) throw failure;
+            rememberAlbum(model);
         } catch (error) {
             if (job !== albumJob) return;
             const missing = error.status === 404;
