@@ -51,6 +51,7 @@
         info: svgIcon('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
         warn: svgIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>'),
         gallery: svgIcon('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
+        typeText: svgIcon('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>'),
         typeImage: svgIcon('<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
         typeVideo: svgIcon('<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/>'),
         user: svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
@@ -82,8 +83,28 @@
 
     // logo do SMG: wordmark "SMG" (G rosa = acento da marca)
     const SMG_LOGO_HTML = '<span class="smg-logo"><span class="smg-logo-word">SM<span class="smg-logo-accent">G</span></span></span>';
-    // marca usada no placeholder de cards sem thumb — mesma cara do logo (SM + G rosa), só que apagada
-    const SMG_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="m21 15-5-5L5 21"/></svg></div>';
+    // FALLBACK DE THUMB (nosso, NUNCA o avatar do autor): superfície AMOLED no visual do skeleton +
+    // ícone pelo TIPO do post. Um só pra todo card de thread (lista/grade/artigo/home) e de feed/salvos.
+    const SMG_PH_KINDS = { text: 'typeText', link: 'link', video: 'typeVideo', media: 'typeImage' };
+    function smgThumbPh(kind) {
+        const k = SMG_PH_KINDS[kind] ? kind : 'text';
+        return '<div class="smg-ph-inner smg-ph--' + k + '"><span class="smg-ph-ico">' + ICONS[SMG_PH_KINDS[k]] + '</span></div>';
+    }
+    // tipo do post: pelo HTML do conteúdo (feed/salvos) ou pelo título + etiquetas (card de thread)
+    function smgPostKind(html) {
+        const s = String(html || '');
+        if (/<video|<iframe|data-s9e-mediaembed|redgifs|smg-rg\b|\.(?:mp4|webm|m4v)\b/i.test(s)) return 'video';
+        if (/<img[^>]*(?:bbImage|data-url)|\.(?:jpe?g|png|gif|webp|avif)\b/i.test(s)) return 'media';
+        if (/<a\b[^>]*href=["']https?:|bbCodeBlock--unfurl/i.test(s)) return 'link';
+        return 'text';
+    }
+    function smgThreadKind(text) {
+        const s = String(text || '');
+        if (/\b(?:videos?|vids?|clips?|gifs?|webm|mp4|onlyfans|of)\b/i.test(s)) return 'video';
+        if (/\b(?:links?|urls?|mega|drive)\b/i.test(s)) return 'link';
+        if (/\b(?:pics?|photos?|images?|albums?|galler(?:y|ies)|sets?|leaks?)\b/i.test(s)) return 'media';
+        return 'text';
+    }
     // favicon SVG (data-URI, nada hospedado): quadrado arredondado rosa + "S" branca (legível a 16px)
     const SMG_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
@@ -91,5 +112,3 @@
         '<rect width="64" height="64" rx="15" fill="url(#g)"/>' +
         '<text x="32" y="45" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="800" fill="#fff" text-anchor="middle">S</text>' +
         '</svg>');
-    // SimpCity (e fallback): marca moderna com ícone de mídia e monograma
-    const SC_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="smg-ph-word">SC</span></div>';

@@ -245,8 +245,7 @@
             html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
             html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
-            html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
-            html.smg-home .smg-feed-card-thumb.smg-feed-noimg .smg-ph-word { font-size: var(--smg-fs-32); opacity: .5; }
+            html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; }
             /* Scrim gradiente cinematográfico */
             html.smg-home .smg-feed-card-body {
                 position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-2); padding: 56px var(--smg-sp-16) var(--smg-sp-16);

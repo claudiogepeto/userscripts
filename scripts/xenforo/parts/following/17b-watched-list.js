@@ -65,14 +65,7 @@
         const title = ((titleA && titleA.textContent) || '').replace(/\s+/g, ' ').trim();
 
         // thumbnail
-        let thumb = '';
-        const thEl = it.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, .structItem-cell--icon img');
-        if (thEl) {
-            const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
-            thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
-        }
-        if (!thumb) thumb = feedThumbUrl(it);
-        if (!thumb) thumb = thumbCacheGet(path, title) || '';
+        const thumb = threadThumbUrl(it) || thumbCacheGet(path, title) || '';   // só a da THREAD (nunca o avatar)
 
         const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 

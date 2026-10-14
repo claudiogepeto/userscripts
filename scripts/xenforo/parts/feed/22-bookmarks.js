@@ -71,8 +71,8 @@
                 title = rawTitleFallback;
             }
 
-            const av = row.querySelector('.contentRow-figure .avatar img, .contentRow-figure img, .avatar img, .structItem-cell--icon img');
-            const thumb = (av && (av.getAttribute('data-src') || av.getAttribute('src') || '')) || '';
+            // thumb da THREAD (da linha, se ela tiver, ou do cache); o avatar do autor nunca vira thumb
+            const thumb = threadThumbUrl(row) || thumbCacheGet(href, title) || '';
             const authorA = row.querySelector('.contentRow-minor a.username, .contentRow-minor a[href*="/members/"], .structItem-parts a.username, a.username, a[href*="/members/"]');
             const author = (authorA && authorA.textContent.trim()) || (row.querySelector('.contentRow-figure .avatar[title], .avatar[title]') || {}).title || '';
             let note = ((row.querySelector('.contentRow-snippet, .structItem-snippet') || {}).textContent || '').replace(/\s+/g, ' ').trim();
@@ -81,7 +81,7 @@
             const bmTs = timeTs(te);
             let postUrl = bmCanonicalPostUrl(href);
             if (!postUrl) postUrl = postId.startsWith('t-') ? ('/threads/' + postId.slice(2) + '/') : ('/posts/' + postId + '/');
-            out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: /^data:/.test(thumb) ? '' : thumb, note: note, bmTs: bmTs });
+            out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: thumb, note: note, bmTs: bmTs });
         });
         return out;
     }

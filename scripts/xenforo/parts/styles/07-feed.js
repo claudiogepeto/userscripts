@@ -149,7 +149,6 @@
             .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-16); padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-16); border-bottom: 1px solid var(--smg-bd); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: var(--smg-r-12); overflow: hidden; background: var(--smg-w-06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
-            .smg-fp-thumb--letter { display: flex; align-items: center; justify-content: center; font-size: var(--smg-fs-22); font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c5cff, #c54b8c); }   /* sem thumb / .su morto → inicial do tópico */
             .smg-fp-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-fp-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
             .smg-fp-tags > * { font-size: var(--smg-fs-11) !important; line-height: 1; vertical-align: middle; }   /* prefixo = chip (mantém a cor nativa do label, injetado via innerHTML) */

@@ -213,15 +213,14 @@
 
         const head = document.createElement('div'); head.className = 'smg-fp-head';
         const thumbA = document.createElement('a'); thumbA.className = 'smg-fp-thumb'; thumbA.href = permalink;
-        const tLetter = ((threadTitle || '?').trim().charAt(0) || '?').toUpperCase();
-        const useLetter = () => { thumbA.replaceChildren(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; };
+        const usePh = () => { thumbA.classList.add('smg-ph'); thumbA.innerHTML = smgThumbPh(smgPostKind(contentHtml)); };
         if (threadThumb && !/^data:/i.test(threadThumb)) {
             const im = document.createElement('img'); im.src = threadThumb; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = '';
-            const fail = () => useLetter();
+            const fail = () => usePh();
             im.addEventListener('error', fail);
             im.addEventListener('load', () => { if (!im.naturalWidth) fail(); });
             thumbA.appendChild(im);
-        } else useLetter();
+        } else usePh();
         head.appendChild(thumbA);
 
         const meta = document.createElement('div'); meta.className = 'smg-fp-meta';

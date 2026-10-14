@@ -72,7 +72,7 @@
 //  CONFIG ............ DEFAULT_FEATURES, FEATURES, gmGet/gmSet, saveFeatures, SETTINGS_META
 //  i18n .............. IS_PT, I18N_PT, i18n(), i18nDom(), navHref()
 //  sessão ............ isLoggedIn(), nativeLoginLink/loginHref/registerHref, wireAuthClick (visitante)
-//  ÍCONES ............ ICONS{}, SMG_LOGO_HTML, SMG_PH_MARK/SC_PH_MARK, SMG_FAVICON
+//  ÍCONES ............ ICONS{}, SMG_LOGO_HTML, smgThumbPh/smgPostKind, SMG_FAVICON
 //  CSS ............... injectStyles() + parts/styles/*  ← fragmentos por contexto, montados em ordem
 //  HELP texto/url .... getBigUrl, cleanText, smgIsWatching, waitForElement
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump

@@ -1,15 +1,21 @@
     // ── CSS: thread list placeholders and article view ──
     const CSS_THREAD_CARDS = `
-            /* PLACEHOLDER (marca SMG) nos cards sem thumb real — no lugar do avatar/thumb-quebrada/vazio.
-               esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho do placeholder muda por modo. */
+            /* FALLBACK DE THUMB (smgThumbPh, .smg-ph): o MESMO em todo card de thread, feed e salvos —
+               superfície AMOLED no visual do skeleton + ícone pelo tipo do post. Nunca o avatar do autor. */
+            .smg-ph {
+                background: linear-gradient(180deg, var(--smg-w-06), var(--smg-w-02)), #000 !important;
+                box-shadow: inset 0 0 0 1px var(--smg-w-06); color: var(--smg-w-30) !important; overflow: hidden;
+            }
+            .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--smg-w-30); }
+            .smg-ph-ico { display: inline-flex; font-size: var(--smg-fs-32); }
+            .smg-fp-thumb .smg-ph-ico { font-size: var(--smg-fs-22); }
+            /* lista/grade: esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho muda por modo. */
             .smg-thumb-ph { display: none; }
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .avatar,
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .structItem-iconContainer,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
-            .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: var(--smg-s2) !important; color: var(--smg-w-40) !important; }
-            .smg-thumb-ph .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+            .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box; }
             html.smg-smg.smg-threadlist .block-container,
             html.smg-smg.smg-threadlist .structItemContainer,
             html.smg-smg.smg-threadlist .uix_stickyContainerOuter {
@@ -27,11 +33,8 @@
             @media (max-width: 600px) {
                 /* LISTA mobile: thumb 92×70 + marca menor */
                 html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-thumb-ph { width: 92px; height: 70px; border-radius: var(--smg-r-8); }
-                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: var(--smg-fs-13); letter-spacing: 1px; }
+                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-ico { font-size: var(--smg-fs-24); }
             }
-            .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--smg-sp-6); color: var(--smg-w-22); text-align: center; }
-            .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
-            .smg-ph-word { font-size: var(--smg-fs-14); font-weight: 800; letter-spacing: 2px; color: var(--smg-w-30); line-height: 1; user-select: none; }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
@@ -78,8 +81,7 @@
                 object-fit: cover !important; display: block !important; border-radius: 0 !important;
             }
             html.smg-threadlist .message--articlePreview .smg-art-ph {
-                display: flex !important; align-items: center !important; justify-content: center !important;
-                background: radial-gradient(circle at 50% 40%, var(--smg-s3), var(--smg-s1)) !important; text-decoration: none;
+                display: flex !important; align-items: center !important; justify-content: center !important; text-decoration: none;
             }
             /* embeds/jogos do trecho que escapam (ex.: Virtualfem) — NÃO renderiza dentro do card */
             html.smg-threadlist .message--articlePreview iframe,

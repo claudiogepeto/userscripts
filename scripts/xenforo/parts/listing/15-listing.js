@@ -87,8 +87,8 @@
         obs.observe(target, { attributes: true, attributeFilter: ['data-badge'], childList: true, subtree: true, characterData: true });
     }
 
-    // SMG: cards sem thumb real (XF mostra o avatar do autor, ou nada) ganham um PLACEHOLDER
-    // com a marca SMG. Vale no grid E na lista (o CSS ajusta o tamanho por modo). Idempotente.
+    // cards sem thumb real (XF mostra o avatar do autor, ou nada) ganham o NOSSO placeholder
+    // (smgThumbPh: ícone pelo tipo do post). Vale no grid E na lista (o CSS ajusta o tamanho por modo). Idempotente.
     // forum_view_type_article (ex.: games.91): marca o container dos .message--articlePreview como grid
     // (pega também sticky/featured que ficam fora do .block-body) + placeholder nos cards sem imagem.
     function styleArticleCards(roots) {
@@ -96,7 +96,6 @@
         const arts = [];
         eachIn(roots, '.message--articlePreview:not([data-smg-art])', art => arts.push(art));
         if (!arts.length) return;
-        const mark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         const wantPh = FEATURES.thumbPlaceholders;
 
         // RECONSTRÓI: o XF (article view) usa um grid "magazine" com grid-template-areas + grid-area por
@@ -143,10 +142,10 @@
                     return;
                 }
                 const ph = document.createElement('a');
-                ph.className = 'smg-art-ph';
+                ph.className = 'smg-art-ph smg-ph';
                 const tl = art.querySelector('.articlePreview-title a[href*="/threads/"]');
                 if (tl) ph.href = tl.getAttribute('href');
-                ph.innerHTML = mark;
+                ph.innerHTML = smgThumbPh(smgThreadKind((art.querySelector('.articlePreview-title') || art).textContent));
                 main.insertBefore(ph, main.firstChild);
                 if (imgLink) imgLink.style.setProperty('display', 'none', 'important');
                 art.dataset.smgArtReady = '1';
@@ -190,7 +189,6 @@
 
     function markGridPlaceholders(roots) {
         if (!document.documentElement.classList.contains('smg-threadlist')) return;  // os 2 sites
-        const mark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         eachIn(roots, '.structItem--thread:not([data-smg-ph])', it => {
             it.setAttribute('data-smg-ph', '1');   // marca ANTES dos guards (REGRA DE OURO): ad/linha sem ícone ficava fora da marca e era re-varrida em todo full-scan
             const cell = it.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
@@ -211,8 +209,8 @@
                 }
                 it.classList.add('smg-no-thumb');
                 const ph = document.createElement('div');
-                ph.className = 'smg-thumb-ph';
-                ph.innerHTML = mark;
+                ph.className = 'smg-thumb-ph smg-ph';
+                ph.innerHTML = smgThumbPh(smgThreadKind((it.querySelector('.structItem-title') || it).textContent));
                 cell.insertBefore(ph, cell.firstChild);
                 it.dataset.smgPhReady = '1';
             };

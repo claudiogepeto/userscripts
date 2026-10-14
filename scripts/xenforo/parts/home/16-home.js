@@ -3,7 +3,7 @@
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)
     //
     // Mapa: expandSubForums · makeHomeCardsClickable ·
-    //   buildHomeFeed (+feedThumbUrl/loadFeed) · layoutHomeSidebar
+    //   buildHomeFeed (+loadFeed) · layoutHomeSidebar
     // =========================================================
 
     // Assinatura barata da estrutura que as passagens de layout realmente usam. O INIT compara esse valor
@@ -600,16 +600,6 @@
     function homeComponentsReady() {
         return homeSidebarDone && homeFeedDone;
     }
-    // URL da thumbnail da THREAD (não do avatar): dcThumbnail tem em background-image; dtt no src.
-    function feedThumbUrl(it) {
-        const ic = it.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
-        if (!ic) return '';
-        const img = ic.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, img');
-        if (!img) return '';
-        const bg = (img.style.backgroundImage || '').match(/url\(['"]?([^'")]+)['"]?\)/i);
-        const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
-        return /^data:/.test(u) ? '' : u;
-    }
     // monta dados serializáveis de 1 card a partir de um .structItem--thread
     function extractFeedItemData(it) {
         const titleCell = it.querySelector('.structItem-title');
@@ -618,7 +608,7 @@
         const lastA = it.querySelector('a.structItem-latestDate[href], .structItem-cell--latest a[href*="/post-"]');
         const href = safeHref((lastA && lastA.getAttribute('href'))
             || (titleLink.getAttribute('href').replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '') + '/latest'));
-        const thumbUrl = feedThumbUrl(it);
+        const thumbUrl = threadThumbUrl(it);   // só a thumb da THREAD (nunca o avatar do autor)
         const labels = [];
         titleCell.querySelectorAll('.label, .prefix').forEach(s => {
             labels.push({ cls: s.getAttribute('class') || 'label', text: s.textContent.trim() });
@@ -632,7 +622,7 @@
     }
 
     // renderiza 1 card vertical refinado a partir dos dados do item
-    function createFeedCardEl(data, phMark) {
+    function createFeedCardEl(data) {
         if (!data) return null;
         const card = document.createElement('a');
         card.className = 'smg-feed-card';
@@ -640,19 +630,17 @@
 
         const thumb = document.createElement('div');
         thumb.className = 'smg-feed-card-thumb';
+        const usePh = () => {
+            thumb.classList.add('smg-feed-noimg', 'smg-ph');
+            thumb.innerHTML = smgThumbPh(smgThreadKind(data.titleText + ' ' + (data.labels || []).map(l => l.text).join(' ')));
+        };
         if (data.thumbUrl) {
             const im = document.createElement('img');
             im.loading = 'lazy';
             im.src = data.thumbUrl;
-            im.addEventListener('error', () => {
-                thumb.classList.add('smg-feed-noimg');
-                thumb.innerHTML = phMark;
-            });
+            im.addEventListener('error', usePh);
             thumb.appendChild(im);
-        } else {
-            thumb.classList.add('smg-feed-noimg');
-            thumb.innerHTML = phMark;
-        }
+        } else usePh();
 
         const body = document.createElement('div');
         body.className = 'smg-feed-card-body';
@@ -730,7 +718,7 @@
         try { return new URL(href, location.href).href; } catch (e) { return ''; }
     }
     // renderiza UMA página de structItems no painel (dedup por feed._seen, sem chat). append=false limpa antes.
-    function feedRenderPage(doc, feed, panel, phMark, append) {
+    function feedRenderPage(doc, feed, panel, append) {
         const frag = document.createDocumentFragment();
         const parsedItems = [];
         let n = 0;
@@ -742,7 +730,7 @@
             const data = extractFeedItemData(it);
             if (data) {
                 parsedItems.push(data);
-                const c = createFeedCardEl(data, phMark);
+                const c = createFeedCardEl(data);
                 if (c) { frag.appendChild(c); n++; }
             }
         });
@@ -782,7 +770,7 @@
     }
 
     // 1ª carga da aba: cache imediato se disponível, senão skeletons → rede → salva cache
-    function loadFeed(feed, panel, phMark, onDone) {
+    function loadFeed(feed, panel, onDone) {
         if (panel.dataset.loaded) { if (onDone) onDone(); return; }
         feed._seen = new Set(); feed._nextUrl = ''; feed._loadingMore = false;
 
@@ -804,7 +792,7 @@
             cached.items.forEach(data => {
                 const k = (data.href || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
                 feed._seen.add(k);
-                const c = createFeedCardEl(data, phMark);
+                const c = createFeedCardEl(data);
                 if (c) frag.appendChild(c);
             });
             panel.appendChild(frag);
@@ -842,7 +830,7 @@
         fetchDoc(feed.url, { credentials: 'same-origin' })
             .then(doc => {
                 if (!isCurrentLoad()) return;
-                const res = feedRenderPage(doc, feed, panel, phMark, false);
+                const res = feedRenderPage(doc, feed, panel, false);
                 feed._nextUrl = res.count ? feedNextUrl(doc) : '';
                 if (res.count) {
                     setCachedFeed(feed.key, res.items, feed._nextUrl);
@@ -859,7 +847,7 @@
             });
     }
     // PAGINAÇÃO: busca a próxima página e dá APPEND (chamada ao chegar perto da borda direita do scroll).
-    function loadMoreFeed(feed, panel, phMark, onDone) {
+    function loadMoreFeed(feed, panel, onDone) {
         if (!feed || !feed._nextUrl || feed._loadingMore) return;
         if (panel.querySelectorAll('.smg-feed-card:not(.smg-feed-skel)').length >= FEED_MAX) { feed._nextUrl = ''; return; }   // teto: para de paginar
         feed._loadingMore = true;
@@ -868,7 +856,7 @@
         for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
         fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             skels.forEach(s => s.remove());
-            const res = feedRenderPage(doc, feed, panel, phMark, true);
+            const res = feedRenderPage(doc, feed, panel, true);
             feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
             feed._loadingMore = false;
             if (onDone) onDone();
@@ -887,7 +875,6 @@
             return;
         }
         homeFeedDone = true;
-        const phMark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         const block = document.createElement('div'); block.className = 'smg-feed-block';
         const tabsEl = document.createElement('div'); tabsEl.className = 'smg-feed-tabs';
         const tablist = document.createElement('div'); tablist.className = 'smg-feed-tablist';
@@ -913,7 +900,7 @@
                 scrollRaf = 0;
                 updateNav();
                 const p = activePanel(); if (!p || !p._feed) return;
-                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, updateNav);
             });
         };
         [-1, 1].forEach(dir => {
@@ -945,7 +932,7 @@
                 panelsEl.querySelectorAll('.smg-feed-panel').forEach(p => p.classList.remove('is-active'));
                 tab.classList.add('is-active'); panel.classList.add('is-active');
                 seeAll.href = f.url;
-                loadFeed(f, panel, phMark, updateNav);
+                loadFeed(f, panel, updateNav);
                 updateNav();
             });
             tablist.appendChild(tab); panelsEl.appendChild(panel);
@@ -955,7 +942,7 @@
         block.append(tabsEl, scrollWrap);
         i18nDom(block);
         parent.insertBefore(block, ref);
-        loadFeed(feeds[0], feeds[0]._panel, phMark, updateNav);
+        loadFeed(feeds[0], feeds[0]._panel, updateNav);
     }
 
     function layoutHomeSidebar() {

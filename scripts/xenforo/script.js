@@ -72,7 +72,7 @@
 //  CONFIG ............ DEFAULT_FEATURES, FEATURES, gmGet/gmSet, saveFeatures, SETTINGS_META
 //  i18n .............. IS_PT, I18N_PT, i18n(), i18nDom(), navHref()
 //  sessão ............ isLoggedIn(), nativeLoginLink/loginHref/registerHref, wireAuthClick (visitante)
-//  ÍCONES ............ ICONS{}, SMG_LOGO_HTML, SMG_PH_MARK/SC_PH_MARK, SMG_FAVICON
+//  ÍCONES ............ ICONS{}, SMG_LOGO_HTML, smgThumbPh/smgPostKind, SMG_FAVICON
 //  CSS ............... injectStyles() + parts/styles/*  ← fragmentos por contexto, montados em ordem
 //  HELP texto/url .... getBigUrl, cleanText, smgIsWatching, waitForElement
 //  HELP UI ........... makeDockButton/makeDockLink, setBtnIcon/Label, makeDivider/Group, readPageJump
@@ -525,6 +525,7 @@
         info: svgIcon('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
         warn: svgIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>'),
         gallery: svgIcon('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
+        typeText: svgIcon('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>'),
         typeImage: svgIcon('<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
         typeVideo: svgIcon('<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/>'),
         user: svgIcon('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
@@ -556,8 +557,28 @@
 
     // logo do SMG: wordmark "SMG" (G rosa = acento da marca)
     const SMG_LOGO_HTML = '<span class="smg-logo"><span class="smg-logo-word">SM<span class="smg-logo-accent">G</span></span></span>';
-    // marca usada no placeholder de cards sem thumb — mesma cara do logo (SM + G rosa), só que apagada
-    const SMG_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="8.5" cy="8.5" r="1.4"/><path d="m21 15-5-5L5 21"/></svg></div>';
+    // FALLBACK DE THUMB (nosso, NUNCA o avatar do autor): superfície AMOLED no visual do skeleton +
+    // ícone pelo TIPO do post. Um só pra todo card de thread (lista/grade/artigo/home) e de feed/salvos.
+    const SMG_PH_KINDS = { text: 'typeText', link: 'link', video: 'typeVideo', media: 'typeImage' };
+    function smgThumbPh(kind) {
+        const k = SMG_PH_KINDS[kind] ? kind : 'text';
+        return '<div class="smg-ph-inner smg-ph--' + k + '"><span class="smg-ph-ico">' + ICONS[SMG_PH_KINDS[k]] + '</span></div>';
+    }
+    // tipo do post: pelo HTML do conteúdo (feed/salvos) ou pelo título + etiquetas (card de thread)
+    function smgPostKind(html) {
+        const s = String(html || '');
+        if (/<video|<iframe|data-s9e-mediaembed|redgifs|smg-rg\b|\.(?:mp4|webm|m4v)\b/i.test(s)) return 'video';
+        if (/<img[^>]*(?:bbImage|data-url)|\.(?:jpe?g|png|gif|webp|avif)\b/i.test(s)) return 'media';
+        if (/<a\b[^>]*href=["']https?:|bbCodeBlock--unfurl/i.test(s)) return 'link';
+        return 'text';
+    }
+    function smgThreadKind(text) {
+        const s = String(text || '');
+        if (/\b(?:videos?|vids?|clips?|gifs?|webm|mp4|onlyfans|of)\b/i.test(s)) return 'video';
+        if (/\b(?:links?|urls?|mega|drive)\b/i.test(s)) return 'link';
+        if (/\b(?:pics?|photos?|images?|albums?|galler(?:y|ies)|sets?|leaks?)\b/i.test(s)) return 'media';
+        return 'text';
+    }
     // favicon SVG (data-URI, nada hospedado): quadrado arredondado rosa + "S" branca (legível a 16px)
     const SMG_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
@@ -565,8 +586,6 @@
         '<rect width="64" height="64" rx="15" fill="url(#g)"/>' +
         '<text x="32" y="45" font-family="Arial,Helvetica,sans-serif" font-size="40" font-weight="800" fill="#fff" text-anchor="middle">S</text>' +
         '</svg>');
-    // SimpCity (e fallback): marca moderna com ícone de mídia e monograma
-    const SC_PH_MARK = '<div class="smg-ph-inner"><svg class="smg-ph-ico" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="smg-ph-word">SC</span></div>';
 
     // =========================================================
     // STYLES: compose context-owned CSS fragments in one deterministic style node.
@@ -2490,8 +2509,7 @@
             html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
             html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
             html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
-            html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, var(--smg-s3), var(--smg-s1)); }
-            html.smg-home .smg-feed-card-thumb.smg-feed-noimg .smg-ph-word { font-size: var(--smg-fs-32); opacity: .5; }
+            html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; }
             /* Scrim gradiente cinematográfico */
             html.smg-home .smg-feed-card-body {
                 position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-2); padding: 56px var(--smg-sp-16) var(--smg-sp-16);
@@ -7864,16 +7882,22 @@
             }`;
     // ── CSS: thread list placeholders and article view ──
     const CSS_THREAD_CARDS = `
-            /* PLACEHOLDER (marca SMG) nos cards sem thumb real — no lugar do avatar/thumb-quebrada/vazio.
-               esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho do placeholder muda por modo. */
+            /* FALLBACK DE THUMB (smgThumbPh, .smg-ph): o MESMO em todo card de thread, feed e salvos —
+               superfície AMOLED no visual do skeleton + ícone pelo tipo do post. Nunca o avatar do autor. */
+            .smg-ph {
+                background: linear-gradient(180deg, var(--smg-w-06), var(--smg-w-02)), #000 !important;
+                box-shadow: inset 0 0 0 1px var(--smg-w-06); color: var(--smg-w-30) !important; overflow: hidden;
+            }
+            .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--smg-w-30); }
+            .smg-ph-ico { display: inline-flex; font-size: var(--smg-fs-32); }
+            .smg-fp-thumb .smg-ph-ico { font-size: var(--smg-fs-22); }
+            /* lista/grade: esconde avatar + thumb (quebrada) em QUALQUER modo; o tamanho muda por modo. */
             .smg-thumb-ph { display: none; }
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .avatar,
             html.smg-threadlist .structItem--thread.smg-no-thumb .structItem-cell--icon:not(.structItem-cell--iconEnd) .structItem-iconContainer,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dcThumbnail,
             html.smg-threadlist .structItem--thread.smg-no-thumb .dtt-thread-thumbnail { display: none !important; }
-            .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box;
-                background: var(--smg-s2) !important; color: var(--smg-w-40) !important; }
-            .smg-thumb-ph .smg-ph-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+            .smg-thumb-ph { align-items: center; justify-content: center; box-sizing: border-box; }
             html.smg-smg.smg-threadlist .block-container,
             html.smg-smg.smg-threadlist .structItemContainer,
             html.smg-smg.smg-threadlist .uix_stickyContainerOuter {
@@ -7891,11 +7915,8 @@
             @media (max-width: 600px) {
                 /* LISTA mobile: thumb 92×70 + marca menor */
                 html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-thumb-ph { width: 92px; height: 70px; border-radius: var(--smg-r-8); }
-                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-word { font-size: var(--smg-fs-13); letter-spacing: 1px; }
+                html.smg-threadlist:not(.smg-tv-grid) .structItem--thread.smg-no-thumb .smg-ph-ico { font-size: var(--smg-fs-24); }
             }
-            .smg-ph-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--smg-sp-6); color: var(--smg-w-22); text-align: center; }
-            .smg-ph-ico { width: 34px; height: 34px; opacity: 0.55; }
-            .smg-ph-word { font-size: var(--smg-fs-14); font-weight: 800; letter-spacing: 2px; color: var(--smg-w-30); line-height: 1; user-select: none; }
 
             /* ===== forum_view_type_article (ex.: /forums/games.91/): threads = .message--articlePreview (NÃO .structItem--thread).
                Vira o MESMO grid de cards das outras páginas (imagem 1:1 + título + meta), sem o excerpt.
@@ -7942,8 +7963,7 @@
                 object-fit: cover !important; display: block !important; border-radius: 0 !important;
             }
             html.smg-threadlist .message--articlePreview .smg-art-ph {
-                display: flex !important; align-items: center !important; justify-content: center !important;
-                background: radial-gradient(circle at 50% 40%, var(--smg-s3), var(--smg-s1)) !important; text-decoration: none;
+                display: flex !important; align-items: center !important; justify-content: center !important; text-decoration: none;
             }
             /* embeds/jogos do trecho que escapam (ex.: Virtualfem) — NÃO renderiza dentro do card */
             html.smg-threadlist .message--articlePreview iframe,
@@ -8640,7 +8660,6 @@
             .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-16); padding: var(--smg-sp-20) var(--smg-sp-24) var(--smg-sp-16); border-bottom: 1px solid var(--smg-bd); }
             .smg-fp-thumb { flex: 0 0 auto; width: 54px; height: 54px; border-radius: var(--smg-r-12); overflow: hidden; background: var(--smg-w-06); display: block; }
             .smg-fp-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
-            .smg-fp-thumb--letter { display: flex; align-items: center; justify-content: center; font-size: var(--smg-fs-22); font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c5cff, #c54b8c); }   /* sem thumb / .su morto → inicial do tópico */
             .smg-fp-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-fp-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
             .smg-fp-tags > * { font-size: var(--smg-fs-11) !important; line-height: 1; vertical-align: middle; }   /* prefixo = chip (mantém a cor nativa do label, injetado via innerHTML) */
@@ -18718,8 +18737,8 @@
         obs.observe(target, { attributes: true, attributeFilter: ['data-badge'], childList: true, subtree: true, characterData: true });
     }
 
-    // SMG: cards sem thumb real (XF mostra o avatar do autor, ou nada) ganham um PLACEHOLDER
-    // com a marca SMG. Vale no grid E na lista (o CSS ajusta o tamanho por modo). Idempotente.
+    // cards sem thumb real (XF mostra o avatar do autor, ou nada) ganham o NOSSO placeholder
+    // (smgThumbPh: ícone pelo tipo do post). Vale no grid E na lista (o CSS ajusta o tamanho por modo). Idempotente.
     // forum_view_type_article (ex.: games.91): marca o container dos .message--articlePreview como grid
     // (pega também sticky/featured que ficam fora do .block-body) + placeholder nos cards sem imagem.
     function styleArticleCards(roots) {
@@ -18727,7 +18746,6 @@
         const arts = [];
         eachIn(roots, '.message--articlePreview:not([data-smg-art])', art => arts.push(art));
         if (!arts.length) return;
-        const mark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         const wantPh = FEATURES.thumbPlaceholders;
 
         // RECONSTRÓI: o XF (article view) usa um grid "magazine" com grid-template-areas + grid-area por
@@ -18774,10 +18792,10 @@
                     return;
                 }
                 const ph = document.createElement('a');
-                ph.className = 'smg-art-ph';
+                ph.className = 'smg-art-ph smg-ph';
                 const tl = art.querySelector('.articlePreview-title a[href*="/threads/"]');
                 if (tl) ph.href = tl.getAttribute('href');
-                ph.innerHTML = mark;
+                ph.innerHTML = smgThumbPh(smgThreadKind((art.querySelector('.articlePreview-title') || art).textContent));
                 main.insertBefore(ph, main.firstChild);
                 if (imgLink) imgLink.style.setProperty('display', 'none', 'important');
                 art.dataset.smgArtReady = '1';
@@ -18821,7 +18839,6 @@
 
     function markGridPlaceholders(roots) {
         if (!document.documentElement.classList.contains('smg-threadlist')) return;  // os 2 sites
-        const mark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         eachIn(roots, '.structItem--thread:not([data-smg-ph])', it => {
             it.setAttribute('data-smg-ph', '1');   // marca ANTES dos guards (REGRA DE OURO): ad/linha sem ícone ficava fora da marca e era re-varrida em todo full-scan
             const cell = it.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
@@ -18842,8 +18859,8 @@
                 }
                 it.classList.add('smg-no-thumb');
                 const ph = document.createElement('div');
-                ph.className = 'smg-thumb-ph';
-                ph.innerHTML = mark;
+                ph.className = 'smg-thumb-ph smg-ph';
+                ph.innerHTML = smgThumbPh(smgThreadKind((it.querySelector('.structItem-title') || it).textContent));
                 cell.insertBefore(ph, cell.firstChild);
                 it.dataset.smgPhReady = '1';
             };
@@ -18883,7 +18900,7 @@
     // (obs: buildFilterBars=THREAD/barra e buildTopbar=TOPBAR ficam logo abaixo deste grupo)
     //
     // Mapa: expandSubForums · makeHomeCardsClickable ·
-    //   buildHomeFeed (+feedThumbUrl/loadFeed) · layoutHomeSidebar
+    //   buildHomeFeed (+loadFeed) · layoutHomeSidebar
     // =========================================================
 
     // Assinatura barata da estrutura que as passagens de layout realmente usam. O INIT compara esse valor
@@ -19480,16 +19497,6 @@
     function homeComponentsReady() {
         return homeSidebarDone && homeFeedDone;
     }
-    // URL da thumbnail da THREAD (não do avatar): dcThumbnail tem em background-image; dtt no src.
-    function feedThumbUrl(it) {
-        const ic = it.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
-        if (!ic) return '';
-        const img = ic.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, img');
-        if (!img) return '';
-        const bg = (img.style.backgroundImage || '').match(/url\(['"]?([^'")]+)['"]?\)/i);
-        const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
-        return /^data:/.test(u) ? '' : u;
-    }
     // monta dados serializáveis de 1 card a partir de um .structItem--thread
     function extractFeedItemData(it) {
         const titleCell = it.querySelector('.structItem-title');
@@ -19498,7 +19505,7 @@
         const lastA = it.querySelector('a.structItem-latestDate[href], .structItem-cell--latest a[href*="/post-"]');
         const href = safeHref((lastA && lastA.getAttribute('href'))
             || (titleLink.getAttribute('href').replace(/\/(unread|latest|page-\d+|post-\d+).*$/, '').replace(/\/$/, '') + '/latest'));
-        const thumbUrl = feedThumbUrl(it);
+        const thumbUrl = threadThumbUrl(it);   // só a thumb da THREAD (nunca o avatar do autor)
         const labels = [];
         titleCell.querySelectorAll('.label, .prefix').forEach(s => {
             labels.push({ cls: s.getAttribute('class') || 'label', text: s.textContent.trim() });
@@ -19512,7 +19519,7 @@
     }
 
     // renderiza 1 card vertical refinado a partir dos dados do item
-    function createFeedCardEl(data, phMark) {
+    function createFeedCardEl(data) {
         if (!data) return null;
         const card = document.createElement('a');
         card.className = 'smg-feed-card';
@@ -19520,19 +19527,17 @@
 
         const thumb = document.createElement('div');
         thumb.className = 'smg-feed-card-thumb';
+        const usePh = () => {
+            thumb.classList.add('smg-feed-noimg', 'smg-ph');
+            thumb.innerHTML = smgThumbPh(smgThreadKind(data.titleText + ' ' + (data.labels || []).map(l => l.text).join(' ')));
+        };
         if (data.thumbUrl) {
             const im = document.createElement('img');
             im.loading = 'lazy';
             im.src = data.thumbUrl;
-            im.addEventListener('error', () => {
-                thumb.classList.add('smg-feed-noimg');
-                thumb.innerHTML = phMark;
-            });
+            im.addEventListener('error', usePh);
             thumb.appendChild(im);
-        } else {
-            thumb.classList.add('smg-feed-noimg');
-            thumb.innerHTML = phMark;
-        }
+        } else usePh();
 
         const body = document.createElement('div');
         body.className = 'smg-feed-card-body';
@@ -19610,7 +19615,7 @@
         try { return new URL(href, location.href).href; } catch (e) { return ''; }
     }
     // renderiza UMA página de structItems no painel (dedup por feed._seen, sem chat). append=false limpa antes.
-    function feedRenderPage(doc, feed, panel, phMark, append) {
+    function feedRenderPage(doc, feed, panel, append) {
         const frag = document.createDocumentFragment();
         const parsedItems = [];
         let n = 0;
@@ -19622,7 +19627,7 @@
             const data = extractFeedItemData(it);
             if (data) {
                 parsedItems.push(data);
-                const c = createFeedCardEl(data, phMark);
+                const c = createFeedCardEl(data);
                 if (c) { frag.appendChild(c); n++; }
             }
         });
@@ -19662,7 +19667,7 @@
     }
 
     // 1ª carga da aba: cache imediato se disponível, senão skeletons → rede → salva cache
-    function loadFeed(feed, panel, phMark, onDone) {
+    function loadFeed(feed, panel, onDone) {
         if (panel.dataset.loaded) { if (onDone) onDone(); return; }
         feed._seen = new Set(); feed._nextUrl = ''; feed._loadingMore = false;
 
@@ -19684,7 +19689,7 @@
             cached.items.forEach(data => {
                 const k = (data.href || '').replace(/\/(unread|latest|post-\d+|page-\d+).*$/, '').replace(/\/$/, '');
                 feed._seen.add(k);
-                const c = createFeedCardEl(data, phMark);
+                const c = createFeedCardEl(data);
                 if (c) frag.appendChild(c);
             });
             panel.appendChild(frag);
@@ -19722,7 +19727,7 @@
         fetchDoc(feed.url, { credentials: 'same-origin' })
             .then(doc => {
                 if (!isCurrentLoad()) return;
-                const res = feedRenderPage(doc, feed, panel, phMark, false);
+                const res = feedRenderPage(doc, feed, panel, false);
                 feed._nextUrl = res.count ? feedNextUrl(doc) : '';
                 if (res.count) {
                     setCachedFeed(feed.key, res.items, feed._nextUrl);
@@ -19739,7 +19744,7 @@
             });
     }
     // PAGINAÇÃO: busca a próxima página e dá APPEND (chamada ao chegar perto da borda direita do scroll).
-    function loadMoreFeed(feed, panel, phMark, onDone) {
+    function loadMoreFeed(feed, panel, onDone) {
         if (!feed || !feed._nextUrl || feed._loadingMore) return;
         if (panel.querySelectorAll('.smg-feed-card:not(.smg-feed-skel)').length >= FEED_MAX) { feed._nextUrl = ''; return; }   // teto: para de paginar
         feed._loadingMore = true;
@@ -19748,7 +19753,7 @@
         for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.innerHTML = FEED_SKEL_CARD; const el = d.firstChild; panel.appendChild(el); skels.push(el); }
         fetchDoc(url, { credentials: 'same-origin' }).then(doc => {
             skels.forEach(s => s.remove());
-            const res = feedRenderPage(doc, feed, panel, phMark, true);
+            const res = feedRenderPage(doc, feed, panel, true);
             feed._nextUrl = res.count ? feedNextUrl(doc) : '';   // página sem itens novos → para (anti-loop)
             feed._loadingMore = false;
             if (onDone) onDone();
@@ -19767,7 +19772,6 @@
             return;
         }
         homeFeedDone = true;
-        const phMark = document.documentElement.classList.contains('smg-smg') ? SMG_PH_MARK : SC_PH_MARK;
         const block = document.createElement('div'); block.className = 'smg-feed-block';
         const tabsEl = document.createElement('div'); tabsEl.className = 'smg-feed-tabs';
         const tablist = document.createElement('div'); tablist.className = 'smg-feed-tablist';
@@ -19793,7 +19797,7 @@
                 scrollRaf = 0;
                 updateNav();
                 const p = activePanel(); if (!p || !p._feed) return;
-                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, phMark, updateNav);
+                if (p.scrollWidth - p.clientWidth - p.scrollLeft <= 700) loadMoreFeed(p._feed, p, updateNav);
             });
         };
         [-1, 1].forEach(dir => {
@@ -19825,7 +19829,7 @@
                 panelsEl.querySelectorAll('.smg-feed-panel').forEach(p => p.classList.remove('is-active'));
                 tab.classList.add('is-active'); panel.classList.add('is-active');
                 seeAll.href = f.url;
-                loadFeed(f, panel, phMark, updateNav);
+                loadFeed(f, panel, updateNav);
                 updateNav();
             });
             tablist.appendChild(tab); panelsEl.appendChild(panel);
@@ -19835,7 +19839,7 @@
         block.append(tabsEl, scrollWrap);
         i18nDom(block);
         parent.insertBefore(block, ref);
-        loadFeed(feeds[0], feeds[0]._panel, phMark, updateNav);
+        loadFeed(feeds[0], feeds[0]._panel, updateNav);
     }
 
     function layoutHomeSidebar() {
@@ -20784,14 +20788,7 @@
         const title = ((titleA && titleA.textContent) || '').replace(/\s+/g, ' ').trim();
 
         // thumbnail
-        let thumb = '';
-        const thEl = it.querySelector('.dcThumbnail img, .dtt-thread-thumbnail img, .structItem-cell--icon img');
-        if (thEl) {
-            const bg = (thEl.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
-            thumb = (bg && bg[1]) || thEl.getAttribute('data-src') || thEl.getAttribute('src') || '';
-        }
-        if (!thumb) thumb = feedThumbUrl(it);
-        if (!thumb) thumb = thumbCacheGet(path, title) || '';
+        const thumb = threadThumbUrl(it) || thumbCacheGet(path, title) || '';   // só a da THREAD (nunca o avatar)
 
         const domUnread = it.classList.contains('is-unread') || it.classList.contains('structItem--unread');
 
@@ -24495,8 +24492,8 @@
                 title = rawTitleFallback;
             }
 
-            const av = row.querySelector('.contentRow-figure .avatar img, .contentRow-figure img, .avatar img, .structItem-cell--icon img');
-            const thumb = (av && (av.getAttribute('data-src') || av.getAttribute('src') || '')) || '';
+            // thumb da THREAD (da linha, se ela tiver, ou do cache); o avatar do autor nunca vira thumb
+            const thumb = threadThumbUrl(row) || thumbCacheGet(href, title) || '';
             const authorA = row.querySelector('.contentRow-minor a.username, .contentRow-minor a[href*="/members/"], .structItem-parts a.username, a.username, a[href*="/members/"]');
             const author = (authorA && authorA.textContent.trim()) || (row.querySelector('.contentRow-figure .avatar[title], .avatar[title]') || {}).title || '';
             let note = ((row.querySelector('.contentRow-snippet, .structItem-snippet') || {}).textContent || '').replace(/\s+/g, ' ').trim();
@@ -24505,7 +24502,7 @@
             const bmTs = timeTs(te);
             let postUrl = bmCanonicalPostUrl(href);
             if (!postUrl) postUrl = postId.startsWith('t-') ? ('/threads/' + postId.slice(2) + '/') : ('/posts/' + postId + '/');
-            out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: /^data:/.test(thumb) ? '' : thumb, note: note, bmTs: bmTs });
+            out.push({ postId: postId, postUrl: postUrl, title: title, prefixesHtml: titleMeta.prefixesHtml, author: author, authorHref: authorA ? authorA.getAttribute('href') : '', thumb: thumb, note: note, bmTs: bmTs });
         });
         return out;
     }
@@ -25480,15 +25477,14 @@
 
         const head = document.createElement('div'); head.className = 'smg-fp-head';
         const thumbA = document.createElement('a'); thumbA.className = 'smg-fp-thumb'; thumbA.href = permalink;
-        const tLetter = ((threadTitle || '?').trim().charAt(0) || '?').toUpperCase();
-        const useLetter = () => { thumbA.replaceChildren(); thumbA.classList.add('smg-fp-thumb--letter'); thumbA.textContent = tLetter; };
+        const usePh = () => { thumbA.classList.add('smg-ph'); thumbA.innerHTML = smgThumbPh(smgPostKind(contentHtml)); };
         if (threadThumb && !/^data:/i.test(threadThumb)) {
             const im = document.createElement('img'); im.src = threadThumb; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = '';
-            const fail = () => useLetter();
+            const fail = () => usePh();
             im.addEventListener('error', fail);
             im.addEventListener('load', () => { if (!im.naturalWidth) fail(); });
             thumbA.appendChild(im);
-        } else useLetter();
+        } else usePh();
         head.appendChild(thumbA);
 
         const meta = document.createElement('div'); meta.className = 'smg-fp-meta';
