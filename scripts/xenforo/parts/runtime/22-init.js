@@ -416,6 +416,11 @@
     // Logout, login, editor e anexos continuam como carregamento inteiro.
     let softNavToken = 0;
     let softNavUsed = false;
+    // XF.DataStore (um Map fechado num closure, sem API pra varrer) guarda cada elemento que o XF.activate
+    // tocou, então todo .p-body trocado fica vivo. Depois de SOFT_NAV_MAX_SWAPS trocas a navegação seguinte
+    // é uma carga inteira, que zera o acúmulo (~0.8 MB e ~11k nós por troca).
+    const SOFT_NAV_MAX_SWAPS = 10;
+    let softNavSwaps = 0;
     let softNavUrl = location.pathname + location.search;
     const SOFT_PAGE_CLASSES = [
         'smg-home', 'smg-home-page', 'smg-home-pending', 'smg-home-ready',
@@ -597,6 +602,11 @@
         let abs;
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
+        if (softNavSwaps >= SOFT_NAV_MAX_SWAPS) {
+            if (opts.push === false) location.reload();   // Voltar/Avançar: a URL já é a de destino
+            else location.href = abs.href;
+            return;
+        }
         const token = ++softNavToken;
         stopWatchedStream();
         document.dispatchEvent(new Event('smg-search-close'));
@@ -625,6 +635,7 @@
             const freshBody = document.importNode(nextBody, true);
             curBodies.forEach(b => { releaseMediaIn(b); releaseObserversIn(b); });   // antes de sair do DOM: solta mídia e observers da página velha
             curBody.replaceWith(freshBody);
+            softNavSwaps++;
             curBodies.forEach(el => { if (el.isConnected) el.remove(); });
             swapOuterPageHeader(doc, nextBody, freshBody);
             document.querySelectorAll('.smg-feed-block, [data-smg-home-hub], #smg-river').forEach(el => {

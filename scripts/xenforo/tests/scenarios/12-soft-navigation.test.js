@@ -178,3 +178,18 @@ scenario('a page whose XenForo has no handler registry or tooltip cache still na
     assert.equal(page.xf.activate.length, 1, 'activation still happens');
     assert.ok(page.$('#js-post-2001'));
 });
+
+scenario('after ten soft navigations the next one is a full page load', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }] }), routes: site(), before: stubXF });
+    await page.settle(60);
+    const targets = [FORUM, '/threads/other.200/', THREAD, FORUM, '/threads/other.200/', THREAD, FORUM, '/threads/other.200/', THREAD, FORUM];
+    for (const href of targets) await go(page, href);
+    assert.equal(page.window.location.pathname, FORUM, 'ten navigations are soft');
+    const fetched = page.requested(/\/threads\/other\.200\//).length;
+    const navLogs = () => page.logs.filter(l => l[0] === 'jsdomError' && /navigation/i.test(l[1])).length;
+    assert.equal(navLogs(), 0, 'control: no full load so far');
+    await go(page, '/threads/other.200/');
+    assert.equal(page.requested(/\/threads\/other\.200\//).length, fetched, 'the eleventh is not fetched for a body swap');
+    assert.equal(navLogs(), 1, 'the eleventh asks the browser for a full load');
+    assert.ok(page.$('#smg-topbar') && page.$$('.p-body').length === 1, 'the current page is left untouched');
+});
