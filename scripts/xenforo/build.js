@@ -133,6 +133,33 @@ const sources = PART_FILES.map(file => ({ file, src: fs.readFileSync(path.join(P
     }
 }
 
+// ---- check (b): colours come from the token palette ----
+// Raw colour literals (hex, rgb/rgba, hsl/hsla) are allowed in CSS only inside the palette
+// file(s). Literals that predate this check are listed per file in color-allowlist.json:
+// do not add to it — use a --smg-* token, or add a token to the palette. An entry that is no
+// longer used must be removed, so the list only shrinks.
+{
+    const COLOR_PALETTE_FILES = ['styles/01-base.js'];
+    const allow = JSON.parse(fs.readFileSync(path.join(__dirname, 'color-allowlist.json'), 'utf8'));
+    const COLOR = /#[0-9a-fA-F]{3,8}(?![\w-])|\b(?:rgba?|hsla?)\([^)]*\)/g;
+    const errors = [];
+    sources.filter(({ file }) => file.startsWith('styles/') || /\/css-[^/]+\.js$/.test(file))
+        .filter(({ file }) => !COLOR_PALETTE_FILES.includes(file))
+        .forEach(({ file, src }) => {
+            const css = src.split('`').filter((_, i) => i % 2 === 1).join('`').replace(/\/\*[\s\S]*?\*\//g, '');
+            const found = new Set((css.match(COLOR) || []).map(v => v.toLowerCase().replace(/\s+/g, '')));
+            const allowed = new Set(allow[file] || []);
+            found.forEach(v => { if (!allowed.has(v)) errors.push(file + ': ' + v + '  (use a --smg-* token)'); });
+            allowed.forEach(v => { if (!found.has(v)) errors.push(file + ': ' + v + '  (no longer used: remove it from color-allowlist.json)'); });
+        });
+    Object.keys(allow).filter(file => !PART_FILES.includes(file) || COLOR_PALETTE_FILES.includes(file))
+        .forEach(file => errors.push('color-allowlist.json: ' + file + ' is not a non-palette part'));
+    if (errors.length) {
+        console.error('ERRO: cor literal fora da paleta:\n  ' + errors.join('\n  '));
+        process.exit(1);
+    }
+}
+
 const out = sources.map(({ src }) => src).join('\n');
 fs.writeFileSync(OUT, out);
 
