@@ -25,25 +25,44 @@
         return 4;
     }
     // pure placement: ratios (h/w) + width -> boxes. No DOM, so it is testable and costs nothing to read.
+    // opts.spans[i] = columns item i wants (a horizontal video wants 2), clamped to the column count. An item
+    // spanning k columns starts at the column c that minimises max(height[c..c+k-1]), ties going left, sits at
+    // that top, and pushes those k columns to its bottom. With every span at 1 this is plain shortest-column.
     function masonryPlace(ratios, width, opts) {
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
-        const cols = Math.max(1, Math.min(want, ratios.length || 1));
+        const spansIn = (opts && opts.spans) || [];
+        const spanOf = i => Math.max(1, Math.min(want, Math.floor(+spansIn[i]) || 1));
+        let need = 0;
+        for (let i = 0; i < ratios.length; i++) need += spanOf(i);
+        const cols = Math.max(1, Math.min(want, need || 1));   // a small group uses only the columns its spans fill
         const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
         const heights = new Array(cols).fill(0);
-        const boxes = ratios.map(r => {
-            let c = 0;
-            for (let i = 1; i < cols; i++) if (heights[i] < heights[c] - 0.5) c = i;
-            const h = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
-            const box = { col: c, x: Math.round(c * (colW + gap)), y: Math.round(heights[c]), w: Math.round(colW), h };
-            heights[c] += h + gap;
+        const boxes = ratios.map((r, i) => {
+            const k = Math.min(spanOf(i), cols);
+            let c = 0, top = Infinity;
+            for (let s = 0; s + k <= cols; s++) {
+                let m = 0;
+                for (let j = s; j < s + k; j++) if (heights[j] > m) m = heights[j];
+                if (m < top - 0.5) { top = m; c = s; }
+            }
+            const w = colW * k + gap * (k - 1);
+            const h = Math.max(1, Math.round(w * (r > 0 ? r : MASONRY_PH_RELH)));
+            const box = { col: c, span: k, x: Math.round(c * (colW + gap)), y: Math.round(top), w: Math.round(w), h };
+            for (let j = c; j < c + k; j++) heights[j] = top + h + gap;
             return box;
         });
         const height = Math.max(0, Math.round(Math.max.apply(null, heights) - gap));
         return { cols, colW, boxes, height };
     }
 
-    const masonryState = new WeakMap();    // container -> { width, getRatio, gap }
+    // a video tile's span from its h/w: horizontal (wider than tall) takes 2 columns, vertical or square 1.
+    // 0.98 and not 1: a "square" upload is often a few pixels off (1080x1072) and must not go wide.
+    function masonryVideoSpan(relH) {
+        return (relH > 0 && relH < 0.98) ? 2 : 1;
+    }
+
+    const masonryState = new WeakMap();    // container -> { width, getRatio, getSpan, gap }
     let masonryRO = null, masonRaf = 0, masonDirty = new Set();
     function masonryObserver() {
         if (masonryRO || typeof ResizeObserver === 'undefined') return masonryRO;
@@ -59,7 +78,8 @@
         });
         return masonryRO;
     }
-    // registers a container (idempotent). opts.getRatio(item) -> height/width of that item.
+    // registers a container (idempotent). opts.getRatio(item) -> height/width of that item;
+    // opts.getSpan(item) -> columns it wants (default 1).
     function masonryMount(container, opts) {
         if (!container) return;
         let st = masonryState.get(container);
@@ -71,6 +91,7 @@
             if (ro) ro.observe(container);
         }
         st.getRatio = (opts && opts.getRatio) || st.getRatio || (() => MASONRY_PH_RELH);
+        st.getSpan = (opts && opts.getSpan) || st.getSpan || null;
         st.gap = (opts && opts.gap != null) ? opts.gap : (st.gap != null ? st.gap : MASONRY_GAP);
         masonrySchedule(container);
     }
@@ -100,7 +121,8 @@
         if (!st) return null;
         const items = Array.prototype.filter.call(container.children, c => c.nodeType === 1);
         const ratios = items.map(it => { try { return st.getRatio(it); } catch (e) { return MASONRY_PH_RELH; } });
-        const res = masonryPlace(ratios, st.width, { gap: st.gap });
+        const spans = st.getSpan ? items.map((it, i) => { try { return st.getSpan(it, ratios[i]); } catch (e) { return 1; } }) : null;
+        const res = masonryPlace(ratios, st.width, { gap: st.gap, spans });
         if (container.dataset.smgCols !== String(res.cols)) container.dataset.smgCols = res.cols;
         container.dataset.smgRelayoutDone = '1';
         if (!st.width) return res;
