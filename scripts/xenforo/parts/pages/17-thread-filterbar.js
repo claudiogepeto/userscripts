@@ -897,16 +897,22 @@
                 jumps, row.classList.contains('is-unread') || row.classList.contains('structItem--unread') ? '1' : '0'].join(':');
         }).join('|');
     }
+    // UM observer pra todos os botões Salvar (antes: um MutationObserver por post, nunca desconectado).
+    // Cada botão guarda o próprio repaint em _smgPaintSaved.
+    let savedButtonObs = null;
+    function savedButtonObserver() {
+        if (!savedButtonObs) {
+            savedButtonObs = new MutationObserver(records => {
+                records.forEach(r => { if (r.target._smgPaintSaved) r.target._smgPaintSaved(); });
+            });
+        }
+        return savedButtonObs;
+    }
+
     function ingestWatchedPageToFollowed(doc, syncPages = false) {
         if (!doc) return Promise.resolve(0);
         const rows = doc.querySelectorAll('.structItem--thread');
         const signature = watchedPageSignature(doc, rows);
-        if (rows.length) {
-            const unreadRows = doc.querySelectorAll('.structItem--thread.is-unread, .structItem--thread.structItem--unread');
-            const unreadCount = unreadRows.length;
-            gmSet('smg-watched-unread-count', String(unreadCount));
-            updateWatchedUnreadBadge(unreadCount);
-        }
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
         if (watchedPageStates.get(doc) === signature && !syncPages) return Promise.resolve(0);
@@ -914,6 +920,10 @@
             watchedPageStates.set(doc, signature);
             return Promise.resolve(0);
         }
+        // só depois da checagem de assinatura: página igual não reescreve o GM storage nem o badge
+        const unreadCount = doc.querySelectorAll('.structItem--thread.is-unread, .structItem--thread.structItem--unread').length;
+        gmSet('smg-watched-unread-count', String(unreadCount));
+        updateWatchedUnreadBadge(unreadCount);
 
         const run = dbFollowedGetAll().then(existingList => {
             const existingMap = new Map();
@@ -1231,9 +1241,8 @@
                 el.dataset.smgHidden = '1';
             });
             eachIn(roots, '.structItem--thread', decorateWatchedThreadRow);
-            if (!roots || normalizeRoots(roots).some(root => root === document.body || root.closest('.structItemContainer, .block-body, .p-body-content'))) {
-                ingestWatchedPageToFollowed(document);
-            }
+            // o ingest da lista é do stream (1× pra página aberta + 1× por página buscada), não de cada
+            // frame de mutação: as linhas que o stream anexa já foram ingeridas com o doc delas.
             streamAllWatchedPages();
             return;
         }
@@ -1476,7 +1485,8 @@
                 save.setAttribute('aria-label', tip);
             };
             paintSaved();
-            new MutationObserver(paintSaved).observe(save, { attributes: true, attributeFilter: ['class'] });
+            save._smgPaintSaved = paintSaved;
+            savedButtonObserver().observe(save, { attributes: true, attributeFilter: ['class'] });
             bar.appendChild(save);
         }
         const translate = footerBar && footerBar.querySelector('.smgTranslator-btn');
