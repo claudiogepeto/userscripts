@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.5
+// @version      4.1.6
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -8703,6 +8703,25 @@
             }
             .bbCodeBlock--quote .bbCodeBlock-expandContent {
                 padding: 0 !important;
+            }
+            /* Citação de comentário (uw_quote_thing) não tem o wrapper .bbCodeBlock--quote.
+               Como div solta no bbWrapper ela vira uma coluna estreita e o nome quebra no meio. */
+            .bbCodeBlock-title.uw_quote_thing,
+            html.smg-thread .smg-cc .bbCodeBlock-title.uw_quote_thing {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                float: none !important;
+                margin: 0 0 6px !important;
+                white-space: normal !important;
+            }
+            .bbCodeBlock-title.uw_quote_thing .username,
+            .bbCodeBlock-title.uw_quote_thing .username span {
+                display: inline !important;
+                white-space: nowrap !important;
+            }
+            .bbWrapper:has(> .bbCodeBlock-title.uw_quote_thing) {
+                display: block !important;
             }
             /* Gradiente e link "Clique para expandir..." suave e elegante */
             .bbCodeBlock--quote .bbCodeBlock-expandLink,
