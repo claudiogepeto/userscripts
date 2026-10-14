@@ -88,6 +88,24 @@ scenario('engine: a 2-column item takes the lowest adjacent pair and sits under 
     assert.deepEqual([one.boxes[0].w, one.boxes[0].h], [300, 169], 'a span is clamped to a single column');
 });
 
+scenario('engine: an all-landscape group lays out in 2 columns of pairs; a mixed group and 2 columns do not change', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 1 }] }), units: true });
+    const { masonryPlace } = page.window.__smgTest;
+    const two = masonryPlace([9 / 16, 9 / 16], 1192, { gap: 8, spans: [2, 2] });
+    assert.deepEqual([two.cols, ...two.boxes.map(b => [b.col, b.span, b.x, b.y, b.w])], [2, [0, 1, 0, 0, 592], [1, 1, 600, 0, 592]], 'two landscape items sit side by side');
+    const three = masonryPlace([9 / 16, 0.5, 9 / 16], 1192, { gap: 8, spans: [2, 2, 2] });
+    assert.equal(three.cols, 2);
+    assert.deepEqual(three.boxes.map(b => [b.col, b.span, b.w]), [[0, 1, 592], [1, 1, 592], [0, 1, 592]], 'every item spans 1 of 2 columns');
+    assert.deepEqual([three.boxes[2].x, three.boxes[2].y], [0, 341], 'odd count: the last item sits alone at the left of the next row, under the taller of the pair');
+    assert.equal(three.height, 341 + 333);
+    const mixed = masonryPlace([9 / 16, 1.25, 9 / 16], 1192, { gap: 8, spans: [2, 1, 2] });
+    assert.deepEqual([mixed.cols, ...mixed.boxes.map(b => b.span)], [3, 2, 1, 2], 'a mixed group keeps 3 columns and wide landscape items');
+    const mob = masonryPlace([9 / 16, 9 / 16, 9 / 16], 402, { gap: 8, spans: [2, 2, 2] });
+    assert.deepEqual([mob.cols, ...mob.boxes.map(b => b.w)], [2, 402, 402, 402], 'with 2 columns each landscape item still takes the whole row');
+    const single = masonryPlace([9 / 16], 1192, { gap: 8, spans: [2] });
+    assert.deepEqual([single.cols, single.boxes[0].w], [2, 1192], 'a single landscape item keeps the full width');
+});
+
 // ---- post block model (DOM) ----
 
 scenario('post: text stays where the author put it; a run of 3 images is one group; a single image stays loose', async t => {
@@ -163,4 +181,39 @@ scenario('post: an image that arrives later next to a group joins it without mov
     assert.equal(seq(bw), 'T G4 T');
     assert.equal(g.children[1], player, 'the player stays the same node in the same slot');
     assert.ok(!moves.includes(player), 'the player was never detached (an iframe would reload)');
+});
+
+scenario('post: a group of only landscape images lays out in pairs on desktop and one per row on mobile', async t => {
+    const page = await postsWith(t, [
+        img(60, 1920, 1080) + '<br>' + img(61, 1920, 1080),
+        img(62, 1920, 1080) + '<br>' + direct(1920, 1080) + '<br>' + img(63, 1600, 900),
+    ]);
+    const [g2, g3] = page.bodies.map(bw => bw.querySelector('.auto-image-grid'));
+    assert.deepEqual(layout(page, g2, 1192), [592, 592]);
+    assert.equal(g2.dataset.smgCols, '2');
+    assert.deepEqual(layout(page, g3, 1192), [592, 592, 592]);
+    assert.equal(g3.dataset.smgCols, '2');
+    const x = el => el.style.transform.match(/translate\((\d+)px/)[1];
+    assert.deepEqual(Array.from(g3.children).map(x), ['0', '600', '0'], 'the third item starts a new row at the left');
+    assert.deepEqual(layout(page, g3, 402), [402, 402, 402], 'mobile: each landscape item takes the whole row');
+});
+
+scenario('gallery: a section of only landscape media lays out in pairs', async t => {
+    const body = '<img class="bbImage" src="https://example.com/media/l1.jpg" width="1920" height="1080">'
+        + '<img class="bbImage" src="https://example.com/media/l2.jpg" width="1920" height="1080">'
+        + '<img class="bbImage" src="https://example.com/media/l3.jpg" width="1920" height="1080">';
+    const page = await t.open({
+        url: URL,
+        html: threadPage({ posts: [{ id: 1, body: 'Hello' }] }),
+        routes: [[/\/threads\/sample-thread\.100\/(\?|$)/, () => threadPage({ posts: [{ id: 1, body }] })]],
+    });
+    await page.settle(50);
+    page.click('.smg-thead-actions .smg-thead-btn');
+    await page.settle(60);
+    const sec = page.$('#smg-gallery .smg-gallery-cols');
+    assert.equal(sec.querySelectorAll('.smg-gallery-tile').length, 3);
+    sec.querySelectorAll('.smg-gallery-tile--image img').forEach(im => page.loadImage(im, 1920, 1080));
+    await page.settle(20);
+    assert.deepEqual(layout(page, sec, 1192), [592, 592, 592]);
+    assert.equal(sec.dataset.smgCols, '2');
 });
