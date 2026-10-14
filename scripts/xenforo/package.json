@@ -5,7 +5,7 @@
   "description": "SimpCity + SocialMediaGirls userscript assembled from modular source parts",
   "scripts": {
     "build": "node build.js",
-    "test": "node test-mock.js"
+    "test": "node tests/run.js"
   },
   "devDependencies": {
     "jsdom": "^24.1.3"

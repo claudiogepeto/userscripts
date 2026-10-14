@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{{lang}}" dir="LTR" data-template="forum_view" data-app="public" data-logged-in="true" data-csrf="csrf-token-1" class="has-js">
+<head>
+<meta charset="utf-8">
+<title>Instagram | SocialMediaGirls Forums</title>
+<link rel="canonical" href="https://forums.socialmediagirls.com/forums/instagram.5/{{canonPage}}">
+</head>
+<body data-template="forum_view">
+<div class="p-pageWrapper" id="top">
+<header class="p-header" id="header"><div class="p-header-inner"><div class="p-header-logo p-header-logo--image"><a href="/"><img src="/styles/logo.png" alt="SocialMediaGirls Forums"></a></div></div></header>
+<nav class="p-nav"><div class="p-nav-inner">
+  <div class="p-nav-scroller"><ul class="p-nav-list"><li><div class="p-navEl"><a href="/" class="p-navEl-link">Forums</a></div></li></ul></div>
+  <div class="p-nav-opposite">
+    <div class="p-navgroup p-account p-navgroup--member">
+      <a href="/account/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--user"><span class="avatar avatar--xxs"><img src="/data/avatars/s/1/1.jpg" alt="Tester"></span><span class="p-navgroup-linkText">Tester</span></a>
+      <a href="/conversations/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--conversations badgeContainer" data-badge="0" title="Inbox"><i aria-hidden="true"></i></a>
+      <a href="/account/alerts" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--alerts badgeContainer" data-badge="0" title="Alerts"><i aria-hidden="true"></i></a>
+    </div>
+    <div class="p-navgroup p-discovery"><a href="/search/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--search" title="Search"><i aria-hidden="true"></i></a></div>
+  </div>
+</div></nav>
+<div class="p-body">
+<div class="p-body-inner">
+  <div class="p-breadcrumbs"><ul class="p-breadcrumbs"><li><a href="/">Forums</a></li></ul></div>
+  <div class="p-body-header"><div class="p-title"><h1 class="p-title-value">Instagram</h1>
+    <div class="p-title-pageAction"><a href="/forums/instagram.5/post-thread" class="button--cta button button--icon button--icon--write">Post thread</a></div></div></div>
+  <div class="p-body-main">
+    <div class="p-body-content">
+      <div class="p-body-pageContent">
+        <div class="block block--forum" data-xf-init="{{xfInit}}">
+          <div class="block-outer"><div class="block-outer-main">{{pageNav}}</div></div>
+          <div class="block-container">
+            <div class="block-filterBar"><div class="filterBar"><a class="filterBar-menuTrigger" data-xf-click="menu">Filters</a></div></div>
+            <div class="block-body">
+              <div class="structItemContainer">
+                <div class="structItemContainer-group structItemContainer-group--sticky">{{sticky}}</div>
+                <div class="structItemContainer-group js-threadList">
+{{rows}}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="block-outer block-outer--after"><div class="block-outer-main">{{pageNav}}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<footer class="p-footer" id="footer"><div class="p-footer-inner">Footer</div></footer>
+</div>
+</body>
+</html>

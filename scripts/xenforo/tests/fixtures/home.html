@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="LTR" data-template="forum_list" data-app="public" data-logged-in="true" data-csrf="csrf-token-1" class="has-js">
+<head>
+<meta charset="utf-8">
+<title>SocialMediaGirls Forums</title>
+<link rel="icon" href="/favicon.ico">
+</head>
+<body data-template="forum_list">
+<div class="p-pageWrapper" id="top">
+<header class="p-header" id="header"><div class="p-header-inner"><div class="p-header-logo p-header-logo--image"><a href="/"><img src="/styles/logo.png" alt="SocialMediaGirls Forums"></a></div></div></header>
+<nav class="p-nav"><div class="p-nav-inner"><div class="p-nav-opposite">
+  <div class="p-navgroup p-account p-navgroup--member">
+    <a href="/account/" class="p-navgroup-link p-navgroup-link--user"><span class="p-navgroup-linkText">Tester</span></a>
+    <a href="/account/alerts" class="p-navgroup-link p-navgroup-link--alerts badgeContainer" data-badge="0">Alerts</a>
+  </div>
+</div></div></nav>
+<div class="p-body">
+<div class="p-body-inner">
+  <ul class="notices notices--block js-notices" data-xf-init="notices">
+    <li class="notice js-notice notice--primary" data-notice-id="12"><div class="notice-content"><a href="/account/dismiss-notice?notice_id=12" class="notice-dismiss js-noticeDismiss"></a>We have a new domain whitelist, please request any domains missing here.</div></li>
+  </ul>
+  <div class="p-body-main">
+    <div class="p-body-content">
+      <div class="p-body-pageContent">
+{{categories}}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>

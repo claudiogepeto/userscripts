@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="{{lang}}" dir="LTR" data-template="thread_view" data-app="public" data-logged-in="true" data-csrf="csrf-token-1" class="has-js">
+<head>
+<meta charset="utf-8">
+<title>Sample Thread | SocialMediaGirls Forums</title>
+<link rel="canonical" href="https://forums.socialmediagirls.com/threads/sample-thread.100/{{canonPage}}">
+{{head}}
+</head>
+<body data-template="thread_view">
+<div class="p-pageWrapper" id="top">
+<header class="p-header" id="header"><div class="p-header-inner"><div class="p-header-logo p-header-logo--image"><a href="/"><img src="/styles/logo.png" alt="SocialMediaGirls Forums"></a></div></div></header>
+<nav class="p-nav"><div class="p-nav-inner">
+  <div class="p-nav-scroller"><ul class="p-nav-list">
+    <li><div class="p-navEl"><a href="/" class="p-navEl-link">Forums</a></div></li>
+    <li><div class="p-navEl"><a href="/whats-new/" class="p-navEl-link">What's new</a></div></li>
+  </ul></div>
+  <div class="p-nav-opposite">
+    <div class="p-navgroup p-account p-navgroup--member">
+      <a href="/account/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--user"><span class="avatar avatar--xxs"><img src="/data/avatars/s/1/1.jpg" alt="Tester"></span><span class="p-navgroup-linkText">Tester</span></a>
+      <a href="/conversations/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--conversations badgeContainer" data-badge="0" title="Inbox"><i aria-hidden="true"></i><span class="p-navgroup-linkText">Inbox</span></a>
+      <a href="/account/alerts" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--alerts badgeContainer{{alertBadgeClass}}" data-badge="{{alertBadge}}" title="Alerts"><i aria-hidden="true"></i><span class="p-navgroup-linkText">Alerts</span></a>
+    </div>
+    <div class="p-navgroup p-discovery">
+      <a href="/whats-new/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--whatsnew" title="What's new"><i aria-hidden="true"></i></a>
+      <a href="/search/" class="p-navgroup-link p-navgroup-link--iconic p-navgroup-link--search" title="Search"><i aria-hidden="true"></i></a>
+    </div>
+  </div>
+</div></nav>
+<div class="p-body">
+<div class="p-body-inner">
+  <div class="p-breadcrumbs"><ul class="p-breadcrumbs"><li><a href="/">Forums</a></li><li><a href="/forums/instagram.5/">Instagram</a></li></ul></div>
+  <div class="p-body-header">
+    <div class="p-title"><h1 class="p-title-value">{{prefix}}Sample Thread</h1></div>
+    <div class="p-description"><ul class="listInline listInline--bullet"><li><a href="/members/author.7/" class="username u-concealed">Author</a></li><li><time class="u-dt" data-timestamp="1700000000">Nov 14, 2023</time></li></ul></div>
+  </div>
+  <div class="p-body-main">
+    <div class="p-body-content">
+      <div class="p-body-pageContent">
+        <div class="block-outer">
+          <div class="block-outer-main">{{pageNav}}</div>
+          <div class="block-outer-opposite"><div class="buttonGroup">{{watchButton}}</div></div>
+        </div>
+        <div class="block block--messages" data-xf-init="lightbox">
+          <div class="block-container lbContainer">
+            <div class="block-body js-replyNewMessageContainer">
+{{posts}}
+            </div>
+          </div>
+        </div>
+        <div class="block-outer block-outer--after"><div class="block-outer-main">{{pageNav}}</div></div>
+        {{after}}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<footer class="p-footer" id="footer"><div class="p-footer-inner">Footer</div></footer>
+</div>
+</body>
+</html>

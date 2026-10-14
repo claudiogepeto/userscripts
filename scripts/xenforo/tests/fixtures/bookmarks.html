@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="LTR" data-template="account_bookmarks" data-app="public" data-logged-in="true" data-csrf="csrf-token-1" class="has-js">
+<head>
+<meta charset="utf-8">
+<title>Bookmarks | SocialMediaGirls Forums</title>
+</head>
+<body data-template="account_bookmarks">
+<div class="p-pageWrapper" id="top">
+<nav class="p-nav"><div class="p-nav-inner"><div class="p-nav-opposite">
+  <div class="p-navgroup p-account p-navgroup--member">
+    <a href="/account/" class="p-navgroup-link p-navgroup-link--user"><span class="p-navgroup-linkText">Tester</span></a>
+    <a href="/account/alerts" class="p-navgroup-link p-navgroup-link--alerts badgeContainer" data-badge="0">Alerts</a>
+  </div>
+</div></div></nav>
+<div class="p-body">
+<div class="p-body-inner">
+  <div class="p-body-header"><div class="p-title"><h1 class="p-title-value">Bookmarks</h1></div></div>
+  <div class="p-body-main p-body-main--withSideNav">
+    <div class="p-body-sideNav"><div class="block"><a href="/account/">Your account</a></div></div>
+    <div class="p-body-content">
+      <div class="p-body-pageContent">
+        <div class="block">
+          <div class="block-container">
+            <div class="block-body">
+{{rows}}
+            </div>
+          </div>
+          <div class="block-outer block-outer--after">{{next}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>

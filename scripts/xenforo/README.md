@@ -11,7 +11,7 @@ root:
 ```bash
 node scripts/xenforo/build.js
 node --check scripts/xenforo/script.js
-node scripts/xenforo/test-mock.js
+node scripts/xenforo/tests/run.js
 ```
 
 To rebuild every userscript and the root README, run:
@@ -109,4 +109,15 @@ composes them in the order below:
   sections when they are declared earlier in the build.
 - CSS fragments are constants consumed by `core/05-styles.js`; keep their order
   in the build manifest and put page-only rules in the matching context.
-- Run the build, syntax check, and mock tests before committing.
+- Run the build, syntax check, and scenario suite before committing.
+
+## Tests
+
+`tests/run.js` runs the scenario suite: each scenario loads the built
+`script.js` into a jsdom page made from a XenForo-shaped fixture
+(`tests/fixtures/`), with the userscript manager, network, IndexedDB and the
+browser observers stubbed (`tests/harness.js`, `tests/fake-idb.js`), and
+asserts on what the user or the forum would see: DOM, storage and requests.
+`node scripts/xenforo/tests/run.js masonry pager` runs only the scenarios whose
+file or name contains one of the words; `SMG_TEST_LOGS=1` prints the page
+console for failures.
