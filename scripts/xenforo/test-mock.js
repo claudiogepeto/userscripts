@@ -7737,6 +7737,67 @@ async function runTests() {
     }
 
     // =========================================================================
+    // CARROSSEL DA HOME: pagina pra direita no motor comum (borda direita, esqueletos, falha não trava)
+    // =========================================================================
+    {
+        console.log('\n--- Carrossel da home: paginação horizontal ---');
+        const hx = window.__homeExports;
+        assert(hx && typeof hx.feedPagerFor === 'function', 'O pager do carrossel deve estar exposto (window.__homeExports.feedPagerFor)');
+        const flushC = async () => { for (let i = 0; i < 8; i++) await new Promise(r => setTimeout(r, 0)); };
+        const m = { scrollWidth: 4000, clientWidth: 1000, scrollLeft: 0 };
+        const panel = document.createElement('div'); panel.className = 'smg-feed-panel is-active';
+        ['scrollWidth', 'clientWidth', 'scrollLeft'].forEach(k => Object.defineProperty(panel, k, { configurable: true, get: () => m[k], set: v => { m[k] = v; } }));
+        document.body.appendChild(panel);
+        const feed = { key: 'cartest', url: '/whats-new/posts/', _seen: new Set() };
+        let navCalls = 0;
+        const item = (id) => '<div class="structItem structItem--thread"><div class="structItem-title"><a href="/threads/car-' + id + '.' + id + '/">Car ' + id + '</a></div></div>';
+        const page = (ids, next) => '<!DOCTYPE html><html><head>' + (next ? '<link rel="next" href="' + next + '">' : '') + '</head><body>' + ids.map(item).join('') + '</body></html>';
+        const prevFetchC = window.fetch;
+        const askedC = [];
+        let failNext = false, pending = null;
+        window.fetch = (url) => {
+            const u = String(url);
+            if (!/carpage-/.test(u)) return prevFetchC(url);
+            askedC.push(u.replace(/^.*carpage-/, ''));
+            return new Promise(res => { pending = () => {
+                if (failNext) { failNext = false; return res({ ok: false, status: 503, text: async () => '', headers: { get: () => null } }); }
+                const n = +u.replace(/^.*carpage-/, '');
+                const ids = n === 4 ? [21] : [n * 10 + 1, n * 10 + 2];   // página 4 só repete um item já visto
+                res({ ok: true, status: 200, text: async () => page(ids, '/whats-new/posts/carpage-' + (n + 1)), headers: { get: () => null } });
+            }; });
+        };
+        const pg = hx.feedPagerFor(feed, panel, () => { navCalls++; });
+        pg.reset('/whats-new/posts/carpage-2');
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        assert(askedC.length === 0, 'Carrossel: longe da borda direita não busca');
+        m.scrollLeft = 2400;   // resta 600 (limite 700)
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        assert(askedC.join(',') === '2', 'Carrossel: perto da borda direita busca a próxima página');
+        assert(panel.querySelectorAll('.smg-feed-skel').length === 4, 'Carrossel: 4 esqueletos à direita enquanto busca');
+        pending(); await flushC();
+        assert(panel.querySelectorAll('.smg-feed-skel').length === 0, 'Carrossel: esqueletos saem quando a página chega');
+        assert(panel.querySelectorAll('.smg-feed-card').length === 2, 'Carrossel: a página entra no fim do painel (obtido: ' + panel.querySelectorAll('.smg-feed-card').length + ')');
+        assert(navCalls >= 1, 'Carrossel: as setas são atualizadas depois da carga');
+        // falha: o carrossel continua paginando (mesma página, no próximo scroll)
+        failNext = true;
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        pending(); await flushC();
+        assert(panel.querySelectorAll('.smg-feed-skel').length === 0, 'Carrossel: esqueletos saem também na falha');
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        assert(askedC.join(',') === '2,3,3', 'Carrossel: depois de uma página que falhou, o próximo scroll tenta a mesma página (obtido: ' + askedC.join(',') + ')');
+        pending(); await flushC();
+        assert(panel.querySelectorAll('.smg-feed-card').length === 4, 'Carrossel: a página que falhou entra quando a nova tentativa dá certo');
+        // página sem item novo → para de paginar
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        pending(); await flushC();
+        panel.dispatchEvent(new window.Event('scroll')); await flushC();
+        assert(askedC.join(',') === '2,3,3,4', 'Carrossel: página sem item novo encerra a paginação (obtido: ' + askedC.join(',') + ')');
+        pg.dispose();
+        window.fetch = prevFetchC;
+        panel.remove();
+    }
+
+    // =========================================================================
     // HOVER: cards de conteúdo não reagem ao hover (só controles reagem)
     // =========================================================================
     {
