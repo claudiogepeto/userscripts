@@ -104,7 +104,7 @@
         'Log in': 'Entrar', 'Register': 'Cadastrar',
         'Refresh': 'Atualizar', 'All': 'Todas', 'Unread': 'Não lidas', 'Drag to resize': 'Arraste para redimensionar',
         'No notifications yet': 'Nenhuma notificação ainda',
-        'No unread notifications': 'Nenhuma notificação não lida', 'End of the list': 'Fim da lista',
+        'End of the list': 'Fim da lista',
         // home feed
         'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)

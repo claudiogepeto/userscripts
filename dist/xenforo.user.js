@@ -360,7 +360,7 @@
         'Log in': 'Entrar', 'Register': 'Cadastrar',
         'Refresh': 'Atualizar', 'All': 'Todas', 'Unread': 'Não lidas', 'Drag to resize': 'Arraste para redimensionar',
         'No notifications yet': 'Nenhuma notificação ainda',
-        'No unread notifications': 'Nenhuma notificação não lida', 'End of the list': 'Fim da lista',
+        'End of the list': 'Fim da lista',
         // home feed
         'Latest posts': 'Últimos posts', 'Following': 'Seguindo', 'Categories': 'Categorias', 'Sites': 'Sites', 'Site Navigation': 'Navegação do site', 'Discussions': 'Discussões', 'Requests': 'Requests', 'More categories': 'Outras categorias', 'More sites': 'Outros sites', 'forums': 'fóruns', 'forum': 'fórum',
         // barras (smgBarBtn)
@@ -21997,14 +21997,12 @@
     let aldockBound = false;
 
     // a fonte do rail: paginar seguindo o "next" nativo, deduplicar, rolagem infinita.
-    //   count         → mostra o contador de não lidos
-    //   filter        → filtro opcional da fonte
     const RAIL_SRC = {
-        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  count: true,  filter: true,  empty: 'No notifications yet',   emptyUnread: 'No unread notifications' },
+        alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  empty: 'No notifications yet' },
     };
-    // estado por aba — dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas sozinho
-    // desde a última ação do usuário (teto pra aba "Não lidas" não varrer o histórico inteiro)
-    const mkState = () => ({ url: null, next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0, filter: 'all' });
+    // estado — dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas sozinho
+    // desde a última ação do usuário (teto pra rolagem automática não varrer o histórico inteiro)
+    const mkState = () => ({ next: null, busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0 });
     const aldockState = { alerts: mkState() };
 
     const aldockViewportMax = () => Math.max(
@@ -22110,11 +22108,9 @@
             return;
         }
         const empty = !list.querySelector(rowSel);
-        const noneVisible = st.filter === 'unread' && !list.querySelector(rowSel + '.is-unread');
         const txt = kind === 'loading' ? i18n('Loading…')
             : kind === 'error' ? i18n('Couldn’t load.')
             : empty ? i18n(src.empty)
-            : noneVisible ? i18n(src.emptyUnread)
             : (!st.next && st.loaded ? i18n('End of the list') : '');
         el.textContent = txt;
         el.hidden = !txt;
@@ -22301,8 +22297,8 @@
             .then(() => { st.busy = false; railFillViewport(tab); });
     }
 
-    // filtro "não lidas" pode esconder tudo que está carregado → puxa mais até ter o que mostrar (ou acabar).
-    // Teto de ALDOCK_AUTOFILL páginas por ação: sem ele, "Não lidas" com zero não-lida varreria o histórico
+    // poucas linhas pra encher o painel → puxa mais até ter o que mostrar (ou acabar).
+    // Teto de ALDOCK_AUTOFILL páginas por ação: sem ele, um painel alto varreria o histórico
     // inteiro numa rajada. Rolar até o fim continua puxando o resto normalmente.
     function railFillViewport(tab) {
         const st = aldockState[tab];
@@ -22310,10 +22306,7 @@
         if (st.autoFill >= ALDOCK_AUTOFILL) return;
         const pane = railPane(tab), list = railList(tab);
         if (!pane) return;
-        const rowSel = 'li.alert';
-        const visible = st.filter === 'unread'
-            ? list.querySelectorAll(rowSel + '.is-unread').length
-            : list.querySelectorAll(rowSel).length;
+        const visible = list.querySelectorAll('li.alert').length;
         if (visible < 8 || pane.scrollHeight <= pane.clientHeight + 40) { st.autoFill++; railMore(tab); }
     }
 
@@ -22321,8 +22314,6 @@
     function railActivate() {
         if (!aldock) return;
         const st = aldockState.alerts;
-        st.filter = 'all';
-        aldock.classList.remove('smg-aldock--unread');
         aldockSyncCount();
         st.autoFill = 0;
         railRefresh('alerts', !st.loaded).then(() => { aldockStatus('alerts', ''); railFillViewport('alerts'); });
