@@ -2208,13 +2208,9 @@ async function runTests() {
     // Verifica que NENHUMA requisição é disparada imediatamente (zero requests)
     assert(watchedPageFetchCount === 0, `streamAllWatchedPages NÃO deve disparar requisições imediatamente (obtido: ${watchedPageFetchCount})`);
 
-    // Aciona a rolagem / carregamento sob demanda
-    if (typeof window.__loadNextWatchedPage === 'function') {
-        await window.__loadNextWatchedPage();
-        assert(watchedPageFetchCount === 1, `loadNextWatchedPage deve carregar a próxima página sob demanda (obtido: ${watchedPageFetchCount})`);
-        const p2Link = watchedContainer.querySelector('a[href="/threads/page2-topic.2/"]');
-        assert(p2Link !== null, 'Item da página 2 deve ser renderizado no container');
-    }
+    // As próximas páginas vêm do loader comum (setupInfiniteScroll: separadores, pré-busca, URL, toggle
+    // infiniteScrollWatched); a lista de seguidas não tem mais paginador próprio.
+    assert(typeof window.__loadNextWatchedPage === 'undefined' && typeof window.__onWatchedScroll === 'undefined', '/watched/threads deve usar o loader comum, sem paginador próprio');
 
     watchedContainer.remove();
     window.fetch = prevFetch11_6;
