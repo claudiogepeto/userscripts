@@ -1033,7 +1033,6 @@
             html.smg-threadlist.smg-tv-grid .stickySeparatortop,
             html.smg-threadlist.smg-tv-grid .stickySeparatorbottom { display: none !important; }
             /* ---- GRID DE TÓPICOS IDENTICO AO NOSSO MODELO ---- */
-            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread {
                 display: flex !important;
                 flex-direction: column !important;
@@ -1051,8 +1050,6 @@
             }
             html.smg-threadlist .structItem--thread.samUnitWrapper,
             html.smg-threadlist .structItem--thread.smg-card-empty,
-            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread.samUnitWrapper,
-            html.smg-threadlist.smg-tv-grid .smg-tl-grid > .structItem--thread.smg-card-empty,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.samUnitWrapper,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.smg-card-empty {
                 display: none !important;
@@ -1160,10 +1157,7 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            .structItem--thread .structItem-title .label,
-            .structItem-title .label,
             .structItem-title .prefix,
-            .structItem .label,
             .labelLink .label {
                 font-size: 9.5px !important;
                 padding: 1.5px 5.5px !important;
@@ -1260,8 +1254,7 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--latest,
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--iconEnd,
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-extraInfo,
-            html.smg-threadlist.smg-tv-grid .structItem--thread input[name="thread_ids[]"],
-            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-minor .structItem-statuses {
+            html.smg-threadlist.smg-tv-grid .structItem--thread input[name="thread_ids[]"] {
                 display: none !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread.is-unread .structItem-title a[href*="/threads/"]::after,
@@ -1276,7 +1269,6 @@
                 margin-left: 6px !important;
                 vertical-align: middle !important;
             }
-            html.smg-threadlist .structItem--thread.smg-card-empty,
             html.smg-threadlist .structItem--quickCreate,
             html.smg-threadlist .block-filterBar { display: none !important; }
             html.smg-threadlist .uix_threadListSeparator {
@@ -1305,7 +1297,4 @@
                 background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
                 animation: smg-skel-shimmer 1.3s ease-in-out infinite;
                 pointer-events: none;
-            }
-            /* ads injetados na lista (samUnitWrapper) são .structItem--thread → viram célula VAZIA
-               no grid. Some de vez (no grid e na lista) — corrige os "buracos" do grid. */
-            html.smg-threadlist .structItem--thread.samUnitWrapper { display: none !important; }`;
+            }`;
