@@ -6764,7 +6764,6 @@ async function runTests() {
         assert(allStyles.includes('.node-title .uix_newIndicator'), 'CSS da home deve estilizar .uix_newIndicator');
         assert(allStyles.includes('.node-extra-title .prefix'), 'CSS da home deve estilizar .prefix nos últimos tópicos');
         assert(!allStyles.includes('html.smg-smg.smg-home .block--category .block-body > .node:hover'), 'Hover dos cards da home no SMG deve usar a mesma cor do Simp');
-        assert(allStyles.includes('html.smg-home .block--category .node:hover'), 'CSS da home deve ter hover neutro compartilhado');
         assert(allStyles.includes('html.smg-smg.smg-home .smg-hub-badge'), 'CSS da home deve ter badges de contagem com rosa no SMG');
 
         // 2. Remoção de wrappers no SMG (Video Sharing & Streaming Apps e More Social Media Sites)
@@ -7480,6 +7479,35 @@ async function runTests() {
         assert(gl3.cols === 2 && gl4.boxes[2].w === 402, 'Galeria em 2 colunas: vídeo deitado ocupa a largura inteira (obtido: ' + gl4.boxes[2].w + ')');
         window.__masonryEngine.masonryUnmount(vcols);
         vsec.remove();
+    }
+
+    // =========================================================================
+    // HOVER: cards de conteúdo não reagem ao hover (só controles reagem)
+    // =========================================================================
+    {
+        console.log('\n--- Hover: cards de conteúdo sem efeito ---');
+        const css = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+        const cardHovers = [
+            ['.smg-pc:hover', 'post card da thread'],
+            ['.smg-fp-card:hover', 'card do Feed/Salvos'],
+            ['.smg-feed-card:hover', 'card do carrossel da home'],
+            ['.block--category .node:hover', 'linha de fórum (home/listagem)'],
+            ['.message--articlePreview:hover', 'card de artigo da listagem'],
+            ['.structItem--thread:hover {', 'card/linha de thread'],
+            ['.block-row--separated:hover', 'card de resultado da busca'],
+            ['.smg-search-result:hover .smg-search-result-fig img', 'zoom da thumb do resultado'],
+            ['.smg-fhcard:hover', 'card de file host'],
+            ['.smg-gallery-tile:hover', 'tile da galeria'],
+            ['.smg-dead:hover', 'caixa de mídia morta'],
+            ['.notice:hover', 'aviso do fórum'],
+            ['.smg-notices-collapse-item:hover', 'aviso recolhido'],
+            ['.smg-set-action-card:hover', 'card de ação das configurações'],
+        ];
+        for (const [sel, what] of cardHovers) assert(!css.includes(sel), 'Sem hover em ' + what + ' (' + sel + ')');
+        assert(!/\.structItem--thread:hover,/.test(css.replace(/\.structItem--thread:hover \.smg-thread-unwatch-btn,/g, '')), 'Sem hover nas linhas compactas de thread');
+        // controles mantêm o hover
+        for (const sel of ['.smg-pc-act:hover', '.smg-nav-btn:not(:disabled):hover', '.smg-tb-item:hover', '.smg-chip:hover', '.smg-thread-unwatch-btn:hover'])
+            assert(css.includes(sel), 'Controle mantém hover: ' + sel);
     }
 
     // =========================================================================
