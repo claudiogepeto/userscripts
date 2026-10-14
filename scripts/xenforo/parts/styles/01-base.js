@@ -16,15 +16,48 @@
                 --smg-s1: hsl(0 0% 12.5%);         /* superfície: popovers, sheets, dock, cards */
                 --smg-s2: hsl(0 0% 16%);           /* hover / inputs / header de card */
                 --smg-s3: hsl(0 0% 21%);           /* ativo / selecionado / botão primário / switch on */
-                --smg-bd: rgba(255,255,255,0.10);  /* borda padrão */
+                --smg-bd: var(--smg-w-10);         /* borda padrão */
                 --smg-bd2: rgba(255,255,255,0.17); /* borda em destaque/ativo */
                 --smg-scrim: rgba(0,0,0,0.66);      /* backdrop de overlays */
                 --smg-media-h: min(70vh, 750px);    /* altura MÁX de imagem/vídeo/skeleton no post (teto p/ não estourar o viewport, inclusive no masonry) */
                 --smg-tx: #e7e7ea;                  /* texto principal */
-                --smg-tx2: rgba(255,255,255,0.5);   /* texto secundário */
+                --smg-tx2: var(--smg-w-50);         /* texto secundário */
                 --smg-ac: #ff77b2;                  /* acento fixo (rosa) */
                 --smg-mono: -apple-system, monospace;
                 --smg-target-h: 320px;              /* altura-alvo da linha justificada (flex-basis) */
+            }
+            /* ===== escalas (definidas UMA vez; todo valor cru do CSS cai num degrau destas) ===== */
+            html.smg-sc, html.smg-smg {
+                /* branco e preto com alfa: escada única (antes eram 54 e 26 níveis soltos) */
+                --smg-w-02: rgba(255,255,255,0.02); --smg-w-04: rgba(255,255,255,0.04); --smg-w-06: rgba(255,255,255,0.06); --smg-w-08: rgba(255,255,255,0.08); --smg-w-10: rgba(255,255,255,0.1);
+                --smg-w-12: rgba(255,255,255,0.12); --smg-w-14: rgba(255,255,255,0.14); --smg-w-18: rgba(255,255,255,0.18); --smg-w-22: rgba(255,255,255,0.22);
+                --smg-w-30: rgba(255,255,255,0.3); --smg-w-40: rgba(255,255,255,0.4); --smg-w-50: rgba(255,255,255,0.5); --smg-w-55: rgba(255,255,255,0.55); --smg-w-60: rgba(255,255,255,0.6);
+                --smg-w-72: rgba(255,255,255,0.72); --smg-w-85: rgba(255,255,255,0.85); --smg-w-95: rgba(255,255,255,0.95);
+                --smg-k-25: rgba(0,0,0,0.25); --smg-k-35: rgba(0,0,0,0.35); --smg-k-45: rgba(0,0,0,0.45); --smg-k-55: rgba(0,0,0,0.55); --smg-k-62: rgba(0,0,0,0.62);
+                --smg-k-72: rgba(0,0,0,0.72); --smg-k-82: rgba(0,0,0,0.82); --smg-k-92: rgba(0,0,0,0.92);
+                /* raio · fonte · espaçamento (px) */
+                --smg-r-4: 4px; --smg-r-6: 6px; --smg-r-8: 8px; --smg-r-10: 10px; --smg-r-12: 12px;
+                --smg-r-14: 14px; --smg-r-16: 16px; --smg-r-18: 18px; --smg-r-20: 20px; --smg-r-pill: 999px;
+                --smg-r-round: 50%;
+                --smg-fs-10: 10px; --smg-fs-11: 11px; --smg-fs-12: 12px; --smg-fs-13: 13px; --smg-fs-14: 14px;
+                --smg-fs-15: 15px; --smg-fs-16: 16px; --smg-fs-18: 18px; --smg-fs-20: 20px; --smg-fs-22: 22px;
+                --smg-fs-24: 24px; --smg-fs-28: 28px; --smg-fs-32: 32px;
+                --smg-sp-2: 2px; --smg-sp-4: 4px; --smg-sp-6: 6px; --smg-sp-8: 8px; --smg-sp-10: 10px;
+                --smg-sp-12: 12px; --smg-sp-14: 14px; --smg-sp-16: 16px; --smg-sp-18: 18px; --smg-sp-20: 20px;
+                --smg-sp-24: 24px; --smg-sp-28: 28px; --smg-sp-32: 32px;
+                /* sombras (4 alturas) + realce interno do topo · durações de transição */
+                --smg-shadow-1: 0 2px 8px var(--smg-k-25); --smg-shadow-2: 0 8px 24px var(--smg-k-45);
+                --smg-shadow-3: 0 14px 38px var(--smg-k-55); --smg-shadow-4: 0 18px 44px var(--smg-k-62);
+                --smg-hl: inset 0 1px 0 var(--smg-w-08);
+                --smg-dur-12: .12s; --smg-dur-15: .15s; --smg-dur-20: .2s; --smg-dur-30: .3s;
+                /* camadas de z-index (mesmos números de antes, agora com nome) */
+                --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
+                --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;
+                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-aldock: 101; --smg-z-topbar: 1000;
+                --smg-z-topbar-up: 1001; --smg-z-gate: 1100; --smg-z-gate-1: 1101; --smg-z-gate-2: 1102; --smg-z-9999: 9999; --smg-z-10000: 10000;
+                --smg-z-dock-under: 999990; --smg-z-dock: 999999; --smg-z-sheet: 1000000; --smg-z-sheet-1: 1000001; --smg-z-sheet-3: 1000003; --smg-z-sheet-4: 1000004;
+                --smg-z-sheet-5: 1000005; --smg-z-sheet-top: 9999999; --smg-z-overlay: 2147483600; --smg-z-overlay-1: 2147483601; --smg-z-max-1: 2147483646;
+                --smg-z-max: 2147483647;
             }
             html.smg-smg {
                 --smg-bg: #1a1a1a;                  /* cor da topbar do socialmediagirls */
@@ -61,7 +94,7 @@
             html.smg-smg .p-sectionLinks,
             html.smg-smg .p-footer {
                 background-color: var(--smg-bg) !important;
-                border-color: rgba(255,255,255,0.06) !important;
+                border-color: var(--smg-w-06) !important;
             }
             /* --smg-link-strong = acento mais FUNDO p/ fundos preenchidos (texto branco lê bem nos 2 sites) */
             /* largura do conteúdo (e da topbar): 80% no desktop, 75% em telas >= 3xl (1920px).

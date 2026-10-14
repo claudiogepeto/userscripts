@@ -14,7 +14,7 @@
                     bottom: 0;
                     transform: none;
                     width: 100%;
-                    transition: transform .22s cubic-bezier(.2,.8,.3,1);
+                    transition: transform var(--smg-dur-20) cubic-bezier(.2,.8,.3,1);
                 }
                 /* auto-hide no scroll (ver syncNavAway): desce = some, sobe = volta. O botão de
                    opções é fixed DENTRO do wrapper, então o transform leva ele junto — que é o
@@ -33,10 +33,10 @@
                     padding: 0 !important;
                     padding-bottom: env(safe-area-inset-bottom) !important;
                     border: none !important;
-                    border-top: 1px solid rgba(255,255,255,0.08) !important;
+                    border-top: 1px solid var(--smg-w-08) !important;
                     border-radius: 0 !important;
                     background: var(--smg-bg) !important;
-                    box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
+                    box-shadow: 0 -4px 20px var(--smg-k-45) !important;
                     overflow: visible !important;
                 }
                 /* navbar = 5 itens (espelha a topbar c/ Timeline): Discover sai da barra; Following (Watched) fica visível */
@@ -45,11 +45,11 @@
                     display: none;
                 }
                 .smg-nav-group {
-                    gap: 4px;
+                    gap: var(--smg-sp-4);
                     flex: 0 0 auto;
                 }
                 .smg-nav-divider {
-                    margin: 0 9px;
+                    margin: 0 var(--smg-sp-10);
                 }
                 /* ícones flat estilo Instagram: sem fundo/borda; cada item ocupa fatia igual da barra */
                 .smg-nav-btn {
@@ -74,10 +74,10 @@
                     transform: scale(0.86);
                 }
                 .smg-nav-ico {
-                    font-size: 24px;   /* tamanho de ícone de navbar (era 26 — pesava junto com a barra alta) */
+                    font-size: var(--smg-fs-24);   /* tamanho de ícone de navbar (era 26 — pesava junto com a barra alta) */
                     filter: none;
                     color: #fff;                             /* ícones brancos (ativo = preenchido, inativo = contorno) */
-                    transition: transform .12s ease;
+                    transition: transform var(--smg-dur-12) ease;
                 }
                 /* item da página atual: ícone na COR DO TEMA (verde/rosa), em CONTORNO (sem preencher → sem "blob"/gradiente) */
                 .smg-nav-btn.smg-nav-active .smg-nav-ico { color: var(--smg-link); }
@@ -85,9 +85,9 @@
                 .smg-nav-ico--avatar {
                     width: 24px !important;
                     height: 24px !important;
-                    border-radius: 50% !important;
+                    border-radius: var(--smg-r-round) !important;
                     overflow: visible !important;
-                    box-shadow: 0 0 0 1px rgba(255,255,255,0.4) !important;
+                    box-shadow: 0 0 0 1px var(--smg-w-40) !important;
                 }
                 .smg-nav-ico--avatar .avatar,
                 .smg-nav-ico--avatar img,
@@ -96,10 +96,10 @@
                     width: 24px !important;
                     height: 24px !important;
                     min-width: 0 !important;
-                    border-radius: 50% !important;
+                    border-radius: var(--smg-r-round) !important;
                     overflow: hidden !important;
                     display: block !important;
-                    font-size: 11px !important;
+                    font-size: var(--smg-fs-11) !important;
                     line-height: 24px !important;
                     text-align: center !important;
                 }
@@ -112,23 +112,23 @@
                 #smg-dock-handle {
                     width: 56px;
                     height: 26px;
-                    font-size: 15px;
+                    font-size: var(--smg-fs-15);
                 }
                 /* search no mobile */
-                #smg-search-pop { gap: 14px; padding: 16px; border-radius: 18px; }
+                #smg-search-pop { gap: var(--smg-sp-14); padding: var(--smg-sp-16); border-radius: var(--smg-r-18); }
                 #smg-search-pop .smg-search-input {
                     flex: 1 1 160px;
                     min-width: 120px;
-                    font-size: 16px;
+                    font-size: var(--smg-fs-16);
                 }
                 #smg-search-pop .smg-search-acts {
                     width: 100% !important;
                     justify-content: flex-end;
-                    padding-top: 6px;
-                    border-top: 1px solid rgba(255,255,255,0.08);
+                    padding-top: var(--smg-sp-6);
+                    border-top: 1px solid var(--smg-w-08);
                 }
                 .smg-search-kbd { display: none; }
-                .smg-search-go { height: 46px; padding: 0 22px; } /* compacto (não ocupa a linha toda) */
+                .smg-search-go { height: 46px; padding: 0 var(--smg-sp-24); } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
 
                 /* Linha 1 (Controles de Thread / Lista no Mobile) */
@@ -140,10 +140,10 @@
                     height: 38px !important;
                     align-items: center !important;
                     justify-content: space-around !important;
-                    padding: 0 4px !important;
+                    padding: 0 var(--smg-sp-4) !important;
                     box-sizing: border-box !important;
-                    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-                    background: rgba(255,255,255,0.025) !important;
+                    border-bottom: 1px solid var(--smg-w-06) !important;
+                    background: var(--smg-w-02) !important;
                     gap: 0 !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn {
@@ -158,19 +158,19 @@
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
-                    border-radius: 8px !important;
-                    padding: 0 2px !important;
+                    border-radius: var(--smg-r-8) !important;
+                    padding: 0 var(--smg-sp-2) !important;
                     margin: 0 !important;
                     box-shadow: none !important;
                     vertical-align: middle !important;
-                    transition: background .15s ease, color .15s ease;
+                    transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico {
-                    font-size: 19px !important;
+                    font-size: var(--smg-fs-20) !important;
                     line-height: 1 !important;
                     height: 19px !important;
                     width: 19px !important;
-                    color: rgba(255,255,255,0.85) !important;
+                    color: var(--smg-w-85) !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
@@ -201,8 +201,8 @@
                     border: none !important;
                     box-shadow: none !important;
                     border-radius: 0 !important;
-                    padding: 0 2px !important;
-                    gap: 3px !important;
+                    padding: 0 var(--smg-sp-2) !important;
+                    gap: var(--smg-sp-4) !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
@@ -220,9 +220,9 @@
                 .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text,
                 .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
                     display: inline-block !important;
-                    font-size: 11.5px !important;
+                    font-size: var(--smg-fs-12) !important;
                     font-weight: 700 !important;
-                    color: rgba(255,255,255,0.88) !important;
+                    color: var(--smg-w-85) !important;
                     line-height: 1 !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
@@ -257,7 +257,7 @@
                 /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
                 .smg-dock-thread-bar #smg-thread-watch.smg-active {
                     background: rgba(255, 119, 178, 0.12) !important;
-                    border-radius: 8px !important;
+                    border-radius: var(--smg-r-8) !important;
                 }
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
                 .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
@@ -273,7 +273,7 @@
                     height: 48px !important;
                     align-items: center !important;
                     justify-content: space-around !important;
-                    padding: 0 6px !important;
+                    padding: 0 var(--smg-sp-6) !important;
                     box-sizing: border-box !important;
                     border-top: none !important;
                     gap: 0 !important;
@@ -289,7 +289,7 @@
                     border: none !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-ico {
-                    font-size: 22px !important;
+                    font-size: var(--smg-fs-22) !important;
                     color: #fff !important;
                     display: inline-flex !important;
                     align-items: center !important;
@@ -313,14 +313,14 @@
                 bottom: calc(var(--smg-navh) + 12px);
                 left: 50%;
                 transform: translateX(-50%);
-                z-index: 50;
+                z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: 16px;
-                padding: 6px 10px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                border-radius: var(--smg-r-16);
+                padding: var(--smg-sp-6) var(--smg-sp-10);
+                box-shadow: var(--smg-shadow-2);
                 align-items: center;
-                gap: 6px;
+                gap: var(--smg-sp-6);
             }
             #smg-mobile-page-pop.open {
                 display: flex !important;
@@ -331,13 +331,13 @@
                 justify-content: center;
                 width: 32px;
                 height: 32px;
-                border-radius: 8px;
-                background: rgba(255,255,255,0.06);
+                border-radius: var(--smg-r-8);
+                background: var(--smg-w-06);
                 color: #fff;
                 text-decoration: none;
                 border: 0;
                 cursor: pointer;
-                transition: background .14s ease;
+                transition: background var(--smg-dur-15) ease;
             }
             .smg-mp-btn:hover {
                 background: var(--smg-s3);
@@ -354,11 +354,11 @@
             .smg-mp-goto {
                 display: flex;
                 align-items: center;
-                gap: 4px;
-                background: rgba(255,255,255,0.04);
+                gap: var(--smg-sp-4);
+                background: var(--smg-w-04);
                 border: 1px solid var(--smg-bd);
-                border-radius: 8px;
-                padding: 2px 6px;
+                border-radius: var(--smg-r-8);
+                padding: var(--smg-sp-2) var(--smg-sp-6);
             }
             .smg-mobile-page-input {
                 width: 42px;
@@ -366,25 +366,25 @@
                 background: transparent;
                 border: 0;
                 color: #fff;
-                font-size: 13px;
+                font-size: var(--smg-fs-13);
                 font-weight: 700;
                 text-align: center;
                 outline: none;
             }
             .smg-mp-sep, .smg-mp-max {
-                font-size: 12px;
-                color: rgba(255,255,255,0.6);
+                font-size: var(--smg-fs-12);
+                color: var(--smg-w-60);
                 font-weight: 600;
             }
             .smg-mp-go {
                 height: 28px;
-                padding: 0 8px;
-                border-radius: 6px;
+                padding: 0 var(--smg-sp-8);
+                border-radius: var(--smg-r-6);
                 background: var(--smg-link);
                 color: #fff;
                 border: 0;
                 font-weight: 700;
-                font-size: 12px;
+                font-size: var(--smg-fs-12);
                 cursor: pointer;
             }
             .smg-mp-close {
@@ -393,16 +393,16 @@
                 justify-content: center;
                 width: 28px;
                 height: 28px;
-                border-radius: 50%;
+                border-radius: var(--smg-r-round);
                 background: transparent;
                 border: 0;
-                color: rgba(255,255,255,0.6);
+                color: var(--smg-w-60);
                 cursor: pointer;
-                margin-left: 2px;
+                margin-left: var(--smg-sp-2);
             }
             .smg-mp-close:hover {
                 color: #fff;
-                background: rgba(255,255,255,0.1);
+                background: var(--smg-w-10);
             }
             .smg-mp-close svg {
                 width: 14px;
@@ -414,14 +414,14 @@
                 bottom: calc(var(--smg-navh) + 12px);
                 left: 50%;
                 transform: translateX(-50%);
-                z-index: 50;
+                z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: 16px;
-                padding: 6px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                border-radius: var(--smg-r-16);
+                padding: var(--smg-sp-6);
+                box-shadow: var(--smg-shadow-2);
                 align-items: center;
-                gap: 4px;
+                gap: var(--smg-sp-4);
             }
             #smg-viewmode-pop.open {
                 display: flex !important;
@@ -429,17 +429,17 @@
             .smg-vm-opt {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: var(--smg-sp-6);
                 height: 34px;
-                padding: 0 12px;
-                border-radius: 10px;
-                background: rgba(255,255,255,0.06);
+                padding: 0 var(--smg-sp-12);
+                border-radius: var(--smg-r-10);
+                background: var(--smg-w-06);
                 color: #fff;
                 border: 0;
-                font-size: 13px;
+                font-size: var(--smg-fs-13);
                 font-weight: 600;
                 cursor: pointer;
-                transition: background .14s ease;
+                transition: background var(--smg-dur-15) ease;
             }
             .smg-vm-opt:hover {
                 background: var(--smg-s3);

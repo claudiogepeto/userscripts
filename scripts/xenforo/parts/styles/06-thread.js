@@ -5,13 +5,13 @@
             /* tags da thread (tamanho médio) */
             html.smg-thread .p-description .tagList .tagItem,
             html.smg-thread .p-description .tagItem {
-                font-size: 11.5px !important; padding: 2px 8px !important; line-height: 1.35 !important;
-                border-radius: 7px !important;
+                font-size: var(--smg-fs-12) !important; padding: var(--smg-sp-2) var(--smg-sp-8) !important; line-height: 1.35 !important;
+                border-radius: var(--smg-r-8) !important;
             }
             /* título da thread */
             html.smg-thread .p-body-header .p-title-value,
             html.smg-thread .smg-thead-unified .p-title-value {
-                font-size: 24px !important;
+                font-size: var(--smg-fs-24) !important;
                 font-weight: 700 !important;
                 color: #fff !important;
                 line-height: 1.25 !important;
@@ -37,7 +37,7 @@
             }
             /* prefixos (ASMR/Patreon/Twitch): pílulas pequenas, não retângulos grandes */
             html.smg-thread .p-title-value .label {
-                font-size: 9.5px !important; padding: 1.5px 5.5px !important; border-radius: 4px !important;
+                font-size: var(--smg-fs-10) !important; padding: var(--smg-sp-2) var(--smg-sp-6) !important; border-radius: var(--smg-r-4) !important;
                 font-weight: 700 !important; letter-spacing: .02em; line-height: 1.3 !important; vertical-align: middle;
             }
             /* AÇÕES (feed · galeria) NA LINHA DO TÍTULO, fixas à direita (dentro do .p-title centralizado).
@@ -48,7 +48,7 @@
                 align-items: center !important;
                 justify-content: space-between !important;
                 flex-wrap: nowrap !important;
-                gap: 16px !important;
+                gap: var(--smg-sp-16) !important;
                 margin: 0 !important;
                 width: 100% !important;
             }
@@ -63,10 +63,10 @@
                Ao fazer scroll: vira barra fixa compacta (48px) abaixo da topbar com o nome da
                thread à esquerda, botões à direita e padding superior/inferior rigorosamente idênticos. */
             html.smg-thread .p-body-header.smg-thead-unified {
-                position: sticky; top: 60px; z-index: 30;
+                position: sticky; top: 60px; z-index: var(--smg-z-30);
                 background: var(--smg-bg);
-                margin: 0 0 16px !important;
-                padding: 18px 0 !important;
+                margin: 0 0 var(--smg-sp-16) !important;
+                padding: var(--smg-sp-18) 0 !important;
                 min-height: unset !important;
                 height: auto !important;
                 display: flex !important;
@@ -74,15 +74,15 @@
                 justify-content: space-between !important;
                 box-sizing: border-box !important;
                 overflow-anchor: none !important;
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08);
+                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08);
                 clip-path: inset(0 -100vmax 0);
-                transition: padding 0.18s cubic-bezier(0.2, 0, 0, 1), height 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease;
+                transition: padding var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), height var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), box-shadow var(--smg-dur-20) ease;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
             html.smg-thread.smg-topbar-on #smg-topbar {
-                border-bottom-color: rgba(255,255,255,0.08) !important;
-                box-shadow: 0 1px 0 rgba(255,255,255,0.02) !important;
+                border-bottom-color: var(--smg-w-08) !important;
+                box-shadow: 0 1px 0 var(--smg-w-02) !important;
             }
             html.smg-thread .p-body-header.smg-thead-unified > *,
             html.smg-thread .p-body-header.smg-thead-unified .pageContent,
@@ -99,7 +99,7 @@
             html.smg-thread .p-body-header.smg-thead-unified.is-stuck {
                 top: 60px;
                 margin: 0 !important;
-                padding: 8px 0 !important;   /* PADDING SIMÉTRICO: 8px no topo e 8px na base */
+                padding: var(--smg-sp-8) 0 !important;   /* PADDING SIMÉTRICO: 8px no topo e 8px na base */
                 min-height: 48px !important;
                 height: 48px !important;
                 max-height: 48px !important;
@@ -108,7 +108,7 @@
                 align-items: center !important;
                 justify-content: space-between !important;
                 clip-path: inset(0 -100vmax 0) !important;
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax rgba(255,255,255,0.08) !important;
+                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08) !important;
             }
             @media (max-width: 800px) {
                 html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
@@ -118,7 +118,7 @@
             html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
                 display: flex !important;
                 align-items: center !important;
-                gap: 18px !important;
+                gap: var(--smg-sp-18) !important;
                 min-width: 0 !important;
                 flex: 1 1 auto !important;
                 margin: 0 !important;
@@ -130,7 +130,7 @@
                 flex-direction: column !important;
                 align-items: flex-start !important;
                 justify-content: center !important;
-                gap: 7px !important;
+                gap: var(--smg-sp-8) !important;
                 min-width: 0 !important;
                 flex: 1 1 auto !important;
                 margin: 0 !important;
@@ -147,7 +147,7 @@
                 box-sizing: border-box !important;
             }
             html.smg-thread .p-body-header.smg-thead-unified:not(.is-stuck) .p-title-value {
-                font-size: 26px !important;
+                font-size: var(--smg-fs-28) !important;
                 font-weight: 800 !important;
                 line-height: 1.25 !important;
                 letter-spacing: -0.01em !important;
@@ -159,7 +159,7 @@
             html.smg-thread .smg-thead-controls {
                 display: flex !important;
                 align-items: center !important;
-                gap: 10px !important;
+                gap: var(--smg-sp-10) !important;
                 margin-left: auto !important;
                 margin-top: 0 !important;
                 margin-bottom: 0 !important;
@@ -168,8 +168,8 @@
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
             }
-            html.smg-thread .smg-thead-unified .smg-bar { border-radius: 12px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: 13px; }
+            html.smg-thread .smg-thead-unified .smg-bar { border-radius: var(--smg-r-12); }
+            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: var(--smg-fs-13); }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
                e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
@@ -205,7 +205,7 @@
                 padding: 0 !important;
             }
             .smg-thead-unified.is-stuck .p-title-value {
-                font-size: 14.5px !important;
+                font-size: var(--smg-fs-15) !important;
                 font-weight: 700 !important;
                 line-height: 32px !important;
                 height: 32px !important;
@@ -232,7 +232,7 @@
                 height: 32px !important;
                 display: flex !important;
                 align-items: center !important;
-                gap: 10px !important;
+                gap: var(--smg-sp-10) !important;
                 margin-left: auto !important;
                 margin-top: 0 !important;
                 margin-bottom: 0 !important;
@@ -252,26 +252,26 @@
             .smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }
             /* barra do header: mais apertada que a versão solta — cada px conta numa faixa fixa */
             html.smg-thread .smg-thead-unified .smg-bar { height: 36px; padding: 0; }
-            html.smg-thread .smg-thead-unified .smg-bar-group { gap: 2px; padding: 2px 4px; }
-            html.smg-thread .smg-thead-unified .smg-bar-div { margin: 9px 2px; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { padding: 0 8px; gap: 5px; }
+            html.smg-thread .smg-thead-unified .smg-bar-group { gap: var(--smg-sp-2); padding: var(--smg-sp-2) var(--smg-sp-4); }
+            html.smg-thread .smg-thead-unified .smg-bar-div { margin: var(--smg-sp-10) var(--smg-sp-2); }
+            html.smg-thread .smg-thead-unified .smg-bar-btn { padding: 0 var(--smg-sp-8); gap: var(--smg-sp-6); }
             html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 30px; padding: 0; }
-            html.smg-thread .smg-thead-unified .smg-bar-cur { min-width: 60px !important; padding: 0 10px !important; }
-            html.smg-thread .smg-thead-unified .smg-bar-pager { gap: 2px; padding: 2px 4px; }
+            html.smg-thread .smg-thead-unified .smg-bar-cur { min-width: 60px !important; padding: 0 var(--smg-sp-10) !important; }
+            html.smg-thread .smg-thead-unified .smg-bar-pager { gap: var(--smg-sp-2); padding: var(--smg-sp-2) var(--smg-sp-4); }
             html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-btn,
             .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-btn {
                 width: 28px !important; height: 28px !important; min-width: 28px !important; padding: 0 !important;
-                border-radius: 50% !important; font-size: 12.5px;
+                border-radius: var(--smg-r-round) !important; font-size: var(--smg-fs-13);
             }
             html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-cur,
             .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-cur {
-                height: 28px !important; min-width: 60px !important; padding: 0 10px !important;
-                border-radius: 10px !important; font-size: 12px !important; font-weight: 700 !important;
+                height: 28px !important; min-width: 60px !important; padding: 0 var(--smg-sp-10) !important;
+                border-radius: var(--smg-r-10) !important; font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
                 white-space: nowrap !important;
             }
             html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-cur.smg-bar-pager-goto,
             .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-cur.smg-bar-pager-goto {
-                font-size: 12px !important; font-weight: 700 !important;
+                font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
             }
             html.smg-thread .smg-thead-unified .smg-bar-pager svg,
             .smg-thead-unified.is-stuck .smg-bar-pager svg {
@@ -281,15 +281,15 @@
                borda, raio, altura) e botões-pílula sem borda própria, em vez do bloco com gradiente e
                divisórias que tinham antes. Assim as duas metades da direita parecem o mesmo componente. */
             html.smg-thread .smg-thead-unified .smg-thead-actions {
-                height: 36px; box-sizing: border-box; padding: 2px 4px; align-items: center; gap: 2px;
+                height: 36px; box-sizing: border-box; padding: var(--smg-sp-2) var(--smg-sp-4); align-items: center; gap: var(--smg-sp-2);
                 background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
-                border-radius: 12px !important; box-shadow: none !important; overflow: visible;
+                border-radius: var(--smg-r-12) !important; box-shadow: none !important; overflow: visible;
             }
             html.smg-thread .smg-thead-unified .smg-thead-btn {
-                width: 30px; height: 30px; min-width: 30px; padding: 0; font-size: 16px;
-                border: 0 !important; border-radius: 8px !important; background: transparent !important;
-                color: rgba(255,255,255,0.9);
-                transition: background .14s ease, color .14s ease;
+                width: 30px; height: 30px; min-width: 30px; padding: 0; font-size: var(--smg-fs-16);
+                border: 0 !important; border-radius: var(--smg-r-8) !important; background: transparent !important;
+                color: var(--smg-w-95);
+                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
             html.smg-thread .smg-thead-unified .smg-thead-btn:hover { background: var(--smg-s3) !important; color: #fff; }
             html.smg-thread .smg-thead-unified .smg-thead-btn + .smg-thead-btn { border-left: 0 !important; }
@@ -299,7 +299,7 @@
             .smg-thead-hero {
                 display: flex;
                 align-items: center;
-                gap: 16px;
+                gap: var(--smg-sp-16);
                 min-width: 0;
                 flex: 1 1 auto;
             }
@@ -309,7 +309,7 @@
                 justify-content: center;
                 min-width: 0;
                 flex: 1 1 auto;
-                gap: 6px;
+                gap: var(--smg-sp-6);
                 padding: 0 !important;
                 padding-left: 0 !important;
                 margin: 0 !important;
@@ -319,7 +319,7 @@
                 display: flex !important;
                 align-items: center !important;
                 flex-wrap: wrap !important;
-                gap: 6px !important;
+                gap: var(--smg-sp-6) !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 padding-left: 0 !important;
@@ -327,9 +327,9 @@
             }
             .smg-thead-badges-row .label,
             .smg-thead-badges-row .prefix {
-                font-size: 11px !important;
-                padding: 2px 7px !important;
-                border-radius: 5px !important;
+                font-size: var(--smg-fs-11) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-8) !important;
+                border-radius: var(--smg-r-6) !important;
                 font-weight: 700 !important;
                 letter-spacing: .02em;
                 line-height: 1.3 !important;
@@ -364,11 +364,11 @@
                 flex: 0 0 120px !important;
                 width: 120px !important;
                 height: 120px !important;
-                border-radius: 16px !important;
+                border-radius: var(--smg-r-16) !important;
                 overflow: hidden !important;
-                background: rgba(255,255,255,0.06) !important;
-                border: 1px solid rgba(255,255,255,0.08) !important;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+                background: var(--smg-w-06) !important;
+                border: 1px solid var(--smg-w-08) !important;
+                box-shadow: var(--smg-shadow-2) !important;
                 display: block !important;
             }
             .smg-thead-thumb img {
@@ -388,13 +388,13 @@
                 display: none !important;
             }
             html.smg-thread .smg-thead-tags-bar {
-                margin: 6px 0 14px 0 !important;
+                margin: var(--smg-sp-6) 0 var(--smg-sp-14) 0 !important;
                 padding: 0 !important;
                 width: 100%;
                 display: block;
             }
             html.smg-smg.smg-thread .smg-thead-tags-bar {
-                margin: 6px auto 14px auto !important;
+                margin: var(--smg-sp-6) auto var(--smg-sp-14) auto !important;
             }
             html.smg-smg.smg-thread .smg-thead-tags-bar > .pageContent {
                 width: 100%;
@@ -404,8 +404,8 @@
                 max-width: var(--smg-cw) !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
+                padding-left: var(--smg-sp-10) !important;
+                padding-right: var(--smg-sp-10) !important;
                 box-sizing: border-box;
             }
             html.smg-thread .smg-thead-tags-bar .p-description {
@@ -419,33 +419,33 @@
                 display: flex !important;
                 align-items: center !important;
                 flex-wrap: wrap !important;
-                gap: 6px !important;
+                gap: var(--smg-sp-6) !important;
                 min-width: 0;
                 width: 100%;
                 margin: 0 !important;
                 padding: 0 !important;
             }
             html.smg-thread .smg-thead-tags-row .tagItem {
-                font-size: 12px !important;
+                font-size: var(--smg-fs-12) !important;
                 font-weight: 500 !important;
-                padding: 3px 10px !important;
-                border-radius: 8px !important;
-                background: rgba(255,255,255,0.06) !important;
-                border: 1px solid rgba(255,255,255,0.08) !important;
-                color: rgba(255,255,255,0.85) !important;
+                padding: var(--smg-sp-4) var(--smg-sp-10) !important;
+                border-radius: var(--smg-r-8) !important;
+                background: var(--smg-w-06) !important;
+                border: 1px solid var(--smg-w-08) !important;
+                color: var(--smg-w-85) !important;
                 text-decoration: none !important;
-                transition: background .14s ease, color .14s ease, border-color .14s ease;
+                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
             }
             html.smg-thread .smg-thead-tags-row .tagItem:hover {
-                background: rgba(255,255,255,0.12) !important;
-                border-color: rgba(255,255,255,0.18) !important;
+                background: var(--smg-w-12) !important;
+                border-color: var(--smg-w-18) !important;
                 color: #fff !important;
             }
             html.smg-thread .smg-thead-tags-row > .listInline,
             html.smg-thread .smg-thead-tags-row > .tagList,
             html.smg-thread .smg-thead-tags-row > .tagList-icon {
                 display: inline-flex !important; align-items: center !important; flex-wrap: wrap;
-                gap: 4px; min-width: 0; margin: 0 !important; padding: 0 !important;
+                gap: var(--smg-sp-4); min-width: 0; margin: 0 !important; padding: 0 !important;
             }
             html.smg-thread .smg-thead-tags-row .tagList-icon {
                 flex: 0 0 auto; line-height: 1; white-space: nowrap;
@@ -457,21 +457,21 @@
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
                 html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
-                .smg-thead-thumb { flex: 0 0 64px !important; width: 64px !important; height: 64px !important; border-radius: 12px !important; }
-                html.smg-thread .p-body-header .p-title-value { font-size: 19px !important; }
+                .smg-thead-thumb { flex: 0 0 64px !important; width: 64px !important; height: 64px !important; border-radius: var(--smg-r-12) !important; }
+                html.smg-thread .p-body-header .p-title-value { font-size: var(--smg-fs-20) !important; }
             }
 
             .smg-thead-actions {
                 display: inline-flex; align-items: stretch; margin-left: auto;
-                border: 1px solid var(--smg-bd2); border-radius: 13px; overflow: hidden;
+                border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-14); overflow: hidden;
                 background: linear-gradient(180deg, var(--smg-s2), var(--smg-s1));
-                box-shadow: 0 4px 16px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.06);
+                box-shadow: var(--smg-shadow-2), var(--smg-hl);
             }
             .smg-thead-btn {
-                width: 48px; height: 42px; font-size: 21px; padding: 0; cursor: pointer;
+                width: 48px; height: 42px; font-size: var(--smg-fs-22); padding: 0; cursor: pointer;
                 display: inline-flex; align-items: center; justify-content: center;
-                border: 0; background: transparent; color: rgba(255,255,255,0.94);
-                transition: background .16s ease, color .16s ease, transform .12s ease;
+                border: 0; background: transparent; color: var(--smg-w-95);
+                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-thead-btn svg { fill: none !important; }   /* ícones outline (o CSS do fórum tentava preencher → play virava blob/sumia) */
             .smg-thead-ic { display: inline-flex; align-items: center; justify-content: center; }
@@ -492,18 +492,18 @@
             @media (max-width: 600px) {
                 /* Header da thread normal (topo) no mobile */
                 html.smg-thread .p-body-header {
-                    padding-top: 6px !important;
-                    padding-left: 4px !important;
-                    padding-right: 4px !important;
-                    margin-bottom: 2px !important;
+                    padding-top: var(--smg-sp-6) !important;
+                    padding-left: var(--smg-sp-4) !important;
+                    padding-right: var(--smg-sp-4) !important;
+                    margin-bottom: var(--smg-sp-2) !important;
                 }
                 html.smg-thread .p-body-header.smg-thead-unified {
                     position: static !important;
                     top: auto !important;
                     min-height: 0 !important;
                     height: auto !important;
-                    padding: 3px 4px !important;
-                    margin-bottom: 4px !important;
+                    padding: var(--smg-sp-4) var(--smg-sp-4) !important;
+                    margin-bottom: var(--smg-sp-4) !important;
                     box-shadow: none !important;
                     clip-path: none !important;
                 }
@@ -514,7 +514,7 @@
                 html.smg-thread .smg-thead-hero {
                     display: flex !important;
                     align-items: center !important;
-                    gap: 12px !important;
+                    gap: var(--smg-sp-12) !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
                     padding-left: 0 !important;
@@ -524,15 +524,15 @@
                     width: 88px !important;
                     min-width: 88px !important;
                     height: 88px !important;
-                    border-radius: 16px !important;
+                    border-radius: var(--smg-r-16) !important;
                     margin-right: 0 !important;
                     align-self: center !important;
-                    box-shadow: 0 4px 16px rgba(0,0,0,0.42) !important;
+                    box-shadow: var(--smg-shadow-2) !important;
                 }
                 html.smg-thread .smg-thead-thumb img {
                     width: 100% !important;
                     height: 100% !important;
-                    border-radius: 16px !important;
+                    border-radius: var(--smg-r-16) !important;
                     object-fit: cover !important;
                 }
                 html.smg-thread .smg-thead-info {
@@ -542,23 +542,23 @@
                     justify-content: center !important;
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
-                    gap: 4px !important;
+                    gap: var(--smg-sp-4) !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title {
-                    gap: 2px !important;
-                    row-gap: 2px !important;
+                    gap: var(--smg-sp-2) !important;
+                    row-gap: var(--smg-sp-2) !important;
                 }
                 html.smg-thread .smg-thead-unified .smg-thead-titleline {
                     flex: 1 1 100% !important;
                     display: flex !important;
                     align-items: center !important;
-                    gap: 4px !important;
+                    gap: var(--smg-sp-4) !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .smg-thead-unified .p-title-value {
                     display: block !important;
-                    font-size: 16px !important;
+                    font-size: var(--smg-fs-16) !important;
                     line-height: 1.25 !important;
                     font-weight: 750 !important;
                     margin: 0 !important;
@@ -578,12 +578,12 @@
                     height: 18px !important;
                     min-height: 18px !important;
                     max-height: 18px !important;
-                    padding: 0 5px !important;
+                    padding: 0 var(--smg-sp-6) !important;
                     margin: 0 !important;
-                    font-size: 9.5px !important;
+                    font-size: var(--smg-fs-10) !important;
                     font-weight: 700 !important;
                     line-height: 1 !important;
-                    border-radius: 4px !important;
+                    border-radius: var(--smg-r-4) !important;
                     vertical-align: middle !important;
                     box-sizing: border-box !important;
                     flex-shrink: 0 !important;
@@ -591,7 +591,7 @@
                 }
                 html.smg-thread .smg-thead-unified .smg-thead-title-text {
                     display: inline !important;
-                    font-size: 16px !important;
+                    font-size: var(--smg-fs-16) !important;
                     font-weight: 750 !important;
                     line-height: 1.25 !important;
                     color: #fff !important;
@@ -603,15 +603,15 @@
                     text-overflow: clip !important;
                 }
                 html.smg-thread .smg-thead-tags {
-                    margin: 1px 0 2px !important;
+                    margin: var(--smg-sp-2) 0 var(--smg-sp-2) !important;
                     padding-left: 0 !important;
                 }
                 html.smg-thread .p-description .listInline,
                 html.smg-thread .p-description .tagList {
                     display: inline-flex !important;
                     flex-wrap: wrap !important;
-                    gap: 2px !important;
-                    row-gap: 2px !important;
+                    gap: var(--smg-sp-2) !important;
+                    row-gap: var(--smg-sp-2) !important;
                     margin: 0 !important;
                     padding: 0 !important;
                 }
@@ -623,17 +623,17 @@
                 html.smg-thread .p-description .tagList .tagItem,
                 html.smg-thread .p-description .tagItem,
                 html.smg-thread .tagItem {
-                    font-size: 10px !important;
-                    padding: 1px 5px !important;
-                    border-radius: 4px !important;
+                    font-size: var(--smg-fs-10) !important;
+                    padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                    border-radius: var(--smg-r-4) !important;
                     margin: 0 !important;
                     line-height: 1.25 !important;
                 }
                 html.smg-thread .p-description .tagList .tagList-icon,
                 html.smg-thread .p-description .tagList-icon {
-                    margin-right: 1px !important;
+                    margin-right: var(--smg-sp-2) !important;
                     padding: 0 !important;
-                    font-size: 11px !important;
+                    font-size: var(--smg-fs-11) !important;
                     align-self: center !important;
                 }
 
@@ -669,26 +669,26 @@
                 flex-wrap: wrap !important; gap: 0 !important; margin: 0 !important; padding-bottom: 0 !important;
             }
             /* espaçamento vertical enxuto: cola título→barra→posts */
-            html.smg-thread .p-body-header:not(.smg-thead-unified) { padding-top: 26px !important; padding-bottom: 4px !important; margin-bottom: 0 !important; }
+            html.smg-thread .p-body-header:not(.smg-thead-unified) { padding-top: var(--smg-sp-28) !important; padding-bottom: var(--smg-sp-4) !important; margin-bottom: 0 !important; }
             html.smg-thread .p-body-header .p-description { margin-bottom: 0 !important; }
-            html.smg-thread .block-outer + * { margin-top: 4px !important; }
+            html.smg-thread .block-outer + * { margin-top: var(--smg-sp-4) !important; }
             html.smg-thread .block.block--messages,
             html.smg-thread .block-body--messages,
-            html.smg-thread .js-replyNewMessageContainer { margin-top: 4px !important; }
+            html.smg-thread .js-replyNewMessageContainer { margin-top: var(--smg-sp-4) !important; }
             html.smg-thread .block-outer-main { flex: 0 1 auto !important; margin: 0 auto 0 0 !important; min-width: 0 !important; }
             html.smg-thread .block-outer-opposite { flex: 0 0 auto !important; margin: 0 !important; }
             /* mata o centramento nativo do pager (era o que indentava a paginação) */
             html.smg-thread .pageNavWrapper { justify-content: flex-start !important; align-items: center !important; text-align: left !important; margin: 0 !important; }
-            html.smg-thread .pageNav { display: flex !important; align-items: center !important; justify-content: flex-start !important; margin: 0 !important; gap: 6px !important; }
-            html.smg-thread .pageNav-main { display: flex !important; align-items: center; gap: 6px !important; flex-wrap: wrap; margin: 0 !important; padding: 0 !important; }
+            html.smg-thread .pageNav { display: flex !important; align-items: center !important; justify-content: flex-start !important; margin: 0 !important; gap: var(--smg-sp-6) !important; }
+            html.smg-thread .pageNav-main { display: flex !important; align-items: center; gap: var(--smg-sp-6) !important; flex-wrap: wrap; margin: 0 !important; padding: 0 !important; }
             /* o <li> (pageNav-page) era o que deslocava os números pra baixo: zera padding/line-height e centra */
             html.smg-thread .pageNav-page { display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; line-height: 1 !important; }
-            html.smg-thread .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; gap: 6px !important; align-items: center; }
+            html.smg-thread .pageNavSimple { justify-content: flex-start !important; margin: 0 !important; gap: var(--smg-sp-6) !important; align-items: center; }
             /* mostra só UM paginador (evita o pager completo + o "1 of N" juntos): completo no desktop */
             html.smg-thread .pageNavWrapper .pageNavSimple { display: none !important; }
             /* === BARRA ÚNICA: MESMO estilo de botão pra TODOS (pager · ações · ordenar) === */
-            html.smg-thread .block-outer-opposite .buttonGroup { display: flex !important; gap: 6px !important; flex-wrap: wrap !important; align-items: center; }
-            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; gap: 6px !important; display: flex !important; }
+            html.smg-thread .block-outer-opposite .buttonGroup { display: flex !important; gap: var(--smg-sp-6) !important; flex-wrap: wrap !important; align-items: center; }
+            html.smg-thread .block-outer-opposite .tabs { justify-content: flex-start !important; gap: var(--smg-sp-6) !important; display: flex !important; }
             html.smg-thread .pageNavSimple-el,
             html.smg-thread .pageNav-jump,
             html.smg-thread .pageNav-page > a,
@@ -696,9 +696,9 @@
             html.smg-thread .block-outer-opposite .button--link,
             html.smg-thread .block-outer-opposite .smgTranslator-globalBtn,
             html.smg-thread .block-outer-opposite .tabs-tab {
-                border-radius: 10px !important; border: 1px solid var(--smg-bd) !important;
-                background: var(--smg-s1) !important; color: rgba(255,255,255,0.85) !important; box-shadow: none !important;
-                min-height: 36px !important; padding: 0 14px !important; margin: 0 !important;
+                border-radius: var(--smg-r-10) !important; border: 1px solid var(--smg-bd) !important;
+                background: var(--smg-s1) !important; color: var(--smg-w-85) !important; box-shadow: none !important;
+                min-height: 36px !important; padding: 0 var(--smg-sp-14) !important; margin: 0 !important;
                 font-weight: 600; display: inline-flex !important; align-items: center; justify-content: center;
             }
             html.smg-thread .pageNavSimple-el:hover,
@@ -735,7 +735,7 @@
             html.smg-thread .block-outer button:focus, html.smg-thread .block-outer button:focus-visible { outline: none !important; box-shadow: none !important; }
             /* CTA de responder (SMG) em destaque (botão branco) */
             html.smg-thread .p-title-pageAction .button--cta {
-                border-radius: 10px !important; border: none !important;
+                border-radius: var(--smg-r-10) !important; border: none !important;
                 background: #fff !important; color: #141414 !important;
             }
             /* mata baseline/borda/pseudo nativos das tabs (o "1px fantasma" na barra) */
@@ -766,7 +766,7 @@
                 html.smg-thread .block-outer-opposite .button,
                 html.smg-thread .block-outer-opposite .button--link,
                 html.smg-thread .block-outer-opposite .smgTranslator-globalBtn,
-                html.smg-thread .block-outer-opposite .tabs-tab { min-height: 34px !important; padding: 0 11px !important; font-size: 13px !important; }
+                html.smg-thread .block-outer-opposite .tabs-tab { min-height: 34px !important; padding: 0 var(--smg-sp-12) !important; font-size: var(--smg-fs-13) !important; }
             }
 
             /* Ocultar preview tooltip nativo do XenForo que abre no hover de textos/títulos */
@@ -777,12 +777,12 @@
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list {
                 display: flex !important;
                 flex-direction: column !important;
-                gap: 3px !important;
-                margin: 0 0 16px 0 !important;
-                padding: 6px 10px !important;
+                gap: var(--smg-sp-4) !important;
+                margin: 0 0 var(--smg-sp-16) 0 !important;
+                padding: var(--smg-sp-6) var(--smg-sp-10) !important;
                 background: var(--smg-s1) !important;
                 border: 1px solid var(--smg-bd) !important;
-                border-radius: 12px !important;
+                border-radius: var(--smg-r-12) !important;
                 list-style: none !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
@@ -791,29 +791,29 @@
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread {
                 justify-content: flex-start !important;
                 text-align: left !important;
-                padding: 6px 10px !important;
+                padding: var(--smg-sp-6) var(--smg-sp-10) !important;
                 border: 0 !important;
-                border-radius: 8px !important;
+                border-radius: var(--smg-r-8) !important;
                 background: transparent !important;
                 min-height: 38px !important;
                 height: auto !important;
                 max-height: none !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
-                transition: background 0.14s ease !important;
+                transition: background var(--smg-dur-15) ease !important;
                 transform: none !important;
                 box-shadow: none !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread:hover,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread:hover {
-                background: rgba(255,255,255,0.06) !important;
+                background: var(--smg-w-06) !important;
                 border-color: transparent !important;
                 transform: none !important;
                 box-shadow: none !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread + .structItem--thread,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread + .structItem--thread {
-                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                border-top: 1px solid var(--smg-w-06) !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .structItem-cell--icon,
@@ -827,7 +827,7 @@
                 max-width: 26px !important;
                 flex: 0 0 26px !important;
                 aspect-ratio: 1 / 1 !important;
-                border-radius: 6px !important;
+                border-radius: var(--smg-r-6) !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;
@@ -844,7 +844,7 @@
                 width: 100% !important;
                 height: 100% !important;
                 object-fit: cover !important;
-                border-radius: 6px !important;
+                border-radius: var(--smg-r-6) !important;
                 display: block !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-cell--main,
@@ -860,7 +860,7 @@
                 flex-direction: row !important;
                 justify-content: flex-start !important;
                 text-align: left !important;
-                font-size: 13.5px !important;
+                font-size: var(--smg-fs-14) !important;
                 font-weight: 600 !important;
                 white-space: nowrap !important;
                 margin: 0 !important;
@@ -875,9 +875,9 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 margin: 0 !important;
-                font-size: 9.5px !important;
-                padding: 1.5px 5.5px !important;
-                border-radius: 4px !important;
+                font-size: var(--smg-fs-10) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                border-radius: var(--smg-r-4) !important;
                 line-height: 1.2 !important;
                 flex-shrink: 0 !important;
             }
@@ -909,7 +909,7 @@
                 display: inline-flex !important;
                 flex-direction: row !important;
                 align-items: center !important;
-                gap: 3px !important;
+                gap: var(--smg-sp-4) !important;
                 padding: 0 !important;
                 flex-shrink: 0 !important;
                 width: auto !important;
@@ -919,18 +919,18 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                font-size: 10px !important;
+                font-size: var(--smg-fs-10) !important;
                 font-weight: 700 !important;
-                padding: 1px 5px !important;
-                border-radius: 3px !important;
-                background: rgba(255,255,255,0.08) !important;
-                color: rgba(255,255,255,0.6) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                border-radius: var(--smg-r-4) !important;
+                background: var(--smg-w-08) !important;
+                color: var(--smg-w-60) !important;
                 text-decoration: none !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .smg-card-dates,
             html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread .smg-card-dates {
-                font-size: 11px !important;
-                color: rgba(255,255,255,0.4) !important;
+                font-size: var(--smg-fs-11) !important;
+                color: var(--smg-w-40) !important;
                 white-space: nowrap !important;
             }
             html.smg-threadlist .smg-sticky-compact-list .structItem--thread .structItem-minor,
@@ -953,18 +953,18 @@
                 display: grid !important;
                 grid-template-columns: 30px minmax(0, 1fr) 230px 128px !important;
                 align-items: center !important;
-                column-gap: 14px !important;
+                column-gap: var(--smg-sp-14) !important;
             }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-cell--main,
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-dates { display: contents !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread > .structItem-cell--icon { grid-column: 1 !important; grid-row: 1 !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-title {
                 grid-column: 2 !important; grid-row: 1 !important; min-width: 0 !important;
-                display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 6px !important;
+                display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: var(--smg-sp-6) !important;
             }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .label-append { display: none !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .structItem-title a:not(.label):not(.labelLink) {
-                display: block !important; min-width: 0 !important; margin-left: 2px !important;
+                display: block !important; min-width: 0 !important; margin-left: var(--smg-sp-2) !important;
             }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:nth-of-type(1) { grid-column: 3 !important; grid-row: 1 !important; text-align: right !important; white-space: nowrap !important; }
             html.smg-threadlist:is(.smg-tv-grid,:not(.smg-tv-grid)) .smg-sticky-compact-list .structItem--thread .smg-card-date-item:not(:first-of-type),
@@ -976,8 +976,8 @@
             html.smg-threadlist.smg-tv-grid .smg-tl-grid {
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
-                gap: 14px !important;
-                padding: 14px !important;
+                gap: var(--smg-sp-14) !important;
+                padding: var(--smg-sp-14) !important;
                 align-items: stretch !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -993,11 +993,11 @@
                 gap: 0 !important;
                 padding: 0 !important;
                 border: 1px solid rgba(127,127,127,0.18) !important;
-                border-radius: 12px !important;
+                border-radius: var(--smg-r-12) !important;
                 overflow: hidden !important;
                 background: var(--smg-s1) !important;
                 position: relative !important;
-                transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
+                transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
             }
             html.smg-threadlist .structItem--thread.samUnitWrapper,
             html.smg-threadlist .structItem--thread.smg-card-empty,
@@ -1008,7 +1008,7 @@
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
                 border-color: var(--smg-bd2) !important;
                 transform: translateY(-2px) !important;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+                box-shadow: var(--smg-shadow-2) !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail,
@@ -1042,19 +1042,19 @@
                 position: absolute !important;
                 top: 6px !important;
                 right: 6px !important;
-                z-index: 5 !important;
+                z-index: var(--smg-z-5) !important;
                 width: 28px !important;
                 height: 28px !important;
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                background: rgba(0,0,0,0.65) !important;
+                background: var(--smg-k-62) !important;
                 border: 0 !important;
-                border-radius: 8px !important;
-                color: rgba(255,255,255,0.8) !important;
+                border-radius: var(--smg-r-8) !important;
+                color: var(--smg-w-85) !important;
                 cursor: pointer !important;
                 opacity: 0 !important;
-                transition: opacity .14s ease, background .14s ease, color .14s ease, transform .14s ease !important;
+                transition: opacity var(--smg-dur-15) ease, background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease !important;
             }
             .structItem--thread:hover .smg-thread-unwatch-btn,
             .structItem-cell--icon:hover .smg-thread-unwatch-btn {
@@ -1063,7 +1063,7 @@
             .smg-thread-unwatch-btn.is-following {
                 opacity: 0.85 !important;
                 color: var(--smg-link) !important;
-                background: rgba(0,0,0,0.75) !important;
+                background: var(--smg-k-72) !important;
             }
             .smg-thread-unwatch-btn.is-following:hover {
                 background: rgba(244,63,94,0.9) !important;
@@ -1088,7 +1088,7 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-cell--main {
                 width: 100% !important;
                 box-sizing: border-box !important;
-                padding: 8px 12px 12px !important;
+                padding: var(--smg-sp-8) var(--smg-sp-12) var(--smg-sp-12) !important;
                 display: flex !important;
                 flex-direction: column !important;
                 gap: 0 !important;
@@ -1101,8 +1101,8 @@
                 flex-direction: row !important;
                 flex-wrap: wrap !important;
                 align-items: center !important;
-                gap: 4px !important;
-                font-size: 14.5px !important;
+                gap: var(--smg-sp-4) !important;
+                font-size: var(--smg-fs-15) !important;
                 font-weight: 700 !important;
                 line-height: 1.3 !important;
                 margin: 0 !important;
@@ -1110,9 +1110,9 @@
             }
             .structItem-title .prefix,
             .labelLink .label {
-                font-size: 9.5px !important;
-                padding: 1.5px 5.5px !important;
-                border-radius: 4px !important;
+                font-size: var(--smg-fs-10) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                border-radius: var(--smg-r-4) !important;
                 line-height: 1.2 !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title a[href*="/threads/"],
@@ -1125,7 +1125,7 @@
                 text-overflow: ellipsis !important;
                 min-height: 2.6em !important;
                 line-height: 1.3 !important;
-                margin-top: 5px !important;
+                margin-top: var(--smg-sp-6) !important;
                 color: #fff !important;
                 text-decoration: none !important;
                 word-break: break-word !important;
@@ -1140,7 +1140,7 @@
                 display: flex !important;
                 flex-direction: column !important;
                 gap: 0 !important;
-                margin-top: 4px !important;
+                margin-top: var(--smg-sp-4) !important;
                 padding: 0 !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-parts {
@@ -1155,8 +1155,8 @@
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-startDate,
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-startDate time {
-                color: rgba(255,255,255,0.45) !important;
-                font-size: 11.5px !important;
+                color: var(--smg-w-50) !important;
+                font-size: var(--smg-fs-12) !important;
                 font-weight: 500 !important;
                 margin: 0 !important;
                 padding: 0 !important;
@@ -1166,22 +1166,22 @@
                 display: flex !important;
                 flex-wrap: wrap !important;
                 align-items: center !important;
-                gap: 5px !important;
+                gap: var(--smg-sp-6) !important;
                 margin-top: auto !important;
-                padding-top: 8px !important;
-                font-size: 11.5px !important;
-                color: rgba(255,255,255,0.45) !important;
+                padding-top: var(--smg-sp-8) !important;
+                font-size: var(--smg-fs-12) !important;
+                color: var(--smg-w-50) !important;
                 line-height: 1.3 !important;
             }
-            .smg-card-date-val { color: rgba(255,255,255,0.7) !important; font-weight: 600 !important; }
-            .smg-card-date-sep { color: rgba(255,255,255,0.25) !important; }
+            .smg-card-date-val { color: var(--smg-w-72) !important; font-weight: 600 !important; }
+            .smg-card-date-sep { color: var(--smg-w-22) !important; }
 
             /* Row 4 (Chips de Paginação) */
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-pageJump {
                 display: flex !important;
                 flex-wrap: wrap !important;
-                gap: 3px !important;
-                margin-top: 7px !important;
+                gap: var(--smg-sp-4) !important;
+                margin-top: var(--smg-sp-8) !important;
                 width: 100% !important;
                 padding: 0 !important;
             }
@@ -1189,12 +1189,12 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                font-size: 11px !important;
+                font-size: var(--smg-fs-11) !important;
                 font-weight: 700 !important;
-                padding: 2px 6px !important;
-                border-radius: 4px !important;
-                background: rgba(255,255,255,0.08) !important;
-                color: rgba(255,255,255,0.65) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                border-radius: var(--smg-r-4) !important;
+                background: var(--smg-w-08) !important;
+                color: var(--smg-w-60) !important;
                 text-decoration: none !important;
             }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-pageJump a:hover {
@@ -1214,26 +1214,26 @@
                 display: inline-block !important;
                 width: 7px !important;
                 height: 7px !important;
-                border-radius: 50% !important;
+                border-radius: var(--smg-r-round) !important;
                 background: var(--smg-link) !important;
                 box-shadow: 0 0 6px var(--smg-link-soft) !important;
-                margin-left: 6px !important;
+                margin-left: var(--smg-sp-6) !important;
                 vertical-align: middle !important;
             }
             html.smg-threadlist .structItem--quickCreate,
             html.smg-threadlist .block-filterBar { display: none !important; }
             html.smg-threadlist .uix_threadListSeparator {
                 background: transparent !important;
-                color: rgba(255,255,255,0.62) !important;
-                font-size: 12px !important;
+                color: var(--smg-w-60) !important;
+                font-size: var(--smg-fs-12) !important;
                 font-weight: 700 !important;
                 letter-spacing: .08em !important;
                 text-transform: uppercase !important;
                 border: 0 !important;
-                padding: 18px 16px 4px !important;
+                padding: var(--smg-sp-18) var(--smg-sp-16) var(--smg-sp-4) !important;
                 margin: 0 !important;
             }
-            html.smg-threadlist .uix_threadListSeparator .uix_threadCollapseTrigger { color: rgba(255,255,255,0.45) !important; }
+            html.smg-threadlist .uix_threadListSeparator .uix_threadCollapseTrigger { color: var(--smg-w-50) !important; }
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd) {
                 position: relative !important;
                 overflow: hidden !important;
@@ -1245,7 +1245,7 @@
                 position: absolute;
                 inset: 0;
                 transform: translateX(-100%);
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+                background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent);
                 animation: smg-skel-shimmer 1.3s ease-in-out infinite;
                 pointer-events: none;
             }`;

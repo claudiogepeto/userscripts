@@ -10,20 +10,20 @@
                 box-sizing: border-box;
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
-                padding: 16px 18px;
-                border-radius: 16px;
+                gap: var(--smg-sp-10);
+                padding: var(--smg-sp-16) var(--smg-sp-18);
+                border-radius: var(--smg-r-16);
                 background: var(--smg-s1);
-                border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 44px rgba(0,0,0,0.62);
+                border: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-hl), var(--smg-shadow-4);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;   /* PERF: fechado SAI da render tree (opacity:0 sozinho mantinha a camada de blur viva em toda thread/lista — o #smg-goto-pop já fazia certo) */
                 opacity: 0;
                 pointer-events: none;
                 transform: translateX(-50%) translateY(6px);
-                transition: opacity .18s ease, transform .18s ease, visibility .18s;
-                z-index: 11;
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease, visibility var(--smg-dur-20);
+                z-index: var(--smg-z-pop);
             }
             #smg-post-nav-wrapper.settings-open #smg-settings-pop,
             #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
@@ -41,7 +41,7 @@
                 overflow-y: auto;
             }
             #smg-listfilter-pop::-webkit-scrollbar { width: 8px; }
-            #smg-listfilter-pop::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
+            #smg-listfilter-pop::-webkit-scrollbar-thumb { background: var(--smg-w-14); border-radius: var(--smg-r-4); }
             #smg-listfilter-pop .smg-multiselect-container { width: 100%; }
             #smg-listfilter-pop .smg-multiselect-btn { width: 100%; justify-content: space-between; }
             #smg-listfilter-pop .smg-multiselect-pop {
@@ -49,37 +49,37 @@
                 width: 100% !important;
                 max-width: 100% !important;
                 max-height: 420px !important;
-                margin-top: 8px !important;
+                margin-top: var(--smg-sp-8) !important;
                 box-shadow: none !important;
-                border: 1px solid rgba(255,255,255,0.1) !important;
+                border: 1px solid var(--smg-w-10) !important;
             }
             #smg-listfilter-pop .smg-multiselect-list {
                 max-height: 320px !important;
             }
             /* ---- ordenação da listagem (fórum) ---- */
-            #smg-listsort-pop { width: 380px; max-width: min(380px, calc(100vw - 20px)); max-height: 80vh; overflow-y: auto; padding: 18px 20px; }
+            #smg-listsort-pop { width: 380px; max-width: min(380px, calc(100vw - 20px)); max-height: 80vh; overflow-y: auto; padding: var(--smg-sp-18) var(--smg-sp-20); }
             #smg-listsort-pop::-webkit-scrollbar { width: 8px; }
-            #smg-listsort-pop::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 4px; }
-            .smg-sort-body { display: flex; flex-direction: column; gap: 14px; }
-            .smg-lf-body { display: flex; flex-direction: column; gap: 14px; }
-            .smg-lf-headrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 2px; }
-            .smg-lf-counter { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.7); }
+            #smg-listsort-pop::-webkit-scrollbar-thumb { background: var(--smg-w-14); border-radius: var(--smg-r-4); }
+            .smg-sort-body { display: flex; flex-direction: column; gap: var(--smg-sp-14); }
+            .smg-lf-body { display: flex; flex-direction: column; gap: var(--smg-sp-14); }
+            .smg-lf-headrow { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-8); padding-bottom: var(--smg-sp-2); }
+            .smg-lf-counter { font-size: var(--smg-fs-13); font-weight: 600; color: var(--smg-w-72); }
             .smg-lf-reset-btn {
-                background: transparent; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 8px;
-                color: rgba(255, 255, 255, 0.7); padding: 3px 9px; font-size: 12px; font-weight: 600; cursor: pointer;
-                transition: background 0.12s ease, color 0.12s ease;
+                background: transparent; border: 1px solid var(--smg-w-14); border-radius: var(--smg-r-8);
+                color: var(--smg-w-72); padding: var(--smg-sp-4) var(--smg-sp-10); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
+                transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
-            .smg-lf-reset-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-            .smg-lf-row { display: flex; flex-direction: column; gap: 7px; }
-            .smg-lf-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); }
+            .smg-lf-reset-btn:hover { background: var(--smg-w-10); color: #fff; }
+            .smg-lf-row { display: flex; flex-direction: column; gap: var(--smg-sp-8); }
+            .smg-lf-label { font-size: var(--smg-fs-12); font-weight: 600; color: var(--smg-w-50); }
             .label,
             .smg-badge-chip {
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 1.5px 5.5px !important;
-                border-radius: 4px !important;
-                font-size: 9.5px !important;
+                padding: var(--smg-sp-2) var(--smg-sp-6) !important;
+                border-radius: var(--smg-r-4) !important;
+                font-size: var(--smg-fs-10) !important;
                 font-weight: 700 !important;
                 line-height: 1.2 !important;
                 cursor: pointer !important;
@@ -87,10 +87,10 @@
                 user-select: none !important;
                 text-decoration: none !important;
                 vertical-align: middle !important;
-                border: 1px solid rgba(255,255,255,0.12) !important;
-                background: rgba(255,255,255,0.07);
+                border: 1px solid var(--smg-w-12) !important;
+                background: var(--smg-w-08);
                 color: #e7e7ea;
-                transition: transform .12s ease, box-shadow .12s ease, filter .12s ease !important;
+                transition: transform var(--smg-dur-12) ease, box-shadow var(--smg-dur-12) ease, filter var(--smg-dur-12) ease !important;
             }
             .smg-badge-chip:hover {
                 filter: brightness(1.18) !important;
@@ -104,8 +104,8 @@
                 filter: brightness(1.25) !important;
             }
             .smg-badge-chip.tagItem {
-                border-radius: 4px !important;
-                background: rgba(255,255,255,0.06) !important;
+                border-radius: var(--smg-r-4) !important;
+                background: var(--smg-w-06) !important;
                 color: #cbd9ff !important;
                 font-weight: 600 !important;
             }
@@ -131,7 +131,7 @@
             .label.label--camgirls, .smg-badge-chip.label--camgirls, .label--camgirls { background: #eb5757 !important; color: #fff !important; }
             .label.label--gumroad, .smg-badge-chip.label--gumroad, .label--gumroad { background: #ff90e8 !important; color: #000 !important; }
             .label.label--snapchat, .smg-badge-chip.label--snapchat, .label--snapchat { background: #fffc00 !important; color: #000 !important; }
-            .label.label--x, .smg-badge-chip.label--x, .label--x { background: #111 !important; border: 1px solid rgba(255,255,255,0.4) !important; color: #fff !important; }
+            .label.label--x, .smg-badge-chip.label--x, .label--x { background: #111 !important; border: 1px solid var(--smg-w-40) !important; color: #fff !important; }
             .label.label--fansly, .smg-badge-chip.label--fansly, .label--fansly { background: #1ea1f1 !important; color: #fff !important; }
             .label.label--xxx, .smg-badge-chip.label--xxx, .label--xxx { background: #8e44ad !important; color: #fff !important; }
             .label.label--pornhub, .smg-badge-chip.label--pornhub, .label--pornhub { background: #ffa31a !important; color: #000 !important; }
@@ -143,7 +143,7 @@
             .label.label--requests, .smg-badge-chip.label--requests, .label--requests { background: #d35400 !important; color: #fff !important; }
             .label.label--brazil, .smg-badge-chip.label--brazil, .label--brazil { background: #27ae60 !important; color: #fff !important; }
             .label.label--passes, .smg-badge-chip.label--passes, .label--passes { background: #2c3e50 !important; color: #fff !important; }
-            .label.label--playboy, .smg-badge-chip.label--playboy, .label--playboy { background: #111 !important; color: #ff77b2 !important; border: 1px solid #ff77b2 !important; }
+            .label.label--playboy, .smg-badge-chip.label--playboy, .label--playboy { background: #111 !important; color: var(--smg-ac) !important; border: 1px solid var(--smg-ac) !important; }
             .label.label--kofi, .smg-badge-chip.label--kofi, .label--kofi { background: #13c3ff !important; color: #000 !important; }
             .label.label--fantia, .smg-badge-chip.label--fantia, .label--fantia { background: #ff5274 !important; color: #fff !important; }
             .label.label--jvid, .smg-badge-chip.label--jvid, .label--jvid { background: #f39c12 !important; color: #fff !important; }
@@ -169,56 +169,56 @@
             .label.label--singapore, .smg-badge-chip.label--singapore, .label--singapore { background: #b71540 !important; color: #fff !important; }
             .label.label--malaysia, .smg-badge-chip.label--malaysia, .label--malaysia { background: #f39c12 !important; color: #fff !important; }
             .smg-lf-input {
-                height: 38px; padding: 0 12px; box-sizing: border-box;
-                border-radius: 10px; border: 1px solid rgba(255,255,255,0.16);
-                background: rgba(255,255,255,0.06); color: #fff; font-size: 14px; outline: none;
+                height: 38px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
+                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-18);
+                background: var(--smg-w-06); color: #fff; font-size: var(--smg-fs-14); outline: none;
             }
-            .smg-lf-input:focus { border-color: rgba(255,255,255,0.45); }
+            .smg-lf-input:focus { border-color: var(--smg-w-50); }
             .smg-lf-select option { background: #1b1c20; color: #fff; }
             /* ---- Controles de Ordenação na Dock ---- */
-            .smg-lf-sort-row { display: flex; flex-direction: column; gap: 8px; }
-            .smg-lf-sort-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .smg-lf-sort-row { display: flex; flex-direction: column; gap: var(--smg-sp-8); }
+            .smg-lf-sort-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--smg-sp-8); }
             .smg-lf-sort-opt {
-                display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-                padding: 9px 12px; border-radius: 10px;
-                background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-                color: rgba(255, 255, 255, 0.85); font-size: 12.5px; font-weight: 600;
-                cursor: pointer; transition: all .15s ease;
+                display: inline-flex; align-items: center; justify-content: center; gap: var(--smg-sp-8);
+                padding: var(--smg-sp-10) var(--smg-sp-12); border-radius: var(--smg-r-10);
+                background: var(--smg-w-04); border: 1px solid var(--smg-w-08);
+                color: var(--smg-w-85); font-size: var(--smg-fs-13); font-weight: 600;
+                cursor: pointer; transition: all var(--smg-dur-15) ease;
             }
-            .smg-lf-sort-opt:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); color: #fff; transform: translateY(-1px); }
+            .smg-lf-sort-opt:hover { background: var(--smg-w-08); border-color: var(--smg-w-18); color: #fff; transform: translateY(-1px); }
             .smg-lf-sort-opt.active {
-                background: rgba(255, 119, 178, 0.16); border-color: #ff77b2;
+                background: rgba(255, 119, 178, 0.16); border-color: var(--smg-ac);
                 color: #fff; font-weight: 700;
                 box-shadow: 0 0 14px rgba(255, 119, 178, 0.25);
             }
-            .smg-lf-dir-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 3px; background: rgba(0,0,0,0.25); border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+            .smg-lf-dir-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--smg-sp-6); padding: var(--smg-sp-4); background: var(--smg-k-25); border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-06); }
             .smg-lf-dir-opt {
-                padding: 8px 12px; border-radius: 8px; border: 0; background: transparent;
-                color: rgba(255,255,255,0.65); font-size: 12.5px; font-weight: 600;
-                cursor: pointer; transition: all .15s ease; text-align: center;
+                padding: var(--smg-sp-8) var(--smg-sp-12); border-radius: var(--smg-r-8); border: 0; background: transparent;
+                color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600;
+                cursor: pointer; transition: all var(--smg-dur-15) ease; text-align: center;
             }
             .smg-lf-dir-opt:hover { color: #fff; }
             .smg-lf-dir-opt.active { background: var(--smg-link); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
             .smg-lf-select {
-                width: 100%; height: 38px; padding: 0 12px; border-radius: 10px;
-                background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-                color: #fff; font-size: 13px; font-weight: 500; outline: none; cursor: pointer;
-                transition: border-color .15s;
+                width: 100%; height: 38px; padding: 0 var(--smg-sp-12); border-radius: var(--smg-r-10);
+                background: var(--smg-w-06); border: 1px solid var(--smg-w-10);
+                color: #fff; font-size: var(--smg-fs-13); font-weight: 500; outline: none; cursor: pointer;
+                transition: border-color var(--smg-dur-15);
             }
-            .smg-lf-select:hover, .smg-lf-select:focus { border-color: rgba(255, 255, 255, 0.25); }
+            .smg-lf-select:hover, .smg-lf-select:focus { border-color: var(--smg-w-22); }
             .smg-lf-apply {
-                margin-top: 10px;
+                margin-top: var(--smg-sp-10);
                 width: 100%;
-                padding: 12px;
-                border-radius: 12px;
+                padding: var(--smg-sp-12);
+                border-radius: var(--smg-r-12);
                 border: none;
                 background: var(--smg-link);
                 color: #fff;
-                font-size: 14.5px;
+                font-size: var(--smg-fs-15);
                 font-weight: 700;
                 cursor: pointer;
                 box-shadow: 0 4px 16px rgba(255, 119, 178, 0.35);
-                transition: filter .15s ease, transform .12s ease;
+                transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-lf-apply:hover {
                 filter: brightness(1.12);

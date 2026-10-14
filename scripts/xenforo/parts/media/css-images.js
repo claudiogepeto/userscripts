@@ -8,7 +8,7 @@
                 max-height: none !important;
                 display: block !important;
                 margin: 0 auto !important;
-                border-radius: 8px !important;
+                border-radius: var(--smg-r-8) !important;
                 cursor: pointer !important;
             }
             a.smg-imglink,
@@ -18,8 +18,8 @@
                 max-width: 100% !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
-                margin-top: 8px !important;
-                margin-bottom: 8px !important;
+                margin-top: var(--smg-sp-8) !important;
+                margin-bottom: var(--smg-sp-8) !important;
                 text-align: center !important;
             }
             .auto-image-grid a.smg-imglink, .portrait-grid a.smg-imglink {
@@ -48,7 +48,7 @@
                 aspect-ratio: var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13));
                 object-fit: cover;
                 background-color: var(--smg-s2);
-                border-radius: 8px;
+                border-radius: var(--smg-r-8);
             }
             @keyframes smg-img-shimmer { 0% { background-position: 160% 0; } 100% { background-position: -160% 0; } }
             /* host de imagem (jpg6/cuckcapital) lento/intermitente: o FÓRUM faz .lazyload/.lazyloading{opacity:0} até carregar. Quando o host pendura, a img some (opacity 0). Força visível p/ estas (têm data-smg-link) → aparece o shimmer e depois a img; se travar de vez, o JS troca por link. */
@@ -56,10 +56,10 @@
             /* fallback de imagem que não renderiza (jpg6.su/jpg5 & afins fora do ar) → chip de link clicável */
             /* CHIP de link solto: mesmo idioma visual dos cards (borda, raio, tipografia), só que numa
                linha — antes era uma caixa alta, com fonte grande e a URL quebrada no meio da palavra. */
-            .smg-imglink-fallback { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin: 3px 0; padding: 5px 10px; border: 1px solid var(--smg-bd); border-radius: 9px; background: var(--smg-s1); color: var(--smg-tx) !important; font-size: 12.5px; font-weight: 500; text-decoration: none !important; vertical-align: middle; }
-            .smg-imglink-fallback::before { content: "🔗"; font-size: 12px; opacity: 0.7; flex: 0 0 auto; }
+            .smg-imglink-fallback { display: inline-flex; align-items: center; gap: var(--smg-sp-8); max-width: 100%; margin: var(--smg-sp-4) 0; padding: var(--smg-sp-6) var(--smg-sp-10); border: 1px solid var(--smg-bd); border-radius: var(--smg-r-10); background: var(--smg-s1); color: var(--smg-tx) !important; font-size: var(--smg-fs-13); font-weight: 500; text-decoration: none !important; vertical-align: middle; }
+            .smg-imglink-fallback::before { content: "🔗"; font-size: var(--smg-fs-12); opacity: 0.7; flex: 0 0 auto; }
             .smg-imglink-fallback.smg-has-fav::before { content: none; }   /* achamos o ícone do site → dispensa o emoji */
-            .smg-linkfav { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 4px; object-fit: contain; }
+            .smg-linkfav { flex: 0 0 auto; width: 16px; height: 16px; border-radius: var(--smg-r-4); object-fit: contain; }
             .smg-linktext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-imglink-fallback:hover { background: var(--smg-s2); border-color: var(--smg-bd2); color: var(--smg-link) !important; }
 
@@ -67,34 +67,34 @@
             .smg-fhcard {
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: var(--smg-sp-10);
                 width: 100%;
                 box-sizing: border-box;
-                margin: 8px 0;
-                padding: 8px 12px;
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                border-radius: 12px;
+                margin: var(--smg-sp-8) 0;
+                padding: var(--smg-sp-8) var(--smg-sp-12);
+                border: 1px solid var(--smg-w-12);
+                border-radius: var(--smg-r-12);
                 background: var(--smg-s1);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+                box-shadow: var(--smg-shadow-1);
+                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             .smg-fhcard:hover {
-                border-color: rgba(255, 255, 255, 0.25);
+                border-color: var(--smg-w-22);
                 background: var(--smg-s2);
-                box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+                box-shadow: var(--smg-shadow-1);
             }
             .smg-fhcard-main {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: var(--smg-sp-12);
                 flex: 1 1 auto;
                 min-width: 0;
-                padding: 4px;
-                border-radius: 8px;
+                padding: var(--smg-sp-4);
+                border-radius: var(--smg-r-8);
                 text-decoration: none !important;
                 color: var(--smg-tx) !important;
                 filter: none !important;
-                transition: opacity .15s ease;
+                transition: opacity var(--smg-dur-15) ease;
             }
             .smg-fhcard-main:hover {
                 background: transparent;
@@ -112,37 +112,37 @@
                 justify-content: center;
                 width: 34px;
                 height: 34px;
-                border: 1px solid rgba(255,255,255,0.12);
-                border-radius: 9px;
-                background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.75);
+                border: 1px solid var(--smg-w-12);
+                border-radius: var(--smg-r-10);
+                background: var(--smg-w-06);
+                color: var(--smg-w-72);
                 cursor: pointer;
                 text-decoration: none !important;
                 filter: none !important;
-                transition: background .14s ease, border-color .14s ease, color .14s ease;
+                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
             .smg-fhcard-btn:hover {
-                background: rgba(255,255,255,0.12);
-                border-color: rgba(255,255,255,0.25);
+                background: var(--smg-w-12);
+                border-color: var(--smg-w-22);
                 color: #fff;
                 filter: none !important;
             }
             .smg-fhcard-btn svg { width: 17px; height: 17px; }
             .smg-fhcard-copied { color: #46d369 !important; }
             /* preview RICO: mosaico de até 4 thumbs + badge de contagem + "+N" no último */
-            .smg-fhcard-thumb { position: relative; flex: 0 0 auto; width: 96px; height: 96px; border-radius: 11px; overflow: hidden; background: var(--smg-s2); }
+            .smg-fhcard-thumb { position: relative; flex: 0 0 auto; width: 96px; height: 96px; border-radius: var(--smg-r-12); overflow: hidden; background: var(--smg-s2); }
             .smg-fhcard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-            .smg-fhcard-thumb--multi { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+            .smg-fhcard-thumb--multi { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--smg-sp-2); }
             .smg-fhcard-cell { position: relative; overflow: hidden; background: var(--smg-s2); }
-            .smg-fhcard-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.56); color: #fff; font-size: 16px; font-weight: 800; }
-            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 999px; background: rgba(0,0,0,0.66); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
+            .smg-fhcard-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--smg-k-55); color: #fff; font-size: var(--smg-fs-16); font-weight: 800; }
+            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8) var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-pill); background: var(--smg-k-62); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
             .smg-fhcard-count svg { width: 12px; height: 12px; fill: none !important; }
             /* skeleton enquanto a thumb carrega (some no load); reusa o @keyframes smg-img-shimmer */
-            .smg-fhcard-thumb--loading { background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 50%, transparent); background-size: 220% 100%; background-repeat: no-repeat; animation: smg-img-shimmer 1.25s ease-in-out infinite; }
+            .smg-fhcard-thumb--loading { background-image: linear-gradient(90deg, transparent, var(--smg-w-08) 50%, transparent); background-size: 220% 100%; background-repeat: no-repeat; animation: smg-img-shimmer 1.25s ease-in-out infinite; }
             /* sem thumb → logo grande do host centralizado no tile */
             /* SEM preview real (só logo/inicial): tile MENOR. Um favicon de 32px esticado num quadrado de
                96px só gastava altura — o tile grande existe pro mosaico de thumbs, que aí sim mostra algo. */
-            .smg-fhcard-thumb--logo, .smg-fhcard-thumb--letter { width: 54px; height: 54px; border-radius: 10px; }
+            .smg-fhcard-thumb--logo, .smg-fhcard-thumb--letter { width: 54px; height: 54px; border-radius: var(--smg-r-10); }
             .smg-fhcard-thumb--logo { display: flex; align-items: center; justify-content: center; }
             .smg-fhcard-thumb--logo img.smg-fhcard-logo { width: 30px; height: 30px; object-fit: contain; }
             .smg-fhcard-thumb--letter { display: flex; align-items: center; justify-content: center; font: 800 22px/1 -apple-system, system-ui, "Segoe UI", sans-serif; color: #fff; background: linear-gradient(135deg, var(--smg-link-strong), var(--smg-link)); }
@@ -164,7 +164,7 @@
             }
             .smg-fhcard-thumb--x {
                 background: #000 !important;
-                border: 1px solid rgba(255,255,255,0.15) !important;
+                border: 1px solid var(--smg-w-14) !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
@@ -179,28 +179,28 @@
                 width: 13px !important;
                 height: 13px !important;
             }
-            .smg-fhcard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
-            .smg-fhcard-platform { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
-            .smg-fhcard-host { font-size: 14px; font-weight: 800; color: var(--smg-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-fhcard-sub { font-size: 12px; color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-fhcard-body { display: flex; flex-direction: column; gap: var(--smg-sp-4); min-width: 0; flex: 1 1 auto; }
+            .smg-fhcard-platform { font-size: var(--smg-fs-11); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--smg-link); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
+            .smg-fhcard-host { font-size: var(--smg-fs-14); font-weight: 800; color: var(--smg-tx); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-fhcard-sub { font-size: var(--smg-fs-12); color: var(--smg-w-55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* DENTRO DE LISTA/TABELA: uma linha por item. O card cheio (tile de 96px) repetido em cada
                <li> de uma lista de 80 links viraria uma página quilométrica — aqui ele vira uma pílula. */
-            .smg-fhcard--inline { margin: 2px 0; padding: 2px 4px; border-radius: 9px; gap: 2px; }
-            .smg-fhcard--inline .smg-fhcard-main { gap: 8px; padding: 2px; }
-            .smg-fhcard--inline .smg-fhcard-thumb { width: 24px; height: 24px; border-radius: 7px; }
-            .smg-fhcard--inline .smg-fhcard-thumb--letter { font-size: 12px; }
+            .smg-fhcard--inline { margin: var(--smg-sp-2) 0; padding: var(--smg-sp-2) var(--smg-sp-4); border-radius: var(--smg-r-10); gap: var(--smg-sp-2); }
+            .smg-fhcard--inline .smg-fhcard-main { gap: var(--smg-sp-8); padding: var(--smg-sp-2); }
+            .smg-fhcard--inline .smg-fhcard-thumb { width: 24px; height: 24px; border-radius: var(--smg-r-8); }
+            .smg-fhcard--inline .smg-fhcard-thumb--letter { font-size: var(--smg-fs-12); }
             .smg-fhcard--inline .smg-fhcard-thumb--logo img.smg-fhcard-logo { width: 15px; height: 15px; }
-            .smg-fhcard--inline .smg-fhcard-thumb--multi { gap: 1px; }
-            .smg-fhcard--inline .smg-fhcard-count { left: 2px; bottom: 2px; padding: 1px 5px 1px 4px; font-size: 9.5px; }
+            .smg-fhcard--inline .smg-fhcard-thumb--multi { gap: var(--smg-sp-2); }
+            .smg-fhcard--inline .smg-fhcard-count { left: 2px; bottom: 2px; padding: var(--smg-sp-2) var(--smg-sp-6) var(--smg-sp-2) var(--smg-sp-4); font-size: var(--smg-fs-10); }
             .smg-fhcard--inline .smg-fhcard-count svg { width: 9px; height: 9px; }
-            .smg-fhcard--inline .smg-fhcard-more { font-size: 10px; }
+            .smg-fhcard--inline .smg-fhcard-more { font-size: var(--smg-fs-10); }
             /* título e host na MESMA linha (o sub vira sufixo discreto): duas linhas por item dobravam a
                altura da lista sem acrescentar nada — o host já aparece no ícone. */
-            .smg-fhcard--inline .smg-fhcard-body { flex-direction: row; align-items: baseline; gap: 7px; }
-            .smg-fhcard--inline .smg-fhcard-platform { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link); flex: 0 0 auto; }
-            .smg-fhcard--inline .smg-fhcard-host { font-size: 13px; font-weight: 600; flex: 0 1 auto; }
-            .smg-fhcard--inline .smg-fhcard-sub { font-size: 10.5px; flex: 0 0 auto; opacity: 0.75; }
-            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: 7px; }
+            .smg-fhcard--inline .smg-fhcard-body { flex-direction: row; align-items: baseline; gap: var(--smg-sp-8); }
+            .smg-fhcard--inline .smg-fhcard-platform { font-size: var(--smg-fs-10); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link); flex: 0 0 auto; }
+            .smg-fhcard--inline .smg-fhcard-host { font-size: var(--smg-fs-13); font-weight: 600; flex: 0 1 auto; }
+            .smg-fhcard--inline .smg-fhcard-sub { font-size: var(--smg-fs-11); flex: 0 0 auto; opacity: 0.75; }
+            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: var(--smg-r-8); }
             .smg-fhcard--inline .smg-fhcard-btn svg { width: 13px; height: 13px; }
             /* o marcador do <li> some quando o conteúdo vira bloco → mantém a numeração da lista original */
             .bbWrapper li > .smg-fhcard--inline { display: flex; }

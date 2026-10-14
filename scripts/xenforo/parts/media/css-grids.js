@@ -6,10 +6,10 @@
                 grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
                 grid-auto-flow: row dense !important;
                 grid-auto-rows: auto !important;
-                gap: 8px !important;
-                row-gap: 8px !important;
-                column-gap: 8px !important;
-                margin: 12px auto !important;
+                gap: var(--smg-sp-8) !important;
+                row-gap: var(--smg-sp-8) !important;
+                column-gap: var(--smg-sp-8) !important;
+                margin: var(--smg-sp-12) auto !important;
                 max-width: 100%;
                 text-align: center !important;
             }
@@ -26,12 +26,12 @@
                 grid-template-columns: repeat(var(--smg-mcols, 3), minmax(0, 1fr)) !important;
                 grid-auto-flow: row dense !important;
                 grid-auto-rows: auto !important;
-                gap: 8px !important;
-                row-gap: 8px !important;
-                column-gap: 8px !important;
+                gap: var(--smg-sp-8) !important;
+                row-gap: var(--smg-sp-8) !important;
+                column-gap: var(--smg-sp-8) !important;
                 align-items: start !important;
                 justify-items: stretch !important;
-                margin: 12px auto !important;
+                margin: var(--smg-sp-12) auto !important;
                 max-width: 100% !important;
                 text-align: center !important;
             }
@@ -65,7 +65,7 @@
             html.smg-masonry-on .auto-image-grid.smg-grid-pair-tall,
             html.smg-masonry-on .auto-image-grid.smg-true-masonry.smg-grid-pair-tall {
                 max-width: 100% !important;
-                margin: 12px auto !important;
+                margin: var(--smg-sp-12) auto !important;
             }
             html.smg-masonry-on .auto-image-grid > * {
                 width: 100% !important;
@@ -91,8 +91,8 @@
             html.smg-masonry-on .auto-image-grid.smg-true-masonry {
                 display: block !important;
                 column-count: var(--smg-mcols, 3) !important;
-                column-gap: 8px !important;
-                margin: 12px auto !important;
+                column-gap: var(--smg-sp-8) !important;
+                margin: var(--smg-sp-12) auto !important;
                 max-width: 100% !important;
                 text-align: center !important;
             }
@@ -125,7 +125,7 @@
                 page-break-inside: avoid !important;
                 display: block !important;
                 width: 100% !important;
-                margin: 0 0 8px 0 !important;
+                margin: 0 0 var(--smg-sp-8) 0 !important;
                 box-sizing: border-box !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-true-masonry img.bbImage,
@@ -138,7 +138,7 @@
                 max-height: none !important;
                 display: block !important;
                 object-fit: contain !important;
-                margin: 0 0 8px 0 !important;
+                margin: 0 0 var(--smg-sp-8) 0 !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-true-masonry > * img.bbImage {
                 margin: 0 !important;
@@ -151,12 +151,12 @@
             html.smg-masonry-on .auto-image-grid.smg-justified-grid {
                 display: flex !important;
                 flex-wrap: wrap !important;
-                gap: 8px !important;
-                row-gap: 8px !important;
-                column-gap: 8px !important;
+                gap: var(--smg-sp-8) !important;
+                row-gap: var(--smg-sp-8) !important;
+                column-gap: var(--smg-sp-8) !important;
                 justify-content: center !important;
                 align-items: stretch !important;
-                margin: 12px auto !important;
+                margin: var(--smg-sp-12) auto !important;
                 max-width: 100% !important;
                 text-align: center !important;
             }
@@ -196,18 +196,18 @@
                 grid-template-columns: repeat(var(--smg-mcols, 2), minmax(0, 1fr)) !important;
                 grid-auto-flow: row dense !important;
                 grid-auto-rows: auto !important;
-                gap: 8px !important;
-                row-gap: 8px !important;
-                column-gap: 8px !important;
+                gap: var(--smg-sp-8) !important;
+                row-gap: var(--smg-sp-8) !important;
+                column-gap: var(--smg-sp-8) !important;
                 align-items: start !important;
                 justify-items: stretch !important;
-                margin: 12px auto !important;
+                margin: var(--smg-sp-12) auto !important;
                 max-width: 100% !important;
                 text-align: center !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-tall {
                 max-width: 100% !important;
-                margin: 12px auto !important;
+                margin: var(--smg-sp-12) auto !important;
             }
             html.smg-masonry-on .auto-image-grid.smg-grid-2.smg-grid-2-asym {
                 grid-template-columns: var(--smg-col1-w, 1fr) var(--smg-col2-w, 1fr) !important;
@@ -308,54 +308,54 @@
             html.smg-masonry-on .auto-image-grid .smg-rg,
             html.smg-masonry-on .auto-image-grid .smg-rg-v { border-radius: 0 !important; }
             /* GALERIA: overlay (igual o feed) com a mídia da thread numa grade masonry de POUCAS colunas + scroll infinito */
-            #smg-gallery { position: fixed; inset: 0; z-index: 2147483600; display: none; flex-direction: column; background: var(--smg-bg); }
+            #smg-gallery { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; flex-direction: column; background: var(--smg-bg); }
             #smg-gallery.open { display: flex; }
             #smg-gallery svg { fill: none !important; }   /* o CSS do fórum preenche svgs — força outline */
             #smg-gallery .smg-rg svg[fill="currentColor"] { fill: currentColor !important; }   /* EXCEÇÃO: ícones PREENCHIDOS do player (play/pause) — senão o fill:none acima apaga o triângulo de play */
             /* DOCK da galeria: IDÊNTICA à dock da thread — mesma pílula do #smg-post-nav-panel + botões .smg-nav-btn (makeDockButton) */
-            .smg-gallery-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 6; }
+            .smg-gallery-dock { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: var(--smg-z-6); }
             .smg-gallery-dock-panel {
-                position: relative; z-index: 12;   /* (= #smg-post-nav-panel) acima do goto-pop (z 11) p/ os tooltips do hover aparecerem */
-                display: flex; flex-direction: row; align-items: center; gap: 6px; padding: 8px;
-                border-radius: 999px; background: rgba(26,26,26,0.95); border: 1px solid rgba(255,255,255,0.09);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 34px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.35);
+                position: relative; z-index: var(--smg-z-pop-up);   /* (= #smg-post-nav-panel) acima do goto-pop (z 11) p/ os tooltips do hover aparecerem */
+                display: flex; flex-direction: row; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8);
+                border-radius: var(--smg-r-pill); background: rgba(26,26,26,0.95); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
+                box-shadow: var(--smg-hl), var(--smg-shadow-3), var(--smg-shadow-1);
             }
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
-            .smg-gallery-close { width: auto !important; border-radius: 20px !important; padding: 0 15px !important; gap: 8px; }
-            .smg-gallery-close-label { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+            .smg-gallery-close { width: auto !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-16) !important; gap: var(--smg-sp-8); }
+            .smg-gallery-close-label { font-size: var(--smg-fs-14); font-weight: 600; white-space: nowrap; }
             .smg-gallery-close:hover { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
             /* SCROLLER vertical · as colunas crescem pra baixo (altura auto) — sem scroll horizontal */
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio masonry (anexar não reembaralha as outras) */
-            .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 8px 14px 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
+            .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
             /* separador de página "PAGE N" — NÃO sticky (rola junto); linha divisória mais grossa */
             .smg-gallery-pagehdr {
-                display: flex; align-items: center; gap: 16px;
-                padding: 16px 2px 11px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-                color: rgba(255,255,255,0.6);
+                display: flex; align-items: center; gap: var(--smg-sp-16);
+                padding: var(--smg-sp-16) var(--smg-sp-2) var(--smg-sp-12); font-size: var(--smg-fs-12); font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+                color: var(--smg-w-60);
             }
-            .smg-gallery-pagehdr::after { content: ""; flex: 1 1 auto; height: 3px; border-radius: 3px; background: var(--smg-bd2); }
+            .smg-gallery-pagehdr::after { content: ""; flex: 1 1 auto; height: 3px; border-radius: var(--smg-r-4); background: var(--smg-bd2); }
             .smg-gallery-page.is-skel .smg-gallery-pagehdr { opacity: 0.55; }
-            .smg-gallery-cols { column-width: 440px; column-gap: 12px; }   /* 1 coluna a menos (tiles maiores) */
-            @media (max-width: 700px) { .smg-gallery-grid { padding: 8px 10px 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: 8px; } }
-            .smg-gallery-tile { position: relative; display: block; width: 100%; margin: 0 0 12px; padding: 0; border: 0; background: var(--smg-s2); border-radius: 10px; overflow: hidden; cursor: pointer; break-inside: avoid; -webkit-column-break-inside: avoid; }
+            .smg-gallery-cols { column-width: 440px; column-gap: var(--smg-sp-12); }   /* 1 coluna a menos (tiles maiores) */
+            @media (max-width: 700px) { .smg-gallery-grid { padding: var(--smg-sp-8) var(--smg-sp-10) 92px; } .smg-gallery-cols { column-width: 46vw; column-gap: var(--smg-sp-8); } }
+            .smg-gallery-tile { position: relative; display: block; width: 100%; margin: 0 0 var(--smg-sp-12); padding: 0; border: 0; background: var(--smg-s2); border-radius: var(--smg-r-10); overflow: hidden; cursor: pointer; break-inside: avoid; -webkit-column-break-inside: avoid; }
             .smg-gallery-tile img { display: block; width: 100%; height: auto; }
             .smg-gallery-tile--embed { aspect-ratio: 16 / 9; background: #000; }
             .smg-gallery-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-            .smg-gallery-play svg { width: 42px; height: 42px; color: rgba(255,255,255,0.9); fill: currentColor !important; }
+            .smg-gallery-play svg { width: 42px; height: 42px; color: var(--smg-w-95); fill: currentColor !important; }
             .smg-gallery-tile--embed .saint-iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; aspect-ratio: auto !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }
             /* NOSSO player no tile da galeria: preenche o tile (o iframe antigo tinha isso; sem a regra o .smg-rg colapsa = tile preto) */
             .smg-gallery-tile--embed .smg-rg { position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; border-radius: 0 !important; aspect-ratio: auto !important; }
-            .smg-gallery-max { position: absolute; top: 6px; right: 6px; z-index: 3; width: 30px; height: 30px; border: 0; border-radius: 8px; background: rgba(0,0,0,0.55); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s ease; }
+            .smg-gallery-max { position: absolute; top: 6px; right: 6px; z-index: var(--smg-z-3); width: 30px; height: 30px; border: 0; border-radius: var(--smg-r-8); background: var(--smg-k-55); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--smg-dur-15) ease; }
             .smg-gallery-max svg { width: 16px; height: 16px; }
-            .smg-gallery-max:hover { background: rgba(0,0,0,0.82); }
+            .smg-gallery-max:hover { background: var(--smg-k-82); }
             .smg-gallery-tile--embed:hover .smg-gallery-max { opacity: 1; }
             @media (hover: none) { .smg-gallery-max { opacity: 1; } }
             .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
-            .smg-gallery-empty { padding: 44px; text-align: center; color: rgba(255,255,255,0.5); }
+            .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
-            .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 12px; border-radius: 10px; overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
-            .smg-gallery-skel::after, .smg-gallery-tile.is-loading::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
+            .smg-gallery-skel { position: relative; width: 100%; margin: 0 0 var(--smg-sp-12); border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); break-inside: avoid; -webkit-column-break-inside: avoid; }
+            .smg-gallery-skel::after, .smg-gallery-tile.is-loading::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; }
             .smg-gallery-tile--image.is-loading { min-height: 150px; background: var(--smg-s2); }
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
-            .smg-gallery-tile--image img { transition: opacity .25s ease; }
+            .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }
 `;

@@ -6,11 +6,11 @@
                 width: 100% !important;
                 max-width: min(920px, calc(min(42vh, 420px) * 16 / 9)) !important;
                 max-height: min(42vh, 420px) !important;
-                margin: 16px auto !important;
+                margin: var(--smg-sp-16) auto !important;
                 display: block !important;
                 aspect-ratio: 16 / 9;
                 overflow: hidden;
-                border-radius: 10px;
+                border-radius: var(--smg-r-10);
                 background: #000;
             }
             .bbCodeBlock--unfurl .contentRow-figure,
@@ -34,7 +34,7 @@
                 max-height: none !important;
                 height: auto !important;
             }
-            html.smg-thread .smg-pc-head { position: relative; z-index: 1; background: var(--smg-s1); }
+            html.smg-thread .smg-pc-head { position: relative; z-index: var(--smg-z-1); background: var(--smg-s1); }
             /* container de iframe nativo em grid respeita o aspect-ratio e limite de altura */
             html.smg-masonry-on .auto-image-grid .generic2wide-iframe-div,
             html.smg-masonry-on .auto-image-grid.smg-grid-2 .generic2wide-iframe-div {
@@ -73,7 +73,7 @@
                 width: 100%;
                 aspect-ratio: 16 / 9;
                 min-height: 220px;
-                border-radius: 10px;
+                border-radius: var(--smg-r-10);
                 overflow: hidden;
                 background: #000;
             }
@@ -96,24 +96,24 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 2;
+                z-index: var(--smg-z-2);
             }
             .smg-loading::after {
                 content: "";
                 width: 42px;
                 height: 42px;
-                border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.15);
-                border-top-color: rgba(255,255,255,0.85);
+                border-radius: var(--smg-r-round);
+                border: 3px solid var(--smg-w-14);
+                border-top-color: var(--smg-w-85);
                 animation: smg-spin 0.8s linear infinite;
             }
             @keyframes smg-spin {
                 to { transform: rotate(360deg); }
             }
             /* ---- reveal: spinner do post travado por like/medalha (in-flow, não overlay) ---- */
-            .smg-reveal-spin { position: static !important; inset: auto !important; min-height: 56px; margin: 14px auto; }
+            .smg-reveal-spin { position: static !important; inset: auto !important; min-height: 56px; margin: var(--smg-sp-14) auto; }
             /* ---- mídia direta (susercontent/Shopee, .mp4/.webm/.webp em link cru) ---- */
-            .smg-dm-wrap { margin: 14px auto !important; max-width: min(75%, 880px) !important; }
+            .smg-dm-wrap { margin: var(--smg-sp-14) auto !important; max-width: min(75%, 880px) !important; }
             /* Container de imagem horizontal/sheet standalone (fora de grid) */
             a.smg-imglink.smg-wide-link,
             a.smg-imglink:has(> img.bbImage.smg-wide),
@@ -126,8 +126,8 @@
                 max-width: min(100%, 1080px) !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
-                margin-top: 14px !important;
-                margin-bottom: 14px !important;
+                margin-top: var(--smg-sp-14) !important;
+                margin-bottom: var(--smg-sp-14) !important;
                 text-align: center !important;
             }
             /* Imagens widescreen/sheets fora de grid: preenchem nobremente até 100% da largura útil (máx 1080px) */
@@ -161,7 +161,7 @@
                 display: flex !important;
                 flex-direction: row !important;
                 align-items: flex-start !important;
-                gap: 12px !important;
+                gap: var(--smg-sp-12) !important;
                 min-width: 0 !important;
             }
             .bbCodeBlock--unfurl .contentRow-figure {
@@ -238,19 +238,19 @@
                 margin: 0 auto !important;
             }
 
-            .smg-dm-wrap img.bbImage { border-radius: 10px; }
+            .smg-dm-wrap img.bbImage { border-radius: var(--smg-r-10); }
             .smg-dm-video {
                 display: block; width: 100%;
                 max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9));
                 max-height: var(--smg-media-h);
-                margin: 0 auto; border-radius: 10px; background: #000;
+                margin: 0 auto; border-radius: var(--smg-r-10); background: #000;
             }
             /* ---- barra de chips dos links de file-host (GoFile/Bunkr/…) no fim do post ---- */
-            .smg-post-links { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 2px; padding-top: 11px; border-top: 1px solid var(--smg-bd); }
+            .smg-post-links { display: flex; flex-wrap: wrap; gap: var(--smg-sp-8); margin: var(--smg-sp-12) 0 var(--smg-sp-2); padding-top: var(--smg-sp-12); border-top: 1px solid var(--smg-bd); }
             .smg-link-chip {
-                display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
-                padding: 6px 11px; border-radius: 8px; background: var(--smg-s2); border: 1px solid var(--smg-bd);
-                color: rgba(255,255,255,0.82) !important; font-size: 12.5px; font-weight: 600;
+                display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 100%;
+                padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-r-8); background: var(--smg-s2); border: 1px solid var(--smg-bd);
+                color: var(--smg-w-85) !important; font-size: var(--smg-fs-13); font-weight: 600;
             }
             .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
             .smg-link-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -263,9 +263,9 @@
                 max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
                 height: auto !important;
                 aspect-ratio: 16 / 9 !important;
-                margin: 16px auto !important;
+                margin: var(--smg-sp-16) auto !important;
                 border: none !important;
-                border-radius: 10px !important;
+                border-radius: var(--smg-r-10) !important;
                 background: #000 !important;
             }
 
@@ -276,7 +276,7 @@
                 display: block !important;
                 width: 100% !important;
                 max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
-                margin: 16px auto !important;
+                margin: var(--smg-sp-16) auto !important;
             }
             span[data-s9e-mediaembed="youtube"] > span,
             span[data-s9e-mediaembed="gifs"] > span,
@@ -295,7 +295,7 @@
                 height: auto !important;
                 aspect-ratio: 16 / 9 !important;
                 border: none !important;
-                border-radius: 10px !important;
+                border-radius: var(--smg-r-10) !important;
                 background: #000 !important;
             }
 
@@ -319,10 +319,10 @@
                 width: 100%;
                 max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778)));
                 max-height: var(--smg-media-h, min(70vh, 750px));   /* TETO: não estoura o viewport (vale no masonry) */
-                margin: 16px auto;
+                margin: var(--smg-sp-16) auto;
                 aspect-ratio: 16 / 9;             /* placeholder; o JS troca pelo aspect REAL (videoWidth/Height ou API do redgifs) e MANTÉM (não some no clearSkel) */
                 background: #000;
-                border-radius: 10px;
+                border-radius: var(--smg-r-10);
                 overflow: hidden;
                 /* CRO antigo NÃO volta: o site forçava aspect/overflow no .generic2wide-iframe-div (já destravado); e o vídeo é
                    position:absolute+inset:0 (preenche a caixa SEM depender de %-height resolver). object-fit:contain = nunca corta. */
@@ -332,8 +332,8 @@
             .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
                 display: flex; align-items: center; justify-content: center;
                 width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
-                background: #161616; color: rgba(255,255,255,0.45);
-                border-radius: 10px; font-size: 13px; text-align: center; padding: 8px;
+                background: #161616; color: var(--smg-w-50);
+                border-radius: var(--smg-r-10); font-size: var(--smg-fs-13); text-align: center; padding: var(--smg-sp-8);
             }
             /* ---- MÍDIA MORTA (buildDeadBox): um estado de falha só p/ imagem/vídeo/embed 404 ----
                Fica DEPOIS de .smg-rg-fail e .smg-turbo-error de propósito: a caixa acumula essas classes (outros
@@ -345,15 +345,15 @@
                 flex-direction: row !important;
                 align-items: center !important;
                 justify-content: flex-start !important;
-                gap: 10px !important;
+                gap: var(--smg-sp-10) !important;
                 box-sizing: border-box !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 min-height: 42px !important;
-                margin: 4px 0 !important;
-                padding: 10px 16px !important;
+                margin: var(--smg-sp-4) 0 !important;
+                padding: var(--smg-sp-10) var(--smg-sp-16) !important;
                 border: 1px solid rgba(255, 75, 75, 0.32) !important;
-                border-radius: 10px !important;
+                border-radius: var(--smg-r-10) !important;
                 background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
                 color: var(--smg-tx) !important;
                 text-align: left !important;
@@ -361,24 +361,24 @@
                 aspect-ratio: auto !important;
                 cursor: pointer !important;
                 pointer-events: auto !important;
-                transition: border-color .15s ease, background .15s ease, box-shadow .15s ease !important;
+                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
             }
             .smg-dead:hover {
                 background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2) !important;
                 border-color: rgba(255, 95, 95, 0.55) !important;
                 box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
             }
-            .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: 16px auto !important; }
+            .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: var(--smg-sp-16) auto !important; }
             .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
             .smg-dead-code {
                 display: inline-flex !important;
                 align-items: center !important;
-                gap: 6px !important;
-                padding: 2px 8px !important;
-                border-radius: 6px !important;
+                gap: var(--smg-sp-6) !important;
+                padding: var(--smg-sp-2) var(--smg-sp-8) !important;
+                border-radius: var(--smg-r-6) !important;
                 background: rgba(255, 75, 75, 0.2) !important;
                 border: 1px solid rgba(255, 75, 75, 0.4) !important;
-                font-size: 13px !important;
+                font-size: var(--smg-fs-13) !important;
                 font-weight: 800 !important;
                 color: #ff6b6b !important;
                 flex-shrink: 0 !important;
@@ -386,8 +386,8 @@
             }
             .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
             .smg-dead-code b:empty { display: none; }
-            .smg-dead-sep { color: rgba(255,255,255,0.3) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
-            .smg-dead-sub { font-size: 13px !important; font-weight: 500 !important; color: rgba(255,255,255,0.75) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            .smg-dead-sep { color: var(--smg-w-30) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
+            .smg-dead-sub { font-size: var(--smg-fs-13) !important; font-weight: 500 !important; color: var(--smg-w-72) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
             /* No mosaico/grade: os cards de erro viram itens ocupando a largura total (span-all), empilhados horizontalmente */
             html.smg-masonry-on .auto-image-grid .smg-dead,
             html.smg-masonry-on .auto-image-grid.smg-true-masonry .smg-dead,
@@ -399,13 +399,13 @@
                 min-height: 42px !important;
                 height: auto !important;
                 aspect-ratio: auto !important;
-                margin: 4px 0 !important;
+                margin: var(--smg-sp-4) 0 !important;
                 display: flex !important;
             }
             /* Skeleton enquanto mídias (imagens / embeds) estão pendentes no grid */
             html.smg-masonry-on .auto-image-grid > :not(.smg-dead):not(.smg-img-ready):not(.smg-player-loaded):not(.generic2wide-iframe-div):not(:has(iframe)):not(:has(.smg-img-ready)):not(:has(.smg-rg-ready)):not(:has(.smg-rgc-playing)) {
                 background-color: var(--smg-s2) !important;
-                border-radius: 8px !important;
+                border-radius: var(--smg-r-8) !important;
                 position: relative !important;
                 min-height: 120px;
                 aspect-ratio: var(--smg-ratio, var(--smg-grid-img-ph, var(--smg-img-ph, 10 / 13)));
@@ -415,11 +415,11 @@
                 content: "";
                 position: absolute;
                 inset: 0;
-                background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+                background: linear-gradient(90deg, transparent 0%, var(--smg-w-06) 50%, transparent 100%);
                 background-size: 200% 100%;
                 animation: smg-img-shimmer 1.8s ease-in-out infinite;
                 pointer-events: none;
-                z-index: 1;
+                z-index: var(--smg-z-1);
             }
             /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
             .generic2wide-iframe-div::before,
@@ -450,7 +450,7 @@
                 text-decoration-color: color-mix(in srgb, var(--smg-link) 55%, transparent) !important;
                 text-underline-offset: 3px !important;
                 text-decoration-thickness: 1px !important;
-                transition: color .15s ease, text-decoration-color .15s ease;
+                transition: color var(--smg-dur-15) ease, text-decoration-color var(--smg-dur-15) ease;
             }
             .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
             .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
@@ -483,42 +483,42 @@
                 top: 50%; left: 50%;
                 width: 46px; height: 46px;
                 margin: -23px 0 0 -23px;
-                border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.2);
+                border-radius: var(--smg-r-round);
+                border: 3px solid var(--smg-w-22);
                 border-top-color: var(--smg-link);
                 animation: smg-spin 0.8s linear infinite;
-                z-index: 5;
+                z-index: var(--smg-z-5);
                 pointer-events: none;
             }
             /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) */
             .smg-rg-error {
-                position: absolute; inset: 0; z-index: 8;
+                position: absolute; inset: 0; z-index: var(--smg-z-8);
                 display: flex; flex-direction: column; align-items: center; justify-content: center;
-                gap: 12px; padding: 20px;
+                gap: var(--smg-sp-12); padding: var(--smg-sp-20);
                 background: rgba(18, 19, 24, 0.94);
                 backdrop-filter: blur(8px);
                 color: #fff; text-align: center; box-sizing: border-box;
             }
             .smg-rg-error-badge {
-                display: inline-flex; align-items: center; gap: 8px;
-                padding: 6px 14px; border-radius: 999px;
+                display: inline-flex; align-items: center; gap: var(--smg-sp-8);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-pill);
                 background: rgba(255, 75, 75, 0.18);
                 border: 1px solid rgba(255, 75, 75, 0.45);
-                color: #ff5e5e; font-size: 14px; font-weight: 800; letter-spacing: 0.4px;
+                color: #ff5e5e; font-size: var(--smg-fs-14); font-weight: 800; letter-spacing: 0.4px;
             }
             .smg-rg-error-badge svg { width: 17px; height: 17px; fill: none !important; stroke: currentColor; }
-            .smg-rg-error-msg { font-size: 13px; color: rgba(255,255,255,0.75); max-width: 85%; line-height: 1.4; overflow-wrap: anywhere; }
-            .smg-rg-error-acts { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+            .smg-rg-error-msg { font-size: var(--smg-fs-13); color: var(--smg-w-72); max-width: 85%; line-height: 1.4; overflow-wrap: anywhere; }
+            .smg-rg-error-acts { display: flex; align-items: center; gap: var(--smg-sp-10); margin-top: var(--smg-sp-4); }
             .smg-rg-error-btn {
-                display: inline-flex; align-items: center; gap: 6px;
-                padding: 6px 14px; border-radius: 8px;
-                font-size: 12.5px; font-weight: 600; text-decoration: none !important;
-                cursor: pointer; transition: background .15s ease, color .15s ease;
+                display: inline-flex; align-items: center; gap: var(--smg-sp-6);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-8);
+                font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none !important;
+                cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
             .smg-rg-error-btn--open { background: var(--smg-link); color: #fff !important; border: 0; }
             .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
-            .smg-rg-error-btn--retry { background: rgba(255,255,255,0.08); color: #e7e7ea !important; border: 1px solid rgba(255,255,255,0.18); }
-            .smg-rg-error-btn--retry:hover { background: rgba(255,255,255,0.15); color: #fff !important; }
+            .smg-rg-error-btn--retry { background: var(--smg-w-08); color: #e7e7ea !important; border: 1px solid var(--smg-w-18); }
+            .smg-rg-error-btn--retry:hover { background: var(--smg-w-14); color: #fff !important; }
             /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
                poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
@@ -527,95 +527,95 @@
                scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
             /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
             .smg-rgc-flash {
-                position: absolute; inset: 0; z-index: 2;
+                position: absolute; inset: 0; z-index: var(--smg-z-2);
                 display: flex; align-items: center; justify-content: center;
-                opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+                opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
             }
             .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
             .smg-rgc-flash button {
-                border: 0; border-radius: 50%; cursor: pointer; padding: 0;
-                background: rgba(0,0,0,0.55); color: #fff;
+                border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                background: var(--smg-k-55); color: #fff;
                 display: flex; align-items: center; justify-content: center;
-                transition: transform 0.12s ease, background 0.12s ease; pointer-events: none;   /* só interativo quando o flash aparece (regras abaixo) — senão capturaria cliques invisível */
+                transition: transform var(--smg-dur-12) ease, background var(--smg-dur-12) ease; pointer-events: none;   /* só interativo quando o flash aparece (regras abaixo) — senão capturaria cliques invisível */
             }
-            .smg-rgc-flash button:hover { transform: scale(1.08); background: rgba(0,0,0,0.72); }
+            .smg-rgc-flash button:hover { transform: scale(1.08); background: var(--smg-k-72); }
             .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
             .smg-rgc-play { width: 64px; height: 64px; }
-            .smg-rgc-play svg { width: 30px; height: 30px; display: block; margin-left: 3px; }
+            .smg-rgc-play svg { width: 30px; height: 30px; display: block; margin-left: var(--smg-sp-4); }
             @media (max-width: 600px) { .smg-rgc-play { width: 54px; height: 54px; } .smg-rgc-play svg { width: 26px; height: 26px; } }
             /* BARRA INFERIOR: gradiente; some fora do hover; visível no pausado-carregado e no touch (NÃO no pronto/poster) */
             .smg-rgc-bottom {
-                position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-                padding: 8px 4px 2px;
-                background: linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.30) 62%, transparent 100%);
-                opacity: 0; pointer-events: none; transition: opacity 0.18s ease;
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-3);
+                padding: var(--smg-sp-8) var(--smg-sp-4) var(--smg-sp-2);
+                background: linear-gradient(to top, var(--smg-k-82) 0%, var(--smg-k-35) 62%, transparent 100%);
+                opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
             }
             .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
             .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
             @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } }
             /* SCRUBBER (no topo da barra) */
             .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-            .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: rgba(255,255,255,0.28); border-radius: 3px; transition: height 0.1s ease; }
+            .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: var(--smg-w-30); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
             .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
-            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,0.30); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: 3px; pointer-events: none; }
-            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform 0.1s ease; }
+            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-30); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: var(--smg-r-round); background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform var(--smg-dur-12) ease; }
             .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
             /* LINHA de controles */
-            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 1px 4px 2px; }
-            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: 1px; }
+            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-4) var(--smg-sp-2); }
+            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: var(--smg-sp-2); }
             .smg-rgc-act {
-                width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; padding: 0;
+                width: 34px; height: 34px; border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
                 background: transparent; color: #fff;
                 display: flex; align-items: center; justify-content: center;
-                transition: background 0.12s ease, transform 0.12s ease;
+                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease;
             }
-            .smg-rgc-act:hover { background: rgba(255,255,255,0.16); }
+            .smg-rgc-act:hover { background: var(--smg-w-18); }
             .smg-rgc-act:active { transform: scale(0.9); }
             .smg-rgc-act svg { width: 21px; height: 21px; display: block; }
             .smg-rgc-speed {
-                height: 24px; min-width: 32px; padding: 0 6px;
-                border: 0; border-radius: 6px; cursor: pointer;
-                background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92);
+                height: 24px; min-width: 32px; padding: 0 var(--smg-sp-6);
+                border: 0; border-radius: var(--smg-r-6); cursor: pointer;
+                background: var(--smg-w-12); color: var(--smg-w-95);
                 font: 700 11.5px/1 var(--smg-mono);
                 letter-spacing: -0.2px;
                 display: flex; align-items: center; justify-content: center;
-                transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
+                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
                 user-select: none;
             }
-            .smg-rgc-speed:hover { background: rgba(255,255,255,0.24); color: #fff; }
+            .smg-rgc-speed:hover { background: var(--smg-w-22); color: #fff; }
             .smg-rgc-speed:active { transform: scale(0.92); }
             .smg-rgc-speed.is-custom-speed { background: var(--smg-ac); color: #fff; font-weight: 800; }
             /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
             .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
             /* VOLUME: mute + barra que expande no hover (YouTube) */
-            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.35); cursor: pointer; opacity: 0; transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease; touch-action: none; }
+            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: var(--smg-r-4); background: var(--smg-w-40); cursor: pointer; opacity: 0; transition: width var(--smg-dur-20) ease, opacity var(--smg-dur-20) ease, margin var(--smg-dur-20) ease; touch-action: none; }
             .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
-            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 3px; pointer-events: none; }
+            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: var(--smg-r-4); pointer-events: none; }
             /* TEMPO (atual / duração) */
-            .smg-rgc-time { color: #fff; font: 600 12px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 6px; white-space: nowrap; flex: 0 0 auto; }
-            @media (max-width: 600px) { .smg-rgc-act { width: 30px; height: 30px; } .smg-rgc-act svg { width: 19px; height: 19px; } .smg-rgc-time { font-size: 11px; padding: 0 4px; } }
+            .smg-rgc-time { color: #fff; font: 600 12px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 var(--smg-sp-6); white-space: nowrap; flex: 0 0 auto; }
+            @media (max-width: 600px) { .smg-rgc-act { width: 30px; height: 30px; } .smg-rgc-act svg { width: 19px; height: 19px; } .smg-rgc-time { font-size: var(--smg-fs-11); padding: 0 var(--smg-sp-4); } }
             /* indicador "« 5s" / "5s »" no duplo-clique p/ voltar/avançar */
             .smg-rgc-seekflash {
-                position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3;
+                position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: var(--smg-z-3);
                 color: #fff; font: 700 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                background: rgba(0,0,0,0.55); padding: 9px 15px; border-radius: 999px;
-                opacity: 0; transition: opacity 0.15s ease; pointer-events: none; white-space: nowrap;
+                background: var(--smg-k-55); padding: var(--smg-sp-10) var(--smg-sp-16); border-radius: var(--smg-r-pill);
+                opacity: 0; transition: opacity var(--smg-dur-15) ease; pointer-events: none; white-space: nowrap;
             }
             .smg-rgc-seekflash.on { opacity: 1; }
             /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO do player ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host" (substituiu o ↗ do rail). */
             .smg-rgc-src {
-                position: absolute; top: 10px; right: 10px; z-index: 4;
-                display: inline-flex; align-items: center; gap: 5px; max-width: calc(100% - 20px);
-                padding: 4px 9px; border-radius: 8px;
-                background: rgba(0,0,0,0.6); color: #fff; text-decoration: none;
+                position: absolute; top: 10px; right: 10px; z-index: var(--smg-z-4);
+                display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: calc(100% - 20px);
+                padding: var(--smg-sp-4) var(--smg-sp-10); border-radius: var(--smg-r-8);
+                background: var(--smg-k-62); color: #fff; text-decoration: none;
                 font: 800 12px/1.2 -apple-system, system-ui, "Segoe UI", sans-serif; letter-spacing: 0.01em;
                 cursor: pointer; opacity: 0; pointer-events: none;
-                transition: opacity 0.15s ease, background 0.15s ease; box-shadow: 0 1px 5px rgba(0,0,0,0.45);
+                transition: opacity var(--smg-dur-15) ease, background var(--smg-dur-15) ease; box-shadow: var(--smg-shadow-1);
             }
             .smg-rg:hover .smg-rgc-src { opacity: 1; pointer-events: auto; }
-            .smg-rgc-src:hover { background: rgba(0,0,0,0.82); }
+            .smg-rgc-src:hover { background: var(--smg-k-82); }
             .smg-rgc-src:active { transform: scale(0.96); }
             .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
@@ -623,8 +623,8 @@
             /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
             .smg-rg.smg-rg-buffering::after {
                 content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
-                border-radius: 50%; border: 3px solid rgba(255,255,255,0.22); border-top-color: rgba(255,255,255,0.9);
-                animation: smg-spin 0.8s linear infinite; z-index: 4; pointer-events: none;
+                border-radius: var(--smg-r-round); border: 3px solid var(--smg-w-22); border-top-color: var(--smg-w-95);
+                animation: smg-spin 0.8s linear infinite; z-index: var(--smg-z-4); pointer-events: none;
             }
             .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; background: #000; }
             .smg-rg:fullscreen .smg-rg-v { height: 100%; }
@@ -667,10 +667,10 @@
             .p-body > * { padding-top: 0 !important; }
             /* respiro abaixo da topbar FIXA: o título não cola na barra (era 10px → colava no desktop, onde
                body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
-            html:not(.smg-thread) .p-body-header { padding-top: 26px !important; padding-bottom: 10px !important; }
-            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: 16px !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
+            html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-28) !important; padding-bottom: var(--smg-sp-10) !important; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-16) !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
             .p-body-header .p-title { text-align: left !important; }
-            .p-body-header .p-title-value { font-size: 30px !important; font-weight: 800 !important; line-height: 1.2 !important; }
+            .p-body-header .p-title-value { font-size: var(--smg-fs-32) !important; font-weight: 800 !important; line-height: 1.2 !important; }
 
             /* ---- remove banners de anúncio (striply etc.) ---- */
             a[href*="striply.com"],

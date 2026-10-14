@@ -7,18 +7,18 @@
                 left: 0;
                 width: 100%;
                 height: 100vh;
-                z-index: 2147483601;
+                z-index: var(--smg-z-overlay-1);
                 display: none;
                 background: #000;
             }
             #smg-feed.open { display: block; }
 
             /* aviso único: galeria/feed têm navegação própria. z-index ACIMA do feed/galeria (scrim cobre tudo). */
-            #smg-navnotice { position: fixed; inset: 0; z-index: 2147483646; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,0.62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
-            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: 16px; padding: 22px 22px 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-            .smg-navnotice-title { font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.95); margin: 0 0 9px; }
-            .smg-navnotice-text { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.62); margin: 0 0 18px; }
-            .smg-navnotice-ok { display: block; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--smg-link); color: #fff; font-size: 14px; font-weight: 650; cursor: pointer; }
+            #smg-navnotice { position: fixed; inset: 0; z-index: var(--smg-z-max-1); display: flex; align-items: center; justify-content: center; padding: var(--smg-sp-24); background: var(--smg-k-62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: var(--smg-r-16); padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-18); box-shadow: var(--smg-shadow-4); }
+            .smg-navnotice-title { font-size: var(--smg-fs-18); font-weight: 700; color: var(--smg-w-95); margin: 0 0 var(--smg-sp-10); }
+            .smg-navnotice-text { font-size: var(--smg-fs-14); line-height: 1.5; color: var(--smg-w-60); margin: 0 0 var(--smg-sp-18); }
+            .smg-navnotice-ok { display: block; width: 100%; padding: var(--smg-sp-12); border: 0; border-radius: var(--smg-r-10); background: var(--smg-link); color: #fff; font-size: var(--smg-fs-14); font-weight: 650; cursor: pointer; }
             .smg-navnotice-ok:hover { filter: brightness(1.06); }
             .smg-feed-track {
                 height: 100%;
@@ -62,7 +62,7 @@
                 aspect-ratio: 16 / 9;
                 max-height: 95vh;
                 border: 0;
-                border-radius: 8px;
+                border-radius: var(--smg-r-8);
                 background: #000;
                 pointer-events: none; /* deixa wheel/touch passarem pro feed (senão o iframe engole o scroll) */
             }
@@ -83,25 +83,25 @@
             /* no feed o player enche a caixa de 90vh (sizing por ALTURA) — sobrepõe o height:auto/max-height do inline */
             .smg-feed-embed .smg-rg-v { height: 100% !important; max-height: none !important; }
             .smg-feed-empty {
-                color: rgba(255,255,255,0.6);
-                font-size: 16px;
+                color: var(--smg-w-60);
+                font-size: var(--smg-fs-16);
             }
             .smg-feed-nav {
                 position: absolute;
                 right: 18px;
-                z-index: 5;
+                z-index: var(--smg-z-5);
                 width: 48px;
                 height: 48px;
-                font-size: 22px;
+                font-size: var(--smg-fs-22);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 50%;
+                border-radius: var(--smg-r-round);
                 cursor: pointer;
                 color: #fff;
-                border: 1px solid rgba(255,255,255,0.15);
+                border: 1px solid var(--smg-w-14);
                 background: rgba(20,20,24,0.82);   /* PERF: era backdrop-filter blur(6px) (repintava a cada frame de scroll do reel) — sólido semi-opaco fica visualmente igual sobre mídia escura */
-                transition: background .15s ease, transform .12s ease;
+                transition: background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-feed-nav:hover { background: rgba(42,42,50,0.85); }
             .smg-feed-nav:active { transform: scale(0.9); }
@@ -112,19 +112,19 @@
                 position: absolute;
                 top: 16px;
                 right: 18px;
-                z-index: 5;
+                z-index: var(--smg-z-5);
                 width: 54px;
                 height: 54px;
-                font-size: 27px;
+                font-size: var(--smg-fs-28);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 50%;
+                border-radius: var(--smg-r-round);
                 cursor: pointer;
                 color: #fff;
-                border: 1px solid rgba(255,255,255,0.15);
+                border: 1px solid var(--smg-w-14);
                 background: rgba(20,20,24,0.82);   /* PERF: era backdrop-filter blur(6px) (repintava a cada frame de scroll do reel) — sólido semi-opaco fica visualmente igual sobre mídia escura */
-                transition: background .15s ease, transform .12s ease;
+                transition: background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-feed-close:hover { background: rgba(42,42,50,0.85); }
             .smg-feed-close:active { transform: scale(0.92); }
@@ -133,13 +133,13 @@
                 position: absolute;
                 top: 20px;
                 left: 18px;
-                z-index: 5;
-                padding: 6px 14px;
-                border-radius: 999px;
+                z-index: var(--smg-z-5);
+                padding: var(--smg-sp-6) var(--smg-sp-14);
+                border-radius: var(--smg-r-pill);
                 background: rgba(20,20,24,0.82);   /* PERF: sem backdrop-filter (repintava no scroll do reel) */
-                border: 1px solid rgba(255,255,255,0.12);
+                border: 1px solid var(--smg-w-12);
                 color: #fff;
-                font-size: 13px;
+                font-size: var(--smg-fs-13);
                 font-weight: 600;
             }
 `;

@@ -8,21 +8,21 @@
                     position: fixed !important; top: 0; left: 0; right: 0; width: 100%;
                     height: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top));
                     padding-top: env(safe-area-inset-top); box-sizing: border-box;
-                    z-index: 1000;
+                    z-index: var(--smg-z-topbar);
                 }
                 #smg-topbar {
-                    height: var(--smg-mobile-topbar-h); border-bottom-color: rgba(255,255,255,0.08);
+                    height: var(--smg-mobile-topbar-h); border-bottom-color: var(--smg-w-08);
                 }
                 #smg-tb-inner {
                     display: flex; width: 100%; max-width: none; height: var(--smg-mobile-topbar-h);
-                    padding: 0 12px; gap: 8px; justify-content: space-between;
+                    padding: 0 var(--smg-sp-12); gap: var(--smg-sp-8); justify-content: space-between;
                 }
                 .smg-tb-left { flex: 1 1 auto; min-width: 0; gap: 0; }
                 .smg-tb-logo { height: 40px; min-width: 0; max-width: 100%; margin-right: 0; }
                 .smg-tb-logo img { height: 30px; max-width: 100%; }
-                .smg-logo-word { font-size: 22px; }
+                .smg-logo-word { font-size: var(--smg-fs-22); }
                 .smg-tb-center { display: none; }
-                .smg-tb-actions { display: flex !important; flex: 0 0 auto; gap: 2px; }
+                .smg-tb-actions { display: flex !important; flex: 0 0 auto; gap: var(--smg-sp-2); }
                 .smg-tb-actions > * { display: none !important; }
                 .smg-tb-actions > .smg-tb-searchbtn,
                 .smg-tb-actions > .smg-tb-account,
@@ -45,22 +45,22 @@
                 }
                 html.smg-thread #smg-tb-inner { display: none !important; }
                 .smg-mobile-threadbar-back {
-                    width: 44px; height: 44px; padding: 0; border: 0; border-radius: 999px;
+                    width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--smg-r-pill);
                     display: inline-flex; align-items: center; justify-content: center;
-                    background: transparent; color: rgba(255,255,255,0.95); cursor: pointer;
+                    background: transparent; color: var(--smg-w-95); cursor: pointer;
                     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-                    transition: background .14s ease, transform .12s ease;
+                    transition: background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
                 }
-                .smg-mobile-threadbar-back:hover { background: rgba(255,255,255,0.09); }
+                .smg-mobile-threadbar-back:hover { background: var(--smg-w-10); }
                 .smg-mobile-threadbar-back:active { transform: scale(.91); }
                 .smg-mobile-threadbar-back svg {
                     display: block; width: 23px; height: 23px; fill: none !important;
                     stroke: currentColor !important; stroke-width: 2 !important;
                 }
                 .smg-mobile-threadbar-title {
-                    display: flex; align-items: center; justify-content: center; gap: 5px;
+                    display: flex; align-items: center; justify-content: center; gap: var(--smg-sp-6);
                     min-width: 0; width: 100%; overflow: hidden; white-space: nowrap;
-                    color: #fff; font-size: 15px; font-weight: 750; line-height: 1.2;
+                    color: #fff; font-size: var(--smg-fs-15); font-weight: 750; line-height: 1.2;
                     text-align: center; letter-spacing: -.01em;
                 }
                 /* Prefixos copiados do título nativo continuam compactos e mantêm a cor
@@ -71,8 +71,8 @@
                 .smg-mobile-threadbar-title > [class*="prefix--"] {
                     position: static !important; display: inline-flex !important; align-items: center;
                     justify-content: center; flex: 0 0 auto; max-width: 42%; height: 20px;
-                    min-height: 20px; padding: 0 7px !important; margin: 0 !important;
-                    border-radius: 6px !important; font-size: 10px !important;
+                    min-height: 20px; padding: 0 var(--smg-sp-8) !important; margin: 0 !important;
+                    border-radius: var(--smg-r-6) !important; font-size: var(--smg-fs-10) !important;
                     font-weight: 800 !important; line-height: 1 !important; letter-spacing: .02em;
                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                     pointer-events: none; cursor: default !important; box-sizing: border-box;
@@ -105,13 +105,13 @@
             /* FAB de configurações (canto inferior direito) — só é criado nas páginas baronly (JS),
                então é inline-flex por padrão; escondemos no mobile (navbar já tem a engrenagem) e quando a dock é reaberta */
             #smg-settings-fab {
-                position: fixed; right: 18px; bottom: 18px; z-index: 999990;
-                width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--smg-bd);
-                background: var(--smg-s1); color: rgba(255,255,255,0.72); cursor: pointer;
+                position: fixed; right: 18px; bottom: 18px; z-index: var(--smg-z-dock-under);
+                width: 44px; height: 44px; border-radius: var(--smg-r-round); border: 1px solid var(--smg-bd);
+                background: var(--smg-s1); color: var(--smg-w-72); cursor: pointer;
                 display: inline-flex; align-items: center; justify-content: center;
-                box-shadow: 0 6px 20px rgba(0,0,0,0.45); transition: color .14s ease, background .14s ease, transform .12s ease;
+                box-shadow: var(--smg-shadow-2); transition: color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
-            #smg-settings-fab .smg-nav-ico { font-size: 21px; }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
+            #smg-settings-fab .smg-nav-ico { font-size: var(--smg-fs-22); }   /* o svg é 1em → gear de 21px, igual a dock (com fill:none) */
             #smg-settings-fab:hover { color: #fff; background: var(--smg-s2); }
             #smg-settings-fab:active { transform: scale(0.92); }
             #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
@@ -140,24 +140,24 @@
                 left: 50%;
                 bottom: 20px;
                 transform: translateX(-50%);
-                z-index: 999999;
+                z-index: var(--smg-z-dock);
             }
             #smg-post-nav-panel {
                 position: relative;
-                z-index: 12; /* acima dos popovers (z 11) p/ os tooltips do hover aparecerem */
+                z-index: var(--smg-z-pop-up); /* acima dos popovers (z 11) p/ os tooltips do hover aparecerem */
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 5px;
-                padding: 9px 10px;
-                border-radius: 999px;
+                gap: var(--smg-sp-6);
+                padding: var(--smg-sp-10) var(--smg-sp-10);
+                border-radius: var(--smg-r-pill);
                 background: rgba(26, 26, 26, 0.95); /* PERF: bg quase-opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
-                border: 1px solid rgba(255,255,255,0.09);
+                border: 1px solid var(--smg-w-10);
                 box-shadow:
-                    inset 0 1px 0 rgba(255,255,255,0.08),
-                    0 12px 34px rgba(0,0,0,0.5),
-                    0 2px 8px rgba(0,0,0,0.35);
-                transition: transform .3s cubic-bezier(.2,.8,.3,1), opacity .3s ease;
+                    var(--smg-hl),
+                    var(--smg-shadow-3),
+                    var(--smg-shadow-1);
+                transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), opacity var(--smg-dur-30) ease;
             }
             #smg-post-nav-wrapper.manual-hidden #smg-post-nav-panel {
                 transform: translateY(230%);
@@ -168,58 +168,58 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 5px;
+                gap: var(--smg-sp-6);
             }
             .smg-nav-divider {
                 width: 1px;
                 height: 28px;
-                margin: 0 6px;
+                margin: 0 var(--smg-sp-6);
                 flex: 0 0 auto;
-                background: linear-gradient(180deg, transparent, rgba(255,255,255,0.22) 50%, transparent);
+                background: linear-gradient(180deg, transparent, var(--smg-w-22) 50%, transparent);
             }
 
             /* botão que abre o sheet — escondido no desktop, aparece no mobile */
             #smg-dock-sheet-btn { display: none; }
 
             /* ---- bottom sheet de opções (mobile) ---- */
-            #smg-sheet { position: fixed; inset: 0; z-index: 1000000; display: none; opacity: 0; background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); transition: opacity .2s ease; }
+            #smg-sheet { position: fixed; inset: 0; z-index: var(--smg-z-sheet); display: none; opacity: 0; background: var(--smg-k-55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); transition: opacity var(--smg-dur-20) ease; }
             #smg-sheet.open { display: block; opacity: 1; }
             .smg-sheet-panel {
                 position: absolute; left: 0; right: 0; bottom: 0;
-                padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
+                padding: var(--smg-sp-10) var(--smg-sp-16) calc(20px + env(safe-area-inset-bottom));
                 /* o painel NÃO rola: quem rola é o .smg-sheet-body. Com o overflow aqui, a alça
                    (grip) subia junto com a lista e o gesto de arrastar-pra-fechar sumia. dvh pelo
                    mesmo motivo do sheet da topbar. */
                 max-height: 82vh; max-height: 82dvh;
                 display: flex; flex-direction: column; overflow: hidden;
                 background: var(--smg-s1);
-                border-radius: 20px 20px 0 0;
-                border-top: 1px solid rgba(255,255,255,0.1);
-                box-shadow: 0 -12px 44px rgba(0,0,0,0.62);
+                border-radius: var(--smg-r-20) var(--smg-r-20) 0 0;
+                border-top: 1px solid var(--smg-w-10);
+                box-shadow: 0 -12px 44px var(--smg-k-62);
                 transform: translateY(100%);
-                transition: transform .28s cubic-bezier(.2,.8,.3,1);
+                transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
             #smg-sheet.open .smg-sheet-panel { transform: translateY(0); }
-            .smg-sheet-grip { width: 40px; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.25); margin: 4px auto 14px; flex: none; }
+            .smg-sheet-grip { width: 40px; height: 5px; border-radius: var(--smg-r-pill); background: var(--smg-w-22); margin: var(--smg-sp-4) auto var(--smg-sp-14); flex: none; }
             .smg-sheet-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-            .smg-sheet-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin: 18px 4px 12px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.07); }
-            .smg-sheet-body > .smg-sheet-title:first-child { margin-top: 2px; padding-top: 0; border-top: none; }
-            .smg-sheet-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px 6px; }
+            .smg-sheet-title { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--smg-w-50); margin: var(--smg-sp-18) var(--smg-sp-4) var(--smg-sp-12); padding-top: var(--smg-sp-16); border-top: 1px solid var(--smg-w-08); }
+            .smg-sheet-body > .smg-sheet-title:first-child { margin-top: var(--smg-sp-2); padding-top: 0; border-top: none; }
+            .smg-sheet-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--smg-sp-12) var(--smg-sp-6); }
             /* item = coluna transparente: botão CIRCULAR (mesma linguagem do dock desktop) + label embaixo */
-            .smg-sheet-item { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 0; border: 0; background: transparent; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+            .smg-sheet-item { display: flex; flex-direction: column; align-items: center; gap: var(--smg-sp-8); padding: 0; border: 0; background: transparent; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
             .smg-sheet-item.smg-sheet-disabled { opacity: .32; pointer-events: none; }
             .smg-sheet-ico {
-                width: 46px; height: 46px; border-radius: 50%; box-sizing: border-box;
+                width: 46px; height: 46px; border-radius: var(--smg-r-round); box-sizing: border-box;
                 display: flex; align-items: center; justify-content: center;
-                border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.05);
-                color: rgba(255,255,255,0.95); font-size: 20px; line-height: 1;
-                transition: background .15s ease, border-color .15s ease, transform .12s ease;
+                border: 1px solid var(--smg-w-10); background: var(--smg-w-06);
+                color: var(--smg-w-95); font-size: var(--smg-fs-20); line-height: 1;
+                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-sheet-ico svg { width: 1em; height: 1em; fill: none !important; }
-            .smg-sheet-item:active .smg-sheet-ico { transform: scale(0.9); background: rgba(255,255,255,0.14); }
+            .smg-sheet-item:active .smg-sheet-ico { transform: scale(0.9); background: var(--smg-w-14); }
             /* estado ativo — espelha o .smg-active do dock (watch on, filtro on, etc.) */
             .smg-sheet-item.smg-active .smg-sheet-ico { background: var(--smg-link-strong); border-color: var(--smg-link-strong); color: #fff; }
-            .smg-sheet-lbl { font-size: 10.5px; line-height: 1.2; text-align: center; color: rgba(255,255,255,0.7); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .smg-sheet-lbl { font-size: var(--smg-fs-11); line-height: 1.2; text-align: center; color: var(--smg-w-72); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
             /* ---- dock: botões circulares (icon-only) ---- */
             .smg-nav-btn {
@@ -229,15 +229,15 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 50%;
-                border: 1px solid rgba(255,255,255,0.07);
-                background: rgba(255,255,255,0.045);
-                color: rgba(255,255,255,0.95);
+                border-radius: var(--smg-r-round);
+                border: 1px solid var(--smg-w-08);
+                background: var(--smg-w-04);
+                color: var(--smg-w-95);
                 box-sizing: border-box;
                 text-decoration: none;
                 cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
-                transition: transform .18s cubic-bezier(.2,.8,.3,1), background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+                transition: transform var(--smg-dur-20) cubic-bezier(.2,.8,.3,1), background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             .smg-nav-ico {
                 position: relative;   /* âncora do badge reativo (alertas) */
@@ -248,14 +248,14 @@
                 height: 22px;
                 font-size: var(--smg-btn-fs, 20px);
                 line-height: 1;
-                filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+                filter: drop-shadow(0 1px 2px var(--smg-k-62));
             }
             /* badge reativo na dock/navbar (contador de alertas) */
             .smg-nav-badge {
-                position: absolute; top: -6px; right: -9px; z-index: 2;
-                min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
-                border-radius: 999px; background: #e0245e; color: #fff;
-                font-size: 10px; font-weight: 700; line-height: 1;
+                position: absolute; top: -6px; right: -9px; z-index: var(--smg-z-2);
+                min-width: 16px; height: 16px; padding: 0 var(--smg-sp-4); box-sizing: border-box;
+                border-radius: var(--smg-r-pill); background: #e0245e; color: #fff;
+                font-size: var(--smg-fs-10); font-weight: 700; line-height: 1;
                 display: flex; align-items: center; justify-content: center;
                 font-variant-numeric: tabular-nums; pointer-events: none;
             }
@@ -268,11 +268,11 @@
                 margin: 0 auto;
             }
             .smg-nav-btn:not(:disabled):hover {
-                background: rgba(255,255,255,0.13);
+                background: var(--smg-w-14);
                 color: #fff;
-                border-color: rgba(255,255,255,0.2);
+                border-color: var(--smg-w-22);
                 transform: translateY(-4px) scale(1.07);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+                box-shadow: var(--smg-shadow-2);
             }
             .smg-nav-btn:not(:disabled):active {
                 transform: translateY(-1px) scale(0.96);
@@ -290,20 +290,20 @@
                 bottom: calc(100% + 12px);
                 left: 50%;
                 transform: translateX(-50%) translateY(5px);
-                padding: 5px 9px;
-                border-radius: 8px;
+                padding: var(--smg-sp-6) var(--smg-sp-10);
+                border-radius: var(--smg-r-8);
                 background: rgba(20,21,25,0.97);
                 color: #fff;
-                font-size: 12px;
+                font-size: var(--smg-fs-12);
                 font-weight: 500;
                 line-height: 1;
                 white-space: nowrap;
-                border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+                border: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-shadow-2);
                 opacity: 0;
                 pointer-events: none;
-                transition: opacity .18s ease, transform .18s ease;
-                z-index: 9999;
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease;
+                z-index: var(--smg-z-9999);
             }
             .smg-nav-btn[data-label]:not(:disabled):hover::after,
             #smg-dock-handle[data-label]:not(:disabled):hover::after {
@@ -312,8 +312,8 @@
             }
 
             /* ---- dock: botão com label VISÍVEL (pílula) — ex.: sort mostrando "Data"/"Reações" nas 2 docks ---- */
-            .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: 22px !important; padding: 0 14px 0 12px !important; gap: 6px; }
-            .smg-nav-btn-text { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
+            .smg-nav-btn.smg-nav-labeled { width: auto !important; height: 44px !important; border-radius: var(--smg-r-20) !important; padding: 0 var(--smg-sp-14) 0 var(--smg-sp-12) !important; gap: var(--smg-sp-6); }
+            .smg-nav-btn-text { font-size: var(--smg-fs-13); font-weight: 600; white-space: nowrap; letter-spacing: .01em; line-height: 1; }
 
             /* ---- dock: handle/aba pra reabrir quando oculta ---- */
             #smg-dock-handle {
@@ -326,23 +326,23 @@
                 height: 28px;
                 align-items: center;
                 justify-content: center;
-                border-radius: 999px;
-                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: var(--smg-r-pill);
+                border: 1px solid var(--smg-w-12);
                 background: var(--smg-s2);
-                color: rgba(255,255,255,0.9);
-                font-size: 16px;
+                color: var(--smg-w-95);
+                font-size: var(--smg-fs-16);
                 cursor: pointer;
                 box-shadow:
-                    inset 0 1px 0 rgba(255,255,255,0.1),
-                    0 10px 26px rgba(0,0,0,0.55);
-                transition: transform .2s cubic-bezier(.2,.8,.3,1), color .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+                    var(--smg-hl),
+                    var(--smg-shadow-2);
+                transition: transform var(--smg-dur-20) cubic-bezier(.2,.8,.3,1), color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             #smg-dock-handle:hover {
                 color: #fff;
                 background: var(--smg-s3);
-                border-color: rgba(255,255,255,0.22);
+                border-color: var(--smg-w-22);
                 transform: translateX(-50%) translateY(-3px);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 14px 30px rgba(0,0,0,0.6);
+                box-shadow: var(--smg-hl), var(--smg-shadow-2);
             }
             #smg-dock-handle:active {
                 transform: translateX(-50%) translateY(-1px) scale(0.97);
@@ -353,14 +353,14 @@
 
             /* ---- goto: número da página dentro do botão (thread + galeria) ---- */
             #smg-post-goto, #smg-gal-goto {
-                border-radius: 12px !important; /* rounded-2xl */
+                border-radius: var(--smg-r-12) !important; /* rounded-2xl */
                 min-width: 64px !important;
                 height: 34px !important;
-                padding: 0 10px !important;
+                padding: 0 var(--smg-sp-10) !important;
             }
             #smg-post-goto .smg-nav-ico,
             #smg-gal-goto .smg-nav-ico {
-                font-size: 13px !important;
+                font-size: var(--smg-fs-13) !important;
                 font-weight: 700 !important;
                 letter-spacing: 0 !important;
                 white-space: nowrap !important;
@@ -376,20 +376,20 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 11px;
+                gap: var(--smg-sp-12);
                 min-width: 232px;
-                padding: 16px 18px;
-                border-radius: 18px;
+                padding: var(--smg-sp-16) var(--smg-sp-18);
+                border-radius: var(--smg-r-18);
                 background: var(--smg-s1);
-                border: 1px solid rgba(255,255,255,0.1);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 44px rgba(0,0,0,0.62);
+                border: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-hl), var(--smg-shadow-4);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;
                 opacity: 0;
                 pointer-events: none;
-                transition: opacity .18s ease, transform .18s ease, visibility .18s;
-                z-index: 11;
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease, visibility var(--smg-dur-20);
+                z-index: var(--smg-z-pop);
             }
             #smg-post-nav-wrapper.goto-open #smg-goto-pop,
             .smg-gallery-dock.goto-open .smg-gallery-goto-pop {
@@ -400,16 +400,16 @@
             }
             .smg-goto-title,
             .smg-pop-title {
-                font-size: 11px;
+                font-size: var(--smg-fs-11);
                 font-weight: 600;
                 letter-spacing: .06em;
                 text-transform: uppercase;
-                color: rgba(255,255,255,0.55);
+                color: var(--smg-w-55);
             }
             .smg-goto-stepper {
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: var(--smg-sp-10);
             }
             .smg-goto-step {
                 flex: 0 0 auto;
@@ -418,19 +418,19 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 11px;
-                border: 1px solid rgba(255,255,255,0.14);
-                background: rgba(255,255,255,0.07);
+                border-radius: var(--smg-r-12);
+                border: 1px solid var(--smg-w-14);
+                background: var(--smg-w-08);
                 color: #fff;
-                font-size: 22px;
+                font-size: var(--smg-fs-22);
                 line-height: 1;
                 cursor: pointer;
                 user-select: none;
-                transition: background .15s ease, border-color .15s ease, transform .12s ease;
+                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-goto-step:hover {
-                background: rgba(255,255,255,0.16);
-                border-color: rgba(255,255,255,0.28);
+                background: var(--smg-w-18);
+                border-color: var(--smg-w-30);
             }
             .smg-goto-step:active {
                 transform: scale(0.9);
@@ -438,19 +438,19 @@
             .smg-goto-input {
                 width: 78px;
                 height: 40px;
-                padding: 0 8px;
-                border-radius: 11px;
-                border: 1px solid rgba(255,255,255,0.16);
-                background: rgba(255,255,255,0.07);
+                padding: 0 var(--smg-sp-8);
+                border-radius: var(--smg-r-12);
+                border: 1px solid var(--smg-w-18);
+                background: var(--smg-w-08);
                 color: #fff;
-                font-size: 19px;
+                font-size: var(--smg-fs-20);
                 font-weight: 700;
                 text-align: center;
                 outline: none;
                 font-variant-numeric: tabular-nums;
                 -moz-appearance: textfield;
                 appearance: textfield;
-                transition: border-color .15s ease, background .15s ease;
+                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease;
             }
             /* esconde os spinners nativos (usamos os botões − / +) */
             .smg-goto-input::-webkit-outer-spin-button,
@@ -459,29 +459,29 @@
                 margin: 0;
             }
             .smg-goto-input:focus {
-                border-color: rgba(255,255,255,0.45);
-                background: rgba(255,255,255,0.1);
+                border-color: var(--smg-w-50);
+                background: var(--smg-w-10);
             }
             .smg-goto-max {
-                font-size: 12px;
-                color: rgba(255,255,255,0.5);
+                font-size: var(--smg-fs-12);
+                color: var(--smg-w-50);
                 white-space: nowrap;
             }
             .smg-goto-btn {
                 width: 100%;
-                padding: 10px 0;
-                border-radius: 11px;
-                border: 1px solid rgba(255,255,255,0.16);
-                background: rgba(255,255,255,0.13);
+                padding: var(--smg-sp-10) 0;
+                border-radius: var(--smg-r-12);
+                border: 1px solid var(--smg-w-18);
+                background: var(--smg-w-14);
                 color: #fff;
-                font-size: 14px;
+                font-size: var(--smg-fs-14);
                 font-weight: 600;
                 cursor: pointer;
-                transition: background .15s ease, border-color .15s ease, transform .12s ease;
+                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-goto-btn:hover {
-                background: rgba(255,255,255,0.22);
-                border-color: rgba(255,255,255,0.3);
+                background: var(--smg-w-22);
+                border-color: var(--smg-w-30);
             }
             .smg-goto-btn:active {
                 transform: scale(0.98);
