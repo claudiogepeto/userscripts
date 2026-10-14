@@ -507,7 +507,11 @@
         // ---- docked no topo → flutuante após rolar ----
         const syncDock = () => { wrap.classList.toggle('floating', window.scrollY > 40); };
         onScrollRaf(syncDock);
-        syncDock();
+        // no boot o documento ainda está montando e scrollY é 0: ler aqui forçava um layout inteiro. Uma
+        // rolagem já feita (âncora, restauração) chega pelo evento de scroll; a leitura de segurança vai
+        // pro 1º frame depois do load, onde o layout já ia acontecer de qualquer jeito.
+        if (document.readyState === 'complete') requestAnimationFrame(syncDock);
+        else window.addEventListener('load', () => requestAnimationFrame(syncDock), { once: true });
 
         // ---- mobile: bottom sheets (Discover/User) — concern separada do topbar desktop ----
         const buildMobileSheets = () => {

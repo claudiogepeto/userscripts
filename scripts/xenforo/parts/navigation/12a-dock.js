@@ -741,7 +741,9 @@
         // (o gesto de subir é o de "quero navegar"), e volta sempre no topo da página.
         // rAF + limiar de 6px: scroll é o evento mais quente da página, e sem o limiar o tremor
         // do dedo/momentum faz a barra piscar.
-        let navLastY = window.scrollY || 0, navAway = false, navTick = false;
+        // navLastY começa em 0: a dock monta no boot (scrollY é 0), logo depois das escritas de scrollMarginTop
+        // em cada post; ler scrollY aqui forçava o layout da página inteira. O 1º scroll acerta a base.
+        let navLastY = 0, navAway = false, navTick = false;
         const isMobileNav = () => window.matchMedia('(max-width: 600px)').matches;
         function syncNavAway() {
             navTick = false;

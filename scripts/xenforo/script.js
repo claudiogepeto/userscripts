@@ -14471,7 +14471,9 @@
         // (o gesto de subir é o de "quero navegar"), e volta sempre no topo da página.
         // rAF + limiar de 6px: scroll é o evento mais quente da página, e sem o limiar o tremor
         // do dedo/momentum faz a barra piscar.
-        let navLastY = window.scrollY || 0, navAway = false, navTick = false;
+        // navLastY começa em 0: a dock monta no boot (scrollY é 0), logo depois das escritas de scrollMarginTop
+        // em cada post; ler scrollY aqui forçava o layout da página inteira. O 1º scroll acerta a base.
+        let navLastY = 0, navAway = false, navTick = false;
         const isMobileNav = () => window.matchMedia('(max-width: 600px)').matches;
         function syncNavAway() {
             navTick = false;
@@ -22276,7 +22278,11 @@
         // ---- docked no topo → flutuante após rolar ----
         const syncDock = () => { wrap.classList.toggle('floating', window.scrollY > 40); };
         onScrollRaf(syncDock);
-        syncDock();
+        // no boot o documento ainda está montando e scrollY é 0: ler aqui forçava um layout inteiro. Uma
+        // rolagem já feita (âncora, restauração) chega pelo evento de scroll; a leitura de segurança vai
+        // pro 1º frame depois do load, onde o layout já ia acontecer de qualquer jeito.
+        if (document.readyState === 'complete') requestAnimationFrame(syncDock);
+        else window.addEventListener('load', () => requestAnimationFrame(syncDock), { once: true });
 
         // ---- mobile: bottom sheets (Discover/User) — concern separada do topbar desktop ----
         const buildMobileSheets = () => {
