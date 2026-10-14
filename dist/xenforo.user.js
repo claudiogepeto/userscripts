@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.3
+// @version      4.1.4
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -22288,12 +22288,28 @@
     }
 
     let isStreamingWatched = false;
+    let watchedStreamScroll = null;
+    const onWatchedPage = () => /\/watched\/threads(?:\/|$|\?)/.test(location.pathname) || /\/watched\/threads(?:\/|$|\?)/.test(location.href);
+    function stopWatchedStream() {
+        if (watchedStreamScroll) {
+            window.removeEventListener('scroll', watchedStreamScroll);
+            watchedStreamScroll = null;
+        }
+        isStreamingWatched = false;
+        document.querySelectorAll('.js-replyNewMessageContainer > .structItem--thread, .block--messages .structItem--thread').forEach(el => el.remove());
+    }
     async function streamAllWatchedPages() {
         if (isStreamingWatched) return;
-        if (!location.pathname.includes('/watched/threads') && !location.href.includes('/watched/threads')) return;
+        if (!onWatchedPage()) return;
         isStreamingWatched = true;
 
-        const getContainer = () => document.querySelector('.structItemContainer.smg-tl-grid') || document.querySelector('.structItemContainer') || document.querySelector('.block-body');
+        // Só a lista de seguidos. .block-body também é o miolo do post, e o fallback
+        // jogava as threads seguidas no fim da publicação depois de sair da página.
+        const getContainer = () => {
+            if (!onWatchedPage()) return null;
+            return document.querySelector('.p-body-content .structItemContainer')
+                || document.querySelector('.structItemContainer');
+        };
         let container = getContainer();
         if (!container) { isStreamingWatched = false; return; }
 
@@ -22349,7 +22365,8 @@
                     decorateWatchedThreadRow(node);
                     frag.appendChild(node);
                 });
-                const curContainer = getContainer() || container;
+                if (!onWatchedPage()) { stopWatchedStream(); return; }
+                const curContainer = getContainer();
                 if (curContainer) curContainer.appendChild(frag);
 
                 if (typeof window.smgReapplyFilters === 'function') {
@@ -22364,6 +22381,7 @@
         }
 
         function onScrollWatched() {
+            if (!onWatchedPage()) { stopWatchedStream(); return; }
             if (isFetching || nextPage > maxPages || nextPage > 100) return;
             const scrollBottom = (window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0) + (window.scrollY || window.pageYOffset || 0);
             const docHeight = Math.max((document.documentElement && document.documentElement.scrollHeight) || 0, (document.body && document.body.scrollHeight) || 0);
@@ -22372,6 +22390,7 @@
             }
         }
 
+        watchedStreamScroll = onScrollWatched;
         window.addEventListener('scroll', onScrollWatched, { passive: true });
         if (typeof window !== 'undefined') {
             window.__onWatchedScroll = onScrollWatched;
@@ -22392,6 +22411,7 @@
             streamAllWatchedPages();
             return;
         }
+        document.querySelectorAll('.js-replyNewMessageContainer > .structItem--thread, .block--messages .structItem--thread').forEach(el => el.remove());
         eachIn(roots, '.structItem--thread:not([data-smg-decorated])', decorateThreadCard);
         const cl = document.documentElement.classList;
         if (!cl.contains('smg-thread') && !cl.contains('smg-threadlist')) return;   // os 2 sites (SMG + simpcity)
@@ -29749,6 +29769,7 @@
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
         const token = ++softNavToken;
+        if (typeof stopWatchedStream === 'function') stopWatchedStream();
         document.dispatchEvent(new Event('smg-search-close'));
         const root = document.documentElement;
         cancelPagePaintRelease();

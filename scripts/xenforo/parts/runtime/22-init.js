@@ -523,6 +523,7 @@
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
         const token = ++softNavToken;
+        if (typeof stopWatchedStream === 'function') stopWatchedStream();
         document.dispatchEvent(new Event('smg-search-close'));
         const root = document.documentElement;
         cancelPagePaintRelease();
