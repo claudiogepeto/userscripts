@@ -490,13 +490,13 @@
                 z-index: var(--smg-z-5);
                 pointer-events: none;
             }
-            /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) */
+            /* ESTADO DE ERRO DIRETO NO PLAYER (.smg-rg-error) — PERF: fundo sólido, sem blur por trás
+               (sob 94% de opacidade o blur mal aparecia e repintava a página a cada frame de scroll) */
             .smg-rg-error {
                 position: absolute; inset: 0; z-index: var(--smg-z-8);
                 display: flex; flex-direction: column; align-items: center; justify-content: center;
                 gap: var(--smg-sp-12); padding: var(--smg-sp-20);
                 background: rgba(18, 19, 24, 0.94);
-                backdrop-filter: blur(8px);
                 color: #fff; text-align: center; box-sizing: border-box;
             }
             .smg-rg-error-badge {
