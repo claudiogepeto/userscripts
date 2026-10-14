@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.1.6
+// @version      4.1.7
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · post media download · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -21696,9 +21696,20 @@
                 // Extrai o texto do título limpando todo e qualquer espaço ou nós residuais
                 const clone = tv.cloneNode(true);
                 clone.querySelectorAll('.label, .prefix, [class*="label--"], [class*="prefix--"], a[class*="prefix"], .smg-notices, .p-title-pageAction').forEach(n => n.remove());
-                const cleanTitle = (clone.textContent || '')
+                let cleanTitle = (clone.textContent || '')
                     .replace(/[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/g, ' ')
                     .trim();
+                if (/^(forum list|lista de fóruns|forums|fóruns)$/i.test(cleanTitle)) {
+                    const generic = /^(forum list|lista de fóruns|forums|fóruns)$/i;
+                    const pageBit = /^(page|página)\s+\d+/i;
+                    const meta = document.querySelector('meta[property="og:title"], meta[name="twitter:title"]');
+                    const metaTitle = meta ? (meta.getAttribute('content') || '').trim() : '';
+                    const fromMeta = metaTitle.split(/\s*[|\-–—]\s*/).map(s => s.trim()).find(p => p && !generic.test(p) && !pageBit.test(p));
+                    const parts = (document.title || '').split(/\s*[|\-–—]\s*/).map(s => s.trim()).filter(Boolean);
+                    const site = parts.length > 1 ? parts[parts.length - 1] : '';
+                    const specific = fromMeta || parts.find(p => p && p !== site && !generic.test(p) && !pageBit.test(p));
+                    if (specific) cleanTitle = specific;
+                }
 
                 tv.replaceChildren();
                 if (cleanTitle) {
