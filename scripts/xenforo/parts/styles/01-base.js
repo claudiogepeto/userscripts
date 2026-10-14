@@ -179,6 +179,7 @@
                página a cada frame. html.smg-scrolling sai ~150ms depois do último scroll (setupScrollHoverGuard). */
             @media (hover: hover) and (pointer: fine) {
                 html.smg-scrolling .p-body { pointer-events: none !important; }
+                html.smg-scrolling .p-body * { pointer-events: none !important; }   /* cards têm pointer-events:auto explícito */
             }
             /* Anti-CLS para posts e galerias da thread:
                O post (leitura) é a âncora primária (overflow-anchor: auto). Mídias mutáveis (imagens,
