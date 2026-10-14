@@ -277,7 +277,7 @@
         const missing = list.querySelectorAll('.smg-al-icon[data-smg-thread]:not([data-smg-thumbed])').length;
         if (missing < 3) return;                                       // cobertura boa → nada a buscar
         dbFollowedGetAll().then(items => {
-            if (!items.length) return fetchAndIngestFollowed(false, false);
+            if (!items.length) return fetchAndIngestFollowed();
         }).catch(() => {});
     }
 

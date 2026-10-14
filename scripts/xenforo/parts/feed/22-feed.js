@@ -684,12 +684,12 @@
         };
 
         if (cold) {
-            fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+            fetchAndIngestFollowed().catch(() => 0).finally(doSync);
         } else {
             const getFollowed = dbFollowedGetAll();
             getFollowed.then(items => {
                 if (!items || !items.length) {
-                    return fetchAndIngestFollowed(false, false).catch(() => 0).finally(doSync);
+                    return fetchAndIngestFollowed().catch(() => 0).finally(doSync);
                 }
                 doSync();
             }).catch(() => {

@@ -93,13 +93,13 @@
         return savedButtonObs;
     }
 
-    function ingestWatchedPageToFollowed(doc, syncPages = false) {
+    function ingestWatchedPageToFollowed(doc) {
         if (!doc) return Promise.resolve(0);
         const rows = doc.querySelectorAll('.structItem--thread');
         const signature = watchedPageSignature(doc, rows);
         const now = Math.floor(Date.now() / 1000);
         if (watchedPageInflight.has(doc)) return watchedPageInflight.get(doc);
-        if (watchedPageStates.get(doc) === signature && !syncPages) return Promise.resolve(0);
+        if (watchedPageStates.get(doc) === signature) return Promise.resolve(0);
         if (!rows.length) {
             watchedPageStates.set(doc, signature);
             return Promise.resolve(0);
@@ -111,7 +111,6 @@
 
             const itemsToUpsert = [];
             const seenPaths = new Set();
-            const syncCandidates = [];
 
             rows.forEach(it => {
                 const titleA = it.querySelector('.structItem-title a[href*="/threads/"]') || it.querySelector('.structItem-title a');
@@ -203,28 +202,13 @@
                     || prev.unread !== item.unread
                     || prev.timeline_skip !== item.timeline_skip;
                 if (changed) itemsToUpsert.push(item);
-                if (typeof followedSet !== 'undefined' && followedSet) {
-                    followedSet.add(path);
-                }
-
-                if (syncPages) {
-                    if (!timeline_skip && (forum_activity_ts > ((prev && prev.last_sync_at) || 0) || domUnread || last_page > ((prev && prev.last_page) || 1) || !(prev && prev.updated_at))) {
-                        syncCandidates.push({ thread: item, page: last_page });
-                    }
-                }
+                followedSet.add(path);
             });
 
-            const upsertPromise = itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
+            return itemsToUpsert.length ? dbFollowedBulkUpsert(itemsToUpsert).then(() => {
                 indexFollowedThumbs(itemsToUpsert);
                 return itemsToUpsert.length;
             }) : Promise.resolve(0);
-
-            return upsertPromise.then(count => {
-                if (syncPages && syncCandidates.length) {
-                    return Promise.all(syncCandidates.map(c => syncThreadPage(c.thread, c.page).catch(() => 0))).then(() => count);
-                }
-                return count;
-            });
         }).catch(err => {
             console.error('[SMG] Erro em ingestWatchedPageToFollowed:', err);
             return 0;
@@ -264,9 +248,9 @@
     let followedFetchInFlight = null;
     const FOLLOWED_FETCH_MIN_INTERVAL_MS = 2 * 60 * 1000; // Mínimo de 2 minutos entre buscas automáticas de /watched/threads
 
-    function fetchAndIngestFollowed(syncPages = false, force = false) {
+    function fetchAndIngestFollowed() {
         const now = Date.now();
-        if (!force && !(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
+        if (!(typeof window !== 'undefined' && window.__TEST_MODE__) && (now - lastFollowedFetchTs < FOLLOWED_FETCH_MIN_INTERVAL_MS)) {
             return Promise.resolve(0);
         }
         if (followedFetchInFlight) {
@@ -277,7 +261,7 @@
         followedFetchInFlight = fetchWatchedDoc()
             .then(doc => {
                 if (doc) {
-                    return ingestWatchedPageToFollowed(doc, syncPages).then(count => {
+                    return ingestWatchedPageToFollowed(doc).then(count => {
                         console.log('[SMG Timeline] Ingestão concluída: ' + count + ' tópicos processados na tabela followed.');
                         return count;
                     });
