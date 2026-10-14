@@ -110,7 +110,30 @@ if (unlisted.length) {
     process.exit(1);
 }
 
-const out = files.map(f => fs.readFileSync(f, 'utf8')).join('\n');
+const sources = PART_FILES.map(file => ({ file, src: fs.readFileSync(path.join(PARTS, file), 'utf8') }));
+
+// ---- check (a): one owner per top-level name ----
+// Every part shares one IIFE scope, so a second top-level `function x` silently replaces the
+// first and a second `const x` is a SyntaxError only at install time. Top level = 4-space indent
+// (the IIFE body); deeper declarations are local to their function.
+{
+    const owners = new Map();
+    sources.forEach(({ file, src }) => src.split('\n').forEach((line, i) => {
+        const m = /^    (?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^    (?:const|let|var)\s+([A-Za-z_$][\w$]*)/.exec(line);
+        if (!m) return;
+        const name = m[1] || m[2];
+        if (!owners.has(name)) owners.set(name, []);
+        owners.get(name).push(file + ':' + (i + 1));
+    }));
+    const dups = [...owners].filter(([, at]) => at.length > 1);
+    if (dups.length) {
+        console.error('ERRO: nome top-level declarado mais de uma vez (os parts dividem um escopo):\n  '
+            + dups.map(([name, at]) => name + '  ' + at.join('  ')).join('\n  '));
+        process.exit(1);
+    }
+}
+
+const out = sources.map(({ src }) => src).join('\n');
 fs.writeFileSync(OUT, out);
 
 // Quick sanity check: count braces in CSS template literals.
