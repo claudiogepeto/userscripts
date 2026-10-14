@@ -1491,7 +1491,7 @@ async function runTests() {
 
     // 9.1 Verificar configuração da dock lateral / sidebar
     const btnWatchedEl = document.getElementById('smg-nav-watched');
-    assert(btnWatchedEl !== null, 'Botão #smg-nav-watched deve existir na barra/dock principal');
+    assert(btnWatchedEl === null, 'Botão #smg-nav-watched (Seguindo na sidebar) não deve existir na dock');
     const btnAlertsEl = document.getElementById('smg-nav-alerts');
     assert(btnAlertsEl === null, 'Botão #smg-nav-alerts NÃO deve existir na barra/dock principal');
 
@@ -1519,7 +1519,7 @@ async function runTests() {
     assert(titleText === 'Alerts' || titleText === 'Alertas', `Título do cabeçalho deve ser Alerts/Alertas (obtido: ${titleText})`);
 
     // Botões de ação mantidos
-    assert(dockEl.querySelector('.smg-aldock-view') !== null, 'Botão .smg-aldock-view deve existir');
+    assert(dockEl.querySelector('.smg-aldock-view') === null, 'Botão grade/lista .smg-aldock-view (só da aba Seguindo) não deve existir');
     assert(dockEl.querySelector('.smg-aldock-refresh') !== null, 'Botão .smg-aldock-refresh deve existir');
     assert(dockEl.querySelector('.smg-aldock-close') !== null, 'Botão .smg-aldock-close deve existir');
 
