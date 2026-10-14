@@ -334,7 +334,9 @@ async function runTests() {
     // Disparar DOMContentLoaded para executar boot()
     document.dispatchEvent(new window.Event('DOMContentLoaded'));
     console.log('Script carregado e inicializado com sucesso!\n');
-    assert(scriptContent.includes('// @version      4.0.1'), 'Userscript deve estar na versão 4.0.1');
+    const headerSource = fs.readFileSync(path.join(__dirname, 'parts', 'core', '01-header.js'), 'utf8');
+    const expectedVersion = (headerSource.match(/\/\/ @version\s+(\S+)/) || [])[1];
+    assert(!!expectedVersion && scriptContent.includes('// @version      ' + expectedVersion), `Userscript deve estar na versão ${expectedVersion} (parts/core/01-header.js)`);
 
     // =========================================================================
     // TESTE UI: topbar/thread header + posição central da busca na navbar mobile
