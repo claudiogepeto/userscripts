@@ -1153,7 +1153,8 @@
                     v.preload = "metadata";
                     v.setAttribute("style", "width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none;display:block");
                     job.host.replaceWith(v);
-                    const finish = () => done();
+                    let finished = false;
+                    const finish = () => { if (finished) return; finished = true; done(); };
                     v.addEventListener("loadeddata", finish, { once: true });
                     v.addEventListener("error", finish, { once: true });
                     setTimeout(finish, 12000);
@@ -1162,11 +1163,29 @@
                 .catch(done);
         }
     }
-    function attachThumb(img, id) {
+    // Miniatura: tenta a imagem estática primeiro; só se ela falhar o card entra na
+    // fila de preview em vídeo (/api/sign + <video>), e apenas quando estiver visível.
+    let previewIO = null;
+    function queuePreviewWhenVisible(img, id) {
+        if (!("IntersectionObserver" in window)) { previewQueue.push({ id, host: img }); pumpPreviews(); return; }
+        if (!previewIO) {
+            previewIO = new IntersectionObserver(entries => {
+                for (const e of entries) {
+                    if (!e.isIntersecting) continue;
+                    previewIO.unobserve(e.target);
+                    previewQueue.push({ id: e.target.dataset.tbPrevId, host: e.target });
+                }
+                pumpPreviews();
+            }, { rootMargin: "200px" });
+        }
+        img.dataset.tbPrevId = id;
+        previewIO.observe(img);
+    }
+    function attachThumb(img, id, src) {
         if (!id || img.dataset.tbPrev) return;
         img.dataset.tbPrev = "1";
-        previewQueue.push({ id, host: img });
-        pumpPreviews();
+        img.addEventListener("error", () => queuePreviewWhenVisible(img, id), { once: true });
+        img.src = src || (THUMB_BASE + id + ".jpg");
     }
 
     function parseSidebarItems() {
@@ -1307,7 +1326,7 @@
             const thumbWrap = el("div", { class: "tb-playlist-thumb-wrap" });
             if (item.thumb || item.id) {
                 const img = el("img", { class: "tb-playlist-thumb", alt: "", loading: "lazy" });
-                attachThumb(img, item.id);
+                attachThumb(img, item.id, item.thumb);
                 thumbWrap.appendChild(img);
             } else {
                 thumbWrap.appendChild(makeThumbPlaceholder(item.kind, "MP4"));
@@ -1660,7 +1679,7 @@
 
             if (d.thumb || d.id) {
                 const img = el("img", { alt: "", loading: "lazy" });
-                attachThumb(img, d.id);
+                attachThumb(img, d.id, d.thumb);
                 th.appendChild(img);
             } else {
                 th.appendChild(makeThumbPlaceholder(d.kind, d.type));
