@@ -62,9 +62,7 @@
                 width: auto !important; max-width: none !important; min-width: 0 !important; float: none !important;   /* item de grid limpo */
                 background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
                 border-radius: var(--smg-r-12) !important; overflow: hidden !important;
-                transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease;
             }
-            html.smg-threadlist .message--articlePreview:hover { border-color: var(--smg-bd2) !important; transform: translateY(-2px); }
             html.smg-threadlist .articlePreview-main { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 0 !important; padding: 0 !important; }
             /* imagem (ou placeholder) 1:1 no topo — igual ao grid de structItem.
                img em position:absolute → quebra a dependência circular (height:auto + img 100%) que fazia

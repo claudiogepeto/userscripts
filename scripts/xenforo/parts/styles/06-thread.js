@@ -798,14 +798,6 @@
                 max-height: none !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
-                transition: background var(--smg-dur-15) ease !important;
-                transform: none !important;
-                box-shadow: none !important;
-            }
-            html.smg-threadlist .smg-sticky-compact-list .structItem--thread:hover,
-            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread:hover {
-                background: var(--smg-w-06) !important;
-                border-color: transparent !important;
                 transform: none !important;
                 box-shadow: none !important;
             }
@@ -1005,18 +997,12 @@
                 overflow: hidden !important;
                 background: var(--smg-s1) !important;
                 position: relative !important;
-                transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
             }
             html.smg-threadlist .structItem--thread.samUnitWrapper,
             html.smg-threadlist .structItem--thread.smg-card-empty,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.samUnitWrapper,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.smg-card-empty {
                 display: none !important;
-            }
-            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
-                border-color: var(--smg-bd2) !important;
-                transform: translateY(-2px) !important;
-                box-shadow: var(--smg-shadow-2) !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail,

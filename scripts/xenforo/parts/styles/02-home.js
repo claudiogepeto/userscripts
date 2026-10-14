@@ -169,15 +169,9 @@
                 display: block; border-radius: var(--smg-r-18); overflow: hidden;
                 background: var(--smg-s2); border: 1px solid var(--smg-w-08); text-decoration: none;
                 box-shadow: 0 8px 24px -6px var(--smg-k-55);
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), border-color var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease;
-            }
-            html.smg-home .smg-feed-card:hover {
-                transform: translateY(-6px); border-color: var(--smg-w-22);
-                box-shadow: 0 22px 44px -10px var(--smg-k-72), 0 0 24px -6px var(--smg-link-soft);
             }
             html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
-            html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
-            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
+            html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; }
             /* Scrim gradiente cinematográfico */
             html.smg-home .smg-feed-card-body {
@@ -311,18 +305,9 @@
                 overflow: hidden !important;
                 min-height: 64px !important;
                 box-shadow: var(--smg-shadow-1) !important;
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), border-color var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease, background var(--smg-dur-20) ease !important;
             }
-            /* Sem feixe lateral no hover */
+            /* Sem feixe lateral (o tema desenha um ::before na linha) */
             html.smg-home .block--category .node::before { display: none !important; }
-            html.smg-home .block--category .node:hover::before { display: none !important; }
-            /* Hover do Hub Row */
-            html.smg-home .block--category .node:hover {
-                transform: translateY(-2px) !important;
-                border-color: var(--smg-w-18) !important;
-                background: linear-gradient(160deg, var(--smg-w-06) 0%, var(--smg-w-02) 100%), var(--smg-s2) !important;
-                box-shadow: 0 10px 24px -4px var(--smg-k-55), 0 0 16px -4px var(--smg-w-06) !important;
-            }
 
             html.smg-smg.smg-home .block--category .node {
                 border: 1px solid var(--smg-w-08) !important;
@@ -346,11 +331,6 @@
                 background: transparent !important;
                 border: 0 !important; border-radius: 0 !important;
                 box-shadow: none !important;
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            html.smg-home .block--category .node:hover .node-icon {
-                transform: scale(1.08) !important;
-                border-color: transparent !important;
             }
             html.smg-home .node-icon img {
                 width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important;
@@ -370,18 +350,11 @@
                 justify-content: flex-start !important; text-align: left !important; line-height: 1.3 !important;
             }
             html.smg-home .node-title a { color: #fff !important; text-decoration: none !important; transition: color var(--smg-dur-15) ease; }
-            html.smg-home .block--category .node:hover .node-title a {
-                color: #fff !important; text-shadow: 0 0 10px var(--smg-w-40);
-            }
             html.smg-home .node-description {
                 font-size: var(--smg-fs-13) !important; line-height: 1.4 !important;
                 color: var(--smg-w-55) !important; margin-top: var(--smg-sp-2) !important;
                 display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
                 white-space: normal !important;
-                transition: color var(--smg-dur-15) ease;
-            }
-            html.smg-home .block--category .node:hover .node-description {
-                color: var(--smg-w-72) !important;
             }
 
             /* Divisor entre categorias principais e restantes */
@@ -450,8 +423,7 @@
                 color: var(--smg-link) !important;
                 border: 1px solid var(--smg-link-soft) !important;
             }
-            html.smg-home .node-extra:hover .node-extra-title,
-            html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
+            html.smg-home .node-extra:hover .node-extra-title {
                 color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
@@ -550,10 +522,6 @@
             html.smg-threadlist .block--category .node {
                 display: flex !important; cursor: pointer; border: 1px solid var(--smg-bd) !important;
                 border-radius: var(--smg-r-14) !important; background: var(--smg-s1) !important; overflow: visible !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease;
-            }
-            html.smg-threadlist .block--category .node:hover {
-                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; transform: translateY(-2px);
             }
             html.smg-threadlist .block--category .node-body {
                 flex: 1 1 auto !important; display: flex !important; flex-direction: column !important;

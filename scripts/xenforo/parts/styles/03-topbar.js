@@ -369,11 +369,6 @@
                 font-size: var(--smg-fs-13) !important;
                 font-weight: 500 !important;
                 line-height: 1.45 !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease !important;
-            }
-            .notice:hover {
-                background: var(--smg-w-06) !important;
-                border-color: var(--smg-w-14) !important;
             }
             .notice::before {
                 content: "" !important;

@@ -14,9 +14,8 @@
             /* POST CARD: UMA pele pro post da thread (.smg-pc) e pros cards do Feed/Salvos (.smg-fp-card, o
                modificador "feed": thumb da thread + título como contexto, ver 07-feed). Superfície, header e
                conteúdo moram aqui; 07-feed só tem o que é do feed. */
-            html.smg-thread .smg-pc, .smg-fp-card { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
+            html.smg-thread .smg-pc, .smg-fp-card { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; }
             html.smg-thread .smg-pc { margin: 0 0 var(--smg-sp-14); overflow: visible; contain: style; overflow-anchor: auto !important; }
-            html.smg-thread .smg-pc:hover, .smg-fp-card:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc, html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
             /* QUOTES / unfurl dentro do post: inset escuro (recuado) + border + rounded — !important p/ vencer o cinza claro do tema */

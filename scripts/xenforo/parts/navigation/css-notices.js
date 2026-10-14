@@ -123,11 +123,7 @@
                 font-size: var(--smg-fs-13) !important;
                 line-height: 1.45 !important;
                 color: var(--smg-w-85) !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease !important;
-            }
-            .smg-notices-collapse-item:hover {
-                background: var(--smg-w-06) !important;
-                border-color: var(--smg-w-10) !important;
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease !important;
             }
             .smg-notices-item-emote {
                 flex-shrink: 0 !important;

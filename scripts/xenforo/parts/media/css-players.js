@@ -329,12 +329,6 @@
                 aspect-ratio: auto !important;
                 cursor: pointer !important;
                 pointer-events: auto !important;
-                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
-            }
-            .smg-dead:hover {
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2) !important;
-                border-color: rgba(255, 95, 95, 0.55) !important;
-                box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
             }
             .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: var(--smg-sp-16) auto !important; }
             .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }

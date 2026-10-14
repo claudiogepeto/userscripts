@@ -943,7 +943,6 @@
             .smg-gallery-max:hover { background: var(--smg-k-82); }
             .smg-gallery-tile--embed:hover .smg-gallery-max { opacity: 1; }
             @media (hover: none) { .smg-gallery-max { opacity: 1; } }
-            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); }
@@ -1014,12 +1013,6 @@
                 border: 1px solid var(--smg-w-12);
                 border-radius: var(--smg-card-r);
                 background: var(--smg-s1);
-                box-shadow: var(--smg-card-shadow);
-                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
-            }
-            .smg-fhcard:hover {
-                border-color: var(--smg-w-22);
-                background: var(--smg-s2);
                 box-shadow: var(--smg-card-shadow);
             }
             .smg-fhcard-main {
@@ -1689,12 +1682,6 @@
                 aspect-ratio: auto !important;
                 cursor: pointer !important;
                 pointer-events: auto !important;
-                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
-            }
-            .smg-dead:hover {
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.14), rgba(255, 75, 75, 0.06)) var(--smg-s2) !important;
-                border-color: rgba(255, 95, 95, 0.55) !important;
-                box-shadow: 0 4px 16px rgba(255, 60, 60, 0.14) !important;
             }
             .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: var(--smg-sp-16) auto !important; }
             .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
@@ -2144,15 +2131,9 @@
                 display: block; border-radius: var(--smg-r-18); overflow: hidden;
                 background: var(--smg-s2); border: 1px solid var(--smg-w-08); text-decoration: none;
                 box-shadow: 0 8px 24px -6px var(--smg-k-55);
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), border-color var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease;
-            }
-            html.smg-home .smg-feed-card:hover {
-                transform: translateY(-6px); border-color: var(--smg-w-22);
-                box-shadow: 0 22px 44px -10px var(--smg-k-72), 0 0 24px -6px var(--smg-link-soft);
             }
             html.smg-home .smg-feed-card-thumb { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--smg-s2); overflow: hidden; display: block; }
-            html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
-            html.smg-home .smg-feed-card:hover .smg-feed-card-thumb img { transform: scale(1.06); }
+            html.smg-home .smg-feed-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
             html.smg-home .smg-feed-card-thumb.smg-feed-noimg { display: flex; align-items: center; justify-content: center; }
             /* Scrim gradiente cinematográfico */
             html.smg-home .smg-feed-card-body {
@@ -2286,18 +2267,9 @@
                 overflow: hidden !important;
                 min-height: 64px !important;
                 box-shadow: var(--smg-shadow-1) !important;
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), border-color var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease, background var(--smg-dur-20) ease !important;
             }
-            /* Sem feixe lateral no hover */
+            /* Sem feixe lateral (o tema desenha um ::before na linha) */
             html.smg-home .block--category .node::before { display: none !important; }
-            html.smg-home .block--category .node:hover::before { display: none !important; }
-            /* Hover do Hub Row */
-            html.smg-home .block--category .node:hover {
-                transform: translateY(-2px) !important;
-                border-color: var(--smg-w-18) !important;
-                background: linear-gradient(160deg, var(--smg-w-06) 0%, var(--smg-w-02) 100%), var(--smg-s2) !important;
-                box-shadow: 0 10px 24px -4px var(--smg-k-55), 0 0 16px -4px var(--smg-w-06) !important;
-            }
 
             html.smg-smg.smg-home .block--category .node {
                 border: 1px solid var(--smg-w-08) !important;
@@ -2321,11 +2293,6 @@
                 background: transparent !important;
                 border: 0 !important; border-radius: 0 !important;
                 box-shadow: none !important;
-                transition: transform var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            html.smg-home .block--category .node:hover .node-icon {
-                transform: scale(1.08) !important;
-                border-color: transparent !important;
             }
             html.smg-home .node-icon img {
                 width: 38px !important; height: 38px !important; max-width: 38px !important; max-height: 38px !important;
@@ -2345,18 +2312,11 @@
                 justify-content: flex-start !important; text-align: left !important; line-height: 1.3 !important;
             }
             html.smg-home .node-title a { color: #fff !important; text-decoration: none !important; transition: color var(--smg-dur-15) ease; }
-            html.smg-home .block--category .node:hover .node-title a {
-                color: #fff !important; text-shadow: 0 0 10px var(--smg-w-40);
-            }
             html.smg-home .node-description {
                 font-size: var(--smg-fs-13) !important; line-height: 1.4 !important;
                 color: var(--smg-w-55) !important; margin-top: var(--smg-sp-2) !important;
                 display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
                 white-space: normal !important;
-                transition: color var(--smg-dur-15) ease;
-            }
-            html.smg-home .block--category .node:hover .node-description {
-                color: var(--smg-w-72) !important;
             }
 
             /* Divisor entre categorias principais e restantes */
@@ -2425,8 +2385,7 @@
                 color: var(--smg-link) !important;
                 border: 1px solid var(--smg-link-soft) !important;
             }
-            html.smg-home .node-extra:hover .node-extra-title,
-            html.smg-home .block--category .node:hover .node-extra:hover .node-extra-title {
+            html.smg-home .node-extra:hover .node-extra-title {
                 color: var(--smg-link) !important;
                 text-decoration: underline !important;
             }
@@ -2525,10 +2484,6 @@
             html.smg-threadlist .block--category .node {
                 display: flex !important; cursor: pointer; border: 1px solid var(--smg-bd) !important;
                 border-radius: var(--smg-r-14) !important; background: var(--smg-s1) !important; overflow: visible !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease;
-            }
-            html.smg-threadlist .block--category .node:hover {
-                background: var(--smg-s2) !important; border-color: var(--smg-bd2) !important; transform: translateY(-2px);
             }
             html.smg-threadlist .block--category .node-body {
                 flex: 1 1 auto !important; display: flex !important; flex-direction: column !important;
@@ -3012,11 +2967,6 @@
                 font-size: var(--smg-fs-13) !important;
                 font-weight: 500 !important;
                 line-height: 1.45 !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease !important;
-            }
-            .notice:hover {
-                background: var(--smg-w-06) !important;
-                border-color: var(--smg-w-14) !important;
             }
             .notice::before {
                 content: "" !important;
@@ -3214,11 +3164,7 @@
                 font-size: var(--smg-fs-13) !important;
                 line-height: 1.45 !important;
                 color: var(--smg-w-85) !important;
-                transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease !important;
-            }
-            .smg-notices-collapse-item:hover {
-                background: var(--smg-w-06) !important;
-                border-color: var(--smg-w-10) !important;
+                transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-20) ease !important;
             }
             .smg-notices-item-emote {
                 flex-shrink: 0 !important;
@@ -4574,10 +4520,8 @@
             html.smg-search-page .block-row.block-row--separated {
                 margin: 0 !important; padding: var(--smg-sp-16) var(--smg-sp-18) !important;
                 background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important; border-radius: var(--smg-r-14) !important;
-                transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             html.smg-smg.smg-search-page .block-row.block-row--separated { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície dos cards de post (.smg-pc) */
-            html.smg-search-page .block-row.block-row--separated:hover { border-color: var(--smg-bd2) !important; box-shadow: var(--smg-shadow-2); }
             html.smg-search-page .block-row .contentRow { align-items: flex-start !important; gap: var(--smg-sp-14) !important; }
             html.smg-search-page .block-row .contentRow-figure { flex: 0 0 auto; }
             html.smg-search-page .block-row .contentRow-main { min-width: 0 !important; }
@@ -4838,8 +4782,7 @@
             #smg-topbar-wrap a, #smg-topbar-wrap a:hover, #smg-topbar-wrap a:focus,
             #smg-search-pop a, #smg-search-pop a:hover, #smg-search-pop a:focus { text-decoration: none !important; }
             .smg-search-result-fig { flex: 0 0 auto; width: 110px; height: 74px; border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-w-06); }
-            .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
-            .smg-search-result:hover .smg-search-result-fig img { transform: scale(1.06); }   /* zoom sutil da thumb no hover (igual aos cards da home) */
+            .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
             .smg-search-result-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-search-result-titlerow { display: flex; align-items: center; gap: var(--smg-sp-6); min-width: 0; flex-wrap: wrap; overflow: visible; padding: var(--smg-sp-2) 0 var(--smg-sp-2); }
             .smg-search-result-titlerow .label,
@@ -5752,10 +5695,6 @@
                 background: var(--smg-w-04);
                 border: 1px solid var(--smg-w-06);
                 margin-top: var(--smg-sp-6);
-            }
-            .smg-set-action-card:hover {
-                background: var(--smg-w-06);
-                border-color: var(--smg-w-10);
             }
             .smg-set-btn-danger {
                 flex: 0 0 auto;
@@ -7069,14 +7008,6 @@
                 max-height: none !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
-                transition: background var(--smg-dur-15) ease !important;
-                transform: none !important;
-                box-shadow: none !important;
-            }
-            html.smg-threadlist .smg-sticky-compact-list .structItem--thread:hover,
-            html.smg-threadlist.smg-tv-grid .smg-sticky-compact-list .structItem--thread:hover {
-                background: var(--smg-w-06) !important;
-                border-color: transparent !important;
                 transform: none !important;
                 box-shadow: none !important;
             }
@@ -7276,18 +7207,12 @@
                 overflow: hidden !important;
                 background: var(--smg-s1) !important;
                 position: relative !important;
-                transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease !important;
             }
             html.smg-threadlist .structItem--thread.samUnitWrapper,
             html.smg-threadlist .structItem--thread.smg-card-empty,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.samUnitWrapper,
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread.smg-card-empty {
                 display: none !important;
-            }
-            html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread:hover {
-                border-color: var(--smg-bd2) !important;
-                transform: translateY(-2px) !important;
-                box-shadow: var(--smg-shadow-2) !important;
             }
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .structItem-cell--icon:not(.structItem-cell--iconEnd),
             html.smg-threadlist.smg-tv-grid :not(.smg-sticky-compact-list) > .structItem--thread .dcThumbnail,
@@ -7583,9 +7508,7 @@
                 width: auto !important; max-width: none !important; min-width: 0 !important; float: none !important;   /* item de grid limpo */
                 background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
                 border-radius: var(--smg-r-12) !important; overflow: hidden !important;
-                transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease;
             }
-            html.smg-threadlist .message--articlePreview:hover { border-color: var(--smg-bd2) !important; transform: translateY(-2px); }
             html.smg-threadlist .articlePreview-main { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 0 !important; padding: 0 !important; }
             /* imagem (ou placeholder) 1:1 no topo — igual ao grid de structItem.
                img em position:absolute → quebra a dependência circular (height:auto + img 100%) que fazia
@@ -7728,9 +7651,8 @@
             /* POST CARD: UMA pele pro post da thread (.smg-pc) e pros cards do Feed/Salvos (.smg-fp-card, o
                modificador "feed": thumb da thread + título como contexto, ver 07-feed). Superfície, header e
                conteúdo moram aqui; 07-feed só tem o que é do feed. */
-            html.smg-thread .smg-pc, .smg-fp-card { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
+            html.smg-thread .smg-pc, .smg-fp-card { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; }
             html.smg-thread .smg-pc { margin: 0 0 var(--smg-sp-14); overflow: visible; contain: style; overflow-anchor: auto !important; }
-            html.smg-thread .smg-pc:hover, .smg-fp-card:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc, html.smg-smg .smg-fp-card { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
             /* QUOTES / unfurl dentro do post: inset escuro (recuado) + border + rounded — !important p/ vencer o cinza claro do tema */

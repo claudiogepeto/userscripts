@@ -62,12 +62,6 @@
                 border-radius: var(--smg-card-r);
                 background: var(--smg-s1);
                 box-shadow: var(--smg-card-shadow);
-                transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
-            }
-            .smg-fhcard:hover {
-                border-color: var(--smg-w-22);
-                background: var(--smg-s2);
-                box-shadow: var(--smg-card-shadow);
             }
             .smg-fhcard-main {
                 display: flex;

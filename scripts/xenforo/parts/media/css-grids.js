@@ -130,7 +130,6 @@
             .smg-gallery-max:hover { background: var(--smg-k-82); }
             .smg-gallery-tile--embed:hover .smg-gallery-max { opacity: 1; }
             @media (hover: none) { .smg-gallery-max { opacity: 1; } }
-            .smg-gallery-tile:hover { outline: 2px solid var(--smg-link); outline-offset: -2px; }
             .smg-gallery-empty { padding: 44px; text-align: center; color: var(--smg-w-50); }
             /* skeleton da galeria: tiles-fantasma (shimmer) reservam espaço durante o fetch → menos "pulo" da página */
             .smg-gallery-skel { border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-s2); }

@@ -589,10 +589,8 @@
             html.smg-search-page .block-row.block-row--separated {
                 margin: 0 !important; padding: var(--smg-sp-16) var(--smg-sp-18) !important;
                 background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important; border-radius: var(--smg-r-14) !important;
-                transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             html.smg-smg.smg-search-page .block-row.block-row--separated { --smg-s1: hsl(0 0% 12.5%); }   /* SMG: mesma superfície dos cards de post (.smg-pc) */
-            html.smg-search-page .block-row.block-row--separated:hover { border-color: var(--smg-bd2) !important; box-shadow: var(--smg-shadow-2); }
             html.smg-search-page .block-row .contentRow { align-items: flex-start !important; gap: var(--smg-sp-14) !important; }
             html.smg-search-page .block-row .contentRow-figure { flex: 0 0 auto; }
             html.smg-search-page .block-row .contentRow-main { min-width: 0 !important; }
@@ -853,8 +851,7 @@
             #smg-topbar-wrap a, #smg-topbar-wrap a:hover, #smg-topbar-wrap a:focus,
             #smg-search-pop a, #smg-search-pop a:hover, #smg-search-pop a:focus { text-decoration: none !important; }
             .smg-search-result-fig { flex: 0 0 auto; width: 110px; height: 74px; border-radius: var(--smg-r-10); overflow: hidden; background: var(--smg-w-06); }
-            .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; transition: transform var(--smg-dur-30) cubic-bezier(.2,.7,.3,1); }
-            .smg-search-result:hover .smg-search-result-fig img { transform: scale(1.06); }   /* zoom sutil da thumb no hover (igual aos cards da home) */
+            .smg-search-result-fig img { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
             .smg-search-result-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-4); }
             .smg-search-result-titlerow { display: flex; align-items: center; gap: var(--smg-sp-6); min-width: 0; flex-wrap: wrap; overflow: visible; padding: var(--smg-sp-2) 0 var(--smg-sp-2); }
             .smg-search-result-titlerow .label,

@@ -50,10 +50,6 @@
                 border: 1px solid var(--smg-w-06);
                 margin-top: var(--smg-sp-6);
             }
-            .smg-set-action-card:hover {
-                background: var(--smg-w-06);
-                border-color: var(--smg-w-10);
-            }
             .smg-set-btn-danger {
                 flex: 0 0 auto;
                 padding: var(--smg-sp-6) var(--smg-sp-12);
