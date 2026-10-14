@@ -874,6 +874,22 @@
     const imagepondCache = new Map();
     const imagepondInflight = new Map();
 
+    // Resolução de embed (imagepond/cyberdrop) = 1 GET de HTML/JSON por item. Numa thread com dezenas,
+    // disparar tudo junto entope as conexões do host → fila por proximidade da viewport.
+    const embedResolveTasks = makeTaskQueue(4);
+    function queueEmbedResolve(anchor, resolve, onResult) {
+        embedResolveTasks.push(() => new Promise(release => {
+            resolve(res => { release(); onResult(res); });
+        }), anchor);
+    }
+    // monta quando o slot chega perto (lazyEmbedIO, 4000px de margem: o callback inicial já cobre o que
+    // está à vista); sem IntersectionObserver, monta na hora.
+    function lazyActivate(slot, activate) {
+        const io = getLazyEmbedIO();
+        if (!io) { activate(); return; }
+        slot._smgActivate = activate;
+        io.observe(slot);
+    }
     function imagepondResolve(pageUrl, cb) {
         if (!GMX || !pageUrl) { cb(null); return; }
         if (imagepondCache.has(pageUrl)) {
@@ -994,7 +1010,7 @@
             const activate = () => {
                 if (slot.dataset.ipActivated) return;   // run-once (turboIO E o masonry podem chamar)
                 slot.dataset.ipActivated = '1'; slot._smgActivate = null;
-                imagepondResolve(pageUrl, res => {
+                queueEmbedResolve(slot, done => imagepondResolve(pageUrl, done), res => {
                     if (wrapper.querySelector('.smg-rg')) return;
                     if (res && res.mp4) {                                   // VÍDEO → nosso player
                         const { wrap, video } = buildNativeVideo(res.mp4, location.origin + '/', restoreIframe, 'ImagePond');
@@ -1047,19 +1063,7 @@
                     restoreIframe();                                        // sem mp4 nem img nem erro específico → iframe nativo
                 });
             };
-            const io = getLazyEmbedIO();
-            if (io) {
-                const rect = slot.getBoundingClientRect();
-                if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
-                    activate();
-                } else {
-                    slot._smgActivate = activate;
-                    io.observe(slot);
-                    setTimeout(() => { if (!slot.dataset.ipActivated) activate(); }, 250);
-                }
-            } else {
-                activate();
-            }
+            lazyActivate(slot, activate);
         });
         // LINK direto do imagepond: <a href="imagepond.net/video/{numId}.{hash}"><div>media.imagepond.net/media/{numId}.mp4</div></a>
         // o mp4 vem no texto (ou é derivável do href) e NÃO é referer-locked → toca direto. Vira nosso player no lugar do link.
@@ -1097,8 +1101,29 @@
         const first = 'api.' + String(host || '').replace(/^www\./, '');
         return first === 'api.cyberdrop.cr' ? [first] : [first, 'api.cyberdrop.cr'];
     }
+    // cache por host+slug: o mesmo arquivo citado várias vezes na thread resolve 1× (auth_url é assinado e
+    // expira → entrada vale CD_CACHE_TTL_MS). Pedidos simultâneos do mesmo slug esperam o primeiro.
+    const cyberdropCache = new Map();
+    const cyberdropInflight = new Map();
+    const CD_CACHE_TTL_MS = 10 * 60 * 1000;
     function cyberdropResolve(host, slug, cb) {
         if (!GMX || !slug) { cb(null); return; }
+        const key = host + '|' + slug;
+        const hit = cyberdropCache.get(key);
+        if (hit && Date.now() - hit.ts < CD_CACHE_TTL_MS) { cb(hit.res); return; }
+        if (cyberdropInflight.has(key)) { cyberdropInflight.get(key).push(cb); return; }
+        cyberdropInflight.set(key, [cb]);
+        cyberdropFetch(host, slug, res => {
+            const cbs = cyberdropInflight.get(key) || [];
+            cyberdropInflight.delete(key);
+            if (res) {
+                while (cyberdropCache.size >= 128) cyberdropCache.delete(cyberdropCache.keys().next().value);
+                cyberdropCache.set(key, { res: res, ts: Date.now() });
+            }
+            cbs.forEach(fn => fn(res));
+        });
+    }
+    function cyberdropFetch(host, slug, cb) {
         const getJson = (url, ok) => GMX({ method: 'GET', url: url, timeout: 15000,
             headers: { Referer: 'https://' + host + '/', Accept: 'application/json,*/*' },
             onload: r => { let j = null; try { j = JSON.parse(r.responseText || ''); } catch (e) {} ok(j); },
@@ -1136,7 +1161,7 @@
         return { wrapper, slot, loading, esc };
     }
     function cyberdropMount(ctx, host, slug, origHref, restore) {
-        cyberdropResolve(host, slug, res => {
+        queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
             if (!res) { restore(); return; }
             const { wrap, video } = buildNativeVideo(res.mp4, 'https://' + host + '/', restore, 'Cyberdrop');
@@ -1171,19 +1196,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = getLazyEmbedIO();
-            if (io) {
-                const rect = ctx.slot.getBoundingClientRect();
-                if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
-                    activate();
-                } else {
-                    ctx.slot._smgActivate = activate;
-                    io.observe(ctx.slot);
-                    setTimeout(() => { if (!ctx.slot.dataset.cdActivated) activate(); }, 250);
-                }
-            } else {
-                activate();
-            }
+            lazyActivate(ctx.slot, activate);
         });
         // LINK cru do /e/ (o XF não embeda quando há 2 URLs na mesma linha) → mesmo player. Sem iframe pra restaurar:
         // a falha revela o link de escape, que é o próprio link original de volta.
@@ -1202,19 +1215,7 @@
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
-            const io = getLazyEmbedIO();
-            if (io) {
-                const rect = ctx.slot.getBoundingClientRect();
-                if (!rect.top || rect.top < (window.innerHeight || 1000) * 4) {
-                    activate();
-                } else {
-                    ctx.slot._smgActivate = activate;
-                    io.observe(ctx.slot);
-                    setTimeout(() => { if (!ctx.slot.dataset.cdActivated) activate(); }, 250);
-                }
-            } else {
-                activate();
-            }
+            lazyActivate(ctx.slot, activate);
         });
     }
 

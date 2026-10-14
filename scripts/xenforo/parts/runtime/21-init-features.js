@@ -281,12 +281,8 @@
                     try { v.preload = 'metadata'; v.src = href + (/#/.test(href) ? '' : '#t=0.1'); } catch (e) {}
                 };
                 const dio = getLazyEmbedIO();
-                if (dio) {
-                    dio.observe(v);
-                    setTimeout(() => { if (v._smgActivate) v._smgActivate(); }, 250);
-                } else {
-                    v._smgActivate();
-                }
+                if (dio) dio.observe(v);
+                else v._smgActivate();
                 // ao saber as dimensões: vídeo deitado ganha .smg-wide → não estica no post inteiro
                 v.addEventListener('loadedmetadata', () => {
                     markWide(v, v.videoWidth, v.videoHeight);
