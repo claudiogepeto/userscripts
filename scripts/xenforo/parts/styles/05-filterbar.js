@@ -15,7 +15,7 @@
             .smg-bar-btn {
                 display: inline-flex; align-items: center; justify-content: center; gap: var(--smg-sp-6); box-sizing: border-box;
                 height: 30px; min-width: 30px; padding: 0 var(--smg-sp-10);
-                border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-72);
+                border: 0; border-radius: var(--smg-btn-r); background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 600; line-height: 1; text-decoration: none; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
@@ -105,12 +105,12 @@
             .smg-bar-pop {
                 position: fixed; transform: translate(-50%, 0);   /* ABAIXO do botão (o header fica no topo da tela) */
                 display: none; flex-direction: column; gap: var(--smg-sp-4); z-index: var(--smg-z-sheet-3); min-width: 160px; padding: var(--smg-sp-6);
-                background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-12); box-shadow: var(--smg-shadow-3);
+                background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r); box-shadow: var(--smg-pop-shadow);
             }
             .smg-bar-pop.open { display: flex; }   /* o popover vive no <body> (fora do clip-path do header) */
             .smg-bar-pop--jump { flex-direction: row; align-items: center; gap: var(--smg-sp-6); min-width: 0; }
             .smg-bar-pop input { width: 66px; height: 34px; box-sizing: border-box; text-align: center; border-radius: var(--smg-r-8); border: 1px solid var(--smg-bd2); background: var(--smg-s1); color: #fff; font-size: var(--smg-fs-14); font-weight: 600; }
-            .smg-bar-go { height: 34px; padding: 0 var(--smg-sp-14); border-radius: var(--smg-r-8); border: 0; background: #fff; color: #141414; font-weight: 700; cursor: pointer; }
+            .smg-bar-go { height: 34px; padding: 0 var(--smg-sp-14); border-radius: var(--smg-btn-r); border: 0; background: #fff; color: #141414; font-weight: 700; cursor: pointer; }
             .smg-bar-poprow { display: flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); border: 0; background: transparent; color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; white-space: nowrap; }
             .smg-bar-poprow:hover { background: var(--smg-s3); color: #fff; }
             /* mobile: barra full-width · números viram compacto cur/max · ações à direita

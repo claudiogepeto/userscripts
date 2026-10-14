@@ -166,7 +166,7 @@
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(3) { width: 76%; }
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(4) { width: 42%; margin-top: var(--smg-sp-24); }
             .smg-page-skeleton-line { display: block; width: 100%; height: 11px; border-radius: var(--smg-r-6); }
-            .smg-page-skeleton-feed-card { display: flex; gap: var(--smg-sp-14); min-height: 146px; padding: var(--smg-sp-14); border: 1px solid var(--smg-w-10); border-radius: var(--smg-r-16); background: var(--smg-w-04); }
+            .smg-page-skeleton-feed-card { display: flex; gap: var(--smg-sp-14); min-height: 146px; padding: var(--smg-sp-14); border: 1px solid var(--smg-w-10); border-radius: var(--smg-card-r); background: var(--smg-w-04); }
             .smg-page-skeleton-card-thumb { flex: 0 0 132px; height: 116px; border-radius: var(--smg-r-12); }
             .smg-page-skeleton-card-copy { flex: 1 1 auto; min-width: 0; padding: var(--smg-sp-8) 0; }
             .smg-page-skeleton-card-copy .smg-page-skeleton-line + .smg-page-skeleton-line { margin-top: var(--smg-sp-12); }

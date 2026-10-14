@@ -7,8 +7,8 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-r-18) !important; margin: 0 0 var(--smg-sp-14); overflow: visible; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; contain: style; overflow-anchor: auto !important; }
-            html.smg-thread .smg-pc:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-shadow-2) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
+            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; margin: 0 0 var(--smg-sp-14); overflow: visible; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; contain: style; overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
             /* QUOTES / unfurl dentro do post: inset escuro (recuado) + border + rounded — !important p/ vencer o cinza claro do tema */
@@ -213,7 +213,7 @@
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
             /* ACTION BAR */
             html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex-wrap: wrap; padding: var(--smg-sp-12) var(--smg-sp-18) var(--smg-sp-14); margin-top: var(--smg-sp-8); border-top: 1px solid var(--smg-bd); }
-            html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 34px; margin: 0 !important; padding: 0 var(--smg-sp-14) !important; border-radius: var(--smg-r-10); border: 0; background: transparent; color: var(--smg-w-72); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
+            html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 34px; margin: 0 !important; padding: 0 var(--smg-sp-14) !important; border-radius: var(--smg-btn-r); border: 0; background: transparent; color: var(--smg-w-72); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
             html.smg-thread .smg-pc-act:hover { background: var(--smg-s3); color: #fff; }
             /* MÉTRICA ÚNICA dos ícones da action bar (post e comentário). Cada ação trazia a sua:
                o <i> da fonte do XF em 15px, o nosso react em 16, o bookmark/share nativos em outra
@@ -266,12 +266,12 @@
             /* ⋯ overflow */
             html.smg-thread .smg-pc-morewrap { position: relative; margin-left: auto; }
             html.smg-thread .smg-pc-act--more { font-size: var(--smg-fs-18); padding: 0 var(--smg-sp-12); }
-            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 168px; padding: var(--smg-sp-6); z-index: var(--smg-z-50); background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-12); box-shadow: var(--smg-shadow-3); }
+            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 168px; padding: var(--smg-sp-6); z-index: var(--smg-z-50); background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r); box-shadow: var(--smg-pop-shadow); }
             html.smg-thread .smg-pc-morewrap.open .smg-pc-morepop { display: flex; }
             html.smg-thread .smg-pc-morerow { display: flex !important; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
             html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3); color: #fff; }
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
-            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: var(--smg-fs-10); font-weight: 800; letter-spacing: .04em; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-6); background: var(--smg-link-soft); color: var(--smg-link); }
+            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: var(--smg-fs-10); font-weight: 800; letter-spacing: .04em; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: var(--smg-fs-11); color: var(--smg-w-40); display: inline-flex; align-items: center; gap: var(--smg-sp-4); }
             /* mobile: barra de ações compacta numa linha só (depois da regra base, senão nunca vale) */
             @media (max-width: 600px) {

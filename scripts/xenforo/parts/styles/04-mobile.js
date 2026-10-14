@@ -144,12 +144,12 @@
                     position: fixed; left: 0; right: 0; bottom: 0; top: auto;
                     width: 100%; max-width: 100%; max-height: 86vh; max-height: 86dvh; z-index: var(--smg-z-20);
                     border: none; border-top: 1px solid var(--smg-w-10);
-                    border-radius: var(--smg-r-20) var(--smg-r-20) 0 0;
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
                     padding: var(--smg-sp-10) var(--smg-sp-18) calc(20px + env(safe-area-inset-bottom));
                     gap: var(--smg-sp-14); opacity: 1;
                     transform: translateY(100%);
                     transition: transform var(--smg-dur-30) cubic-bezier(.2,.85,.25,1);
-                    box-shadow: 0 -16px 50px var(--smg-k-62);
+                    box-shadow: var(--smg-sheet-shadow);
                 }
                 #smg-post-nav-wrapper.settings-open #smg-settings-pop,
                 #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
@@ -197,7 +197,7 @@
                 }
                 #smg-search-pop .smg-search-chip {
                     flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
-                    margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-r-10);
+                    margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 }
                 #smg-search-pop .smg-search-chip-t { min-width: 0; font-size: var(--smg-fs-12); }
                 #smg-search-pop .smg-search-acts {
@@ -206,7 +206,7 @@
                 }
                 #smg-search-pop .smg-search-close {
                     width: 40px; height: 40px; min-width: 40px; padding: 0;
-                    border: 0; border-radius: var(--smg-r-12); background: transparent;
+                    border: 0; border-radius: var(--smg-btn-r); background: transparent;
                     color: var(--smg-w-60);
                 }
                 #smg-search-pop .smg-search-close:hover { background: var(--smg-w-10); color: #fff; }
@@ -228,7 +228,7 @@
                 #smg-search-pop .smg-search-select-wrap {
                     position: relative !important; flex: 0 0 38px !important;
                     width: 38px !important; height: 38px !important; min-width: 38px !important; max-width: 38px !important;
-                    border-radius: var(--smg-r-10) !important; background: var(--smg-w-06) !important;
+                    border-radius: var(--smg-input-r) !important; background: var(--smg-w-06) !important;
                     border: 1px solid var(--smg-w-14) !important;
                     display: flex !important; align-items: center !important; justify-content: center !important;
                     box-sizing: border-box !important;
@@ -288,12 +288,12 @@
                 #smg-search-pop .smg-search-tb-row .smg-search-cfg {
                     margin-left: auto !important;
                     flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
-                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-r-10) !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-btn-r) !important;
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv {
                     flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
-                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-r-10) !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-btn-r) !important;
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv span:first-child {
@@ -330,8 +330,8 @@
                 }
 
                 /* alvos de toque maiores + cantos mais macios */
-                .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
-                .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
+                .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-input-r); }
+                .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-btn-r); }
                 .smg-chip { height: 40px; font-size: var(--smg-fs-14); }
                 /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
                 html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }

@@ -12,10 +12,10 @@
                 flex-direction: column;
                 gap: var(--smg-sp-10);
                 padding: var(--smg-sp-16) var(--smg-sp-18);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-hl), var(--smg-shadow-4);
+                box-shadow: var(--smg-pop-shadow);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;   /* PERF: fechado SAI da render tree (opacity:0 sozinho mantinha a camada de blur viva em toda thread/lista — o #smg-goto-pop já fazia certo) */
@@ -65,7 +65,7 @@
             .smg-lf-headrow { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-8); padding-bottom: var(--smg-sp-2); }
             .smg-lf-counter { font-size: var(--smg-fs-13); font-weight: 600; color: var(--smg-w-72); }
             .smg-lf-reset-btn {
-                background: transparent; border: 1px solid var(--smg-w-14); border-radius: var(--smg-r-8);
+                background: transparent; border: 1px solid var(--smg-w-14); border-radius: var(--smg-btn-r);
                 color: var(--smg-w-72); padding: var(--smg-sp-4) var(--smg-sp-10); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
                 transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
@@ -170,7 +170,7 @@
             .label.label--malaysia, .smg-badge-chip.label--malaysia, .label--malaysia { background: #f39c12 !important; color: #fff !important; }
             .smg-lf-input {
                 height: 38px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-18);
+                border-radius: var(--smg-input-r); border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-06); color: #fff; font-size: var(--smg-fs-14); outline: none;
             }
             .smg-lf-input:focus { border-color: var(--smg-w-50); }
@@ -200,7 +200,7 @@
             .smg-lf-dir-opt:hover { color: #fff; }
             .smg-lf-dir-opt.active { background: var(--smg-link); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
             .smg-lf-select {
-                width: 100%; height: 38px; padding: 0 var(--smg-sp-12); border-radius: var(--smg-r-10);
+                width: 100%; height: 38px; padding: 0 var(--smg-sp-12); border-radius: var(--smg-input-r);
                 background: var(--smg-w-06); border: 1px solid var(--smg-w-10);
                 color: #fff; font-size: var(--smg-fs-13); font-weight: 500; outline: none; cursor: pointer;
                 transition: border-color var(--smg-dur-15);
@@ -210,7 +210,7 @@
                 margin-top: var(--smg-sp-10);
                 width: 100%;
                 padding: var(--smg-sp-12);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: none;
                 background: var(--smg-link);
                 color: #fff;

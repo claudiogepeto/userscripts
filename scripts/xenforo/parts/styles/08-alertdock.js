@@ -30,14 +30,14 @@
             }
             .smg-aldock-title { display: flex; align-items: center; gap: var(--smg-sp-8); margin-right: auto; font-size: var(--smg-fs-16); font-weight: 800; color: #fff; }
             .smg-aldock-n {
-                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums;
+                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums;
                 background: var(--smg-link-soft); color: var(--smg-link);
             }
             .smg-aldock-n[hidden] { display: none; }
             .smg-aldock-acts { display: flex; align-items: center; gap: var(--smg-sp-6); }
             .smg-aldock-btn {
                 display: inline-flex; align-items: center; justify-content: center;
-                width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-r-8);
+                width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06); color: var(--smg-w-72); font-size: var(--smg-fs-16); cursor: pointer;
                 -webkit-appearance: none; appearance: none; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }

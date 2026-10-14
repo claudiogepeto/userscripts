@@ -316,9 +316,9 @@
                 z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 padding: var(--smg-sp-6) var(--smg-sp-10);
-                box-shadow: var(--smg-shadow-2);
+                box-shadow: var(--smg-pop-shadow);
                 align-items: center;
                 gap: var(--smg-sp-6);
             }
@@ -331,7 +331,7 @@
                 justify-content: center;
                 width: 32px;
                 height: 32px;
-                border-radius: var(--smg-r-8);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 color: #fff;
                 text-decoration: none;
@@ -379,7 +379,7 @@
             .smg-mp-go {
                 height: 28px;
                 padding: 0 var(--smg-sp-8);
-                border-radius: var(--smg-r-6);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-link);
                 color: #fff;
                 border: 0;
@@ -417,9 +417,9 @@
                 z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 padding: var(--smg-sp-6);
-                box-shadow: var(--smg-shadow-2);
+                box-shadow: var(--smg-pop-shadow);
                 align-items: center;
                 gap: var(--smg-sp-4);
             }

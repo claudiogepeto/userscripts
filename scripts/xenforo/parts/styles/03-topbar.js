@@ -82,7 +82,7 @@
             .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
             .smg-tb-act {
                 position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-12); border: none; background: transparent; color: var(--smg-w-85);
+                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-85);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
@@ -134,7 +134,7 @@
             .smg-search-clear svg { width: 14px; height: 14px; fill: none !important; }
             .smg-search-clear[hidden] { display: none !important; }
             /* SEARCH: chip de contexto (Reddit-style) + tooltip de comandos — valem na barra da topbar E no modal da dock */
-            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 42%; margin-right: var(--smg-sp-2); padding: var(--smg-sp-4) var(--smg-sp-6) var(--smg-sp-4) var(--smg-sp-12); border: 0; border-radius: var(--smg-r-10); background: var(--smg-link-soft); color: var(--smg-link); font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: var(--smg-z-2); }
+            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 42%; margin-right: var(--smg-sp-2); padding: var(--smg-sp-4) var(--smg-sp-6) var(--smg-sp-4) var(--smg-sp-12); border: 0; border-radius: var(--smg-chip-r); background: var(--smg-link-soft); color: var(--smg-link); font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: var(--smg-z-2); }
             .smg-tb-search-chip[hidden], .smg-search-chip[hidden] { display: none !important; }   /* o display:inline-flex de autor vencia o [hidden] do browser → chip vazio aparecia fora de tópico/fórum */
             .smg-search-chip-k { flex: 0 0 auto; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-6); background: var(--smg-w-18); color: var(--smg-w-72); font-size: var(--smg-fs-10); font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }   /* tag TÓPICO/FÓRUM antes do nome */
             .smg-search-chip-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -149,7 +149,7 @@
             .smg-search-cmd-item { display: flex; align-items: center; gap: var(--smg-sp-10); width: 100%; padding: var(--smg-sp-8) var(--smg-sp-10); border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-tx); font: inherit; font-size: var(--smg-fs-14); text-align: left; cursor: pointer; }
             .smg-search-cmd-item:hover, .smg-search-cmd-item.sel { background: var(--smg-link-soft); }
             .smg-search-cmd-item code { flex: 0 0 auto; min-width: 46px; padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
-            .smg-search-cfg-portal { position: fixed; z-index: var(--smg-z-max); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 244px; max-width: 320px; padding: var(--smg-sp-8); border-radius: var(--smg-r-12); background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: var(--smg-shadow-3); }
+            .smg-search-cfg-portal { position: fixed; z-index: var(--smg-z-max); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 244px; max-width: 320px; padding: var(--smg-sp-8); border-radius: var(--smg-pop-r); background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: var(--smg-pop-shadow); }
             .smg-search-cfg-portal.open { display: flex; }
             .smg-search-cfg-head { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); font-size: var(--smg-fs-11); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--smg-w-40); }
             .smg-search-cfg-row { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-8); border-radius: var(--smg-r-8); font-size: var(--smg-fs-14); color: var(--smg-tx); cursor: pointer; }
@@ -165,7 +165,7 @@
             .smg-tb-search-input::placeholder { color: var(--smg-w-50); }
             .smg-tb-badge {
                 position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 var(--smg-sp-4);
-                border-radius: var(--smg-r-pill); background: #e0245e; color: #fff; font-size: var(--smg-fs-10); font-weight: 700;
+                border-radius: var(--smg-badge-r); background: #e0245e; color: #fff; font-size: var(--smg-fs-10); font-weight: 700;
                 display: flex; align-items: center; justify-content: center; box-sizing: border-box;
                 font-variant-numeric: tabular-nums;
             }
@@ -197,7 +197,7 @@
             .smg-tb-authlink:hover { background: var(--smg-w-10); color: #fff; }
             .smg-tb-loginbtn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-16); flex: 0 0 auto;
-                border-radius: var(--smg-r-10); border: 0; white-space: nowrap;
+                border-radius: var(--smg-btn-r); border: 0; white-space: nowrap;
                 background: var(--smg-link-strong); color: #fff !important;
                 font-size: var(--smg-fs-14); font-weight: 800; text-decoration: none !important;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -209,10 +209,10 @@
             /* popovers agrupados */
             .smg-tb-pop {
                 position: absolute; top: calc(100% + 8px); left: 0; min-width: 290px; max-width: 340px;
-                padding: var(--smg-sp-8); border-radius: var(--smg-r-16);
+                padding: var(--smg-sp-8); border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-shadow-4), var(--smg-hl);
+                box-shadow: var(--smg-pop-shadow);
                 opacity: 0; visibility: hidden; transform: translateY(6px);
                 transition: opacity var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, visibility var(--smg-dur-15);
                 z-index: var(--smg-z-40);

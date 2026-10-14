@@ -36,7 +36,7 @@
             html.smg-thread .smg-cc-num:hover { color: var(--smg-w-72); }
             html.smg-thread .smg-cc .comment-body { font-size: var(--smg-fs-14); line-height: 1.5; }
             html.smg-thread .smg-cc-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex-wrap: wrap; margin-top: var(--smg-sp-6); }
-            html.smg-thread .smg-cc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-6); height: 30px; margin: 0 !important; padding: 0 var(--smg-sp-10) !important; border-radius: var(--smg-r-8); background: transparent; border: 0; color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
+            html.smg-thread .smg-cc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-6); height: 30px; margin: 0 !important; padding: 0 var(--smg-sp-10) !important; border-radius: var(--smg-btn-r); background: transparent; border: 0; color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
             html.smg-thread .smg-cc-act:hover { background: var(--smg-s3); color: #fff; }
             html.smg-thread .smg-cc-act svg { width: 14px; height: 14px; }
             html.smg-thread .smg-cc-act > i { font-size: var(--smg-fs-14); }

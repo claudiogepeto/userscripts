@@ -188,9 +188,9 @@
                 max-height: 82vh; max-height: 82dvh;
                 display: flex; flex-direction: column; overflow: hidden;
                 background: var(--smg-s1);
-                border-radius: var(--smg-r-20) var(--smg-r-20) 0 0;
+                border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
                 border-top: 1px solid var(--smg-w-10);
-                box-shadow: 0 -12px 44px var(--smg-k-62);
+                box-shadow: var(--smg-sheet-shadow);
                 transform: translateY(100%);
                 transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
@@ -249,7 +249,7 @@
             .smg-nav-badge {
                 position: absolute; top: -6px; right: -9px; z-index: var(--smg-z-2);
                 min-width: 16px; height: 16px; padding: 0 var(--smg-sp-4); box-sizing: border-box;
-                border-radius: var(--smg-r-pill); background: #e0245e; color: #fff;
+                border-radius: var(--smg-badge-r); background: #e0245e; color: #fff;
                 font-size: var(--smg-fs-10); font-weight: 700; line-height: 1;
                 display: flex; align-items: center; justify-content: center;
                 font-variant-numeric: tabular-nums; pointer-events: none;
@@ -374,10 +374,10 @@
                 gap: var(--smg-sp-12);
                 min-width: 232px;
                 padding: var(--smg-sp-16) var(--smg-sp-18);
-                border-radius: var(--smg-r-18);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-hl), var(--smg-shadow-4);
+                box-shadow: var(--smg-pop-shadow);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;
@@ -413,7 +413,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-08);
                 color: #fff;
@@ -434,7 +434,7 @@
                 width: 78px;
                 height: 40px;
                 padding: 0 var(--smg-sp-8);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-input-r);
                 border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-08);
                 color: #fff;
@@ -465,7 +465,7 @@
             .smg-goto-btn {
                 width: 100%;
                 padding: var(--smg-sp-10) 0;
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-14);
                 color: #fff;

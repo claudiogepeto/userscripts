@@ -249,7 +249,7 @@
             .smg-post-links { display: flex; flex-wrap: wrap; gap: var(--smg-sp-8); margin: var(--smg-sp-12) 0 var(--smg-sp-2); padding-top: var(--smg-sp-12); border-top: 1px solid var(--smg-bd); }
             .smg-link-chip {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 100%;
-                padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-r-8); background: var(--smg-s2); border: 1px solid var(--smg-bd);
+                padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-chip-r); background: var(--smg-s2); border: 1px solid var(--smg-bd);
                 color: var(--smg-w-85) !important; font-size: var(--smg-fs-13); font-weight: 600;
             }
             .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
@@ -501,7 +501,7 @@
             }
             .smg-rg-error-badge {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
-                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-pill);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-badge-r);
                 background: rgba(255, 75, 75, 0.18);
                 border: 1px solid rgba(255, 75, 75, 0.45);
                 color: #ff5e5e; font-size: var(--smg-fs-14); font-weight: 800; letter-spacing: 0.4px;
@@ -511,7 +511,7 @@
             .smg-rg-error-acts { display: flex; align-items: center; gap: var(--smg-sp-10); margin-top: var(--smg-sp-4); }
             .smg-rg-error-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-8);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-btn-r);
                 font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none !important;
                 cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }

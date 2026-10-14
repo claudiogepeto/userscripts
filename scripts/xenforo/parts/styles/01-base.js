@@ -50,6 +50,12 @@
                 --smg-shadow-3: 0 14px 38px var(--smg-k-55); --smg-shadow-4: 0 18px 44px var(--smg-k-62);
                 --smg-hl: inset 0 1px 0 var(--smg-w-08);
                 --smg-dur-12: .12s; --smg-dur-15: .15s; --smg-dur-20: .2s; --smg-dur-30: .3s;
+                /* DONO de cada componente: um raio e uma sombra por componente; as regras de feature só referenciam */
+                --smg-pop-r: var(--smg-r-16); --smg-pop-shadow: var(--smg-hl), var(--smg-shadow-4);
+                --smg-sheet-r: var(--smg-r-20); --smg-sheet-shadow: 0 -12px 44px var(--smg-k-62);
+                --smg-card-r: var(--smg-r-16); --smg-card-shadow: var(--smg-shadow-2);
+                --smg-btn-r: var(--smg-r-10); --smg-input-r: var(--smg-r-10); --smg-tab-r: var(--smg-r-10);
+                --smg-chip-r: var(--smg-r-pill); --smg-badge-r: var(--smg-r-pill);
                 /* camadas de z-index (mesmos números de antes, agora com nome) */
                 --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
                 --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;

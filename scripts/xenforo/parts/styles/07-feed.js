@@ -129,7 +129,7 @@
             .smg-river-more.is-loading .smg-loading { display: flex; }
             .smg-river-more.is-loading .smg-river-more-t { display: none; }
             /* pílula "N novos posts" (flutua no topo, estilo Twitter) */
-            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: var(--smg-z-60); display: inline-flex; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8) var(--smg-sp-16) var(--smg-sp-8) var(--smg-sp-12); border: 0; border-radius: var(--smg-r-pill); background: var(--smg-link); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; box-shadow: var(--smg-shadow-2); }
+            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: var(--smg-z-60); display: inline-flex; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8) var(--smg-sp-16) var(--smg-sp-8) var(--smg-sp-12); border: 0; border-radius: var(--smg-chip-r); background: var(--smg-link); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; box-shadow: var(--smg-shadow-2); }
             .smg-river-pill[hidden] { display: none; }
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -138,8 +138,8 @@
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
             }
-            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-r-18); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-shadow-2); }
+            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-card-r); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
+            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-card-shadow); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px var(--smg-w-18); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }
@@ -230,7 +230,7 @@
             .smg-fp-open:hover { gap: var(--smg-sp-10); }
             .smg-fp-open svg { width: 15px; height: 15px; fill: none; }
             @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); }
-                .smg-fp-card { border-radius: var(--smg-r-14); }
+                .smg-fp-card { border-radius: var(--smg-card-r); }
                 .smg-fp-head { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); }
                 .smg-fp-content { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-8); }
                 .smg-fp-open { padding: var(--smg-sp-12) var(--smg-sp-16) var(--smg-sp-14); }
@@ -243,7 +243,7 @@
             .smg-multiselect-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-12);
                 background: var(--smg-s1); border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-10); color: var(--smg-w-85); font-size: var(--smg-fs-13); font-weight: 600;
+                border-radius: var(--smg-input-r); color: var(--smg-w-85); font-size: var(--smg-fs-13); font-weight: 600;
                 cursor: pointer; transition: all var(--smg-dur-15) ease; box-sizing: border-box;
             }
             .smg-lf-row .smg-multiselect-btn { width: 100%; justify-content: space-between; }
@@ -254,7 +254,7 @@
             .smg-multiselect-btn-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; }
             .smg-multiselect-btn-badge {
                 display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
-                padding: 0 var(--smg-sp-6); border-radius: var(--smg-r-pill); background: var(--smg-link); color: #fff;
+                padding: 0 var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-link); color: #fff;
                 font-size: var(--smg-fs-11); font-weight: 700; line-height: 1;
             }
             .smg-multiselect-btn-arrow { margin-left: auto; display: inline-flex; align-items: center; }
@@ -264,8 +264,8 @@
             .smg-multiselect-pop {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--smg-z-sheet-top) !important; width: 340px; max-width: 90vw;
                 max-height: 480px; display: flex; flex-direction: column; background: var(--smg-s1);
-                border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-14);
-                box-shadow: var(--smg-shadow-3); overflow: hidden;
+                border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r);
+                box-shadow: var(--smg-pop-shadow); overflow: hidden;
             }
             .smg-lf-row .smg-multiselect-pop { width: 100%; max-width: 100%; box-sizing: border-box; }
             .smg-multiselect-pop[hidden] { display: none !important; }
@@ -291,7 +291,7 @@
             .smg-multiselect-pills-bar[hidden] { display: none !important; }
             .smg-multiselect-pills { display: flex; flex-wrap: wrap; gap: var(--smg-sp-4); max-height: 70px; overflow-y: auto; }
             .smg-multiselect-pill {
-                display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill);
+                display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 background: var(--smg-link-soft); border: 1px solid var(--smg-link);
                 color: #fff; font-size: var(--smg-fs-11); font-weight: 600;
             }

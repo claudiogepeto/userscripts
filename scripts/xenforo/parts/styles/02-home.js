@@ -192,7 +192,7 @@
             html.smg-home .smg-feed-tab {
                 position: relative;
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); flex: 0 0 auto; height: 36px; padding: 0 var(--smg-sp-16);
-                border: 0; border-radius: var(--smg-r-10); background: transparent; color: var(--smg-w-55);
+                border: 0; border-radius: var(--smg-tab-r); background: transparent; color: var(--smg-w-55);
                 font-size: var(--smg-fs-14); font-weight: 700; letter-spacing: .01em; cursor: pointer; white-space: nowrap;
                 transition: color var(--smg-dur-20) ease, background var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease;
             }
@@ -344,7 +344,7 @@
             /* Badge de contagem de fóruns no header da seção */
             html.smg-home .smg-hub-badge {
                 display: inline-flex; align-items: center;
-                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-8);
+                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r);
                 font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
                 background: var(--smg-w-06); border: 1px solid var(--smg-w-08);
                 color: var(--smg-w-50); margin-left: var(--smg-sp-10);

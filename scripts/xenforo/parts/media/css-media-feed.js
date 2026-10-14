@@ -15,7 +15,7 @@
 
             /* aviso único: galeria/feed têm navegação própria. z-index ACIMA do feed/galeria (scrim cobre tudo). */
             #smg-navnotice { position: fixed; inset: 0; z-index: var(--smg-z-max-1); display: flex; align-items: center; justify-content: center; padding: var(--smg-sp-24); background: var(--smg-k-62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
-            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: var(--smg-r-16); padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-18); box-shadow: var(--smg-shadow-4); }
+            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: var(--smg-card-r); padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-18); box-shadow: var(--smg-shadow-4); }
             .smg-navnotice-title { font-size: var(--smg-fs-18); font-weight: 700; color: var(--smg-w-95); margin: 0 0 var(--smg-sp-10); }
             .smg-navnotice-text { font-size: var(--smg-fs-14); line-height: 1.5; color: var(--smg-w-60); margin: 0 0 var(--smg-sp-18); }
             .smg-navnotice-ok { display: block; width: 100%; padding: var(--smg-sp-12); border: 0; border-radius: var(--smg-r-10); background: var(--smg-link); color: #fff; font-size: var(--smg-fs-14); font-weight: 650; cursor: pointer; }

@@ -27,8 +27,8 @@
                 padding: var(--smg-sp-16) var(--smg-sp-18) !important;
                 background: var(--smg-s1) !important;
                 border: 1px solid var(--smg-w-12) !important;
-                border-radius: var(--smg-r-16) !important;
-                box-shadow: var(--smg-shadow-2) !important;
+                border-radius: var(--smg-card-r) !important;
+                box-shadow: var(--smg-card-shadow) !important;
                 color: var(--smg-tx) !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
                 box-sizing: border-box !important;

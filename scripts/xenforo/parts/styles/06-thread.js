@@ -283,7 +283,7 @@
             }
             html.smg-thread .smg-thead-unified .smg-thead-btn {
                 width: 30px; height: 30px; min-width: 30px; padding: 0; font-size: var(--smg-fs-16);
-                border: 0 !important; border-radius: var(--smg-r-8) !important; background: transparent !important;
+                border: 0 !important; border-radius: var(--smg-btn-r) !important; background: transparent !important;
                 color: var(--smg-w-95);
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
@@ -1048,7 +1048,7 @@
                 justify-content: center !important;
                 background: var(--smg-k-62) !important;
                 border: 0 !important;
-                border-radius: var(--smg-r-8) !important;
+                border-radius: var(--smg-btn-r) !important;
                 color: var(--smg-w-85) !important;
                 cursor: pointer !important;
                 opacity: 0 !important;

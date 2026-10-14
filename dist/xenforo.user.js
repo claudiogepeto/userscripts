@@ -635,6 +635,12 @@
                 --smg-shadow-3: 0 14px 38px var(--smg-k-55); --smg-shadow-4: 0 18px 44px var(--smg-k-62);
                 --smg-hl: inset 0 1px 0 var(--smg-w-08);
                 --smg-dur-12: .12s; --smg-dur-15: .15s; --smg-dur-20: .2s; --smg-dur-30: .3s;
+                /* DONO de cada componente: um raio e uma sombra por componente; as regras de feature só referenciam */
+                --smg-pop-r: var(--smg-r-16); --smg-pop-shadow: var(--smg-hl), var(--smg-shadow-4);
+                --smg-sheet-r: var(--smg-r-20); --smg-sheet-shadow: 0 -12px 44px var(--smg-k-62);
+                --smg-card-r: var(--smg-r-16); --smg-card-shadow: var(--smg-shadow-2);
+                --smg-btn-r: var(--smg-r-10); --smg-input-r: var(--smg-r-10); --smg-tab-r: var(--smg-r-10);
+                --smg-chip-r: var(--smg-r-pill); --smg-badge-r: var(--smg-r-pill);
                 /* camadas de z-index (mesmos números de antes, agora com nome) */
                 --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
                 --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;
@@ -1179,15 +1185,15 @@
                 margin: var(--smg-sp-8) 0;
                 padding: var(--smg-sp-8) var(--smg-sp-12);
                 border: 1px solid var(--smg-w-12);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-card-r);
                 background: var(--smg-s1);
-                box-shadow: var(--smg-shadow-1);
+                box-shadow: var(--smg-card-shadow);
                 transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             .smg-fhcard:hover {
                 border-color: var(--smg-w-22);
                 background: var(--smg-s2);
-                box-shadow: var(--smg-shadow-1);
+                box-shadow: var(--smg-card-shadow);
             }
             .smg-fhcard-main {
                 display: flex;
@@ -1219,7 +1225,7 @@
                 width: 34px;
                 height: 34px;
                 border: 1px solid var(--smg-w-12);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 color: var(--smg-w-72);
                 cursor: pointer;
@@ -1241,7 +1247,7 @@
             .smg-fhcard-thumb--multi { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--smg-sp-2); }
             .smg-fhcard-cell { position: relative; overflow: hidden; background: var(--smg-s2); }
             .smg-fhcard-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--smg-k-55); color: #fff; font-size: var(--smg-fs-16); font-weight: 800; }
-            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8) var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-pill); background: var(--smg-k-62); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
+            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8) var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-k-62); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
             .smg-fhcard-count svg { width: 12px; height: 12px; fill: none !important; }
             /* skeleton enquanto a thumb carrega (some no load); reusa o @keyframes smg-img-shimmer */
             .smg-fhcard-thumb--loading { background-image: linear-gradient(90deg, transparent, var(--smg-w-08) 50%, transparent); background-size: 220% 100%; background-repeat: no-repeat; animation: smg-img-shimmer 1.25s ease-in-out infinite; }
@@ -1306,7 +1312,7 @@
             .smg-fhcard--inline .smg-fhcard-platform { font-size: var(--smg-fs-10); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link); flex: 0 0 auto; }
             .smg-fhcard--inline .smg-fhcard-host { font-size: var(--smg-fs-13); font-weight: 600; flex: 0 1 auto; }
             .smg-fhcard--inline .smg-fhcard-sub { font-size: var(--smg-fs-11); flex: 0 0 auto; opacity: 0.75; }
-            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: var(--smg-r-8); }
+            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: var(--smg-btn-r); }
             .smg-fhcard--inline .smg-fhcard-btn svg { width: 13px; height: 13px; }
             /* o marcador do <li> some quando o conteúdo vira bloco → mantém a numeração da lista original */
             .bbWrapper li > .smg-fhcard--inline { display: flex; }
@@ -1350,8 +1356,8 @@
                 padding: var(--smg-sp-16) var(--smg-sp-18) !important;
                 background: var(--smg-s1) !important;
                 border: 1px solid var(--smg-w-12) !important;
-                border-radius: var(--smg-r-16) !important;
-                box-shadow: var(--smg-shadow-2) !important;
+                border-radius: var(--smg-card-r) !important;
+                box-shadow: var(--smg-card-shadow) !important;
                 color: var(--smg-tx) !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
                 box-sizing: border-box !important;
@@ -1776,7 +1782,7 @@
             .smg-post-links { display: flex; flex-wrap: wrap; gap: var(--smg-sp-8); margin: var(--smg-sp-12) 0 var(--smg-sp-2); padding-top: var(--smg-sp-12); border-top: 1px solid var(--smg-bd); }
             .smg-link-chip {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 100%;
-                padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-r-8); background: var(--smg-s2); border: 1px solid var(--smg-bd);
+                padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-chip-r); background: var(--smg-s2); border: 1px solid var(--smg-bd);
                 color: var(--smg-w-85) !important; font-size: var(--smg-fs-13); font-weight: 600;
             }
             .smg-link-chip svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: 0.65; }
@@ -2028,7 +2034,7 @@
             }
             .smg-rg-error-badge {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
-                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-pill);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-badge-r);
                 background: rgba(255, 75, 75, 0.18);
                 border: 1px solid rgba(255, 75, 75, 0.45);
                 color: #ff5e5e; font-size: var(--smg-fs-14); font-weight: 800; letter-spacing: 0.4px;
@@ -2038,7 +2044,7 @@
             .smg-rg-error-acts { display: flex; align-items: center; gap: var(--smg-sp-10); margin-top: var(--smg-sp-4); }
             .smg-rg-error-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-r-8);
+                padding: var(--smg-sp-6) var(--smg-sp-14); border-radius: var(--smg-btn-r);
                 font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none !important;
                 cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
@@ -2399,7 +2405,7 @@
             html.smg-home .smg-feed-tab {
                 position: relative;
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); flex: 0 0 auto; height: 36px; padding: 0 var(--smg-sp-16);
-                border: 0; border-radius: var(--smg-r-10); background: transparent; color: var(--smg-w-55);
+                border: 0; border-radius: var(--smg-tab-r); background: transparent; color: var(--smg-w-55);
                 font-size: var(--smg-fs-14); font-weight: 700; letter-spacing: .01em; cursor: pointer; white-space: nowrap;
                 transition: color var(--smg-dur-20) ease, background var(--smg-dur-20) ease, box-shadow var(--smg-dur-20) ease;
             }
@@ -2551,7 +2557,7 @@
             /* Badge de contagem de fóruns no header da seção */
             html.smg-home .smg-hub-badge {
                 display: inline-flex; align-items: center;
-                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-8);
+                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r);
                 font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
                 background: var(--smg-w-06); border: 1px solid var(--smg-w-08);
                 color: var(--smg-w-50); margin-left: var(--smg-sp-10);
@@ -3027,7 +3033,7 @@
             .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
             .smg-tb-act {
                 position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-12); border: none; background: transparent; color: var(--smg-w-85);
+                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-85);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
@@ -3079,7 +3085,7 @@
             .smg-search-clear svg { width: 14px; height: 14px; fill: none !important; }
             .smg-search-clear[hidden] { display: none !important; }
             /* SEARCH: chip de contexto (Reddit-style) + tooltip de comandos — valem na barra da topbar E no modal da dock */
-            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 42%; margin-right: var(--smg-sp-2); padding: var(--smg-sp-4) var(--smg-sp-6) var(--smg-sp-4) var(--smg-sp-12); border: 0; border-radius: var(--smg-r-10); background: var(--smg-link-soft); color: var(--smg-link); font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: var(--smg-z-2); }
+            .smg-tb-search-chip, .smg-search-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: 42%; margin-right: var(--smg-sp-2); padding: var(--smg-sp-4) var(--smg-sp-6) var(--smg-sp-4) var(--smg-sp-12); border: 0; border-radius: var(--smg-chip-r); background: var(--smg-link-soft); color: var(--smg-link); font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; pointer-events: auto !important; z-index: var(--smg-z-2); }
             .smg-tb-search-chip[hidden], .smg-search-chip[hidden] { display: none !important; }   /* o display:inline-flex de autor vencia o [hidden] do browser → chip vazio aparecia fora de tópico/fórum */
             .smg-search-chip-k { flex: 0 0 auto; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-6); background: var(--smg-w-18); color: var(--smg-w-72); font-size: var(--smg-fs-10); font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }   /* tag TÓPICO/FÓRUM antes do nome */
             .smg-search-chip-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3094,7 +3100,7 @@
             .smg-search-cmd-item { display: flex; align-items: center; gap: var(--smg-sp-10); width: 100%; padding: var(--smg-sp-8) var(--smg-sp-10); border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-tx); font: inherit; font-size: var(--smg-fs-14); text-align: left; cursor: pointer; }
             .smg-search-cmd-item:hover, .smg-search-cmd-item.sel { background: var(--smg-link-soft); }
             .smg-search-cmd-item code { flex: 0 0 auto; min-width: 46px; padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
-            .smg-search-cfg-portal { position: fixed; z-index: var(--smg-z-max); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 244px; max-width: 320px; padding: var(--smg-sp-8); border-radius: var(--smg-r-12); background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: var(--smg-shadow-3); }
+            .smg-search-cfg-portal { position: fixed; z-index: var(--smg-z-max); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 244px; max-width: 320px; padding: var(--smg-sp-8); border-radius: var(--smg-pop-r); background: var(--smg-s1); border: 1px solid var(--smg-bd); box-shadow: var(--smg-pop-shadow); }
             .smg-search-cfg-portal.open { display: flex; }
             .smg-search-cfg-head { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); font-size: var(--smg-fs-11); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--smg-w-40); }
             .smg-search-cfg-row { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-8); border-radius: var(--smg-r-8); font-size: var(--smg-fs-14); color: var(--smg-tx); cursor: pointer; }
@@ -3110,7 +3116,7 @@
             .smg-tb-search-input::placeholder { color: var(--smg-w-50); }
             .smg-tb-badge {
                 position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 var(--smg-sp-4);
-                border-radius: var(--smg-r-pill); background: #e0245e; color: #fff; font-size: var(--smg-fs-10); font-weight: 700;
+                border-radius: var(--smg-badge-r); background: #e0245e; color: #fff; font-size: var(--smg-fs-10); font-weight: 700;
                 display: flex; align-items: center; justify-content: center; box-sizing: border-box;
                 font-variant-numeric: tabular-nums;
             }
@@ -3142,7 +3148,7 @@
             .smg-tb-authlink:hover { background: var(--smg-w-10); color: #fff; }
             .smg-tb-loginbtn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-16); flex: 0 0 auto;
-                border-radius: var(--smg-r-10); border: 0; white-space: nowrap;
+                border-radius: var(--smg-btn-r); border: 0; white-space: nowrap;
                 background: var(--smg-link-strong); color: #fff !important;
                 font-size: var(--smg-fs-14); font-weight: 800; text-decoration: none !important;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -3154,10 +3160,10 @@
             /* popovers agrupados */
             .smg-tb-pop {
                 position: absolute; top: calc(100% + 8px); left: 0; min-width: 290px; max-width: 340px;
-                padding: var(--smg-sp-8); border-radius: var(--smg-r-16);
+                padding: var(--smg-sp-8); border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-shadow-4), var(--smg-hl);
+                box-shadow: var(--smg-pop-shadow);
                 opacity: 0; visibility: hidden; transform: translateY(6px);
                 transition: opacity var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, visibility var(--smg-dur-15);
                 z-index: var(--smg-z-40);
@@ -3448,7 +3454,7 @@
                 min-width: 18px !important;
                 height: 18px !important;
                 padding: 0 var(--smg-sp-6) !important;
-                border-radius: var(--smg-r-pill) !important;
+                border-radius: var(--smg-badge-r) !important;
                 font-size: var(--smg-fs-11) !important;
                 font-weight: 700 !important;
                 background: var(--smg-link) !important;
@@ -3613,8 +3619,8 @@
                    nascia mais alto que a tela e o rodapé ficava embaixo da barra do navegador */
                 max-height: 80vh; max-height: 80dvh; display: flex; flex-direction: column;
                 background: var(--smg-s1);
-                border-radius: var(--smg-r-20) var(--smg-r-20) 0 0; border-top: 1px solid var(--smg-w-10);
-                box-shadow: 0 -12px 44px var(--smg-k-62);
+                border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0; border-top: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-sheet-shadow);
                 transform: translateY(100%); transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
             .smg-sheet.open .smg-csheet-panel { transform: translateY(0); }
@@ -3995,9 +4001,9 @@
                 max-height: 82vh; max-height: 82dvh;
                 display: flex; flex-direction: column; overflow: hidden;
                 background: var(--smg-s1);
-                border-radius: var(--smg-r-20) var(--smg-r-20) 0 0;
+                border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
                 border-top: 1px solid var(--smg-w-10);
-                box-shadow: 0 -12px 44px var(--smg-k-62);
+                box-shadow: var(--smg-sheet-shadow);
                 transform: translateY(100%);
                 transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
@@ -4056,7 +4062,7 @@
             .smg-nav-badge {
                 position: absolute; top: -6px; right: -9px; z-index: var(--smg-z-2);
                 min-width: 16px; height: 16px; padding: 0 var(--smg-sp-4); box-sizing: border-box;
-                border-radius: var(--smg-r-pill); background: #e0245e; color: #fff;
+                border-radius: var(--smg-badge-r); background: #e0245e; color: #fff;
                 font-size: var(--smg-fs-10); font-weight: 700; line-height: 1;
                 display: flex; align-items: center; justify-content: center;
                 font-variant-numeric: tabular-nums; pointer-events: none;
@@ -4181,10 +4187,10 @@
                 gap: var(--smg-sp-12);
                 min-width: 232px;
                 padding: var(--smg-sp-16) var(--smg-sp-18);
-                border-radius: var(--smg-r-18);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-hl), var(--smg-shadow-4);
+                box-shadow: var(--smg-pop-shadow);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;
@@ -4220,7 +4226,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-08);
                 color: #fff;
@@ -4241,7 +4247,7 @@
                 width: 78px;
                 height: 40px;
                 padding: 0 var(--smg-sp-8);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-input-r);
                 border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-08);
                 color: #fff;
@@ -4272,7 +4278,7 @@
             .smg-goto-btn {
                 width: 100%;
                 padding: var(--smg-sp-10) 0;
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-14);
                 color: #fff;
@@ -4583,7 +4589,7 @@
             .smg-search-author-row .smg-search-author-close {
                 width: 24px;
                 height: 24px;
-                border-radius: var(--smg-r-6);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-08);
                 color: var(--smg-w-72);
                 padding: 0;
@@ -4596,7 +4602,7 @@
                 width: 34px;
                 height: 34px;
                 padding: 0;
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-12);
                 color: var(--smg-w-72);
@@ -4617,7 +4623,7 @@
                 gap: var(--smg-sp-8);
                 height: 34px;
                 padding: 0 var(--smg-sp-12);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-12);
                 background: var(--smg-w-06);
                 color: var(--smg-w-72);
@@ -4646,7 +4652,7 @@
                 padding: 0 var(--smg-sp-12);
                 font-size: var(--smg-fs-13);
                 font-weight: 600;
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-input-r);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-12);
                 color: var(--smg-w-95);
@@ -4719,7 +4725,7 @@
             .smg-chip {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 40px; padding: 0 var(--smg-sp-18); box-sizing: border-box;
-                border-radius: var(--smg-r-pill); border: 1px solid var(--smg-w-10);
+                border-radius: var(--smg-chip-r); border: 1px solid var(--smg-w-10);
                 background: var(--smg-w-04); color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -4748,7 +4754,7 @@
             .smg-search-scope-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
                 height: 36px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
@@ -4762,8 +4768,8 @@
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--smg-z-50);
                 min-width: 180px; padding: var(--smg-sp-6);
                 display: flex; flex-direction: column; gap: var(--smg-sp-2);
-                background: var(--smg-s1); border: 1px solid var(--smg-w-14); border-radius: var(--smg-r-12);
-                box-shadow: var(--smg-shadow-4);
+                background: var(--smg-s1); border: 1px solid var(--smg-w-14); border-radius: var(--smg-pop-r);
+                box-shadow: var(--smg-pop-shadow);
             }
             .smg-search-scope-list[hidden] { display: none; }
             .smg-search-scope-list button {
@@ -4779,7 +4785,7 @@
             .smg-search-order-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 36px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
@@ -4811,7 +4817,7 @@
             .smg-search-author-btn {
                 display: inline-flex; align-items: center; justify-content: center;
                 width: 36px; height: 36px; box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: var(--smg-w-72); cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
             }
@@ -4826,7 +4832,7 @@
                 flex: 0 0 auto; box-sizing: border-box;
                 display: inline-flex; align-items: center; justify-content: center;
                 min-width: 30px; height: 30px; padding: 0 var(--smg-sp-8); margin: 0;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-12);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-12);
                 background: var(--smg-w-06); color: var(--smg-w-55);
                 font: 600 13px/1 -apple-system, system-ui, sans-serif; text-decoration: none; cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -4840,7 +4846,7 @@
             .smg-search-go {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 42px; padding: 0 var(--smg-sp-18); box-sizing: border-box;
-                border-radius: var(--smg-r-12); border: none;
+                border-radius: var(--smg-btn-r); border: none;
                 background: #fff; color: #141414;
                 font-size: var(--smg-fs-14); font-weight: 700; cursor: pointer;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -4866,7 +4872,7 @@
                 height: 32px;
                 padding: 0 var(--smg-sp-10);
                 font-size: var(--smg-fs-13);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-input-r);
             }
 
             /* ===== página de RESULTADOS da busca: lista nativa re-tematizada (cards no padrão do tema) =====
@@ -5042,7 +5048,7 @@
             #smg-search-pop.smg-search-pop--drop {
                 position: fixed; transform: none; margin: 0;   /* top/left/width vêm inline do JS (ancorado ao input) */
                 width: 480px; max-width: calc(100vw - 16px); max-height: min(85vh, 760px);
-                padding: var(--smg-sp-16) var(--smg-sp-18) 0; gap: var(--smg-sp-14); border-radius: var(--smg-r-16);   /* sem padding-bottom: o footer "Ver todos" cola no fundo (sticky) */
+                padding: var(--smg-sp-16) var(--smg-sp-18) 0; gap: var(--smg-sp-14); border-radius: var(--smg-pop-r);   /* sem padding-bottom: o footer "Ver todos" cola no fundo (sticky) */
                 pointer-events: auto;
             }
             #smg-search-overlay.open #smg-search-pop.smg-search-pop--drop { transform: none; }   /* sem o scale do modal; só o fade de opacity */
@@ -5062,7 +5068,7 @@
             .smg-search-empty-hint code { padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: var(--smg-sp-8); margin-bottom: var(--smg-sp-4); }
             .smg-search-hist-title { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--smg-w-40); }
-            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
+            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
             .smg-search-hist-clear {
                 margin-left: auto; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); border: none;
                 background: transparent; color: var(--smg-w-55); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
@@ -5095,7 +5101,7 @@
             .smg-search-hist-acts { flex: 0 0 auto; display: flex; align-items: center; gap: var(--smg-sp-2); }
             .smg-search-hist-act {
                 flex: 0 0 auto; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-8); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
+                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
                 opacity: 0; transition: opacity var(--smg-dur-12) ease, background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
             .smg-search-hist-item:hover .smg-search-hist-act { opacity: 1; }
@@ -5115,7 +5121,7 @@
             .smg-search-chips-row::-webkit-scrollbar { display: none; }
             .smg-search-result-chip {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                height: 28px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-pill);
+                height: 28px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-chip-r);
                 border: 1px solid var(--smg-w-10); background: var(--smg-w-06);
                 color: var(--smg-w-72); font-size: var(--smg-fs-12); font-weight: 600;
                 cursor: pointer; white-space: nowrap; transition: all var(--smg-dur-15) ease;
@@ -5127,7 +5133,7 @@
                 box-shadow: 0 2px 8px rgba(255,119,178,0.3);
             }
             .smg-search-result-chip .smg-chip-count {
-                padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-pill);
+                padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r);
                 background: var(--smg-k-25); font-size: var(--smg-fs-11); font-weight: 700; line-height: 1;
             }
             .smg-search-result-chip.is-active .smg-chip-count { background: var(--smg-w-22); color: #fff; }
@@ -5198,7 +5204,7 @@
 
             /* aviso único: galeria/feed têm navegação própria. z-index ACIMA do feed/galeria (scrim cobre tudo). */
             #smg-navnotice { position: fixed; inset: 0; z-index: var(--smg-z-max-1); display: flex; align-items: center; justify-content: center; padding: var(--smg-sp-24); background: var(--smg-k-62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
-            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: var(--smg-r-16); padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-18); box-shadow: var(--smg-shadow-4); }
+            .smg-navnotice-card { max-width: 420px; width: 100%; background: var(--smg-s1); border: 1px solid var(--smg-bd); border-radius: var(--smg-card-r); padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-18); box-shadow: var(--smg-shadow-4); }
             .smg-navnotice-title { font-size: var(--smg-fs-18); font-weight: 700; color: var(--smg-w-95); margin: 0 0 var(--smg-sp-10); }
             .smg-navnotice-text { font-size: var(--smg-fs-14); line-height: 1.5; color: var(--smg-w-60); margin: 0 0 var(--smg-sp-18); }
             .smg-navnotice-ok { display: block; width: 100%; padding: var(--smg-sp-12); border: 0; border-radius: var(--smg-r-10); background: var(--smg-link); color: #fff; font-size: var(--smg-fs-14); font-weight: 650; cursor: pointer; }
@@ -5644,9 +5650,9 @@
                 z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 padding: var(--smg-sp-6) var(--smg-sp-10);
-                box-shadow: var(--smg-shadow-2);
+                box-shadow: var(--smg-pop-shadow);
                 align-items: center;
                 gap: var(--smg-sp-6);
             }
@@ -5659,7 +5665,7 @@
                 justify-content: center;
                 width: 32px;
                 height: 32px;
-                border-radius: var(--smg-r-8);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 color: #fff;
                 text-decoration: none;
@@ -5707,7 +5713,7 @@
             .smg-mp-go {
                 height: 28px;
                 padding: 0 var(--smg-sp-8);
-                border-radius: var(--smg-r-6);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-link);
                 color: #fff;
                 border: 0;
@@ -5745,9 +5751,9 @@
                 z-index: var(--smg-z-50);
                 background: var(--smg-s2);
                 border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 padding: var(--smg-sp-6);
-                box-shadow: var(--smg-shadow-2);
+                box-shadow: var(--smg-pop-shadow);
                 align-items: center;
                 gap: var(--smg-sp-4);
             }
@@ -5792,10 +5798,10 @@
                 flex-direction: column;
                 gap: var(--smg-sp-10);
                 padding: var(--smg-sp-16) var(--smg-sp-18);
-                border-radius: var(--smg-r-16);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
                 border: 1px solid var(--smg-w-10);
-                box-shadow: var(--smg-hl), var(--smg-shadow-4);
+                box-shadow: var(--smg-pop-shadow);
                 backdrop-filter: blur(20px) saturate(170%);
                 -webkit-backdrop-filter: blur(20px) saturate(170%);
                 visibility: hidden;   /* PERF: fechado SAI da render tree (opacity:0 sozinho mantinha a camada de blur viva em toda thread/lista — o #smg-goto-pop já fazia certo) */
@@ -5845,7 +5851,7 @@
             .smg-lf-headrow { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-8); padding-bottom: var(--smg-sp-2); }
             .smg-lf-counter { font-size: var(--smg-fs-13); font-weight: 600; color: var(--smg-w-72); }
             .smg-lf-reset-btn {
-                background: transparent; border: 1px solid var(--smg-w-14); border-radius: var(--smg-r-8);
+                background: transparent; border: 1px solid var(--smg-w-14); border-radius: var(--smg-btn-r);
                 color: var(--smg-w-72); padding: var(--smg-sp-4) var(--smg-sp-10); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
                 transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
@@ -5950,7 +5956,7 @@
             .label.label--malaysia, .smg-badge-chip.label--malaysia, .label--malaysia { background: #f39c12 !important; color: #fff !important; }
             .smg-lf-input {
                 height: 38px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-18);
+                border-radius: var(--smg-input-r); border: 1px solid var(--smg-w-18);
                 background: var(--smg-w-06); color: #fff; font-size: var(--smg-fs-14); outline: none;
             }
             .smg-lf-input:focus { border-color: var(--smg-w-50); }
@@ -5980,7 +5986,7 @@
             .smg-lf-dir-opt:hover { color: #fff; }
             .smg-lf-dir-opt.active { background: var(--smg-link); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(255,119,178,0.3); }
             .smg-lf-select {
-                width: 100%; height: 38px; padding: 0 var(--smg-sp-12); border-radius: var(--smg-r-10);
+                width: 100%; height: 38px; padding: 0 var(--smg-sp-12); border-radius: var(--smg-input-r);
                 background: var(--smg-w-06); border: 1px solid var(--smg-w-10);
                 color: #fff; font-size: var(--smg-fs-13); font-weight: 500; outline: none; cursor: pointer;
                 transition: border-color var(--smg-dur-15);
@@ -5990,7 +5996,7 @@
                 margin-top: var(--smg-sp-10);
                 width: 100%;
                 padding: var(--smg-sp-12);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-btn-r);
                 border: none;
                 background: var(--smg-link);
                 color: #fff;
@@ -6027,7 +6033,7 @@
             .smg-set-q::placeholder { color: var(--smg-w-50); }
             .smg-set-body { display: flex; min-height: 0; flex: 1; }
             .smg-set-rail { display: flex; flex-direction: column; gap: var(--smg-sp-4); padding: var(--smg-sp-10) var(--smg-sp-8); border-right: 1px solid var(--smg-w-08); flex: 0 0 auto; }
-            .smg-set-tab { width: 40px; height: 40px; border: 0; border-radius: var(--smg-r-12); display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
+            .smg-set-tab { width: 40px; height: 40px; border: 0; border-radius: var(--smg-tab-r); display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
             .smg-set-tab svg { width: 20px; height: 20px; fill: none !important; }
             .smg-set-tab:hover { background: var(--smg-w-08); color: #fff; }
             .smg-set-tab.active { background: var(--smg-link-soft); color: var(--smg-link); }
@@ -6054,7 +6060,7 @@
                 justify-content: space-between;
                 gap: var(--smg-sp-12);
                 padding: var(--smg-sp-10) var(--smg-sp-8);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-card-r);
                 background: var(--smg-w-04);
                 border: 1px solid var(--smg-w-06);
                 margin-top: var(--smg-sp-6);
@@ -6066,7 +6072,7 @@
             .smg-set-btn-danger {
                 flex: 0 0 auto;
                 padding: var(--smg-sp-6) var(--smg-sp-12);
-                border-radius: var(--smg-r-8);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid rgba(244,63,94,0.3);
                 background: rgba(244,63,94,0.12);
                 color: #fb7185;
@@ -6086,7 +6092,7 @@
             }
             .smg-set-empty { padding: var(--smg-sp-32) var(--smg-sp-16); text-align: center; color: var(--smg-w-50); font-size: var(--smg-fs-14); }
             .smg-set-foot { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-12) var(--smg-sp-16); border-top: 1px solid var(--smg-w-08); }
-            .smg-set-reset { border: 0; background: transparent; color: var(--smg-w-55); font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); cursor: pointer; }
+            .smg-set-reset { border: 0; background: transparent; color: var(--smg-w-55); font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-btn-r); cursor: pointer; }
             .smg-set-reset:hover { color: #fb7185; background: rgba(244,63,94,0.1); }
             .smg-set-reload { border: 1px solid var(--smg-bd2); background: var(--smg-s3); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-r-10); cursor: pointer; }
             .smg-set-reload:hover { filter: brightness(1.12); }
@@ -6249,12 +6255,12 @@
                     position: fixed; left: 0; right: 0; bottom: 0; top: auto;
                     width: 100%; max-width: 100%; max-height: 86vh; max-height: 86dvh; z-index: var(--smg-z-20);
                     border: none; border-top: 1px solid var(--smg-w-10);
-                    border-radius: var(--smg-r-20) var(--smg-r-20) 0 0;
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
                     padding: var(--smg-sp-10) var(--smg-sp-18) calc(20px + env(safe-area-inset-bottom));
                     gap: var(--smg-sp-14); opacity: 1;
                     transform: translateY(100%);
                     transition: transform var(--smg-dur-30) cubic-bezier(.2,.85,.25,1);
-                    box-shadow: 0 -16px 50px var(--smg-k-62);
+                    box-shadow: var(--smg-sheet-shadow);
                 }
                 #smg-post-nav-wrapper.settings-open #smg-settings-pop,
                 #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
@@ -6302,7 +6308,7 @@
                 }
                 #smg-search-pop .smg-search-chip {
                     flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
-                    margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-r-10);
+                    margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 }
                 #smg-search-pop .smg-search-chip-t { min-width: 0; font-size: var(--smg-fs-12); }
                 #smg-search-pop .smg-search-acts {
@@ -6311,7 +6317,7 @@
                 }
                 #smg-search-pop .smg-search-close {
                     width: 40px; height: 40px; min-width: 40px; padding: 0;
-                    border: 0; border-radius: var(--smg-r-12); background: transparent;
+                    border: 0; border-radius: var(--smg-btn-r); background: transparent;
                     color: var(--smg-w-60);
                 }
                 #smg-search-pop .smg-search-close:hover { background: var(--smg-w-10); color: #fff; }
@@ -6333,7 +6339,7 @@
                 #smg-search-pop .smg-search-select-wrap {
                     position: relative !important; flex: 0 0 38px !important;
                     width: 38px !important; height: 38px !important; min-width: 38px !important; max-width: 38px !important;
-                    border-radius: var(--smg-r-10) !important; background: var(--smg-w-06) !important;
+                    border-radius: var(--smg-input-r) !important; background: var(--smg-w-06) !important;
                     border: 1px solid var(--smg-w-14) !important;
                     display: flex !important; align-items: center !important; justify-content: center !important;
                     box-sizing: border-box !important;
@@ -6393,12 +6399,12 @@
                 #smg-search-pop .smg-search-tb-row .smg-search-cfg {
                     margin-left: auto !important;
                     flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
-                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-r-10) !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-btn-r) !important;
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv {
                     flex: 0 0 38px !important; width: 38px !important; height: 38px !important;
-                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-r-10) !important;
+                    min-width: 38px !important; max-width: 38px !important; border-radius: var(--smg-btn-r) !important;
                     padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
                 }
                 #smg-search-pop .smg-search-tb-row .smg-search-adv span:first-child {
@@ -6435,8 +6441,8 @@
                 }
 
                 /* alvos de toque maiores + cantos mais macios */
-                .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
-                .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-r-14); }
+                .smg-lf-select, .smg-lf-input { height: 48px; font-size: var(--smg-fs-16); border-radius: var(--smg-input-r); }
+                .smg-lf-apply { padding: var(--smg-sp-16); font-size: var(--smg-fs-16); border-radius: var(--smg-btn-r); }
                 .smg-chip { height: 40px; font-size: var(--smg-fs-14); }
                 /* mobile: só o pager simples (depois do "none" do desktop, senão nunca aparece) */
                 html.smg-threadlist .pageNavWrapper .pageNavSimple { display: flex !important; }
@@ -6464,7 +6470,7 @@
             .smg-bar-btn {
                 display: inline-flex; align-items: center; justify-content: center; gap: var(--smg-sp-6); box-sizing: border-box;
                 height: 30px; min-width: 30px; padding: 0 var(--smg-sp-10);
-                border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-72);
+                border: 0; border-radius: var(--smg-btn-r); background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 600; line-height: 1; text-decoration: none; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
@@ -6554,12 +6560,12 @@
             .smg-bar-pop {
                 position: fixed; transform: translate(-50%, 0);   /* ABAIXO do botão (o header fica no topo da tela) */
                 display: none; flex-direction: column; gap: var(--smg-sp-4); z-index: var(--smg-z-sheet-3); min-width: 160px; padding: var(--smg-sp-6);
-                background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-12); box-shadow: var(--smg-shadow-3);
+                background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r); box-shadow: var(--smg-pop-shadow);
             }
             .smg-bar-pop.open { display: flex; }   /* o popover vive no <body> (fora do clip-path do header) */
             .smg-bar-pop--jump { flex-direction: row; align-items: center; gap: var(--smg-sp-6); min-width: 0; }
             .smg-bar-pop input { width: 66px; height: 34px; box-sizing: border-box; text-align: center; border-radius: var(--smg-r-8); border: 1px solid var(--smg-bd2); background: var(--smg-s1); color: #fff; font-size: var(--smg-fs-14); font-weight: 600; }
-            .smg-bar-go { height: 34px; padding: 0 var(--smg-sp-14); border-radius: var(--smg-r-8); border: 0; background: #fff; color: #141414; font-weight: 700; cursor: pointer; }
+            .smg-bar-go { height: 34px; padding: 0 var(--smg-sp-14); border-radius: var(--smg-btn-r); border: 0; background: #fff; color: #141414; font-weight: 700; cursor: pointer; }
             .smg-bar-poprow { display: flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); border: 0; background: transparent; color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; white-space: nowrap; }
             .smg-bar-poprow:hover { background: var(--smg-s3); color: #fff; }
             /* mobile: barra full-width · números viram compacto cur/max · ações à direita
@@ -6860,7 +6866,7 @@
             }
             html.smg-thread .smg-thead-unified .smg-thead-btn {
                 width: 30px; height: 30px; min-width: 30px; padding: 0; font-size: var(--smg-fs-16);
-                border: 0 !important; border-radius: var(--smg-r-8) !important; background: transparent !important;
+                border: 0 !important; border-radius: var(--smg-btn-r) !important; background: transparent !important;
                 color: var(--smg-w-95);
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
             }
@@ -7625,7 +7631,7 @@
                 justify-content: center !important;
                 background: var(--smg-k-62) !important;
                 border: 0 !important;
-                border-radius: var(--smg-r-8) !important;
+                border-radius: var(--smg-btn-r) !important;
                 color: var(--smg-w-85) !important;
                 cursor: pointer !important;
                 opacity: 0 !important;
@@ -8024,8 +8030,8 @@
             /* contain style (SEM layout): contain:layout impedia o navegador de usar os posts como âncora
                de scroll nativo (Scroll Anchoring), fazendo a tela sambar ao carregar imagens acima do leitor.
                overflow-anchor:auto reativa o travamento nativo do ponto de leitura pelo motor do browser. */
-            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-r-18) !important; margin: 0 0 var(--smg-sp-14); overflow: visible; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; contain: style; overflow-anchor: auto !important; }
-            html.smg-thread .smg-pc:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-shadow-2) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
+            html.smg-thread .smg-pc { background: var(--smg-s1) !important; border: 1px solid var(--smg-w-12) !important; border-radius: var(--smg-card-r) !important; margin: 0 0 var(--smg-sp-14); overflow: visible; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; contain: style; overflow-anchor: auto !important; }
+            html.smg-thread .smg-pc:hover { border-color: var(--smg-w-22) !important; box-shadow: var(--smg-card-shadow) !important; }   /* realce no hover (estilo Reddit) — !important p/ vencer o tema do SMG */
             /* SMG: o card usa as superfícies (cinzas) do SimpCity — mais escuras que o tema SMG (s1 12.5 vs 13.5 etc.). Escopo .smg-pc → só os cards/posts; o resto do SMG mantém o tema dele. (escolha do user) */
             html.smg-smg .smg-pc { --smg-s1: hsl(0 0% 12.5%); --smg-s2: hsl(0 0% 16%); --smg-s3: hsl(0 0% 21%); }
             /* QUOTES / unfurl dentro do post: inset escuro (recuado) + border + rounded — !important p/ vencer o cinza claro do tema */
@@ -8230,7 +8236,7 @@
             html.smg-thread .smg-pc-row2 .badgeIcon { width: 16px; height: 16px; }
             /* ACTION BAR */
             html.smg-thread .smg-pc-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex-wrap: wrap; padding: var(--smg-sp-12) var(--smg-sp-18) var(--smg-sp-14); margin-top: var(--smg-sp-8); border-top: 1px solid var(--smg-bd); }
-            html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 34px; margin: 0 !important; padding: 0 var(--smg-sp-14) !important; border-radius: var(--smg-r-10); border: 0; background: transparent; color: var(--smg-w-72); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
+            html.smg-thread .smg-pc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 34px; margin: 0 !important; padding: 0 var(--smg-sp-14) !important; border-radius: var(--smg-btn-r); border: 0; background: transparent; color: var(--smg-w-72); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
             html.smg-thread .smg-pc-act:hover { background: var(--smg-s3); color: #fff; }
             /* MÉTRICA ÚNICA dos ícones da action bar (post e comentário). Cada ação trazia a sua:
                o <i> da fonte do XF em 15px, o nosso react em 16, o bookmark/share nativos em outra
@@ -8283,12 +8289,12 @@
             /* ⋯ overflow */
             html.smg-thread .smg-pc-morewrap { position: relative; margin-left: auto; }
             html.smg-thread .smg-pc-act--more { font-size: var(--smg-fs-18); padding: 0 var(--smg-sp-12); }
-            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 168px; padding: var(--smg-sp-6); z-index: var(--smg-z-50); background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-12); box-shadow: var(--smg-shadow-3); }
+            html.smg-thread .smg-pc-morepop { position: absolute; right: 0; bottom: calc(100% + 6px); display: none; flex-direction: column; gap: var(--smg-sp-2); min-width: 168px; padding: var(--smg-sp-6); z-index: var(--smg-z-50); background: var(--smg-s2); border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r); box-shadow: var(--smg-pop-shadow); }
             html.smg-thread .smg-pc-morewrap.open .smg-pc-morepop { display: flex; }
             html.smg-thread .smg-pc-morerow { display: flex !important; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
             html.smg-thread .smg-pc-morerow:hover { background: var(--smg-s3); color: #fff; }
             /* DISCUSSÃO (social): badge + indicador "silent" no header do post */
-            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: var(--smg-fs-10); font-weight: 800; letter-spacing: .04em; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-6); background: var(--smg-link-soft); color: var(--smg-link); }
+            html.smg-thread .smg-pc-idline .smg-discussion-badge { font-size: var(--smg-fs-10); font-weight: 800; letter-spacing: .04em; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-link-soft); color: var(--smg-link); }
             html.smg-thread .smg-pc-idline .smg-silent-indicator { font-size: var(--smg-fs-11); color: var(--smg-w-40); display: inline-flex; align-items: center; gap: var(--smg-sp-4); }
             /* mobile: barra de ações compacta numa linha só (depois da regra base, senão nunca vale) */
             @media (max-width: 600px) {
@@ -8337,7 +8343,7 @@
             html.smg-thread .smg-cc-num:hover { color: var(--smg-w-72); }
             html.smg-thread .smg-cc .comment-body { font-size: var(--smg-fs-14); line-height: 1.5; }
             html.smg-thread .smg-cc-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex-wrap: wrap; margin-top: var(--smg-sp-6); }
-            html.smg-thread .smg-cc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-6); height: 30px; margin: 0 !important; padding: 0 var(--smg-sp-10) !important; border-radius: var(--smg-r-8); background: transparent; border: 0; color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
+            html.smg-thread .smg-cc-act { display: inline-flex !important; align-items: center; gap: var(--smg-sp-6); height: 30px; margin: 0 !important; padding: 0 var(--smg-sp-10) !important; border-radius: var(--smg-btn-r); background: transparent; border: 0; color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease; }
             html.smg-thread .smg-cc-act:hover { background: var(--smg-s3); color: #fff; }
             html.smg-thread .smg-cc-act svg { width: 14px; height: 14px; }
             html.smg-thread .smg-cc-act > i { font-size: var(--smg-fs-14); }
@@ -8582,7 +8588,7 @@
             .smg-river-more.is-loading .smg-loading { display: flex; }
             .smg-river-more.is-loading .smg-river-more-t { display: none; }
             /* pílula "N novos posts" (flutua no topo, estilo Twitter) */
-            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: var(--smg-z-60); display: inline-flex; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8) var(--smg-sp-16) var(--smg-sp-8) var(--smg-sp-12); border: 0; border-radius: var(--smg-r-pill); background: var(--smg-link); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; box-shadow: var(--smg-shadow-2); }
+            .smg-river-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: var(--smg-z-60); display: inline-flex; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8) var(--smg-sp-16) var(--smg-sp-8) var(--smg-sp-12); border: 0; border-radius: var(--smg-chip-r); background: var(--smg-link); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 700; cursor: pointer; box-shadow: var(--smg-shadow-2); }
             .smg-river-pill[hidden] { display: none; }
             .smg-river-pill:hover { filter: brightness(1.08); }
             .smg-river-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -8591,8 +8597,8 @@
                 content-visibility: auto !important;
                 contain-intrinsic-size: 500px !important;
             }
-            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-r-18); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-shadow-2); }
+            .smg-fp-card { background: var(--smg-s1); border: 1px solid var(--smg-w-12); border-radius: var(--smg-card-r); overflow: hidden; transition: border-color var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
+            .smg-fp-card:hover { border-color: var(--smg-w-22); box-shadow: var(--smg-card-shadow); }
             @keyframes smg-fp-in { from { opacity: 0; transform: translateY(-10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes smg-fp-glow { 0% { box-shadow: 0 0 0 1px var(--smg-w-18); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
             .smg-fp-card.smg-fp-enter { animation: smg-fp-in .42s cubic-bezier(.2,.7,.3,1) both, smg-fp-glow 1.2s ease-out; }
@@ -8683,7 +8689,7 @@
             .smg-fp-open:hover { gap: var(--smg-sp-10); }
             .smg-fp-open svg { width: 15px; height: 15px; fill: none; }
             @media (max-width: 600px) { .smg-river-head { margin-top: var(--smg-sp-16); }
-                .smg-fp-card { border-radius: var(--smg-r-14); }
+                .smg-fp-card { border-radius: var(--smg-card-r); }
                 .smg-fp-head { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); }
                 .smg-fp-content { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-8); }
                 .smg-fp-open { padding: var(--smg-sp-12) var(--smg-sp-16) var(--smg-sp-14); }
@@ -8696,7 +8702,7 @@
             .smg-multiselect-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8); height: 36px; padding: 0 var(--smg-sp-12);
                 background: var(--smg-s1); border: 1px solid var(--smg-bd);
-                border-radius: var(--smg-r-10); color: var(--smg-w-85); font-size: var(--smg-fs-13); font-weight: 600;
+                border-radius: var(--smg-input-r); color: var(--smg-w-85); font-size: var(--smg-fs-13); font-weight: 600;
                 cursor: pointer; transition: all var(--smg-dur-15) ease; box-sizing: border-box;
             }
             .smg-lf-row .smg-multiselect-btn { width: 100%; justify-content: space-between; }
@@ -8707,7 +8713,7 @@
             .smg-multiselect-btn-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; }
             .smg-multiselect-btn-badge {
                 display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
-                padding: 0 var(--smg-sp-6); border-radius: var(--smg-r-pill); background: var(--smg-link); color: #fff;
+                padding: 0 var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-link); color: #fff;
                 font-size: var(--smg-fs-11); font-weight: 700; line-height: 1;
             }
             .smg-multiselect-btn-arrow { margin-left: auto; display: inline-flex; align-items: center; }
@@ -8717,8 +8723,8 @@
             .smg-multiselect-pop {
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--smg-z-sheet-top) !important; width: 340px; max-width: 90vw;
                 max-height: 480px; display: flex; flex-direction: column; background: var(--smg-s1);
-                border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-14);
-                box-shadow: var(--smg-shadow-3); overflow: hidden;
+                border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r);
+                box-shadow: var(--smg-pop-shadow); overflow: hidden;
             }
             .smg-lf-row .smg-multiselect-pop { width: 100%; max-width: 100%; box-sizing: border-box; }
             .smg-multiselect-pop[hidden] { display: none !important; }
@@ -8744,7 +8750,7 @@
             .smg-multiselect-pills-bar[hidden] { display: none !important; }
             .smg-multiselect-pills { display: flex; flex-wrap: wrap; gap: var(--smg-sp-4); max-height: 70px; overflow-y: auto; }
             .smg-multiselect-pill {
-                display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill);
+                display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 background: var(--smg-link-soft); border: 1px solid var(--smg-link);
                 color: #fff; font-size: var(--smg-fs-11); font-weight: 600;
             }
@@ -8821,14 +8827,14 @@
             }
             .smg-aldock-title { display: flex; align-items: center; gap: var(--smg-sp-8); margin-right: auto; font-size: var(--smg-fs-16); font-weight: 800; color: #fff; }
             .smg-aldock-n {
-                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums;
+                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums;
                 background: var(--smg-link-soft); color: var(--smg-link);
             }
             .smg-aldock-n[hidden] { display: none; }
             .smg-aldock-acts { display: flex; align-items: center; gap: var(--smg-sp-6); }
             .smg-aldock-btn {
                 display: inline-flex; align-items: center; justify-content: center;
-                width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-r-8);
+                width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06); color: var(--smg-w-72); font-size: var(--smg-fs-16); cursor: pointer;
                 -webkit-appearance: none; appearance: none; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
@@ -9080,7 +9086,7 @@
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(3) { width: 76%; }
             .smg-page-skeleton-post-body .smg-page-skeleton-line:nth-child(4) { width: 42%; margin-top: var(--smg-sp-24); }
             .smg-page-skeleton-line { display: block; width: 100%; height: 11px; border-radius: var(--smg-r-6); }
-            .smg-page-skeleton-feed-card { display: flex; gap: var(--smg-sp-14); min-height: 146px; padding: var(--smg-sp-14); border: 1px solid var(--smg-w-10); border-radius: var(--smg-r-16); background: var(--smg-w-04); }
+            .smg-page-skeleton-feed-card { display: flex; gap: var(--smg-sp-14); min-height: 146px; padding: var(--smg-sp-14); border: 1px solid var(--smg-w-10); border-radius: var(--smg-card-r); background: var(--smg-w-04); }
             .smg-page-skeleton-card-thumb { flex: 0 0 132px; height: 116px; border-radius: var(--smg-r-12); }
             .smg-page-skeleton-card-copy { flex: 1 1 auto; min-width: 0; padding: var(--smg-sp-8) 0; }
             .smg-page-skeleton-card-copy .smg-page-skeleton-line + .smg-page-skeleton-line { margin-top: var(--smg-sp-12); }

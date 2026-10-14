@@ -55,7 +55,7 @@
                 min-width: 18px !important;
                 height: 18px !important;
                 padding: 0 var(--smg-sp-6) !important;
-                border-radius: var(--smg-r-pill) !important;
+                border-radius: var(--smg-badge-r) !important;
                 font-size: var(--smg-fs-11) !important;
                 font-weight: 700 !important;
                 background: var(--smg-link) !important;
@@ -220,8 +220,8 @@
                    nascia mais alto que a tela e o rodapé ficava embaixo da barra do navegador */
                 max-height: 80vh; max-height: 80dvh; display: flex; flex-direction: column;
                 background: var(--smg-s1);
-                border-radius: var(--smg-r-20) var(--smg-r-20) 0 0; border-top: 1px solid var(--smg-w-10);
-                box-shadow: 0 -12px 44px var(--smg-k-62);
+                border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0; border-top: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-sheet-shadow);
                 transform: translateY(100%); transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
             .smg-sheet.open .smg-csheet-panel { transform: translateY(0); }

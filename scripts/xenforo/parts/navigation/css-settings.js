@@ -18,7 +18,7 @@
             .smg-set-q::placeholder { color: var(--smg-w-50); }
             .smg-set-body { display: flex; min-height: 0; flex: 1; }
             .smg-set-rail { display: flex; flex-direction: column; gap: var(--smg-sp-4); padding: var(--smg-sp-10) var(--smg-sp-8); border-right: 1px solid var(--smg-w-08); flex: 0 0 auto; }
-            .smg-set-tab { width: 40px; height: 40px; border: 0; border-radius: var(--smg-r-12); display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
+            .smg-set-tab { width: 40px; height: 40px; border: 0; border-radius: var(--smg-tab-r); display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--smg-w-50); cursor: pointer; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
             .smg-set-tab svg { width: 20px; height: 20px; fill: none !important; }
             .smg-set-tab:hover { background: var(--smg-w-08); color: #fff; }
             .smg-set-tab.active { background: var(--smg-link-soft); color: var(--smg-link); }
@@ -45,7 +45,7 @@
                 justify-content: space-between;
                 gap: var(--smg-sp-12);
                 padding: var(--smg-sp-10) var(--smg-sp-8);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-card-r);
                 background: var(--smg-w-04);
                 border: 1px solid var(--smg-w-06);
                 margin-top: var(--smg-sp-6);
@@ -57,7 +57,7 @@
             .smg-set-btn-danger {
                 flex: 0 0 auto;
                 padding: var(--smg-sp-6) var(--smg-sp-12);
-                border-radius: var(--smg-r-8);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid rgba(244,63,94,0.3);
                 background: rgba(244,63,94,0.12);
                 color: #fb7185;
@@ -77,7 +77,7 @@
             }
             .smg-set-empty { padding: var(--smg-sp-32) var(--smg-sp-16); text-align: center; color: var(--smg-w-50); font-size: var(--smg-fs-14); }
             .smg-set-foot { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-12) var(--smg-sp-16); border-top: 1px solid var(--smg-w-08); }
-            .smg-set-reset { border: 0; background: transparent; color: var(--smg-w-55); font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); cursor: pointer; }
+            .smg-set-reset { border: 0; background: transparent; color: var(--smg-w-55); font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-btn-r); cursor: pointer; }
             .smg-set-reset:hover { color: #fb7185; background: rgba(244,63,94,0.1); }
             .smg-set-reload { border: 1px solid var(--smg-bd2); background: var(--smg-s3); color: #fff; font: inherit; font-size: var(--smg-fs-13); font-weight: 600; padding: var(--smg-sp-6) var(--smg-sp-12); border-radius: var(--smg-r-10); cursor: pointer; }
             .smg-set-reload:hover { filter: brightness(1.12); }

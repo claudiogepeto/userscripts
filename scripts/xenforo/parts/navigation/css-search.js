@@ -292,7 +292,7 @@
             .smg-search-author-row .smg-search-author-close {
                 width: 24px;
                 height: 24px;
-                border-radius: var(--smg-r-6);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-08);
                 color: var(--smg-w-72);
                 padding: 0;
@@ -305,7 +305,7 @@
                 width: 34px;
                 height: 34px;
                 padding: 0;
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-12);
                 color: var(--smg-w-72);
@@ -326,7 +326,7 @@
                 gap: var(--smg-sp-8);
                 height: 34px;
                 padding: 0 var(--smg-sp-12);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-12);
                 background: var(--smg-w-06);
                 color: var(--smg-w-72);
@@ -355,7 +355,7 @@
                 padding: 0 var(--smg-sp-12);
                 font-size: var(--smg-fs-13);
                 font-weight: 600;
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-input-r);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-12);
                 color: var(--smg-w-95);
@@ -428,7 +428,7 @@
             .smg-chip {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 40px; padding: 0 var(--smg-sp-18); box-sizing: border-box;
-                border-radius: var(--smg-r-pill); border: 1px solid var(--smg-w-10);
+                border-radius: var(--smg-chip-r); border: 1px solid var(--smg-w-10);
                 background: var(--smg-w-04); color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -457,7 +457,7 @@
             .smg-search-scope-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
                 height: 36px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
@@ -471,8 +471,8 @@
                 position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--smg-z-50);
                 min-width: 180px; padding: var(--smg-sp-6);
                 display: flex; flex-direction: column; gap: var(--smg-sp-2);
-                background: var(--smg-s1); border: 1px solid var(--smg-w-14); border-radius: var(--smg-r-12);
-                box-shadow: var(--smg-shadow-4);
+                background: var(--smg-s1); border: 1px solid var(--smg-w-14); border-radius: var(--smg-pop-r);
+                box-shadow: var(--smg-pop-shadow);
             }
             .smg-search-scope-list[hidden] { display: none; }
             .smg-search-scope-list button {
@@ -488,7 +488,7 @@
             .smg-search-order-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 36px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
@@ -520,7 +520,7 @@
             .smg-search-author-btn {
                 display: inline-flex; align-items: center; justify-content: center;
                 width: 36px; height: 36px; box-sizing: border-box;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-14);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: var(--smg-w-72); cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
             }
@@ -535,7 +535,7 @@
                 flex: 0 0 auto; box-sizing: border-box;
                 display: inline-flex; align-items: center; justify-content: center;
                 min-width: 30px; height: 30px; padding: 0 var(--smg-sp-8); margin: 0;
-                border-radius: var(--smg-r-10); border: 1px solid var(--smg-w-12);
+                border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-12);
                 background: var(--smg-w-06); color: var(--smg-w-55);
                 font: 600 13px/1 -apple-system, system-ui, sans-serif; text-decoration: none; cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -549,7 +549,7 @@
             .smg-search-go {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-8);
                 height: 42px; padding: 0 var(--smg-sp-18); box-sizing: border-box;
-                border-radius: var(--smg-r-12); border: none;
+                border-radius: var(--smg-btn-r); border: none;
                 background: #fff; color: #141414;
                 font-size: var(--smg-fs-14); font-weight: 700; cursor: pointer;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
@@ -575,7 +575,7 @@
                 height: 32px;
                 padding: 0 var(--smg-sp-10);
                 font-size: var(--smg-fs-13);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-input-r);
             }
 
             /* ===== página de RESULTADOS da busca: lista nativa re-tematizada (cards no padrão do tema) =====
@@ -751,7 +751,7 @@
             #smg-search-pop.smg-search-pop--drop {
                 position: fixed; transform: none; margin: 0;   /* top/left/width vêm inline do JS (ancorado ao input) */
                 width: 480px; max-width: calc(100vw - 16px); max-height: min(85vh, 760px);
-                padding: var(--smg-sp-16) var(--smg-sp-18) 0; gap: var(--smg-sp-14); border-radius: var(--smg-r-16);   /* sem padding-bottom: o footer "Ver todos" cola no fundo (sticky) */
+                padding: var(--smg-sp-16) var(--smg-sp-18) 0; gap: var(--smg-sp-14); border-radius: var(--smg-pop-r);   /* sem padding-bottom: o footer "Ver todos" cola no fundo (sticky) */
                 pointer-events: auto;
             }
             #smg-search-overlay.open #smg-search-pop.smg-search-pop--drop { transform: none; }   /* sem o scale do modal; só o fade de opacity */
@@ -771,7 +771,7 @@
             .smg-search-empty-hint code { padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: var(--smg-sp-8); margin-bottom: var(--smg-sp-4); }
             .smg-search-hist-title { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--smg-w-40); }
-            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-r-pill); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
+            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
             .smg-search-hist-clear {
                 margin-left: auto; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); border: none;
                 background: transparent; color: var(--smg-w-55); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
@@ -804,7 +804,7 @@
             .smg-search-hist-acts { flex: 0 0 auto; display: flex; align-items: center; gap: var(--smg-sp-2); }
             .smg-search-hist-act {
                 flex: 0 0 auto; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-8); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
+                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
                 opacity: 0; transition: opacity var(--smg-dur-12) ease, background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
             .smg-search-hist-item:hover .smg-search-hist-act { opacity: 1; }
@@ -824,7 +824,7 @@
             .smg-search-chips-row::-webkit-scrollbar { display: none; }
             .smg-search-result-chip {
                 flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                height: 28px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-pill);
+                height: 28px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-chip-r);
                 border: 1px solid var(--smg-w-10); background: var(--smg-w-06);
                 color: var(--smg-w-72); font-size: var(--smg-fs-12); font-weight: 600;
                 cursor: pointer; white-space: nowrap; transition: all var(--smg-dur-15) ease;
@@ -836,7 +836,7 @@
                 box-shadow: 0 2px 8px rgba(255,119,178,0.3);
             }
             .smg-search-result-chip .smg-chip-count {
-                padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-pill);
+                padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r);
                 background: var(--smg-k-25); font-size: var(--smg-fs-11); font-weight: 700; line-height: 1;
             }
             .smg-search-result-chip.is-active .smg-chip-count { background: var(--smg-w-22); color: #fff; }

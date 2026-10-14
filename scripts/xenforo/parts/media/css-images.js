@@ -73,15 +73,15 @@
                 margin: var(--smg-sp-8) 0;
                 padding: var(--smg-sp-8) var(--smg-sp-12);
                 border: 1px solid var(--smg-w-12);
-                border-radius: var(--smg-r-12);
+                border-radius: var(--smg-card-r);
                 background: var(--smg-s1);
-                box-shadow: var(--smg-shadow-1);
+                box-shadow: var(--smg-card-shadow);
                 transition: border-color var(--smg-dur-15) ease, background var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease;
             }
             .smg-fhcard:hover {
                 border-color: var(--smg-w-22);
                 background: var(--smg-s2);
-                box-shadow: var(--smg-shadow-1);
+                box-shadow: var(--smg-card-shadow);
             }
             .smg-fhcard-main {
                 display: flex;
@@ -113,7 +113,7 @@
                 width: 34px;
                 height: 34px;
                 border: 1px solid var(--smg-w-12);
-                border-radius: var(--smg-r-10);
+                border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
                 color: var(--smg-w-72);
                 cursor: pointer;
@@ -135,7 +135,7 @@
             .smg-fhcard-thumb--multi { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--smg-sp-2); }
             .smg-fhcard-cell { position: relative; overflow: hidden; background: var(--smg-s2); }
             .smg-fhcard-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--smg-k-55); color: #fff; font-size: var(--smg-fs-16); font-weight: 800; }
-            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8) var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-r-pill); background: var(--smg-k-62); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
+            .smg-fhcard-count { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-8) var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-badge-r); background: var(--smg-k-62); color: #fff; font: 700 11.5px/1 -apple-system, system-ui, sans-serif; }
             .smg-fhcard-count svg { width: 12px; height: 12px; fill: none !important; }
             /* skeleton enquanto a thumb carrega (some no load); reusa o @keyframes smg-img-shimmer */
             .smg-fhcard-thumb--loading { background-image: linear-gradient(90deg, transparent, var(--smg-w-08) 50%, transparent); background-size: 220% 100%; background-repeat: no-repeat; animation: smg-img-shimmer 1.25s ease-in-out infinite; }
@@ -200,7 +200,7 @@
             .smg-fhcard--inline .smg-fhcard-platform { font-size: var(--smg-fs-10); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--smg-link); flex: 0 0 auto; }
             .smg-fhcard--inline .smg-fhcard-host { font-size: var(--smg-fs-13); font-weight: 600; flex: 0 1 auto; }
             .smg-fhcard--inline .smg-fhcard-sub { font-size: var(--smg-fs-11); flex: 0 0 auto; opacity: 0.75; }
-            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: var(--smg-r-8); }
+            .smg-fhcard--inline .smg-fhcard-btn { width: 24px; height: 24px; border-radius: var(--smg-btn-r); }
             .smg-fhcard--inline .smg-fhcard-btn svg { width: 13px; height: 13px; }
             /* o marcador do <li> some quando o conteúdo vira bloco → mantém a numeração da lista original */
             .bbWrapper li > .smg-fhcard--inline { display: flex; }
