@@ -24741,7 +24741,7 @@
     }
     // card do feed (riverCard) + a nota do bookmark por cima do conteúdo + botão "remover dos salvos"
     function bmCard(obj, row) {
-        const card = riverCard(obj);
+        const card = riverCard(obj, { keepSkipped: true });
         card.dataset.bmId = row.postId; card.dataset.bmTs = String(row.bmTs || 0);
         if (row.note) {
             const n = document.createElement('div'); n.className = 'smg-bm-note'; n.textContent = row.note;
@@ -25610,11 +25610,12 @@
         return a;
     }
     // card: [foto da thread] · tags / nome do tópico / postado por autor · tempo · conteúdo · footer
-    function riverCard(p) {
+    // opts.keepSkipped: salvos mostram o post mesmo com tag que o feed pula (discussion/off-topic/ajuda...)
+    function riverCard(p, opts) {
         if (!p) return null;
         const postId = p.post_id || '';
         if (!postId || !p.content_html) return null;
-        if (timelineContentSkip([p.prefixes_html || ''])) return null;
+        if (!(opts && opts.keepSkipped) && timelineContentSkip([p.prefixes_html || ''])) return null;
         const ts = p.created_at || 0;
         let threadTitle = (p.thread_name || '').replace(/\s+/g, ' ').trim();
         threadTitle = threadTitle.replace(/Avisos.*$/i, '').replace(/\s+Tags\s+Tags\b[\s\S]*$/i, '').trim();
