@@ -657,52 +657,6 @@
             });
         }
     }
-    // POLLING: enquanto o feed está visível, re-sincroniza
-    const FEED_POLL_INTERVAL_MS = 300000; // 5 minutos (evita sobrecarga e HTTP 429)
-    let feedPollTimer = null;
-    function feedPoll() {
-        if (typeof riverPauseUntil !== 'undefined' && Date.now() < riverPauseUntil) return;
-        if (typeof riverAborted !== 'undefined' && riverAborted) return;
-        if (document.hidden || !riverList || !riverList.isConnected || feedSyncRunning) return;
-        feedSyncRunning = true;
-        lastTimelineSyncTime = Date.now();
-        syncTimeline({
-            onBatch: addedCount => {
-                if (riverList && addedCount > 0 && riverList.querySelector('.smg-fp-setup')) {
-                    firstPaint();
-                    renderMore();
-                } else if (riverList && (!riverSeen || !riverSeen.size)) {
-                    renderMore();
-                } else if (riverList && addedCount) {
-                    fetchFreshPosts().then(fresh => {
-                        if (fresh.length && riverNearTop()) insertFreshPosts(fresh);
-                    });
-                }
-            }
-        }).then(() => afterSync()).catch(() => {}).finally(() => {
-            feedSyncRunning = false;
-        });
-    }
-    function feedVisPoll() {
-        if (document.hidden) return;
-        if (typeof riverPauseUntil !== 'undefined' && Date.now() < riverPauseUntil) return;
-        if (typeof riverAborted !== 'undefined' && riverAborted) return;
-        feedPoll();
-    }
-    function feedStartPoll() {
-        if (feedPollTimer) return;
-        feedPollTimer = setInterval(() => {
-            if (typeof riverPauseUntil !== 'undefined' && Date.now() < riverPauseUntil) return;
-            if (typeof riverAborted !== 'undefined' && riverAborted) return;
-            feedPoll();
-        }, FEED_POLL_INTERVAL_MS);
-        document.addEventListener('visibilitychange', feedVisPoll);
-    }
-    function feedStopPoll() {
-        if (feedPollTimer) { clearInterval(feedPollTimer); feedPollTimer = null; }
-        document.removeEventListener('visibilitychange', feedVisPoll);
-    }
-
     // ---- ativa o modo feed (home ?view=feed) ----  (sem tabbar: a saída é o logo/Home da topbar)
     function applyRiverMode(mode) {
         const feed = mode === 'feed';
@@ -728,7 +682,7 @@
                 ch.classList.toggle('smg-river-hide', feed);
             });
         }
-        if (feed) { buildRiver(); feedStartPoll(); } else feedStopPoll();
+        if (feed) buildRiver();   // re-sync: cron do 22-feed-sync + foco/visibilidade (handleTimelineFocusOrVisibility)
     }
     let riverSetupDone = false;
     function setupFeedView() {
@@ -795,7 +749,6 @@
             set riverLastTs(v) { riverLastTs = v; },
             renderMore,
             kickSync,
-            feedPoll,
             FEED_DATA_VERSION,
             FEED_SYNC_VERSION,
             RIVER_CONCURRENCY,

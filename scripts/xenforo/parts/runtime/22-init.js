@@ -447,7 +447,6 @@
         disposeStickySyncs();
         smgPopPrune();
         contentIsReady = false;
-        if (!feedViewWanted()) feedStopPoll();
     }
 
     function softNavigate(url, opts) {
