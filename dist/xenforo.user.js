@@ -7251,12 +7251,8 @@
                 border-radius: var(--smg-btn-r) !important;
                 color: var(--smg-w-85) !important;
                 cursor: pointer !important;
-                opacity: 0 !important;
+                opacity: 0.6 !important;   /* sempre visível: revelar no hover da linha repintava cada card que passava sob o cursor ao rolar */
                 transition: opacity var(--smg-dur-15) ease, background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease !important;
-            }
-            .structItem--thread:hover .smg-thread-unwatch-btn,
-            .structItem-cell--icon:hover .smg-thread-unwatch-btn {
-                opacity: 1 !important;
             }
             .smg-thread-unwatch-btn.is-following {
                 opacity: 0.85 !important;
@@ -7272,6 +7268,7 @@
                 color: #fff !important;
             }
             .smg-thread-unwatch-btn:hover {
+                opacity: 1 !important;
                 transform: scale(1.08) !important;
             }
             .smg-thread-unwatch-btn svg {
