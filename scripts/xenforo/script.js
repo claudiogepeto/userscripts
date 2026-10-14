@@ -26076,6 +26076,15 @@
         NONE: 'none',
     });
 
+    // rota de THREAD (/threads/…, /posts/N, /goto/…), ancorada na raiz: /whats-new/posts/ é LISTAGEM.
+    // Única fonte da pergunta "é thread?" (classificador, classes da página, passes e ingestão).
+    function isThreadRoute(pathname, search) {
+        const p = pathname == null ? location.pathname : pathname;
+        const q = search == null ? location.search : search;
+        return !/\/watched\//i.test(p)
+            && (/\/threads\//i.test(p) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(p) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(q || ''));
+    }
+
     function classifyPaintPage(input) {
         const source = input || {};
         const pathname = source.pathname || location.pathname || '/';
@@ -26094,7 +26103,7 @@
         else if (home) kind = PAINT_PAGE_KINDS.HOME;
         else if (tpl.includes('bookmarks') || /\/account\/bookmarks|\/bookmarks\//i.test(pathname)) kind = PAINT_PAGE_KINDS.BOOKMARKS;
         else if (/\/watched\/threads(?:\/|$)/i.test(pathname) || tpl === 'watched_threads_list') kind = PAINT_PAGE_KINDS.FOLLOWING;
-        else if (/^thread_view/i.test(tpl) || (!/\/watched\//i.test(pathname) && (/\/threads\//i.test(pathname) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(search || '')))) kind = PAINT_PAGE_KINDS.THREAD;
+        else if (/^thread_view/i.test(tpl) || isThreadRoute(pathname, search || '')) kind = PAINT_PAGE_KINDS.THREAD;
         else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)|\/account\/alerts(?:\/|$)/i.test(pathname)
             || /^(?:forum_view|whats_new_posts|search_results)$/i.test(tpl)) kind = PAINT_PAGE_KINDS.LISTING;
         else kind = PAINT_PAGE_KINDS.GENERIC;
@@ -26877,9 +26886,7 @@
         if (FEATURES.customFavicon) safe(setFavicon);
 
         const path = location.pathname;
-        const isThreadRoute = !/\/watched\//.test(path)
-            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
-        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute;
+        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute();
         const isThreadList = [PAINT_PAGE_KINDS.LISTING, PAINT_PAGE_KINDS.FOLLOWING].includes(paintContext.kind)
             || cls.contains('smg-threadlist') || /\/forums\//.test(path) || /\/watched\//.test(path);
         const isHome = paintContext.kind === PAINT_PAGE_KINDS.HOME || (cls.contains('smg-home') && !cls.contains('smg-watched-feed'));
@@ -27101,9 +27108,7 @@
         } else {
             cls.remove('smg-home-pending', 'smg-home-ready');
         }
-        const isThreadRoute = !/\/watched\//.test(path)
-            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
-        const isThread = /^thread_view/i.test(tpl) || isThreadRoute;
+        const isThread = /^thread_view/i.test(tpl) || isThreadRoute(path);
         cls.toggle('smg-thread', isThread);
         const isList = !isThread && (
             /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
@@ -27260,7 +27265,7 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
+        if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
         safe(pinDeepLinkPost);
         safe(startTimelineCron);
 
@@ -27378,7 +27383,7 @@
             if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
             if (FEATURES.headerNotices) safe(setupHeaderNotices);
             if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
+            if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();

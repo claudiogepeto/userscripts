@@ -18,9 +18,7 @@
         if (FEATURES.customFavicon) safe(setFavicon);
 
         const path = location.pathname;
-        const isThreadRoute = !/\/watched\//.test(path)
-            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
-        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute;
+        const isThread = paintContext.kind === PAINT_PAGE_KINDS.THREAD || cls.contains('smg-thread') || isThreadRoute();
         const isThreadList = [PAINT_PAGE_KINDS.LISTING, PAINT_PAGE_KINDS.FOLLOWING].includes(paintContext.kind)
             || cls.contains('smg-threadlist') || /\/forums\//.test(path) || /\/watched\//.test(path);
         const isHome = paintContext.kind === PAINT_PAGE_KINDS.HOME || (cls.contains('smg-home') && !cls.contains('smg-watched-feed'));
@@ -242,9 +240,7 @@
         } else {
             cls.remove('smg-home-pending', 'smg-home-ready');
         }
-        const isThreadRoute = !/\/watched\//.test(path)
-            && (/\/(?:threads|posts|goto)(?:\/|$)/.test(path) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''));
-        const isThread = /^thread_view/i.test(tpl) || isThreadRoute;
+        const isThread = /^thread_view/i.test(tpl) || isThreadRoute(path);
         cls.toggle('smg-thread', isThread);
         const isList = !isThread && (
             /\/(?:watched|whats-new|forums|tags|categories)(\/|$)/i.test(path)
@@ -401,7 +397,7 @@
 
         if (feedContext()) safe(setupFeedView);
         if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
-        if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
+        if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
         safe(pinDeepLinkPost);
         safe(startTimelineCron);
 
@@ -519,7 +515,7 @@
             if (isBookmarksPage() && FEATURES.bookmarksFeed) safe(setupBookmarksFeed);
             if (FEATURES.headerNotices) safe(setupHeaderNotices);
             if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
-            if (!/\/watched\//.test(location.pathname) && (/\/(?:threads|posts|goto)(?:\/|$)/.test(location.pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/.test(location.search || ''))) safe(ingestCurrentThreadPageIfFollowed);
+            if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
             if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();

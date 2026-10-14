@@ -19,6 +19,15 @@
         NONE: 'none',
     });
 
+    // rota de THREAD (/threads/…, /posts/N, /goto/…), ancorada na raiz: /whats-new/posts/ é LISTAGEM.
+    // Única fonte da pergunta "é thread?" (classificador, classes da página, passes e ingestão).
+    function isThreadRoute(pathname, search) {
+        const p = pathname == null ? location.pathname : pathname;
+        const q = search == null ? location.search : search;
+        return !/\/watched\//i.test(p)
+            && (/\/threads\//i.test(p) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(p) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(q || ''));
+    }
+
     function classifyPaintPage(input) {
         const source = input || {};
         const pathname = source.pathname || location.pathname || '/';
@@ -37,7 +46,7 @@
         else if (home) kind = PAINT_PAGE_KINDS.HOME;
         else if (tpl.includes('bookmarks') || /\/account\/bookmarks|\/bookmarks\//i.test(pathname)) kind = PAINT_PAGE_KINDS.BOOKMARKS;
         else if (/\/watched\/threads(?:\/|$)/i.test(pathname) || tpl === 'watched_threads_list') kind = PAINT_PAGE_KINDS.FOLLOWING;
-        else if (/^thread_view/i.test(tpl) || (!/\/watched\//i.test(pathname) && (/\/threads\//i.test(pathname) || /^\/(?:threads|posts|goto)(?:\/|$)/i.test(pathname) || /[?&](?:threads|posts|goto)(?:\/|$)/i.test(search || '')))) kind = PAINT_PAGE_KINDS.THREAD;
+        else if (/^thread_view/i.test(tpl) || isThreadRoute(pathname, search || '')) kind = PAINT_PAGE_KINDS.THREAD;
         else if (/\/forums(?:\/|$)|\/whats-new(?:\/|$)|\/tags(?:\/|$)|\/categories(?:\/|$)|\/account\/alerts(?:\/|$)/i.test(pathname)
             || /^(?:forum_view|whats_new_posts|search_results)$/i.test(tpl)) kind = PAINT_PAGE_KINDS.LISTING;
         else kind = PAINT_PAGE_KINDS.GENERIC;
