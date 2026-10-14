@@ -48,10 +48,8 @@ const CASES = {
     directMedia: { open: thread('<a href="https://cdn.example.com/clip.mp4" class="link link--external">https://cdn.example.com/clip.mp4</a>'), seen: p => !!p.$('.smg-dm-wrap') },
     fileHostCards: { open: thread('<a href="https://gofile.io/d/AbCd12" class="link link--external">https://gofile.io/d/AbCd12</a>'), seen: p => !!p.$('.smg-fhcard') },
     unwrapLinks: { open: thread('<a href="/goto/link-confirmation?url=aHR0cHM6Ly9leGFtcGxlLm9yZy9wYWdl" class="link link--external">Click</a>'), seen: p => p.$('.bbWrapper a').getAttribute('href') === 'https://example.org/page' },
-    // with "Image grid in posts" on (the default) every external link is first turned into a chip carrying
-    // a favicon <img>, and groupPostLinks skips links that contain an image, so nothing is ever grouped:
-    // KNOWN, reported; the toggle is exercised with the image grid off
-    groupLinks: { base: { autoFullImages: false }, open: thread('<a href="https://example.org/a" class="link link--external">one</a> and <a href="https://example.net/b" class="link link--external">two</a>'), seen: p => !!p.$('.smg-post-links') },
+    // with the defaults (image grid on), so links already carrying the script's favicon are grouped too
+    groupLinks: { open: thread('<a href="https://example.org/a" class="link link--external">one</a> and <a href="https://example.net/b" class="link link--external">two</a>'), seen: p => !!p.$('.smg-post-links') },
     infiniteScroll: { open: { url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }], of: 2 }), routes: page2 }, seen: p => p.requested(/page-2/).length > 0 },
     infiniteScrollThreads: { open: { url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }], of: 2 }), routes: page2 }, seen: p => p.requested(/page-2/).length > 0 },
     infiniteScrollTimeline: {
@@ -99,6 +97,13 @@ scenario('the settings panel offers exactly the toggles covered here, and a togg
     toggle.checked = false;
     toggle.dispatchEvent(new page.window.Event('change'));
     assert.equal(JSON.parse(page.gm['smg-features']).groupLinks, false, 'saved to the userscript storage');
+});
+
+scenario('link grouping still runs with the image grid on, ignoring the favicons the script put in the links', async t => {
+    const page = await t.open(thread('<a href="https://example.org/a" class="link link--external">one</a> and <a href="https://example.net/b" class="link link--external">two</a>'));
+    await page.settle(120);
+    assert.ok(page.$$('.bbWrapper a.link--external img.smg-linkfav').length > 0, 'the links carry a favicon from the script');
+    assert.deepEqual(page.$$('.smg-post-links .smg-link-chip').map(a => a.getAttribute('href')), ['https://example.org/a', 'https://example.net/b']);
 });
 
 Object.keys(CASES).forEach(key => {
