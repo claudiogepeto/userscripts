@@ -43,7 +43,14 @@
         }, { signal: ac.signal });
 
         const host = el("div", { class: "fl-host fl-pl" }, video);
-        buildPlayerControls(host, video, src, ac);
+        buildPlayerControls(host, video, src, ac, {
+            nav: navFile,
+            // botão Baixar: o botão de download da própria página, senão o src
+            download: () => {
+                const dlBtn = document.getElementById("downloadButton") || document.querySelector('a[id*="download" i], .download-btn');
+                if (dlBtn) dlBtn.click(); else if (src) window.open(src, "_blank");
+            },
+        });
         mid.appendChild(host);
 
         video.addEventListener("loadedmetadata", () => {

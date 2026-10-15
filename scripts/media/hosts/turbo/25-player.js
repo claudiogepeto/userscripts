@@ -207,7 +207,16 @@
             }, { signal: ac.signal });
 
             const host = el("div", { class: "tb-host tb-pl" }, video);
-            buildPlayerControls(host, video, u, id, ac);
+            buildPlayerControls(host, video, u, ac, {
+                nav: navFile,
+                // botão Baixar: link de download da página, senão /d/<id>, senão o próprio src
+                download: () => {
+                    const dlBtn = document.getElementById("btnDownload") || document.querySelector('a[href*="/d/"]');
+                    if (dlBtn && dlBtn.href) window.open(dlBtn.href, "_blank");
+                    else if (id) window.open("/d/" + id, "_blank");
+                    else if (u) window.open(u, "_blank");
+                },
+            });
             mid.appendChild(host);
 
             video.addEventListener("loadedmetadata", () => {

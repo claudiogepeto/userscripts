@@ -5,8 +5,7 @@
     // seu próprio CSS (mantendo a ordem da cascata) e acrescenta só os overrides dele.
     function mediaComponentCSS(t) {
         const P = t.p, rgbS = t.accentRgb.replace(/,/g, ", ");
-        return {
-            player: `        /* ===== v2.7 — PLAYER MODERNO (accent roxo, estilo YouTube Pro) + SIDEBAR PLAYLIST ===== */
+        const plc = `        /* ===== v2.7 — PLAYER MODERNO (accent roxo, estilo YouTube Pro) + SIDEBAR PLAYLIST ===== */
         :root { --${P}-accent: ${t.accent}; --${P}-accent-rgb: ${rgbS}; }
         .${P}-host { position: relative; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: #000; border-radius: 0 !important; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .${P}-video { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; background: #000 !important; border-radius: 0 !important; outline: none; cursor: pointer; display: block; }
@@ -100,7 +99,8 @@
         .${P}-plc-speeditem svg { width: 14px; height: 14px; opacity: 0; color: var(--${P}-accent, ${t.accent}); flex: 0 0 auto; }
         .${P}-plc-speeditem.on svg { opacity: 1; }
 
-        /* ===== FOTO: ZOOM + PAN ===== */
+`;
+        const photo = `        /* ===== FOTO: ZOOM + PAN ===== */
         .${P}-img-host { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; overflow: visible; }
         .${P}-image { display: block !important; max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; object-fit: contain !important; opacity: 1 !important; filter: none !important; position: static !important; background: transparent !important; border-radius: 0 !important; box-shadow: none !important; cursor: zoom-in; user-select: none; -webkit-user-drag: none; transform-origin: center center; will-change: transform; touch-action: none; }
         .${P}-stage-mid.is-zoomed .${P}-image, .${P}-img-host.is-zoomed .${P}-image { cursor: grab; }
@@ -112,7 +112,8 @@
         .${P}-mirror.is-testing .${P}-mirror-btn svg { display: none; }
         .${P}-mirror.is-testing .${P}-mirror-spin { display: inline-block; }
 
-        /* ===== STAGE: LAYOUT COM SIDEBAR INTEGRADA AO LADO DA TOPBAR E DO PLAYER ===== */
+`;
+        const stage = `        /* ===== STAGE: LAYOUT COM SIDEBAR INTEGRADA AO LADO DA TOPBAR E DO PLAYER ===== */
         html.${P}-has-stage, html.${P}-has-stage body { overflow: hidden !important; }
         html.${P}-file::before { content: ""; position: fixed; inset: 0; background: #0b0c0f; z-index: 98000; pointer-events: none; }
         html.${P}-file.${P}-fallback::before { display: none; }
@@ -228,7 +229,8 @@
             .${P}-playlist-thumb-wrap { flex: 0 0 110px; width: 110px; height: 62px; }
         }
 
-        /* ===== ADAPTAÇÃO MOBILE (<= 768px) ESTILO YOUTUBE ===== */
+`;
+        const mobileA = `        /* ===== ADAPTAÇÃO MOBILE (<= 768px) ESTILO YOUTUBE ===== */
         @media (max-width: 768px) {
             /* 1. O Stage não prende a tela: flui verticalmente com scroll natural */
             html.${P}-has-stage, html.${P}-has-stage body { overflow: auto !important; height: 100% !important; }
@@ -327,7 +329,8 @@
                 max-height: 60vh !important;
             }
 
-            /* 4. Base do player em 2 Linhas:
+`;
+        const plcMobile = `            /* 4. Base do player em 2 Linhas:
                Linha 1: Controles de reprodução (Play, Repeat, Prev, Next, Skips, Vol, Tempo à direita)
                Linha 2: Ações secundárias (Autoplay à esquerda, Velocidade 1x, Report, Download, Share, PiP, Fullscreen à direita) */
             .${P}-plc-bottom {
@@ -403,7 +406,8 @@
                 padding: 0 3px !important;
             }
 
-            /* 5. Próximos vídeos (Sidebar de Playlist) aparecem abaixo do player */
+`;
+        const mobileB = `            /* 5. Próximos vídeos (Sidebar de Playlist) aparecem abaixo do player */
             .${P}-sidebar {
                 flex: 1 0 auto !important;
                 width: 100% !important;
@@ -440,7 +444,12 @@
             .${P}-playlist-name { font-size: 13.5px !important; }
             .${P}-playlist-date-lbl, .${P}-playlist-date-val, .${P}-playlist-meta { font-size: 12px !important; }
         }
-`,
+`;
+        return {
+            player: plc + photo + stage + mobileA + plcMobile + mobileB,
+            // Só o player (hosts que ainda têm stage próprio): controles + regras mobile dos controles.
+            plc: plc + "        @media (max-width: 768px) {\n" + plcMobile + "        }\n",
+            photo,
             actionbar: `        /* Nova Actionbar Integrada com busca, chips e ações */
         .${P}-gallery-actionbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #111318; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 8px 12px; margin: 16px 0 24px; box-shadow: 0 4px 20px rgba(0,0,0,.25); flex-wrap: wrap; }
         .${P}-actionbar-search { position: relative; flex: 1 1 320px; min-width: 240px; max-width: 480px; }

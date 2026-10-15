@@ -232,59 +232,6 @@
         :root { --gf-accent: ${ACCENT}; }
         .gf-host { position: relative; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: #000; border-radius: 0 !important; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .gf-video { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; background: #000 !important; border-radius: 0 !important; outline: none; cursor: pointer; display: block; }
-        .gf-plc-flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        .gf-plc-play { pointer-events: auto; width: 68px; height: 68px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: rgba(14,16,22,.75); backdrop-filter: blur(14px); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,.5); transition: transform .15s, background .15s, opacity .15s, border-color .15s; }
-        .gf-plc-play:hover { transform: scale(1.08); background: rgba(22,24,34,.9); border-color: var(--gf-accent, #f5c400); }
-        .gf-plc-play svg { width: 34px; height: 34px; margin-left: 3px; }
-        .gf-host.is-playing .gf-plc-play { opacity: 0; pointer-events: none; transform: scale(.9); }
-        .gf-host:hover .gf-plc-play { opacity: 1; pointer-events: auto; transform: scale(1); }
-        .gf-plc-seekflash { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,.75); color: #fff; padding: 10px 18px; border-radius: 20px; font-weight: 700; font-size: 15px; pointer-events: none; opacity: 0; transition: opacity .15s; }
-        .gf-plc-seekflash.on { opacity: 1; }
-        .gf-plc-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 0 14px 10px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.85) 100%); opacity: 0; transition: opacity .18s; pointer-events: none; }
-        .gf-host:hover .gf-plc-bottom, .gf-host:not(.is-playing) .gf-plc-bottom, .gf-img-host:hover .gf-plc-bottom, .gf-img-host:focus-within .gf-plc-bottom { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .gf-plc-bottom { opacity: 1; pointer-events: auto; } }
-        .gf-plc-prog { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; }
-        .gf-plc-bar { position: relative; width: 100%; height: 4px; background: rgba(255,255,255,.25); border-radius: 2px; transition: height .1s; }
-        .gf-plc-prog:hover .gf-plc-bar { height: 6px; }
-        .gf-plc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,.4); border-radius: 2px; }
-        .gf-plc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--gf-accent, #f5c400); border-radius: 2px; }
-        .gf-plc-knob { position: absolute; right: -6px; top: 50%; transform: translateY(-50%) scale(0); width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform .1s; box-shadow: 0 0 4px rgba(0,0,0,.5); }
-        .gf-plc-prog:hover .gf-plc-knob { transform: translateY(-50%) scale(1); }
-        .gf-plc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
-        .gf-plc-left, .gf-plc-right { display: flex; align-items: center; gap: 6px; }
-        @media (max-width: 900px) {
-            .gf-plc-row { flex-direction: column !important; align-items: stretch !important; gap: 3px !important; }
-            .gf-plc-left, .gf-plc-right { width: 100% !important; height: 34px !important; gap: 1px !important; }
-            .gf-plc-left .gf-plc-time { margin-left: auto !important; }
-            .gf-plc-right { justify-content: flex-end !important; padding-top: 3px !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-            .gf-plc-autoplay { margin-right: auto !important; }
-        }
-        .gf-plc-timetip { position: absolute; bottom: calc(100% + 7px); transform: translateX(-50%); background: rgba(14,15,19,.95); border: 1px solid rgba(255,255,255,.16); color: #fff; font: 600 11px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 4px 7px; border-radius: 6px; pointer-events: none; opacity: 0; white-space: nowrap; z-index: 10; }
-        .gf-plc-prog:hover .gf-plc-timetip { opacity: 1; }
-        .gf-plc-act { position: relative; border: 0; background: transparent; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background .12s, color .12s; font-size: 13px; flex: 0 0 auto; }
-        .gf-plc-act:hover { background: rgba(255,255,255,.12); }
-        .gf-plc-act.is-active { color: var(--gf-accent, #f5c400); background: rgba(245,196,0,.16); }
-        .gf-plc-act svg { width: 20px; height: 20px; }
-        .gf-plc-time { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); margin-left: 4px; font-variant-numeric: tabular-nums; }
-        .gf-plc-skip { position: relative; border-radius: 50%; }
-        .gf-plc-skipn { position: absolute; left: 0; right: 0; top: 51%; transform: translateY(-50%); text-align: center; font: 800 8.5px/1 Inter, system-ui, sans-serif; pointer-events: none; }
-        .gf-plc-autoplay { width: auto; height: 30px; padding: 0 8px 0 10px; border-radius: 15px; gap: 8px; font: 600 12px/1 Inter, system-ui, sans-serif; color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
-        .gf-plc-autoplay:hover { background: rgba(255,255,255,.12); }
-        .gf-plc-autoplay.is-active { background: rgba(245,196,0,.16); border-color: rgba(245,196,0,.4); color: #fff; }
-        .gf-plc-ap-pill { position: relative; width: 28px; height: 16px; border-radius: 9px; background: rgba(255,255,255,.24); display: block; flex: 0 0 28px; }
-        .gf-plc-ap-knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; display: block; transition: transform .18s ease; }
-        .gf-plc-autoplay.is-active .gf-plc-ap-pill { background: var(--gf-accent, #f5c400); }
-        .gf-plc-autoplay.is-active .gf-plc-ap-knob { transform: translateX(12px); background: #1a1400; }
-        .gf-plc-vol { display: flex; align-items: center; gap: 4px; }
-        .gf-plc-volbar { width: 0; height: 28px; display: flex; align-items: center; cursor: pointer; overflow: hidden; transition: width .18s ease, margin .18s ease; }
-        .gf-plc-vol:hover .gf-plc-volbar, .gf-plc-volbar:hover { width: 62px; margin-right: 4px; }
-        .gf-plc-volfill { width: 100%; height: 4px; background: #fff; border-radius: 2px; position: relative; }
-        .gf-plc-speedwrap { position: relative; }
-        .gf-plc-speedmenu { position: absolute; bottom: 42px; right: 0; background: rgba(18,20,26,.96); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px; display: none; flex-direction: column; gap: 2px; min-width: 86px; max-height: 240px; overflow-y: auto; box-shadow: 0 10px 28px rgba(0,0,0,.6); z-index: 10; }
-        .gf-plc-speedmenu.open { display: flex; }
-        .gf-plc-speeditem { border: 0; background: transparent; color: #fff; padding: 6px 10px; font: 600 12.5px/1 Inter, sans-serif; border-radius: 6px; cursor: pointer; text-align: left; }
-        .gf-plc-speeditem:hover { background: rgba(255,255,255,.1); }
-        .gf-plc-speeditem.on { color: var(--gf-accent, #f5c400); font-weight: 800; }
 
         /* ===================== FOTO ZOOM/PAN ===================== */
         .gf-img-host { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; overflow: visible; }
@@ -352,6 +299,7 @@
             .gf-playlist-name { font-size: 13.5px !important; }
             .gf-playlist-meta, .gf-playlist-date-lbl, .gf-playlist-date-val { font-size: 12px !important; }
         }
+${mediaComponentCSS(mediaTheme()).plc}
     `;
 
     addCSS(GF_CSS);

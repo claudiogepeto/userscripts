@@ -78,61 +78,7 @@
         .fl-host { position: relative; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .fl-video { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; background: #000 !important; outline: none; cursor: pointer; display: block; }
 
-        .fl-plc-flash { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-        .fl-pl:not(.is-playing):not(.is-buffering) .fl-plc-flash { opacity: 1; pointer-events: auto; cursor: pointer; }
-        .fl-plc-flash button { border: 0; border-radius: 50%; cursor: pointer; padding: 0; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; transition: transform .12s ease, background .12s ease; pointer-events: auto; }
-        .fl-plc-flash button:hover { transform: scale(1.08); background: rgba(0,0,0,.8); }
-        .fl-plc-play { width: 64px; height: 64px; }
-        .fl-plc-play svg { width: 28px; height: 28px; display: block; margin-left: 3px; }
-
-        .fl-plc-seekflash { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 3; padding: 9px 18px; border-radius: 24px; background: rgba(0,0,0,.75); color: #fff; font: 700 15px/1 Inter, sans-serif; pointer-events: none; opacity: 0; transition: opacity .15s ease; }
-        .fl-plc-seekflash.on { opacity: 1; }
-
-        .fl-plc-bottom {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column;
-            padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.45) 65%, transparent 100%);
-            opacity: 0; pointer-events: none; transition: opacity .18s ease; gap: 4px;
-        }
-        .fl-host:hover .fl-plc-bottom, .fl-pl:not(.is-playing) .fl-plc-bottom, .fl-img-host:hover .fl-plc-bottom, .fl-img-host:focus-within .fl-plc-bottom { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .fl-plc-bottom { opacity: 1; pointer-events: auto; } }
-
-        .fl-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-        .fl-plc-bar { position: relative; width: 100%; height: 3.5px; background: rgba(255,255,255,.25); border-radius: 2px; transition: height .1s ease; }
-        .fl-plc-prog:hover .fl-plc-bar { height: 5px; }
-        .fl-plc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,.38); border-radius: 2px; pointer-events: none; }
-        .fl-plc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--fl-accent, #14b8a6); border-radius: 2px; pointer-events: none; }
-        .fl-plc-knob { position: absolute; right: -6px; top: 50%; transform: translateY(-50%) scale(0); width: 12px; height: 12px; border-radius: 50%; background: var(--fl-accent, #14b8a6); box-shadow: 0 0 4px rgba(0,0,0,.5); transition: transform .1s ease; }
-        .fl-plc-prog:hover .fl-plc-knob { transform: translateY(-50%) scale(1); }
-
-        .fl-plc-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-        .fl-plc-left, .fl-plc-right { display: flex; align-items: center; gap: 3px; }
-        .fl-plc-act { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; background: transparent; color: #fff; cursor: pointer; border-radius: 50%; font: 600 13px/1 Inter, sans-serif; transition: background .12s, color .12s; }
-        .fl-plc-act:hover { background: rgba(255,255,255,.14); color: var(--fl-accent, #14b8a6); }
-        .fl-plc-act svg { width: 22px; height: 22px; display: block; }
-        .fl-plc-skip { position: relative; }
-        .fl-plc-skipn { position: absolute; font-size: 8.5px; font-weight: 800; top: 52%; left: 50%; transform: translate(-50%, -50%); color: #fff; }
-        .fl-plc-time { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); padding: 0 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-        .fl-plc-vol { display: flex; align-items: center; gap: 2px; }
-        .fl-plc-volbar { width: 0; height: 28px; display: flex; align-items: center; cursor: pointer; overflow: hidden; transition: width .18s ease, margin .18s ease; touch-action: none; }
-        .fl-plc-vol:hover .fl-plc-volbar, .fl-plc-volbar:hover { width: 62px; margin-right: 4px; }
-        .fl-plc-volfill { width: 100%; height: 4px; background: #fff; border-radius: 2px; position: relative; }
-
         /* Velocidade plana (sem pill pesado) */
-        .fl-plc-act.is-active { color: ${ACCENT}; }
-        .fl-plc-autoplay { width: auto; height: 30px; padding: 0 8px 0 10px; border-radius: 15px; gap: 8px; font: 600 12px/1 Inter, system-ui, sans-serif; color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
-        .fl-plc-autoplay.is-active { background: rgba(20,184,166,.16); border-color: rgba(20,184,166,.45); color: #fff; }
-        .fl-plc-ap-pill { position: relative; width: 28px; height: 16px; border-radius: 9px; background: rgba(255,255,255,.24); display: block; flex: 0 0 28px; }
-        .fl-plc-ap-knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; display: block; transition: transform .18s ease; }
-        .fl-plc-autoplay.is-active .fl-plc-ap-pill { background: ${ACCENT}; }
-        .fl-plc-autoplay.is-active .fl-plc-ap-knob { transform: translateX(12px); background: #04221e; }
-        .fl-plc-speed { width: auto !important; min-width: 32px; padding: 0 6px; color: #fff; font: 700 13px/1 Inter, sans-serif; font-variant-numeric: tabular-nums; background: transparent !important; }
-        .fl-plc-speedwrap { position: relative; }
-        .fl-plc-speedmenu { position: absolute; bottom: 42px; right: 0; background: rgba(18,20,26,.96); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px; display: none; flex-direction: column; gap: 2px; min-width: 86px; max-height: 240px; overflow-y: auto; box-shadow: 0 10px 28px rgba(0,0,0,.6); z-index: 10; }
-        .fl-plc-speedmenu.open { display: flex; }
-        .fl-plc-speeditem { border: 0; background: transparent; color: #fff; padding: 6px 10px; font: 600 12.5px/1 Inter, sans-serif; border-radius: 6px; cursor: pointer; text-align: left; }
-        .fl-plc-speeditem:hover { background: rgba(255,255,255,.1); }
-        .fl-plc-speeditem.on { color: var(--fl-accent, #14b8a6); font-weight: 800; }
 
         /* ===================== FOTO ZOOM/PAN REFINADO ===================== */
         .fl-img-host { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; overflow: visible; }
@@ -286,20 +232,14 @@
             .fl-playlist-thumb-wrap { flex: 0 0 132px !important; width: 132px !important; height: 74px !important; }
             .fl-playlist-name { font-size: 13.5px !important; }
             .fl-playlist-meta, .fl-playlist-date-lbl, .fl-playlist-date-val { font-size: 12px !important; }
-            .fl-plc-row { flex-direction: column !important; align-items: stretch !important; gap: 3px !important; }
-            .fl-plc-left, .fl-plc-right { width: 100% !important; height: 34px !important; }
-            .fl-plc-left .fl-plc-time { margin-left: auto !important; }
-            .fl-plc-right { justify-content: flex-end !important; padding-top: 3px !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-            .fl-plc-autoplay { margin-right: auto !important; width: auto !important; }
+
             .fl-vrow { flex-wrap: wrap !important; height: auto !important; padding: 8px 10px !important; }
             .fl-vrow-top { width: 100% !important; justify-content: space-between !important; }
             .fl-vrow-sub { width: 100% !important; justify-content: flex-start !important; overflow-x: auto !important; }
             .fl-name { max-width: 75vw !important; }
         }
-        @media (max-width: 600px) {
-            .fl-plc-act { width: 30px; height: 30px; }
-            .fl-plc-act svg { width: 20px; height: 20px; }
-        }
+        
+${mediaComponentCSS(mediaTheme()).plc}
     `;
 
     addCSS(CSS);

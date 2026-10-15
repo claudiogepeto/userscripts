@@ -16,6 +16,15 @@
         return IC.file;
     };
 
+    // Ganchos do gofile para o player do core: navegação no stage e download pelo botão nativo do item.
+    const GF_PLAYER_HOOKS = {
+        nav: dir => navStage(dir),
+        download: src => {
+            if (stCur && stCur._gf && stCur._gf.downloadBtn) stCur._gf.downloadBtn.click();
+            else if (src) window.open(src, "_blank");
+        },
+    };
+
     function toggleSidebar(forceState) {
         if (!stage) return;
         stTempCollapsed = false;
@@ -615,7 +624,7 @@
                     }, { signal: curAc.signal });
 
                     const host = el("div", { class: "gf-host gf-pl" }, playerVid);
-                    buildPlayerControls(host, playerVid, src, curAc);
+                    buildPlayerControls(host, playerVid, src, curAc, GF_PLAYER_HOOKS);
                     stMid.appendChild(host);
 
                     const p = playerVid.play();
@@ -662,7 +671,7 @@
             }, { signal: curAc.signal });
 
             const host = el("div", { class: "gf-host gf-pl" }, playerVid);
-            buildPlayerControls(host, playerVid, videoSrc, curAc);
+            buildPlayerControls(host, playerVid, videoSrc, curAc, GF_PLAYER_HOOKS);
             stMid.appendChild(host);
 
             const p = playerVid.play();
@@ -705,7 +714,7 @@
                 }, { signal: curAc.signal });
 
                 const host = el("div", { class: "gf-host gf-pl" }, playerVid);
-                buildPlayerControls(host, playerVid, src, curAc);
+                buildPlayerControls(host, playerVid, src, curAc, GF_PLAYER_HOOKS);
                 stMid.appendChild(host);
 
                 const p = playerVid.play();

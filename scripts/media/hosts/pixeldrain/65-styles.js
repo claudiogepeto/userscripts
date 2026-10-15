@@ -494,57 +494,7 @@
         .pdx-img-host.pdx-zoomed .pdx-image { cursor: grab; }
         .pdx-img-host.pdx-zoomed .pdx-image:active { cursor: grabbing; }
 
-        .pdx-plc-flash { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-        .pdx-pl:not(.pdx-pl-playing):not(.pdx-pl-buffering) .pdx-plc-flash { opacity: 1; }
-        .pdx-plc-play { width: 66px; height: 66px; border: 0; border-radius: 50%; cursor: pointer; padding: 0; background: rgba(0,0,0,.65); color: #fff; display: flex; align-items: center; justify-content: center; transition: transform .12s, background .12s; pointer-events: auto; }
-        .pdx-plc-play:hover { transform: scale(1.08); background: rgba(0,0,0,.85); }
-        .pdx-plc-play svg { width: 28px; height: 28px; margin-left: 3px; }
-
-        .pdx-plc-bottom {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 12px 10px 4px;
-            background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 65%, transparent 100%);
-            opacity: 0; pointer-events: none; transition: opacity .18s ease; display: flex; flex-direction: column; gap: 4px;
-        }
-        .pdx-pl:hover .pdx-plc-bottom, .pdx-pl:not(.pdx-pl-playing) .pdx-plc-bottom, .pdx-img-host:hover .pdx-plc-bottom, .pdx-img-host:focus-within .pdx-plc-bottom { opacity: 1; pointer-events: auto; }
-        @media (hover:none) { .pdx-plc-bottom { opacity: 1; pointer-events: auto; } }
-
-        .pdx-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-        .pdx-plc-bar { position: relative; width: 100%; height: 3.5px; background: rgba(255,255,255,.28); border-radius: 3px; transition: height .1s ease; }
-        .pdx-plc-prog:hover .pdx-plc-bar { height: 5px; }
-        .pdx-plc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,.32); border-radius: 3px; }
-        .pdx-plc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--pdx-green); border-radius: 3px; }
-        .pdx-plc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--pdx-green); transform: translateY(-50%) scale(0); transition: transform .1s ease; }
-        .pdx-plc-prog:hover .pdx-plc-knob { transform: translateY(-50%) scale(1); }
-
-        .pdx-plc-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-        .pdx-plc-left, .pdx-plc-right { display: flex; align-items: center; gap: 3px; }
-        .pdx-plc-act { width: 36px; height: 36px; border: 0; border-radius: 50%; cursor: pointer; padding: 0; background: transparent; color: #fff; display: flex; align-items: center; justify-content: center; transition: opacity .1s, transform .1s; }
-        .pdx-plc-act:hover { opacity: 1; } .pdx-plc-act:active { transform: scale(.9); }
-        .pdx-plc-act.is-active { color: #fff; background: rgba(255,255,255,.16); }
-        .pdx-plc-act svg { width: 22px; height: 22px; display: block; }
-
-        .pdx-plc-vol { display: flex; align-items: center; }
-        .pdx-plc-volbar { position: relative; width: 0; height: 4px; border-radius: 3px; background: rgba(255,255,255,.35); cursor: pointer; opacity: 0; transition: width .18s, opacity .18s; touch-action: none; }
-        .pdx-plc-vol:hover .pdx-plc-volbar { width: 62px; opacity: 1; margin: 0 6px 0 2px; }
-        .pdx-plc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 3px; }
-        .pdx-plc-time { color: #fff; font: 600 12px/1 Inter, sans-serif; font-variant-numeric: tabular-nums; padding: 0 6px; white-space: nowrap; flex: 0 0 auto; }
-
         /* Velocidade limpa (sem pill pesado) */
-        .pdx-plc-autoplay { width: auto; height: 30px; padding: 0 8px 0 10px; border-radius: 15px; gap: 8px; font: 600 12px/1 Inter, system-ui, sans-serif; color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
-        .pdx-plc-autoplay.is-active { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.45); color: #fff; }
-        .pdx-plc-ap-pill { position: relative; width: 28px; height: 16px; border-radius: 9px; background: rgba(255,255,255,.24); display: block; flex: 0 0 28px; }
-        .pdx-plc-ap-knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; display: block; transition: transform .18s ease; }
-        .pdx-plc-autoplay.is-active .pdx-plc-ap-pill { background: #fff; }
-        .pdx-plc-autoplay.is-active .pdx-plc-ap-knob { transform: translateX(12px); background: #111; }
-        .pdx-plc-speed { width: auto !important; min-width: 34px; padding: 0 6px; color: #fff; font: 700 13px/1 Inter, sans-serif; font-variant-numeric: tabular-nums; background: transparent !important; }
-        .pdx-plc-skip { position: relative; }
-        .pdx-plc-skip .pdx-plc-skipn { position: absolute; left: 0; right: 0; top: 53%; transform: translateY(-50%); text-align: center; font: 800 8.5px Inter; color: #fff; pointer-events: none; }
-        .pdx-plc-speedwrap { position: relative; display: flex; align-items: center; }
-        .pdx-plc-speedmenu { position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 5; display: none; flex-direction: column; gap: 2px; padding: 6px; max-height: 240px; overflow: auto; background: rgba(14,16,14,.97); border: 1px solid var(--pdx-line); border-radius: 9px; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
-        .pdx-plc-speedmenu.open { display: flex; }
-        .pdx-plc-speeditem { border: 0; background: transparent; color: #fff; font: 600 13px Inter; padding: 7px 16px; border-radius: 6px; cursor: pointer; text-align: right; }
-        .pdx-plc-speeditem:hover { background: rgba(255,255,255,.12); }
-        .pdx-plc-speeditem.on { color: var(--pdx-green); font-weight: 800; }
 
         .pdx-plc-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
         .pdx-plc-sprev { left: 12px; } .pdx-plc-snext { right: 12px; }
@@ -552,10 +502,6 @@
         @media (hover:none) { .pdx-plc-side { opacity: .85; pointer-events: auto; } }
         .pdx-plc-side:hover { background: rgba(0,0,0,.75); }
         .pdx-plc-side svg { width: 24px; height: 24px; }
-
-        .pdx-plc-seekflash { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 3; color: #fff; font: 700 15px Inter; background: rgba(0,0,0,.6); padding: 9px 16px; border-radius: 999px; opacity: 0; transition: opacity .15s; pointer-events: none; }
-        .pdx-plc-seekflash.on { opacity: 1; }
-        .pdx-pl.pdx-pl-buffering::after { content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; border: 3px solid rgba(255,255,255,.2); border-top-color: var(--pdx-green); animation: pdx-spin .8s linear infinite; z-index: 4; }
 
         .pdx-fail { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: #fff; background: rgba(0,0,0,.92); font: 14px Inter; }
         .pdx-failrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -597,11 +543,7 @@
             .pdx-playlist-thumb-wrap { flex: 0 0 132px !important; width: 132px !important; height: 74px !important; }
             .pdx-playlist-name { font-size: 13.5px !important; }
             .pdx-playlist-meta, .pdx-playlist-date-lbl, .pdx-playlist-date-val { font-size: 12px !important; }
-            .pdx-plc-row { flex-direction: column !important; align-items: stretch !important; gap: 3px !important; }
-            .pdx-plc-left, .pdx-plc-right { width: 100% !important; height: 34px !important; }
-            .pdx-plc-left .pdx-plc-time { margin-left: auto !important; }
-            .pdx-plc-right { justify-content: flex-end !important; padding-top: 3px !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-            .pdx-plc-autoplay { margin-right: auto !important; width: auto !important; }
+
             .pdx-vrow {
                 flex-direction: column !important;
                 height: auto !important;
@@ -614,14 +556,8 @@
             .pdx-vrow-actions { width: 100% !important; justify-content: space-between !important; overflow-x: auto !important; }
             .pdx-name { max-width: calc(100vw - 120px) !important; }
         }
-        @media (max-width: 600px) {
-            .pdx-plc-act { width: 32px; height: 32px; }
-            .pdx-plc-act svg { width: 20px; height: 20px; }
-            .pdx-plc-play { width: 54px; height: 54px; }
-            .pdx-plc-play svg { width: 24px; height: 24px; }
-            .pdx-plc-time { font-size: 11px; padding: 0 3px; }
-            .pdx-plc-act { width: 30px; height: 30px; }
-        }
+        
+${mediaComponentCSS(mediaTheme()).plc}
     `);
 
     /* Observer & Boot */

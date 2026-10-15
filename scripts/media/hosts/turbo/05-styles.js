@@ -79,63 +79,7 @@
         .tb-spin { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; border: 3px solid rgba(255,255,255,.22); border-top-color: var(--tb-accent, #f97316); animation: tb-spin .8s linear infinite; z-index: 4; pointer-events: none; }
         @keyframes tb-spin { to { transform: rotate(360deg); } }
 
-        .tb-plc-flash { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-        .tb-pl:not(.is-playing):not(.is-buffering) .tb-plc-flash { opacity: 1; pointer-events: auto; cursor: pointer; }
-        .tb-plc-flash button { border: 0; border-radius: 50%; cursor: pointer; padding: 0; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; transition: transform .12s ease, background .12s ease; pointer-events: auto; }
-        .tb-plc-flash button:hover { transform: scale(1.08); background: rgba(0,0,0,.8); }
-        .tb-plc-play { width: 64px; height: 64px; }
-        .tb-plc-play svg { width: 28px; height: 28px; display: block; margin-left: 3px; }
-
-        .tb-plc-seekflash { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 3; padding: 9px 18px; border-radius: 24px; background: rgba(0,0,0,.75); color: #fff; font: 700 15px/1 Inter, sans-serif; pointer-events: none; opacity: 0; transition: opacity .15s ease; }
-        .tb-plc-seekflash.on { opacity: 1; }
-
-        .tb-pl.is-buffering::after { content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; border: 3px solid rgba(255,255,255,.22); border-top-color: var(--tb-accent, #f97316); animation: tb-spin .8s linear infinite; z-index: 4; pointer-events: none; }
-
-        .tb-plc-bottom {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column;
-            padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.45) 65%, transparent 100%);
-            opacity: 0; pointer-events: none; transition: opacity .18s ease; gap: 4px;
-        }
-        .tb-host:hover .tb-plc-bottom, .tb-pl:not(.is-playing) .tb-plc-bottom, .tb-img-host:hover .tb-plc-bottom, .tb-img-host:focus-within .tb-plc-bottom { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .tb-plc-bottom { opacity: 1; pointer-events: auto; } }
-
-        .tb-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-        .tb-plc-bar { position: relative; width: 100%; height: 3.5px; background: rgba(255,255,255,.25); border-radius: 2px; transition: height .1s ease; }
-        .tb-plc-prog:hover .tb-plc-bar { height: 5px; }
-        .tb-plc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,.38); border-radius: 2px; pointer-events: none; }
-        .tb-plc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--tb-accent, #f97316); border-radius: 2px; pointer-events: none; }
-        .tb-plc-knob { position: absolute; right: -6px; top: 50%; transform: translateY(-50%) scale(0); width: 12px; height: 12px; border-radius: 50%; background: var(--tb-accent, #f97316); box-shadow: 0 0 4px rgba(0,0,0,.5); transition: transform .1s ease; }
-        .tb-plc-prog:hover .tb-plc-knob { transform: translateY(-50%) scale(1); }
-
-        .tb-plc-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-        .tb-plc-left, .tb-plc-right { display: flex; align-items: center; gap: 3px; }
-        .tb-plc-act { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; background: transparent; color: #fff; cursor: pointer; border-radius: 50%; font: 600 13px/1 Inter, sans-serif; transition: background .12s, color .12s; }
-        .tb-plc-act:hover { background: rgba(255,255,255,.14); color: var(--tb-accent, #f97316); }
-        .tb-plc-act.is-active { color: var(--tb-accent, #f97316); }
-        .tb-plc-act svg { width: 22px; height: 22px; display: block; }
-        .tb-plc-skip { position: relative; }
-        .tb-plc-skipn { position: absolute; font-size: 8.5px; font-weight: 800; top: 52%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-shadow: 0 0 2px rgba(0,0,0,.5); }
-        .tb-plc-time { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); padding: 0 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-        .tb-plc-vol { display: flex; align-items: center; gap: 2px; }
-        .tb-plc-volbar { width: 0; height: 28px; display: flex; align-items: center; cursor: pointer; overflow: hidden; transition: width .18s ease, margin .18s ease; touch-action: none; }
-        .tb-plc-vol:hover .tb-plc-volbar, .tb-plc-volbar:hover { width: 62px; margin-right: 4px; }
-        .tb-plc-volfill { width: 100%; height: 4px; background: #fff; border-radius: 2px; position: relative; }
-
         /* Velocidade plana (sem botão pill pesado) */
-        .tb-plc-autoplay { width: auto; height: 30px; padding: 0 8px 0 10px; border-radius: 15px; gap: 8px; font: 600 12px/1 Inter, system-ui, sans-serif; color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
-        .tb-plc-autoplay.is-active { background: rgba(249,115,22,.16); border-color: rgba(249,115,22,.45); color: #fff; }
-        .tb-plc-ap-pill { position: relative; width: 28px; height: 16px; border-radius: 9px; background: rgba(255,255,255,.24); display: block; flex: 0 0 28px; }
-        .tb-plc-ap-knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; display: block; transition: transform .18s ease; }
-        .tb-plc-autoplay.is-active .tb-plc-ap-pill { background: var(--tb-accent, #f97316); }
-        .tb-plc-autoplay.is-active .tb-plc-ap-knob { transform: translateX(12px); background: #1c0a00; }
-        .tb-plc-speed { width: auto !important; min-width: 32px; padding: 0 6px; color: #fff; font: 700 13px/1 Inter, sans-serif; font-variant-numeric: tabular-nums; background: transparent !important; }
-        .tb-plc-speedwrap { position: relative; }
-        .tb-plc-speedmenu { position: absolute; bottom: 42px; right: 0; background: rgba(18,20,26,.96); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px; display: none; flex-direction: column; gap: 2px; min-width: 86px; max-height: 240px; overflow-y: auto; box-shadow: 0 10px 28px rgba(0,0,0,.6); z-index: 10; }
-        .tb-plc-speedmenu.open { display: flex; }
-        .tb-plc-speeditem { border: 0; background: transparent; color: #fff; padding: 6px 10px; font: 600 12.5px/1 Inter, sans-serif; border-radius: 6px; cursor: pointer; text-align: left; }
-        .tb-plc-speeditem:hover { background: rgba(255,255,255,.1); }
-        .tb-plc-speeditem.on { color: var(--tb-accent, #f97316); font-weight: 800; }
 
         /* ===================== SIDEBAR DA PLAYLIST ===================== */
         .tb-sidebar {
@@ -306,20 +250,14 @@
             .tb-playlist-thumb-wrap { flex: 0 0 132px !important; width: 132px !important; height: 74px !important; }
             .tb-playlist-name { font-size: 13.5px !important; }
             .tb-playlist-meta, .tb-playlist-date-lbl, .tb-playlist-date-val { font-size: 12px !important; }
-            .tb-plc-row { flex-direction: column !important; align-items: stretch !important; gap: 3px !important; }
-            .tb-plc-left, .tb-plc-right { width: 100% !important; height: 34px !important; }
-            .tb-plc-left .tb-plc-time { margin-left: auto !important; }
-            .tb-plc-right { justify-content: flex-end !important; padding-top: 3px !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-            .tb-plc-autoplay { margin-right: auto !important; width: auto !important; }
+
             .tb-vrow { flex-wrap: wrap !important; height: auto !important; padding: 8px 10px !important; }
             .tb-vrow-top { width: 100% !important; justify-content: space-between !important; }
             .tb-vrow-sub { width: 100% !important; justify-content: flex-start !important; overflow-x: auto !important; }
             .tb-name { max-width: 75vw !important; }
         }
-        @media (max-width: 600px) {
-            .tb-plc-act { width: 30px; height: 30px; }
-            .tb-plc-act svg { width: 20px; height: 20px; }
-        }
+        
+${mediaComponentCSS(mediaTheme()).plc}
     `;
 
     addCSS(CSS);
