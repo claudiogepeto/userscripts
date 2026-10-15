@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.5.2
+// @version      3.5.3
 // @description  Card grid, search, custom player, YouTube-style theater stage with sidebar playlist, media grouping (Videos & Photos), instant photo zoom, and AMOLED styling for GoFile.
 // @author       claudiogepeto
 // @run-at       document-start
@@ -706,6 +706,7 @@
     let stage, stMid, stName, stSize, stDl, stIcon, stCur = null;
     let stSidebarList, stSbCount, stPlBtn, stTypeStat;
     let isSidebarCollapsed = localStorage.getItem("gf_sidebar_collapsed") === "1";
+    let stTempCollapsed = false;   // recolhida só nesta abertura (pasta de 1 item); não persiste
     let plGroupFilter = "all"; // "all" | "video" | "image" | "text"
     let plSortMode = "default"; // "default" | "name"
     let plSearchQuery = "";
@@ -721,6 +722,7 @@
 
     function toggleSidebar(forceState) {
         if (!stage) return;
+        stTempCollapsed = false;
         isSidebarCollapsed = typeof forceState === "boolean" ? forceState : !stage.classList.contains("is-sidebar-collapsed");
         stage.classList.toggle("is-sidebar-collapsed", isSidebarCollapsed);
         try { localStorage.setItem("gf_sidebar_collapsed", isSidebarCollapsed ? "1" : "0"); } catch {}
@@ -1449,9 +1451,13 @@
         }, 80);
     }
 
-    function openStage(card) {
+    // collapseSidebar: abre com a playlist recolhida SÓ nesta abertura (pasta de 1 item), sem gravar gf_sidebar_collapsed.
+    // Vale até fechar o stage ou o usuário mexer na sidebar (toggleSidebar limpa).
+    function openStage(card, opts) {
         buildStage();
         stCur = card;
+        if (opts && opts.collapseSidebar) stTempCollapsed = true;
+        stage.classList.toggle("is-sidebar-collapsed", stTempCollapsed || isSidebarCollapsed);
         stage.classList.add("open");
         document.documentElement.classList.add("gf-has-stage");
         renderPlaylist();
@@ -1488,6 +1494,7 @@
         });
 
         stage.classList.remove("open");
+        stTempCollapsed = false;
         document.documentElement.classList.remove("gf-has-stage");
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
@@ -1970,7 +1977,7 @@
                     autoExpandedUrl = location.href;
                     buildStage();
                     if (!stage || !stage.classList.contains("open")) {
-                        openStage(targetCard);
+                        openStage(targetCard, { collapseSidebar: true });
                     }
                 }
             }, 80);
