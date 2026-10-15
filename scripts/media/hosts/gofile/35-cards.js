@@ -17,6 +17,17 @@
         return "";
     }
 
+    // "dd/mm/aaaa hh:mm" (compactPtDate) em ms; 0 quando não há data.
+    function ptDateTs(text) {
+        const m = String(text || "").match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+        return m ? new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime() : 0;
+    }
+    function sizeBytes(text) {
+        const m = String(text || "").match(/(\d+(?:\.\d+)?)\s?(B|KB|MB|GB|TB)\b/i);
+        return m ? parseFloat(m[1]) * Math.pow(1024, ["B", "KB", "MB", "GB", "TB"].indexOf(m[2].toUpperCase())) : 0;
+    }
+    let cardSeq = 0;   // ordem em que o gofile entregou os cards (ficha "Padrão" e desagrupar)
+
     function extractGofileItemData(it) {
         let cleanName = "";
         const nameP = it.querySelector('[data-action="open-file"] p.truncate, [data-action="open-file"] p, p.truncate');
@@ -88,6 +99,7 @@
         if (!name) return;
 
         it.dataset.gfDone = "1";
+        it.dataset.gfOrigIdx = String(cardSeq++);
         it.classList.add("gf-card");
 
         const sizeText = data.sizeText;
@@ -122,6 +134,8 @@
             displayTitle: data.displayTitle,
             size: sizeText,
             uploadDate: data.uploadDate,
+            uploadTs: ptDateTs(data.uploadDate),
+            sizeBytes: sizeBytes(sizeText),
             extractedDate: data.extractedDate,
             thumb: thumbSrc,
             kind,
@@ -169,13 +183,7 @@
         checkEl.addEventListener("click", e => {
             e.preventDefault();
             e.stopPropagation();
-            const nowSelected = !it.classList.contains("is-selected");
-            it.classList.toggle("is-selected", nowSelected);
-            checkEl.classList.toggle("is-selected", nowSelected);
-            if (selectBtn) {
-                try { selectBtn.click(); } catch (err) {}
-            }
-            updateBulk();
+            toggleCardSelected(it);
         });
 
         // Informações e datas no corpo do card
@@ -207,7 +215,8 @@
             if (e.target.closest(".gf-card-select")) return;
             e.preventDefault();
             e.stopPropagation();
-            if (playable) openStage(it);
+            if (selectMode) toggleCardSelected(it);
+            else if (playable) openStage(it);
             else if (openBtn) openBtn.click();
         }, true);
     }
@@ -334,5 +343,5 @@
         rows.forEach(processItem);
         injectFolderActions();
         checkAutoExpandSingleItem();
-        if (isGroupByType) groupGalleryByType(true);
+        arrangeGallery();
     }

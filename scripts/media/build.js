@@ -58,6 +58,7 @@ const MANIFEST = {
         'core/dates.js',
         'core/position.js',
         'core/history.js',
+        'core/stage.js',
         '10-helpers.js',
         '20-stage-builder.js',
         '25-group-by-type.js',

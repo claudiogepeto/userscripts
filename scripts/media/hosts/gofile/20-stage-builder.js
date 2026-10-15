@@ -4,7 +4,9 @@
     let isSidebarCollapsed = localStorage.getItem("gf_sidebar_collapsed") === "1";
     let stTempCollapsed = false;   // recolhida só nesta abertura (pasta de 1 item); não persiste
     let plGroupFilter = "all"; // "all" | "video" | "image" | "text"
-    let plSortMode = "default"; // "default" | "name"
+    let plSortMode = prefs.plSort || "default"; // fichas do bunkr: "default" | "upload" | "title" | "name"
+    let plSortDir = prefs.plSortDir || "desc";
+    let sbTabs = null;
     let plSearchQuery = "";
 
     const kindIcon = k => {
@@ -95,8 +97,10 @@
         const sbHeader = el("div", { class: "gf-sidebar-header" });
         stSbCount = el("span", null, "(0)");
         const sbTitle = el("div", { class: "gf-sidebar-title" }, el("span", null, "Arquivos da pasta"), stSbCount);
+        sbTitle.insertAdjacentHTML("afterbegin", IC.playlist);
         const sbActions = el("div", { class: "gf-sidebar-actions" });
-        const galleryBtn = el("button", { class: "gf-sidebar-btn", type: "button", title: "Abrir a galeria", onClick: closeStage }, "Galeria");
+        const galleryBtn = el("button", { class: "gf-sidebar-btn gf-sidebar-gallery-btn", type: "button", title: "Ver galeria completa da pasta", onClick: closeStage }, el("span", null, "Galeria"));
+        galleryBtn.insertAdjacentHTML("afterbegin", IC.grid);
         const closeSb = el("button", { class: "gf-sidebar-btn gf-sidebar-close", type: "button", title: "Recolher sidebar (p)", onClick: () => toggleSidebar(true) }); closeSb.innerHTML = IC.close;
         sbActions.append(galleryBtn, closeSb);
         sbHeader.append(sbTitle, sbActions);
@@ -110,43 +114,26 @@
         });
         sbSearch.appendChild(sbInput);
 
-        // Abas de Agrupamento por Tipo
-        const sbTabs = el("div", { class: "gf-sidebar-filter-tabs" });
-        const tabAll = el("button", { class: "gf-tab-chip is-active", type: "button", dataset: { group: "all" } }, "Todos");
-        const tabVideos = el("button", { class: "gf-tab-chip", type: "button", dataset: { group: "video" } }, "Vídeos");
-        const tabImages = el("button", { class: "gf-tab-chip", type: "button", dataset: { group: "image" } }, "Fotos");
-        const tabTexts = el("button", { class: "gf-tab-chip", type: "button", dataset: { group: "text" }, style: "display:none;" }, "Textos");
-        [tabAll, tabVideos, tabImages, tabTexts].forEach(tab => {
-            tab.addEventListener("click", () => {
-                sbTabs.querySelectorAll(".gf-tab-chip").forEach(t => t.classList.remove("is-active"));
-                tab.classList.add("is-active");
-                plGroupFilter = tab.dataset.group;
-                renderPlaylist();
-            });
-            sbTabs.appendChild(tab);
+        // Abas de tipo e fichas de ordenação do bunkr, sob a busca
+        sbTabs = mediaTypeTabs({ active: plGroupFilter, onChange: key => { plGroupFilter = key; renderPlaylist(); } });
+        const sbSort = mediaSortChips({
+            kind: "sidebar",
+            mode: plSortMode,
+            dirs: { [plSortMode]: plSortDir },
+            chips: [
+                { key: "default", label: "Padrão" },
+                { key: "upload", label: "Data de Envio", dir: true, title: "Ordenar por data de envio" },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome" },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome" }
+            ],
+            onChange: (mode, dir) => { plSortMode = mode; plSortDir = dir; prefs.plSort = mode; prefs.plSortDir = dir; saveP(); renderPlaylist(); }
         });
-
-        // Barra de Ordenação na Sidebar
-        const sbSortBar = el("div", { class: "gf-sidebar-sort-bar" },
-            el("span", null, "ORDEM:"),
-            el("button", { class: "gf-sort-chip is-active", type: "button", onClick: (e) => {
-                sbSortBar.querySelectorAll(".gf-sort-chip").forEach(c => c.classList.remove("is-active"));
-                e.target.classList.add("is-active");
-                plSortMode = "default";
-                renderPlaylist();
-            }}, "Padrão"),
-            el("button", { class: "gf-sort-chip", type: "button", onClick: (e) => {
-                sbSortBar.querySelectorAll(".gf-sort-chip").forEach(c => c.classList.remove("is-active"));
-                e.target.classList.add("is-active");
-                plSortMode = "name";
-                renderPlaylist();
-            }}, "A-Z")
-        );
+        sbSearch.append(sbTabs, sbSort);
 
         // Lista de Cards da Playlist
         stSidebarList = el("div", { class: "gf-playlist-list" });
 
-        sidebar.append(sbHeader, sbSearch, sbTabs, sbSortBar, stSidebarList);
+        sidebar.append(sbHeader, sbSearch, stSidebarList);
 
         stage.append(stageMain, sidebar);
         (document.body || document.documentElement).appendChild(stage);
@@ -264,18 +251,7 @@
         const numImages = allCards.filter(c => c._gf && c._gf.kind === "image").length;
         const numTexts = allCards.filter(c => c._gf && c._gf.kind === "text").length;
 
-        // Atualiza contadores nas abas
-        const tabs = stage.querySelectorAll(".gf-tab-chip");
-        tabs.forEach(t => {
-            const grp = t.dataset.group;
-            if (grp === "all") t.textContent = `Todos (${allCards.length})`;
-            else if (grp === "video") t.textContent = `Vídeos (${numVideos})`;
-            else if (grp === "image") t.textContent = `Fotos (${numImages})`;
-            else if (grp === "text") {
-                t.textContent = `Textos (${numTexts})`;
-                t.style.display = numTexts ? "inline-flex" : "none";
-            }
-        });
+        if (sbTabs) sbTabs.update({ all: allCards.length, video: numVideos, image: numImages, text: numTexts });
 
         if (stSbCount) stSbCount.textContent = `(${allCards.length})`;
 
@@ -288,9 +264,7 @@
         });
 
         // Ordenação
-        if (plSortMode === "name") {
-            filtered = filtered.slice().sort((a, b) => (a._gf?.name || "").localeCompare(b._gf?.name || "", undefined, { numeric: true, sensitivity: "base" }));
-        }
+        filtered = mediaSortItems(filtered, plSortMode, plSortDir, GF_SORT_ACC);
 
         stage.classList.toggle("has-nav", allCards.length > 1);
 
@@ -770,6 +744,5 @@
         requestAnimationFrame(() => {
             buildStage();
             scan();
-            if (isGroupByType) groupGalleryByType(true);
         });
     }

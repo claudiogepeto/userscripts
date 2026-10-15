@@ -13,9 +13,9 @@
     // Observa só o container do app (não o <html> inteiro) e ignora mutações
     // causadas pelos próprios nós do script (stage, barra, cabeçalhos de grupo).
     // Um card já processado que continua no documento só foi movido pelo agrupamento.
-    const isOwnNode = n => n.nodeType !== 1 || (n.classList && (n.classList.contains("gf-gallery-group-header") || (n.classList.contains("gf-card") && !!n._gf && n.isConnected)));
+    const isOwnNode = n => n.nodeType !== 1 || (n.classList && (n.classList.contains("gf-group-header") || n.classList.contains("gf-gallery-actionbar") || (n.classList.contains("gf-card") && !!n._gf && n.isConnected)));
     const isOwnRecord = r => {
-        if ((stage && stage.contains(r.target)) || (bulkBar && bulkBar.contains(r.target))) return true;
+        if ((stage && stage.contains(r.target)) || (bulkBar && bulkBar.contains(r.target)) || (folderBar && folderBar.bar.contains(r.target))) return true;
         if (!r.addedNodes.length && !r.removedNodes.length) return false;
         for (const n of r.addedNodes) if (!isOwnNode(n)) return false;
         for (const n of r.removedNodes) if (!isOwnNode(n)) return false;
@@ -43,7 +43,8 @@
     }
 
     function routeKey(href) {
-        try { const u = new URL(href); u.searchParams.delete("position"); return u.pathname + u.search + u.hash; } catch { return href; }
+        // ?q= é a busca da barra de ações (replaceState a cada tecla), não uma rota nova.
+        try { const u = new URL(href); u.searchParams.delete("position"); u.searchParams.delete("q"); return u.pathname + u.search + u.hash; } catch { return href; }
     }
     let lastHref = routeKey(location.href);
     function onRoute() {

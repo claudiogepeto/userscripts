@@ -221,5 +221,5 @@
         const countEl = el("span", { class: `${P}-actionbar-count` }, "");
         const actions = el("div", { class: `${P}-actionbar-actions` }, groupBtn, namesBtn, namesCopy, urlsCopy, ...(o.extra || []), countEl);
         bar.append(searchWrap, el("div", { class: `${P}-actionbar-divider` }), o.sort, el("div", { class: `${P}-actionbar-divider` }), actions);
-        return { bar, input, setCount: s => { countEl.textContent = s; } };
+        return { bar, input, setCount: s => { if (countEl.textContent !== s) countEl.textContent = s; } };
     }

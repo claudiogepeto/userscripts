@@ -42,15 +42,7 @@
         html.gf #sidebar-toggle, html.gf #index_toggleSidebar { display: none !important; }
         html.gf .gf-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #fff; text-decoration: none; flex: 0 0 auto; }
         html.gf .gf-brand img { height: 26px; width: auto; }
-        html.gf .gf-topsearch { flex: 1 1 480px; max-width: 480px; margin: 0 auto; }
-        html.gf .gf-topsearch input { width: 100%; height: 38px; box-sizing: border-box; padding: 0 16px 0 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3ad' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 14px center; background-size: 16px; color: #fff; font-size: 14px; outline: none; transition: border-color .15s, background-color .15s; }
-        html.gf .gf-topsearch input:focus { border-color: ${ACCENT}; background-color: rgba(255,255,255,0.1); }
 
-        /* Botão de Agrupar por Tipo junto da barra de ações/filtros da pasta */
-        .gf-folder-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font: 600 12px/1 Inter, sans-serif; cursor: pointer; transition: all .12s; margin-left: 8px; }
-        .gf-folder-btn:hover { background: rgba(245,196,0,0.15); border-color: ${ACCENT}88; }
-        .gf-folder-btn.is-active { background: rgba(245,196,0,0.22); border-color: ${ACCENT}; color: #f5c400; }
-        .gf-folder-btn svg { width: 14px; height: 14px; color: ${ACCENT}; }
 
         /* ===================== GRADE DE CARDS AMOLED (Estilo YouTube/Bunkr) ===================== */
         html.gf #fm-list > div,
@@ -127,12 +119,15 @@
         html.gf .gf-card-select.is-selected { background: ${ACCENT}; border-color: ${ACCENT}; }
         html.gf .gf-card-select.is-selected svg { display: block; }
         html.gf .gf-card-select svg { display: none; width: 14px; height: 14px; color: #1a1400; }
+        /* Seleção: a caixa aparece no hover, no modo Selecionar (barra de ações) e nos cards marcados */
+        html.gf:not(.gf-selecting) .gf-card:not(:hover):not(.is-selected) .gf-card-select { opacity: 0; }
+        @media (hover: none) { html.gf .gf-card .gf-card-select { opacity: 1 !important; } }
+        html.gf.gf-full-names .gf-card-name { display: block !important; -webkit-line-clamp: unset !important; overflow: visible !important; word-break: break-all; }
 
-        /* Divisores de seção para Agrupamento por Tipo na Galeria */
-        .gf-gallery-group-header { grid-column: 1 / -1 !important; display: flex !important; align-items: center; justify-content: space-between; padding: 16px 4px 8px; margin-top: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .gf-gallery-group-title { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .gf-gallery-group-title svg { color: ${ACCENT}; width: 18px; height: 18px; }
-        .gf-gallery-group-count { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 3px 9px; border-radius: 999px; }
+        /* Barra de ações da pasta (a do bunkr) */
+        html.gf .gf-gallery-actionbar { margin: 12px 0 16px; }
+        html.gf .gf-gallery-actionbar, html.gf .gf-gallery-actionbar input, html.gf .gf-gallery-actionbar button { font-family: Inter, system-ui, sans-serif; box-sizing: border-box; }
+
 
         /* Single file page */
         html.gf #fm-root section.panel { background: #12141a !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 14px !important; }
@@ -189,18 +184,12 @@
         .gf-sidebar-actions { display: flex; align-items: center; gap: 8px; }
         .gf-sidebar-btn { display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font: 600 12.5px/1 Inter, sans-serif; cursor: pointer; transition: background .12s, border-color .12s; }
         .gf-sidebar-btn:hover { background: rgba(255,255,255,0.12); border-color: ${ACCENT}66; }
+        .gf-sidebar-btn svg { width: 14px; height: 14px; color: ${ACCENT}; }
+        .gf-sidebar-btn.gf-sidebar-gallery-btn { gap: 6px; }
+        .gf-sidebar-title > svg { width: 18px; height: 18px; color: ${ACCENT}; flex: 0 0 auto; }
         .gf-sidebar-search { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); flex: 0 0 auto; }
         .gf-sidebar-input { width: 100%; height: 36px; box-sizing: border-box; padding: 0 12px 0 36px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 11px center; background-size: 15px; color: #fff; font-size: 13px; outline: none; }
         .gf-sidebar-input:focus { border-color: ${ACCENT}; background-color: rgba(255,255,255,0.08); }
-        .gf-sidebar-filter-tabs { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); flex: 0 0 auto; overflow-x: auto; scrollbar-width: none; }
-        .gf-sidebar-filter-tabs::-webkit-scrollbar { display: none; }
-        .gf-tab-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; font: 600 12px/1 Inter, sans-serif; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid transparent; cursor: pointer; transition: all .12s; white-space: nowrap; flex: 0 0 auto; }
-        .gf-tab-chip:hover { background: rgba(255,255,255,0.12); color: #fff; }
-        .gf-tab-chip.is-active { background: rgba(245,196,0,0.18); color: ${ACCENT}; border-color: rgba(245,196,0,0.4); font-weight: 700; }
-        .gf-sidebar-sort-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 11.5px; color: rgba(255,255,255,0.5); flex: 0 0 auto; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .gf-sort-chip { background: transparent; border: 0; color: rgba(255,255,255,0.6); font: 600 11.5px/1 Inter, sans-serif; padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: color .12s; }
-        .gf-sort-chip:hover { color: #fff; }
-        .gf-sort-chip.is-active { color: ${ACCENT}; font-weight: 700; background: rgba(245,196,0,0.12); }
         .gf-playlist-list { flex: 1 1 auto; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; scrollbar-color: rgba(245,196,0,.35) transparent; }
         .gf-playlist-list::-webkit-scrollbar { width: 6px; }
         .gf-playlist-list::-webkit-scrollbar-thumb { background: rgba(245,196,0,.35); border-radius: 4px; }
@@ -300,6 +289,8 @@
             .gf-playlist-meta, .gf-playlist-date-lbl, .gf-playlist-date-val { font-size: 12px !important; }
         }
 ${mediaComponentCSS(mediaTheme()).plc}
+${mediaComponentCSS(mediaTheme()).actionbar}
+${mediaComponentCSS(mediaTheme()).dates}
     `;
 
     addCSS(GF_CSS);
