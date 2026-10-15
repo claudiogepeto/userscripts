@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Pixeldrain — Mirror Bypass & Theater Player (AMOLED)
 // @namespace    pixeldrain-mirror-player
-// @version      14.16.2
+// @version      14.16.3
 // @description  Refaz o pixeldrain.com em cima de MIRRORS (proxy Cloudflare/espelho), contornando o limite de 6 GB/dia (que é por IP), e redesenha a interface com Stage estilo YouTube AMOLED, Sidebar de Playlist lateral com abas e placeholders, visualizador de texto integrado, controles modernizados no player e agrupamento por tipo de mídia.
 // @author       claudiogepeto
 // @match        https://pixeldrain.com/*
@@ -1899,6 +1899,25 @@
         location.hash = "#item=" + nextIdx;
     }
 
+    /* Lista com UM arquivo: sai da galeria e abre o item direto no player. location.replace troca só o hash
+       (sem entrada nova no histórico) e roda 1× por lista por aba, então voltar à galeria (#gallery / voltar) não
+       re-abre → sem loop. Com 1 arquivo setupSidebar já não monta a sidebar, e prefs.sidebarCollapsed não é tocado. */
+    const SINGLE_DONE_KEY = "pdx_single_done:";
+    let singleTried = false;
+    function openSingleItemList() {
+        if (singleTried) return false;
+        if (location.hash.replace(/^#/, "") === "gallery") { singleTried = true; return false; }
+        const al = albumInfo();
+        if (!al) return false;   // viewer_data ainda não chegou
+        singleTried = true;
+        if (al.files.length !== 1) return false;
+        try { const nav = performance.getEntriesByType("navigation")[0]; if (nav && nav.type === "back_forward") return false; } catch {}
+        const key = SINGLE_DONE_KEY + (al.lid || location.pathname);
+        try { if (sessionStorage.getItem(key)) return false; sessionStorage.setItem(key, "1"); } catch {}
+        location.replace(location.pathname + location.search + "#item=0");
+        return true;
+    }
+
     /* ==================================================================== * (7) ORQUESTRAÇÃO & SYNC */
     let lastSig = null;
     const sync = debounce(() => {
@@ -1930,6 +1949,7 @@
         lastSig = sig;
 
         if (gal) {
+            if (openSingleItemList()) return;
             clearPlayerOverlay();
             buildGalbar(fv);
             fv.classList.add("pdx-mode-gallery");
