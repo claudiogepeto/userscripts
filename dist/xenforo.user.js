@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.3.1
+// @version      4.4.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -388,6 +388,8 @@
         'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
         'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume',
         'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador',
+        'Back 5s': 'Voltar 5s', 'Forward 5s': 'Avançar 5s', 'Loop': 'Repetir', 'Picture-in-picture': 'Picture-in-picture',
+        'Download / open original': 'Baixar / abrir original', 'Gallery mode': 'Modo galeria', 'More': 'Mais', 'Speed': 'Velocidade', 'Normal': 'Normal',
         'Edit in search bar': 'Editar na barra de busca', 'Search on': 'Buscar no',
         'No results': 'Sem resultados', 'See all results': 'Ver todos os resultados', 'Search failed': 'Busca falhou',
         'Search commands': 'Comandos de busca', 'search post text': 'buscar no texto do post', 'Thread': 'Tópico', 'Forum': 'Fórum', 'Search in this thread': 'Buscar neste tópico',
@@ -538,6 +540,15 @@
         rgPause: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
         rgExpand: svgIcon('<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'),
         rgExternal: svgIcon('<path d="M7 17 17 7"/><path d="M8 7h9v9"/>'),
+        // barra do player (media/10-redgifs-player): voltar/avançar 5s, volume baixo, repetir, PiP, baixar, mais, check do menu
+        rgSkipBack: svgIcon('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'),
+        rgSkipFwd: svgIcon('<path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>'),
+        volumeLow: svgIcon('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>'),
+        rgLoop: svgIcon('<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>'),
+        rgPip: svgIcon('<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/>'),
+        rgDownload: svgIcon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+        rgMore: svgIcon('<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'),
+        rgCheck: svgIcon('<polyline points="20 6 9 17 4 12"/>'),
         info: svgIcon('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
         warn: svgIcon('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>'),
         gallery: svgIcon('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
@@ -1410,6 +1421,13 @@
                 border-radius: var(--smg-r-10);
                 background: #000;
             }
+            /* turbo com a proporção real já conhecida (turboApplyAspect, 21): a caixa adota a proporção; vertical fica
+               estreita e alta como os outros players. Dentro do mosaico as regras do motor (css-grids) vencem. */
+            .generic2wide-iframe-div.smg-tb-sized { aspect-ratio: var(--smg-tb-ar) !important; }
+            .generic2wide-iframe-div.smg-tb-vert {
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-tb-r))) !important;
+            }
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,
             .bbCodeBlock--unfurl img.bbImage {
@@ -1695,6 +1713,13 @@
             }
             span[data-s9e-mediaembed] .smg-rg,
             .generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }   /* container já dá a margem → não dobra */
+            /* a largura do player SEGUE a proporção (teto de altura × proporção). Dentro do embed o defensivo
+               "* { max-width: 100% !important }" lá embaixo apagava esse teto: a caixa ficava com a largura toda e
+               o teto de altura → vídeo em pé virava faixa larga com tarjas pretas. No mosaico vale o motor (css-grids). */
+            span[data-s9e-mediaembed] .smg-rg,
+            .generic2wide-iframe-div .smg-rg {
+                max-width: min(100%, 1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;
+            }
             .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
                 display: flex; align-items: center; justify-content: center;
                 width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
@@ -1768,9 +1793,9 @@
                 animation: none !important;
             }
             /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
-            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
-            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
-            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
                 color: color-mix(in srgb, var(--smg-link) 42%, #e9e9ec) !important;
                 font-weight: 500;
                 text-decoration: underline !important;
@@ -1779,9 +1804,9 @@
                 text-decoration-thickness: 1px !important;
                 transition: color var(--smg-dur-15) ease, text-decoration-color var(--smg-dur-15) ease;
             }
-            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
-            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
-            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
                 color: #fff !important;
                 text-decoration-color: #fff !important;
                 filter: none !important;
@@ -1846,91 +1871,170 @@
             .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
             .smg-rg-error-btn--retry { background: var(--smg-w-08); color: var(--smg-tx) !important; border: 1px solid var(--smg-w-18); }
             .smg-rg-error-btn--retry:hover { background: var(--smg-w-14); color: #fff !important; }
-            /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
-               poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
+            /* PRONTO (poster, ainda sem vídeo): sem spinner, play central FIXO ("clique pra tocar") — nunca caixa preta sem affordance */
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
             .smg-rg.smg-rg-ready .smg-rgc-play { pointer-events: auto; }
-            /* ---- controles estilo YouTube: play CENTRAL (no pausado) + BARRA INFERIOR com gradiente:
-               scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
-            /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
+            .smg-rg:focus { outline: none; }
+            .smg-rg:focus-visible { outline: 2px solid var(--smg-link); outline-offset: 2px; }
+            /* ---- BARRA DO PLAYER (rgControls, 10): a mesma em todo player nosso. Accent = tema. ---- */
+            /* CENTRO: play grande — pausado/pronto (tocando, o controle é a barra) */
             .smg-rgc-flash {
                 position: absolute; inset: 0; z-index: var(--smg-z-2);
                 display: flex; align-items: center; justify-content: center;
                 opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
             }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
             .smg-rgc-flash button {
-                border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
-                background: var(--smg-k-55); color: #fff;
+                border: 1px solid var(--smg-w-18); border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                background: var(--smg-k-72); color: var(--smg-w-95); box-shadow: var(--smg-shadow-2);
                 display: flex; align-items: center; justify-content: center;
-                transition: transform var(--smg-dur-12) ease, background var(--smg-dur-12) ease; pointer-events: none;   /* só interativo quando o flash aparece (regras abaixo) — senão capturaria cliques invisível */
+                transition: transform var(--smg-dur-12) ease, background var(--smg-dur-12) ease, border-color var(--smg-dur-12) ease;
+                pointer-events: none;   /* só interativo quando o play aparece (regra abaixo) — invisível não captura clique */
             }
-            .smg-rgc-flash button:hover { transform: scale(1.08); background: var(--smg-k-72); }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
-            .smg-rgc-play { width: 64px; height: 64px; }
-            .smg-rgc-play svg { width: 30px; height: 30px; display: block; margin-left: var(--smg-sp-4); }
-            @media (max-width: 600px) { .smg-rgc-play { width: 54px; height: 54px; } .smg-rgc-play svg { width: 26px; height: 26px; } }
-            /* BARRA INFERIOR: gradiente; some fora do hover; visível no pausado-carregado e no touch (NÃO no pronto/poster) */
+            .smg-rgc-flash button:hover { transform: scale(1.08); background: var(--smg-k-82); border-color: var(--smg-link); }
+            .smg-rgc-flash button:active { transform: scale(0.95); }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
+            .smg-rgc-play { width: 68px; height: 68px; }
+            .smg-rgc-play svg { width: 28px; height: 28px; display: block; margin-left: var(--smg-sp-4); }
+            .smg-rgc-playing .smg-rgc-play svg { margin-left: 0; }
+            @media (max-width: 600px) { .smg-rgc-play { width: 56px; height: 56px; } .smg-rgc-play svg { width: 24px; height: 24px; } }
+            /* BARRA INFERIOR: aparece no hover, no pausado (com vídeo), com menu aberto e no foco; some parada tocando (.smg-rgc-idle).
+               container-type: os botões secundários dobram pro menu "⋯" quando a BARRA (= o player) é estreita. */
             .smg-rgc-bottom {
-                position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-3);
-                padding: var(--smg-sp-8) var(--smg-sp-4) var(--smg-sp-2);
-                background: linear-gradient(to top, var(--smg-k-82) 0%, var(--smg-k-35) 62%, transparent 100%);
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-4);
+                display: flex; flex-direction: column; gap: var(--smg-sp-2);
+                padding: var(--smg-sp-18) var(--smg-sp-10) var(--smg-sp-6);
+                background: linear-gradient(to top, var(--smg-k-82) 0%, var(--smg-k-45) 55%, transparent 100%);
                 opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
+                container-type: inline-size;
             }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
-            .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
-            /* SCRUBBER (no topo da barra) */
-            .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-            .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: var(--smg-w-30); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
-            .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
-            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-30); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):hover .smg-rgc-bottom,
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):focus-within .smg-rgc-bottom,
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):not(.smg-rgc-playing):not(.smg-rg-buffering) .smg-rgc-bottom,
+            .smg-rg.smg-rgc-menu-open .smg-rgc-bottom,
+            .smg-rg.smg-rgc-scrub .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open):not(.smg-rgc-scrub) .smg-rgc-bottom { opacity: 0; pointer-events: none; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open) .smg-rg-v { cursor: none; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open) .smg-rgc-src { opacity: 0 !important; pointer-events: none !important; }
+            /* PROGRESSO: 3.5px → 6px no hover, tooltip de tempo */
+            .smg-rgc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
+            .smg-rgc-bar { position: relative; width: 100%; height: 3.5px; background: var(--smg-w-22); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
+            .smg-rgc-prog:hover .smg-rgc-bar, .smg-rg.smg-rgc-scrub .smg-rgc-bar { height: 6px; }
+            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-40); border-radius: var(--smg-r-4); pointer-events: none; }
             .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: var(--smg-r-4); pointer-events: none; }
-            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: var(--smg-r-round); background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform var(--smg-dur-12) ease; }
-            .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
-            /* LINHA de controles */
-            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-4) var(--smg-sp-2); }
-            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: var(--smg-sp-2); }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: var(--smg-r-round); background: var(--smg-w-95); box-shadow: var(--smg-shadow-1); transform: translateY(-50%) scale(0); transition: transform var(--smg-dur-12) ease; }
+            .smg-rgc-prog:hover .smg-rgc-knob, .smg-rg.smg-rgc-scrub .smg-rgc-knob { transform: translateY(-50%) scale(1); }
+            .smg-rgc-tip {
+                position: absolute; bottom: calc(100% + 6px); left: 0; transform: translateX(-50%);
+                padding: var(--smg-sp-4) var(--smg-sp-6); border-radius: var(--smg-r-6);
+                background: var(--smg-k-92); border: 1px solid var(--smg-w-14); color: var(--smg-w-95);
+                font: 600 11px/1 var(--smg-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+                opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-12) ease; box-shadow: var(--smg-shadow-1);
+            }
+            .smg-rgc-prog:hover .smg-rgc-tip { opacity: 1; }
+            /* LINHA de botões */
+            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-6); min-height: 40px; }
+            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: var(--smg-sp-2); min-width: 0; }
+            .smg-rgc-right { position: relative; }
             .smg-rgc-act {
-                width: 34px; height: 34px; border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
-                background: transparent; color: #fff;
+                position: relative; flex: 0 0 auto;
+                width: 36px; height: 36px; border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                background: transparent; color: var(--smg-w-95);
                 display: flex; align-items: center; justify-content: center;
-                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease;
+                transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease, transform var(--smg-dur-12) ease;
             }
-            .smg-rgc-act:hover { background: var(--smg-w-18); }
+            .smg-rgc-act[hidden] { display: none; }
+            .smg-rgc-act:hover { background: var(--smg-w-14); color: var(--smg-w-95); }
             .smg-rgc-act:active { transform: scale(0.9); }
-            .smg-rgc-act svg { width: 21px; height: 21px; display: block; }
-            .smg-rgc-speed {
-                height: 24px; min-width: 32px; padding: 0 var(--smg-sp-6);
-                border: 0; border-radius: var(--smg-r-6); cursor: pointer;
-                background: var(--smg-w-12); color: var(--smg-w-95);
-                font: 700 11.5px/1 var(--smg-mono);
-                letter-spacing: -0.2px;
-                display: flex; align-items: center; justify-content: center;
-                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
-                user-select: none;
-            }
-            .smg-rgc-speed:hover { background: var(--smg-w-22); color: #fff; }
-            .smg-rgc-speed:active { transform: scale(0.92); }
-            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac); color: #fff; font-weight: 800; }
-            /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
-            .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
+            .smg-rgc-act:focus-visible { outline: 2px solid var(--smg-link); outline-offset: -2px; }
+            .smg-rgc-act.is-active { color: var(--smg-link); background: var(--smg-link-soft); }
+            .smg-rgc-act svg { width: 20px; height: 20px; display: block; flex: 0 0 auto; }
+            .smg-rgc-barplay svg { width: 22px; height: 22px; }
+            .smg-rgc-lbl { display: none; }
+            /* −5s / +5s: arco com o número dentro */
+            .smg-rgc-skip svg { width: 22px; height: 22px; }
+            .smg-rgc-skipn { position: absolute; left: 0; right: 0; top: 51%; transform: translateY(-50%); text-align: center; font: 800 8.5px/1 var(--smg-mono); pointer-events: none; }
+            /* PADRONIZA os ícones = OUTLINE (o CSS do fórum PREENCHE svg). Play/pause são PREENCHIDOS. */
+            .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg, .smg-rg .smg-rgc-menuitem svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
-            /* VOLUME: mute + barra que expande no hover (YouTube) */
-            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: var(--smg-r-4); background: var(--smg-w-40); cursor: pointer; opacity: 0; transition: width var(--smg-dur-20) ease, opacity var(--smg-dur-20) ease, margin var(--smg-dur-20) ease; touch-action: none; }
-            .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
-            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: var(--smg-r-4); pointer-events: none; }
-            /* TEMPO (atual / duração) */
-            .smg-rgc-time { color: #fff; font: 600 12px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 var(--smg-sp-6); white-space: nowrap; flex: 0 0 auto; }
-            @media (max-width: 600px) { .smg-rgc-act { width: 30px; height: 30px; } .smg-rgc-act svg { width: 19px; height: 19px; } .smg-rgc-time { font-size: var(--smg-fs-11); padding: 0 var(--smg-sp-4); } }
-            /* indicador "« 5s" / "5s »" no duplo-clique p/ voltar/avançar */
+            /* VOLUME: mudo + barra que abre no hover (desktop) ou no 1º toque (.is-open) */
+            .smg-rgc-vol { display: flex; align-items: center; }
+            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: var(--smg-r-4); background: var(--smg-w-30); cursor: pointer; opacity: 0; transition: width var(--smg-dur-20) ease, opacity var(--smg-dur-20) ease, margin var(--smg-dur-20) ease; touch-action: none; }
+            .smg-rgc-volbar::before { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }   /* área de toque alta */
+            .smg-rgc-vol:hover .smg-rgc-volbar, .smg-rgc-vol:focus-within .smg-rgc-volbar, .smg-rgc-vol.is-open .smg-rgc-volbar, .smg-rgc-vol.is-sliding .smg-rgc-volbar { width: 64px; opacity: 1; margin: 0 var(--smg-sp-8) 0 var(--smg-sp-2); }
+            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-95); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rgc-volfill::after { content: ""; position: absolute; right: -5px; top: 50%; width: 10px; height: 10px; border-radius: var(--smg-r-round); background: var(--smg-w-95); transform: translateY(-50%); }
+            /* TEMPO */
+            .smg-rgc-time { color: var(--smg-w-85); font: 600 12px/1 var(--smg-mono); font-variant-numeric: tabular-nums; padding: 0 var(--smg-sp-6); white-space: nowrap; flex: 0 0 auto; user-select: none; }
+            /* VELOCIDADE: texto + menu */
+            .smg-rgc-speedwrap { position: relative; display: flex; align-items: center; }
+            .smg-rgc-speed { width: auto; min-width: 40px; padding: 0 var(--smg-sp-6); border-radius: var(--smg-r-8); font: 700 13px/1 var(--smg-mono); font-variant-numeric: tabular-nums; user-select: none; }
+            .smg-rgc-speed.is-custom { color: var(--smg-link); }
+            /* MENUS (velocidade, "⋯"): sobem da barra, rolam se o player for baixo */
+            .smg-rgc-menu {
+                position: absolute; right: 0; bottom: calc(100% + 8px); z-index: var(--smg-z-5);
+                display: none; flex-direction: column; gap: var(--smg-sp-2);
+                min-width: 150px; max-height: 300px; overflow-y: auto; overscroll-behavior: contain;
+                padding: var(--smg-sp-6); border-radius: var(--smg-pop-r);
+                background: var(--smg-k-92); border: 1px solid var(--smg-w-14); box-shadow: var(--smg-pop-shadow);
+                scrollbar-width: thin;
+            }
+            .smg-rgc-menu.open { display: flex; }
+            .smg-rgc-menuhead { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); margin-bottom: var(--smg-sp-2); border-bottom: 1px solid var(--smg-w-10); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+            .smg-rgc-menuitem {
+                display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-8);
+                min-height: 32px; padding: 0 var(--smg-sp-10); border: 0; border-radius: var(--smg-r-8); cursor: pointer;
+                background: transparent; color: var(--smg-w-85); font: 600 12.5px/1 var(--smg-mono); text-align: left; white-space: nowrap;
+            }
+            .smg-rgc-menuitem:hover { background: var(--smg-w-10); color: var(--smg-w-95); }
+            .smg-rgc-menuitem.on { color: var(--smg-link); background: var(--smg-link-soft); }
+            .smg-rgc-menuitem svg { width: 14px; height: 14px; opacity: 0; flex: 0 0 auto; }
+            .smg-rgc-menuitem.on svg { opacity: 1; }
+            /* SECUNDÁRIOS (repetir, PiP, baixar, galeria): na linha quando cabe; "⋯" só no player estreito */
+            .smg-rgc-extras { display: flex; align-items: center; gap: var(--smg-sp-2); }
+            .smg-rgc-more, .smg-rgc-speedcycle { display: none; }
+            @container (max-width: 560px) {
+                .smg-rgc-more { display: flex; }
+                .smg-rgc-extras { display: none; }
+                .smg-rgc-extras.open {
+                    display: flex; position: absolute; right: 0; bottom: calc(100% + 8px); z-index: var(--smg-z-5);
+                    flex-direction: column; align-items: stretch; min-width: 190px; max-height: 300px; overflow-y: auto;
+                    padding: var(--smg-sp-6); border-radius: var(--smg-pop-r);
+                    background: var(--smg-k-92); border: 1px solid var(--smg-w-14); box-shadow: var(--smg-pop-shadow);
+                }
+                .smg-rgc-extras .smg-rgc-act { width: auto; height: 40px; justify-content: flex-start; gap: var(--smg-sp-10); padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); }
+                .smg-rgc-extras .smg-rgc-act[hidden] { display: none; }
+                .smg-rgc-extras .smg-rgc-lbl { display: inline; font-size: var(--smg-fs-13); font-weight: 600; white-space: nowrap; }
+            }
+            @container (max-width: 400px) {
+                .smg-rgc-skip { display: none; }
+                .smg-rgc-vol:is(.is-open, .is-sliding, :hover) + .smg-rgc-time { display: none; }   /* a barra de volume aberta toma o lugar do tempo */
+                .smg-rgc-time { font-size: var(--smg-fs-11); padding: 0 var(--smg-sp-4); }
+            }
+            @container (max-width: 270px) {
+                .smg-rgc-time, .smg-rgc-speedwrap { display: none; }
+                .smg-rgc-extras .smg-rgc-speedcycle { display: flex; }
+                .smg-rgc-vol:hover .smg-rgc-volbar, .smg-rgc-vol.is-open .smg-rgc-volbar, .smg-rgc-vol.is-sliding .smg-rgc-volbar { width: 44px; }
+            }
+            /* TOQUE: alvos de 40px e barra visível enquanto não some */
+            @media (hover: none), (pointer: coarse) {
+                .smg-rgc-act { width: 40px; height: 40px; }
+                .smg-rgc-speed { min-width: 44px; }
+                .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):not(.smg-rgc-idle) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
+                .smg-rgc-src { opacity: 0.72; pointer-events: auto; }
+                .smg-rgc-bottom { padding-left: var(--smg-sp-6); padding-right: var(--smg-sp-6); }
+                .smg-rgc-row { gap: 0; }
+                .smg-rgc-left, .smg-rgc-right { gap: 0; }
+            }
+            /* aviso central curto: "« 5s" / "5s »" / "2x" / "60%" */
             .smg-rgc-seekflash {
                 position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: var(--smg-z-3);
-                color: #fff; font: 700 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                background: var(--smg-k-55); padding: var(--smg-sp-10) var(--smg-sp-16); border-radius: var(--smg-r-pill);
+                color: var(--smg-w-95); font: 700 15px/1 var(--smg-mono);
+                background: var(--smg-k-62); padding: var(--smg-sp-10) var(--smg-sp-16); border-radius: var(--smg-r-pill);
                 opacity: 0; transition: opacity var(--smg-dur-15) ease; pointer-events: none; white-space: nowrap;
             }
             .smg-rgc-seekflash.on { opacity: 1; }
-            /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO do player ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host" (substituiu o ↗ do rail). */
+            /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO ("Turbo ↗") */
             .smg-rgc-src {
                 position: absolute; top: 10px; right: 10px; z-index: var(--smg-z-4);
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: calc(100% - 20px);
@@ -1945,15 +2049,15 @@
             .smg-rgc-src:active { transform: scale(0.96); }
             .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
-            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
-            /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
+            /* BUFFERING (seek): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
             .smg-rg.smg-rg-buffering::after {
                 content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
-                border-radius: var(--smg-r-round); border: 3px solid var(--smg-w-22); border-top-color: var(--smg-w-95);
+                border-radius: var(--smg-r-round); border: 3px solid var(--smg-w-22); border-top-color: var(--smg-link);
                 animation: smg-spin 0.8s linear infinite; z-index: var(--smg-z-4); pointer-events: none;
             }
-            .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; background: #000; }
+            .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; border-radius: 0; background: #000; }
             .smg-rg:fullscreen .smg-rg-v { height: 100%; }
+            .smg-rg:fullscreen .smg-rgc-bottom { padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-14); }
             /* turbo/saint: quando o slot recebe NOSSO player, ele NÃO pode forçar 16:9 nem cortar — a altura
                vem do aspect REAL do .smg-rg (vídeo vertical não vira faixa horizontal). A classe .smg-turbo-slot--filled
                é setada no JS ao montar o player (robusto: não depende do :has, que às vezes não solta o 16:9 a tempo
@@ -2062,8 +2166,8 @@
             .smg-home-skeleton-notices-line.short { width: 48%; }
             .smg-home-skeleton-notices:not(.is-expanded) .smg-home-skeleton-notices-body { display: none; }
             .smg-home-skeleton-feed {
-                position: relative; margin-bottom: 38px; padding: var(--smg-sp-14) var(--smg-sp-18) var(--smg-sp-20);
-                border: 1px solid var(--smg-w-08); border-radius: var(--smg-r-20); background: var(--smg-w-04);
+                position: relative; margin-bottom: 38px; padding: 0;
+                border: 0; border-radius: 0; background: transparent;
                 overflow: hidden;
             }
             .smg-home-skeleton-feed-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 44px; margin-bottom: var(--smg-sp-18); border-bottom: 1px solid var(--smg-w-08); }
@@ -2105,7 +2209,7 @@
                 .smg-home-skeleton-notices { margin-bottom: var(--smg-sp-16); border-radius: var(--smg-r-12); }
                 .smg-home-skeleton-notices-head { height: 42px; padding: 0 var(--smg-sp-12); }
                 .smg-home-skeleton-notices-body { padding: var(--smg-sp-8) var(--smg-sp-10) var(--smg-sp-10); }
-                .smg-home-skeleton-feed { margin-bottom: var(--smg-sp-28); padding: var(--smg-sp-10) var(--smg-sp-12) var(--smg-sp-14); border-radius: var(--smg-r-16); }
+                .smg-home-skeleton-feed { margin-bottom: var(--smg-sp-28); }
                 .smg-home-skeleton-feed-head { margin-bottom: var(--smg-sp-12); }
                 .smg-home-skeleton-card { flex-basis: 210px; }
                 .smg-home-skeleton-sections { gap: var(--smg-sp-28); padding-bottom: 8vh; }
@@ -2120,11 +2224,10 @@
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
+            /* sem caixa em volta: os cards já são superfícies (caixa dentro de caixa era ruído) */
             html.smg-home .smg-feed-block {
-                margin: var(--smg-sp-28) 0 46px !important; padding: var(--smg-sp-18) var(--smg-sp-18) var(--smg-sp-20);
-                background: var(--smg-s1);
-                border: 1px solid var(--smg-w-08); border-radius: var(--smg-r-20);
-                box-shadow: var(--smg-hl), 0 18px 44px -18px var(--smg-k-62);
+                margin: var(--smg-sp-28) 0 46px !important; padding: 0;
+                background: transparent; border: 0; border-radius: 0; box-shadow: none;
                 overflow: visible;
             }
             /* tabbar = header da section com segmented control moderno */
@@ -2240,8 +2343,8 @@
             html.smg-home .smg-feed-nav:hover { background: rgba(35,37,45,0.96); border-color: var(--smg-w-30); transform: translateY(-50%) scale(1.08); }
             html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.95); }
             html.smg-home .smg-feed-nav svg { width: 20px; height: 20px; fill: none !important; }
-            html.smg-home .smg-feed-prev { left: -10px; }
-            html.smg-home .smg-feed-next { right: -10px; }
+            html.smg-home .smg-feed-prev { left: var(--smg-sp-8); }   /* setas por dentro da borda do conteúdo */
+            html.smg-home .smg-feed-next { right: var(--smg-sp-8); }
             html.smg-home .smg-feed-nav.smg-nav-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
             @media (max-width: 1100px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: calc((100% - 14px) / 2); }
@@ -2637,7 +2740,7 @@
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
                 color: var(--smg-w-55) !important;
             }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
                 html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
                     display: none !important;
                 }
@@ -2744,7 +2847,8 @@
                 #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
                 #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-                #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
+                #smg-topbar-wrap.floating .smg-tb-act,
+                #smg-topbar-wrap.floating .smg-tb-account { width: 38px; height: 38px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
@@ -2824,18 +2928,18 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 40px; height: 40px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
+                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
             }
-            .smg-tb-account:hover { background: var(--smg-link-soft); }
+            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-link-soft); }
             .smg-tb-account img { width: 100%; height: 100%; object-fit: cover; }
             .smg-tb-account .avatar,
             .smg-tb-account > img {
                 width: 28px !important; height: 28px !important; margin: 0 !important;
                 border-radius: var(--smg-r-round) !important; display: block; overflow: hidden;
-                box-shadow: 0 0 0 1px var(--smg-w-18);   /* anel fino: separa do fundo sem virar botão */
+                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-50);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
             }
             .smg-tb-account .avatar > span,
             .smg-tb-account .avatar > img { width: 28px !important; height: 28px !important; display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-13) !important; line-height: 28px !important; border-radius: var(--smg-r-round) !important; }
@@ -3370,10 +3474,6 @@
             }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon svg { width: 24px; height: 24px; }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link); }
-            /* não-lida: o ícone ganha a tinta do tema (o card inteiro fica mais "vivo" que as lidas) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread .smg-al-icon {
-                background: var(--smg-link-soft); border-color: var(--smg-w-14); color: var(--smg-link);
-            }
             /* FOTO da thread no lugar do glifo (quando o cache de thumbs conhece a thread do alerta):
                mesma caixa, então trocar o glifo pela imagem não desloca uma linha sequer. */
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--thumb { width: 80px !important; min-height: 80px !important; height: auto !important; aspect-ratio: 1 / 1 !important; border-radius: var(--smg-r-12) !important; flex: 0 0 80px !important; align-self: stretch !important; padding: 0; overflow: hidden; background: var(--smg-w-06); }
@@ -3406,9 +3506,17 @@
             .smg-tb-listbody .smg-alert-clean li.alert .fauxBlockLink { position: static !important; }
             .smg-tb-listbody .smg-alert-clean li.alert,
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow { background: transparent !important; box-shadow: none !important; }
+            /* faixa vertical do tema na borda da linha não-lida (borda/pseudo do XF): fora. A não-lida é só o dot + a tinta leve */
+            .smg-tb-listbody .smg-alert-clean li.alert,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow-main { border-left: 0 !important; border-right: 0 !important; outline: 0 !important; }
+            .smg-tb-listbody .smg-alert-clean li.alert::before,
+            .smg-tb-listbody .smg-alert-clean li.alert::after,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow::before,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow::after { content: none !important; display: none !important; }
             .smg-tb-listbody .smg-alert-clean li.alert:hover { background: var(--smg-w-06) !important; }
-            /* NÃO-LIDA: tinta suave do tema (o marcador é o dot à direita, sem faixa na borda esquerda) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft) !important; }
+            /* NÃO-LIDA: tinta bem leve do tema (o marcador é o dot à direita, sem faixa na borda esquerda) */
+            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: color-mix(in srgb, var(--smg-link) 5%, transparent) !important; }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread:hover { box-shadow: inset 0 0 0 999px var(--smg-w-06) !important; }
             /* JÁ VISTAS: bem apagadas (o olho vai direto nas novas) — o hover devolve o contraste inteiro */
             .smg-tb-listbody .smg-alert-clean li.smg-al-old { opacity: 0.4; }
@@ -3423,7 +3531,16 @@
             }
             .smg-tb-listbody .smg-alert-clean li.alert:hover .smg-al-title { text-decoration: underline !important; text-underline-offset: 2px; }
             /* tags: chips nativos coloridos (cor da plataforma) — menores */
-            .smg-al-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
+            /* tags numa linha só: o que não cabe vira "+N" (fitAlertTags, 18-alerts) → toda linha tem a mesma altura */
+            .smg-al-tags { display: flex; flex-wrap: nowrap; gap: var(--smg-sp-6); align-items: center; min-width: 0; overflow: hidden; }
+            .smg-al-tags > * { flex: 0 0 auto; }
+            .smg-al-tags > :first-child { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+            #smg-aldock .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
+            .smg-al-tags .smg-al-more {
+                font-size: var(--smg-fs-10); font-weight: 700; line-height: 1.3; padding: var(--smg-sp-2) var(--smg-sp-6);
+                border-radius: var(--smg-r-4); background: var(--smg-w-08); color: var(--smg-w-72); white-space: nowrap;
+            }
+            .smg-al-tags .smg-al-more[hidden] { display: none; }
             .smg-alert-clean .smg-al-tags .smg-al-chip,
             .smg-alert-clean .smg-al-tags .label,
             .smg-alert-clean .smg-al-tags .prefix,
@@ -6306,8 +6423,8 @@
             html.smg-thread .p-body-header.smg-thead-unified {
                 position: sticky; top: 60px; z-index: var(--smg-z-30);
                 background: var(--smg-bg);
-                margin: 0 0 var(--smg-sp-16) !important;
-                padding: var(--smg-sp-18) 0 !important;
+                margin: 0 0 var(--smg-sp-12) !important;
+                padding: var(--smg-sp-12) 0 !important;
                 min-height: unset !important;
                 height: auto !important;
                 display: flex !important;
@@ -6406,6 +6523,9 @@
                 white-space: nowrap !important;
             }
             html.smg-thread .smg-thead-unified .smg-bar { border-radius: var(--smg-r-12); }
+            /* O header é título + tags + o botão de mídia. Paginação, ordenar, seguir e ir-pra-nova moram na dock
+               (no celular o header já escondia tudo). A barra fica no DOM: é a fonte que o header sincroniza. */
+            html.smg-thread .p-body-header .smg-thead-controls > .smg-bar { display: none !important; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: var(--smg-fs-13); }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
@@ -7870,6 +7990,8 @@
             html.smg-thread .smg-pc .message-attribution { display: none !important; }                  /* tempo/#/share/bookmark movidos */
             html.smg-thread .smg-pc .message-actionBar { display: none !important; }                    /* react/comentar/quote/report movidos */
             html.smg-thread .smg-pc .message-content, .smg-fp-content { padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-10); }
+            /* mídia que abre o post (markLeadMedia, 08): o padding do conteúdo já separa do header, sem margem a mais */
+            html.smg-thread .smg-pc .bbWrapper > .smg-lead-media.smg-lead-media { margin-top: 0 !important; }
             /* HEADER (com divisor border-b) */
             html.smg-thread .smg-pc-head, .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-12); padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--smg-r-round); overflow: hidden; }
@@ -8507,9 +8629,10 @@
             }
             .smg-aldock-foot a { padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; }
             .smg-aldock-foot a:hover { background: var(--smg-w-10); color: #fff; }
-            /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
+            /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar. Aberto = ícone na cor do
+               tema, SEM caixa preenchida (mesmo tratamento da busca e do avatar; o fundo só no hover, como eles) */
             .smg-tb-bellbtn.active,
-            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
+            html.smg-aldock-on .smg-tb-bellbtn { color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1100px) and (min-width: 601px) {
@@ -9663,7 +9786,8 @@
         if (!img) return '';
         const bg = (img.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
         const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
-        return /^data:/i.test(u) ? '' : u;
+        // a imagem padrão do fórum (no_image, o logo do site) não é foto da thread: sem URL, quem chama usa o placeholder
+        return (/^data:/i.test(u) || /defaultThumbnailImage|no_image/i.test(u)) ? '' : u;
     }
     // chave da thread: o ID quando a URL tem (o normal no XF: /threads/slug.123/). O SLUG só entra
     // quando NÃO há id — usá-lo como reserva geral seria pior que perder a foto: dois tópicos de
@@ -11168,7 +11292,7 @@
     }
 
     // media/08a-masonry-engine.js
-    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns), one ResizeObserver, one rAF.
+    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns; a group that would leave a column empty drops to one column fewer), one ResizeObserver, one rAF.
     // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
     // Depends on: nothing.
     // =========================================================
@@ -11200,6 +11324,7 @@
     // that top, and pushes those k columns to its bottom. With every span at 1 this is plain shortest-column.
     // Exception: when 3 columns are available and every item of a group of 2+ wants 2, the group is laid out as
     // pairs (2 columns, span 1, row by row) instead of one wide item per row with the third column empty.
+    // And a group that would still leave a whole column empty is laid out with one column fewer.
     function masonryPlace(ratios, width, opts) {
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
@@ -11212,9 +11337,9 @@
         let need = 0;
         for (let i = 0; i < ratios.length; i++) need += spanOf(i);
         const cols = pairs ? 2 : Math.max(1, Math.min(want, need || 1));   // a small group uses only the columns its spans fill
-        const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
-        const heights = new Array(cols).fill(0);
         if (pairs) {
+            const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
+            const heights = new Array(cols).fill(0);
             // rows of two: each row starts under the taller item of the row above; an odd last item sits alone at the left
             let rowTop = 0;
             const boxes = ratios.map((r, i) => {
@@ -11226,6 +11351,20 @@
             });
             return { cols, colW, boxes, height: Math.max(0, Math.round(Math.max.apply(null, heights) - gap)) };
         }
+        // a group whose spans sum past the column count can still leave a column empty (two portraits and
+        // one landscape: 1 + 1 + 2 = 4 > 3, but the landscape lands under the portraits and the third
+        // column stays blank, a third of the post width unused). Lay it out again with one column fewer.
+        if (!(opts && opts.cols) && cols > 2) {
+            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf);
+            if (res.boxes.length && !res.emptyCol) return res.out;
+            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf).out;
+        }
+        return masonryPlaceIn(ratios, cols, width, gap, spanOf).out;
+    }
+    // shortest-column placement in exactly `cols` columns (spans clamped); emptyCol = a column no item touches
+    function masonryPlaceIn(ratios, cols, width, gap, spanOf) {
+        const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
+        const heights = new Array(cols).fill(0);
         const boxes = ratios.map((r, i) => {
             const k = Math.min(spanOf(i), cols);
             let c = 0, top = Infinity;
@@ -11241,7 +11380,7 @@
             return box;
         });
         const height = Math.max(0, Math.round(Math.max.apply(null, heights) - gap));
-        return { cols, colW, boxes, height };
+        return { boxes, emptyCol: heights.some(v => v === 0), out: { cols, colW, boxes, height } };
     }
 
     // an image or video item's span from its h/w: horizontal (wider than tall) takes 2 columns, vertical or
@@ -11350,7 +11489,7 @@
     // media/08-images-masonry.js
     // Owns: post images (full-size swap, lazy observers, dead-image watchdog), host viewers (GoonBox, Chevereto)
     // and the post block model: runs of images and players become one masonry group.
-    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks.
+    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
     // Depends on: media/08a-masonry-engine, media/10-redgifs-player, core/06-helpers, core/02-config.
     // =========================================================
     // FEATURE: auto full images + portrait grid
@@ -12335,6 +12474,22 @@
             add(flow);
         });
         byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
+        markLeadMedia(scope);
+    }
+    // mídia que ABRE o post (grupo, player ou imagem antes de qualquer texto): as quebras de linha antes dela
+    // saem e ela perde a margem de cima (o padding do conteúdo já a separa do header do post)
+    function markLeadMedia(scope) {
+        const bw = scope.matches && scope.matches('.bbWrapper') ? scope : scope.querySelector && scope.querySelector('.bbWrapper');
+        if (!bw) return;
+        let n = bw.firstChild;
+        const lead = [];
+        while (n && isInertNode(n)) { lead.push(n); n = n.nextSibling; }
+        if (!n || n.nodeType !== 1 || n.classList.contains('smg-lead-media')) return;
+        const isMedia = isPostGroup(n) || n.classList.contains('smg-mvid') || n.matches(MEDIA_ITEM_SEL)
+            || (!!n.querySelector(MEDIA_ITEM_SEL) && mediaFlowNode(n.querySelector(MEDIA_ITEM_SEL)) === n);
+        if (!isMedia) return;
+        lead.forEach(x => { if (x.nodeType !== 1 || x.tagName === 'BR') x.remove(); });
+        n.classList.add('smg-lead-media');
     }
     function buildPostGalleries(roots) {
         if (!document.documentElement.classList.contains('smg-masonry-on')) return;   // só com a Galeria ligada
@@ -12371,11 +12526,71 @@
         if (g) masonrySchedule(g);
     }
 
+    // =========================================================
+    // MÍDIA MUDA DE TAMANHO SEM A PÁGINA PULAR. O scroll anchoring do navegador está DESLIGADO de propósito,
+    // então quando um player descobre a proporção real (API, poster, metadata) e a caixa dele (ou o grupo do
+    // mosaico) está ACIMA da tela, o que o usuário está lendo seria empurrado. Quem vai mudar uma caixa chama
+    // mediaResizeKeep(el) ANTES de mudar: guarda a geometria e, no próximo frame (depois de todas as mudanças
+    // da mesma tarefa, ex. rgAspect + markWide no mesmo loadedmetadata), re-coloca o grupo e devolve a
+    // diferença no scroll. Vale pra página (window) e pra grade da galeria (.smg-gallery-grid, rola sozinha);
+    // no feed (slide da tela toda) não há o que compensar.
+    //   grupo inteiro acima ........ a variação de altura do grupo
+    //   grupo cruzando o topo ....... quanto o 1º item visível do grupo andou dentro dele (o motor pode re-colocar
+    //                                 itens depois do que mudou, inclusive os que estão na tela)
+    //   caixa solta começando acima . a variação de altura dela (a mesma regra do turbo, turboApplyAspect)
+    // =========================================================
+    let mediaResizeBatch = null;
+    function mediaResizeKeep(el) {
+        if (!el || !el.isConnected) return;
+        const sc = el.closest('.smg-gallery-grid');
+        if (!sc && el.closest('#smg-media')) return;
+        const grid = el.closest('.smg-mason');
+        let item = el;
+        if (grid) while (item.parentElement && item.parentElement !== grid) item = item.parentElement;
+        else item = videoFlowNode(el);
+        const key = grid || item;
+        if (!mediaResizeBatch) { mediaResizeBatch = new Map(); requestAnimationFrame(mediaResizeFlush); }
+        const top0 = sc ? sc.getBoundingClientRect().top : 0;
+        const prev = mediaResizeBatch.get(key);
+        const itemAbove = item.getBoundingClientRect().top < top0;
+        if (prev) { if (itemAbove) prev.itemAbove = true; return; }   // a 1ª foto do frame é o "antes"
+        const kr = key.getBoundingClientRect();
+        const snap = { key, sc, grid, h0: kr.height, itemAbove, ref: null, refOff: 0 };
+        if (grid && kr.top < top0 && kr.bottom > top0) {   // grupo cruzando o topo: referência = 1º item visível
+            for (const c of grid.children) {
+                const t = c.getBoundingClientRect().top;
+                if (t >= top0 && (!snap.ref || t < snap.refOff + kr.top)) { snap.ref = c; snap.refOff = t - kr.top; }
+            }
+        }
+        snap.above = kr.top < top0;
+        mediaResizeBatch.set(key, snap);
+    }
+    function mediaResizeFlush() {
+        const batch = mediaResizeBatch; mediaResizeBatch = null;
+        if (!batch) return;
+        let dy = 0;
+        const dsc = new Map();
+        batch.forEach(s => {
+            if (s.grid && s.grid.isConnected) masonryLayout(s.grid);   // agora, não no próximo frame: a conta precisa da altura nova
+            if (!s.above || !s.key.isConnected) return;
+            const kr = s.key.getBoundingClientRect();
+            let d = 0;
+            if (s.ref && s.ref.isConnected) d = (s.ref.getBoundingClientRect().top - kr.top) - s.refOff;
+            else if (!s.grid || s.itemAbove || kr.bottom <= (s.sc ? s.sc.getBoundingClientRect().top : 0)) d = kr.height - s.h0;
+            if (!d) return;
+            if (s.sc) dsc.set(s.sc, (dsc.get(s.sc) || 0) + d); else dy += d;
+        });
+        dsc.forEach((d, sc) => { sc.scrollTop += d; });
+        if (dy) window.scrollBy(0, dy);
+    }
+
 
     // media/10-redgifs-player.js
-    // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters, controls).
+    // Owns: the built-in player pipeline: RedGifs, Turbo, ImagePond and Cyberdrop (token, caches, blobs, posters) and the ONE
+    //   control bar every player of ours uses (rgControls: progress, skip, volume, speed, loop, PiP, download, gallery mode,
+    //   fullscreen, keyboard, autohide), with the player preferences in GM key smg-player (rgPrefs).
     // Exposes: rgPrepare, rgLoad, rgSolo, rgDispose, rgUnload, releaseMediaIn, gmGetJSON, GMX and the rg* helpers used by embeds and the media overlay.
-    // Depends on: core/06-helpers, core/02-config, media/08a-masonry-engine.
+    // Depends on: core/06-helpers, core/02-config, core/04-icons, media/08a-masonry-engine, media/08-images-masonry (relayoutPostGroupOf, mediaResizeKeep), media/14-feed-lightbox (openMediaFeed, at click time).
     // =========================================================
     // FEATURE: player nativo de RedGifs (substitui o iframe por <video> com o mp4 da API — reaproveitado do reddit.js)
     // À PROVA DE FALHA: qualquer erro (sem GM / API / blob) RESTAURA o embed nativo (iframe). Nunca deixa buraco.
@@ -12384,7 +12599,7 @@
     //   API redgifs .. GMX · rgIdFrom · gmGetJSON · rgToken · rgVideo (id → urls.hd/sd + poster)
     //   infra ........ rgBlob · getRgLoadIO · rgTasks (fila por viewport, máx 3) · rgHost/rgDirect
     //   carga ........ rgLoad → rgViaDirect (streaming) | rgViaBlob (download) · rgRestore (falha → iframe)
-    //   player UI .... rgBuild · rgControls (controles próprios) · rgStart · buildNativeVideo
+    //   player UI .... rgBuild · rgControls (a barra única: rgPrefs · bindRgKeys) · rgStart · buildNativeVideo
     //   aplica ....... applyRedgifsPlayer (loaders/iframes do fórum → nosso player) · rgHidePlaceholder
     // =========================================================
     const GMX = (typeof GM_xmlhttpRequest === 'function') ? (...args) => GM_xmlhttpRequest(...args)
@@ -12478,30 +12693,51 @@
         }
     }
 
-    let rgSpeedGlobalBound = false;
-    function bindRgSpeedGlobal() {
-        if (rgSpeedGlobalBound) return;
-        rgSpeedGlobalBound = true;
+    // PREFERÊNCIAS do player (volume, mudo, velocidade, repetir): UMA para todos os players, lembradas no GM
+    // (chave smg-player). Mudo começa ligado (autoplay do feed e gifs em loop); só vira "com som" quando o
+    // usuário tira o mudo num controle nosso, e aí o próximo play que ELE dispara já sai com som.
+    const RG_PREFS_KEY = 'smg-player';
+    const RG_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+    let rgPrefsCache = null;
+    function rgPrefs() {
+        if (rgPrefsCache) return rgPrefsCache;
+        let p = {};
+        try { p = JSON.parse(gmGet(RG_PREFS_KEY, '{}')) || {}; } catch (e) { p = {}; }
+        const v = Number(p.v), r = Number(p.r);
+        rgPrefsCache = { v: v >= 0 && v <= 1 ? v : 1, m: p.m !== false, r: RG_RATES.includes(r) ? r : 1, l: p.l !== false };
+        return rgPrefsCache;
+    }
+    function rgPrefsSave(patch) {
+        Object.assign(rgPrefs(), patch);
+        gmSet(RG_PREFS_KEY, JSON.stringify(rgPrefsCache));
+    }
+
+    // TECLADO: UM listener (fase de captura, antes dos atalhos da thread e do overlay) entrega a tecla ao player
+    // com foco ou sob o ponteiro (no Feed, ao slide ativo). Nunca enquanto se digita (input, editor).
+    let rgKeysBound = false;
+    let rgHoverWrap = null;   // player sob o ponteiro (pointerenter/leave de cada player)
+    function rgKeyTarget() {
+        const ae = document.activeElement;
+        const f = ae && ae !== document.body && ae.closest ? ae.closest('.smg-rg') : null;
+        if (f && f._rgc) {
+            const r = f.getBoundingClientRect();
+            if (r.bottom >= 0 && r.top <= (window.innerHeight || 0)) return f;   // foco num player que saiu da tela não rouba a tecla
+        }
+        if (rgHoverWrap && rgHoverWrap.isConnected && rgHoverWrap._rgc) return rgHoverWrap;
+        const live = document.querySelector('#smg-media.open .smg-feed-slide.active .smg-rg');
+        return live && live._rgc ? live : null;
+    }
+    function bindRgKeys() {
+        if (rgKeysBound) return;
+        rgKeysBound = true;
         document.addEventListener('keydown', e => {
-            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
-            if (e.key !== '>' && e.key !== '<' && !(e.shiftKey && (e.key === '.' || e.key === ','))) return;
-            const activeWrap = document.querySelector('.smg-rg:hover, .smg-rg:focus-within, .smg-feed-slide.active .smg-rg');
-            if (!activeWrap) return;
-            const v = activeWrap.querySelector('video.smg-rg-v');
-            if (!v) return;
-            e.preventDefault(); e.stopPropagation();
-            const cur = v.playbackRate || 1;
-            const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-            if (e.key === '>' || (e.key === '.' && e.shiftKey)) {
-                const next = SPEEDS.find(s => s > cur + 0.05) || SPEEDS[SPEEDS.length - 1];
-                v.playbackRate = next;
-                toast(next + 'x', 'info');
-            } else {
-                const prev = [...SPEEDS].reverse().find(s => s < cur - 0.05) || SPEEDS[0];
-                v.playbackRate = prev;
-                toast(prev + 'x', 'info');
-            }
-        });
+            if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target;
+            if (t && t.nodeType === 1 && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT'
+                || t.isContentEditable || (t.closest && t.closest('[contenteditable]:not([contenteditable="false"])')))) return;
+            const wrap = rgKeyTarget();
+            if (wrap && wrap._rgc.key(e)) { e.preventDefault(); e.stopPropagation(); }
+        }, true);
     }
 
     // FILA: serializa o carregamento (rgLoad/rgLoadUrl) em máx RG_MAX_CONCURRENT. O streaming direto libera o slot no
@@ -12555,6 +12791,8 @@
         if (!wrap || !w || !h) return false;
         const r = w / h;
         if (!(r > 0.3 && r < 2.8)) return false;
+        if (wrap.style.getPropertyValue('--smg-rg-ratio') === String(r)) return true;   // mesma proporção (API → poster → metadata): nada muda
+        mediaResizeKeep(wrap);   // ANTES de mudar: a caixa acima da tela devolve a diferença no scroll (08-images-masonry)
         wrap.style.aspectRatio = w + ' / ' + h;
         wrap.style.setProperty('--smg-rg-ratio', String(r));
         const isVertical = (h / w) >= 0.9;
@@ -12788,6 +13026,7 @@
     function rgDispose(video) {
         if (!video) return;
         try { video.pause(); } catch (e) {}
+        if (video._rgcAc) { video._rgcAc.abort(); video._rgcAc = null; }   // solta TODO listener/timer da barra (rgControls)
         if (rgLoadIO) rgLoadIO.unobserve(video);
         rgReleasePosterUrl(video);
         for (let i = rgBlobs.length - 1; i >= 0; i--) if (rgBlobs[i].video === video) { try { URL.revokeObjectURL(rgBlobs[i].url); } catch (e) {} rgBlobs.splice(i, 1); }
@@ -12866,7 +13105,7 @@
         video.addEventListener('loadedmetadata', () => {
             if (video.videoWidth && video.videoHeight) rgAspect(wrap, video.videoWidth, video.videoHeight);
         });
-        rgControls(wrap, video);   // play/pause + flash · progresso seekável · volume flyout · tempo · externo · visualizador · auto-hide
+        rgControls(wrap, video);   // a barra única (ver rgControls)
         return { wrap, video };
     }
     function rgFmt(t) {   // M:SS; ≥ 1h vira H:MM:SS (vídeo longo mostrava "160:19" em vez de "2:40:19")
@@ -12874,11 +13113,58 @@
         const h = t / 3600 | 0, m = (t / 60 | 0) % 60, s = t % 60, ss = (s < 10 ? '0' : '') + s;
         return h ? h + ':' + (m < 10 ? '0' : '') + m + ':' + ss : m + ':' + ss;
     }
-    function rgControls(wrap, video) {   // controles próprios: play central + progresso embaixo + rail vertical (volume · overlay · tela cheia · externo)
-        const mkAct = (icon, label, on) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-rgc-act'; b.innerHTML = icon; b.title = i18n(label); b.setAttribute('aria-label', i18n(label)); b.addEventListener('click', on); return b; };
+    // BARRA DO PLAYER (a mesma em todo player nosso: RedGifs, ImagePond, Cyberdrop, mídia direta, Feed e galeria):
+    //   centro .... play grande (pausado/pronto) · clique = play/pause (230ms separa do duplo) · duplo-clique = ∓5s
+    //   progresso . 3.5px → 6px no hover, tooltip com o tempo sob o ponteiro, faixa bufferizada, clique/arrasto = seek
+    //   esquerda .. play/pause · −5s · +5s · mudo + volume (abre no hover; no toque, 1º toque abre) · tempo/duração
+    //   direita ... velocidade (menu 0.25x–3x) · repetir · PiP · baixar/abrir original · modo galeria · tela cheia
+    //               (player estreito: repetir/PiP/baixar/galeria vão pro menu "⋯", ver css-players)
+    //   teclado ... espaço/k · ←/→ 5s · j/l 10s · ↑/↓ volume · m · f · 0-9 = % · </> velocidade (ver bindRgKeys)
+    //   some ...... a barra e o cursor depois de 2s sem mexer o ponteiro, tocando
+    // Volume/mudo/velocidade/repetir ficam em rgPrefs. TODO listener do player passa pelo AbortController do player
+    // (video._rgcAc), abortado no rgDispose: nada sobra preso ao document depois que o player sai.
+    function rgControls(wrap, video) {
+        const ac = new AbortController();
+        video._rgcAc = ac;
+        const on = (el, ev, fn, capture) => el.addEventListener(ev, fn, { signal: ac.signal, capture: !!capture });
+        const timers = new Set();
+        const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
+        const cancel = id => { if (id) { clearTimeout(id); timers.delete(id); } };
+        ac.signal.addEventListener('abort', () => {
+            timers.forEach(clearTimeout); timers.clear();
+            if (rgHoverWrap === wrap) rgHoverWrap = null;
+            wrap._rgc = null;
+        });
+        const prefs = rgPrefs();
+        const mk = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+        const mkAct = (icon, label, fn, cls, withLabel) => {
+            const b = mk('button', 'smg-rgc-act' + (cls ? ' ' + cls : ''));
+            b.type = 'button'; b.innerHTML = icon; b.title = i18n(label); b.setAttribute('aria-label', i18n(label));
+            if (withLabel) { const l = mk('span', 'smg-rgc-lbl'); l.textContent = i18n(label); b.appendChild(l); }   // rótulo só aparece no menu "⋯"
+            on(b, 'click', e => { e.preventDefault(); e.stopPropagation(); fn(e); });
+            return b;
+        };
+        bindRgKeys();
+        wrap.tabIndex = -1;   // clique no player dá foco (teclado vai pra ele), sem entrar na ordem do Tab
+
+        // preferências lembradas
+        try { video.volume = prefs.v; } catch (e) {}
+        video.loop = prefs.l;
+        const applyRate = () => {
+            try {
+                if (video.defaultPlaybackRate !== prefs.r) video.defaultPlaybackRate = prefs.r;   // sobrevive ao load() do src novo
+                if (video.playbackRate !== prefs.r) video.playbackRate = prefs.r;
+            } catch (e) {}
+        };
+        applyRate();
+
         const toggle = () => {
             if (!video.paused) { video.pause(); return; }
             video._rgUserPlayed = true;
+            // o play que o usuário dá segue as preferências ATUAIS (podem ter mudado em outro player depois deste ser montado)
+            try { if (video.volume !== prefs.v) video.volume = prefs.v; } catch (e) {}
+            video.loop = prefs.l;
+            if (!video._rgInFeed && !prefs.m && video.muted) { video.muted = false; rgSolo(video); }   // o usuário escolheu som da última vez
             if (video.preload !== 'auto') video.preload = 'auto';
             if (video._rgDeferUrl) {   // o blob foi adiado (inline autoplay-off) → baixa AGORA + toca (rgViaBlob → rgPlayIfVisible; _rgUserPlayed já é true)
                 const u = video._rgDeferUrl; video._rgDeferUrl = null;
@@ -12886,108 +13172,241 @@
                 rgViaBlob(video, u, wrap);
                 return;
             }
-            if (video._rgUrl && !video.dataset.rgLoaded) {   // turbo/saint preparado (só poster) → AGORA faz o stream + toca
+            if (video._rgUrl && !video.dataset.rgLoaded) {   // turbo/saint/imagepond/cyberdrop/direto preparado (só poster) → AGORA faz o stream + toca
                 wrap.classList.remove('smg-rg-ready'); wrap.classList.add('smg-rg-loading');
                 rgLoadUrl(video, video._rgUrl, wrap);
                 return;
             }
-            if (video.dataset.rgid && !video.dataset.rgLoaded) {   // redgifs preparado (só poster) → AGORA baixa o vídeo de verdade + toca (rgLoad → rgViaDirect/Blob → rgPlayIfVisible; _rgUserPlayed já é true)
+            if (video.dataset.rgid && !video.dataset.rgLoaded) {   // redgifs preparado (só poster) → AGORA baixa o vídeo de verdade + toca
                 wrap.classList.remove('smg-rg-ready'); wrap.classList.add('smg-rg-loading');
                 rgLoad(video);
                 return;
             }
             const p = video.play(); if (p && p.catch) p.catch(() => {});
         };
-        // Clique no wrap enquanto estiver em loading: força início do carregamento/play imediatamente
-        wrap.addEventListener('click', e => {
-            if (wrap.classList.contains('smg-rg-loading') && !e.target.closest('.smg-rgc-act, .smg-rgc-prog, .smg-rgc-volbar, .smg-rgc-speed')) {
+        // clique no wrap enquanto carrega: força o início do carregamento/play
+        on(wrap, 'click', e => {
+            if (wrap.classList.contains('smg-rg-loading') && !e.target.closest('.smg-rgc-bottom, .smg-rgc-src')) {
                 e.preventDefault(); e.stopPropagation();
                 toggle();
             }
         });
-        // SEEK ±5s + flash "« 5s" / "5s »"
-        const sflash = document.createElement('div'); sflash.className = 'smg-rgc-seekflash';
-        let sflashT;
+
+        // aviso central curto ("« 5s", "2x", "60%")
+        const sflash = mk('div', 'smg-rgc-seekflash');
+        let sflashT = 0;
+        const flashText = txt => { sflash.textContent = txt; sflash.classList.add('on'); cancel(sflashT); sflashT = later(() => sflash.classList.remove('on'), 520); };
         const seek = d => {
-            if (!video.duration) return;
+            if (!video.duration) return false;
             video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + d));
-            sflash.textContent = d < 0 ? '« 5s' : '5s »';
-            sflash.classList.add('on'); clearTimeout(sflashT); sflashT = setTimeout(() => sflash.classList.remove('on'), 480);
+            flashText(d < 0 ? '« ' + (-d) + 's' : d + 's »');
+            return true;
         };
-        // CLIQUE no vídeo: 1× = play/pause · 2× = ±5s (metade esquerda/direita). timer separa single de double-click.
-        let clickT = null;
-        video.addEventListener('click', e => {
+        // CLIQUE no vídeo: 1× = play/pause · 2× = ∓5s pela metade (o timer separa o simples do duplo)
+        let clickT = 0;
+        let revealTap = false;   // toque com a barra escondida: só mostra a barra (não pausa), como no YouTube
+        on(video, 'click', e => {
             e.preventDefault(); e.stopPropagation();
-            if (clickT) return;   // já há um clique pendente → este é o 2º (o dblclick cuida do seek)
-            clickT = setTimeout(() => { clickT = null; toggle(); }, 230);
+            if (closeMenus()) return;   // clique fora de um menu aberto só fecha o menu
+            if (revealTap) { revealTap = false; return; }
+            if (clickT) return;
+            clickT = later(() => { clickT = 0; toggle(); }, 230);
         });
-        video.addEventListener('dblclick', e => {
+        on(video, 'dblclick', e => {
             e.preventDefault(); e.stopPropagation();
-            if (clickT) { clearTimeout(clickT); clickT = null; }   // cancela o play/pause pendente
+            if (clickT) { cancel(clickT); clickT = 0; }
             const r = video.getBoundingClientRect();
             seek((e.clientX - r.left) < r.width / 2 ? -5 : 5);
         });
-        // CENTRO: play grande (só no pausado/pronto) — seek é por DUPLO-CLIQUE no vídeo (estilo YouTube)
-        const flash = document.createElement('div'); flash.className = 'smg-rgc-flash';
-        const playBtn = document.createElement('button'); playBtn.type = 'button'; playBtn.className = 'smg-rgc-play'; playBtn.setAttribute('aria-label', i18n('Play/Pause')); playBtn.innerHTML = ICONS.rgPlay;
-        playBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggle(); });
-        flash.appendChild(playBtn);
-        // SCRUBBER (no topo da barra): buffer + preenchido + knob; seekável por drag
-        const buf = document.createElement('div'); buf.className = 'smg-rgc-buf';
-        const fill = document.createElement('div'); fill.className = 'smg-rgc-fill';
-        const knob = document.createElement('div'); knob.className = 'smg-rgc-knob'; fill.appendChild(knob);
-        const bar = document.createElement('div'); bar.className = 'smg-rgc-bar'; bar.append(buf, fill);
-        const prog = document.createElement('div'); prog.className = 'smg-rgc-prog'; prog.appendChild(bar);
-        // rect CACHEADO no pointerdown (não muda durante o drag): getBoundingClientRect por pointermove
-        // forçava layout síncrono a cada move (o write do 'seeking'/fill suja o layout entre moves)
-        const seekTo = (cx, r) => { if (!video.duration || !r.width) return; video.currentTime = Math.max(0, Math.min(1, (cx - r.left) / r.width)) * video.duration; };
-        prog.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); const r = bar.getBoundingClientRect(); seekTo(e.clientX, r); const mv = ev => seekTo(ev.clientX, r); const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); }; document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); });
-        // TEMPO (atual / duração)
-        const tEl = document.createElement('span'); tEl.className = 'smg-rgc-time'; tEl.textContent = '0:00';
-        // PERF: escreve no text node (.data = characterData, que o observer global NÃO escuta). textContent
-        // recriava o text node a cada timeupdate (~4Hz/vídeo) → mutação childList → processAll com dirtyRoots
-        // vazio = FULL-SCAN do body a cada tick. Skip-if-same corta os ticks dentro do mesmo segundo.
-        const syncTime = () => { const s = rgFmt(video.currentTime) + (video.duration ? ' / ' + rgFmt(video.duration) : ''); if (tEl.firstChild.data !== s) tEl.firstChild.data = s; };
-        video.addEventListener('timeupdate', () => { if (video.duration) fill.style.width = (video.currentTime / video.duration * 100) + '%'; syncTime(); });
-        video.addEventListener('loadedmetadata', syncTime);
-        video.addEventListener('progress', () => { try { if (video.buffered.length && video.duration) buf.style.width = (video.buffered.end(video.buffered.length - 1) / video.duration * 100) + '%'; } catch (x) {} });
-        // VOLUME: barra DIV (igual a de progresso, que SEMPRE renderiza — o <input range> vinha só como um PONTO).
-        // Linha no canto inferior-ESQUERDO [mudo][======barra======], sempre visível no hover (sem flyout).
-        const mute = mkAct(ICONS.volumeMute, 'Mute', e => { e.stopPropagation(); video.muted = !video.muted; if (!video.muted) { if (!video.volume) video.volume = 1; rgSolo(video); } syncVol(); });
-        const volfill = document.createElement('div'); volfill.className = 'smg-rgc-volfill';
-        const volbar = document.createElement('div'); volbar.className = 'smg-rgc-volbar'; volbar.setAttribute('role', 'slider'); volbar.setAttribute('aria-label', i18n('Volume')); volbar.appendChild(volfill);
-        const volgrp = document.createElement('div');
-        volgrp.append(mute, volbar);
-        const syncVol = () => { mute.innerHTML = (video.muted || !video.volume) ? ICONS.volumeMute : ICONS.volume; volfill.style.width = ((video.muted ? 0 : video.volume) * 100) + '%'; };
-        const setVolFromX = (cx, r) => { if (!r.width) return; const v = Math.max(0, Math.min(1, (cx - r.left) / r.width)); video.volume = v; video.muted = (v === 0); if (v > 0) rgSolo(video); syncVol(); };
-        volbar.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); const r = volbar.getBoundingClientRect(); setVolFromX(e.clientX, r); const mv = ev => setVolFromX(ev.clientX, r); const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); }; document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); });
-        // VELOCIDADE: 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x (cicla no clique ou atalhos < e >)
-        const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-        const speedBtn = document.createElement('button');
-        speedBtn.type = 'button';
-        speedBtn.className = 'smg-rgc-speed';
-        speedBtn.title = i18n('Playback speed');
-        speedBtn.setAttribute('aria-label', i18n('Playback speed'));
-        speedBtn.textContent = '1x';
-        const setSpeed = rate => {
-            video.playbackRate = rate;
-            speedBtn.textContent = (rate === 1 ? '1x' : (rate + 'x'));
-            speedBtn.classList.toggle('is-custom-speed', rate !== 1);
-        };
-        video.addEventListener('ratechange', () => {
-            const cur = video.playbackRate || 1;
-            speedBtn.textContent = (cur === 1 ? '1x' : (cur + 'x'));
-            speedBtn.classList.toggle('is-custom-speed', cur !== 1);
-        });
-        speedBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            const cur = video.playbackRate || 1;
-            let nextIdx = SPEEDS.findIndex(s => Math.abs(s - cur) < 0.05) + 1;
-            if (nextIdx >= SPEEDS.length || nextIdx < 0) nextIdx = 0;
-            setSpeed(SPEEDS[nextIdx]);
-        });
-        bindRgSpeedGlobal();
 
+        // CENTRO: play grande
+        const flash = mk('div', 'smg-rgc-flash');
+        const playBtn = mk('button', 'smg-rgc-play'); playBtn.type = 'button'; playBtn.setAttribute('aria-label', i18n('Play/Pause')); playBtn.innerHTML = ICONS.rgPlay;
+        on(playBtn, 'click', e => { e.preventDefault(); e.stopPropagation(); toggle(); });
+        flash.appendChild(playBtn);
+
+        // PROGRESSO: buffer + preenchido + knob + tooltip de tempo
+        const buf = mk('div', 'smg-rgc-buf');
+        const fill = mk('div', 'smg-rgc-fill');
+        fill.appendChild(mk('div', 'smg-rgc-knob'));
+        const bar = mk('div', 'smg-rgc-bar'); bar.append(buf, fill);
+        const tip = mk('div', 'smg-rgc-tip'); tip.textContent = '0:00';
+        const prog = mk('div', 'smg-rgc-prog'); prog.append(bar, tip);
+        // rect CACHEADO no pointerdown/enter: getBoundingClientRect por pointermove forçava layout a cada move
+        const seekTo = (cx, r) => { if (!video.duration || !r.width) return; video.currentTime = Math.max(0, Math.min(1, (cx - r.left) / r.width)) * video.duration; };
+        on(prog, 'pointerdown', e => {
+            e.preventDefault(); e.stopPropagation();
+            const r = bar.getBoundingClientRect();
+            seekTo(e.clientX, r);
+            wrap.classList.add('smg-rgc-scrub');
+            const mv = ev => seekTo(ev.clientX, r);
+            const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); wrap.classList.remove('smg-rgc-scrub'); keepBar(); };
+            on(document, 'pointermove', mv); on(document, 'pointerup', up);
+        });
+        let progRect = null;
+        on(prog, 'pointerenter', () => { progRect = bar.getBoundingClientRect(); });
+        on(prog, 'pointerleave', () => { progRect = null; });
+        on(prog, 'pointermove', e => {
+            const r = progRect || (progRect = bar.getBoundingClientRect());
+            if (!r.width || !video.duration) return;
+            const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+            tip.firstChild.data = rgFmt(x * video.duration);
+            tip.style.left = (x * 100) + '%';
+        });
+        // TEMPO (atual / duração). PERF: escreve no text node (.data = characterData, que o observer global NÃO escuta);
+        // textContent recriava o nó a cada timeupdate → mutação childList → full-scan do body a cada tick.
+        const tEl = mk('span', 'smg-rgc-time'); tEl.textContent = '0:00';
+        const syncTime = () => { const s = rgFmt(video.currentTime) + (video.duration ? ' / ' + rgFmt(video.duration) : ''); if (tEl.firstChild.data !== s) tEl.firstChild.data = s; };
+        on(video, 'timeupdate', () => { if (video.duration) fill.style.width = (video.currentTime / video.duration * 100) + '%'; syncTime(); });
+        on(video, 'loadedmetadata', () => { syncTime(); applyRate(); });
+        on(video, 'progress', () => { try { if (video.buffered.length && video.duration) buf.style.width = (video.buffered.end(video.buffered.length - 1) / video.duration * 100) + '%'; } catch (x) {} });
+
+        // VOLUME: mudo + barra (abre no hover; no toque o 1º toque abre a barra, o 2º alterna o mudo)
+        const volgrp = mk('div', 'smg-rgc-vol');
+        const volfill = mk('div', 'smg-rgc-volfill');
+        const volbar = mk('div', 'smg-rgc-volbar'); volbar.setAttribute('role', 'slider'); volbar.setAttribute('aria-label', i18n('Volume'));
+        volbar.setAttribute('aria-valuemin', '0'); volbar.setAttribute('aria-valuemax', '100');
+        volbar.appendChild(volfill);
+        const canHover = () => !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+        const syncVol = () => {
+            const v = video.muted ? 0 : video.volume;
+            mute.innerHTML = !v ? ICONS.volumeMute : (v < 0.5 ? ICONS.volumeLow : ICONS.volume);
+            mute.title = i18n(video.muted ? 'Unmute' : 'Mute'); mute.setAttribute('aria-label', mute.title);
+            volfill.style.width = (v * 100) + '%';
+            volbar.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+        };
+        const setMuted = m => {
+            video.muted = m;
+            if (!m) { if (!video.volume) video.volume = 1; rgSolo(video); }
+            rgPrefsSave({ m: video.muted, v: video.volume });
+            syncVol();
+        };
+        // keepMuted: ↓ com o mudo ligado só baixa o nível (não solta som); o resto (barra, ↑) tira o mudo
+        const setVol = (v, keepMuted) => {
+            v = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
+            video.volume = v;
+            if (!keepMuted) video.muted = v === 0;
+            if (!video.muted) rgSolo(video);
+            rgPrefsSave({ v, m: video.muted });
+            syncVol();
+        };
+        const mute = mkAct(ICONS.volumeMute, 'Mute', () => {
+            if (!canHover() && !volgrp.classList.contains('is-open')) { volgrp.classList.add('is-open'); keepBar(); return; }
+            setMuted(!video.muted);
+        }, 'smg-rgc-mute');
+        const setVolFromX = (cx, r) => { if (r.width) setVol((cx - r.left) / r.width); };
+        on(volbar, 'pointerdown', e => {
+            e.preventDefault(); e.stopPropagation();
+            const r = volbar.getBoundingClientRect();
+            setVolFromX(e.clientX, r);
+            volgrp.classList.add('is-sliding');
+            const mv = ev => setVolFromX(ev.clientX, r);
+            const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); volgrp.classList.remove('is-sliding'); };
+            on(document, 'pointermove', mv); on(document, 'pointerup', up);
+        });
+        volgrp.append(mute, volbar);
+
+        // VELOCIDADE: menu 0.25x–3x (lembrada); no player bem estreito vira um botão que cicla, dentro do "⋯"
+        const menus = [];
+        let menuCloser = null;
+        function closeMenus() {
+            let closed = false;
+            menus.forEach(m => { if (m.classList.contains('open')) { m.classList.remove('open'); closed = true; } });
+            wrap.classList.remove('smg-rgc-menu-open');
+            if (menuCloser) { document.removeEventListener('pointerdown', menuCloser, true); menuCloser = null; }
+            return closed;
+        }
+        const toggleMenu = (menu, anchor) => {
+            const was = menu.classList.contains('open');
+            closeMenus();
+            if (was) { keepBar(); return; }
+            menu.classList.add('open');
+            wrap.classList.add('smg-rgc-menu-open');
+            const room = wrap.clientHeight - bottom.offsetHeight - 12;   // o menu sobe da barra: não passa do topo do player (overflow:hidden cortaria)
+            menu.style.maxHeight = room > 96 ? Math.min(300, room) + 'px' : '';
+            keepBar();
+            menuCloser = ev => { if (!menu.contains(ev.target) && !anchor.contains(ev.target)) closeMenus(); };
+            on(document, 'pointerdown', menuCloser, true);
+        };
+        const setRate = r => { rgPrefsSave({ r }); applyRate(); };
+        const stepRate = dir => {
+            const i = RG_RATES.indexOf(video.playbackRate);
+            const ni = Math.max(0, Math.min(RG_RATES.length - 1, (i < 0 ? RG_RATES.indexOf(1) : i) + dir));
+            setRate(RG_RATES[ni]);
+            flashText(RG_RATES[ni] + 'x');
+        };
+        const speedWrap = mk('div', 'smg-rgc-speedwrap');
+        const speedBtn = mk('button', 'smg-rgc-act smg-rgc-speed'); speedBtn.type = 'button';
+        speedBtn.title = i18n('Speed'); speedBtn.setAttribute('aria-label', i18n('Speed')); speedBtn.setAttribute('aria-haspopup', 'menu');
+        const speedMenu = mk('div', 'smg-rgc-menu smg-rgc-speedmenu'); speedMenu.setAttribute('role', 'menu');
+        const speedHead = mk('div', 'smg-rgc-menuhead'); speedHead.textContent = i18n('Speed');
+        speedMenu.appendChild(speedHead);
+        RG_RATES.forEach(r => {
+            const it = mk('button', 'smg-rgc-menuitem'); it.type = 'button'; it.setAttribute('role', 'menuitemradio'); it.dataset.r = String(r);
+            const t = mk('span'); t.textContent = r === 1 ? '1x · ' + i18n('Normal') : r + 'x';
+            it.appendChild(t); it.insertAdjacentHTML('beforeend', ICONS.rgCheck);
+            on(it, 'click', e => { e.preventDefault(); e.stopPropagation(); setRate(r); closeMenus(); });
+            speedMenu.appendChild(it);
+        });
+        on(speedBtn, 'click', e => { e.preventDefault(); e.stopPropagation(); toggleMenu(speedMenu, speedBtn); });
+        speedWrap.append(speedMenu, speedBtn);
+        menus.push(speedMenu);
+        const speedCycle = mkAct(ICONS.sliders, 'Speed', () => stepRate(RG_RATES.indexOf(video.playbackRate) === RG_RATES.length - 1 ? -(RG_RATES.length - 1) : 1), 'smg-rgc-speedcycle', true);
+        const syncRate = () => {
+            const r = video.playbackRate || 1;
+            speedBtn.textContent = r + 'x';
+            speedBtn.classList.toggle('is-custom', r !== 1);
+            speedMenu.querySelectorAll('.smg-rgc-menuitem').forEach(it => { const onIt = Number(it.dataset.r) === r; it.classList.toggle('on', onIt); it.setAttribute('aria-checked', onIt ? 'true' : 'false'); });
+            speedCycle.querySelector('.smg-rgc-lbl').textContent = i18n('Speed') + ' ' + r + 'x';
+        };
+        on(video, 'ratechange', syncRate);
+
+        // REPETIR (lembrado)
+        const syncLoop = () => { loopBtn.classList.toggle('is-active', !!video.loop); loopBtn.setAttribute('aria-pressed', video.loop ? 'true' : 'false'); };
+        const loopBtn = mkAct(ICONS.rgLoop, 'Loop', () => { video.loop = !video.loop; rgPrefsSave({ l: video.loop }); syncLoop(); closeMenus(); }, 'smg-rgc-loop', true);
+        // PiP: só onde o navegador tem a API (o Firefox não expõe requestPictureInPicture)
+        const pipBtn = (document.pictureInPictureEnabled && typeof video.requestPictureInPicture === 'function')
+            ? mkAct(ICONS.rgPip, 'Picture-in-picture', () => {
+                try {
+                    const p = document.pictureInPictureElement === video ? document.exitPictureInPicture() : video.requestPictureInPicture();
+                    if (p && p.catch) p.catch(() => {});
+                } catch (x) {}
+                closeMenus();
+            }, 'smg-rgc-pip', true)
+            : null;
+        // BAIXAR / ABRIR ORIGINAL: o blob local baixa direto; URL de outro host abre numa guia (o navegador ignora
+        // download= entre origens). Sem URL conhecida o botão some (sincronizado no hover).
+        const dlUrl = () => {
+            const cs = video.currentSrc || '';
+            if (/^blob:/.test(cs)) return cs;
+            let u = video._rgUrl || '';
+            if (!u && video.dataset.rgid) { const c = rgCache.get(video.dataset.rgid.toLowerCase()); u = (c && c.hd) || ''; }
+            if (!u) u = cs;
+            return u ? u.replace(/#t=[\d.]+$/, '') : (video._rgExt || '');
+        };
+        const dlBtn = mkAct(ICONS.rgDownload, 'Download / open original', () => {
+            const u = dlUrl();
+            closeMenus();
+            if (!u) return;
+            const a = document.createElement('a');
+            a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+            a.download = /^blob:/.test(u) ? (video.dataset.rgid || (video._rgSource || 'video').toLowerCase()) + '.mp4' : '';
+            document.body.appendChild(a); a.click(); a.remove();
+        }, 'smg-rgc-dl', true);
+        // MODO GALERIA: a mídia do post no overlay (Feed), neste item. Sem URL coletável (_rgFeed) o botão some.
+        const over = mkAct(ICONS.gallery, 'Gallery mode', () => {
+            closeMenus();
+            if (!video._rgFeed) return;
+            document.querySelectorAll('video.smg-rg-v').forEach(v => { try { v.pause(); } catch (x) {} });
+            try { openMediaFeed(video._rgFeed); } catch (x) {}
+        }, 'smg-rgc-over', true);
+        const extras = mk('div', 'smg-rgc-extras');
+        extras.append(...[loopBtn, pipBtn, dlBtn, over, speedCycle].filter(Boolean));
+        menus.push(extras);
+        const moreBtn = mkAct(ICONS.rgMore, 'More', () => toggleMenu(extras, moreBtn), 'smg-rgc-more');
+        const syncLazy = () => { dlBtn.hidden = !dlUrl(); over.hidden = !video._rgFeed; };   // _rgFeed/_rgUrl chegam depois do build
+
+        // TELA CHEIA da caixa do player
         const upgradeToHd = () => {
             if (video.dataset.rgid && video._rgSd && rgCache.has(video.dataset.rgid.toLowerCase())) {
                 const info = rgCache.get(video.dataset.rgid.toLowerCase());
@@ -13002,50 +13421,111 @@
                 }
             }
         };
-
-        // rail: velocidade · visualizador · tela cheia
-        const over = mkAct(ICONS.gallery, 'Open in viewer', e => { e.stopPropagation(); document.querySelectorAll('video.smg-rg-v').forEach(v => { try { v.pause(); } catch (x) {} }); if (video._rgFeed) { try { openMediaFeed(video._rgFeed); } catch (x) {} } });   // grid (galeria) ≠ cantos (fullscreen)
-        over.classList.add('smg-rgc-over');   // escondido no feed (lá já É o visualizador) — ver CSS
-        const fs = mkAct(ICONS.rgExpand, 'Fullscreen', e => {
-            e.stopPropagation();
+        const toggleFs = () => {
             try {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                } else {
-                    wrap.requestFullscreen();
-                    upgradeToHd();
-                }
+                if (document.fullscreenElement) { const p = document.exitFullscreen(); if (p && p.catch) p.catch(() => {}); }
+                else { const p = wrap.requestFullscreen(); if (p && p.catch) p.catch(() => {}); upgradeToHd(); }
             } catch (x) {}
-        });
-        // BARRA INFERIOR (YouTube): scrubber em cima + linha [play · volume · tempo ··· velocidade · visualizador · tela cheia]
-        const barPlay = mkAct(ICONS.rgPlay, 'Play/Pause', e => { e.stopPropagation(); toggle(); }); barPlay.classList.add('smg-rgc-barplay');   // ícone PREENCHIDO → isenta do fill:none do #smg-feed
-        const bottom = document.createElement('div'); bottom.className = 'smg-rgc-bottom';
-        const row = document.createElement('div'); row.className = 'smg-rgc-row';
-        const leftc = document.createElement('div'); leftc.className = 'smg-rgc-left'; leftc.append(barPlay, volgrp, tEl);
-        const rightc = document.createElement('div'); rightc.className = 'smg-rgc-right'; rightc.append(speedBtn, over, fs);
+        };
+        const fs = mkAct(ICONS.rgExpand, 'Fullscreen', toggleFs, 'smg-rgc-fs');
+
+        // BARRA INFERIOR
+        const barPlay = mkAct(ICONS.rgPlay, 'Play/Pause', toggle, 'smg-rgc-barplay');   // ícone PREENCHIDO → isenta do fill:none do #smg-feed
+        const mkSkip = (d, icon, label) => { const b = mkAct(icon, label, () => seek(d), 'smg-rgc-skip'); const n = mk('span', 'smg-rgc-skipn'); n.textContent = String(Math.abs(d)); b.appendChild(n); return b; };
+        const back5 = mkSkip(-5, ICONS.rgSkipBack, 'Back 5s');
+        const fwd5 = mkSkip(5, ICONS.rgSkipFwd, 'Forward 5s');
+        const bottom = mk('div', 'smg-rgc-bottom');
+        const row = mk('div', 'smg-rgc-row');
+        const leftc = mk('div', 'smg-rgc-left'); leftc.append(barPlay, back5, fwd5, volgrp, tEl);
+        const rightc = mk('div', 'smg-rgc-right'); rightc.append(speedWrap, extras, moreBtn, fs);
         row.append(leftc, rightc);
         bottom.append(prog, row);
-        // FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host".
-        const src = document.createElement('a'); src.className = 'smg-rgc-src'; src.target = '_blank'; src.rel = 'noopener noreferrer'; src.title = i18n('Open in new tab');
+        on(bottom, 'click', e => e.stopPropagation());   // clique na barra nunca vira play/pause nem abre o post
+
+        // FONTE + abrir EXTERNO: badge no canto superior direito ("Turbo ↗")
+        const src = mk('a', 'smg-rgc-src'); src.target = '_blank'; src.rel = 'noopener noreferrer'; src.title = i18n('Open in new tab');
         src.innerHTML = '<span class="smg-rgc-src-t">' + (video._rgSource || '') + '</span>' + ICONS.rgExternal;
-        const syncSrcHref = () => { if (video._rgExt) src.href = video._rgExt; };   // redgifs já tem _rgExt aqui; turbo/saint setam logo após o build → sincroniza no hover
-        syncSrcHref(); src.addEventListener('pointerenter', syncSrcHref);
-        src.addEventListener('click', e => { e.stopPropagation(); if (!video._rgExt) e.preventDefault(); });   // não dispara o play/pause do player; sem _rgExt → não navega
-        // estado play/pause → classe (o CSS mostra/esconde o play central)
-        video.addEventListener('play', () => { if (video.preload !== 'auto') video.preload = 'auto'; wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause; if (!video.muted) rgSolo(video); });
-        video.addEventListener('pause', () => { wrap.classList.remove('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPlay; barPlay.innerHTML = ICONS.rgPlay; });
-        video.addEventListener('volumechange', syncVol);
-        // LOADING ao avançar/voltar: spinner por cima SÓ no SEEK do usuário (era o pedido). NÃO usa 'waiting':
-        // vídeo PAUSADO + preload=metadata (inline, autoplay off) dispara 'waiting' no load mas NUNCA 'canplay'/'playing'
-        // → dava spinner ETERNO. 'seeking' NÃO dispara no load (só quando o usuário muda o currentTime). Remoção redundante p/ garantir.
-        video.addEventListener('seeking', () => wrap.classList.add('smg-rg-buffering'));
-        ['seeked', 'canplay', 'playing', 'loadeddata', 'pause', 'suspend', 'error', 'abort'].forEach(ev => video.addEventListener(ev, () => wrap.classList.remove('smg-rg-buffering')));
-        // SKELETON: revela o player só quando o vídeo TEM frame de verdade (loadeddata/canplay). Persistente (não 'once').
-        const clearSkel = () => wrap.classList.remove('smg-rg-loading', 'smg-rg-ready');   // carregou de verdade → tira skeleton E o estado "pronto". MANTÉM o aspect-ratio: a caixa fica no aspect REAL (setado no metadata/API) → revela já no tamanho certo, sem "ajustar no play"
-        video.addEventListener('loadeddata', clearSkel);
-        video.addEventListener('canplay', () => { clearSkel(); wrap.classList.remove('smg-rg-buffering'); });
+        const syncSrcHref = () => { if (video._rgExt) src.href = video._rgExt; };   // turbo/saint setam _rgExt logo após o build
+        syncSrcHref(); on(src, 'pointerenter', syncSrcHref);
+        on(src, 'click', e => { e.stopPropagation(); if (!video._rgExt) e.preventDefault(); });
+
+        // SOME a barra (e o cursor) depois de 2s parado, tocando
+        let idleT = 0, lastMove = 0;
+        function keepBar(e) {
+            // toque que acorda a barra escondida (pointerenter/down do toque chegam antes do click): o click seguinte não pausa
+            if (e && e.pointerType === 'touch' && wrap.classList.contains('smg-rgc-idle')) { revealTap = true; later(() => { revealTap = false; }, 700); }
+            wrap.classList.remove('smg-rgc-idle');
+            const now = Date.now();
+            if (idleT && now - lastMove < 150) return;   // pointermove a 60Hz: re-arma no máximo a cada 150ms
+            lastMove = now;
+            cancel(idleT); idleT = 0;
+            if (video.paused) return;
+            idleT = later(() => {
+                idleT = 0;
+                if (video.paused || wrap.classList.contains('smg-rgc-menu-open') || wrap.classList.contains('smg-rgc-scrub')) return;
+                wrap.classList.add('smg-rgc-idle');
+                if (!canHover()) volgrp.classList.remove('is-open');
+            }, 2000);
+        }
+        on(wrap, 'pointermove', keepBar);
+        on(wrap, 'pointerdown', keepBar);
+        on(wrap, 'pointerenter', e => { rgHoverWrap = wrap; keepBar(e); syncLazy(); syncSrcHref(); });
+        on(wrap, 'pointerleave', () => { if (rgHoverWrap === wrap) rgHoverWrap = null; });
+        on(wrap, 'focusin', syncLazy);
+
+        // estado play/pause → classe (o CSS mostra/esconde o play central e a barra)
+        on(video, 'play', () => {
+            if (video.preload !== 'auto') video.preload = 'auto';
+            applyRate();
+            wrap.classList.add('smg-rgc-playing'); playBtn.innerHTML = ICONS.rgPause; barPlay.innerHTML = ICONS.rgPause;
+            if (!video.muted) rgSolo(video);
+            keepBar();
+        });
+        on(video, 'pause', () => {
+            wrap.classList.remove('smg-rgc-playing', 'smg-rgc-idle'); playBtn.innerHTML = ICONS.rgPlay; barPlay.innerHTML = ICONS.rgPlay;
+            cancel(idleT); idleT = 0;
+        });
+        on(video, 'volumechange', syncVol);
+        // LOADING ao avançar/voltar: spinner SÓ no seek ('waiting' no load com preload=metadata dava spinner eterno)
+        on(video, 'seeking', () => wrap.classList.add('smg-rg-buffering'));
+        ['seeked', 'canplay', 'playing', 'loadeddata', 'pause', 'suspend', 'error', 'abort'].forEach(ev => on(video, ev, () => wrap.classList.remove('smg-rg-buffering')));
+        // SKELETON: revela o player só quando o vídeo TEM frame (loadeddata/canplay). Mantém o aspect-ratio real.
+        const clearSkel = () => wrap.classList.remove('smg-rg-loading', 'smg-rg-ready');
+        on(video, 'loadeddata', clearSkel);
+        on(video, 'canplay', () => { clearSkel(); wrap.classList.remove('smg-rg-buffering'); });
+
+        // TECLADO (bindRgKeys entrega a tecla a este player quando ele tem foco ou está sob o ponteiro).
+        // No overlay, espaço/↑/↓/m são do próprio overlay (navegar slides, mudo do Feed).
+        wrap._rgc = {
+            key: e => {
+                const k = e.key, ov = !!wrap.closest('#smg-media');
+                if (k === ' ' && ov) return false;
+                if (k === ' ' || k === 'k' || k === 'K') { toggle(); return true; }
+                if (k === 'ArrowLeft') return seek(-5);
+                if (k === 'ArrowRight') return seek(5);
+                if (k === 'j' || k === 'J') return seek(-10);
+                if (k === 'l' || k === 'L') return seek(10);
+                if (!ov && (k === 'ArrowUp' || k === 'ArrowDown')) {
+                    if (k === 'ArrowUp') setVol(video.volume + 0.05);
+                    else setVol(video.volume - 0.05, video.muted);
+                    flashText(video.muted ? i18n('Mute') + ' · ' + Math.round(video.volume * 100) + '%' : Math.round(video.volume * 100) + '%');
+                    return true;
+                }
+                if (!ov && (k === 'm' || k === 'M')) { setMuted(!video.muted); return true; }
+                if (k === 'f' || k === 'F') { toggleFs(); return true; }
+                if (k === '>' || k === '<') { stepRate(k === '>' ? 1 : -1); return true; }
+                if (k.length === 1 && k >= '0' && k <= '9') {
+                    if (!video.duration) return false;
+                    video.currentTime = video.duration * Number(k) / 10;
+                    return true;
+                }
+                return false;
+            },
+        };
+
         wrap.append(flash, sflash, bottom, src);
-        syncVol(); syncTime();
+        syncVol(); syncTime(); syncRate(); syncLoop(); syncLazy();
+        Promise.resolve().then(syncLazy);   // quem constrói o player seta _rgExt/_rgFeed/_rgUrl logo depois, na mesma tarefa
     }
     function rgStart(video, preferSd) {   // preferSd: post = SD (rápido); feed = HD
         video._rgSd = !!preferSd;
@@ -13392,6 +13872,7 @@
             ifr.replaceWith(wrapper);
             const restoreIframe = () => {
                 if (slot.querySelector('iframe')) return;
+                mediaResizeKeep(wrapper);
                 unfillSlot(slot);
                 loading.remove();
                 const oldWrap = slot.querySelector('.smg-rg');
@@ -13406,6 +13887,7 @@
                 loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
                 queueEmbedResolve(slot, done => imagepondResolve(pageUrl, done), res => {
                     if (wrapper.querySelector('.smg-rg')) return;
+                    mediaResizeKeep(wrapper);   // spinner 16:9 → player/iframe/imagem: acima da tela, devolve a diferença no scroll
                     if (res && res.mp4) {                                   // VÍDEO → nosso player
                         const { wrap, video } = buildNativeVideo(res.mp4, location.origin + '/', restoreIframe, 'ImagePond');
                         video._rgKeepRef = 'origin';                        // mp4 referer-locked → streaming direto PRESERVANDO o referer (senão 403); blob (com _rgRef) é o backup
@@ -13549,6 +14031,7 @@
         ctx.loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
         queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
+            mediaResizeKeep(ctx.wrapper);   // spinner 16:9 → player (ou iframe de volta): acima da tela, devolve a diferença no scroll
             if (!res) { restore(); return; }
             const { wrap, video } = buildNativeVideo(res.mp4, 'https://' + host + '/', restore, 'Cyberdrop');
             video._rgExt = cyberdropPageUrl(host, slug);   // "abrir em nova guia" → página do arquivo (tem download)
@@ -13572,6 +14055,7 @@
             // o iframe nativo já saiu do DOM (para de tentar carregar); guardado pra voltar se a API falhar
             const restore = () => {
                 if (ctx.slot.querySelector('iframe')) return;
+                mediaResizeKeep(ctx.wrapper);
                 unfillSlot(ctx.slot); ctx.loading.remove();
                 ifr.classList.add('saint-iframe'); ifr.removeAttribute('style');   // preenche o slot 16:9 (o width/height="auto" do site quebrava na coluna)
                 ctx.slot.appendChild(ifr);
@@ -13595,7 +14079,7 @@
             const host = m[1], slug = m[2], origHref = link.href;
             const ctx = cyberdropSlot(link, host, slug, origHref);
             if (!ctx) return;
-            const restore = () => { unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
+            const restore = () => { mediaResizeKeep(ctx.wrapper); unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
             const activate = () => {
                 if (ctx.slot.dataset.cdActivated) return;
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;
@@ -17180,7 +17664,7 @@
     // media/14-feed-lightbox.js
     // Owns: the media overlay: one media list per thread, gallery and feed views, gestures, ?view= URL state.
     // Exposes: openMedia, openMediaFeed, closeMedia, setMediaView, collectMediaFrom, restoreNavMode, smgSetNavParam.
-    // Depends on: media/08a-masonry-engine (gallery), media/10-redgifs-player, core/06-helpers.
+    // Depends on: media/08a-masonry-engine (gallery), media/08-images-masonry (mediaResizeKeep), media/10-redgifs-player, runtime/21-init-features (turboThumbSize, at call time), core/06-helpers.
     // =========================================================
     // FEATURE: modo mídia — a mídia da thread num overlay com DUAS vistas sobre UMA lista
     //
@@ -17373,10 +17857,16 @@
                     tile.insertBefore(iframe, maxBtn);
                 };
                 // tile ganha o aspect REAL do vídeo (vertical = tile alto, não esmagado em 16:9)
-                const fitTile = video => video.addEventListener('loadedmetadata', () => {
-                    if (!video.videoWidth || !video.videoHeight) return;
-                    tile.dataset.relh = (video.videoHeight / video.videoWidth).toFixed(4);
+                // (acima da tela a grade devolve a diferença no scroll: mediaResizeKeep, 08-images-masonry)
+                const setRelh = (w, h) => {
+                    const relh = (h / w).toFixed(4);
+                    if (!tile.isConnected || tile.dataset.relh === relh) return;
+                    mediaResizeKeep(tile);
+                    tile.dataset.relh = relh;
                     masonrySchedule(tile.parentElement);
+                };
+                const fitTile = video => video.addEventListener('loadedmetadata', () => {
+                    if (video.videoWidth && video.videoHeight) setRelh(video.videoWidth, video.videoHeight);
                 }, { once: true });
                 const rid = (FEATURES.redgifsPlayer && GMX) ? rgIdFrom(it.url) : null;
                 if (rid) {   // redgifs → NOSSO player (autoplay-off, igual ao inline)
@@ -17386,6 +17876,10 @@
                     rgStart(video, true);
                 } else {   // imagepond/youtube/etc → iframe (não temos player nativo)
                     toIframe();
+                    // turbo: o iframe nasce 16:9; a thumb do og:image da /embed/ tem a proporção do vídeo (a MESMA
+                    // busca do turbo no post, turboThumbSize, com cache por id) → tile vertical sem tarjas
+                    const tid = GMX && (it.url.match(/turbo\.cr\/embed\/([a-zA-Z0-9_-]+)/) || [])[1];
+                    if (tid) turboThumbSize(tid, size => { if (size && size.w / size.h > 0.3 && size.w / size.h < 2.8) setRelh(size.w, size.h); });
                 }
             };
             galObserve(tile);
@@ -20992,7 +21486,7 @@
 
     // alerts/18-alerts.js
     // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page, popup and rail).
-    // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs.
+    // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs, fitAlertTags.
     // Depends on: core/06-helpers, alerts/19-alerts-dock.
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
@@ -21093,6 +21587,61 @@
         return n;
     }
 
+    // TAGS NUMA LINHA: as que não cabem saem e um chip "+N" diz quantas (o title lista os nomes). Refeito
+    // quando a largura muda (o rail é redimensionável): um ResizeObserver pra todas as linhas, que também
+    // dispara quando a linha entra no DOM e ganha largura. Esconder chips não muda a largura da caixa → sem laço.
+    let alertTagsRO = null;
+    function watchAlertTags(box) {
+        if (typeof ResizeObserver === 'undefined') return;
+        if (!alertTagsRO) {
+            alertTagsRO = new ResizeObserver(entries => entries.forEach(en => {
+                if (!en.target.isConnected) { alertTagsRO.unobserve(en.target); return; }   // linha saiu (refresh do rail)
+                const w = Math.round(en.contentRect.width);
+                if (!w || en.target._smgTagsW === w) return;
+                en.target._smgTagsW = w;
+                fitAlertTags(en.target);
+            }));
+            // fonte da web chegou depois da medida: os chips crescem sem a caixa mudar de largura → refaz
+            if (document.fonts && document.fonts.addEventListener) {
+                document.fonts.addEventListener('loadingdone', () => document.querySelectorAll('.smg-al-tags').forEach(fitAlertTags));
+            }
+        }
+        alertTagsRO.observe(box);
+    }
+    function fitAlertTags(box) {
+        if (!box || !box.isConnected) return;
+        const chips = Array.from(box.children).filter(c => !c.classList.contains('smg-al-more'));
+        let more = box.querySelector(':scope > .smg-al-more');
+        chips.forEach(c => c.classList.remove('smg-al-chip--cut'));
+        if (more) more.hidden = true;
+        const W = box.getBoundingClientRect().width;
+        if (!W || chips.length < 2) return;
+        const gap = parseFloat(getComputedStyle(box).columnGap) || 6;
+        // largura REAL (fracionária): offsetWidth arredonda e, somando 3 chips, sobrava ~1px que o 1º chip
+        // (flex-shrink) absorvia cortando o texto ("Onlyf") em vez de virar +N
+        const widths = chips.map(c => c.getBoundingClientRect().width);
+        const total = widths.reduce((a, b) => a + b, 0) + gap * (chips.length - 1);
+        const boxRight = box.getBoundingClientRect().right + 0.5;
+        const clipped = last => last.getBoundingClientRect().right > boxRight || chips[0].scrollWidth > chips[0].clientWidth + 1;
+        if (total <= W - 0.5 && !clipped(chips[chips.length - 1])) return;
+        if (!more) { more = document.createElement('span'); more.className = 'smg-al-more'; box.appendChild(more); }
+        more.hidden = false;
+        more.textContent = '+' + (chips.length - 1);
+        const moreW = more.getBoundingClientRect().width;
+        let keep = 1, used = widths[0];
+        while (keep < chips.length && used + gap + widths[keep] + gap + moreW <= W - 0.5) { used += gap + widths[keep]; keep++; }
+        const apply = () => {
+            const cut = chips.slice(keep);
+            chips.forEach((c, i) => c.classList.toggle('smg-al-chip--cut', i >= keep));
+            more.textContent = '+' + cut.length;
+            more.title = cut.map(c => (c.textContent || '').trim()).filter(Boolean).join(', ');
+        };
+        apply();
+        // conferência no layout real: nenhum chip visível além do 1º pode ficar cortado (o 1º só encolhe com
+        // ellipsis quando está sozinho com o +N). Sobrou corte → mais um chip vai pro +N.
+        while (keep > 1 && clipped(more)) { keep--; apply(); }
+    }
+
     function cleanAlertRow(main) {
         if (!main || main.dataset.smgAlert) return;
         // título = nome do tópico. Em alerta de COMENTÁRIO o .fauxBlockLink-blockLink é a palavra "commented"
@@ -21156,7 +21705,7 @@
 
         // remonta do zero: (1) tags · (2) nome · (3) publicado-por+data — verbo, boilerplate e foto não voltam
         main.textContent = '';
-        if (tags.children.length) main.appendChild(tags);
+        if (tags.children.length) { main.appendChild(tags); watchAlertTags(tags); }
         main.appendChild(title);
         if (by.childNodes.length) main.appendChild(by);
 
@@ -22998,6 +23547,73 @@
                 a.textContent = rewriteSaintHost(a.textContent);
             }
         });
+
+        // 5. Proporção REAL do vídeo turbo (o iframe é de outra origem e nasce 16:9: vídeo vertical virava
+        // uma faixa larga com tarjas pretas e ocupava 2 colunas do mosaico). A thumb do og:image da página
+        // /embed/ tem a proporção do vídeo → vira data-width/height da caixa (o motor lê) + aspect inline.
+        if (GMX) eachIn(roots, '.generic2wide-iframe-div > iframe[src*="turbo.cr/embed/"]', ifr => {
+            const box = ifr.parentElement;
+            if (!box || box.dataset.tbAr) return;
+            const id = ((ifr.getAttribute('src') || '').match(/\/embed\/([a-zA-Z0-9_-]+)/) || [])[1];
+            if (!id) return;
+            box.dataset.tbAr = '1';
+            lazyActivate(box, () => {
+                box._smgActivate = null;
+                queueEmbedResolve(box, done => turboThumbSize(id, done), size => {
+                    box.dataset.tbAr = '2';   // resolvido (com ou sem tamanho): o paint gate (22-paint) para de esperar esta caixa
+                    if (size) turboApplyAspect(box, size.w, size.h);
+                });
+            });
+        });
+    }
+
+    // id do turbo -> { w, h } da thumb (null quando não deu). Uma busca por id; os pedidos repetidos esperam a mesma.
+    const turboSizeCache = new Map();
+    function turboThumbSize(id, cb) {
+        const hit = turboSizeCache.get(id);
+        if (hit && hit.done) { cb(hit.size); return; }
+        if (hit) { hit.cbs.push(cb); return; }
+        const ent = { done: false, size: null, cbs: [cb] };
+        turboSizeCache.set(id, ent);
+        const finish = size => {
+            ent.done = true; ent.size = size;
+            ent.cbs.splice(0).forEach(fn => { try { fn(size); } catch (e) {} });
+        };
+        GMX({ method: 'GET', url: 'https://turbo.cr/embed/' + id, timeout: 8000,
+            headers: { Accept: 'text/html,application/xhtml+xml,*/*' },
+            onload: r => {
+                const m = r.status < 400 && (r.responseText || '').match(/<meta\s+[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+                if (!m) { finish(null); return; }
+                const im = new Image();
+                im.onload = () => finish(im.naturalWidth && im.naturalHeight ? { w: im.naturalWidth, h: im.naturalHeight } : null);
+                im.onerror = () => finish(null);
+                im.src = m[1].replace(/&amp;/g, '&');
+            },
+            onerror: () => finish(null),
+            ontimeout: () => finish(null) });
+    }
+    // aplica a proporção na caixa do iframe. No mosaico o motor re-coloca (vertical = 1 coluna); solta, a
+    // caixa vertical fica estreita e alta como os outros players. Scroll anchoring está desligado: se a
+    // caixa (ou o grupo dela) começa ACIMA da tela, a diferença de altura é devolvida no scroll.
+    function turboApplyAspect(box, w, h) {
+        if (!box.isConnected || !w || !h) return;
+        const r = w / h;
+        if (!(r > 0.3 && r < 2.8)) return;
+        const grid = box.parentElement && box.parentElement.classList.contains('smg-mason') ? box.parentElement : null;   // o motor posiciona os filhos diretos
+        const anchor = grid || box;
+        const before = anchor.getBoundingClientRect();
+        box.dataset.width = String(w);
+        box.dataset.height = String(h);
+        // solta: classe + variáveis (CSS em css-players); dentro do mosaico as regras do motor vencem
+        box.style.setProperty('--smg-tb-ar', w + ' / ' + h);
+        box.style.setProperty('--smg-tb-r', r.toFixed(4));
+        box.classList.add('smg-tb-sized');
+        box.classList.toggle('smg-tb-vert', r < 1);
+        if (before.top < 0) {
+            if (grid) masonryLayout(grid);   // agora, não no próximo frame: a compensação precisa da altura nova
+            const dh = anchor.getBoundingClientRect().height - before.height;
+            if (dh) window.scrollBy(0, dh);
+        } else if (grid) masonrySchedule(grid);
     }
 
     // =========================================================
@@ -25798,6 +26414,13 @@
         pagePendingStartTime = 0;
         paintDeadline = 0;
         paintMediaDeadline = 0;
+        // os avisos viram o collapse no boot (DOMContentLoaded), que espera os scripts defer do fórum e
+        // costuma chegar DEPOIS da liberação: a lista crua aparecia e encolhia na frente do usuário (o conteúdo
+        // subia 6-18px logo após o skeleton sair). Aqui o HTML dos avisos já está todo no DOM → monta agora,
+        // ainda sob o skeleton. Idempotente (o boot vira no-op).
+        if (FEATURES.headerNotices && typeof setupHeaderNotices === 'function') {
+            try { setupHeaderNotices(); } catch (e) {}
+        }
         const root = document.documentElement;
         root.classList.remove('smg-content-loading', 'smg-content-pending');
         root.classList.add('smg-content-ready');
@@ -25979,6 +26602,23 @@
             const wrap = ifr.closest('.generic2wide-iframe-div, .smg-dm-wrap, .smg-rg, [style*="aspect-ratio"]');
             if (!wrap && !ifr.style.aspectRatio) {
                 return false;
+            }
+        }
+
+        // 3. Players e slots de vídeo da PRIMEIRA TELA: a caixa nasce 16:9 e só ganha o tamanho final quando a
+        // proporção real chega (API do redgifs, poster, metadata, og:image do turbo). Liberando antes, ela
+        // encolhe/cresce na frente do usuário logo depois do skeleton sair (o "deslize"). Mesmo prazo das imagens.
+        if (!(paintMediaDeadline && Date.now() >= paintMediaDeadline)) {
+            const vh = window.innerHeight || 0;
+            // a tela que aparece na liberação: a partir do post alvo (scrollIntoView no release) ou do scroll atual
+            const top0 = targetPost ? targetPost.getBoundingClientRect().top : 0;
+            const pending = content.querySelectorAll('article.message .smg-rg:not(.smg-rg-has-error), '
+                + 'article.message .smg-turbo-slot:not(.smg-turbo-slot--filled) > .smg-loading, '
+                + 'article.message .generic2wide-iframe-div[data-tb-ar="1"]');
+            for (const el of pending) {
+                if (el.classList.contains('smg-rg') && el.style.getPropertyValue('--smg-rg-ratio')) continue;
+                const r = el.getBoundingClientRect();
+                if (r.bottom - top0 > 0 && r.top - top0 < vh) return false;
             }
         }
 
