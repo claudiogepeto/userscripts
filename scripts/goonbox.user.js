@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Goonbox — Theater Gallery & Image Stage
 // @namespace    goonbox-theater
-// @version      1.1.1
+// @version      1.1.2
 // @description  AMOLED gallery and zoomable theater stage for Goonbox. Loads the whole album from the public API, with search, sort, keyboard navigation, and prev/next across album images.
 // @author       claudiogepeto
 // @match        *://goonbox.cr/*
@@ -814,6 +814,23 @@
         return added;
     }
 
+    // Álbum com UMA imagem: pula a grade e abre direto no stage (replace → o álbum não fica no histórico).
+    // Só 1× por álbum por aba: quem volta pela Galeria / voltar vê a grade → sem loop.
+    // O stage do goonbox não tem sidebar recolhível nem preferência salva, então a lateral fica como está.
+    const singleOpened = new Set();
+    function openSingleImage(model) {
+        if (!model || model.images.length !== 1 || (model.total || 0) > 1) return false;
+        const key = `gbx-single:${model.albumId}`;
+        if (singleOpened.has(model.albumId)) return false;
+        try { if (sessionStorage.getItem(key)) return false; } catch {}
+        try { const nav = performance.getEntriesByType("navigation")[0]; if (nav && nav.type === "back_forward") return false; } catch {}
+        singleOpened.add(model.albumId);
+        try { sessionStorage.setItem(key, "1"); } catch {}
+        rememberAlbum(model);
+        goImage(model.images[0].id, true);
+        return true;
+    }
+
     async function showAlbum(albumId) {
         const job = ++albumJob;
         imageJob += 1;
@@ -821,6 +838,7 @@
         const cached = albums.get(albumId) || readStoredAlbum(albumId);
         if (cached && Date.now() - cached.at < FRESH_MS && cached.images.length) {
             albums.set(albumId, cached);
+            if (openSingleImage(cached)) return;
             paintGallery(cached);
             return;
         }
@@ -843,6 +861,7 @@
                 at: Date.now(),
             };
             takeImages(model, first.images);
+            if (openSingleImage(model)) return;
             let last = Math.min(first.pagination?.last_page || 1, MAX_PAGES);
             rememberAlbum(model, false);
             paintGallery(model);
