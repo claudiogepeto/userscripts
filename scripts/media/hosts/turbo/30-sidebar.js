@@ -190,8 +190,9 @@
             thumb: "",
             id: f.id,
             isCurrent: f.id === curId,
-            kind: "video",
-            dur: Number(f.dur) || 0
+            kind: IMAGE_NAME.test(f.name || "") ? "image" : (/\.(txt|md|nfo|log)$/i.test(f.name || "") ? "text" : "video"),
+            dur: Number(f.dur) || 0,
+            views: Number(f.views) || 0
         })) : parseSidebarItems()).filter(it => {
             if (!it.id || seen.has(it.id)) return false;
             seen.add(it.id);
@@ -201,9 +202,13 @@
         playlistItems = allItems;
         playlistKey = itemsKey(allItems);
         applyListPosition(allItems);
-        const q = (stSidebarEl.querySelector(".tb-sidebar-search-in")?.value || "").trim().toLowerCase();
+        const q = (stSidebarEl.querySelector(".tb-sidebar-search input")?.value || "").trim().toLowerCase();
         const activeTab = prefs.sidebarTab || "all";
-        const sortMode = prefs.sidebarSort || "default";
+        const stage = stSidebarEl.closest(".tb-stage");
+        if (stage) {
+            stage.classList.toggle("has-playlist", allItems.length > 0);
+            stage.classList.toggle("has-nav", allItems.length > 1);
+        }
 
         let filtered = allItems.filter(item => {
             if (q && item.name.toLowerCase().indexOf(q) === -1) return false;
@@ -213,22 +218,17 @@
             return true;
         });
 
-        if (sortMode === "az") {
-            filtered.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
-        }
+        filtered = mediaSortItems(filtered, sidebarSortMode(), prefs.sidebarSortDir || "desc", { name: it => it.name, views: it => it.views });
 
         const countEl = stSidebarEl.querySelector(".tb-sidebar-count");
         if (countEl) countEl.textContent = `${filtered.length} vídeos`;
 
-        stSidebarEl.querySelectorAll(".tb-tab-chip").forEach(tab => {
-            const t = tab.dataset.tab;
-            let n = allItems.length;
-            if (t === "video") n = allItems.filter(i => i.kind === "video").length;
-            else if (t === "image") n = allItems.filter(i => i.kind === "image").length;
-            else if (t === "text") n = allItems.filter(i => i.kind === "text").length;
-            const c = tab.querySelector(".tb-tab-count");
-            if (c) c.textContent = n;
-            tab.style.display = (t !== "all" && n === 0) ? "none" : "";
+        const tabs = stSidebarEl._tabs;
+        if (tabs) tabs.update({
+            all: allItems.length,
+            video: allItems.filter(i => i.kind === "video").length,
+            image: allItems.filter(i => i.kind === "image").length,
+            text: allItems.filter(i => i.kind === "text").length
         });
 
         if (!filtered.length) {
@@ -303,101 +303,31 @@
         }, 50);
     }
 
-    function setupSidebar(stage) {
-        if (stSidebarEl && stSidebarEl.parentNode === stage) {
-            renderPlaylist();
-            return;
-        }
+    // Modo salvo de versões antigas ("az") vira o A-Z das fichas do bunkr.
+    function sidebarSortMode() {
+        const m = prefs.sidebarSort || "default";
+        return m === "az" ? "name" : m;
+    }
 
-        const sb = el("div", { class: "tb-sidebar" });
-
-        const header = el("div", { class: "tb-sidebar-header" });
-        header.innerHTML = `
-            <div class="tb-sidebar-title-wrap">
-                <span class="tb-sidebar-icon">${IC.playlist}</span>
-                <span class="tb-sidebar-title">Playlist</span>
-                <span class="tb-sidebar-count">0 vídeos</span>
-            </div>
-        `;
-        const collapseBtn = el("button", {
-            type: "button",
-            class: "tb-sidebar-collapse-btn",
-            title: "Recolher playlist (p)",
-            onClick: () => toggleSidebar()
+    // Abas de tipo e fichas de ordenação da sidebar (sem "Data de Envio": o turbo não informa a data de upload).
+    function sidebarControls() {
+        const tabs = mediaTypeTabs({
+            active: prefs.sidebarTab || "all",
+            onChange: key => { prefs.sidebarTab = key; saveP(); renderPlaylist(); }
         });
-        collapseBtn.innerHTML = IC.close;
-        const albumA = document.querySelector('a[href*="/a/"]');
-        const actions = el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } });
-        if (albumA) {
-            const gal = el("a", { class: "tb-sidebar-gallery", href: albumA.href, title: "Abrir a galeria do álbum" });
-            gal.insertAdjacentHTML("beforeend", IC.grid);
-            gal.append(el("span", null, "Galeria"));
-            actions.append(gal);
-        }
-        actions.append(collapseBtn);
-        header.appendChild(actions);
-
-        const searchWrap = el("div", { class: "tb-sidebar-search" });
-        searchWrap.innerHTML = `<span class="tb-sidebar-search-icon">${IC.search}</span>`;
-        const searchIn = el("input", {
-            type: "search",
-            class: "tb-sidebar-search-in",
-            placeholder: "Buscar na playlist...",
-            value: ""
+        const sort = mediaSortChips({
+            kind: "sidebar",
+            mode: sidebarSortMode(),
+            dirs: { [sidebarSortMode()]: prefs.sidebarSortDir || "desc" },
+            chips: [
+                { key: "default", label: "Padrão" },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome" },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome" },
+                { key: "views", label: "Views", dir: true, title: "Ordenar por visualizações" }
+            ],
+            onChange: (mode, dir) => { prefs.sidebarSort = mode; prefs.sidebarSortDir = dir; saveP(); renderPlaylist(); }
         });
-        searchIn.addEventListener("input", debounce(() => renderPlaylist(), 140));
-        searchIn.addEventListener("keydown", e => e.stopPropagation());
-        searchWrap.appendChild(searchIn);
-
-        const tabsWrap = el("div", { class: "tb-sidebar-tabs" });
-        const makeTab = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "tb-tab-chip" + (prefs.sidebarTab === key ? " is-active" : "")
-            });
-            b.dataset.tab = key;
-            b.innerHTML = `<span>${label}</span> <span class="tb-tab-count">0</span>`;
-            b.addEventListener("click", () => {
-                prefs.sidebarTab = key; saveP();
-                tabsWrap.querySelectorAll(".tb-tab-chip").forEach(t => t.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        tabsWrap.append(
-            makeTab("all", "Todos"),
-            makeTab("video", "Vídeos")
-        );
-
-        const sortWrap = el("div", { class: "tb-sidebar-sort" });
-        const makeSort = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "tb-sort-chip" + (prefs.sidebarSort === key ? " is-active" : "")
-            });
-            b.dataset.sort = key;
-            b.textContent = label;
-            b.addEventListener("click", () => {
-                prefs.sidebarSort = key; saveP();
-                sortWrap.querySelectorAll(".tb-sort-chip").forEach(s => s.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        sortWrap.append(
-            el("span", { class: "tb-sort-label" }, "Ordem:"),
-            makeSort("default", "Padrão"),
-            makeSort("az", "A-Z")
-        );
-
-        const listEl = el("div", { class: "tb-playlist-list" });
-
-        sb.append(header, searchWrap, tabsWrap, sortWrap, listEl);
-        stage.appendChild(sb);
-        stSidebarEl = sb;
-        renderPlaylist();
+        return { tabs, sort };
     }
 
     let playlistItems = [];

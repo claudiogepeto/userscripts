@@ -20,52 +20,6 @@
         html.tb ::-webkit-scrollbar { width: 8px; height: 8px; }
         html.tb ::-webkit-scrollbar-thumb { background: #262930; border-radius: 8px; }
 
-        /* ===================== EARLY PAINT (vídeo): tampa preta até o stage montar ===================== */
-        html.tb-file::before { content: ""; position: fixed; inset: 0; background: #0b0c0f; z-index: 98000; pointer-events: none; }
-        html.tb-file.tb-fallback::before { display: none; }
-        html.tb-has-stage, html.tb-has-stage body { overflow: hidden !important; }
-
-        /* ===================== STAGE THEATER EM 2 COLUNAS ===================== */
-        .tb-stage { position: fixed; inset: 0; z-index: 99000; display: flex; flex-direction: row; background: #0b0c0f; color: #fff; font-family: Inter, system-ui, sans-serif; }
-        .tb-stage * { box-sizing: border-box; }
-
-        /* Coluna Principal (Esquerda) */
-        .tb-stage-main { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .tb-stage-mid { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 !important; overflow: hidden; background: #000; }
-
-        /* Topbar VROW */
-        .tb-vrow {
-            flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            padding: 8px 14px; background: #0e0f13; border-bottom: 1px solid rgba(255,255,255,.08);
-            overflow-x: auto; white-space: nowrap; scrollbar-width: thin;
-        }
-        .tb-vrow-top { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
-        .tb-vrow-sub { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-
-        .tb-top-logo { display: inline-flex; align-items: center; gap: 7px; color: #fff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 4px 6px; border-radius: 6px; transition: opacity .12s; flex: 0 0 auto; }
-        .tb-top-logo:hover { opacity: 0.85; }
-        .tb-logo-img { height: 22px; width: 22px; display: block; object-fit: contain; }
-
-        .tb-name { flex: 0 1 auto; min-width: 60px; max-width: 44vw; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; color: #fff; }
-        .tb-name svg { color: var(--tb-accent, #f97316); flex: 0 0 auto; width: 16px; height: 16px; }
-        .tb-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        .tb-stats { display: flex; align-items: center; gap: 12px; padding: 0 6px; flex: 0 0 auto; }
-        .tb-stat { font-size: 12px; color: rgba(255,255,255,.62); font-weight: 600; }
-        .tb-spacer { flex: 1 1 auto; min-width: 8px; }
-
-        .tb-item {
-            display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px;
-            border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.05);
-            color: #fff; font: 600 12.5px/1 Inter, system-ui, sans-serif; cursor: pointer; text-decoration: none;
-            transition: background .12s, border-color .12s; white-space: nowrap;
-        }
-        .tb-item:hover { background: rgba(255,255,255,.1); border-color: rgba(249,115,22,0.45); }
-        .tb-item svg { width: 15px; height: 15px; color: var(--tb-accent, #f97316); }
-        .tb-item.is-primary { background: var(--tb-accent, #f97316); border-color: var(--tb-accent, #f97316); color: #1c0a00 !important; font-weight: 700; }
-        .tb-item.is-primary svg { color: #1c0a00 !important; }
-        .tb-vrow-playlist.is-active { background: rgba(249,115,22,0.2); border-color: var(--tb-accent, #f97316); color: #fdba74; }
-        .tb-vsep { flex: 0 0 auto; width: 1px; height: 20px; margin: 0 2px; background: rgba(255,255,255,.1); }
 
         /* ===================== PLAYER ESTILO YOUTUBE ===================== */
         :root { --tb-accent: ${ACCENT}; }
@@ -78,112 +32,16 @@
 
         .tb-spin { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%; border: 3px solid rgba(255,255,255,.22); border-top-color: var(--tb-accent, #f97316); animation: tb-spin .8s linear infinite; z-index: 4; pointer-events: none; }
         @keyframes tb-spin { to { transform: rotate(360deg); } }
-
-        /* Velocidade plana (sem botão pill pesado) */
-
-        /* ===================== SIDEBAR DA PLAYLIST ===================== */
-        .tb-sidebar {
-            width: 380px; flex: 0 0 380px; height: 100%; display: flex; flex-direction: column;
-            background: #08090b; border-left: 1px solid rgba(255,255,255,.08); overflow: hidden; z-index: 25;
-            transition: width .18s ease, margin .18s ease;
-        }
-        .tb-stage.is-sidebar-collapsed .tb-sidebar { display: none !important; }
-
-        .tb-sidebar-header {
-            display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 8px;
-            border-bottom: 1px solid rgba(255,255,255,.06); flex: 0 0 auto;
-        }
-        .tb-sidebar-title-wrap { display: flex; align-items: center; gap: 8px; }
-        .tb-sidebar-icon svg { width: 18px; height: 18px; color: var(--tb-accent, #f97316); }
-        .tb-sidebar-title { font-size: 14.5px; font-weight: 700; color: #fff; }
-        .tb-sidebar-count { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.5); background: rgba(255,255,255,.06); padding: 2px 7px; border-radius: 999px; }
-        .tb-sidebar-collapse-btn { background: transparent; border: 0; color: rgba(255,255,255,.5); cursor: pointer; display: flex; padding: 4px; border-radius: 6px; }
-        .tb-sidebar-collapse-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
-        .tb-sidebar-collapse-btn svg { width: 16px; height: 16px; }
-
-        .tb-sidebar-search {
-            position: relative; display: flex; align-items: center; margin: 8px 12px 6px; background: rgba(255,255,255,.05);
-            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 0 8px; flex: 0 0 auto;
-        }
-        .tb-sidebar-search:focus-within { border-color: var(--tb-accent, #f97316); background: rgba(255,255,255,.08); }
-        .tb-sidebar-search-icon svg { width: 14px; height: 14px; color: rgba(255,255,255,.4); margin-right: 6px; }
-        .tb-sidebar-search-in { width: 100%; height: 32px; background: transparent; border: 0; outline: none; color: #fff; font: 12.5px Inter, sans-serif; }
-        .tb-sidebar-search-in::placeholder { color: rgba(255,255,255,.4); }
-
-        .tb-sidebar-tabs { display: flex; align-items: center; gap: 5px; padding: 4px 12px 6px; overflow-x: auto; scrollbar-width: none; flex: 0 0 auto; }
-        .tb-sidebar-tabs::-webkit-scrollbar { display: none; }
-        .tb-tab-chip {
-            display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 6px;
-            background: rgba(255,255,255,.05); border: 1px solid transparent; color: rgba(255,255,255,.6); font: 600 11.5px/1 Inter, sans-serif;
-            cursor: pointer; transition: all .12s; white-space: nowrap;
-        }
-        .tb-tab-chip:hover { background: rgba(255,255,255,.09); color: #fff; }
-        .tb-tab-chip.is-active { background: rgba(249,115,22,0.2); border-color: var(--tb-accent, #f97316); color: #fdba74; }
-        .tb-tab-count { font-size: 10px; opacity: .75; }
-
-        .tb-sidebar-sort { display: flex; align-items: center; gap: 6px; padding: 4px 12px 6px; font-size: 11px; color: rgba(255,255,255,.5); flex: 0 0 auto; }
-        .tb-sort-label { text-transform: uppercase; letter-spacing: .04em; }
-        .tb-sort-chip {
-            background: transparent; border: 0; color: rgba(255,255,255,.5); font: 600 11px Inter, sans-serif; cursor: pointer; padding: 2px 5px; border-radius: 4px;
-        }
-        .tb-sort-chip:hover { color: #fff; }
-        .tb-sort-chip.is-active { color: var(--tb-accent, #f97316); font-weight: 700; text-decoration: underline; }
-
-        .tb-playlist-list { flex: 1 1 auto; overflow-y: auto; padding: 6px 10px 40px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; }
-        .tb-playlist-list::-webkit-scrollbar { width: 5px; }
-        .tb-playlist-list::-webkit-scrollbar-thumb { background: #332121; border-radius: 4px; }
-
-        .tb-playlist-item {
-            display: flex; gap: 10px; padding: 7px; border-radius: 10px; background: rgba(255,255,255,.03);
-            border: 1px solid rgba(255,255,255,.05); cursor: pointer; transition: background .12s, border-color .12s, transform .12s; text-decoration: none; color: inherit;
-        }
-        .tb-playlist-item:hover { background: rgba(255,255,255,.07); border-color: rgba(249,115,22,.4); transform: translateY(-1px); }
-        .tb-playlist-item.is-current { background: rgba(249,115,22,0.14); border-color: var(--tb-accent, #f97316); }
-        /* Itens fora da tela não são renderizados (o item atual fica sempre renderizado). */
-        .tb-playlist-item:not(.is-current) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 99px; }
-
-        .tb-playlist-thumb-wrap {
-            position: relative; flex: 0 0 176px; width: 176px; height: 99px; border-radius: 8px;
-            overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center;
-        }
-        .tb-playlist-thumb, .tb-playlist-thumb-wrap video { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; background: #000; pointer-events: none; }
-        .tb-playlist-kind { position: absolute; top: 6px; left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.78); color: #fff; font: 700 10px/1.2 Inter, system-ui, sans-serif; }
-        .tb-playlist-num { position: absolute; top: 6px; right: 6px; z-index: 1; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.8); color: #fff; font: 700 11px/1 Inter, system-ui, sans-serif; }
-        .tb-playlist-dur { position: absolute; bottom: 5px; right: 6px; z-index: 1; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.8); color: #fff; font: 700 11px/1 Inter, system-ui, sans-serif; }
-        .tb-playlist-dur[hidden] { display: none !important; }
-        .tb-now-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tb-accent, #f97316); animation: tb-pulse 1.2s infinite; }
-
         .tb-playlist-placeholder { width: 100%; height: 100%; background: #0a0505; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
         .tb-playlist-ph-icon svg { width: 22px; height: 22px; color: var(--tb-accent, #f97316); opacity: .75; }
         .tb-playlist-ph-ext { font: 800 9px Inter; letter-spacing: .06em; color: rgba(255,255,255,.5); background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 3px; }
-
-        .tb-playlist-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-        .tb-playlist-name {
-            font-size: 14.5px; font-weight: 500; color: rgba(255,255,255,.9); line-height: 1.35; display: -webkit-box;
-            -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
-        }
-        .tb-playlist-item.is-current .tb-playlist-name { color: #fdba74; }
-        .tb-playlist-meta { font-size: 12.5px; color: rgba(255,255,255,.55); display: flex; align-items: center; gap: 8px; }
-        .tb-playlist-meta-active { color: var(--tb-accent, #f97316); font-weight: 700; }
         .tb-playlist-empty { padding: 32px 16px; text-align: center; color: rgba(255,255,255,.5); font-size: 13px; }
-
-        /* Setas laterais do Stage */
-        .tb-nav-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 6; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s ease, background .12s ease; }
-        .tb-nav-prev { left: 16px; } .tb-nav-next { right: 16px; }
-        .tb-stage.has-nav .tb-stage-mid:hover .tb-nav-side { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .tb-stage.has-nav .tb-nav-side { opacity: .85; pointer-events: auto; } }
-        .tb-nav-side:hover { background: rgba(0,0,0,.74); } .tb-nav-side:active { transform: translateY(-50%) scale(.92); }
-        .tb-nav-side svg { width: 24px; height: 24px; display: block; }
-
         /* ===================== ÁLBUM (/a/): TABELA → GRADE AMOLED ===================== */
         html.tb-album .max-w-6xl { max-width: min(100% - 32px, 1800px) !important; }
-        html.tb-album #searchInput, html.tb-album #sortSelect { background: #14161a !important; border-color: rgba(255,255,255,.12) !important; color: #fff !important; }
+        html.tb-album #searchInput, html.tb-album #sortSelect { display: none !important; }
         html.tb-album #btnDownloadAlbum { background: var(--tb-accent, #f97316) !important; border-color: var(--tb-accent, #f97316) !important; color: #1c0a00 !important; }
         html.tb-album .thumb img { width: 100% !important; height: 100% !important; object-fit: cover !important; background: #000 !important; }
         html.tb-album .thumb:has(img)::after { display: none !important; }
-        .tb-sidebar-gallery { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color: #fff; font: 600 12px/1 Inter, system-ui, sans-serif; text-decoration: none; }
-        .tb-sidebar-gallery:hover { background: rgba(255,255,255,.12); }
-        .tb-sidebar-gallery svg { width: 14px; height: 14px; }
         .tb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 32px 24px; padding: 18px 0; }
         @media (min-width: 1600px) { .tb-grid { grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 36px 28px; } }
         @media (max-width: 768px) { .tb-grid { grid-template-columns: 1fr; gap: 20px 16px; padding: 12px 0; } }
@@ -206,58 +64,26 @@
         .tb-card-dl:hover { background: var(--tb-accent, #f97316); color: #1c0a00; }
         @media (hover: none) { .tb-card-dl, .tb-card-play { opacity: 1; } }
         .tb-empty { grid-column: 1 / -1; padding: 30px; text-align: center; color: rgba(255,255,255,0.5); }
-
-        /* Datas em texto simples na playlist e galeria */
-        .tb-playlist-dates, .tb-card-dates { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; font-size: 11px; color: rgba(255,255,255,.5); }
-        .tb-playlist-dates, .tb-card-dates { min-width: 0; }
-        .tb-playlist-date-row, .tb-card-date-row { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; line-height: 1.3; white-space: nowrap; overflow: hidden; }
-        .tb-playlist-date-lbl, .tb-card-date-lbl { flex: 0 0 auto; white-space: nowrap; }
-        .tb-playlist-date-val, .tb-card-date-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .tb-playlist-date-lbl, .tb-card-date-lbl { color: rgba(255,255,255,.55); font-weight: 600; font-size: 11.5px; }
-        .tb-playlist-date-val, .tb-card-date-val { color: rgba(255,255,255,.9); font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
-
-        /* Tooltip sutil e ícone em Data Extraída */
-        .tb-has-tip { cursor: help !important; display: inline-flex !important; align-items: center !important; gap: 3px !important; }
-        .tb-tip-icon { display: inline-flex; align-items: center; justify-content: center; font-size: 9.5px; line-height: 1; color: rgba(255,255,255,.5); border-radius: 50%; width: 13px; height: 13px; background: rgba(255,255,255,.08); transition: color .15s ease, background .15s ease; user-select: none; }
-        .tb-has-tip:hover .tb-tip-icon { color: #fff; background: var(--tb-accent, #f97316); }
-
-        /* Botão playlist na topbar visível apenas quando sidebar fechada */
-        .tb-vrow-playlist { display: none !important; }
-        .tb-stage.is-sidebar-collapsed .tb-vrow-playlist { display: inline-flex !important; }
-
-        /* Divisores de seção para Agrupamento por Tipo no Álbum */
-        .tb-album-group-header { grid-column: 1 / -1 !important; display: flex !important; align-items: center; justify-content: space-between; padding: 18px 4px 8px; margin-top: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .tb-album-group-title { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .tb-album-group-title svg { color: var(--tb-accent, #f97316); width: 18px; height: 18px; }
-        .tb-album-group-count { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); padding: 3px 9px; border-radius: 999px; }
-        .tb-group-toggle-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font: 600 13px Inter; cursor: pointer; transition: all .12s; }
-        .tb-group-toggle-btn.is-active { background: rgba(249,115,22,0.2); border-color: var(--tb-accent, #f97316); color: #fdba74; }
-
+        .tb-gallery-actionbar, .tb-gallery-actionbar input, .tb-gallery-actionbar button { font-family: Inter, system-ui, sans-serif; box-sizing: border-box; }
+        .tb-grid.is-full-names .tb-card-name { display: block; -webkit-line-clamp: unset; overflow: visible; word-break: break-all; }
+        .tb-card-dates { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; font-size: 11px; color: rgba(255,255,255,.5); }
+        .tb-card-dates { min-width: 0; }
+        .tb-card-date-row { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; line-height: 1.3; white-space: nowrap; overflow: hidden; }
+        .tb-card-date-lbl { flex: 0 0 auto; white-space: nowrap; }
+        .tb-card-date-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tb-card-date-lbl { color: rgba(255,255,255,.55); font-weight: 600; font-size: 11.5px; }
+        .tb-card-date-val { color: rgba(255,255,255,.9); font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
         /* Toast */
         .tb-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(12px); z-index: 100001; padding: 10px 18px; border-radius: 20px; background: #14161a; border: 1px solid rgba(249,115,22,0.4); color: #fff; font: 13px Inter, system-ui, sans-serif; box-shadow: 0 6px 22px rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
         .tb-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        @keyframes tb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-
-        /* ===================== RESPONSIVIDADE MOBILE ===================== */
-        @media (max-width: 900px) {
-            .tb-vrow-playlist { display: inline-flex !important; }
-            .tb-stage { flex-direction: column !important; overflow-y: auto !important; }
-            .tb-stage-main { height: auto !important; min-height: 0 !important; flex: 0 0 auto !important; }
-            .tb-stage-mid { height: 55vh !important; min-height: 270px !important; }
-            .tb-sidebar { width: 100% !important; flex: 1 1 auto !important; height: auto !important; border-left: none !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-            .tb-playlist-list { max-height: 65vh !important; overflow-y: auto !important; }
-            .tb-playlist-thumb-wrap { flex: 0 0 132px !important; width: 132px !important; height: 74px !important; }
-            .tb-playlist-name { font-size: 13.5px !important; }
-            .tb-playlist-meta, .tb-playlist-date-lbl, .tb-playlist-date-val { font-size: 12px !important; }
-
-            .tb-vrow { flex-wrap: wrap !important; height: auto !important; padding: 8px 10px !important; }
-            .tb-vrow-top { width: 100% !important; justify-content: space-between !important; }
-            .tb-vrow-sub { width: 100% !important; justify-content: flex-start !important; overflow-x: auto !important; }
-            .tb-name { max-width: 75vw !important; }
-        }
+        /* Logo do turbo na topbar do stage (imagem própria, sem o selo do bunkr) */
+        .tb-logo-img { height: 22px; width: 22px; display: block; object-fit: contain; }
+        .tb-logo-text { font: 800 15px/1 Inter, system-ui, sans-serif; letter-spacing: -0.03em; color: #fff; }
         
-${mediaComponentCSS(mediaTheme()).plc}
+${mediaComponentCSS(mediaTheme()).player}
+${mediaComponentCSS(mediaTheme()).actionbar}
+${mediaComponentCSS(mediaTheme()).dates}
     `;
 
     addCSS(CSS);

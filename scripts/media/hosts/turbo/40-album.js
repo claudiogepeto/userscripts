@@ -18,7 +18,7 @@
             href: "/v/" + f.id,
             thumb: f.thumb || "",
             type: ((f.name || "").split(".").pop() || "mp4"),
-            kind: "video"
+            kind: IMAGE_NAME.test(f.name || "") ? "image" : (/\.(txt|md|nfo|log)$/i.test(f.name || "") ? "text" : "video")
         })) : rows.map((row, idx) => {
             const a = row.querySelector("a[data-thumb]") || row.querySelector('a[href*="/v/"]');
             const id = row.dataset.id || "";
@@ -55,24 +55,6 @@
             if (list) list.style.display = "none";
             const anchor = native || document.getElementById("rows") || document.querySelector("main") || document.body;
             anchor.insertAdjacentElement("afterend", grid);
-        }
-
-        // Botão Agrupar por Tipo na barra do álbum
-        const albumControls = document.querySelector(".flex.flex-wrap.items-center.gap-4, .mb-6.flex, .max-w-6xl .flex");
-        if (albumControls && !albumControls.querySelector(".tb-group-toggle-btn")) {
-            const grpBtn = el("button", {
-                type: "button",
-                class: "tb-group-toggle-btn" + (isAlbumGrouped ? " is-active" : ""),
-                onClick: () => {
-                    isAlbumGrouped = !isAlbumGrouped;
-                    prefs.groupByType = isAlbumGrouped;
-                    saveP();
-                    grpBtn.classList.toggle("is-active", isAlbumGrouped);
-                    render();
-                }
-            });
-            grpBtn.innerHTML = `${IC.playlist} <span>Agrupar por Tipo</span>`;
-            albumControls.appendChild(grpBtn);
         }
 
         const cards = data.map(d => {
@@ -125,19 +107,44 @@
 
         const empty = el("div", { class: "tb-empty" }, "Nenhum arquivo encontrado");
         let groupHeaders = [];
+        let query = mediaGetQ().toLowerCase();
+        const sortState = { mode: prefs.albumSort || "default", dir: prefs.albumSortDir || "desc" };
+        const sortAcc = { name: c => c.d.name, size: c => c.d.size, views: c => c.d.views };
+
+        // Barra de ações do bunkr: busca (/ e ?q=), fichas, agrupar, nomes completos, copiar e contador.
+        // O turbo não informa a data de envio, então não há ficha "Data de Envio".
+        const sortChips = mediaSortChips({
+            kind: "bar",
+            mode: sortState.mode,
+            dirs: { [sortState.mode]: sortState.dir },
+            chips: [
+                { key: "default", label: "Padrão", title: "Ordem original do álbum" },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome do arquivo", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome alfabético", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="8" y2="18"/></svg>' },
+                { key: "size", label: "Tamanho", dir: true, title: "Ordenar por tamanho de arquivo", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' },
+                { key: "views", label: "Views", dir: true, title: "Ordenar por visualizações", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' }
+            ],
+            onChange: (mode, dir) => {
+                sortState.mode = mode; sortState.dir = dir;
+                prefs.albumSort = mode; prefs.albumSortDir = dir; saveP();
+                render();
+            }
+        });
+        const visible = () => cards.filter(c => c.match !== false);
+        const bar = buildActionBar({
+            sort: sortChips,
+            grouped: isAlbumGrouped,
+            onGroup: on => { isAlbumGrouped = on; prefs.groupByType = on; saveP(); render(); },
+            onFullNames: on => grid.classList.toggle("is-full-names", on),
+            names: () => visible().map(c => c.d.name),
+            urls: () => visible().map(c => location.origin + c.d.href),
+            onSearch: q => { query = q.toLowerCase(); applySearch(); }
+        });
+        grid.insertAdjacentElement("beforebegin", bar.bar);
+
         // Ordenação e agrupamento remontam a grade; a busca só esconde cards.
         function render() {
-            const sort = ((document.getElementById("sortSelect") || {}).value) || "name_asc";
-            let list = cards;
-            const cmp = {
-                name_asc: (a, b) => a.d.name.localeCompare(b.d.name),
-                name_desc: (a, b) => b.d.name.localeCompare(a.d.name),
-                size_asc: (a, b) => a.d.size - b.d.size,
-                size_desc: (a, b) => b.d.size - a.d.size,
-                views_asc: (a, b) => a.d.views - b.d.views,
-                views_desc: (a, b) => b.d.views - a.d.views,
-            }[sort];
-            if (cmp) list = list.slice().sort(cmp);
+            const list = mediaSortItems(cards, sortState.mode, sortState.dir, sortAcc);
             grid.textContent = "";
             groupHeaders = [];
 
@@ -155,23 +162,24 @@
             });
 
             const defs = [
-                { key: "video", title: "Vídeos", icon: IC.video, items: groups.video },
-                { key: "image", title: "Fotos", icon: IC.image, items: groups.image },
-                { key: "text", title: "Textos & Documentos", icon: IC.fileText, items: groups.text },
-                { key: "other", title: "Outros", icon: IC.grid, items: groups.other }
+                { key: "video", title: "Vídeos", icon: IC.video, unit: "vídeos", items: groups.video },
+                { key: "image", title: "Fotos", icon: IC.image, unit: "fotos", items: groups.image },
+                { key: "text", title: "Documentos & Textos", icon: IC.fileText, unit: "textos", items: groups.text },
+                { key: "other", title: "Outros Arquivos", icon: IC.grid, unit: "arquivos", items: groups.other }
             ];
 
             defs.forEach(def => {
                 if (!def.items.length) return;
-                const countEl = el("span", { class: "tb-album-group-count" });
-                const hdr = el("div", { class: "tb-album-group-header" },
-                    el("div", { class: "tb-album-group-title" },
+                const countEl = el("span", { class: "tb-group-count" });
+                const hdr = el("div", { class: "tb-group-header", "data-group": def.key },
+                    el("div", { class: "tb-group-header-left" },
                         el("span", { html: def.icon }),
-                        el("span", null, def.title)
+                        el("span", null, def.title),
+                        countEl
                     ),
-                    countEl
+                    el("div", { class: "tb-group-line" })
                 );
-                groupHeaders.push({ hdr, countEl, items: def.items });
+                groupHeaders.push({ hdr, countEl, unit: def.unit, items: def.items });
                 grid.appendChild(hdr);
                 def.items.forEach(c => grid.appendChild(c.card));
             });
@@ -179,23 +187,21 @@
             applySearch();
         }
         function applySearch() {
-            const q = (((document.getElementById("searchInput") || {}).value) || "").toLowerCase().trim();
             let shown = 0;
             cards.forEach(c => {
-                c.match = !q || c.d.name.toLowerCase().indexOf(q) !== -1;
+                c.match = !query || c.d.name.toLowerCase().indexOf(query) !== -1;
                 c.card.style.display = c.match ? "" : "none";
                 if (c.match) shown++;
             });
             groupHeaders.forEach(g => {
                 const n = g.items.filter(c => c.match).length;
-                g.countEl.textContent = `${n} ${n === 1 ? "item" : "itens"}`;
+                g.countEl.textContent = `${n} ${n === 1 ? "arquivo" : g.unit}`;
                 g.hdr.style.display = n ? "" : "none";
             });
             empty.style.display = shown ? "none" : "";
+            bar.setCount(shown === cards.length ? `Total: ${cards.length} arquivos` : `${shown} de ${cards.length} arquivos`);
         }
 
-        const si = document.getElementById("searchInput"); if (si) si.addEventListener("input", debounce(applySearch, 150));
-        const ss = document.getElementById("sortSelect"); if (ss) ss.addEventListener("change", render);
         render();
         return true;
     }
