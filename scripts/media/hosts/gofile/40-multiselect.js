@@ -35,7 +35,7 @@
     function bulkDownload() {
         selectedCards().forEach((card, i) => {
             const b = card._gf && card._gf.downloadBtn;
-            if (b) setTimeout(() => { try { b.click(); } catch (e) {} }, i * 450);
+            if (b) setTimeout(() => fireNativeClick(b), i * 450);
         });
     }
     function ensureBulkBar() {

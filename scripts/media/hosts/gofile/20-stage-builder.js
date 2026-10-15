@@ -22,7 +22,7 @@
     const GF_PLAYER_HOOKS = {
         nav: dir => navStage(dir),
         download: src => {
-            if (stCur && stCur._gf && stCur._gf.downloadBtn) stCur._gf.downloadBtn.click();
+            if (stCur && stCur._gf && stCur._gf.downloadBtn) fireNativeClick(stCur._gf.downloadBtn);
             else if (src) window.open(src, "_blank");
         },
     };
@@ -380,7 +380,7 @@
         });
         const dlb = mkAct(IC.download, "Baixar", () => {
             const d = stCur && stCur._gf;
-            if (d && d.downloadBtn) d.downloadBtn.click();
+            if (d && d.downloadBtn) fireNativeClick(d.downloadBtn);
             else if (imgUrl) window.open(imgUrl, "_blank", "noopener");
         });
         const shareBtn = mkAct(IC.share, "Compartilhar / Copiar link", () => {
@@ -471,7 +471,7 @@
 
         if (d.downloadBtn) {
             dlBtn.style.display = "inline-flex";
-            dlBtn.onclick = () => { d.downloadBtn.click(); };
+            dlBtn.onclick = () => { fireNativeClick(d.downloadBtn); };
         }
 
         if (d.previewBtn) {
@@ -529,7 +529,7 @@
             stTypeStat.textContent = typeLabel;
         }
         if (typeof stDl !== "undefined" && stDl) {
-            stDl.onclick = () => { if (d.downloadBtn) d.downloadBtn.click(); };
+            stDl.onclick = () => { if (d.downloadBtn) fireNativeClick(d.downloadBtn); };
         }
 
         // Atualiza item ativo na sidebar e dá scroll suave
