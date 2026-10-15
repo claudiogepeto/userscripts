@@ -200,6 +200,8 @@
             html.smg-thread .smg-pc .message-attribution { display: none !important; }                  /* tempo/#/share/bookmark movidos */
             html.smg-thread .smg-pc .message-actionBar { display: none !important; }                    /* react/comentar/quote/report movidos */
             html.smg-thread .smg-pc .message-content, .smg-fp-content { padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-10); }
+            /* mídia que abre o post (markLeadMedia, 08): o padding do conteúdo já separa do header, sem margem a mais */
+            html.smg-thread .smg-pc .bbWrapper > .smg-lead-media.smg-lead-media { margin-top: 0 !important; }
             /* HEADER (com divisor border-b) */
             html.smg-thread .smg-pc-head, .smg-fp-head { display: flex; align-items: flex-start; gap: var(--smg-sp-12); padding: var(--smg-sp-18) var(--smg-sp-24) var(--smg-sp-14); border-bottom: 1px solid var(--smg-bd); }
             html.smg-thread .smg-pc-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--smg-r-round); overflow: hidden; }

@@ -69,8 +69,8 @@
             html.smg-thread .p-body-header.smg-thead-unified {
                 position: sticky; top: 60px; z-index: var(--smg-z-30);
                 background: var(--smg-bg);
-                margin: 0 0 var(--smg-sp-16) !important;
-                padding: var(--smg-sp-18) 0 !important;
+                margin: 0 0 var(--smg-sp-12) !important;
+                padding: var(--smg-sp-12) 0 !important;
                 min-height: unset !important;
                 height: auto !important;
                 display: flex !important;

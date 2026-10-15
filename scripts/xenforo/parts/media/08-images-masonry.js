@@ -986,6 +986,22 @@
             add(flow);
         });
         byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
+        markLeadMedia(scope);
+    }
+    // mídia que ABRE o post (grupo, player ou imagem antes de qualquer texto): as quebras de linha antes dela
+    // saem e ela perde a margem de cima (o padding do conteúdo já a separa do header do post)
+    function markLeadMedia(scope) {
+        const bw = scope.matches && scope.matches('.bbWrapper') ? scope : scope.querySelector && scope.querySelector('.bbWrapper');
+        if (!bw) return;
+        let n = bw.firstChild;
+        const lead = [];
+        while (n && isInertNode(n)) { lead.push(n); n = n.nextSibling; }
+        if (!n || n.nodeType !== 1 || n.classList.contains('smg-lead-media')) return;
+        const isMedia = isPostGroup(n) || n.classList.contains('smg-mvid') || n.matches(MEDIA_ITEM_SEL)
+            || (!!n.querySelector(MEDIA_ITEM_SEL) && mediaFlowNode(n.querySelector(MEDIA_ITEM_SEL)) === n);
+        if (!isMedia) return;
+        lead.forEach(x => { if (x.nodeType !== 1 || x.tagName === 'BR') x.remove(); });
+        n.classList.add('smg-lead-media');
     }
     function buildPostGalleries(roots) {
         if (!document.documentElement.classList.contains('smg-masonry-on')) return;   // só com a Galeria ligada
