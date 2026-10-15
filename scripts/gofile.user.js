@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.5.3
+// @version      3.5.4
 // @description  Card grid, search, custom player, YouTube-style theater stage with sidebar playlist, media grouping (Videos & Photos), instant photo zoom, and AMOLED styling for GoFile.
 // @author       claudiogepeto
 // @run-at       document-start
@@ -1466,8 +1466,10 @@
         loadStageItem((p && cards[p - 1]) || card);
     }
 
-    function closeStage() {
+    function closeStage(opts) {
         if (!stage) return;
+        const fromRoute = !!(opts && opts.fromRoute === true);
+        if (!fromRoute && stage.classList.contains("open")) autoDismissedRoute = routeKey(location.href);
         if (curAc) { curAc.abort(); curAc = null; }
         stMid.querySelectorAll("video, audio").forEach(v => {
             try { v.pause(); v.muted = true; } catch (err) {}
@@ -1879,8 +1881,12 @@
         }, true);
     }
 
-    let autoExpandedUrl = null;
+    // Abertura automática de pasta com 1 arquivo: roda sempre que a lista assenta (o scan já
+    // roda a cada mutação), independente da ordem em que os nós chegam. Só deixa de reabrir
+    // depois que o usuário fechou o stage nesta rota.
+    let autoDismissedRoute = null;
     let autoExpandTimer = null;
+    const AUTO_EXPAND_SETTLE_MS = 350;
 
     function getSingleFileCard() {
         const previewSection = document.getElementById("fm-file-preview");
@@ -1954,34 +1960,41 @@
         return card;
     }
 
+    // Linha que é arquivo de verdade (exclui pastas, linha-pai e cabeçalhos de coluna da lista).
+    function isFileCard(c) {
+        const d = c._gf;
+        if (!d || !c.isConnected) return false;
+        if (c.getAttribute("data-type") === "folder" || c.querySelector('[data-lucide="folder"], .lucide-folder, [data-lucide="folder-open"]')) return false;
+        return d.kind !== "other" || /\.[a-z0-9]{2,5}$/i.test(d.name || "");
+    }
+
+    function findSingleItemTarget() {
+        const files = Array.from(document.querySelectorAll(".gf-card")).filter(isFileCard);
+        if (files.length === 1) return files[0];
+        if (files.length > 1) return null;
+        return getSingleFileCard();
+    }
+
+    // Assinatura da lista: o timer só recomeça quando ela muda (o boot também chama scan a cada 300 ms).
+    let autoExpandSig = "";
+    function fileListSig() {
+        return Array.from(document.querySelectorAll(".gf-card")).filter(isFileCard).map(c => c._gf.name).join("\n") + "|" + routeKey(location.href);
+    }
     function checkAutoExpandSingleItem() {
-        if (autoExpandedUrl === location.href) return;
-        const allCards = Array.from(document.querySelectorAll(".gf-card")).filter(c => c._gf);
-        let targetCard = null;
-
-        if (allCards.length === 1) {
-            targetCard = allCards[0];
-        } else if (allCards.length === 0) {
-            targetCard = getSingleFileCard();
-        } else {
-            autoExpandedUrl = location.href;
-            if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
-            return;
-        }
-
-        if (targetCard && targetCard._gf && targetCard._gf.playable) {
-            if (autoExpandTimer) clearTimeout(autoExpandTimer);
-            autoExpandTimer = setTimeout(() => {
-                autoExpandTimer = null;
-                if (autoExpandedUrl !== location.href) {
-                    autoExpandedUrl = location.href;
-                    buildStage();
-                    if (!stage || !stage.classList.contains("open")) {
-                        openStage(targetCard, { collapseSidebar: true });
-                    }
-                }
-            }, 80);
-        }
+        if (autoDismissedRoute === routeKey(location.href)) return;
+        if (stage && stage.classList.contains("open")) return;
+        const sig = fileListSig();
+        if (autoExpandTimer && sig === autoExpandSig) return;
+        if (autoExpandTimer) clearTimeout(autoExpandTimer);
+        autoExpandSig = sig;
+        autoExpandTimer = setTimeout(() => {
+            autoExpandTimer = null;
+            if (autoDismissedRoute === routeKey(location.href)) return;
+            if (stage && stage.classList.contains("open")) return;
+            if (fileListSig() !== autoExpandSig) { checkAutoExpandSingleItem(); return; }
+            const target = findSingleItemTarget();
+            if (target && target._gf && target._gf.playable) openStage(target, { collapseSidebar: true });
+        }, AUTO_EXPAND_SETTLE_MS);
     }
 
     function scan() {
@@ -2136,9 +2149,8 @@
         const key = routeKey(location.href);
         if (key === lastHref) return;
         lastHref = key;
-        autoExpandedUrl = null;
-        if (autoExpandTimer) { clearTimeout(autoExpandTimer); autoExpandTimer = null; }
-        closeStage();
+        autoDismissedRoute = null;
+        closeStage({ fromRoute: true });
         observeRoot();
         requestScan();
     }
