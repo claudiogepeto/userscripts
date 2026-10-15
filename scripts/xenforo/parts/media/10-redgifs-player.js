@@ -181,6 +181,8 @@
         if (!wrap || !w || !h) return false;
         const r = w / h;
         if (!(r > 0.3 && r < 2.8)) return false;
+        if (wrap.style.getPropertyValue('--smg-rg-ratio') === String(r)) return true;   // mesma proporção (API → poster → metadata): nada muda
+        mediaResizeKeep(wrap);   // ANTES de mudar: a caixa acima da tela devolve a diferença no scroll (08-images-masonry)
         wrap.style.aspectRatio = w + ' / ' + h;
         wrap.style.setProperty('--smg-rg-ratio', String(r));
         const isVertical = (h / w) >= 0.9;
@@ -1018,6 +1020,7 @@
             ifr.replaceWith(wrapper);
             const restoreIframe = () => {
                 if (slot.querySelector('iframe')) return;
+                mediaResizeKeep(wrapper);
                 unfillSlot(slot);
                 loading.remove();
                 const oldWrap = slot.querySelector('.smg-rg');
@@ -1032,6 +1035,7 @@
                 loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
                 queueEmbedResolve(slot, done => imagepondResolve(pageUrl, done), res => {
                     if (wrapper.querySelector('.smg-rg')) return;
+                    mediaResizeKeep(wrapper);   // spinner 16:9 → player/iframe/imagem: acima da tela, devolve a diferença no scroll
                     if (res && res.mp4) {                                   // VÍDEO → nosso player
                         const { wrap, video } = buildNativeVideo(res.mp4, location.origin + '/', restoreIframe, 'ImagePond');
                         video._rgKeepRef = 'origin';                        // mp4 referer-locked → streaming direto PRESERVANDO o referer (senão 403); blob (com _rgRef) é o backup
@@ -1175,6 +1179,7 @@
         ctx.loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
         queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
+            mediaResizeKeep(ctx.wrapper);   // spinner 16:9 → player (ou iframe de volta): acima da tela, devolve a diferença no scroll
             if (!res) { restore(); return; }
             const { wrap, video } = buildNativeVideo(res.mp4, 'https://' + host + '/', restore, 'Cyberdrop');
             video._rgExt = cyberdropPageUrl(host, slug);   // "abrir em nova guia" → página do arquivo (tem download)
@@ -1198,6 +1203,7 @@
             // o iframe nativo já saiu do DOM (para de tentar carregar); guardado pra voltar se a API falhar
             const restore = () => {
                 if (ctx.slot.querySelector('iframe')) return;
+                mediaResizeKeep(ctx.wrapper);
                 unfillSlot(ctx.slot); ctx.loading.remove();
                 ifr.classList.add('saint-iframe'); ifr.removeAttribute('style');   // preenche o slot 16:9 (o width/height="auto" do site quebrava na coluna)
                 ctx.slot.appendChild(ifr);
@@ -1221,7 +1227,7 @@
             const host = m[1], slug = m[2], origHref = link.href;
             const ctx = cyberdropSlot(link, host, slug, origHref);
             if (!ctx) return;
-            const restore = () => { unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
+            const restore = () => { mediaResizeKeep(ctx.wrapper); unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
             const activate = () => {
                 if (ctx.slot.dataset.cdActivated) return;
                 ctx.slot.dataset.cdActivated = '1'; ctx.slot._smgActivate = null;

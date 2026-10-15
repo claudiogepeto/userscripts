@@ -1,7 +1,7 @@
     // media/08-images-masonry.js
     // Owns: post images (full-size swap, lazy observers, dead-image watchdog), host viewers (GoonBox, Chevereto)
     // and the post block model: runs of images and players become one masonry group.
-    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks.
+    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
     // Depends on: media/08a-masonry-engine, media/10-redgifs-player, core/06-helpers, core/02-config.
     // =========================================================
     // FEATURE: auto full images + portrait grid
@@ -1020,5 +1020,63 @@
     function relayoutPostGroupOf(el) {
         const g = el && el.closest && el.closest('.auto-image-grid');
         if (g) masonrySchedule(g);
+    }
+
+    // =========================================================
+    // MÍDIA MUDA DE TAMANHO SEM A PÁGINA PULAR. O scroll anchoring do navegador está DESLIGADO de propósito,
+    // então quando um player descobre a proporção real (API, poster, metadata) e a caixa dele (ou o grupo do
+    // mosaico) está ACIMA da tela, o que o usuário está lendo seria empurrado. Quem vai mudar uma caixa chama
+    // mediaResizeKeep(el) ANTES de mudar: guarda a geometria e, no próximo frame (depois de todas as mudanças
+    // da mesma tarefa, ex. rgAspect + markWide no mesmo loadedmetadata), re-coloca o grupo e devolve a
+    // diferença no scroll. Vale pra página (window) e pra grade da galeria (.smg-gallery-grid, rola sozinha);
+    // no feed (slide da tela toda) não há o que compensar.
+    //   grupo inteiro acima ........ a variação de altura do grupo
+    //   grupo cruzando o topo ....... quanto o 1º item visível do grupo andou dentro dele (o motor pode re-colocar
+    //                                 itens depois do que mudou, inclusive os que estão na tela)
+    //   caixa solta começando acima . a variação de altura dela (a mesma regra do turbo, turboApplyAspect)
+    // =========================================================
+    let mediaResizeBatch = null;
+    function mediaResizeKeep(el) {
+        if (!el || !el.isConnected) return;
+        const sc = el.closest('.smg-gallery-grid');
+        if (!sc && el.closest('#smg-media')) return;
+        const grid = el.closest('.smg-mason');
+        let item = el;
+        if (grid) while (item.parentElement && item.parentElement !== grid) item = item.parentElement;
+        else item = videoFlowNode(el);
+        const key = grid || item;
+        if (!mediaResizeBatch) { mediaResizeBatch = new Map(); requestAnimationFrame(mediaResizeFlush); }
+        const top0 = sc ? sc.getBoundingClientRect().top : 0;
+        const prev = mediaResizeBatch.get(key);
+        const itemAbove = item.getBoundingClientRect().top < top0;
+        if (prev) { if (itemAbove) prev.itemAbove = true; return; }   // a 1ª foto do frame é o "antes"
+        const kr = key.getBoundingClientRect();
+        const snap = { key, sc, grid, h0: kr.height, itemAbove, ref: null, refOff: 0 };
+        if (grid && kr.top < top0 && kr.bottom > top0) {   // grupo cruzando o topo: referência = 1º item visível
+            for (const c of grid.children) {
+                const t = c.getBoundingClientRect().top;
+                if (t >= top0 && (!snap.ref || t < snap.refOff + kr.top)) { snap.ref = c; snap.refOff = t - kr.top; }
+            }
+        }
+        snap.above = kr.top < top0;
+        mediaResizeBatch.set(key, snap);
+    }
+    function mediaResizeFlush() {
+        const batch = mediaResizeBatch; mediaResizeBatch = null;
+        if (!batch) return;
+        let dy = 0;
+        const dsc = new Map();
+        batch.forEach(s => {
+            if (s.grid && s.grid.isConnected) masonryLayout(s.grid);   // agora, não no próximo frame: a conta precisa da altura nova
+            if (!s.above || !s.key.isConnected) return;
+            const kr = s.key.getBoundingClientRect();
+            let d = 0;
+            if (s.ref && s.ref.isConnected) d = (s.ref.getBoundingClientRect().top - kr.top) - s.refOff;
+            else if (!s.grid || s.itemAbove || kr.bottom <= (s.sc ? s.sc.getBoundingClientRect().top : 0)) d = kr.height - s.h0;
+            if (!d) return;
+            if (s.sc) dsc.set(s.sc, (dsc.get(s.sc) || 0) + d); else dy += d;
+        });
+        dsc.forEach((d, sc) => { sc.scrollTop += d; });
+        if (dy) window.scrollBy(0, dy);
     }
 

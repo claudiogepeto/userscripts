@@ -1,7 +1,7 @@
     // media/14-feed-lightbox.js
     // Owns: the media overlay: one media list per thread, gallery and feed views, gestures, ?view= URL state.
     // Exposes: openMedia, openMediaFeed, closeMedia, setMediaView, collectMediaFrom, restoreNavMode, smgSetNavParam.
-    // Depends on: media/08a-masonry-engine (gallery), media/10-redgifs-player, core/06-helpers.
+    // Depends on: media/08a-masonry-engine (gallery), media/08-images-masonry (mediaResizeKeep), media/10-redgifs-player, runtime/21-init-features (turboThumbSize, at call time), core/06-helpers.
     // =========================================================
     // FEATURE: modo mídia — a mídia da thread num overlay com DUAS vistas sobre UMA lista
     //
@@ -194,10 +194,16 @@
                     tile.insertBefore(iframe, maxBtn);
                 };
                 // tile ganha o aspect REAL do vídeo (vertical = tile alto, não esmagado em 16:9)
-                const fitTile = video => video.addEventListener('loadedmetadata', () => {
-                    if (!video.videoWidth || !video.videoHeight) return;
-                    tile.dataset.relh = (video.videoHeight / video.videoWidth).toFixed(4);
+                // (acima da tela a grade devolve a diferença no scroll: mediaResizeKeep, 08-images-masonry)
+                const setRelh = (w, h) => {
+                    const relh = (h / w).toFixed(4);
+                    if (!tile.isConnected || tile.dataset.relh === relh) return;
+                    mediaResizeKeep(tile);
+                    tile.dataset.relh = relh;
                     masonrySchedule(tile.parentElement);
+                };
+                const fitTile = video => video.addEventListener('loadedmetadata', () => {
+                    if (video.videoWidth && video.videoHeight) setRelh(video.videoWidth, video.videoHeight);
                 }, { once: true });
                 const rid = (FEATURES.redgifsPlayer && GMX) ? rgIdFrom(it.url) : null;
                 if (rid) {   // redgifs → NOSSO player (autoplay-off, igual ao inline)
@@ -207,6 +213,10 @@
                     rgStart(video, true);
                 } else {   // imagepond/youtube/etc → iframe (não temos player nativo)
                     toIframe();
+                    // turbo: o iframe nasce 16:9; a thumb do og:image da /embed/ tem a proporção do vídeo (a MESMA
+                    // busca do turbo no post, turboThumbSize, com cache por id) → tile vertical sem tarjas
+                    const tid = GMX && (it.url.match(/turbo\.cr\/embed\/([a-zA-Z0-9_-]+)/) || [])[1];
+                    if (tid) turboThumbSize(tid, size => { if (size && size.w / size.h > 0.3 && size.w / size.h < 2.8) setRelh(size.w, size.h); });
                 }
             };
             galObserve(tile);

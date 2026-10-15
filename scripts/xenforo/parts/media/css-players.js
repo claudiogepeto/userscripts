@@ -309,6 +309,13 @@
             }
             span[data-s9e-mediaembed] .smg-rg,
             .generic2wide-iframe-div .smg-rg { margin: 0 auto !important; }   /* container já dá a margem → não dobra */
+            /* a largura do player SEGUE a proporção (teto de altura × proporção). Dentro do embed o defensivo
+               "* { max-width: 100% !important }" lá embaixo apagava esse teto: a caixa ficava com a largura toda e
+               o teto de altura → vídeo em pé virava faixa larga com tarjas pretas. No mosaico vale o motor (css-grids). */
+            span[data-s9e-mediaembed] .smg-rg,
+            .generic2wide-iframe-div .smg-rg {
+                max-width: min(100%, 1400px, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-rg-ratio, 1.7778))) !important;
+            }
             .smg-rg-fail {   /* gif morto: placeholder discreto no lugar do iframe de erro do redgifs */
                 display: flex; align-items: center; justify-content: center;
                 width: 100%; aspect-ratio: 16 / 9; max-height: var(--smg-media-h);
