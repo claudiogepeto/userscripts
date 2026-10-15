@@ -1,0 +1,177 @@
+    /* ===================== PARSER DE DATAS E TÍTULOS ===================== */
+    function cleanHtmlText(str) {
+        if (!str || typeof str !== "string") return "";
+        let cur = str;
+        for (let i = 0; i < 3; i++) {
+            if (!/&[a-zA-Z0-9#]+;/.test(cur)) break;
+            const txt = document.createElement("textarea");
+            txt.innerHTML = cur;
+            cur = txt.value;
+        }
+        return cur.trim();
+    }
+
+    function extractDateFromTitle(title) {
+        if (!title || typeof title !== "string") return null;
+        title = cleanHtmlText(title).trim();
+
+        // 1. ISO: YYYY[-._]MM[-._]DD
+        const mIso = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])[.\-_](0[1-9]|[12]\d|3[01])\b/);
+        if (mIso) {
+            const y = parseInt(mIso[1], 10), m = parseInt(mIso[2], 10), d = parseInt(mIso[3], 10);
+            return {
+                timestamp: Date.UTC(y, m - 1, d),
+                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
+                year: y, month: m, day: d,
+                raw: mIso[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
+            };
+        }
+
+        // 2. Compacto: YYYYMMDD
+        const mCompact = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/);
+        if (mCompact) {
+            const y = parseInt(mCompact[1], 10), m = parseInt(mCompact[2], 10), d = parseInt(mCompact[3], 10);
+            return {
+                timestamp: Date.UTC(y, m - 1, d),
+                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
+                year: y, month: m, day: d,
+                raw: mCompact[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
+            };
+        }
+
+        // 3. BR/EU: DD[-._]MM[-._]YYYY
+        const mDmy = title.match(/(?:^|[\[(_\s])(0[1-9]|[12]\d|3[01])[.\-_](0[1-9]|1[0-2])[.\-_](20\d\d|19\d\d)\b/);
+        if (mDmy) {
+            const d = parseInt(mDmy[1], 10), m = parseInt(mDmy[2], 10), y = parseInt(mDmy[3], 10);
+            return {
+                timestamp: Date.UTC(y, m - 1, d),
+                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
+                year: y, month: m, day: d,
+                raw: mDmy[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
+            };
+        }
+
+        // 4. Mês e Ano: YYYY[-._]MM
+        const mYm = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])\b/);
+        if (mYm) {
+            const y = parseInt(mYm[1], 10), m = parseInt(mYm[2], 10);
+            return {
+                timestamp: Date.UTC(y, m - 1, 1),
+                formatted: `${y}-${String(m).padStart(2, "0")}`,
+                displayDate: `${String(m).padStart(2, "0")}/${y}`,
+                year: y, month: m, day: 1,
+                raw: mYm[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
+            };
+        }
+
+        return null;
+    }
+
+    function cleanTitleWithoutDate(title, dt) {
+        if (!title || typeof title !== "string") return "";
+        title = cleanHtmlText(title).trim();
+        const withoutExt = title.replace(/\.[a-zA-Z0-9]{2,5}$/i, "").trim();
+        const target = withoutExt || title;
+        if (!dt || !dt.raw) return target;
+        const esc = dt.raw.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        let cleaned = target.replace(new RegExp("^[\\s\\[(_-]*" + esc + "[\\s\\])_–—-]*(?:[-–—_]\\s*)?", "i"), "");
+        cleaned = cleaned.replace(/^[\s\-_–—.]+\s*/, "").trim();
+        return cleaned || target;
+    }
+
+    function formatDisplayDate(isoOrDate) {
+        if (!isoOrDate) return "";
+        try {
+            const d = new Date(isoOrDate);
+            if (isNaN(d.getTime())) return String(isoOrDate);
+            const pad = n => String(n).padStart(2, "0");
+            const dia = pad(d.getDate()), mes = pad(d.getMonth() + 1), ano = d.getFullYear();
+            const hora = pad(d.getHours()), min = pad(d.getMinutes());
+            return `${dia}/${mes}/${ano}, ${hora}:${min}`;
+        } catch {
+            return String(isoOrDate);
+        }
+    }
+
+    function el(tag, props, ...kids) {
+        const n = document.createElement(tag);
+        if (props) for (const [k, v] of Object.entries(props)) {
+            if (v == null) continue;
+            if (k === "class") n.className = v;
+            else if (k === "html") n.innerHTML = v;
+            else if (k === "style" && typeof v === "object") Object.assign(n.style, v);
+            else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2).toLowerCase(), v);
+            else n.setAttribute(k, v);
+        }
+        for (const kid of kids) if (kid != null) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+        return n;
+    }
+
+    const svgi = inner => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block">${inner}</svg>`;
+    const PL_ICONS = {
+        play: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M7 4.5v15a1 1 0 0 0 1.52.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
+        pause: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
+        volume: svgi('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>'),
+        mute: svgi('<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'),
+        expand: svgi('<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'),
+        download: svgi('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+        skipBack: svgi('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'),
+        skipFwd: svgi('<path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>'),
+        prevTrack: svgi('<polygon points="19 20 9 12 19 4 19 20" fill="currentColor"/><line x1="5" y1="19" x2="5" y2="5" stroke-width="2.5"/>'),
+        nextTrack: svgi('<polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/><line x1="19" y1="5" x2="19" y2="19" stroke-width="2.5"/>'),
+        playlist: svgi('<line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/><polygon points="17,14 22,17 17,20" fill="currentColor" stroke="none"/>'),
+        chevL: svgi('<path d="m15 18-6-6 6-6"/>'),
+        chevR: svgi('<path d="m9 18 6-6-6-6"/>'),
+        grid: svgi('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+        image: svgi('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>'),
+        video: svgi('<rect x="2" y="5" width="14" height="14" rx="2"/><path d="m22 8-6 4 6 4V8z"/>'),
+        fileText: svgi('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'),
+        copy: svgi('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+        repeat: svgi('<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'),
+        flag: svgi('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'),
+        close: svgi('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'),
+        search: svgi('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
+        check: svgi('<polyline points="20 6 9 17 4 12"/>'),
+        share: svgi('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'),
+        pip: svgi('<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/>'),
+        prev: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M6 5a1 1 0 0 1 1 1v12a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1zm12.44 1.34a1 1 0 0 0-1.44-.88l-9 5.5a1 1 0 0 0 0 1.72l9 5.5A1 1 0 0 0 19 17.5v-11a1 1 0 0 0-.56-.86z"/></svg>',
+        next: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M18 5a1 1 0 0 1 1 1v12a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1zM5.56 6.66a1 1 0 0 0-1.56.84v11a1 1 0 0 0 1.56.84l9-5.5a1 1 0 0 0 0-1.68l-9-5.5z"/></svg>'
+    };
+
+    function kindSvg(k) {
+        if (k === "video") return PL_ICONS.video;
+        if (k === "image") return PL_ICONS.image;
+        if (k === "text") return PL_ICONS.fileText;
+        return PL_ICONS.fileText;
+    }
+
+    const fmtT = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60; const p = n => String(n).padStart(2, "0"); return h ? h + ":" + p(m) + ":" + p(ss) : m + ":" + p(ss); };
+
+    let toastT;
+    function toast(msg) {
+        let t = document.querySelector(".fl-toast");
+        if (!t) { t = el("div", { class: "fl-toast" }); (document.body || document.documentElement).appendChild(t); }
+        t.textContent = msg; t.classList.add("show");
+        clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1800);
+    }
+    function fallbackCopy(s) { try { const t = el("textarea", { style: { position: "fixed", opacity: "0", left: "-9999px" } }); t.value = s; document.body.appendChild(t); t.select(); const ok = document.execCommand("copy"); t.remove(); return ok; } catch { return false; } }
+    function copyText(s) {
+        if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(s).then(() => true, () => fallbackCopy(s));
+        return Promise.resolve(fallbackCopy(s));
+    }
+
+    function isVidName(n) { return /\.(mp4|m4v|mov|webm|mkv|avi|ts|flv)$/i.test(n || ""); }
+    function isImgName(n) { return /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i.test(n || ""); }
+    function isTxtName(n) { return /\.(txt|md|nfo|log|json|csv)$/i.test(n || ""); }
+
+    function getMediaKind(name) {
+        if (isVidName(name)) return "video";
+        if (isImgName(name)) return "image";
+        if (isTxtName(name)) return "text";
+        return "other";
+    }
+
+    function debounce(fn, ms) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; }

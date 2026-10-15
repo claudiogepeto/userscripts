@@ -72,6 +72,16 @@ function withUpdate(header, fileName) {
 const scriptsDir = path.join(__dirname, "scripts");
 const xenforoDir = path.join(scriptsDir, "xenforo");
 const bypassbrDir = path.join(scriptsDir, "bypassbr");
+const mediaDir = path.join(scriptsDir, "media");
+
+// Media hosts (bunkr, gofile, filester, pixeldrain, turbo, goonbox) are generated into
+// scripts/<host>.user.js from scripts/media/; a failure here must stop the build.
+try {
+  execFileSync("node", [path.join(mediaDir, "build.js")], { stdio: "inherit" });
+} catch {
+  console.error("! scripts/media/build.js failed");
+  process.exit(1);
+}
 
 try {
   execFileSync("node", [path.join(xenforoDir, "build.js")], { stdio: "inherit" });
