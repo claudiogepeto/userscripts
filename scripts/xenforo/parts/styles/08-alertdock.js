@@ -80,9 +80,10 @@
             }
             .smg-aldock-foot a { padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; }
             .smg-aldock-foot a:hover { background: var(--smg-w-10); color: #fff; }
-            /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar */
+            /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar. Aberto = ícone na cor do
+               tema, SEM caixa preenchida (mesmo tratamento da busca e do avatar; o fundo só no hover, como eles) */
             .smg-tb-bellbtn.active,
-            html.smg-aldock-on .smg-tb-bellbtn { background: var(--smg-link-soft); color: var(--smg-link); }
+            html.smg-aldock-on .smg-tb-bellbtn { color: var(--smg-link); }
             /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
                desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
             @media (max-width: 1100px) and (min-width: 601px) {

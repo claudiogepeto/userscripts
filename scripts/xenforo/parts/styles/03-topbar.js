@@ -97,7 +97,8 @@
                 #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
                 #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-                #smg-topbar-wrap.floating .smg-tb-act { width: 38px; height: 38px; }
+                #smg-topbar-wrap.floating .smg-tb-act,
+                #smg-topbar-wrap.floating .smg-tb-account { width: 38px; height: 38px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
@@ -177,18 +178,18 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 40px; height: 40px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
+                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
             }
-            .smg-tb-account:hover { background: var(--smg-link-soft); }
+            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-link-soft); }
             .smg-tb-account img { width: 100%; height: 100%; object-fit: cover; }
             .smg-tb-account .avatar,
             .smg-tb-account > img {
                 width: 28px !important; height: 28px !important; margin: 0 !important;
                 border-radius: var(--smg-r-round) !important; display: block; overflow: hidden;
-                box-shadow: 0 0 0 1px var(--smg-w-18);   /* anel fino: separa do fundo sem virar botão */
+                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-50);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
             }
             .smg-tb-account .avatar > span,
             .smg-tb-account .avatar > img { width: 28px !important; height: 28px !important; display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-13) !important; line-height: 28px !important; border-radius: var(--smg-r-round) !important; }
