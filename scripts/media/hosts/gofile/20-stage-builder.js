@@ -457,28 +457,7 @@
         }
         host.appendChild(newImg);
         appendImageChrome(host, imgUrl);
-        const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
-        const clampPan = () => {
-            const stageW = mid.clientWidth || window.innerWidth;
-            const stageH = mid.clientHeight || (window.innerHeight - 80);
-            const imgW = newImg.clientWidth * z;
-            const imgH = newImg.clientHeight * z;
-            const mx = Math.max(0, (imgW - stageW) / 2);
-            const my = Math.max(0, (imgH - stageH) / 2);
-            tx = Math.max(-mx, Math.min(mx, tx));
-            ty = Math.max(-my, Math.min(my, ty));
-        };
-        const applyTf = () => {
-            newImg.style.transform = z === 1 ? "" : `translate(${tx}px,${ty}px) scale(${z})`;
-            mid.classList.toggle("is-zoomed", z !== 1);
-            host.classList.toggle("is-zoomed", z !== 1);
-        };
-        const setZoomIdx = i => { zi = ((i % ZOOMS.length) + ZOOMS.length) % ZOOMS.length; z = ZOOMS[zi]; if (z === 1) { tx = ty = 0; } else clampPan(); applyTf(); };
-        let drag = null;
-        newImg.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); drag = { x: e.clientX, y: e.clientY, tx, ty, moved: false }; try { newImg.setPointerCapture(e.pointerId); } catch (er) {} });
-        newImg.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (z !== 1 && drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; clampPan(); applyTf(); } });
-        const end = e => { if (!drag) return; const click = !drag.moved; drag = null; try { newImg.releasePointerCapture(e.pointerId); } catch (er) {} if (click) setZoomIdx(zi + 1); };
-        newImg.addEventListener("pointerup", end); newImg.addEventListener("pointercancel", end);
+        bindZoom(mid, newImg, { host, padH: 80, keys: { nav: navStage, fullscreenTarget: () => stage } });
     }
 
     async function mountTextViewer(mid, d) {

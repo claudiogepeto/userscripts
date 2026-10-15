@@ -65,52 +65,7 @@
         const img = el("img", { class: "tb-image", src: src || "", alt: "", draggable: "false" });
         host.append(img);
         appendImageChrome(host, id, src);
-        const ZOOMS = [1, 2, 4];
-        let zi = 0, z = 1, tx = 0, ty = 0;
-        const clampPan = () => {
-            const stageW = host.clientWidth || mid.clientWidth || window.innerWidth;
-            const stageH = host.clientHeight || mid.clientHeight || window.innerHeight;
-            const imgW = img.clientWidth * z;
-            const imgH = img.clientHeight * z;
-            const mx = Math.max(0, (imgW - stageW) / 2);
-            const my = Math.max(0, (imgH - stageH) / 2);
-            tx = Math.max(-mx, Math.min(mx, tx));
-            ty = Math.max(-my, Math.min(my, ty));
-        };
-        const applyTf = () => {
-            img.style.transform = z === 1 ? "" : `translate(${tx}px,${ty}px) scale(${z})`;
-            host.classList.toggle("is-zoomed", z !== 1);
-        };
-        const setZoomIdx = i => {
-            zi = ((i % ZOOMS.length) + ZOOMS.length) % ZOOMS.length;
-            z = ZOOMS[zi];
-            if (z === 1) { tx = 0; ty = 0; }
-            else clampPan();
-            applyTf();
-        };
-        let drag = null;
-        img.addEventListener("pointerdown", e => {
-            if (e.button) return;
-            e.preventDefault();
-            drag = { x: e.clientX, y: e.clientY, tx, ty, moved: false };
-            try { img.setPointerCapture(e.pointerId); } catch { /* pointer already released */ }
-        });
-        img.addEventListener("pointermove", e => {
-            if (!drag) return;
-            const dx = e.clientX - drag.x;
-            const dy = e.clientY - drag.y;
-            if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
-            if (z !== 1 && drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; clampPan(); applyTf(); }
-        });
-        const end = e => {
-            if (!drag) return;
-            const click = !drag.moved;
-            drag = null;
-            try { img.releasePointerCapture(e.pointerId); } catch { /* capture already gone */ }
-            if (click) setZoomIdx(zi + 1);
-        };
-        img.addEventListener("pointerup", end);
-        img.addEventListener("pointercancel", end);
+        bindZoom(host, img, { keys: { nav: navFile, fullscreenTarget: () => document.querySelector(".tb-stage") } });
         mid.appendChild(host);
         const stage = mid.closest(".tb-stage");
         if (stage) stage.classList.add("is-image");

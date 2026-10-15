@@ -292,5 +292,6 @@
         if (i) return "image";
         const h1 = document.querySelector("main h1") || Array.from(document.querySelectorAll("h1")).find(h => !h.closest("header"));
         if (h1 && isVidName(h1.textContent)) return "video";
+        if (h1 && isTxtName((h1.textContent || "").trim())) return "text";
         return "image";
     }

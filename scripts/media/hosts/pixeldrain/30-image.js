@@ -24,24 +24,7 @@
         appendImageChrome(host, f);
 
         // Zoom 1x → 2x → 4x com Drag
-        const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
-        const clampPan = () => {
-            const stageW = host.clientWidth || window.innerWidth;
-            const stageH = host.clientHeight || (window.innerHeight - 120);
-            const imgW = img.clientWidth * z;
-            const imgH = img.clientHeight * z;
-            const mx = Math.max(0, (imgW - stageW) / 2);
-            const my = Math.max(0, (imgH - stageH) / 2);
-            tx = Math.max(-mx, Math.min(mx, tx));
-            ty = Math.max(-my, Math.min(my, ty));
-        };
-        const applyTf = () => { img.style.transform = z === 1 ? "" : `translate(${tx}px,${ty}px) scale(${z})`; host.classList.toggle("pdx-zoomed", z !== 1); };
-        const setZoomIdx = i => { zi = ((i % ZOOMS.length) + ZOOMS.length) % ZOOMS.length; z = ZOOMS[zi]; if (z === 1) { tx = ty = 0; } else clampPan(); applyTf(); };
-        let drag = null;
-        on(img, "pointerdown", e => { if (e.button) return; e.preventDefault(); e.stopPropagation(); drag = { x: e.clientX, y: e.clientY, tx, ty, moved: false }; try { img.setPointerCapture(e.pointerId); } catch {} });
-        on(img, "pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (z !== 1 && drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; clampPan(); applyTf(); } });
-        const endDrag = e => { if (!drag) return; const click = !drag.moved; drag = null; try { img.releasePointerCapture(e.pointerId); } catch {} if (click) setZoomIdx(zi + 1); };
-        on(img, "pointerup", endDrag); on(img, "pointercancel", endDrag);
+        bindZoom(host, img, { zoomClass: "pdx-zoomed", stopPointer: true, padH: 120, keys: { nav: navItem, fullscreen: goFullscreen } });
 
         // Setas laterais grandes
         const al = albumInfo(), multi = !!(al && al.files.length > 1);
@@ -63,10 +46,8 @@
             const t = e.target;
             if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || (t.closest && t.closest(".pdx-search, .pdx-sidebar-search")))) return;
             let h = true;
-            if (e.key === "ArrowLeft") navItem(-1);
-            else if (e.key === "ArrowRight") navItem(1);
-            else if (e.key === "f") goFullscreen();
-            else if (e.shiftKey && (e.key === "N" || e.key === "n")) navItem(1);
+            // ← → f (e + − 0 Esc) ficam no teclado da foto do core (bindZoom acima)
+            if (e.shiftKey && (e.key === "N" || e.key === "n")) navItem(1);
             else if (e.shiftKey && (e.key === "P" || e.key === "p")) navItem(-1);
             else if (e.key === "p" || e.key === "P") toggleSidebar();
             else h = false;

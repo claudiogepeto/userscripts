@@ -445,6 +445,36 @@
             .${P}-playlist-date-lbl, .${P}-playlist-date-val, .${P}-playlist-meta { font-size: 12px !important; }
         }
 `;
+        const misc = `        .${P}-thumb-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #181b24 0%, #0e1017 100%) !important; border-radius: 14px; gap: 8px; z-index: 1; user-select: none; pointer-events: none; border: 1px solid rgba(255,255,255,0.06); }
+        .${P}-ph-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.06); }
+        .${P}-ph-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
+        .${P}-ph-badge { font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.07); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.08); }
+
+        /* Preview do conteúdo de arquivo .txt no card da galeria */
+        .${P}-txt-preview { position: absolute; inset: 0; display: flex; flex-direction: column; background: #0f1118 !important; border-radius: 14px; padding: 10px 12px; overflow: hidden; z-index: 1; pointer-events: none; border: 1px solid rgba(255,255,255,0.08); }
+        .${P}-txt-head { display: flex; align-items: center; gap: 7px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); flex: 0 0 auto; }
+        .${P}-txt-head-tag { font: 700 9.5px/1 Inter, monospace; background: rgba(${t.accentRgb},0.18); color: ${t.accentLight}; padding: 2.5px 6px; border-radius: 4px; border: 1px solid rgba(${t.accentRgb},0.3); letter-spacing: 0.03em; }
+        .${P}-txt-head-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .${P}-txt-body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important; font-size: 10.5px !important; line-height: 1.45 !important; color: #cbd5e1 !important; white-space: pre-wrap !important; word-break: break-all !important; overflow: hidden !important; flex: 1 1 auto; margin: 0 !important; opacity: 0.9; }
+        .${P}-txt-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 38px; background: linear-gradient(to top, #0f1118 15%, transparent 100%); pointer-events: none; }
+
+        /* Visualizador de texto no Stage da página de arquivo (.is-text) */
+        .${P}-txt-stage-host { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; overflow: hidden; }
+        .${P}-txt-stage-card { width: 100%; max-width: 960px; height: 85vh; max-height: 820px; background: #11131a; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; display: flex; flex-direction: column; box-shadow: 0 16px 40px rgba(0,0,0,0.6); overflow: hidden; }
+        .${P}-txt-stage-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; background: #161822; border-bottom: 1px solid rgba(255,255,255,0.08); flex: 0 0 auto; }
+        .${P}-txt-stage-info { display: flex; align-items: center; gap: 10px; }
+        .${P}-txt-tag { font: 700 10.5px/1 Inter, monospace; letter-spacing: 0.05em; background: rgba(${t.accentRgb},0.2); color: ${t.accentLight}; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(${t.accentRgb},0.35); }
+        .${P}-txt-meta { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .${P}-txt-stage-actions { display: flex; align-items: center; gap: 8px; }
+        .${P}-txt-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; font: 600 12px/1 Inter, sans-serif; cursor: pointer; text-decoration: none; transition: background .12s, border-color .12s; }
+        .${P}-txt-btn:hover { background: rgba(${t.accentRgb},0.15); border-color: rgba(${t.accentRgb},0.4); color: #fff; text-decoration: none; }
+        .${P}-txt-btn[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+        .${P}-txt-btn svg { width: 14px; height: 14px; }
+        .${P}-txt-stage-content { flex: 1 1 auto; overflow-y: auto; padding: 18px 20px; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important; font-size: 13px !important; line-height: 1.6 !important; color: #e2e8f0 !important; white-space: pre-wrap !important; word-break: break-word !important; background: transparent !important; }
+
+        /* toast (feedback de copiar etc.) — acima do stage */
+        .${P}-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(12px); z-index: 100001; padding: 10px 18px; border-radius: 20px; background: #14161a; border: 1px solid ${t.accent}66; color: #fff; font: 13px Inter, system-ui, sans-serif; box-shadow: 0 6px 22px rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+        .${P}-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }`;
         return {
             player: plc + photo + stage + mobileA + plcMobile + mobileB,
             // Só o player (hosts que ainda têm stage próprio): controles + regras mobile dos controles.
@@ -508,35 +538,8 @@
         .${P}-group-count { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.08); padding: 2.5px 8.5px; border-radius: 999px; }
         .${P}-group-line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
 `,
-            misc: `        .${P}-thumb-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #181b24 0%, #0e1017 100%) !important; border-radius: 14px; gap: 8px; z-index: 1; user-select: none; pointer-events: none; border: 1px solid rgba(255,255,255,0.06); }
-        .${P}-ph-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.06); }
-        .${P}-ph-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
-        .${P}-ph-badge { font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.07); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.08); }
-
-        /* Preview do conteúdo de arquivo .txt no card da galeria */
-        .${P}-txt-preview { position: absolute; inset: 0; display: flex; flex-direction: column; background: #0f1118 !important; border-radius: 14px; padding: 10px 12px; overflow: hidden; z-index: 1; pointer-events: none; border: 1px solid rgba(255,255,255,0.08); }
-        .${P}-txt-head { display: flex; align-items: center; gap: 7px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); flex: 0 0 auto; }
-        .${P}-txt-head-tag { font: 700 9.5px/1 Inter, monospace; background: rgba(${t.accentRgb},0.18); color: ${t.accentLight}; padding: 2.5px 6px; border-radius: 4px; border: 1px solid rgba(${t.accentRgb},0.3); letter-spacing: 0.03em; }
-        .${P}-txt-head-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .${P}-txt-body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important; font-size: 10.5px !important; line-height: 1.45 !important; color: #cbd5e1 !important; white-space: pre-wrap !important; word-break: break-all !important; overflow: hidden !important; flex: 1 1 auto; margin: 0 !important; opacity: 0.9; }
-        .${P}-txt-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 38px; background: linear-gradient(to top, #0f1118 15%, transparent 100%); pointer-events: none; }
-
-        /* Visualizador de texto no Stage da página de arquivo (.is-text) */
-        .${P}-txt-stage-host { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; overflow: hidden; }
-        .${P}-txt-stage-card { width: 100%; max-width: 960px; height: 85vh; max-height: 820px; background: #11131a; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; display: flex; flex-direction: column; box-shadow: 0 16px 40px rgba(0,0,0,0.6); overflow: hidden; }
-        .${P}-txt-stage-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; background: #161822; border-bottom: 1px solid rgba(255,255,255,0.08); flex: 0 0 auto; }
-        .${P}-txt-stage-info { display: flex; align-items: center; gap: 10px; }
-        .${P}-txt-tag { font: 700 10.5px/1 Inter, monospace; letter-spacing: 0.05em; background: rgba(${t.accentRgb},0.2); color: ${t.accentLight}; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(${t.accentRgb},0.35); }
-        .${P}-txt-meta { font-size: 12px; color: rgba(255,255,255,0.6); }
-        .${P}-txt-stage-actions { display: flex; align-items: center; gap: 8px; }
-        .${P}-txt-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; font: 600 12px/1 Inter, sans-serif; cursor: pointer; text-decoration: none; transition: background .12s, border-color .12s; }
-        .${P}-txt-btn:hover { background: rgba(${t.accentRgb},0.15); border-color: rgba(${t.accentRgb},0.4); color: #fff; text-decoration: none; }
-        .${P}-txt-btn[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-        .${P}-txt-btn svg { width: 14px; height: 14px; }
-        .${P}-txt-stage-content { flex: 1 1 auto; overflow-y: auto; padding: 18px 20px; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important; font-size: 13px !important; line-height: 1.6 !important; color: #e2e8f0 !important; white-space: pre-wrap !important; word-break: break-word !important; background: transparent !important; }
-
-        /* toast (feedback de copiar etc.) — acima do stage */
-        .${P}-toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(12px); z-index: 100001; padding: 10px 18px; border-radius: 20px; background: #14161a; border: 1px solid ${t.accent}66; color: #fff; font: 13px Inter, system-ui, sans-serif; box-shadow: 0 6px 22px rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
-        .${P}-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }`,
+            misc,
+            // Só o leitor de texto do stage (.X-txt-stage-*), para hosts que ainda têm CSS próprio no resto.
+            textStage: misc.slice(misc.indexOf("        /* Visualizador de texto no Stage"), misc.indexOf("        /* toast")),
         };
     }

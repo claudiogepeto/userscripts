@@ -19,6 +19,8 @@
                     if (src) {
                         mountOwnPlayer(mid, src);
                     }
+                } else if (stage.classList.contains("is-text")) {
+                    mountFilesterText(mid);
                 } else {
                     mountPhotoZoom(mid);
                 }

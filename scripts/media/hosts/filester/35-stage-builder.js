@@ -10,9 +10,10 @@
         const size = sizeEl ? (sizeEl.textContent || "").replace(/\s+/g, " ").trim() : "";
         const reportA = document.querySelector('a[href*="/report"], a[href*="report?file"]');
         const dlBtn = document.getElementById("downloadButton") || document.querySelector('a[id*="download" i], .download-btn');
-        const isVid = findMediaKind() === "video";
+        const kind = findMediaKind();
+        const isVid = kind === "video", isTxt = kind === "text";
 
-        const stage = el("div", { class: "fl-stage " + (isVid ? "is-video" : "is-image") + (isSidebarCollapsed ? " is-sidebar-collapsed" : "") });
+        const stage = el("div", { class: "fl-stage " + (isVid ? "is-video" : isTxt ? "is-text" : "is-image") + (isSidebarCollapsed ? " is-sidebar-collapsed" : "") });
         const main = el("div", { class: "fl-stage-main" });
 
         // ---- vrow (topbar) ----
@@ -25,14 +26,14 @@
             el("span", null, "Filester")
         );
         const nameEl = el("div", { class: "fl-name", title: name });
-        nameEl.insertAdjacentHTML("beforeend", isVid ? PL_ICONS.video : PL_ICONS.image);
+        nameEl.insertAdjacentHTML("beforeend", isVid ? PL_ICONS.video : isTxt ? PL_ICONS.fileText : PL_ICONS.image);
         nameEl.append(el("span", null, name));
         vtop.append(logo, nameEl);
 
         const vsub = el("div", { class: "fl-vrow-sub" });
         const stats = el("div", { class: "fl-stats" });
         if (size) stats.append(el("span", { class: "fl-stat" }, size));
-        stats.append(el("span", { class: "fl-stat" }, isVid ? "Vídeo" : "Imagem"));
+        stats.append(el("span", { class: "fl-stat" }, isVid ? "Vídeo" : isTxt ? "Texto" : "Imagem"));
         vsub.append(stats, el("div", { class: "fl-spacer" }));
 
         // Botão Playlist (visível apenas quando a sidebar estiver fechada)

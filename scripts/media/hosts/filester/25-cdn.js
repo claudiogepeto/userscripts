@@ -137,26 +137,42 @@
         });
         host.appendChild(newImg);
         appendImageChrome(host);
-        const ZOOMS = [1, 2, 4]; let zi = 0, z = 1, tx = 0, ty = 0;
-        const clampPan = () => {
-            const stageW = mid.clientWidth || window.innerWidth;
-            const stageH = mid.clientHeight || (window.innerHeight - 190);
-            const imgW = newImg.clientWidth * z;
-            const imgH = newImg.clientHeight * z;
-            const mx = Math.max(0, (imgW - stageW) / 2);
-            const my = Math.max(0, (imgH - stageH) / 2);
-            tx = Math.max(-mx, Math.min(mx, tx));
-            ty = Math.max(-my, Math.min(my, ty));
-        };
-        const applyTf = () => {
-            newImg.style.transform = z === 1 ? "" : `translate(${tx}px,${ty}px) scale(${z})`;
-            mid.classList.toggle("is-zoomed", z !== 1);
-            host.classList.toggle("is-zoomed", z !== 1);
-        };
-        const setZoomIdx = i => { zi = ((i % ZOOMS.length) + ZOOMS.length) % ZOOMS.length; z = ZOOMS[zi]; if (z === 1) { tx = ty = 0; } else clampPan(); applyTf(); };
-        let drag = null;
-        newImg.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); drag = { x: e.clientX, y: e.clientY, tx, ty, moved: false }; try { newImg.setPointerCapture(e.pointerId); } catch (er) {} });
-        newImg.addEventListener("pointermove", e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true; if (z !== 1 && drag.moved) { tx = drag.tx + dx; ty = drag.ty + dy; clampPan(); applyTf(); } });
-        const end = e => { if (!drag) return; const click = !drag.moved; drag = null; try { newImg.releasePointerCapture(e.pointerId); } catch (er) {} if (click) setZoomIdx(zi + 1); };
-        newImg.addEventListener("pointerup", end); newImg.addEventListener("pointercancel", end);
+        bindZoom(mid, newImg, { host, padH: 190, keys: { nav: navFile, fullscreenTarget: () => document.querySelector(".fl-stage") } });
+    }
+
+    /* ===================== ARQUIVO DE TEXTO (.txt/.md/.nfo/.log/.json/.csv) ===================== */
+    // Leitor de texto do core (core/viewers.js). Conteúdo: texto já presente na página, senão o link de
+    // download (mesma origem, até 1 MB); se nada der certo o cartão mostra o aviso e o botão Baixar.
+    function filesterTextUrl() {
+        const a = document.querySelector('a#downloadButton[href], a[id*="download" i][href], a.download-btn[href], a[download][href], a[href*="/download"]');
+        const href = a ? (a.getAttribute("href") || "") : "";
+        if (!href || href === "#" || /^javascript:/i.test(href)) return "";
+        try { return new URL(href, location.href).href; } catch { return ""; }
+    }
+    function fetchText(url, maxBytes) {
+        return new Promise(resolve => {
+            const done = t => resolve(typeof t === "string" && !/^\s*<(?:!DOCTYPE|html)/i.test(t) ? t.slice(0, maxBytes) : "");
+            if (typeof GM_xmlhttpRequest === "function") {
+                GM_xmlhttpRequest({ method: "GET", url, headers: { Range: `bytes=0-${maxBytes - 1}` }, onload: r => done(r.status < 400 ? r.responseText : ""), onerror: () => done(""), ontimeout: () => done(""), timeout: 15000 });
+            } else {
+                fetch(url, { headers: { Range: `bytes=0-${maxBytes - 1}` } }).then(r => (r.ok ? r.text() : "")).then(done, () => done(""));
+            }
+        });
+    }
+    let textMounted = false;
+    function mountFilesterText(mid) {
+        if (textMounted) return;
+        textMounted = true; mediaMounted = true;
+        const h1 = document.querySelector("main h1") || Array.from(document.querySelectorAll("h1")).find(h => !h.closest("header"));
+        const name = h1 ? (h1.textContent || "").trim() : "";
+        const url = filesterTextUrl();
+        mountTextCard(mid, {
+            ext: (name.match(/\.([a-z0-9]{1,5})$/i) || [0, "txt"])[1],
+            downloadUrl: url,
+            load: async () => {
+                const native = Array.from(document.querySelectorAll("main pre, main textarea, main code")).find(n => !n.closest(".fl-stage") && (n.textContent || "").trim());
+                if (native) return native.tagName === "TEXTAREA" ? native.value : native.textContent;
+                return url ? fetchText(url, 1048576) : "";
+            },
+        });
     }

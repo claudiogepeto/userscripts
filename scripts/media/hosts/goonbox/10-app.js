@@ -582,68 +582,7 @@
         return image.medium || image.original;
     }
 
-    function bindZoom(viewport, pic) {
-        const levels = [1, 2];
-        let index = 0;
-        let scale = 1;
-        let x = 0;
-        let y = 0;
-        let drag = null;
-        const clamp = () => {
-            const stageW = viewport.clientWidth || window.innerWidth;
-            const stageH = viewport.clientHeight || window.innerHeight;
-            const imgW = pic.clientWidth * scale;
-            const imgH = pic.clientHeight * scale;
-            const maxX = Math.max(0, (imgW - stageW) / 2);
-            const maxY = Math.max(0, (imgH - stageH) / 2);
-            x = Math.max(-maxX, Math.min(maxX, x));
-            y = Math.max(-maxY, Math.min(maxY, y));
-        };
-        const apply = () => {
-            pic.style.transform = scale === 1 ? "" : `translate(${x}px, ${y}px) scale(${scale})`;
-            viewport.classList.toggle("is-zoomed", scale !== 1);
-        };
-        const setIndex = next => {
-            index = ((next % levels.length) + levels.length) % levels.length;
-            scale = levels[index];
-            if (scale === 1) { x = 0; y = 0; }
-            else clamp();
-            apply();
-        };
-        pic.addEventListener("pointerdown", event => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            drag = { px: event.clientX, py: event.clientY, x, y, moved: false };
-            try { pic.setPointerCapture(event.pointerId); } catch { /* pointer already released */ }
-        });
-        pic.addEventListener("pointermove", event => {
-            if (!drag) return;
-            const dx = event.clientX - drag.px;
-            const dy = event.clientY - drag.py;
-            if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
-            if (scale === 1 || !drag.moved) return;
-            x = drag.x + dx;
-            y = drag.y + dy;
-            clamp();
-            apply();
-        });
-        const endDrag = event => {
-            if (!drag) return;
-            const click = !drag.moved;
-            drag = null;
-            try { pic.releasePointerCapture(event.pointerId); } catch { /* capture already gone */ }
-            if (click) setIndex(index + 1);
-        };
-        pic.addEventListener("pointerup", endDrag);
-        pic.addEventListener("pointercancel", endDrag);
-        apply();
-        return {
-            zoomIn: () => { if (scale === 1) setIndex(1); },
-            zoomOut: () => setIndex(0),
-            reset: () => setIndex(0),
-            isZoomed: () => scale !== 1,
-        };
-    }
+    // Zoom 1x/2x/4x + arrastar: core/viewers.js (bindZoom); o teclado da foto fica no keydown abaixo.
 
     function paintStage(model, imageId) {
         if (!stagePanel) return;

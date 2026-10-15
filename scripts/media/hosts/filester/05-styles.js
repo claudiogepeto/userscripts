@@ -240,6 +240,7 @@
         }
         
 ${mediaComponentCSS(mediaTheme()).plc}
+${mediaComponentCSS(mediaTheme()).textStage}
     `;
 
     addCSS(CSS);
