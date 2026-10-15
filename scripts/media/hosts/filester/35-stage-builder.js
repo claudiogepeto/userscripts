@@ -13,63 +13,38 @@
         const kind = findMediaKind();
         const isVid = kind === "video", isTxt = kind === "text";
 
-        const stage = el("div", { class: "fl-stage " + (isVid ? "is-video" : isTxt ? "is-text" : "is-image") + (isSidebarCollapsed ? " is-sidebar-collapsed" : "") });
-        const main = el("div", { class: "fl-stage-main" });
-
-        // ---- vrow (topbar) ----
-        const vrow = el("div", { class: "fl-vrow" });
-        const vtop = el("div", { class: "fl-vrow-top" });
         const mark = el("span", { class: "fl-logo-img" });
         mark.innerHTML = LOGO_SVG;
-        const logo = el("a", { class: "fl-top-logo", href: "/", title: "Filester" },
-            mark,
-            el("span", null, "Filester")
-        );
-        const nameEl = el("div", { class: "fl-name", title: name });
-        nameEl.insertAdjacentHTML("beforeend", isVid ? PL_ICONS.video : isTxt ? PL_ICONS.fileText : PL_ICONS.image);
-        nameEl.append(el("span", null, name));
-        vtop.append(logo, nameEl);
-
-        const vsub = el("div", { class: "fl-vrow-sub" });
-        const stats = el("div", { class: "fl-stats" });
-        if (size) stats.append(el("span", { class: "fl-stat" }, size));
-        stats.append(el("span", { class: "fl-stat" }, isVid ? "Vídeo" : isTxt ? "Texto" : "Imagem"));
-        vsub.append(stats, el("div", { class: "fl-spacer" }));
-
-        // Botão Playlist (visível apenas quando a sidebar estiver fechada)
-        const plBtn = el("button", {
-            type: "button",
-            class: "fl-item fl-vrow-playlist" + (!isSidebarCollapsed ? " is-active" : ""),
-            title: "Abrir / fechar playlist (p)",
-            onClick: () => toggleSidebar()
+        const logo = el("a", { class: "fl-top-logo", href: "/", title: "Filester" }, mark, el("span", { class: "fl-logo-text" }, "Filester"));
+        const galleryA = document.querySelector('a[href*="/f/"]');
+        const { tabs, sort } = sidebarControls();
+        const parts = buildMediaStage({
+            kind,
+            name,
+            stats: [size, isVid ? "Vídeo" : isTxt ? "Texto" : "Imagem"],
+            logo,
+            nav: navFile,
+            collapsed: isSidebarCollapsed,
+            galleryHref: galleryA ? galleryA.href : "",
+            tabs,
+            sort,
+            onSearch: () => renderPlaylist()
         });
-        plBtn.insertAdjacentHTML("beforeend", PL_ICONS.playlist);
-        plBtn.append(el("span", null, "Playlist"));
-        vsub.append(plBtn);
-
-        vrow.append(vtop, vsub);
-
-        // ---- mid (mídia) ----
-        const mid = el("div", { class: "fl-stage-mid" });
-        const navPrev = el("button", { class: "fl-nav-side fl-nav-prev", title: "Anterior", onClick: e => { e.stopPropagation(); navFile(-1); } });
-        navPrev.insertAdjacentHTML("beforeend", PL_ICONS.chevL);
-        const navNext = el("button", { class: "fl-nav-side fl-nav-next", title: "Próximo", onClick: e => { e.stopPropagation(); navFile(1); } });
-        navNext.insertAdjacentHTML("beforeend", PL_ICONS.chevR);
-        mid.append(navPrev, navNext);
-
-        main.append(vrow, mid);
-        stage.appendChild(main);
+        const stage = parts.stage;
+        parts.sidebar._tabs = tabs;
+        stSidebarEl = parts.sidebar;
+        const typeStat = Array.from(stage.querySelectorAll(".fl-stat")).pop();
+        if (typeStat) typeStat.classList.add("fl-stat-type");
 
         let uuid = "";
         if (reportA) { const m = reportA.href.match(/file=([a-f0-9-]{8,})/i); if (m) uuid = m[1]; }
         if (!uuid) { const u = Array.from(document.querySelectorAll("main .font-mono")).map(e => (e.textContent || "").trim()).find(t => /^[a-f0-9-]{32,}$/i.test(t)); if (u) uuid = u; }
-        stage._cur = { name, href: location.pathname + location.search, thumb: uuid ? (location.origin + "/t/" + uuid) : "", isVid };
+        stage._cur = { name, href: location.pathname + location.search, thumb: uuid ? (location.origin + "/t/" + uuid) : "", isVid, kind };
 
         document.body.insertBefore(stage, document.body.firstChild);
         document.documentElement.classList.add("fl-has-stage");
 
-        // Monta Sidebar da Playlist
-        setupSidebar(stage);
+        renderPlaylist();
 
         const grid = document.querySelector(".related-files-grid");
         if (grid) { try { new MutationObserver(() => renderPlaylist()).observe(grid, { childList: true }); } catch (e) {} }

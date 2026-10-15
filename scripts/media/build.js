@@ -80,6 +80,7 @@ const MANIFEST = {
         'core/toast.js',
         'core/dates.js',
         'core/position.js',
+        'core/stage.js',
         '10-helpers.js',
         '15-dates.js',
         '25-cdn.js',

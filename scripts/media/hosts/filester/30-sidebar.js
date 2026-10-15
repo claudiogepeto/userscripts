@@ -35,7 +35,7 @@
                 href: cur.href,
                 thumb: cur.thumb,
                 isCurrent: true,
-                kind: cur.isVid ? "video" : "image"
+                kind: cur.kind || (cur.isVid ? "video" : "image")
             });
         }
         related.forEach(it => {
@@ -64,9 +64,13 @@
 
         const allItems = parseSidebarItems();
         applyListPosition(allItems);
-        const q = (stSidebarEl.querySelector(".fl-sidebar-search-in")?.value || "").trim().toLowerCase();
+        const q = (stSidebarEl.querySelector(".fl-sidebar-search input")?.value || "").trim().toLowerCase();
         const activeTab = prefs.sidebarTab || "all";
-        const sortMode = prefs.sidebarSort || "default";
+        const stage = stSidebarEl.closest(".fl-stage");
+        if (stage) {
+            stage.classList.toggle("has-playlist", allItems.length > 0);
+            stage.classList.toggle("has-nav", allItems.length > 1);
+        }
 
         let filtered = allItems.filter(item => {
             if (q && item.name.toLowerCase().indexOf(q) === -1) return false;
@@ -76,22 +80,17 @@
             return true;
         });
 
-        if (sortMode === "az") {
-            filtered.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
-        }
+        filtered = mediaSortItems(filtered, sidebarSortMode(), prefs.sidebarSortDir || "desc", { name: it => it.name });
 
         const countEl = stSidebarEl.querySelector(".fl-sidebar-count");
         if (countEl) countEl.textContent = `${filtered.length} arquivos`;
 
-        stSidebarEl.querySelectorAll(".fl-tab-chip").forEach(tab => {
-            const t = tab.dataset.tab;
-            let n = allItems.length;
-            if (t === "video") n = allItems.filter(i => i.kind === "video").length;
-            else if (t === "image") n = allItems.filter(i => i.kind === "image").length;
-            else if (t === "text") n = allItems.filter(i => i.kind === "text").length;
-            const c = tab.querySelector(".fl-tab-count");
-            if (c) c.textContent = n;
-            tab.style.display = (t !== "all" && n === 0) ? "none" : "";
+        const tabs = stSidebarEl._tabs;
+        if (tabs) tabs.update({
+            all: allItems.length,
+            video: allItems.filter(i => i.kind === "video").length,
+            image: allItems.filter(i => i.kind === "image").length,
+            text: allItems.filter(i => i.kind === "text").length
         });
 
         if (!filtered.length) {
@@ -174,102 +173,30 @@
         }, 50);
     }
 
-    function setupSidebar(stage) {
-        if (stSidebarEl && stSidebarEl.parentNode === stage) {
-            renderPlaylist();
-            return;
-        }
+    // Modo salvo de versões antigas ("az") vira o A-Z das fichas do bunkr.
+    function sidebarSortMode() {
+        const m = prefs.sidebarSort || "default";
+        return m === "az" ? "name" : m;
+    }
 
-        const sb = el("div", { class: "fl-sidebar" });
-
-        const header = el("div", { class: "fl-sidebar-header" });
-        header.innerHTML = `
-            <div class="fl-sidebar-title-wrap">
-                <span class="fl-sidebar-icon">${PL_ICONS.playlist}</span>
-                <span class="fl-sidebar-title">Playlist</span>
-                <span class="fl-sidebar-count">0 arquivos</span>
-            </div>
-        `;
-        const collapseBtn = el("button", {
-            type: "button",
-            class: "fl-sidebar-collapse-btn",
-            title: "Recolher playlist (p)",
-            onClick: () => toggleSidebar()
+    // Abas de tipo e fichas de ordenação da sidebar (sem "Data de Envio": o filester não informa a data de upload).
+    function sidebarControls() {
+        const tabs = mediaTypeTabs({
+            active: prefs.sidebarTab || "all",
+            onChange: key => { prefs.sidebarTab = key; saveP(); renderPlaylist(); }
         });
-        collapseBtn.innerHTML = PL_ICONS.close;
-        const galleryA = document.querySelector('a[href*="/f/"]');
-        const actions = el("div", { class: "fl-sidebar-actions" });
-        if (galleryA) {
-            const gal = el("a", { class: "fl-sidebar-gallery", href: galleryA.href, title: "Abrir a galeria da pasta" });
-            gal.insertAdjacentHTML("beforeend", PL_ICONS.grid);
-            gal.append(el("span", null, "Galeria"));
-            actions.append(gal);
-        }
-        actions.append(collapseBtn);
-        header.appendChild(actions);
-
-        const searchWrap = el("div", { class: "fl-sidebar-search" });
-        searchWrap.innerHTML = `<span class="fl-sidebar-search-icon">${PL_ICONS.search}</span>`;
-        const searchIn = el("input", {
-            type: "search",
-            class: "fl-sidebar-search-in",
-            placeholder: "Buscar na playlist...",
-            value: ""
+        const sort = mediaSortChips({
+            kind: "sidebar",
+            mode: sidebarSortMode(),
+            dirs: { [sidebarSortMode()]: prefs.sidebarSortDir || "desc" },
+            chips: [
+                { key: "default", label: "Padrão" },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome" },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome" }
+            ],
+            onChange: (mode, dir) => { prefs.sidebarSort = mode; prefs.sidebarSortDir = dir; saveP(); renderPlaylist(); }
         });
-        searchIn.addEventListener("input", debounce(() => renderPlaylist(), 140));
-        searchIn.addEventListener("keydown", e => e.stopPropagation());
-        searchWrap.appendChild(searchIn);
-
-        const tabsWrap = el("div", { class: "fl-sidebar-tabs" });
-        const makeTab = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "fl-tab-chip" + (prefs.sidebarTab === key ? " is-active" : "")
-            });
-            b.dataset.tab = key;
-            b.innerHTML = `<span>${label}</span> <span class="fl-tab-count">0</span>`;
-            b.addEventListener("click", () => {
-                prefs.sidebarTab = key; saveP();
-                tabsWrap.querySelectorAll(".fl-tab-chip").forEach(t => t.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        tabsWrap.append(
-            makeTab("all", "Todos"),
-            makeTab("video", "Vídeos"),
-            makeTab("image", "Fotos")
-        );
-
-        const sortWrap = el("div", { class: "fl-sidebar-sort" });
-        const makeSort = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "fl-sort-chip" + (prefs.sidebarSort === key ? " is-active" : "")
-            });
-            b.dataset.sort = key;
-            b.textContent = label;
-            b.addEventListener("click", () => {
-                prefs.sidebarSort = key; saveP();
-                sortWrap.querySelectorAll(".fl-sort-chip").forEach(s => s.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        sortWrap.append(
-            el("span", { class: "fl-sort-label" }, "Ordem:"),
-            makeSort("default", "Padrão"),
-            makeSort("az", "A-Z")
-        );
-
-        const listEl = el("div", { class: "fl-playlist-list" });
-
-        sb.append(header, searchWrap, tabsWrap, sortWrap, listEl);
-        stage.appendChild(sb);
-        stSidebarEl = sb;
-        renderPlaylist();
+        return { tabs, sort };
     }
 
     function navFile(dir) {
