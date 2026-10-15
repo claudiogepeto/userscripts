@@ -123,7 +123,7 @@ Users already have data under these names. Renaming one silently loses it.
   `smg-feed-retention-days`, `smg-feed-muted`, `smg-fh-logos`,
   `smg-search-history`, `smg-thumb-cache-<site>`, `smg-thumb-tpl-<site>`,
   `smg-navmode-notice`, `smg-notices-dismissed-ids`, `smg-notices-expanded`,
-  `smg-threadview`.
+  `smg-threadview`, `smg-player` (player volume, mute, speed, loop).
 - localStorage: `smg-off`, `smg-dock-hidden`, `smg_known_prefix_ids`,
   `smg-search-def-titles`, `smg-search-def-order`, `smg-search-like`.
   sessionStorage: `smg_feed_cache_v2_*`.

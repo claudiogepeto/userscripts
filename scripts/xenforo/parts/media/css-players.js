@@ -389,9 +389,9 @@
                 animation: none !important;
             }
             /* ---- LINKS EM POSTS E TEXTOS (.bbWrapper, .message-body, etc.): contraste limpo e legível (sem neon/drop-shadow) ---- */
-            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
-            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
-            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]),
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]) {
                 color: color-mix(in srgb, var(--smg-link) 42%, #e9e9ec) !important;
                 font-weight: 500;
                 text-decoration: underline !important;
@@ -400,9 +400,9 @@
                 text-decoration-thickness: 1px !important;
                 transition: color var(--smg-dur-15) ease, text-decoration-color var(--smg-dur-15) ease;
             }
-            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
-            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
-            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
+            .message-body a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .message-userContent a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover,
+            .bbWrapper a:not(.smg-imglink):not(.bbImageWrapper):not(.smg-dead):not(.smg-wide-link):not(.smg-link-chip):not(.button):not(.tabs-tab):not(.menu-linkRow):not(.smg-rg-error-btn):not(.smg-rgc-src):not([class*="smg-fhcard"]):not([class*="smg-dead"]):hover {
                 color: #fff !important;
                 text-decoration-color: #fff !important;
                 filter: none !important;
@@ -467,91 +467,170 @@
             .smg-rg-error-btn--open:hover { background: var(--smg-link-strong); }
             .smg-rg-error-btn--retry { background: var(--smg-w-08); color: var(--smg-tx) !important; border: 1px solid var(--smg-w-18); }
             .smg-rg-error-btn--retry:hover { background: var(--smg-w-14); color: #fff !important; }
-            /* PRONTO (defer de host-blob, autoplay-off): sem spinner, play central FIXO ("clique pra tocar").
-               poster (redgifs) ou fundo preto (turbo/saint) atrás → NUNCA caixa preta sem affordance (era o bug do deferBlob desligado). */
+            /* PRONTO (poster, ainda sem vídeo): sem spinner, play central FIXO ("clique pra tocar") — nunca caixa preta sem affordance */
             .smg-rg.smg-rg-ready .smg-rgc-flash { opacity: 1; }
             .smg-rg.smg-rg-ready .smg-rgc-play { pointer-events: auto; }
-            /* ---- controles estilo YouTube: play CENTRAL (no pausado) + BARRA INFERIOR com gradiente:
-               scrubber em cima e linha [play · volume · tempo ··· visualizador · tela cheia]. Accent = tema. ---- */
-            /* CENTRO: play grande — só no pausado/pronto (tocando, o controle é a barra). Seek = duplo-clique no vídeo. */
+            .smg-rg:focus { outline: none; }
+            .smg-rg:focus-visible { outline: 2px solid var(--smg-link); outline-offset: 2px; }
+            /* ---- BARRA DO PLAYER (rgControls, 10): a mesma em todo player nosso. Accent = tema. ---- */
+            /* CENTRO: play grande — pausado/pronto (tocando, o controle é a barra) */
             .smg-rgc-flash {
                 position: absolute; inset: 0; z-index: var(--smg-z-2);
                 display: flex; align-items: center; justify-content: center;
                 opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
             }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash { opacity: 1; }
             .smg-rgc-flash button {
-                border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
-                background: var(--smg-k-55); color: #fff;
+                border: 1px solid var(--smg-w-18); border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                background: var(--smg-k-72); color: var(--smg-w-95); box-shadow: var(--smg-shadow-2);
                 display: flex; align-items: center; justify-content: center;
-                transition: transform var(--smg-dur-12) ease, background var(--smg-dur-12) ease; pointer-events: none;   /* só interativo quando o flash aparece (regras abaixo) — senão capturaria cliques invisível */
+                transition: transform var(--smg-dur-12) ease, background var(--smg-dur-12) ease, border-color var(--smg-dur-12) ease;
+                pointer-events: none;   /* só interativo quando o play aparece (regra abaixo) — invisível não captura clique */
             }
-            .smg-rgc-flash button:hover { transform: scale(1.08); background: var(--smg-k-72); }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
-            .smg-rgc-play { width: 64px; height: 64px; }
-            .smg-rgc-play svg { width: 30px; height: 30px; display: block; margin-left: var(--smg-sp-4); }
-            @media (max-width: 600px) { .smg-rgc-play { width: 54px; height: 54px; } .smg-rgc-play svg { width: 26px; height: 26px; } }
-            /* BARRA INFERIOR: gradiente; some fora do hover; visível no pausado-carregado e no touch (NÃO no pronto/poster) */
+            .smg-rgc-flash button:hover { transform: scale(1.08); background: var(--smg-k-82); border-color: var(--smg-link); }
+            .smg-rgc-flash button:active { transform: scale(0.95); }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-buffering):not(.smg-rgc-playing) .smg-rgc-flash button { pointer-events: auto; }
+            .smg-rgc-play { width: 68px; height: 68px; }
+            .smg-rgc-play svg { width: 28px; height: 28px; display: block; margin-left: var(--smg-sp-4); }
+            .smg-rgc-playing .smg-rgc-play svg { margin-left: 0; }
+            @media (max-width: 600px) { .smg-rgc-play { width: 56px; height: 56px; } .smg-rgc-play svg { width: 24px; height: 24px; } }
+            /* BARRA INFERIOR: aparece no hover, no pausado (com vídeo), com menu aberto e no foco; some parada tocando (.smg-rgc-idle).
+               container-type: os botões secundários dobram pro menu "⋯" quando a BARRA (= o player) é estreita. */
             .smg-rgc-bottom {
-                position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-3);
-                padding: var(--smg-sp-8) var(--smg-sp-4) var(--smg-sp-2);
-                background: linear-gradient(to top, var(--smg-k-82) 0%, var(--smg-k-35) 62%, transparent 100%);
+                position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--smg-z-4);
+                display: flex; flex-direction: column; gap: var(--smg-sp-2);
+                padding: var(--smg-sp-18) var(--smg-sp-10) var(--smg-sp-6);
+                background: linear-gradient(to top, var(--smg-k-82) 0%, var(--smg-k-45) 55%, transparent 100%);
                 opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-20) ease;
+                container-type: inline-size;
             }
-            .smg-rg:hover:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom,
-            .smg-rg:not(.smg-rgc-playing):not(.smg-rg-ready):not(.smg-rg-loading):not(.smg-rg-buffering) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
-            /* SCRUBBER (no topo da barra) */
-            .smg-rgc-prog { position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
-            .smg-rgc-bar { position: relative; width: 100%; height: 3px; background: var(--smg-w-30); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
-            .smg-rgc-prog:hover .smg-rgc-bar { height: 5px; }
-            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-30); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):hover .smg-rgc-bottom,
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):focus-within .smg-rgc-bottom,
+            .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):not(.smg-rgc-playing):not(.smg-rg-buffering) .smg-rgc-bottom,
+            .smg-rg.smg-rgc-menu-open .smg-rgc-bottom,
+            .smg-rg.smg-rgc-scrub .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open):not(.smg-rgc-scrub) .smg-rgc-bottom { opacity: 0; pointer-events: none; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open) .smg-rg-v { cursor: none; }
+            .smg-rg.smg-rgc-playing.smg-rgc-idle:not(.smg-rgc-menu-open) .smg-rgc-src { opacity: 0 !important; pointer-events: none !important; }
+            /* PROGRESSO: 3.5px → 6px no hover, tooltip de tempo */
+            .smg-rgc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
+            .smg-rgc-bar { position: relative; width: 100%; height: 3.5px; background: var(--smg-w-22); border-radius: var(--smg-r-4); transition: height var(--smg-dur-12) ease; }
+            .smg-rgc-prog:hover .smg-rgc-bar, .smg-rg.smg-rgc-scrub .smg-rgc-bar { height: 6px; }
+            .smg-rgc-buf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-40); border-radius: var(--smg-r-4); pointer-events: none; }
             .smg-rgc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-link); border-radius: var(--smg-r-4); pointer-events: none; }
-            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: var(--smg-r-round); background: var(--smg-link); transform: translateY(-50%) scale(0); transition: transform var(--smg-dur-12) ease; }
-            .smg-rgc-prog:hover .smg-rgc-knob { transform: translateY(-50%) scale(1); }
-            /* LINHA de controles */
-            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-4); padding: var(--smg-sp-2) var(--smg-sp-4) var(--smg-sp-2); }
-            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: var(--smg-sp-2); }
+            .smg-rgc-knob { position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; border-radius: var(--smg-r-round); background: var(--smg-w-95); box-shadow: var(--smg-shadow-1); transform: translateY(-50%) scale(0); transition: transform var(--smg-dur-12) ease; }
+            .smg-rgc-prog:hover .smg-rgc-knob, .smg-rg.smg-rgc-scrub .smg-rgc-knob { transform: translateY(-50%) scale(1); }
+            .smg-rgc-tip {
+                position: absolute; bottom: calc(100% + 6px); left: 0; transform: translateX(-50%);
+                padding: var(--smg-sp-4) var(--smg-sp-6); border-radius: var(--smg-r-6);
+                background: var(--smg-k-92); border: 1px solid var(--smg-w-14); color: var(--smg-w-95);
+                font: 600 11px/1 var(--smg-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+                opacity: 0; pointer-events: none; transition: opacity var(--smg-dur-12) ease; box-shadow: var(--smg-shadow-1);
+            }
+            .smg-rgc-prog:hover .smg-rgc-tip { opacity: 1; }
+            /* LINHA de botões */
+            .smg-rgc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-6); min-height: 40px; }
+            .smg-rgc-left, .smg-rgc-right { display: flex; align-items: center; gap: var(--smg-sp-2); min-width: 0; }
+            .smg-rgc-right { position: relative; }
             .smg-rgc-act {
-                width: 34px; height: 34px; border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
-                background: transparent; color: #fff;
+                position: relative; flex: 0 0 auto;
+                width: 36px; height: 36px; border: 0; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                background: transparent; color: var(--smg-w-95);
                 display: flex; align-items: center; justify-content: center;
-                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease;
+                transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease, transform var(--smg-dur-12) ease;
             }
-            .smg-rgc-act:hover { background: var(--smg-w-18); }
+            .smg-rgc-act[hidden] { display: none; }
+            .smg-rgc-act:hover { background: var(--smg-w-14); color: var(--smg-w-95); }
             .smg-rgc-act:active { transform: scale(0.9); }
-            .smg-rgc-act svg { width: 21px; height: 21px; display: block; }
-            .smg-rgc-speed {
-                height: 24px; min-width: 32px; padding: 0 var(--smg-sp-6);
-                border: 0; border-radius: var(--smg-r-6); cursor: pointer;
-                background: var(--smg-w-12); color: var(--smg-w-95);
-                font: 700 11.5px/1 var(--smg-mono);
-                letter-spacing: -0.2px;
-                display: flex; align-items: center; justify-content: center;
-                transition: background var(--smg-dur-12) ease, transform var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
-                user-select: none;
-            }
-            .smg-rgc-speed:hover { background: var(--smg-w-22); color: #fff; }
-            .smg-rgc-speed:active { transform: scale(0.92); }
-            .smg-rgc-speed.is-custom-speed { background: var(--smg-ac); color: #fff; font-weight: 800; }
-            /* PADRONIZA os ícones do player = OUTLINE limpo, igual ao visualizador (o CSS do fórum PREENCHE svg → vira blob; o #smg-feed já se protege, o inline não). Play/pause é a exceção (preenchido). */
-            .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg { fill: none !important; }
+            .smg-rgc-act:focus-visible { outline: 2px solid var(--smg-link); outline-offset: -2px; }
+            .smg-rgc-act.is-active { color: var(--smg-link); background: var(--smg-link-soft); }
+            .smg-rgc-act svg { width: 20px; height: 20px; display: block; flex: 0 0 auto; }
+            .smg-rgc-barplay svg { width: 22px; height: 22px; }
+            .smg-rgc-lbl { display: none; }
+            /* −5s / +5s: arco com o número dentro */
+            .smg-rgc-skip svg { width: 22px; height: 22px; }
+            .smg-rgc-skipn { position: absolute; left: 0; right: 0; top: 51%; transform: translateY(-50%); text-align: center; font: 800 8.5px/1 var(--smg-mono); pointer-events: none; }
+            /* PADRONIZA os ícones = OUTLINE (o CSS do fórum PREENCHE svg). Play/pause são PREENCHIDOS. */
+            .smg-rg .smg-rgc-act svg, .smg-rg .smg-rgc-src svg, .smg-rg .smg-rgc-menuitem svg { fill: none !important; }
             .smg-rg .smg-rgc-play svg, .smg-rg .smg-rgc-barplay svg { fill: currentColor !important; }
-            /* VOLUME: mute + barra que expande no hover (YouTube) */
-            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: var(--smg-r-4); background: var(--smg-w-40); cursor: pointer; opacity: 0; transition: width var(--smg-dur-20) ease, opacity var(--smg-dur-20) ease, margin var(--smg-dur-20) ease; touch-action: none; }
-            .smg-rgc-volbar::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; }   /* área de clique alta */
-            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: var(--smg-r-4); pointer-events: none; }
-            /* TEMPO (atual / duração) */
-            .smg-rgc-time { color: #fff; font: 600 12px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 var(--smg-sp-6); white-space: nowrap; flex: 0 0 auto; }
-            @media (max-width: 600px) { .smg-rgc-act { width: 30px; height: 30px; } .smg-rgc-act svg { width: 19px; height: 19px; } .smg-rgc-time { font-size: var(--smg-fs-11); padding: 0 var(--smg-sp-4); } }
-            /* indicador "« 5s" / "5s »" no duplo-clique p/ voltar/avançar */
+            /* VOLUME: mudo + barra que abre no hover (desktop) ou no 1º toque (.is-open) */
+            .smg-rgc-vol { display: flex; align-items: center; }
+            .smg-rgc-volbar { position: relative; width: 0; height: 4px; border-radius: var(--smg-r-4); background: var(--smg-w-30); cursor: pointer; opacity: 0; transition: width var(--smg-dur-20) ease, opacity var(--smg-dur-20) ease, margin var(--smg-dur-20) ease; touch-action: none; }
+            .smg-rgc-volbar::before { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }   /* área de toque alta */
+            .smg-rgc-vol:hover .smg-rgc-volbar, .smg-rgc-vol:focus-within .smg-rgc-volbar, .smg-rgc-vol.is-open .smg-rgc-volbar, .smg-rgc-vol.is-sliding .smg-rgc-volbar { width: 64px; opacity: 1; margin: 0 var(--smg-sp-8) 0 var(--smg-sp-2); }
+            .smg-rgc-volfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--smg-w-95); border-radius: var(--smg-r-4); pointer-events: none; }
+            .smg-rgc-volfill::after { content: ""; position: absolute; right: -5px; top: 50%; width: 10px; height: 10px; border-radius: var(--smg-r-round); background: var(--smg-w-95); transform: translateY(-50%); }
+            /* TEMPO */
+            .smg-rgc-time { color: var(--smg-w-85); font: 600 12px/1 var(--smg-mono); font-variant-numeric: tabular-nums; padding: 0 var(--smg-sp-6); white-space: nowrap; flex: 0 0 auto; user-select: none; }
+            /* VELOCIDADE: texto + menu */
+            .smg-rgc-speedwrap { position: relative; display: flex; align-items: center; }
+            .smg-rgc-speed { width: auto; min-width: 40px; padding: 0 var(--smg-sp-6); border-radius: var(--smg-r-8); font: 700 13px/1 var(--smg-mono); font-variant-numeric: tabular-nums; user-select: none; }
+            .smg-rgc-speed.is-custom { color: var(--smg-link); }
+            /* MENUS (velocidade, "⋯"): sobem da barra, rolam se o player for baixo */
+            .smg-rgc-menu {
+                position: absolute; right: 0; bottom: calc(100% + 8px); z-index: var(--smg-z-5);
+                display: none; flex-direction: column; gap: var(--smg-sp-2);
+                min-width: 150px; max-height: 300px; overflow-y: auto; overscroll-behavior: contain;
+                padding: var(--smg-sp-6); border-radius: var(--smg-pop-r);
+                background: var(--smg-k-92); border: 1px solid var(--smg-w-14); box-shadow: var(--smg-pop-shadow);
+                scrollbar-width: thin;
+            }
+            .smg-rgc-menu.open { display: flex; }
+            .smg-rgc-menuhead { padding: var(--smg-sp-4) var(--smg-sp-8) var(--smg-sp-6); margin-bottom: var(--smg-sp-2); border-bottom: 1px solid var(--smg-w-10); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+            .smg-rgc-menuitem {
+                display: flex; align-items: center; justify-content: space-between; gap: var(--smg-sp-8);
+                min-height: 32px; padding: 0 var(--smg-sp-10); border: 0; border-radius: var(--smg-r-8); cursor: pointer;
+                background: transparent; color: var(--smg-w-85); font: 600 12.5px/1 var(--smg-mono); text-align: left; white-space: nowrap;
+            }
+            .smg-rgc-menuitem:hover { background: var(--smg-w-10); color: var(--smg-w-95); }
+            .smg-rgc-menuitem.on { color: var(--smg-link); background: var(--smg-link-soft); }
+            .smg-rgc-menuitem svg { width: 14px; height: 14px; opacity: 0; flex: 0 0 auto; }
+            .smg-rgc-menuitem.on svg { opacity: 1; }
+            /* SECUNDÁRIOS (repetir, PiP, baixar, galeria): na linha quando cabe; "⋯" só no player estreito */
+            .smg-rgc-extras { display: flex; align-items: center; gap: var(--smg-sp-2); }
+            .smg-rgc-more, .smg-rgc-speedcycle { display: none; }
+            @container (max-width: 560px) {
+                .smg-rgc-more { display: flex; }
+                .smg-rgc-extras { display: none; }
+                .smg-rgc-extras.open {
+                    display: flex; position: absolute; right: 0; bottom: calc(100% + 8px); z-index: var(--smg-z-5);
+                    flex-direction: column; align-items: stretch; min-width: 190px; max-height: 300px; overflow-y: auto;
+                    padding: var(--smg-sp-6); border-radius: var(--smg-pop-r);
+                    background: var(--smg-k-92); border: 1px solid var(--smg-w-14); box-shadow: var(--smg-pop-shadow);
+                }
+                .smg-rgc-extras .smg-rgc-act { width: auto; height: 40px; justify-content: flex-start; gap: var(--smg-sp-10); padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); }
+                .smg-rgc-extras .smg-rgc-act[hidden] { display: none; }
+                .smg-rgc-extras .smg-rgc-lbl { display: inline; font-size: var(--smg-fs-13); font-weight: 600; white-space: nowrap; }
+            }
+            @container (max-width: 400px) {
+                .smg-rgc-skip { display: none; }
+                .smg-rgc-vol:is(.is-open, .is-sliding, :hover) + .smg-rgc-time { display: none; }   /* a barra de volume aberta toma o lugar do tempo */
+                .smg-rgc-time { font-size: var(--smg-fs-11); padding: 0 var(--smg-sp-4); }
+            }
+            @container (max-width: 270px) {
+                .smg-rgc-time, .smg-rgc-speedwrap { display: none; }
+                .smg-rgc-extras .smg-rgc-speedcycle { display: flex; }
+                .smg-rgc-vol:hover .smg-rgc-volbar, .smg-rgc-vol.is-open .smg-rgc-volbar, .smg-rgc-vol.is-sliding .smg-rgc-volbar { width: 44px; }
+            }
+            /* TOQUE: alvos de 40px e barra visível enquanto não some */
+            @media (hover: none), (pointer: coarse) {
+                .smg-rgc-act { width: 40px; height: 40px; }
+                .smg-rgc-speed { min-width: 44px; }
+                .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready):not(.smg-rgc-idle) .smg-rgc-bottom { opacity: 1; pointer-events: auto; }
+                .smg-rgc-src { opacity: 0.72; pointer-events: auto; }
+                .smg-rgc-bottom { padding-left: var(--smg-sp-6); padding-right: var(--smg-sp-6); }
+                .smg-rgc-row { gap: 0; }
+                .smg-rgc-left, .smg-rgc-right { gap: 0; }
+            }
+            /* aviso central curto: "« 5s" / "5s »" / "2x" / "60%" */
             .smg-rgc-seekflash {
                 position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: var(--smg-z-3);
-                color: #fff; font: 700 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                background: var(--smg-k-55); padding: var(--smg-sp-10) var(--smg-sp-16); border-radius: var(--smg-r-pill);
+                color: var(--smg-w-95); font: 700 15px/1 var(--smg-mono);
+                background: var(--smg-k-62); padding: var(--smg-sp-10) var(--smg-sp-16); border-radius: var(--smg-r-pill);
                 opacity: 0; transition: opacity var(--smg-dur-15) ease; pointer-events: none; white-space: nowrap;
             }
             .smg-rgc-seekflash.on { opacity: 1; }
-            /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO do player ("Turbo ↗"). É a marca-dágua da fonte E o "abrir no host" (substituiu o ↗ do rail). */
+            /* FONTE + abrir EXTERNO num só: badge clicável no canto SUP-DIREITO ("Turbo ↗") */
             .smg-rgc-src {
                 position: absolute; top: 10px; right: 10px; z-index: var(--smg-z-4);
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6); max-width: calc(100% - 20px);
@@ -566,15 +645,15 @@
             .smg-rgc-src:active { transform: scale(0.96); }
             .smg-rgc-src .smg-rgc-src-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .smg-rgc-src svg { width: 13px; height: 13px; display: block; flex: 0 0 auto; }
-            @media (hover: none) { .smg-rg:not(.smg-rg-loading):not(.smg-rg-ready) .smg-rgc-bottom { opacity: 1; pointer-events: auto; } .smg-rgc-src { opacity: 0.72; pointer-events: auto; } }
-            /* BUFFERING (loading ao avançar/voltar): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
+            /* BUFFERING (seek): spinner por cima, SEM esconder o vídeo (diferente do skeleton) */
             .smg-rg.smg-rg-buffering::after {
                 content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px;
-                border-radius: var(--smg-r-round); border: 3px solid var(--smg-w-22); border-top-color: var(--smg-w-95);
+                border-radius: var(--smg-r-round); border: 3px solid var(--smg-w-22); border-top-color: var(--smg-link);
                 animation: smg-spin 0.8s linear infinite; z-index: var(--smg-z-4); pointer-events: none;
             }
-            .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; background: #000; }
+            .smg-rg:fullscreen { width: 100vw; height: 100vh; max-width: none; max-height: none; aspect-ratio: auto; margin: 0; border-radius: 0; background: #000; }
             .smg-rg:fullscreen .smg-rg-v { height: 100%; }
+            .smg-rg:fullscreen .smg-rgc-bottom { padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-14); }
             /* turbo/saint: quando o slot recebe NOSSO player, ele NÃO pode forçar 16:9 nem cortar — a altura
                vem do aspect REAL do .smg-rg (vídeo vertical não vira faixa horizontal). A classe .smg-turbo-slot--filled
                é setada no JS ao montar o player (robusto: não depende do :has, que às vezes não solta o 16:9 a tempo

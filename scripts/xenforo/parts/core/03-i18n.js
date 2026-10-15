@@ -124,6 +124,8 @@
         'Thumbnails': 'Miniaturas', 'Sound': 'Som', 'Mute': 'Mudo', 'Unmute': 'Ativar som',
         'Play/Pause': 'Tocar/Pausar', 'Fullscreen': 'Tela cheia', 'Volume': 'Volume',
         'Open in new tab': 'Abrir em nova guia', 'Open in viewer': 'Abrir no visualizador',
+        'Back 5s': 'Voltar 5s', 'Forward 5s': 'Avançar 5s', 'Loop': 'Repetir', 'Picture-in-picture': 'Picture-in-picture',
+        'Download / open original': 'Baixar / abrir original', 'Gallery mode': 'Modo galeria', 'More': 'Mais', 'Speed': 'Velocidade', 'Normal': 'Normal',
         'Edit in search bar': 'Editar na barra de busca', 'Search on': 'Buscar no',
         'No results': 'Sem resultados', 'See all results': 'Ver todos os resultados', 'Search failed': 'Busca falhou',
         'Search commands': 'Comandos de busca', 'search post text': 'buscar no texto do post', 'Thread': 'Tópico', 'Forum': 'Fórum', 'Search in this thread': 'Buscar neste tópico',
