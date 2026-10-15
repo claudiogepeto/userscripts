@@ -6,7 +6,8 @@
     document.documentElement.classList.add("gf");
     const ACCENT = "#f5c400";
 
-    const CSS = `
+    // Não chamar de CSS: a const sombrearia window.CSS e quebraria CSS.escape.
+    const GF_CSS = `
         /* ===================== TEMA AMOLED ===================== */
         html.gf, html.gf body, html.gf #app, html.gf .bg-surface-base { background: #0b0c0f !important; color: #e9e9ee !important; }
         html.gf .bg-surface-raised, html.gf .panel, html.gf .bg-gray-800 { background: #12141a !important; border-color: rgba(255,255,255,0.08) !important; }
@@ -353,7 +354,7 @@
         }
     `;
 
-    addCSS(CSS);
+    addCSS(GF_CSS);
 
     const keepRoot = () => { if (!document.documentElement.classList.contains("gf")) document.documentElement.classList.add("gf"); };
     try { new MutationObserver(keepRoot).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] }); } catch (e) {}
