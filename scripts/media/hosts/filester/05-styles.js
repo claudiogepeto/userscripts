@@ -302,11 +302,6 @@
         }
     `;
 
-    function addCSS(css) {
-        if (typeof GM_addStyle === "function") { GM_addStyle(css); return; }
-        const s = document.createElement("style"); s.textContent = css;
-        (document.head || document.documentElement).appendChild(s);
-    }
     addCSS(CSS);
 
     const keepRoot = () => { const c = document.documentElement.classList; if (!c.contains("fl")) c.add("fl"); if (isFile && !c.contains("fl-file")) c.add("fl-file"); if (isAlbum && !c.contains("fl-album")) c.add("fl-album"); };

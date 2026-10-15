@@ -1,116 +1,9 @@
     /* ===================== PARSER DE DATAS E TÍTULOS ===================== */
-    function cleanHtmlText(str) {
-        if (!str || typeof str !== "string") return "";
-        let cur = str;
-        for (let i = 0; i < 3; i++) {
-            if (!/&[a-zA-Z0-9#]+;/.test(cur)) break;
-            const txt = document.createElement("textarea");
-            txt.innerHTML = cur;
-            cur = txt.value;
-        }
-        return cur.trim();
-    }
 
-    function extractDateFromTitle(title) {
-        if (!title || typeof title !== "string") return null;
-        title = cleanHtmlText(title).trim();
 
-        // 1. ISO: YYYY[-._]MM[-._]DD
-        const mIso = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])[.\-_](0[1-9]|[12]\d|3[01])\b/);
-        if (mIso) {
-            const y = parseInt(mIso[1], 10), m = parseInt(mIso[2], 10), d = parseInt(mIso[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y, month: m, day: d,
-                raw: mIso[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
 
-        // 2. Compacto: YYYYMMDD
-        const mCompact = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/);
-        if (mCompact) {
-            const y = parseInt(mCompact[1], 10), m = parseInt(mCompact[2], 10), d = parseInt(mCompact[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y, month: m, day: d,
-                raw: mCompact[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
 
-        // 3. BR/EU: DD[-._]MM[-._]YYYY
-        const mDmy = title.match(/(?:^|[\[(_\s])(0[1-9]|[12]\d|3[01])[.\-_](0[1-9]|1[0-2])[.\-_](20\d\d|19\d\d)\b/);
-        if (mDmy) {
-            const d = parseInt(mDmy[1], 10), m = parseInt(mDmy[2], 10), y = parseInt(mDmy[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y, month: m, day: d,
-                raw: mDmy[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
 
-        // 4. Mês e Ano: YYYY[-._]MM
-        const mYm = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])\b/);
-        if (mYm) {
-            const y = parseInt(mYm[1], 10), m = parseInt(mYm[2], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, 1),
-                formatted: `${y}-${String(m).padStart(2, "0")}`,
-                displayDate: `${String(m).padStart(2, "0")}/${y}`,
-                year: y, month: m, day: 1,
-                raw: mYm[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
-
-        return null;
-    }
-
-    function cleanTitleWithoutDate(title, dt) {
-        if (!title || typeof title !== "string") return "";
-        title = cleanHtmlText(title).trim();
-        const withoutExt = title.replace(/\.[a-zA-Z0-9]{2,5}$/i, "").trim();
-        const target = withoutExt || title;
-        if (!dt || !dt.raw) return target;
-        const esc = dt.raw.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-        let cleaned = target.replace(new RegExp("^[\\s\\[(_-]*" + esc + "[\\s\\])_–—-]*(?:[-–—_]\\s*)?", "i"), "");
-        cleaned = cleaned.replace(/^[\s\-_–—.]+\s*/, "").trim();
-        return cleaned || target;
-    }
-
-    function formatDisplayDate(isoOrDate) {
-        if (!isoOrDate) return "";
-        try {
-            const d = new Date(isoOrDate);
-            if (isNaN(d.getTime())) return String(isoOrDate);
-            const pad = n => String(n).padStart(2, "0");
-            const dia = pad(d.getDate()), mes = pad(d.getMonth() + 1), ano = d.getFullYear();
-            const hora = pad(d.getHours()), min = pad(d.getMinutes());
-            return `${dia}/${mes}/${ano}, ${hora}:${min}`;
-        } catch {
-            return String(isoOrDate);
-        }
-    }
-
-    function el(tag, props, ...kids) {
-        const n = document.createElement(tag);
-        if (props) for (const [k, v] of Object.entries(props)) {
-            if (v == null) continue;
-            if (k === "class") n.className = v;
-            else if (k === "html") n.innerHTML = v;
-            else if (k === "style" && typeof v === "object") Object.assign(n.style, v);
-            else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2).toLowerCase(), v);
-            else n.setAttribute(k, v);
-        }
-        for (const kid of kids) if (kid != null) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
-        return n;
-    }
-
-    const svgi = inner => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block">${inner}</svg>`;
     const IC = {
         play: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M7 4.5v15a1 1 0 0 0 1.52.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
         pause: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
@@ -148,24 +41,6 @@
         return IC.fileText;
     }
 
-    const fmtT = s => {
-        s = Math.max(0, Math.floor(s || 0));
-        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
-        const p = n => String(n).padStart(2, "0");
-        return h ? h + ":" + p(m) + ":" + p(ss) : p(m) + ":" + p(ss);
-    };
 
-    let toastT;
-    function toast(msg) {
-        let t = document.querySelector(".tb-toast");
-        if (!t) { t = el("div", { class: "tb-toast" }); (document.body || document.documentElement).appendChild(t); }
-        t.textContent = msg; t.classList.add("show");
-        clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1800);
-    }
-    function fallbackCopy(s) { try { const t = el("textarea", { style: { position: "fixed", opacity: "0", left: "-9999px" } }); t.value = s; document.body.appendChild(t); t.select(); const ok = document.execCommand("copy"); t.remove(); return ok; } catch { return false; } }
-    function copyText(s) {
-        if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(s).then(() => true, () => fallbackCopy(s));
-        return Promise.resolve(fallbackCopy(s));
-    }
 
     function vidId() { return (PATH.match(/\/(?:v|embed)\/([^/?#]+)/) || [])[1] || ""; }

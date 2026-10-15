@@ -308,17 +308,6 @@
         const pad = n => String(n).padStart(2, "0");
         return pad(m[1]) + "/" + pad(mo) + "/" + m[3] + (m[4] ? " " + m[4] : "");
     }
-    function readPosition() {
-        try { const n = parseInt(new URL(location.href).searchParams.get("position") || "", 10); return Number.isFinite(n) && n > 0 ? n : 0; } catch { return 0; }
-    }
-    function writePosition(n) {
-        try {
-            const u = new URL(location.href);
-            if (String(u.searchParams.get("position") || "") === String(n)) return;
-            u.searchParams.set("position", String(n));
-            history.replaceState(history.state, "", u.pathname + u.search + u.hash);
-        } catch {}
-    }
     function navStage(dir) {
         const cards = playableCards(); if (cards.length < 2) return;
         let i = cards.indexOf(stCur); if (i < 0) i = 0;
@@ -378,20 +367,6 @@
         return null;
     }
 
-    function copyText(s) {
-        try { return navigator.clipboard.writeText(s); } catch { /* clipboard blocked */ }
-        try {
-            const t = document.createElement("textarea");
-            t.value = s;
-            t.style.position = "fixed";
-            t.style.opacity = "0";
-            document.body.append(t);
-            t.select();
-            document.execCommand("copy");
-            t.remove();
-        } catch { /* fallback blocked */ }
-        return Promise.resolve();
-    }
     let gfToastT;
     function toast(msg) {
         let t = document.querySelector(".gf-toast");

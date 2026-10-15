@@ -13,21 +13,6 @@
     const prefs = Object.assign({ volume: 1, muted: false, rate: 1, loop: false, autoplay: true },
         (() => { try { return JSON.parse(safeGetStorage(PREFS_KEY)) || {}; } catch { return {}; } })());
     let saveT; const saveP = () => { clearTimeout(saveT); saveT = setTimeout(() => { safeSetStorage(PREFS_KEY, JSON.stringify(prefs)); }, 250); };
-    function cleanHtmlText(str) {
-        if (!str || typeof str !== "string") return "";
-        let cur = str;
-        for (let i = 0; i < 3; i++) {
-            if (!/&[a-zA-Z0-9#]+;/.test(cur)) break;
-            cur = cur
-                .replace(/&amp;/gi, "&")
-                .replace(/&quot;/gi, '"')
-                .replace(/&#39;/gi, "'")
-                .replace(/&lt;/gi, "<")
-                .replace(/&gt;/gi, ">")
-                .replace(/&nbsp;/gi, " ");
-        }
-        return cur.trim();
-    }
 
     /* Formata data de envio do Bunkr ("HH:mm:ss DD/MM/YYYY") para "DD/MM/YYYY HH:mm" (sem segundos) */
     function formatUploadDate(ts) {
@@ -61,98 +46,9 @@
     }
 
     /* Extrai com precisão datas embutidas no nome do arquivo (ex.: 2026-08-16, 2026.07.26, 2026_05_26, [20260816], etc.) */
-    function extractDateFromTitle(title) {
-        if (!title || typeof title !== "string") return null;
-        title = cleanHtmlText(title).trim();
-
-        // 1. Formato ISO YYYY[-._]MM[-._]DD (ex: 2026-08-16, 2026.07.26, 2026_05_26)
-        const mIso = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])[.\-_](0[1-9]|[12]\d|3[01])\b/);
-        if (mIso) {
-            const y = parseInt(mIso[1], 10), m = parseInt(mIso[2], 10), d = parseInt(mIso[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y,
-                month: m,
-                day: d,
-                raw: mIso[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
-
-        // 2. Formato Compacto YYYYMMDD (ex: 20260816)
-        const mCompact = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/);
-        if (mCompact) {
-            const y = parseInt(mCompact[1], 10), m = parseInt(mCompact[2], 10), d = parseInt(mCompact[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y,
-                month: m,
-                day: d,
-                raw: mCompact[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
-
-        // 3. Formato DD[-._]MM[-._]YYYY (ex: 16-08-2026, 16.08.2026)
-        const mDmy = title.match(/(?:^|[\[(_\s])(0[1-9]|[12]\d|3[01])[.\-_](0[1-9]|1[0-2])[.\-_](20\d\d|19\d\d)\b/);
-        if (mDmy) {
-            const d = parseInt(mDmy[1], 10), m = parseInt(mDmy[2], 10), y = parseInt(mDmy[3], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, d),
-                formatted: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-                displayDate: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`,
-                year: y,
-                month: m,
-                day: d,
-                raw: mDmy[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
-
-        // 4. Formato YYYY[-._]MM (ex: 2026-08)
-        const mYm = title.match(/(?:^|[\[(_\s])(20\d\d|19\d\d)[.\-_](0[1-9]|1[0-2])\b/);
-        if (mYm) {
-            const y = parseInt(mYm[1], 10), m = parseInt(mYm[2], 10);
-            return {
-                timestamp: Date.UTC(y, m - 1, 1),
-                formatted: `${y}-${String(m).padStart(2, "0")}`,
-                displayDate: `${String(m).padStart(2, "0")}/${y}`,
-                year: y,
-                month: m,
-                day: 1,
-                raw: mYm[0].trim().replace(/^[\[(_\s]+|[\])_\s]+$/g, "")
-            };
-        }
-
-        return null;
-    }
 
     /* Remove o prefixo/ocorrência de data do título deixando apenas o nome limpo do arquivo */
-    function cleanTitleWithoutDate(title, dt) {
-        if (!title || typeof title !== "string") return "";
-        title = cleanHtmlText(title).trim();
-        if (!dt || !dt.raw) return title;
-        const esc = dt.raw.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-        let cleaned = title.replace(new RegExp("^[\\s\\[(_-]*" + esc + "[\\s\\])_–—-]*(?:[-–—_]\\s*)?", "i"), "");
-        cleaned = cleaned.replace(/^[\s\-_–—.]+\s*/, "").trim();
-        return cleaned || title;
-    }
 
-    function el(tag, props, ...kids) {
-        const n = document.createElement(tag);
-        if (props) for (const [k, v] of Object.entries(props)) {
-            if (v == null) continue;
-            if (k === "class") n.className = v;
-            else if (k === "html") n.innerHTML = v;
-            else if (k === "style" && typeof v === "object") Object.assign(n.style, v);
-            else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2).toLowerCase(), v);
-            else n.setAttribute(k, v);
-        }
-        for (const kid of kids) if (kid != null) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
-        return n;
-    }
-    const svgi = inner => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block">${inner}</svg>`;
     const PL_ICONS = {
         play: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><path d="M7 4.5v15a1 1 0 0 0 1.52.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
         pause: '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="display:block"><rect x="6" y="4.5" width="4" height="15" rx="1.5"/><rect x="14" y="4.5" width="4" height="15" rx="1.5"/></svg>',
@@ -187,7 +83,6 @@
         group: svgi('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'),
         bunkrMark: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style="display:block"><path d="M5 4h8a5 5 0 0 1 0 10H5V4zm0 8h8.5a5 5 0 0 1 0 10H5v-10zm3-5v4h5a2 2 0 1 0 0-4H8zm0 8v4h5.5a2 2 0 1 0 0-4H8z"/></svg>',
     };
-    const fmtT = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60; const p = n => String(n).padStart(2, "0"); return h ? h + ":" + p(m) + ":" + p(ss) : m + ":" + p(ss); };
 
     /* controles estilo YouTube Pro com revamp visual completo */
     function buildPlayerControls(wrap, video, src, ac) {
@@ -802,15 +697,3 @@
 
     function setMirrorTesting(on) { document.querySelectorAll(".bunkr-mirror, .bunkr-mirror-vrow").forEach(w => w.classList.toggle("is-testing", !!on)); }   // spinner "testando" no(s) botão(ões) de mirror
 
-    let toastT;
-    function toast(msg) {
-        let t = document.querySelector(".bunkr-toast");
-        if (!t) { t = el("div", { class: "bunkr-toast" }); (document.body || document.documentElement).appendChild(t); }
-        t.textContent = msg; t.classList.add("show");
-        clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1800);
-    }
-    function fallbackCopy(s) { try { const t = el("textarea", { style: { position: "fixed", opacity: "0", left: "-9999px" } }); t.value = s; document.body.appendChild(t); t.select(); const ok = document.execCommand("copy"); t.remove(); return ok; } catch { return false; } }
-    function copyText(s) {   // clipboard API (assíncrono) com fallback p/ execCommand; resolve booleano de sucesso
-        if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(s).then(() => true, () => fallbackCopy(s));
-        return Promise.resolve(fallbackCopy(s));
-    }

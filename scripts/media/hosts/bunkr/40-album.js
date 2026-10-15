@@ -247,7 +247,7 @@
                 const titleDate = extractDateFromTitle(cleanRaw);
 
                 // Título limpo sem o prefixo/ocorrência de data
-                const displayTitle = cleanTitleWithoutDate(cleanRaw, titleDate);
+                const displayTitle = cleanTitleWithoutDate(cleanRaw, titleDate, true);
 
                 if (theName && theName.textContent !== displayTitle) {
                     theName.textContent = displayTitle;
@@ -481,8 +481,8 @@
             const rawB = b.dataset.origTitle || b.querySelector(".theName")?.textContent || b.title || "";
             const dtA = extractDateFromTitle(rawA);
             const dtB = extractDateFromTitle(rawB);
-            const nA = cleanTitleWithoutDate(rawA, dtA);
-            const nB = cleanTitleWithoutDate(rawB, dtB);
+            const nA = cleanTitleWithoutDate(rawA, dtA, true);
+            const nB = cleanTitleWithoutDate(rawB, dtB, true);
             const res = nA.localeCompare(nB, undefined, { numeric: true, sensitivity: "base" });
             return dir === "desc" ? -res : res;
         });
@@ -775,10 +775,6 @@
         checkPageType();
         simplifyHeader(); killBanner();   // header/busca valem pro ÁLBUM; na página de arquivo o stage cobre por cima
         if (!isFile()) setupModernGallery();
-    }
-    function onReady(fn) {
-        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn, { once: true });
-        else fn();
     }
     onReady(() => {
         if (!isFile() && openSingleItemAlbum()) return;

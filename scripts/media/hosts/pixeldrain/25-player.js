@@ -30,12 +30,6 @@
         const prev = document.querySelector(".file_preview"); showNative(prev);
     }
 
-    function fmtT(s) {
-        s = Math.max(0, Math.floor(s || 0));
-        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
-        const p = n => String(n).padStart(2, "0");
-        return h ? h + ":" + p(m) + ":" + p(ss) : m + ":" + p(ss);
-    }
 
     const durKnown = new Map();
     const durPending = new Set();

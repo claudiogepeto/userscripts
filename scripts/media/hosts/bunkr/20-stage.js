@@ -273,20 +273,6 @@
         const u = prefix + slug + (getQ() ? "?q=" + encodeURIComponent(getQ()) : "");
         return u;
     }
-    function readPosition() {
-        try { const n = parseInt(new URL(location.href).searchParams.get("position") || "", 10); return Number.isFinite(n) && n > 0 ? n : 0; } catch { return 0; }
-    }
-    function writePosition(n) {
-        try {
-            const u = new URL(location.href);
-            if (String(u.searchParams.get("position") || "") === String(n)) return;
-            u.searchParams.set("position", String(n));
-            history.replaceState(history.state, "", u.pathname + u.search + u.hash);
-        } catch {}
-    }
-    function hrefWithPosition(href, n) {
-        try { const u = new URL(href, location.origin); u.searchParams.set("position", String(n)); return u.pathname + u.search + u.hash; } catch { return href; }
-    }
     function sortedAlbumList() {
         if (!albumFilesCache || !albumFilesCache.length) return [];
         const q = getQ().toLowerCase();
@@ -399,8 +385,8 @@
             sorted.sort((a, b) => {
                 const dtA = extractDateFromTitle(a.original || a.name);
                 const dtB = extractDateFromTitle(b.original || b.name);
-                const nameA = cleanTitleWithoutDate((a.original || a.name || "").trim(), dtA);
-                const nameB = cleanTitleWithoutDate((b.original || b.name || "").trim(), dtB);
+                const nameA = cleanTitleWithoutDate((a.original || a.name || "").trim(), dtA, true);
+                const nameB = cleanTitleWithoutDate((b.original || b.name || "").trim(), dtB, true);
                 return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
             });
         }
@@ -427,7 +413,7 @@
     function playlistCard(name, href, thumb, isV, current, idx, uploadTs) {
         name = cleanHtmlText(name);
         const dt = extractDateFromTitle(name);
-        const cleanName = cleanTitleWithoutDate(name, dt);
+        const cleanName = cleanTitleWithoutDate(name, dt, true);
         const finfo = getFileInfo(name);
         if (isV) finfo.category = "video";
 
@@ -570,8 +556,8 @@
                 const nmB = (b.getAttribute("title") || b.querySelector(".theName")?.textContent || "").trim();
                 const dtA = extractDateFromTitle(nmA);
                 const dtB = extractDateFromTitle(nmB);
-                const nameA = cleanTitleWithoutDate(nmA, dtA);
-                const nameB = cleanTitleWithoutDate(nmB, dtB);
+                const nameA = cleanTitleWithoutDate(nmA, dtA, true);
+                const nameB = cleanTitleWithoutDate(nmB, dtB, true);
                 return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
             });
         }

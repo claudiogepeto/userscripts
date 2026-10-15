@@ -763,9 +763,4 @@
         .bunkr-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     `;
 
-    function addCSS(css) {
-        if (typeof GM_addStyle === "function") { GM_addStyle(css); return; }
-        const s = document.createElement("style"); s.textContent = css;
-        (document.head || document.documentElement).appendChild(s);
-    }
     addCSS(CSS);   // document-start → sem flash do layout antigo

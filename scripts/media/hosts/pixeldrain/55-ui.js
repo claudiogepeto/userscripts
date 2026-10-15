@@ -208,17 +208,6 @@
         if (plBtn) plBtn.style.display = isSidebarCollapsed ? "inline-flex" : "none";
     }
 
-    function readPosition() {
-        try { const n = parseInt(new URL(location.href).searchParams.get("position") || "", 10); return Number.isFinite(n) && n > 0 ? n : 0; } catch { return 0; }
-    }
-    function writePosition(n) {
-        try {
-            const u = new URL(location.href);
-            if (String(u.searchParams.get("position") || "") === String(n)) return;
-            u.searchParams.set("position", String(n));
-            history.replaceState(history.state, "", u.pathname + u.search + u.hash);
-        } catch {}
-    }
     function navItem(d) {
         const a = albumInfo();
         if (!a || !a.files.length) return;

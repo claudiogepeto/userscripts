@@ -3,18 +3,6 @@
     const prefs = Object.assign({ volume: 1, muted: false, rate: 1, loop: false, autoplay: true }, (() => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch { return {}; } })());
     let saveT; const saveP = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch {} }, 250); };
 
-    function el(tag, props, ...kids) {
-        const n = document.createElement(tag);
-        if (props) for (const [k, v] of Object.entries(props)) {
-            if (v == null) continue;
-            if (k === "class") n.className = v; else if (k === "html") n.innerHTML = v;
-            else if (k === "style" && typeof v === "object") Object.assign(n.style, v);
-            else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2).toLowerCase(), v);
-            else n.setAttribute(k, v);
-        }
-        for (const kid of kids) if (kid != null) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
-        return n;
-    }
 
     // Cliques sintéticos que o próprio script dispara no botão nativo: o listener de captura
     // do card (e o do preview) deixam passar, senão openStage -> fireNativeClick -> listener
@@ -40,7 +28,6 @@
         }
     }
 
-    const svgi = inner => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block">${inner}</svg>`;
     const IC = {
         download: svgi('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
         copy: svgi('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
@@ -73,7 +60,6 @@
         repeat: svgi('<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>'),
         logoMark: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style="display:block"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>',
     };
-    const fmtT = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60; const p = n => String(n).padStart(2, "0"); return h ? h + ":" + p(m) + ":" + p(ss) : m + ":" + p(ss); };
     const gfDurKnown = new Map();
     const gfDurPending = new Set();
     const gfDurQueue = [];
