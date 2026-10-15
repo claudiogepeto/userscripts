@@ -30,6 +30,7 @@ const MANIFEST = {
         '00-meta.js',
         '05-boot.js',
         '06-host.js',
+        'core/css.js',
         'core/dom.js',
         'core/clipboard.js',
         'core/toast.js',
