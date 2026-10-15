@@ -106,6 +106,18 @@ scenario('engine: an all-landscape group lays out in 2 columns of pairs; a mixed
     assert.deepEqual([single.cols, single.boxes[0].w], [2, 1192], 'a single landscape item keeps the full width');
 });
 
+scenario('engine: a group that would leave a column empty uses one column fewer and the full width', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 1 }] }), units: true });
+    const { masonryPlace } = page.window.__smgTest;
+    const r = masonryPlace([1.25, 1.25, 9 / 16], 1530, { gap: 8, spans: [1, 1, 2] });
+    assert.equal(r.cols, 2, 'two portraits and one landscape: 2 columns, not 3 with the third empty');
+    assert.deepEqual(r.boxes.map(b => [b.col, b.span, b.x, b.w]), [[0, 1, 0, 761], [1, 1, 769, 761], [0, 2, 0, 1530]], 'portraits side by side, the landscape under them across the full width');
+    const full = masonryPlace([1.25, 1.25, 1.25], 1530, { gap: 8, spans: [1, 1, 1] });
+    assert.equal(full.cols, 3, 'three portraits still fill 3 columns');
+    const right = Math.max(...r.boxes.map(b => b.x + b.w));
+    assert.equal(right, 1530, 'the group reaches the right edge of the post');
+});
+
 // ---- post block model (DOM) ----
 
 scenario('post: text stays where the author put it; a run of 3 images is one group; a single image stays loose', async t => {

@@ -1,5 +1,5 @@
     // media/08a-masonry-engine.js
-    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns), one ResizeObserver, one rAF.
+    // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns; a group that would leave a column empty drops to one column fewer), one ResizeObserver, one rAF.
     // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
     // Depends on: nothing.
     // =========================================================
@@ -31,6 +31,7 @@
     // that top, and pushes those k columns to its bottom. With every span at 1 this is plain shortest-column.
     // Exception: when 3 columns are available and every item of a group of 2+ wants 2, the group is laid out as
     // pairs (2 columns, span 1, row by row) instead of one wide item per row with the third column empty.
+    // And a group that would still leave a whole column empty is laid out with one column fewer.
     function masonryPlace(ratios, width, opts) {
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
@@ -43,9 +44,9 @@
         let need = 0;
         for (let i = 0; i < ratios.length; i++) need += spanOf(i);
         const cols = pairs ? 2 : Math.max(1, Math.min(want, need || 1));   // a small group uses only the columns its spans fill
-        const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
-        const heights = new Array(cols).fill(0);
         if (pairs) {
+            const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
+            const heights = new Array(cols).fill(0);
             // rows of two: each row starts under the taller item of the row above; an odd last item sits alone at the left
             let rowTop = 0;
             const boxes = ratios.map((r, i) => {
@@ -57,6 +58,20 @@
             });
             return { cols, colW, boxes, height: Math.max(0, Math.round(Math.max.apply(null, heights) - gap)) };
         }
+        // a group whose spans sum past the column count can still leave a column empty (two portraits and
+        // one landscape: 1 + 1 + 2 = 4 > 3, but the landscape lands under the portraits and the third
+        // column stays blank, a third of the post width unused). Lay it out again with one column fewer.
+        if (!(opts && opts.cols) && cols > 2) {
+            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf);
+            if (res.boxes.length && !res.emptyCol) return res.out;
+            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf).out;
+        }
+        return masonryPlaceIn(ratios, cols, width, gap, spanOf).out;
+    }
+    // shortest-column placement in exactly `cols` columns (spans clamped); emptyCol = a column no item touches
+    function masonryPlaceIn(ratios, cols, width, gap, spanOf) {
+        const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
+        const heights = new Array(cols).fill(0);
         const boxes = ratios.map((r, i) => {
             const k = Math.min(spanOf(i), cols);
             let c = 0, top = Infinity;
@@ -72,7 +87,7 @@
             return box;
         });
         const height = Math.max(0, Math.round(Math.max.apply(null, heights) - gap));
-        return { cols, colW, boxes, height };
+        return { boxes, emptyCol: heights.some(v => v === 0), out: { cols, colW, boxes, height } };
     }
 
     // an image or video item's span from its h/w: horizontal (wider than tall) takes 2 columns, vertical or
