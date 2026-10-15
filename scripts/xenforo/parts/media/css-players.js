@@ -17,6 +17,13 @@
                 border-radius: var(--smg-r-10);
                 background: #000;
             }
+            /* turbo com a proporção real já conhecida (turboApplyAspect, 21): a caixa adota a proporção; vertical fica
+               estreita e alta como os outros players. Dentro do mosaico as regras do motor (css-grids) vencem. */
+            .generic2wide-iframe-div.smg-tb-sized { aspect-ratio: var(--smg-tb-ar) !important; }
+            .generic2wide-iframe-div.smg-tb-vert {
+                max-height: var(--smg-media-h, min(70vh, 750px)) !important;
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-tb-r))) !important;
+            }
             .bbCodeBlock--unfurl .contentRow-figure,
             .bbCodeBlock--unfurl .contentRow-figure img,
             .bbCodeBlock--unfurl img.bbImage {

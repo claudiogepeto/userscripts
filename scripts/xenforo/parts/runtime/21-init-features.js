@@ -379,6 +379,73 @@
                 a.textContent = rewriteSaintHost(a.textContent);
             }
         });
+
+        // 5. Proporção REAL do vídeo turbo (o iframe é de outra origem e nasce 16:9: vídeo vertical virava
+        // uma faixa larga com tarjas pretas e ocupava 2 colunas do mosaico). A thumb do og:image da página
+        // /embed/ tem a proporção do vídeo → vira data-width/height da caixa (o motor lê) + aspect inline.
+        if (GMX) eachIn(roots, '.generic2wide-iframe-div > iframe[src*="turbo.cr/embed/"]', ifr => {
+            const box = ifr.parentElement;
+            if (!box || box.dataset.tbAr) return;
+            const id = ((ifr.getAttribute('src') || '').match(/\/embed\/([a-zA-Z0-9_-]+)/) || [])[1];
+            if (!id) return;
+            box.dataset.tbAr = '1';
+            lazyActivate(box, () => {
+                box._smgActivate = null;
+                queueEmbedResolve(box, done => turboThumbSize(id, done), size => {
+                    box.dataset.tbAr = '2';   // resolvido (com ou sem tamanho): o paint gate (22-paint) para de esperar esta caixa
+                    if (size) turboApplyAspect(box, size.w, size.h);
+                });
+            });
+        });
+    }
+
+    // id do turbo -> { w, h } da thumb (null quando não deu). Uma busca por id; os pedidos repetidos esperam a mesma.
+    const turboSizeCache = new Map();
+    function turboThumbSize(id, cb) {
+        const hit = turboSizeCache.get(id);
+        if (hit && hit.done) { cb(hit.size); return; }
+        if (hit) { hit.cbs.push(cb); return; }
+        const ent = { done: false, size: null, cbs: [cb] };
+        turboSizeCache.set(id, ent);
+        const finish = size => {
+            ent.done = true; ent.size = size;
+            ent.cbs.splice(0).forEach(fn => { try { fn(size); } catch (e) {} });
+        };
+        GMX({ method: 'GET', url: 'https://turbo.cr/embed/' + id, timeout: 8000,
+            headers: { Accept: 'text/html,application/xhtml+xml,*/*' },
+            onload: r => {
+                const m = r.status < 400 && (r.responseText || '').match(/<meta\s+[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+                if (!m) { finish(null); return; }
+                const im = new Image();
+                im.onload = () => finish(im.naturalWidth && im.naturalHeight ? { w: im.naturalWidth, h: im.naturalHeight } : null);
+                im.onerror = () => finish(null);
+                im.src = m[1].replace(/&amp;/g, '&');
+            },
+            onerror: () => finish(null),
+            ontimeout: () => finish(null) });
+    }
+    // aplica a proporção na caixa do iframe. No mosaico o motor re-coloca (vertical = 1 coluna); solta, a
+    // caixa vertical fica estreita e alta como os outros players. Scroll anchoring está desligado: se a
+    // caixa (ou o grupo dela) começa ACIMA da tela, a diferença de altura é devolvida no scroll.
+    function turboApplyAspect(box, w, h) {
+        if (!box.isConnected || !w || !h) return;
+        const r = w / h;
+        if (!(r > 0.3 && r < 2.8)) return;
+        const grid = box.parentElement && box.parentElement.classList.contains('smg-mason') ? box.parentElement : null;   // o motor posiciona os filhos diretos
+        const anchor = grid || box;
+        const before = anchor.getBoundingClientRect();
+        box.dataset.width = String(w);
+        box.dataset.height = String(h);
+        // solta: classe + variáveis (CSS em css-players); dentro do mosaico as regras do motor vencem
+        box.style.setProperty('--smg-tb-ar', w + ' / ' + h);
+        box.style.setProperty('--smg-tb-r', r.toFixed(4));
+        box.classList.add('smg-tb-sized');
+        box.classList.toggle('smg-tb-vert', r < 1);
+        if (before.top < 0) {
+            if (grid) masonryLayout(grid);   // agora, não no próximo frame: a compensação precisa da altura nova
+            const dh = anchor.getBoundingClientRect().height - before.height;
+            if (dh) window.scrollBy(0, dh);
+        } else if (grid) masonrySchedule(grid);
     }
 
     // =========================================================
