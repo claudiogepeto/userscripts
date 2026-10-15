@@ -335,6 +335,13 @@
         pagePendingStartTime = 0;
         paintDeadline = 0;
         paintMediaDeadline = 0;
+        // os avisos viram o collapse no boot (DOMContentLoaded), que espera os scripts defer do fórum e
+        // costuma chegar DEPOIS da liberação: a lista crua aparecia e encolhia na frente do usuário (o conteúdo
+        // subia 6-18px logo após o skeleton sair). Aqui o HTML dos avisos já está todo no DOM → monta agora,
+        // ainda sob o skeleton. Idempotente (o boot vira no-op).
+        if (FEATURES.headerNotices && typeof setupHeaderNotices === 'function') {
+            try { setupHeaderNotices(); } catch (e) {}
+        }
         const root = document.documentElement;
         root.classList.remove('smg-content-loading', 'smg-content-pending');
         root.classList.add('smg-content-ready');
@@ -516,6 +523,23 @@
             const wrap = ifr.closest('.generic2wide-iframe-div, .smg-dm-wrap, .smg-rg, [style*="aspect-ratio"]');
             if (!wrap && !ifr.style.aspectRatio) {
                 return false;
+            }
+        }
+
+        // 3. Players e slots de vídeo da PRIMEIRA TELA: a caixa nasce 16:9 e só ganha o tamanho final quando a
+        // proporção real chega (API do redgifs, poster, metadata, og:image do turbo). Liberando antes, ela
+        // encolhe/cresce na frente do usuário logo depois do skeleton sair (o "deslize"). Mesmo prazo das imagens.
+        if (!(paintMediaDeadline && Date.now() >= paintMediaDeadline)) {
+            const vh = window.innerHeight || 0;
+            // a tela que aparece na liberação: a partir do post alvo (scrollIntoView no release) ou do scroll atual
+            const top0 = targetPost ? targetPost.getBoundingClientRect().top : 0;
+            const pending = content.querySelectorAll('article.message .smg-rg:not(.smg-rg-has-error), '
+                + 'article.message .smg-turbo-slot:not(.smg-turbo-slot--filled) > .smg-loading, '
+                + 'article.message .generic2wide-iframe-div[data-tb-ar="1"]');
+            for (const el of pending) {
+                if (el.classList.contains('smg-rg') && el.style.getPropertyValue('--smg-rg-ratio')) continue;
+                const r = el.getBoundingClientRect();
+                if (r.bottom - top0 > 0 && r.top - top0 < vh) return false;
             }
         }
 
