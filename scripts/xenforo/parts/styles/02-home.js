@@ -55,8 +55,8 @@
             .smg-home-skeleton-notices-line.short { width: 48%; }
             .smg-home-skeleton-notices:not(.is-expanded) .smg-home-skeleton-notices-body { display: none; }
             .smg-home-skeleton-feed {
-                position: relative; margin-bottom: 38px; padding: var(--smg-sp-14) var(--smg-sp-18) var(--smg-sp-20);
-                border: 1px solid var(--smg-w-08); border-radius: var(--smg-r-20); background: var(--smg-w-04);
+                position: relative; margin-bottom: 38px; padding: 0;
+                border: 0; border-radius: 0; background: transparent;
                 overflow: hidden;
             }
             .smg-home-skeleton-feed-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 44px; margin-bottom: var(--smg-sp-18); border-bottom: 1px solid var(--smg-w-08); }
@@ -98,7 +98,7 @@
                 .smg-home-skeleton-notices { margin-bottom: var(--smg-sp-16); border-radius: var(--smg-r-12); }
                 .smg-home-skeleton-notices-head { height: 42px; padding: 0 var(--smg-sp-12); }
                 .smg-home-skeleton-notices-body { padding: var(--smg-sp-8) var(--smg-sp-10) var(--smg-sp-10); }
-                .smg-home-skeleton-feed { margin-bottom: var(--smg-sp-28); padding: var(--smg-sp-10) var(--smg-sp-12) var(--smg-sp-14); border-radius: var(--smg-r-16); }
+                .smg-home-skeleton-feed { margin-bottom: var(--smg-sp-28); }
                 .smg-home-skeleton-feed-head { margin-bottom: var(--smg-sp-12); }
                 .smg-home-skeleton-card { flex-basis: 210px; }
                 .smg-home-skeleton-sections { gap: var(--smg-sp-28); padding-bottom: 8vh; }
@@ -113,11 +113,10 @@
             html.smg-home .p-body-content { order: 2 !important; padding-left: 0 !important; padding-right: 0 !important; }   /* mata o padding-right:20px do tema (.p-body-main--withSidebar) que desalinhava a home */
             /* ---- home: FEED com abas (Latest posts · Trending) — scroll horizontal, painel em DESTAQUE ---- */
             /* hero shelf: surface elevada com gradiente sutil e highlight superior */
+            /* sem caixa em volta: os cards já são superfícies (caixa dentro de caixa era ruído) */
             html.smg-home .smg-feed-block {
-                margin: var(--smg-sp-28) 0 46px !important; padding: var(--smg-sp-18) var(--smg-sp-18) var(--smg-sp-20);
-                background: var(--smg-s1);
-                border: 1px solid var(--smg-w-08); border-radius: var(--smg-r-20);
-                box-shadow: var(--smg-hl), 0 18px 44px -18px var(--smg-k-62);
+                margin: var(--smg-sp-28) 0 46px !important; padding: 0;
+                background: transparent; border: 0; border-radius: 0; box-shadow: none;
                 overflow: visible;
             }
             /* tabbar = header da section com segmented control moderno */
@@ -233,8 +232,8 @@
             html.smg-home .smg-feed-nav:hover { background: rgba(35,37,45,0.96); border-color: var(--smg-w-30); transform: translateY(-50%) scale(1.08); }
             html.smg-home .smg-feed-nav:active { transform: translateY(-50%) scale(0.95); }
             html.smg-home .smg-feed-nav svg { width: 20px; height: 20px; fill: none !important; }
-            html.smg-home .smg-feed-prev { left: -10px; }
-            html.smg-home .smg-feed-next { right: -10px; }
+            html.smg-home .smg-feed-prev { left: var(--smg-sp-8); }   /* setas por dentro da borda do conteúdo */
+            html.smg-home .smg-feed-next { right: var(--smg-sp-8); }
             html.smg-home .smg-feed-nav.smg-nav-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
             @media (max-width: 1100px) {
                 html.smg-home .smg-feed-panel.is-active { --smg-feed-card-w: calc((100% - 14px) / 2); }
@@ -630,7 +629,7 @@
             html.smg-threadlist .block--category.smg-home-section-sites .node-extra-user {
                 color: var(--smg-w-55) !important;
             }
-            @media (max-width: 600px) { html.smg-home .smg-feed-block { padding: var(--smg-sp-14) var(--smg-sp-14) var(--smg-sp-18); border-radius: var(--smg-r-18); margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
+            @media (max-width: 600px) { html.smg-home .smg-feed-block { margin-top: var(--smg-sp-16) !important; margin-bottom: var(--smg-sp-32) !important; }
                 html.smg-threadlist .block--category.smg-home-section-sites .node-extra {
                     display: none !important;
                 }

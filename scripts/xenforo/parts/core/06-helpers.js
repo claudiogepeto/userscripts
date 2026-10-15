@@ -860,7 +860,8 @@
         if (!img) return '';
         const bg = (img.style.backgroundImage || '').match(/url\(\s*["']?([^"')]+)/i);
         const u = (bg && bg[1]) || img.getAttribute('data-src') || img.getAttribute('src') || '';
-        return /^data:/i.test(u) ? '' : u;
+        // a imagem padrão do fórum (no_image, o logo do site) não é foto da thread: sem URL, quem chama usa o placeholder
+        return (/^data:/i.test(u) || /defaultThumbnailImage|no_image/i.test(u)) ? '' : u;
     }
     // chave da thread: o ID quando a URL tem (o normal no XF: /threads/slug.123/). O SLUG só entra
     // quando NÃO há id — usá-lo como reserva geral seria pior que perder a foto: dois tópicos de
