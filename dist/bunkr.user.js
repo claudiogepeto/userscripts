@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bunkr — Theater Player, Gallery, Mirror & Downloader
 // @namespace    bunkr-youtube-player
-// @version      2.13.3
+// @version      2.13.4
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
 // @description  Camada visual sobre as páginas de arquivo do Bunkr (vídeo · foto · galeria), aproximando do YouTube. (1) PLAYER GRANDE: tira o cap de 1000px e usa o maior 16:9 que cabe na largura E na altura da viewport (theater), centralizado/arredondado. (2) Player, título e header na MESMA coluna → o título alinha com o vídeo (flush-left). (3) Topbar padronizada: logo direcionando para home do Bunkr, botões Search Albums (balbums.st), Upload e Stats na ponta direita. (4) Respiro maior no rodapé. @include por regex (o TLD do Bunkr muda toda hora). v2.0: Player próprio estilo YouTube, zoom/pan em foto, mirror probe. v2.1: Stage overlay. v2.2: Tema AMOLED. v2.3: Força Advanced View (?advanced=1). v2.4: Carregamento do álbum completo e filtro ?q=. v2.7: Playlist em sidebar lateral. v2.8: Refinamentos no player (controles reordenados, arcos de skip circulares, logo na topbar, fix no falso-positivo de mirror). v2.9: Galeria de álbum redesenhada estilo YouTube com Actionbar integrada, cards nítidos e sanitização de links. v2.9.1: Topbar padronizada e grade ampla. v2.9.2: Preservação do master.css, botão Report alinhado ao lado das informações do álbum, topbar com Search Albums/Upload/Stats na ponta direita e logo apontando para a home do Bunkr (/), e revamp AMOLED completo da homepage. v2.10.0: Identificação de datas no título, ordenação por Data de Envio e Data Extraída (⬇/⬆) na Galeria e na Sidebar, títulos limpos sem data com exibição em texto simples abaixo (sem badges/ícones), botões anterior/próximo lado a lado e botão 1x plano no player. v2.10.1: Correção do congelamento/crash em álbuns (eliminação de loop infinito no MutationObserver com observação restrita a childList sem subtree, proteção contra reentrância e renderização idempotente com chave de cache nos cards), decodificação segura e rápida de entidades HTML para títulos duplamente escapados pelo Bunkr. v2.11.0: Agrupamento inteligente por tipo de arquivo com seções dedicadas, visualizador integrado de texto no Stage, e layout mobile responsivo. v2.11.1: Correção do carregamento do leitor de arquivos .txt no Stage com detecção e bypass de CORS via GM_xmlhttpRequest, botão de download direto de arquivos de texto, e placeholders temáticos AMOLED na barra de playlist para arquivos sem thumbnail ou com erro de imagem.
@@ -2029,7 +2029,9 @@
         stage._galleryBtn = galleryBtn;
 
         const isCollapsed = safeGetStorage("bunkr_sidebar_collapsed") === "1";
-        if (isCollapsed) stage.classList.add("is-sidebar-collapsed");
+        let singleOpen = "";
+        try { singleOpen = sessionStorage.getItem(SINGLE_OPEN_KEY) || ""; if (singleOpen) sessionStorage.removeItem(SINGLE_OPEN_KEY); } catch {}
+        if (isCollapsed || (singleOpen && singleOpen === fileSlug())) stage.classList.add("is-sidebar-collapsed");
 
         document.body.insertBefore(stage, document.body.firstChild);
         document.documentElement.classList.add("bunkr-has-stage");
@@ -2083,6 +2085,41 @@
         let list = q ? albumFilesCache.filter(f => (f.original || f.name || "").toLowerCase().indexOf(q) !== -1) : albumFilesCache.slice();
         const activeDir = plSortMode === "upload-date" ? plUploadDateDir : plTitleDateDir;
         return sortFileList(list, plSortMode, activeDir);
+    }
+    /* ÁLBUM com UM arquivo: pula a grade e abre o arquivo direto no player, com a playlist recolhida SÓ nessa
+       abertura (marca one-shot em sessionStorage; bunkr_sidebar_collapsed não é gravado). location.replace tira o
+       álbum do histórico, e o álbum só abre sozinho 1× por aba: quem volta pela Galeria / voltar vê a grade → sem loop.
+       (O referrer não basta: o botão Galeria passa pelo redirect do ?advanced=1, que troca o referrer pelo próprio álbum.) */
+    const SINGLE_OPEN_KEY = "bunkr_single_open";
+    const SINGLE_DONE_KEY = "bunkr_single_done:";
+    const slugOfPath = p => (String(p || "").match(/\/(?:f|i|v|d)\/([^/?#]+)/) || [])[1] || "";
+    function openSingleItemAlbum() {
+        const albumId = (location.pathname.match(/\/a\/([^/?#]+)/) || [])[1];
+        if (!albumId) return false;
+        try { if (sessionStorage.getItem(SINGLE_DONE_KEY + albumId)) return false; } catch {}
+        try { const nav = performance.getEntriesByType("navigation")[0]; if (nav && nav.type === "back_forward") return false; } catch {}
+        const cards = document.querySelectorAll(".theItem");
+        const files = Array.isArray(window.albumFiles) ? window.albumFiles : null;
+        let href = "";
+        if (files) {
+            if (files.length !== 1 || cards.length > 1) return false;
+            href = fileHref(files[0]);
+        } else {
+            if (cards.length !== 1) return false;
+            const a = cards[0].querySelector('a[href*="/f/"], a[href*="/v/"], a[href*="/i/"]');
+            href = a ? a.getAttribute("href") || "" : "";
+        }
+        let target;
+        try { target = new URL(hrefWithPosition(href, 1), location.origin); } catch { return false; }
+        const slug = slugOfPath(target.pathname);
+        if (!slug || target.origin !== location.origin) return false;
+        try {
+            const ref = document.referrer ? new URL(document.referrer) : null;
+            if (ref && ref.origin === location.origin && slugOfPath(ref.pathname) === slug) return false;
+        } catch {}
+        try { sessionStorage.setItem(SINGLE_OPEN_KEY, slug); sessionStorage.setItem(SINGLE_DONE_KEY + albumId, "1"); } catch {}
+        location.replace(target.pathname + target.search + target.hash);
+        return true;
     }
     function applyAlbumPosition() {
         const list = sortedAlbumList();
@@ -3393,6 +3430,7 @@
         else fn();
     }
     onReady(() => {
+        if (!isFile() && openSingleItemAlbum()) return;
         checkPageType();
         apply(); setTimeout(apply, 700); initFilter();
         if (!isFile()) {
