@@ -169,6 +169,9 @@
                 white-space: nowrap !important;
             }
             html.smg-thread .smg-thead-unified .smg-bar { border-radius: var(--smg-r-12); }
+            /* O header é título + tags + o botão de mídia. Paginação, ordenar, seguir e ir-pra-nova moram na dock
+               (no celular o header já escondia tudo). A barra fica no DOM: é a fonte que o header sincroniza. */
+            html.smg-thread .p-body-header .smg-thead-controls > .smg-bar { display: none !important; }
             html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: var(--smg-fs-13); }
             /* COMPACTO (barra fixa ao rolar a página):
                Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
