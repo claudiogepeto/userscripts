@@ -18,6 +18,7 @@
         fv.insertBefore(gtop, fv.firstChild);
     }
 
+    let galleryBar = null;
     function buildGalbar(fv) {
         let bar = fv.querySelector(":scope > .pdx-galbar");
         if (bar) return;
@@ -35,83 +36,48 @@
         const titleEl = el("div", { class: "pdx-galtitle" }, (al.title || "Álbum") + " · " + al.files.length + " arquivos");
         topRow.append(logoLink, titleEl);
 
-        const actsRow = el("div", { class: "pdx-galbar-actions" });
-        const searchLabel = el("label", { class: "pdx-search" }, icon("search"));
-        const searchInput = el("input", {
-            class: "pdx-search-in",
-            type: "search",
-            placeholder: "Filtrar arquivos...",
-            value: state.filter,
-            "aria-label": "Filtrar arquivos",
-            onInput: debounce(e => applyGalleryFilter(e.target.value), 140),
-            onKeydown: stop, onKeyup: stop, onKeypress: stop
-        });
-        searchLabel.appendChild(searchInput);
-
-        const sortWrap = el("div", { class: "pdx-gal-sort" });
-        [
-            { key: "default", label: "Original" },
-            { key: "date", label: "Data" },
-            { key: "name", label: "A–Z" },
-            { key: "size", label: "Tamanho" }
-        ].forEach(s => {
-            const b = el("button", {
-                type: "button",
-                class: "pdx-gal-chip" + (gallerySort === s.key ? " is-active" : ""),
-                onClick: () => {
-                    if (gallerySort === s.key && s.key !== "default") {
-                        gallerySortDir = gallerySortDir === "desc" ? "asc" : "desc";
-                    } else {
-                        gallerySort = s.key;
-                        gallerySortDir = s.key === "name" ? "asc" : "desc";
-                    }
-                    prefs.gallerySort = gallerySort;
-                    prefs.gallerySortDir = gallerySortDir;
-                    saveP();
-                    sortWrap.querySelectorAll(".pdx-gal-chip").forEach(c => {
-                        c.classList.toggle("is-active", c.dataset.sort === gallerySort);
-                        const dir = c.querySelector(".pdx-gal-dir");
-                        if (dir) dir.remove();
-                    });
-                    const active = sortWrap.querySelector(".pdx-gal-chip.is-active");
-                    if (active && gallerySort !== "default") {
-                        active.append(el("span", { class: "pdx-gal-dir" }, gallerySortDir === "desc" ? "↓" : "↑"));
-                    }
-                    renderGalleryGroups();
-                }
-            }, s.label);
-            b.dataset.sort = s.key;
-            if (gallerySort === s.key && s.key !== "default") {
-                b.append(el("span", { class: "pdx-gal-dir" }, gallerySortDir === "desc" ? "↓" : "↑"));
-            }
-            sortWrap.append(b);
-        });
-
-        const groupToggle = el("button", {
-            type: "button",
-            class: "pdx-item pdx-gal-group-btn" + (isGalleryGrouped ? " is-active" : ""),
-            title: "Agrupar arquivos por tipo de mídia (Vídeos, Fotos, etc.)",
-            onClick: () => {
-                isGalleryGrouped = !isGalleryGrouped;
-                prefs.groupByType = isGalleryGrouped;
-                saveP();
-                groupToggle.classList.toggle("is-active", isGalleryGrouped);
-                const txt = groupToggle.querySelector("span");
-                if (txt) txt.textContent = isGalleryGrouped ? "Desagrupar" : "Agrupar por Tipo";
+        // Barra de ações do bunkr: busca (/ e ?q=), fichas, agrupar, nomes completos, copiar e contador,
+        // mais as ações do pixeldrain (zip, copiar todos os links, exportar lista do aria2).
+        const visibleFiles = () => Array.from(document.querySelectorAll(".file_viewer .gallery > .file, .file_preview .gallery > .file"))
+            .filter(c => c.style.display !== "none").map(galleryFileMeta).filter(Boolean);
+        const sort = mediaSortChips({
+            kind: "bar",
+            mode: gallerySort,
+            dirs: { [gallerySort]: gallerySortDir },
+            chips: [
+                { key: "default", label: "Padrão", title: "Ordem original da lista" },
+                { key: "upload", label: "Data de Envio", dir: true, title: "Ordenar por data de envio", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome do arquivo", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome alfabético", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="8" y2="18"/></svg>' },
+                { key: "size", label: "Tamanho", dir: true, title: "Ordenar por tamanho de arquivo", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' }
+            ],
+            onChange: (mode, dir) => {
+                gallerySort = mode; gallerySortDir = dir;
+                prefs.gallerySort = mode; prefs.gallerySortDir = dir; saveP();
                 renderGalleryGroups();
             }
         });
-        groupToggle.innerHTML = `${PL_ICONS.playlist} <span>${isGalleryGrouped ? "Desagrupar" : "Agrupar por Tipo"}</span>`;
-
-        actsRow.append(
-            searchLabel,
-            sortWrap,
-            groupToggle,
-            el("div", { class: "pdx-spacer" }),
-            tbtn("folder_zip", "Baixar tudo (.zip)", "Baixar o álbum inteiro via mirror", () => window.open(M().zip(al.lid), "_blank")),
-            tbtn("content_copy", "Copiar todos", al.files.length + " links — cola no gerenciador", () => copyText(links()).then(() => toast(al.files.length + " links copiados"))),
-            tbtn("description", "Exportar .txt", "Lista aria2 -i", () => { downloadText((al.lid || "album") + ".txt", links()); toast("Lista exportada"); })
-        );
+        const action = (ic, label, title, onClick) => {
+            const b = el("button", { type: "button", class: "pdx-act-btn", title }, icon(ic), el("span", { class: "label" }, label));
+            b.addEventListener("click", onClick);
+            return b;
+        };
+        galleryBar = buildActionBar({
+            sort,
+            grouped: isGalleryGrouped,
+            onGroup: on => { isGalleryGrouped = on; prefs.groupByType = on; saveP(); renderGalleryGroups(); },
+            onFullNames: on => document.documentElement.classList.toggle("pdx-full-names", on),
+            names: () => visibleFiles().map(x => x.name),
+            urls: () => visibleFiles().map(x => M().dl(x.id)),
+            onSearch: applyGalleryFilter,
+            extra: [
+                action("folder_zip", "Baixar tudo (.zip)", "Baixar o álbum inteiro via mirror", () => window.open(M().zip(al.lid), "_blank")),
+                action("content_copy", "Copiar todos", al.files.length + " links — cola no gerenciador", () => copyText(links()).then(() => toast(al.files.length + " links copiados"))),
+                action("description", "Exportar .txt", "Lista aria2 -i", () => { downloadText((al.lid || "album") + ".txt", links()); toast("Lista exportada"); })
+            ]
+        });
+        ["keydown", "keyup", "keypress"].forEach(t => galleryBar.input.addEventListener(t, stop));
+        const actsRow = galleryBar.bar;
 
         bar.append(topRow, actsRow);
         fv.insertBefore(bar, fv.firstChild);
@@ -139,6 +105,7 @@
         if (t && al) {
             t.textContent = (al.title || "Álbum") + " · " + (state.filter ? `${shown} de ${cards.length}` : `${cards.length} arquivos`);
         }
+        if (galleryBar) galleryBar.setCount(shown === cards.length ? `Total: ${cards.length} arquivos` : `${shown} de ${cards.length} arquivos`);
     }
 
     /* TOPBAR DO MODO CONTEÚDO (1 ROW NO DESKTOP ESTILO BUNKR) */

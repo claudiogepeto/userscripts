@@ -114,7 +114,6 @@
 
         const q = (stSidebarEl.querySelector(".pdx-sidebar-search-in")?.value || "").trim().toLowerCase();
         const activeTab = prefs.sidebarTab || "all";
-        const sortMode = prefs.sidebarSort || "default";
 
         let filtered = al.files.filter(f => {
             if (q && (f.name || "").toLowerCase().indexOf(q) === -1) return false;
@@ -125,9 +124,10 @@
             return true;
         });
 
-        if (sortMode === "az") {
-            filtered.sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { numeric: true, sensitivity: "base" }));
-        }
+        filtered = mediaSortItems(filtered, sidebarSortMode(), prefs.sidebarSortDir || "desc", {
+            name: f => f.name,
+            upload: f => new Date(f.date_upload || 0).getTime() || 0
+        });
 
         // Atualiza contadores das abas
         const countAll = al.files.length;
@@ -135,16 +135,7 @@
         const countImages = al.files.filter(f => getFileKind(f) === "image").length;
         const countTexts = al.files.filter(f => getFileKind(f) === "text").length;
 
-        stSidebarEl.querySelectorAll(".pdx-tab-chip").forEach(tab => {
-            const t = tab.dataset.tab;
-            let n = countAll;
-            if (t === "video") n = countVideos;
-            else if (t === "image") n = countImages;
-            else if (t === "text") n = countTexts;
-            const cEl = tab.querySelector(".pdx-tab-count");
-            if (cEl) cEl.textContent = n;
-            tab.style.display = (t !== "all" && n === 0) ? "none" : "";
-        });
+        if (stSidebarEl._tabs) stSidebarEl._tabs.update({ all: countAll, video: countVideos, image: countImages, text: countTexts });
 
         const subTitle = stSidebarEl.querySelector(".pdx-sidebar-count");
         if (subTitle) subTitle.textContent = `${filtered.length} de ${al.files.length} arquivos`;
@@ -165,6 +156,12 @@
                 try { curItem.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch { curItem.scrollIntoView(); }
             }
         }, 50);
+    }
+
+    // Modo salvo de versões antigas ("az") vira o A-Z das fichas do bunkr.
+    function sidebarSortMode() {
+        const m = prefs.sidebarSort || "default";
+        return m === "az" ? "name" : m;
     }
 
     function setupSidebar(row) {
@@ -192,7 +189,7 @@
         header.innerHTML = `
             <div class="pdx-sidebar-title-wrap">
                 <span class="pdx-sidebar-icon">${PL_ICONS.playlist}</span>
-                <span class="pdx-sidebar-title">Playlist</span>
+                <span class="pdx-sidebar-title">Arquivos do álbum</span>
                 <span class="pdx-sidebar-count">${al.files.length} arquivos</span>
             </div>
         `;
@@ -219,65 +216,38 @@
         const searchIn = el("input", {
             type: "search",
             class: "pdx-sidebar-search-in",
-            placeholder: "Buscar na playlist...",
+            placeholder: "Filtrar no álbum…",
             value: ""
         });
         searchIn.addEventListener("input", debounce(() => renderPlaylist(), 140));
         searchIn.addEventListener("keydown", e => e.stopPropagation());
         searchWrap.appendChild(searchIn);
 
-        // Abas
-        const tabsWrap = el("div", { class: "pdx-sidebar-tabs" });
-        const makeTab = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "pdx-tab-chip" + (prefs.sidebarTab === key ? " is-active" : "")
-            });
-            b.dataset.tab = key;
-            b.innerHTML = `<span>${label}</span> <span class="pdx-tab-count">0</span>`;
-            b.addEventListener("click", () => {
-                prefs.sidebarTab = key; saveP();
-                tabsWrap.querySelectorAll(".pdx-tab-chip").forEach(t => t.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        tabsWrap.append(
-            makeTab("all", "Todos"),
-            makeTab("video", "Vídeos"),
-            makeTab("image", "Fotos"),
-            makeTab("text", "Textos")
-        );
-
-        // Ordenação
-        const sortWrap = el("div", { class: "pdx-sidebar-sort" });
-        const makeSort = (key, label) => {
-            const b = el("button", {
-                type: "button",
-                class: "pdx-sort-chip" + (prefs.sidebarSort === key ? " is-active" : "")
-            });
-            b.dataset.sort = key;
-            b.textContent = label;
-            b.addEventListener("click", () => {
-                prefs.sidebarSort = key; saveP();
-                sortWrap.querySelectorAll(".pdx-sort-chip").forEach(s => s.classList.remove("is-active"));
-                b.classList.add("is-active");
-                renderPlaylist();
-            });
-            return b;
-        };
-        sortWrap.append(
-            el("span", { class: "pdx-sort-label" }, "Ordem:"),
-            makeSort("default", "Padrão"),
-            makeSort("az", "A-Z")
-        );
+        // Abas de tipo e fichas de ordenação do bunkr
+        const tabsWrap = mediaTypeTabs({
+            active: prefs.sidebarTab || "all",
+            onChange: key => { prefs.sidebarTab = key; saveP(); renderPlaylist(); }
+        });
+        const sortWrap = mediaSortChips({
+            kind: "sidebar",
+            mode: sidebarSortMode(),
+            dirs: { [sidebarSortMode()]: prefs.sidebarSortDir || "desc" },
+            chips: [
+                { key: "default", label: "Padrão" },
+                { key: "upload", label: "Data de Envio", dir: true, title: "Ordenar por data de envio" },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome" },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome" }
+            ],
+            onChange: (mode, dir) => { prefs.sidebarSort = mode; prefs.sidebarSortDir = dir; saveP(); renderPlaylist(); }
+        });
+        const controls = el("div", { class: "pdx-sidebar-controls" }, tabsWrap, sortWrap);
 
         // Lista
         const listEl = el("div", { class: "pdx-playlist-list" });
 
-        sb.append(header, searchWrap, tabsWrap, sortWrap, listEl);
+        sb.append(header, searchWrap, controls, listEl);
         row.appendChild(sb);
         stSidebarEl = sb;
+        sb._tabs = tabsWrap;
         renderPlaylist();
     }

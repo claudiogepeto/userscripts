@@ -48,8 +48,8 @@
             const gtop = fv.querySelector(":scope > .pdx-gtop");
             if (gtop) gtop.style.display = "none";
             decorateGalleryCards();
-            if (state.filter) { applyGalleryFilter(state.filter); }
-            if (isGalleryGrouped) setTimeout(renderGalleryGroups, 100);
+            applyGalleryFilter(state.filter);
+            if (isGalleryGrouped || gallerySort !== "default") setTimeout(renderGalleryGroups, 100);
             return;
         }
 

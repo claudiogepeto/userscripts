@@ -83,27 +83,6 @@
         .pdx-galbar-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
         .pdx-galtitle { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .pdx-galbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-        .pdx-search {
-            display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px;
-            border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: #141414; color: rgba(255,255,255,.55);
-            flex: 1 1 220px; max-width: 340px; min-width: 180px; box-sizing: border-box;
-        }
-        .pdx-search .icon { font-size: 18px; color: rgba(255,255,255,.45); }
-        .pdx-search-in {
-            flex: 1 1 auto; min-width: 0; width: 100%; height: 100%; border: 0; outline: none;
-            background: transparent; color: #fff; font: 500 13px/1 Inter, system-ui, sans-serif;
-            -webkit-appearance: none; appearance: none;
-        }
-        .pdx-search-in::placeholder { color: rgba(255,255,255,.38); }
-        .pdx-gal-sort { display: inline-flex; align-items: center; gap: 6px; flex: 0 1 auto; flex-wrap: wrap; }
-        .pdx-gal-chip {
-            display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 12px;
-            border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: #141414;
-            color: rgba(255,255,255,.78); font: 600 12.5px/1 Inter, system-ui, sans-serif; cursor: pointer;
-        }
-        .pdx-gal-chip:hover { border-color: rgba(255,255,255,.28); color: #fff; }
-        .pdx-gal-chip.is-active { background: #fff; border-color: #fff; color: #111; }
-        .pdx-gal-dir { font-size: 11px; }
 
         /* ===================== GRADE DE CARDS NA GALERIA ===================== */
         .file_viewer .gallery,
@@ -365,7 +344,7 @@
 
         /* ===================== SIDEBAR DA PLAYLIST ===================== */
         .pdx-sidebar {
-            width: 380px; flex: 0 0 380px; height: 100%; display: flex; flex-direction: column;
+            width: 420px; flex: 0 0 420px; max-width: 45vw; box-sizing: border-box; height: 100%; display: flex; flex-direction: column;
             background: #080908; border-left: 1px solid var(--pdx-line, #1c1c1c); overflow: hidden; z-index: 25;
             transition: width .18s ease, margin .18s ease;
         }
@@ -402,24 +381,6 @@
         .pdx-sidebar-search-in { width: 100%; height: 32px; background: transparent; border: 0; outline: none; color: #fff; font: 12.5px Inter, sans-serif; }
         .pdx-sidebar-search-in::placeholder { color: var(--pdx-muted); }
 
-        .pdx-sidebar-tabs { display: flex; align-items: center; gap: 5px; padding: 4px 12px 6px; overflow-x: auto; scrollbar-width: none; flex: 0 0 auto; }
-        .pdx-sidebar-tabs::-webkit-scrollbar { display: none; }
-        .pdx-tab-chip {
-            display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 6px;
-            background: rgba(255,255,255,.05); border: 1px solid transparent; color: var(--pdx-muted); font: 600 11.5px/1 Inter, sans-serif;
-            cursor: pointer; transition: all .12s; white-space: nowrap;
-        }
-        .pdx-tab-chip:hover { background: rgba(255,255,255,.09); color: #fff; }
-        .pdx-tab-chip.is-active { background: rgba(255,255,255,.18); border-color: var(--pdx-green); color: #ffffff; }
-        .pdx-tab-count { font-size: 10px; opacity: .75; }
-
-        .pdx-sidebar-sort { display: flex; align-items: center; gap: 6px; padding: 4px 12px 6px; font-size: 11px; color: var(--pdx-muted); flex: 0 0 auto; }
-        .pdx-sort-label { text-transform: uppercase; letter-spacing: .04em; }
-        .pdx-sort-chip {
-            background: transparent; border: 0; color: var(--pdx-muted); font: 600 11px Inter, sans-serif; cursor: pointer; padding: 2px 5px; border-radius: 4px;
-        }
-        .pdx-sort-chip:hover { color: #fff; }
-        .pdx-sort-chip.is-active { color: var(--pdx-green); font-weight: 700; text-decoration: underline; }
 
         .pdx-playlist-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
         .pdx-playlist-list::-webkit-scrollbar { width: 6px; }
@@ -476,15 +437,6 @@
             overflow: auto; white-space: pre-wrap; word-break: break-word; tab-size: 4;
         }
 
-        /* ===================== AGRUPAMENTO NA GALERIA ===================== */
-        .pdx-gal-group-header {
-            grid-column: 1 / -1 !important; display: flex !important; align-items: center; justify-content: space-between;
-            padding: 18px 4px 8px; margin-top: 14px; border-bottom: 1px solid var(--pdx-line);
-        }
-        .pdx-gal-group-title { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .pdx-gal-group-icon svg { width: 18px; height: 18px; color: var(--pdx-green); }
-        .pdx-gal-group-count { font-size: 11.5px; font-weight: 600; color: var(--pdx-muted); background: rgba(255,255,255,.08); padding: 3px 9px; border-radius: 999px; }
-        .pdx-gal-group-btn.is-active { background: rgba(255,255,255,.18); border-color: var(--pdx-green); color: #ffffff; }
 
         /* ===================== CONTROLES DO PLAYER ===================== */
         .pdx-host { position: absolute; inset: 0; z-index: 30; background: #000; overflow: hidden; }
@@ -496,12 +448,12 @@
 
         /* Velocidade limpa (sem pill pesado) */
 
-        .pdx-plc-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
+        .pdx-plc-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 46px; height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
         .pdx-plc-sprev { left: 12px; } .pdx-plc-snext { right: 12px; }
         .pdx-pl:hover .pdx-plc-side, .pdx-img-host:hover .pdx-plc-side { opacity: 1; pointer-events: auto; }
         @media (hover:none) { .pdx-plc-side { opacity: .85; pointer-events: auto; } }
         .pdx-plc-side:hover { background: rgba(0,0,0,.75); }
-        .pdx-plc-side svg { width: 24px; height: 24px; }
+        .pdx-plc-side svg { width: 26px; height: 26px; }
 
         .pdx-fail { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: #fff; background: rgba(0,0,0,.92); font: 14px Inter; }
         .pdx-failrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -524,7 +476,11 @@
         @keyframes pdx-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
         /* ===================== RESPONSIVIDADE MOBILE ===================== */
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
+            .pdx-sidebar { flex: 0 0 340px; width: 340px; }
+            .pdx-playlist-thumb-wrap { flex: 0 0 110px; width: 110px; height: 62px; }
+        }
+        @media (max-width: 768px) {
             .file_viewer.pdx-mode-content { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; }
             .file_viewer.pdx-mode-content .file_preview_row {
                 flex-direction: column !important; height: auto !important; min-height: 0 !important; overflow: visible !important;
@@ -557,7 +513,16 @@
             .pdx-name { max-width: calc(100vw - 120px) !important; }
         }
         
+        /* Barra de ações do bunkr na galeria e controles da sidebar */
+        .pdx-galbar .pdx-gallery-actionbar { margin: 0; }
+        .pdx-gallery-actionbar, .pdx-gallery-actionbar input, .pdx-gallery-actionbar button { font-family: Inter, system-ui, sans-serif; box-sizing: border-box; }
+        .pdx-act-btn .icon { font-size: 16px; }
+        html.pdx-full-names .pdx-card-name { display: block !important; -webkit-line-clamp: unset !important; overflow: visible !important; word-break: break-all; }
+        .pdx-sidebar-controls { flex: 0 0 auto; padding: 0 12px 8px; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .pdx-sidebar-controls .pdx-sidebar-sort:first-child { margin-top: 2px; }
 ${mediaComponentCSS(mediaTheme()).plc}
+${mediaComponentCSS(mediaTheme()).actionbar}
+${mediaComponentCSS(mediaTheme()).dates}
     `);
 
     /* Observer & Boot */

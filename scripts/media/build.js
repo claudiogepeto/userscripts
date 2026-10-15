@@ -102,6 +102,7 @@ const MANIFEST = {
         'core/toast.js',
         'core/dates.js',
         'core/position.js',
+        'core/stage.js',
         '10-mirrors.js',
         '15-icons.js',
         '20-mirror-manager.js',
