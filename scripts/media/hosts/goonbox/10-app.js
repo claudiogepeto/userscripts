@@ -15,9 +15,15 @@
     let app = null;
     let galleryPanel = null;
     let stagePanel = null;
+    // Preferências do goonbox (ordem, agrupar, proporção real, sidebar recolhida).
+    const GBX_PREFS_KEY = "gbx_prefs";
+    const gbxPrefs = Object.assign({ sort: "default", dir: "desc", grouped: false, realAspect: true, sidebarCollapsed: false }, (() => {
+        try { return JSON.parse(localStorage.getItem(GBX_PREFS_KEY)) || {}; } catch { return {}; }
+    })());
+    const saveGbxPrefs = () => { try { localStorage.setItem(GBX_PREFS_KEY, JSON.stringify(gbxPrefs)); } catch { /* storage blocked */ } };
     let uiQuery = "";
-    let uiSort = "order";
-    let filtersAlbumId = null;
+    let uiSort = gbxPrefs.sort || "default";
+    let uiDir = gbxPrefs.dir || "desc";
     let zoomCtl = null;
 
     function canonicalId(segment) {
@@ -78,13 +84,6 @@
         return `${shown} ${units[index]}`;
     }
 
-    function formatDate(iso) {
-        if (!iso) return "";
-        const date = new Date(iso);
-        if (Number.isNaN(date.getTime())) return "";
-        return date.toLocaleString();
-    }
-
     function norm(raw) {
         if (!raw || typeof raw !== "object") return null;
         const id = raw.encoded_id ?? raw.id;
@@ -119,7 +118,7 @@
         if (!res.ok) {
             const message = data && typeof data.message === "string" && data.message
                 ? data.message
-                : `Request failed (${res.status})`;
+                : `Falha na requisição (${res.status})`;
             const err = new Error(message);
             err.status = res.status;
             throw err;
@@ -181,7 +180,7 @@
             images.forEach((image, index) => { image.order = index; });
             return {
                 albumId,
-                album: { title: data.title || "Album", user: data.username ? { username: data.username } : null },
+                album: { title: data.title || "Álbum", user: data.username ? { username: data.username } : null },
                 images,
                 total: images.length,
                 at: data.at || 0,
@@ -208,8 +207,8 @@
         .gbx-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1 1 auto; }
         .gbx-panel.is-hidden { display: none !important; }
         .gbx-top {
-            flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-            background: #0e0f13; border-bottom: 1px solid rgba(255,255,255,.08); min-height: 56px;
+            flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 16px;
+            background: #0e0f13; border-bottom: 1px solid rgba(255,255,255,.08); min-height: 52px;
         }
         .gbx-logo { display: inline-flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font-weight: 800; letter-spacing: -0.03em; flex: 0 0 auto; }
         .gbx-mark {
@@ -220,26 +219,13 @@
         .gbx-title { min-width: 0; display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; }
         .gbx-title strong { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .gbx-title span, .gbx-sub { color: rgba(255,255,255,.62); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .gbx-title a { color: #6ee7b7; text-decoration: none; }
-        .gbx-title a:hover { text-decoration: underline; }
-        .gbx-tools { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-        .gbx-input, .gbx-select {
-            height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); background: #14161c; color: #fff;
-            font: 500 13px/1 Inter, system-ui, sans-serif; padding: 0 10px;
-        }
-        .gbx-input { width: min(280px, 36vw); }
-        .gbx-input:focus, .gbx-select:focus { outline: 2px solid rgba(16,185,129,.45); border-color: transparent; }
-        .gbx-btn {
-            height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.06); color: #fff; font: 600 12.5px/1 Inter, system-ui, sans-serif;
-            display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; white-space: nowrap;
-        }
-        .gbx-btn:hover { background: rgba(255,255,255,.12); }
-        .gbx-btn.icon { width: 34px; padding: 0; justify-content: center; }
-        .gbx-btn:disabled { opacity: .35; cursor: default; }
+        .gbx-title a, .gbx-profile { color: #6ee7b7; text-decoration: none; }
+        .gbx-title a:hover, .gbx-profile:hover { text-decoration: underline; }
         .gbx-ico { display: inline-flex; width: 16px; height: 16px; }
         .gbx-ico svg { width: 16px; height: 16px; }
         .gbx-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+        .gbx-scroll > .gbx-gallery-actionbar { margin: 18px 18px 0; }
+        .gbx-gallery-actionbar, .gbx-gallery-actionbar input, .gbx-gallery-actionbar button { font-family: Inter, system-ui, sans-serif; }
         .gbx-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px;
             padding: 18px; align-items: start;
@@ -252,25 +238,24 @@
             background: #111318; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.06);
         }
         .gbx-card-media img { width: 100%; height: auto; display: block; }
+        /* Proporção real desligada: cards uniformes 16:9 recortados */
+        .gbx-grid.is-uniform .gbx-card-media { aspect-ratio: 16 / 9 !important; }
+        .gbx-grid.is-uniform .gbx-card-media img { height: 100%; object-fit: cover; }
         .gbx-card:hover .gbx-card-media { border-color: rgba(16,185,129,.55); }
         .gbx-card-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gbx-grid.is-full-names .gbx-card-name { white-space: normal; word-break: break-all; }
         .gbx-card-sub { color: rgba(255,255,255,.55); font-size: 12px; }
         .gbx-note { padding: 28px 18px; color: rgba(255,255,255,.7); }
-        .gbx-shell { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: row; }
-        .gbx-main { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-        .gbx-view {
-            flex: 1 1 auto; min-width: 0; min-height: 0; background: #000; display: flex; align-items: center; justify-content: center;
-            overflow: hidden; position: relative; touch-action: none;
-        }
-        .gbx-view img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; user-select: none; -webkit-user-drag: none; cursor: zoom-in; touch-action: none; }
-        .gbx-view.is-zoomed img { cursor: grab; }
-        .gbx-view.is-zoomed img:active { cursor: grabbing; }
+
+        /* Foto no stage do bunkr: barra de ações sobre a imagem */
+        .gbx-stage-mid > .gbx-img-host { width: 100%; height: 100%; touch-action: none; }
+        .gbx-image { cursor: zoom-in; user-select: none; -webkit-user-drag: none; touch-action: none; }
         .gbx-bar {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px;
             padding: 28px 12px 10px; background: linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.45) 62%, transparent 100%);
             opacity: 0; pointer-events: none; transition: opacity .18s ease;
         }
-        .gbx-view:hover .gbx-bar, .gbx-view:focus-within .gbx-bar { opacity: 1; pointer-events: auto; }
+        .gbx-stage-mid:hover .gbx-bar, .gbx-stage-mid:focus-within .gbx-bar { opacity: 1; pointer-events: auto; }
         .gbx-bar-side { display: flex; align-items: center; gap: 2px; }
         .gbx-act {
             width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: #fff;
@@ -279,48 +264,17 @@
         .gbx-act:hover { background: rgba(255,255,255,.14); }
         .gbx-act:disabled { opacity: .35; cursor: default; }
         .gbx-act .gbx-ico, .gbx-act .gbx-ico svg { width: 20px; height: 20px; }
-        .gbx-nav {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 44px; height: 44px; border: 0; border-radius: 50%;
-            background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity .18s ease;
+        .gbx-nav-side:disabled { display: none; }
+        @media (hover: none) { .gbx-bar { opacity: 1; pointer-events: auto; } }
+        .gbx-stage-mid > .gbx-note { position: absolute; z-index: 3; }
+        @media (max-width: 768px) {
+            .gbx-top { flex-wrap: wrap; padding: 8px 12px; }
         }
-        .gbx-nav.prev { left: 12px; } .gbx-nav.next { right: 12px; }
-        .gbx-view:hover .gbx-nav, .gbx-view:focus-within .gbx-nav { opacity: 1; pointer-events: auto; }
-        .gbx-nav:disabled { opacity: 0; pointer-events: none; }
-        .gbx-nav .gbx-ico, .gbx-nav .gbx-ico svg { width: 24px; height: 24px; }
-        @media (hover: none) {
-            .gbx-bar, .gbx-nav { opacity: 1; pointer-events: auto; }
-            .gbx-nav:disabled { opacity: .35; }
-        }
-        .gbx-side {
-            width: 280px; flex: 0 0 280px; height: 100%; background: #0e0f13; border-left: 1px solid rgba(255,255,255,.08);
-            display: flex; flex-direction: column; min-height: 0;
-        }
-        .gbx-side-head {
-            flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            padding: 10px; border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-        .gbx-side-count { color: rgba(255,255,255,.55); font-size: 12px; font-weight: 600; }
-        .gbx-side-list { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .gbx-thumb {
-            display: flex; gap: 8px; width: 100%; padding: 6px; border-radius: 10px; border: 1px solid transparent;
-            background: transparent; color: inherit; text-align: left; cursor: pointer; align-items: center;
-        }
-        .gbx-thumb img { width: 84px; height: 56px; object-fit: cover; border-radius: 6px; background: #111318; flex: 0 0 auto; }
-        .gbx-thumb span { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .gbx-thumb[aria-current="true"] { background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.4); }
-        .gbx-thumb:not([aria-current="true"]) { content-visibility: auto; flex-shrink: 0; contain-intrinsic-block-size: auto 56px; }
-        .gbx-thumb:hover { background: rgba(255,255,255,.06); }
-        @media (max-width: 800px) {
-            .gbx-top { flex-wrap: wrap; }
-            .gbx-input { width: 100%; }
-            .gbx-shell { flex-direction: column; }
-            .gbx-main { flex: 1 1 auto; min-height: 0; }
-            .gbx-side { width: auto; height: 132px; flex: 0 0 132px; border-left: 0; border-top: 1px solid rgba(255,255,255,.08); }
-            .gbx-side-list { flex-direction: row; overflow-x: auto; }
-            .gbx-thumb { width: 132px; flex: 0 0 auto; }
-            .gbx-thumb span { display: none; }
-        }
+
+${mediaComponentCSS(mediaTheme()).player}
+${mediaComponentCSS(mediaTheme()).actionbar}
+${mediaComponentCSS(mediaTheme()).dates}
+${mediaComponentCSS(mediaTheme()).misc}
     `;
 
     function ensureStyle() {
@@ -402,14 +356,48 @@
         queueRender();
     }
 
+    // Busca (?q=) e fichas de ordenação valem para a grade e para a lista lateral do stage:
+    // as setas e o teclado seguem a mesma ordem que se vê.
     function orderedImages(model) {
-        const images = model.images.slice();
         const query = uiQuery.trim().toLowerCase();
-        let list = images;
-        if (query) {
-            list = images.filter(image => image.name.toLowerCase().includes(query) || image.id.toLowerCase().includes(query));
-        }
+        const list = query
+            ? model.images.filter(image => image.name.toLowerCase().includes(query) || image.id.toLowerCase().includes(query))
+            : model.images;
         return orderedSort(list);
+    }
+
+    const SORT_ACC = { name: image => image.name, upload: image => new Date(image.created || 0).getTime() || 0, size: image => image.bytes };
+    function orderedSort(images) {
+        const base = images.slice().sort((a, b) => a.order - b.order);
+        return mediaSortItems(base, uiSort, uiDir, SORT_ACC);
+    }
+    function setSort(mode, dir) {
+        uiSort = mode; uiDir = dir;
+        gbxPrefs.sort = mode; gbxPrefs.dir = dir; saveGbxPrefs();
+    }
+    function sortChips(kind, onChange) {
+        const icon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${d}</svg>`;
+        const side = kind === "sidebar";
+        return mediaSortChips({
+            kind,
+            mode: uiSort,
+            dirs: { [uiSort]: uiDir },
+            chips: [
+                { key: "default", label: "Padrão", title: "Ordem do álbum" },
+                { key: "upload", label: "Data de Envio", dir: true, title: "Ordenar por data de envio", icon: side ? "" : icon('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>') },
+                { key: "title", label: "Data Extraída", dir: true, title: "Ordenar por data extraída do nome do arquivo", icon: side ? "" : icon('<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>') },
+                { key: "name", label: "A-Z", dir: true, title: "Ordenar por nome alfabético", icon: side ? "" : icon('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="8" y2="18"/>') },
+                { key: "size", label: "Tamanho", dir: true, title: "Ordenar por tamanho de arquivo", icon: side ? "" : icon('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>') }
+            ],
+            onChange: (mode, dir) => { setSort(mode, dir); onChange(); }
+        });
+    }
+    function kindOf(image) {
+        const mime = image.mime || "";
+        if (mime.startsWith("video/")) return "video";
+        if (mime.startsWith("text/")) return "text";
+        if (mime.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(image.name)) return "image";
+        return "other";
     }
 
     function paintStatus(panel, text) {
@@ -425,7 +413,7 @@
         const pic = el("img", { src: image.thumb, alt: "", loading: "lazy" });
         media.append(pic);
         const subParts = [formatBytes(image.bytes), image.width && image.height ? `${image.width}×${image.height}` : ""].filter(Boolean);
-        card = el("button", { class: "gbx-card", type: "button", "aria-label": `Open ${image.name}` },
+        card = el("button", { class: "gbx-card", type: "button", "aria-label": `Abrir ${image.name}` },
             media,
             el("span", { class: "gbx-card-name", title: image.name }, image.name),
             el("span", { class: "gbx-card-sub" }, subParts.join(" · "))
@@ -438,7 +426,7 @@
     function galleryCountLabel(model) {
         const loaded = model.images.length;
         const total = model.total || loaded;
-        return loaded === total ? `${total} images` : `${loaded} / ${total} images`;
+        return loaded === total ? `${total} ${total === 1 ? "imagem" : "imagens"}` : `${loaded} / ${total} imagens`;
     }
 
     // Filtro sem reconstruir a grade: só alterna a visibilidade dos cards já montados.
@@ -452,8 +440,49 @@
             const card = model.cards && model.cards.get(image.id);
             if (card) card.style.display = visible.has(image.id) ? "" : "none";
         }
-        view.empty.textContent = list.length ? "" : (model.images.length ? "No images match that filter." : "This album has no images.");
+        for (const group of view.headers) {
+            const n = group.images.filter(image => visible.has(image.id)).length;
+            group.count.textContent = `${n} ${n === 1 ? "arquivo" : group.unit}`;
+            group.hdr.style.display = n ? "" : "none";
+        }
+        view.empty.textContent = list.length ? "" : (model.images.length ? "Nenhuma imagem corresponde ao filtro." : "Este álbum não tem imagens.");
         view.empty.style.display = list.length ? "none" : "";
+        const total = model.images.length;
+        view.bar.setCount(list.length === total ? `Total: ${total} arquivos` : `${list.length} de ${total} arquivos`);
+    }
+
+    // Põe os cards na ordem das fichas e, com o agrupamento ligado, sob os cabeçalhos de tipo.
+    function arrangeGallery(model) {
+        const view = galleryPanel && galleryPanel._gbxView;
+        if (!view || view.model !== model) return;
+        view.headers.forEach(group => group.hdr.remove());
+        view.headers = [];
+        const ordered = orderedSort(model.images);
+        const frag = document.createDocumentFragment();
+        if (!gbxPrefs.grouped) {
+            for (const image of ordered) frag.append(galleryCard(model, image));
+        } else {
+            const defs = [
+                { key: "video", title: "Vídeos", unit: "vídeos", icon: MEDIA_ICONS.video },
+                { key: "image", title: "Fotos", unit: "fotos", icon: MEDIA_ICONS.image },
+                { key: "text", title: "Documentos & Textos", unit: "textos", icon: MEDIA_ICONS.doc },
+                { key: "other", title: "Outros Arquivos", unit: "arquivos", icon: MEDIA_ICONS.archive },
+            ];
+            for (const def of defs) {
+                const images = ordered.filter(image => kindOf(image) === def.key);
+                if (!images.length) continue;
+                const count = el("span", { class: "gbx-group-count" });
+                const hdr = el("div", { class: "gbx-group-header", "data-group": def.key },
+                    el("div", { class: "gbx-group-header-left" }, el("span", { html: def.icon }), el("span", null, def.title), count),
+                    el("div", { class: "gbx-group-line" })
+                );
+                view.headers.push({ hdr, count, unit: def.unit, images });
+                frag.append(hdr);
+                for (const image of images) frag.append(galleryCard(model, image));
+            }
+        }
+        view.grid.append(frag);
+        applyGalleryFilter(model);
     }
 
     // Página nova da API: acrescenta só os cards novos à grade já pintada.
@@ -464,90 +493,80 @@
             return;
         }
         view.count.textContent = galleryCountLabel(model);
-        // Em "order" basta anexar os novos no fim; nas outras ordens os cards
+        // Em "Padrão" sem agrupar basta anexar os novos no fim; nas outras ordens os cards
         // existentes são movidos (não recriados) para a posição ordenada.
-        const frag = document.createDocumentFragment();
-        for (const image of uiSort === "order" ? added : orderedSort(model.images)) frag.append(galleryCard(model, image));
-        view.grid.append(frag);
-        applyGalleryFilter(model);
+        if (uiSort === "default" && !gbxPrefs.grouped) {
+            const frag = document.createDocumentFragment();
+            for (const image of added) frag.append(galleryCard(model, image));
+            view.grid.append(frag);
+            applyGalleryFilter(model);
+        } else {
+            arrangeGallery(model);
+        }
     }
 
-    function orderedSort(images) {
-        const sorted = images.slice();
-        if (uiSort === "newest") sorted.sort((a, b) => String(b.created).localeCompare(String(a.created)));
-        else if (uiSort === "oldest") sorted.sort((a, b) => String(a.created).localeCompare(String(b.created)));
-        else if (uiSort === "largest") sorted.sort((a, b) => b.bytes - a.bytes);
-        else if (uiSort === "smallest") sorted.sort((a, b) => a.bytes - b.bytes);
-        else if (uiSort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
-        else sorted.sort((a, b) => a.order - b.order);
-        return sorted;
+    function profileLink(user) {
+        const username = user?.username || "";
+        if (!username) return null;
+        const profile = el("a", { class: "gbx-profile", href: `/u/${encodeURIComponent(username)}`, title: "Perfil de quem enviou" }, displayName(user));
+        profile.addEventListener("click", event => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+            event.preventDefault();
+            location.assign(profile.href);
+        });
+        return profile;
     }
 
+    // Grade do álbum: cabeçalho (título, contagem, perfil) e a barra de ações do bunkr com
+    // "Proporção real" (cards no formato da imagem ou uniformes 16:9).
     function paintGallery(model) {
         if (!galleryPanel) return;
         if (parseAlbum(location.pathname) !== model.albumId) return;
-        if (filtersAlbumId !== model.albumId) {
-            filtersAlbumId = model.albumId;
-            uiQuery = "";
-            uiSort = "order";
-        }
+        uiQuery = mediaGetQ();
         const album = model.album ?? {};
-        const user = album.user ?? null;
-        const username = user?.username || "";
-        const title = album.title || "Album";
+        const title = album.title || "Álbum";
 
         const heading = el("div", { class: "gbx-title" });
         heading.append(el("strong", { title: title }, title));
         const meta = el("span");
         const count = document.createTextNode(galleryCountLabel(model));
         meta.append(count);
-        if (username) {
-            meta.append(document.createTextNode(" · "));
-            const profile = el("a", { href: `/u/${encodeURIComponent(username)}` }, displayName(user));
-            profile.addEventListener("click", event => {
-                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-                event.preventDefault();
-                location.assign(profile.href);
-            });
-            meta.append(profile);
-        }
+        const profile = profileLink(album.user ?? null);
+        if (profile) meta.append(document.createTextNode(" · "), profile);
         heading.append(meta);
 
-        const search = el("input", { class: "gbx-input", type: "search", placeholder: "Filter images", "aria-label": "Filter images", value: uiQuery });
-        let searchTimer = 0;
-        search.addEventListener("input", () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => {
-                uiQuery = search.value;
-                applyGalleryFilter(model);
-            }, 150);
+        const grid = el("div", { class: "gbx-grid" + (gbxPrefs.realAspect ? "" : " is-uniform") });
+        const aspect = el("button", { type: "button", class: "gbx-act-btn" + (gbxPrefs.realAspect ? " is-active" : ""), title: "Cards no formato real de cada imagem (desligado: 16:9 uniforme)" });
+        aspect.insertAdjacentHTML("beforeend", MEDIA_ICONS.image);
+        aspect.append(el("span", { class: "label" }, "Proporção real"));
+        aspect.addEventListener("click", () => {
+            gbxPrefs.realAspect = !gbxPrefs.realAspect; saveGbxPrefs();
+            aspect.classList.toggle("is-active", gbxPrefs.realAspect);
+            grid.classList.toggle("is-uniform", !gbxPrefs.realAspect);
+        });
+        const visibleImages = () => (model.viewIds || []).map(id => model.images.find(image => image.id === id)).filter(Boolean);
+        const bar = buildActionBar({
+            sort: sortChips("bar", () => arrangeGallery(model)),
+            grouped: gbxPrefs.grouped,
+            onGroup: on => { gbxPrefs.grouped = on; saveGbxPrefs(); arrangeGallery(model); },
+            onFullNames: on => grid.classList.toggle("is-full-names", on),
+            names: () => visibleImages().map(image => image.name),
+            urls: () => visibleImages().map(image => image.original || image.medium),
+            onSearch: q => { uiQuery = q; applyGalleryFilter(model); },
+            extra: [aspect]
         });
 
-        const sort = el("select", { class: "gbx-select", "aria-label": "Sort images" });
-        for (const [value, label] of [["order", "Album order"], ["newest", "Newest"], ["oldest", "Oldest"], ["largest", "Largest"], ["smallest", "Smallest"], ["name", "Name"]]) {
-            const option = el("option", { value }, label);
-            if (value === uiSort) option.setAttribute("selected", "selected");
-            sort.append(option);
-        }
-        sort.addEventListener("change", () => {
-            uiSort = sort.value;
-            paintGallery(model);
-        });
-
-        const top = el("div", { class: "gbx-top" }, logoLink(), heading, el("div", { class: "gbx-tools" }, search, sort));
+        const top = el("div", { class: "gbx-top" }, logoLink(), heading);
         const previousScroll = galleryPanel.querySelector(".gbx-scroll");
         const scrollTop = previousScroll ? previousScroll.scrollTop : 0;
-        const grid = el("div", { class: "gbx-grid" });
         const empty = el("p", { class: "gbx-note" });
         grid.append(empty);
-        const frag = document.createDocumentFragment();
-        for (const image of orderedSort(model.images)) frag.append(galleryCard(model, image));
-        grid.append(frag);
-        const scroll = el("div", { class: "gbx-scroll" }, grid);
+        const scroll = el("div", { class: "gbx-scroll" }, bar.bar, grid);
+        // Cards montados com a grade ainda fora do documento (um só layout ao anexar).
+        galleryPanel._gbxView = { model, grid, empty, count, bar, headers: [] };
+        arrangeGallery(model);
         if (album.description) galleryPanel.replaceChildren(top, el("p", { class: "gbx-note" }, album.description), scroll);
         else galleryPanel.replaceChildren(top, scroll);
-        galleryPanel._gbxView = { model, grid, empty, count };
-        applyGalleryFilter(model);
         scroll.scrollTop = scrollTop;
         showPanel("gallery");
     }
@@ -582,27 +601,88 @@
         return image.medium || image.original;
     }
 
+    // Sidebar recolhível do stage (tecla p). A abertura automática de álbum com 1 imagem recolhe
+    // só aquela abertura (singleCollapseId), sem gravar a preferência.
+    let singleCollapseId = null;
+    function toggleSidebar(forceState) {
+        const stage = stagePanel && stagePanel.querySelector(".gbx-stage");
+        if (!stage) return;
+        const collapsed = typeof forceState === "boolean" ? forceState : !stage.classList.contains("is-sidebar-collapsed");
+        stage.classList.toggle("is-sidebar-collapsed", collapsed);
+        singleCollapseId = null;
+        gbxPrefs.sidebarCollapsed = collapsed; saveGbxPrefs();
+    }
+
+    function sidebarCard(image, index, current) {
+        const thumbWrap = el("div", { class: "gbx-playlist-thumb-wrap" },
+            el("img", { class: "gbx-playlist-thumb", src: image.thumb, alt: "", loading: "lazy" }),
+            el("span", { class: "gbx-playlist-kind" }, image.mime === "image/gif" ? "GIF" : "Imagem"),
+            el("span", { class: "gbx-playlist-num" }, String(index + 1))
+        );
+        const info = el("div", { class: "gbx-playlist-info" }, el("span", { class: "gbx-playlist-name" }, cleanTitleWithoutDate(image.name, extractDateFromTitle(image.name), true)));
+        const dates = el("div", { class: "gbx-playlist-dates" });
+        if (image.created) dates.append(el("div", { class: "gbx-playlist-date-row", title: "Data de envio" }, el("span", { class: "gbx-playlist-date-val" }, formatDisplayDate(image.created))));
+        const dt = extractDateFromTitle(image.name);
+        if (dt && dt.displayDate) dates.append(el("div", { class: "gbx-playlist-date-row", title: "Data extraída do nome do arquivo" }, el("span", { class: "gbx-playlist-date-val" }, dt.displayDate)));
+        if (dates.childNodes.length) info.append(dates);
+        if (current) info.append(el("div", { class: "gbx-playlist-meta" }, el("span", { class: "gbx-playlist-meta-active" }, "Visualizando agora")));
+        const item = el("a", { class: "gbx-playlist-item" + (current ? " is-current" : ""), href: `/img/${image.id}`, title: image.name }, thumbWrap, info);
+        item.addEventListener("click", event => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+            event.preventDefault();
+            if (!current) goImage(image.id, true);
+        });
+        return item;
+    }
+
     // Zoom 1x/2x/4x + arrastar: core/viewers.js (bindZoom); o teclado da foto fica no keydown abaixo.
 
+    // Stage do bunkr: topbar (logo, nome, posição/tamanho/dimensões/data, perfil), foto com setas
+    // laterais e barra de ações, e a sidebar com busca, abas de tipo, fichas e a lista do álbum.
     function paintStage(model, imageId) {
         if (!stagePanel) return;
         if (parseImage(location.pathname) !== imageId) return;
         const image = model.images.find(item => item.id === imageId) || model.images[0];
         if (!image) {
-            paintStatus(stagePanel, "Image not found.");
+            paintStatus(stagePanel, "Imagem não encontrada.");
             showPanel("stage");
             return;
         }
-        const near = neighbors(model, image.id);
+        uiQuery = mediaGetQ();
+        if (!model.viewIds) model.viewIds = orderedImages(model).map(item => item.id);
         const albumId = model.albumId;
+        const near = neighbors(model, image.id);
         const pos = near.position ? `${near.position} / ${near.total}` : "";
-        const bits = [pos, formatBytes(image.bytes), image.width && image.height ? `${image.width}×${image.height}` : "", formatDate(image.created)].filter(Boolean);
-        const heading = el("div", { class: "gbx-title" });
-        heading.append(el("strong", { title: image.name }, image.name));
-        heading.append(el("span", null, bits.join(" · ")));
-        const top = el("div", { class: "gbx-top" }, logoLink(), heading);
+        const goNear = dir => {
+            const n = neighbors(model, image.id);
+            const id = dir < 0 ? n.prev : n.next;
+            if (id) goImage(id, true);
+        };
 
-        const goNear = id => { if (id) goImage(id, true); };
+        const tabs = mediaTypeTabs({ active: "all", onChange: () => renderList() });
+        const sort = sortChips("sidebar", () => refreshList());
+        const profile = profileLink(model.album?.user ?? null);
+        const parts = buildMediaStage({
+            kind: "image",
+            name: image.name,
+            stats: [pos, formatBytes(image.bytes), image.width && image.height ? `${image.width}×${image.height}` : "", formatDisplayDate(image.created)],
+            logo: logoLink(),
+            vrowExtra: profile ? [profile] : null,
+            nav: goNear,
+            collapsed: singleCollapseId === image.id || !!gbxPrefs.sidebarCollapsed,
+            galleryHref: albumId ? `/a/${albumId}` : "",
+            sidebarTitle: "Imagens do álbum",
+            tabs,
+            sort,
+            onSearch: q => { uiQuery = q; refreshList(); }
+        });
+        const stage = parts.stage;
+        parts.gallery.addEventListener("click", event => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+            event.preventDefault();
+            leaveStage(albumId);
+        });
+
         const act = (label, icon, onClick, nav) => {
             const button = el("button", { class: "gbx-act", type: "button", title: label, "aria-label": label });
             if (nav) button.dataset.gbxNav = nav;
@@ -614,24 +694,17 @@
             });
             return button;
         };
-        const prev = act("Anterior", ICON.prev, () => goNear(near.prev), "prev");
-        const next = act("Próximo", ICON.next, () => goNear(near.next), "next");
-        prev.disabled = !near.prev;
-        next.disabled = !near.next;
+        const prev = act("Anterior", ICON.prev, () => goNear(-1), "prev");
+        const next = act("Próximo", ICON.next, () => goNear(1), "next");
         const report = act("Reportar", ICON.flag, () => window.open(`${location.origin}/removals`, "_blank", "noopener"));
         const download = act("Baixar", ICON.download, () => {
             const link = el("a", { href: image.original || image.medium, download: image.name, target: "_blank", rel: "noopener" });
             link.click();
         });
-        const copy = act("Copiar link", ICON.copy, async () => {
-            const link = `${location.origin}/img/${image.id}`;
-            try {
-                await navigator.clipboard.writeText(link);
-                copy.setAttribute("title", "Copiado");
-                setTimeout(() => copy.setAttribute("title", "Copiar link"), 1200);
-            } catch { /* clipboard denied */ }
+        const copy = act("Copiar link", ICON.copy, () => {
+            copyText(`${location.origin}/img/${image.id}`).then(ok => toast(ok ? "Link copiado!" : "Falha ao copiar link"));
         });
-        const full = act("Tela cheia", ICON.full, () => {
+        const full = act("Tela cheia (f)", ICON.full, () => {
             const target = app || document.documentElement;
             if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
             else target.requestFullscreen?.().catch(() => {});
@@ -640,67 +713,63 @@
             el("div", { class: "gbx-bar-side" }, prev, next),
             el("div", { class: "gbx-bar-side" }, report, download, copy, full)
         );
-        const sidePrev = el("button", { class: "gbx-nav prev", type: "button", title: "Anterior", "aria-label": "Anterior", "data-gbx-nav": "prev" });
-        const sideNext = el("button", { class: "gbx-nav next", type: "button", title: "Próximo", "aria-label": "Próximo", "data-gbx-nav": "next" });
-        sidePrev.append(svg(ICON.chevL));
-        sideNext.append(svg(ICON.chevR));
-        sidePrev.disabled = !near.prev;
-        sideNext.disabled = !near.next;
-        sidePrev.addEventListener("click", event => { event.stopPropagation(); goNear(near.prev); });
-        sideNext.addEventListener("click", event => { event.stopPropagation(); goNear(near.next); });
 
-        const viewport = el("div", { class: "gbx-view" });
-        const pic = el("img", { src: stageSrc(image), alt: image.name, draggable: "false" });
-        viewport.append(pic, bar);
-        if (near.prev || near.next) viewport.append(sidePrev, sideNext);
+        const host = el("div", { class: "gbx-img-host" });
+        const pic = el("img", { class: "gbx-image", src: stageSrc(image), alt: image.name, draggable: "false" });
+        host.append(pic);
+        parts.mid.append(host, bar);
+        // Troca progressiva: mostra a versão média e passa para a original quando ela termina de baixar.
         if (image.mime !== "image/gif" && image.original && image.original !== pic.src) {
             const fullImage = new Image();
             fullImage.onload = () => { if (pic.isConnected) pic.src = image.original; };
             fullImage.src = image.original;
         }
         pic.addEventListener("error", () => {
-            if (!viewport.querySelector(".gbx-note")) viewport.append(el("p", { class: "gbx-note" }, "Could not load this image."));
+            if (!parts.mid.querySelector(".gbx-note")) parts.mid.append(el("p", { class: "gbx-note" }, "Não foi possível carregar esta imagem."));
         });
 
-        let strip = model.images;
-        if (model.viewIds && model.viewIds.includes(image.id)) {
+        const sideNav = Array.from(parts.mid.querySelectorAll(".gbx-nav-side"));
+        sideNav.forEach(button => { button.dataset.gbxNav = button.classList.contains("gbx-nav-prev") ? "prev" : "next"; });
+        const refreshNav = () => {
+            const n = neighbors(model, image.id);
+            prev.disabled = !n.prev; next.disabled = !n.next;
+            sideNav.forEach(button => { button.disabled = button.dataset.gbxNav === "prev" ? !n.prev : !n.next; });
+            stage.classList.toggle("has-nav", !!(n.prev || n.next));
+        };
+        let currentItem = null;
+        const renderList = () => {
+            const tab = (tabs.querySelector(".is-active") || {}).dataset?.tab || "all";
             const byId = new Map(model.images.map(item => [item.id, item]));
-            strip = model.viewIds.map(id => byId.get(id)).filter(Boolean);
-        }
-        const side = el("div", { class: "gbx-side" });
-        const head = el("div", { class: "gbx-side-head" });
-        if (albumId) {
-            const gallery = el("button", { class: "gbx-btn", type: "button" });
-            gallery.append(svg(ICON.grid), document.createTextNode("Galeria"));
-            gallery.addEventListener("click", () => leaveStage(albumId));
-            head.append(gallery);
-        }
-        head.append(el("span", { class: "gbx-side-count" }, strip.length ? String(strip.length) : ""));
-        const list = el("div", { class: "gbx-side-list" });
-        let currentThumb = null;
-        for (const item of strip) {
-            const thumb = el("button", { class: "gbx-thumb", type: "button", "aria-label": item.name });
-            if (item.id === image.id) {
-                thumb.setAttribute("aria-current", "true");
-                currentThumb = thumb;
-            }
-            thumb.append(el("img", { src: item.thumb, alt: "" }), el("span", { title: item.name }, item.name));
-            thumb.addEventListener("click", () => {
-                if (item.id !== image.id) goImage(item.id, true);
+            const strip = (model.viewIds || []).map(id => byId.get(id)).filter(Boolean);
+            const shown = tab === "all" ? strip : strip.filter(item => kindOf(item) === tab);
+            const counts = { all: strip.length, video: 0, image: 0, text: 0 };
+            strip.forEach(item => { const k = kindOf(item); if (k in counts) counts[k] += 1; });
+            tabs.update(counts);
+            parts.count.textContent = String(strip.length);
+            const frag = document.createDocumentFragment();
+            currentItem = null;
+            shown.forEach((item, index) => {
+                const card = sidebarCard(item, index, item.id === image.id);
+                if (item.id === image.id) currentItem = card;
+                frag.append(card);
             });
-            list.append(thumb);
-        }
-        side.append(head, list);
-        if (currentThumb && currentThumb.scrollIntoView) {
-            requestAnimationFrame(() => currentThumb.scrollIntoView({ block: "nearest", inline: "nearest" }));
-        }
+            parts.list.replaceChildren(frag);
+        };
+        const refreshList = () => {
+            model.viewIds = orderedImages(model).map(item => item.id);
+            renderList();
+            refreshNav();
+        };
+        renderList();
+        refreshNav();
+        stage.classList.toggle("has-playlist", !!albumId || model.images.length > 1);
 
-        const main = el("div", { class: "gbx-main" }, top, viewport);
-        const shell = el("div", { class: "gbx-shell" }, main);
-        if (albumId || strip.length > 1) shell.append(side);
-        stagePanel.replaceChildren(shell);
+        stagePanel.replaceChildren(stage);
         showPanel("stage");
-        zoomCtl = bindZoom(viewport, pic);
+        if (currentItem && currentItem.scrollIntoView) {
+            requestAnimationFrame(() => currentItem.scrollIntoView({ block: "nearest", inline: "nearest" }));
+        }
+        zoomCtl = bindZoom(host, pic);
     }
 
     function takeImages(model, rows) {
@@ -718,7 +787,7 @@
 
     // Álbum com UMA imagem: pula a grade e abre direto no stage (replace → o álbum não fica no histórico).
     // Só 1× por álbum por aba: quem volta pela Galeria / voltar vê a grade → sem loop.
-    // O stage do goonbox não tem sidebar recolhível nem preferência salva, então a lateral fica como está.
+    // A sidebar abre recolhida só nessa abertura (singleCollapseId); a preferência salva não muda.
     const singleOpened = new Set();
     function openSingleImage(model) {
         if (!model || model.images.length !== 1 || (model.total || 0) > 1) return false;
@@ -729,6 +798,7 @@
         singleOpened.add(model.albumId);
         try { sessionStorage.setItem(key, "1"); } catch {}
         rememberAlbum(model);
+        singleCollapseId = model.images[0].id;
         goImage(model.images[0].id, true);
         return true;
     }
@@ -744,7 +814,7 @@
             paintGallery(cached);
             return;
         }
-        if (galleryPanel) paintStatus(galleryPanel, "Loading album…");
+        if (galleryPanel) paintStatus(galleryPanel, "Carregando álbum…");
         showPanel("gallery");
         try {
             const [meta, first] = await Promise.all([
@@ -754,7 +824,7 @@
             if (job !== albumJob) return;
             const model = {
                 albumId,
-                album: meta.album || { title: "Album" },
+                album: meta.album || { title: "Álbum" },
                 images: [],
                 seen: new Set(),
                 total: first.pagination?.total || meta.album?.images_count || 0,
@@ -806,7 +876,7 @@
         } catch (error) {
             if (job !== albumJob) return;
             const missing = error.status === 404;
-            paintStatus(galleryPanel, missing ? "This album is not available." : (error.message || "Could not load the album."));
+            paintStatus(galleryPanel, missing ? "Este álbum não está disponível." : (error.message || "Não foi possível carregar o álbum."));
             showPanel("gallery");
         }
     }
@@ -820,14 +890,14 @@
             albums.set(cached.albumId, cached);
             paintStage(cached, imageId);
         } else if (stagePanel) {
-            paintStatus(stagePanel, "Loading image…");
+            paintStatus(stagePanel, "Carregando imagem…");
             showPanel("stage");
         }
         try {
             const data = await api(`/api/images/${encodeURIComponent(imageId)}`);
             if (job !== imageJob) return;
             const fresh = norm(data.image);
-            if (!fresh) throw Object.assign(new Error("Image not found."), { status: 404 });
+            if (!fresh) throw Object.assign(new Error("Imagem não encontrada."), { status: 404 });
             if (cached && cached.images.some(image => image.id === fresh.id)) {
                 const item = cached.images.find(image => image.id === fresh.id);
                 Object.assign(item, fresh);
@@ -856,7 +926,7 @@
             if (job !== imageJob) return;
             if (cached && cached.images.some(image => image.id === imageId)) return;
             const missing = error.status === 404;
-            paintStatus(stagePanel, missing ? "This image is not available." : (error.message || "Could not load the image."));
+            paintStatus(stagePanel, missing ? "Esta imagem não está disponível." : (error.message || "Não foi possível carregar a imagem."));
             showPanel("stage");
         }
     }
@@ -918,6 +988,12 @@
             button.click();
             return;
         }
+        if (event.shiftKey && (event.key === "N" || event.key === "P")) {
+            const button = stagePanel.querySelector(`[data-gbx-nav="${event.key === "P" ? "prev" : "next"}"]`);
+            if (button && !button.disabled) { event.preventDefault(); button.click(); }
+            return;
+        }
+        if (event.key === "p") { event.preventDefault(); toggleSidebar(); return; }
         if (event.key === "+" || event.key === "=") { if (zoomCtl) zoomCtl.zoomIn(); return; }
         if (event.key === "-" || event.key === "_") { if (zoomCtl) zoomCtl.zoomOut(); return; }
         if (event.key === "0") { if (zoomCtl) zoomCtl.reset(); return; }
