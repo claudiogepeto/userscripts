@@ -19,10 +19,6 @@
             }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon svg { width: 24px; height: 24px; }
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--comment { color: var(--smg-link); }
-            /* não-lida: o ícone ganha a tinta do tema (o card inteiro fica mais "vivo" que as lidas) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread .smg-al-icon {
-                background: var(--smg-link-soft); border-color: var(--smg-w-14); color: var(--smg-link);
-            }
             /* FOTO da thread no lugar do glifo (quando o cache de thumbs conhece a thread do alerta):
                mesma caixa, então trocar o glifo pela imagem não desloca uma linha sequer. */
             .smg-tb-listbody .smg-alert-clean .smg-al-icon--thumb { width: 80px !important; min-height: 80px !important; height: auto !important; aspect-ratio: 1 / 1 !important; border-radius: var(--smg-r-12) !important; flex: 0 0 80px !important; align-self: stretch !important; padding: 0; overflow: hidden; background: var(--smg-w-06); }
@@ -55,9 +51,17 @@
             .smg-tb-listbody .smg-alert-clean li.alert .fauxBlockLink { position: static !important; }
             .smg-tb-listbody .smg-alert-clean li.alert,
             .smg-tb-listbody .smg-alert-clean li.alert .contentRow { background: transparent !important; box-shadow: none !important; }
+            /* faixa vertical do tema na borda da linha não-lida (borda/pseudo do XF): fora. A não-lida é só o dot + a tinta leve */
+            .smg-tb-listbody .smg-alert-clean li.alert,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow-main { border-left: 0 !important; border-right: 0 !important; outline: 0 !important; }
+            .smg-tb-listbody .smg-alert-clean li.alert::before,
+            .smg-tb-listbody .smg-alert-clean li.alert::after,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow::before,
+            .smg-tb-listbody .smg-alert-clean li.alert .contentRow::after { content: none !important; display: none !important; }
             .smg-tb-listbody .smg-alert-clean li.alert:hover { background: var(--smg-w-06) !important; }
-            /* NÃO-LIDA: tinta suave do tema (o marcador é o dot à direita, sem faixa na borda esquerda) */
-            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: var(--smg-link-soft) !important; }
+            /* NÃO-LIDA: tinta bem leve do tema (o marcador é o dot à direita, sem faixa na borda esquerda) */
+            .smg-tb-listbody .smg-alert-clean li.alert.is-unread { background: color-mix(in srgb, var(--smg-link) 5%, transparent) !important; }
             .smg-tb-listbody .smg-alert-clean li.alert.is-unread:hover { box-shadow: inset 0 0 0 999px var(--smg-w-06) !important; }
             /* JÁ VISTAS: bem apagadas (o olho vai direto nas novas) — o hover devolve o contraste inteiro */
             .smg-tb-listbody .smg-alert-clean li.smg-al-old { opacity: 0.4; }
@@ -72,7 +76,16 @@
             }
             .smg-tb-listbody .smg-alert-clean li.alert:hover .smg-al-title { text-decoration: underline !important; text-underline-offset: 2px; }
             /* tags: chips nativos coloridos (cor da plataforma) — menores */
-            .smg-al-tags { display: flex; flex-wrap: wrap; gap: var(--smg-sp-6); align-items: center; }
+            /* tags numa linha só: o que não cabe vira "+N" (fitAlertTags, 18-alerts) → toda linha tem a mesma altura */
+            .smg-al-tags { display: flex; flex-wrap: nowrap; gap: var(--smg-sp-6); align-items: center; min-width: 0; overflow: hidden; }
+            .smg-al-tags > * { flex: 0 0 auto; }
+            .smg-al-tags > :first-child { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+            #smg-aldock .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
+            .smg-al-tags .smg-al-more {
+                font-size: var(--smg-fs-10); font-weight: 700; line-height: 1.3; padding: var(--smg-sp-2) var(--smg-sp-6);
+                border-radius: var(--smg-r-4); background: var(--smg-w-08); color: var(--smg-w-72); white-space: nowrap;
+            }
+            .smg-al-tags .smg-al-more[hidden] { display: none; }
             .smg-alert-clean .smg-al-tags .smg-al-chip,
             .smg-alert-clean .smg-al-tags .label,
             .smg-alert-clean .smg-al-tags .prefix,

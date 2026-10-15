@@ -1,6 +1,6 @@
     // alerts/18-alerts.js
     // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page, popup and rail).
-    // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs.
+    // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs, fitAlertTags.
     // Depends on: core/06-helpers, alerts/19-alerts-dock.
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
@@ -101,6 +101,61 @@
         return n;
     }
 
+    // TAGS NUMA LINHA: as que não cabem saem e um chip "+N" diz quantas (o title lista os nomes). Refeito
+    // quando a largura muda (o rail é redimensionável): um ResizeObserver pra todas as linhas, que também
+    // dispara quando a linha entra no DOM e ganha largura. Esconder chips não muda a largura da caixa → sem laço.
+    let alertTagsRO = null;
+    function watchAlertTags(box) {
+        if (typeof ResizeObserver === 'undefined') return;
+        if (!alertTagsRO) {
+            alertTagsRO = new ResizeObserver(entries => entries.forEach(en => {
+                if (!en.target.isConnected) { alertTagsRO.unobserve(en.target); return; }   // linha saiu (refresh do rail)
+                const w = Math.round(en.contentRect.width);
+                if (!w || en.target._smgTagsW === w) return;
+                en.target._smgTagsW = w;
+                fitAlertTags(en.target);
+            }));
+            // fonte da web chegou depois da medida: os chips crescem sem a caixa mudar de largura → refaz
+            if (document.fonts && document.fonts.addEventListener) {
+                document.fonts.addEventListener('loadingdone', () => document.querySelectorAll('.smg-al-tags').forEach(fitAlertTags));
+            }
+        }
+        alertTagsRO.observe(box);
+    }
+    function fitAlertTags(box) {
+        if (!box || !box.isConnected) return;
+        const chips = Array.from(box.children).filter(c => !c.classList.contains('smg-al-more'));
+        let more = box.querySelector(':scope > .smg-al-more');
+        chips.forEach(c => c.classList.remove('smg-al-chip--cut'));
+        if (more) more.hidden = true;
+        const W = box.getBoundingClientRect().width;
+        if (!W || chips.length < 2) return;
+        const gap = parseFloat(getComputedStyle(box).columnGap) || 6;
+        // largura REAL (fracionária): offsetWidth arredonda e, somando 3 chips, sobrava ~1px que o 1º chip
+        // (flex-shrink) absorvia cortando o texto ("Onlyf") em vez de virar +N
+        const widths = chips.map(c => c.getBoundingClientRect().width);
+        const total = widths.reduce((a, b) => a + b, 0) + gap * (chips.length - 1);
+        const boxRight = box.getBoundingClientRect().right + 0.5;
+        const clipped = last => last.getBoundingClientRect().right > boxRight || chips[0].scrollWidth > chips[0].clientWidth + 1;
+        if (total <= W - 0.5 && !clipped(chips[chips.length - 1])) return;
+        if (!more) { more = document.createElement('span'); more.className = 'smg-al-more'; box.appendChild(more); }
+        more.hidden = false;
+        more.textContent = '+' + (chips.length - 1);
+        const moreW = more.getBoundingClientRect().width;
+        let keep = 1, used = widths[0];
+        while (keep < chips.length && used + gap + widths[keep] + gap + moreW <= W - 0.5) { used += gap + widths[keep]; keep++; }
+        const apply = () => {
+            const cut = chips.slice(keep);
+            chips.forEach((c, i) => c.classList.toggle('smg-al-chip--cut', i >= keep));
+            more.textContent = '+' + cut.length;
+            more.title = cut.map(c => (c.textContent || '').trim()).filter(Boolean).join(', ');
+        };
+        apply();
+        // conferência no layout real: nenhum chip visível além do 1º pode ficar cortado (o 1º só encolhe com
+        // ellipsis quando está sozinho com o +N). Sobrou corte → mais um chip vai pro +N.
+        while (keep > 1 && clipped(more)) { keep--; apply(); }
+    }
+
     function cleanAlertRow(main) {
         if (!main || main.dataset.smgAlert) return;
         // título = nome do tópico. Em alerta de COMENTÁRIO o .fauxBlockLink-blockLink é a palavra "commented"
@@ -164,7 +219,7 @@
 
         // remonta do zero: (1) tags · (2) nome · (3) publicado-por+data — verbo, boilerplate e foto não voltam
         main.textContent = '';
-        if (tags.children.length) main.appendChild(tags);
+        if (tags.children.length) { main.appendChild(tags); watchAlertTags(tags); }
         main.appendChild(title);
         if (by.childNodes.length) main.appendChild(by);
 
