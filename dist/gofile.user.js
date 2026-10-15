@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GoFile — Card Grid, Search, Custom Player & Theater Stage
 // @namespace    gofile-grid
-// @version      3.5.4
+// @version      3.5.5
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/gofile.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/gofile.user.js
 // @description  Card grid, search, custom player, YouTube-style theater stage with sidebar playlist, media grouping (Videos & Photos), instant photo zoom, and AMOLED styling for GoFile.
@@ -396,8 +396,13 @@
         return n;
     }
 
+    // Cliques sintéticos que o próprio script dispara no botão nativo: o listener de captura
+    // do card (e o do preview) deixam passar, senão openStage -> fireNativeClick -> listener
+    // -> openStage recursa até estourar a pilha e o botão nativo nunca recebe o clique.
+    let firingNativeClick = 0;
     function fireNativeClick(target) {
         if (!target) return;
+        firingNativeClick++;
         try {
             const rect = target.getBoundingClientRect();
             const clientX = rect.left + (rect.width ? rect.width / 2 : 10);
@@ -410,6 +415,8 @@
             target.dispatchEvent(new MouseEvent("click", opts));
         } catch (e) {
             try { target.click(); } catch (err) {}
+        } finally {
+            firingNativeClick--;
         }
     }
 
@@ -1467,8 +1474,14 @@
         loadStageItem((p && cards[p - 1]) || card);
     }
 
+    // closeStage dispara Escape no document, e o atalho Escape chama closeStage de novo.
+    let closingStage = false;
     function closeStage(opts) {
-        if (!stage) return;
+        if (!stage || closingStage) return;
+        closingStage = true;
+        try { closeStageNow(opts); } finally { closingStage = false; }
+    }
+    function closeStageNow(opts) {
         const fromRoute = !!(opts && opts.fromRoute === true);
         if (!fromRoute && stage.classList.contains("open")) autoDismissedRoute = routeKey(location.href);
         if (curAc) { curAc.abort(); curAc = null; }
@@ -1874,6 +1887,7 @@
 
         // Intercepta clique no card inteiro
         it.addEventListener("click", e => {
+            if (firingNativeClick) return;
             if (e.target.closest(".gf-card-select")) return;
             e.preventDefault();
             e.stopPropagation();
@@ -1952,6 +1966,7 @@
         if (previewSection && !previewSection.dataset.gfClickBound) {
             previewSection.dataset.gfClickBound = "1";
             previewSection.addEventListener("click", e => {
+                if (firingNativeClick) return;
                 e.preventDefault();
                 e.stopPropagation();
                 openStage(card);
