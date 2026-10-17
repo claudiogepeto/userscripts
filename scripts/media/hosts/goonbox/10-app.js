@@ -706,8 +706,7 @@ ${mediaComponentCSS(mediaTheme()).misc}
         });
         const full = act("Tela cheia (f)", ICON.full, () => {
             const target = app || document.documentElement;
-            if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-            else target.requestFullscreen?.().catch(() => {});
+            toggleMediaFullscreen(target);
         });
         const bar = el("div", { class: "gbx-bar" },
             el("div", { class: "gbx-bar-side" }, prev, next),
