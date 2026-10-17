@@ -26819,6 +26819,9 @@
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a[href]');
             if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            // The mobile alerts link owns its click when the rail is enabled. Let its
+            // handler open the modal instead of starting a page navigation in capture.
+            if (a.id === 'smg-nav-bell' && FEATURES.alertsDock) return;
             if (a.origin && a.origin !== location.origin) return;
             const href = a.getAttribute('href') || a.href || '';
             if (!href || href === '#' || href.startsWith('javascript:')) return;
