@@ -15,6 +15,7 @@ const PART_FILES = [
     'sites/50-pornhub.js',
     'sites/60-sexcom.js',
     'sites/70-kick.js',
+    'sites/80-age-vendors.js',
     'runtime/99-footer.js',
 ];
 

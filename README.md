@@ -37,7 +37,7 @@ Install only the scripts you need:
 | **rule34** | Dark theme, responsive media grid, infinite scroll, tag search, and fullscreen viewer for Rule34. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/rule34.user.js) |
 | **turbo** | Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/turbo.user.js) |
 | **xenforo** | Full redesign for SimpCity and SocialMediaGirls with custom navigation, feeds, media tools, and forum layouts. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js) |
-| **bypassbr** | Age-gate and sensitive-media bypass adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, Sex.com, and Kick. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js) |
+| **bypassbr** | Age-gate and sensitive-media adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, Sex.com, and Kick, plus AgeGO, AgeChecker, and AgeVerif overlays on any site. | [Install](https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js) |
 
 ## Repository layout
 
