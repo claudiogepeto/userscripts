@@ -68,7 +68,7 @@
 
         /* Tempo */
         .${P}-plc-time { color: rgba(255,255,255,.88); font: 600 12px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 0 8px; white-space: nowrap; user-select: none; flex: 0 0 auto; }
-        @media (max-width: 600px) { .${P}-plc-act { width: 30px; height: 30px; } .${P}-plc-act svg { width: 17px; height: 17px; } .${P}-plc-time { font-size: 11px; padding: 0 4px; } }
+        @media (max-width: 600px) { .${P}-plc-act { width: 40px; min-width: 40px; height: 40px; min-height: 40px; } .${P}-plc-act svg { width: 17px; height: 17px; } .${P}-plc-time { font-size: 11px; padding: 0 4px; } }
 
         /* Feedback do seek flash */
         .${P}-plc-seekflash { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 3; color: #fff; font: 700 15px/1 Inter, system-ui, sans-serif; background: rgba(0,0,0,.65); padding: 9px 15px; border-radius: 999px; opacity: 0; transition: opacity .15s ease; pointer-events: none; white-space: nowrap; }
@@ -240,6 +240,7 @@
             .${P}-stage {
                 position: fixed !important;
                 inset: 0 !important;
+                padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
                 width: 100% !important;
                 height: 100% !important;
                 flex-direction: column !important;
@@ -337,7 +338,7 @@
                Linha 1: Controles de reprodução (Play, Repeat, Prev, Next, Skips, Vol, Tempo à direita)
                Linha 2: Ações secundárias (Autoplay à esquerda, Velocidade 1x, Report, Download, Share, PiP, Fullscreen à direita) */
             .${P}-plc-bottom {
-                padding: 0 8px 6px !important;
+                padding: 0 max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
             }
             .${P}-plc-row {
                 flex-direction: column !important;
@@ -350,7 +351,9 @@
                 align-items: center !important;
                 justify-content: flex-start !important;
                 width: 100% !important;
-                height: 34px !important;
+                height: auto !important;
+                min-height: 40px !important;
+                flex-wrap: wrap !important;
                 gap: 1px !important;
             }
             .${P}-plc-left .${P}-plc-time {
@@ -363,14 +366,24 @@
                 align-items: center !important;
                 justify-content: flex-end !important;
                 width: 100% !important;
-                height: 34px !important;
+                height: auto !important;
+                min-height: 40px !important;
+                flex-wrap: wrap !important;
                 padding-top: 3px !important;
                 border-top: 1px solid rgba(255,255,255,.08) !important;
                 gap: 3px !important;
             }
             .${P}-plc-act:not(.${P}-plc-autoplay):not(.${P}-plc-speed) {
-                width: 30px !important;
-                height: 30px !important;
+                width: 40px !important;
+                min-width: 40px !important;
+                height: 40px !important;
+                min-height: 40px !important;
+            }
+            .${P}-plc-barplay {
+                width: 40px !important;
+                min-width: 40px !important;
+                height: 40px !important;
+                min-height: 40px !important;
             }
             .${P}-plc-act svg {
                 width: 17px !important;
@@ -381,10 +394,14 @@
                 min-width: 86px !important;
                 flex: 0 0 auto !important;
                 margin-right: auto !important;
-                height: 28px !important;
+                min-height: 40px !important;
                 padding: 0 8px 0 10px !important;
                 gap: 6px !important;
                 white-space: nowrap !important;
+            }
+            .${P}-plc-speed {
+                min-width: 40px !important;
+                height: 40px !important;
             }
             .${P}-plc-ap-label {
                 font-size: 11px !important;

@@ -265,10 +265,12 @@
         .gbx-act:disabled { opacity: .35; cursor: default; }
         .gbx-act .gbx-ico, .gbx-act .gbx-ico svg { width: 20px; height: 20px; }
         .gbx-nav-side:disabled { display: none; }
-        @media (hover: none) { .gbx-bar { opacity: 1; pointer-events: auto; } }
         .gbx-stage-mid > .gbx-note { position: absolute; z-index: 3; }
+        @media (hover: none) { .gbx-bar { opacity: 1; pointer-events: auto; } }
         @media (max-width: 768px) {
             .gbx-top { flex-wrap: wrap; padding: 8px 12px; }
+            .gbx-bar { left: env(safe-area-inset-left); right: env(safe-area-inset-right); bottom: env(safe-area-inset-bottom); flex-wrap: wrap; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+            .gbx-act { min-width: 40px; min-height: 40px; }
         }
 
 ${mediaComponentCSS(mediaTheme()).player}
