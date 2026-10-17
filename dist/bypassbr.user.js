@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BypassBR
 // @namespace    claudiogepeto-bypassbr
-// @version      1.1.0
+// @version      1.2.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js
 // @description  Site-specific adapters for age gates and sensitive media restrictions.
@@ -21,6 +21,8 @@
 // @match        *://*.pornhub.com/*
 // @match        *://sex.com/*
 // @match        *://*.sex.com/*
+// @match        *://kick.com/*
+// @match        *://*.kick.com/*
 // @run-at       document-start
 // @noframes
 // @grant        none
@@ -821,5 +823,10 @@
             if (clean()) stopWatching();
             else if (!document.querySelector(AGE_MARKERS)) stopWatching();
         });
+    }
+    if (BypassBR.hostIs('kick.com')) {
+        BypassBR.addStyle('bypassbr-kick', `
+            [data-nosnippet].backdrop-blur-3xl { display: none !important; }
+        `);
     }
 })();

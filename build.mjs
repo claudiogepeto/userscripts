@@ -134,7 +134,7 @@ const README_DESCRIPTIONS = {
   rule34: "Dark theme, responsive media grid, infinite scroll, tag search, and fullscreen viewer for Rule34.",
   turbo: "Native player and theater stage for Turbo with signed-media playback, album navigation, search, and AMOLED styling.",
   xenforo: "Full redesign for SimpCity and SocialMediaGirls with custom navigation, feeds, media tools, and forum layouts.",
-  bypassbr: "Age-gate and sensitive-media bypass adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, and Sex.com.",
+  bypassbr: "Age-gate and sensitive-media bypass adapters for Twitter/X, SpankBang, Chaturbate, Erome, Pornhub, Sex.com, and Kick.",
 };
 const cards = parsed.map(p => ({
   id: p.name,
