@@ -169,7 +169,7 @@
         .${P}-nav-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 6; width: 46px; height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s ease, background .12s ease; }
         .${P}-nav-prev { left: 16px; } .${P}-nav-next { right: 16px; }
         .${P}-stage.has-nav .${P}-stage-mid:hover .${P}-nav-side { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .${P}-stage.has-nav .${P}-nav-side { opacity: .85; pointer-events: auto; } }
+        @media (hover: none), (pointer: coarse) { .${P}-nav-side { display: none !important; opacity: 0 !important; pointer-events: none !important; } }
         .${P}-nav-side:hover { background: rgba(0,0,0,.78); } .${P}-nav-side:active { transform: translateY(-50%) scale(.92); }
         .${P}-nav-side svg { width: 26px; height: 26px; display: block; }
         .${P}-nav-side.is-disabled { display: none !important; }

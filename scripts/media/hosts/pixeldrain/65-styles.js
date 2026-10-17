@@ -451,7 +451,7 @@
         .pdx-plc-side { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 46px; height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
         .pdx-plc-sprev { left: 12px; } .pdx-plc-snext { right: 12px; }
         .pdx-pl:hover .pdx-plc-side, .pdx-img-host:hover .pdx-plc-side { opacity: 1; pointer-events: auto; }
-        @media (hover:none) { .pdx-plc-side { opacity: .85; pointer-events: auto; } }
+        @media (hover:none), (pointer:coarse) { .pdx-plc-side { display: none !important; opacity: 0 !important; pointer-events: none !important; } }
         .pdx-plc-side:hover { background: rgba(0,0,0,.75); }
         .pdx-plc-side svg { width: 26px; height: 26px; }
 
