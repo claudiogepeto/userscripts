@@ -22,8 +22,11 @@
 
         /* Barra inferior de controles */
         .${P}-plc-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 0 14px 10px; background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.45) 55%, transparent 100%); opacity: 0; pointer-events: none; transition: opacity .2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; gap: 4px; }
-        .${P}-pl:hover .${P}-plc-bottom, .${P}-pl:not(.is-playing) .${P}-plc-bottom, .${P}-pl.is-menu-open .${P}-plc-bottom, .${P}-img-host:hover .${P}-plc-bottom, .${P}-img-host:focus-within .${P}-plc-bottom { opacity: 1; pointer-events: auto; }
-        @media (hover: none) { .${P}-plc-bottom { opacity: 1; pointer-events: auto; } }
+        .${P}-pl:hover .${P}-plc-bottom, .${P}-pl:not(.is-playing) .${P}-plc-bottom, .${P}-pl.is-menu-open .${P}-plc-bottom, .${P}-pl.is-interacting .${P}-plc-bottom, .${P}-plc-bottom:focus-within, .${P}-img-host:hover .${P}-plc-bottom, .${P}-img-host:focus-within .${P}-plc-bottom { opacity: 1; pointer-events: auto; }
+        .${P}-pl.is-controls-hidden .${P}-plc-bottom { opacity: 0; pointer-events: none; }
+        @media (hover: none) { .${P}-pl:not(.is-controls-hidden) .${P}-plc-bottom { opacity: 1; pointer-events: auto; } }
+        .${P}-pl.is-controls-hidden .${P}-plc-flash { opacity: 0; }
+        @media (hover: hover) and (pointer: fine) { .${P}-pl.is-controls-hidden, .${P}-pl.is-controls-hidden .${P}-video { cursor: none; } }
 
         /* Linha de progresso / scrubber com tooltip de tempo */
         .${P}-plc-prog { position: relative; width: 100%; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
