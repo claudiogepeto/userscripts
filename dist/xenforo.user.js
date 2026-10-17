@@ -9627,7 +9627,7 @@
     //     estado no history por abertura; o popstate fecha o sheet no lugar de navegar. Quem
     //     fecha por gesto/scrim consome esse estado (history.back) pra não deixar lixo.
     // Os três sheets (opções da dock, discover/conta, alertas) passam por aqui.
-    const smgSheets = { open: [], scrollY: 0, locks: 0, backs: 0 };
+    const smgSheets = { open: [], scrollY: 0, locks: 0, backEchoes: [] };
     // trava/destrava contadas: o modal de busca também usa (ele não é um .smg-sheet, mas no
     // mobile é um bottom sheet igual) e sobreposições não podem destravar uma à outra
     function smgLockScroll() {
@@ -9658,8 +9658,12 @@
         if (i === -1) return false;                 // já fechado → nada a desfazer (corta o eco do popstate)
         smgSheets.open.splice(i, 1);
         smgUnlockScroll();
-        // o popstate desse back chega DEPOIS (assíncrono): conta pra não fechar um modal aberto no meio
-        if (!fromPop) { try { smgSheets.backs++; history.back(); } catch (e) { smgSheets.backs = 0; } }
+        // O eco desse history.back() chega depois; guarde a URL de origem para não confundi-lo com Voltar.
+        if (!fromPop) {
+            const href = location.href;
+            smgSheets.backEchoes.push(href);
+            try { history.back(); } catch (e) { smgSheets.backEchoes.pop(); }
+        }
         return true;
     }
     function smgSheetOpen(sheet) {
@@ -9671,7 +9675,12 @@
         if (smgModalClose(sheet, fromPop)) sheet.classList.remove('open');
     }
     window.addEventListener('popstate', () => {
-        if (smgSheets.backs) { smgSheets.backs--; return; }   // eco do nosso próprio history.back()
+        // A UI fecha antes de history.back() entregar seu popstate. Correlacione o eco pela
+        // URL para não consumir um Voltar real que chegue primeiro; se a URL mudou, esse
+        // evento já é navegação do usuário e não deve ser descartado.
+        const echo = smgSheets.backEchoes.indexOf(location.href);
+        if (echo !== -1) { smgSheets.backEchoes.splice(0, echo + 1); return; }
+        smgSheets.backEchoes.length = 0;
         const top = smgSheets.open[smgSheets.open.length - 1];
         if (top && smgModalClose(top.key, true)) top.onPop();
     });
