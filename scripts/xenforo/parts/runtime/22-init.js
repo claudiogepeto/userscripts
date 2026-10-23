@@ -394,6 +394,7 @@
         if (FEATURES.topBar) safe(buildTopbar);
         safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
+        safe(setupHoverZoom);   // sempre montado: o switch hoverZoom é lido a cada hover (liga/desliga sem recarregar)
         safe(setupImageClickFeed);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);

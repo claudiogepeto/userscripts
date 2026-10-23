@@ -299,6 +299,16 @@
             html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
             .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
             .smg-thead-actions:empty { display: none !important; }   /* a mídia foi pra dock: barra vazia não ocupa espaço */
+            /* ZOOM NO HOVER (setupHoverZoom): preview flutuante da foto do cabeçalho e do rail de alertas */
+            #smg-hoverzoom {
+                position: fixed; z-index: var(--smg-z-max); box-sizing: border-box; padding: var(--smg-sp-4);
+                border-radius: var(--smg-r-14); background: var(--smg-s1); border: 1px solid var(--smg-w-10); box-shadow: var(--smg-pop-shadow);
+                pointer-events: none; opacity: 0; visibility: hidden; transform: scale(0.96); transform-origin: left top;
+                transition: opacity var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, visibility var(--smg-dur-15);
+            }
+            #smg-hoverzoom.open { opacity: 1; visibility: visible; transform: scale(1); }
+            #smg-hoverzoom img { display: block; width: 100%; height: auto; max-height: calc(100vh - 32px); object-fit: contain; border-radius: var(--smg-r-10); }
+            @media (prefers-reduced-motion: reduce) { #smg-hoverzoom { transition: none; transform: none; } }
             /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;

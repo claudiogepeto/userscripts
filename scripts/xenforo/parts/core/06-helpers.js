@@ -954,6 +954,45 @@
         try { thumbCache = JSON.parse(gmGet(THUMBC_KEY, '{}')) || {}; } catch (e) { thumbCache = {}; }
         return thumbCache;
     }
+    // ZOOM NO HOVER: a foto do cabeçalho do tópico e as fotos do rail de alertas abrem ampliadas num preview
+    // flutuante enquanto o mouse está em cima. Um listener delegado no document (cabeçalho e rail se refazem a
+    // cada página); o preview nunca recebe o clique. Só com mouse; o switch (FEATURES.hoverZoom) vale na hora.
+    const HOVER_ZOOM_SEL = '.smg-thead-thumb img, .smg-al-icon--thumb img';
+    function setupHoverZoom() {
+        if (!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+        let box = null, cur = null;
+        const hide = () => { cur = null; if (box) box.classList.remove('open'); };
+        const show = img => {
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'smg-hoverzoom';
+                box.setAttribute('aria-hidden', 'true');
+                box.style.pointerEvents = 'none';
+                box.appendChild(document.createElement('img'));
+                document.body.appendChild(box);
+            }
+            box.firstChild.src = img.currentSrc || img.src;
+            // ao lado da foto: à direita, ou à esquerda quando não cabe (o rail de alertas fica colado na borda)
+            const r = img.getBoundingClientRect();
+            const w = Math.min(360, window.innerWidth - 24);
+            let x = r.right + 12;
+            if (x + w > window.innerWidth - 12) x = Math.max(12, r.left - 12 - w);
+            box.style.left = x + 'px';
+            box.style.top = Math.min(Math.max(12, r.top), Math.max(12, window.innerHeight - 12 - w)) + 'px';
+            box.style.width = w + 'px';
+            box.classList.add('open');
+        };
+        document.addEventListener('mouseover', e => {
+            const img = e.target && e.target.closest ? e.target.closest(HOVER_ZOOM_SEL) : null;
+            if (!img || img === cur || !FEATURES.hoverZoom) return;
+            cur = img;
+            show(img);
+        }, true);
+        document.addEventListener('mouseout', e => { if (cur && e.target === cur) hide(); }, true);
+        window.addEventListener('scroll', hide, { passive: true, capture: true });
+        document.addEventListener('smg:page', hide);
+    }
+
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
         const id = threadIdOf(href);

@@ -17,7 +17,7 @@
         'Appearance': 'Aparência', 'Videos': 'Vídeos', 'Links & files': 'Links e arquivos', 'Infinite scroll': 'Rolagem infinita', 'Thread & reading': 'Thread e leitura',
         // settings — labels dos toggles (a descrição é inline no SETTINGS_META)
         'Redesigned top bar': 'Barra superior redesenhada', 'Reworked homepage': 'Página inicial reformulada',
-        'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado',
+        'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado', 'Zoom pictures on hover': 'Zoom nas fotos ao passar o mouse',
         'Image grid in posts': 'Grade de imagens nos posts',
         'Replace thumbnails with full images': 'Substituir miniaturas pelas imagens finais', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
         'RedGifs — load automatically': 'RedGifs — carregar automaticamente', 'RedGifs — built-in player': 'RedGifs — player próprio',

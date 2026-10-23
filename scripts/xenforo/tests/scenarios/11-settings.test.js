@@ -36,6 +36,11 @@ const CASES = {
     customFavicon: { open: thread('x'), seen: p => !!p.$('#smg-favicon') },
     autoFullImages: { open: thread('<img class="bbImage" src="https://example.com/a.jpg" width="9" height="9"><br><img class="bbImage" src="https://example.com/b.jpg" width="9" height="9">'), seen: p => !!p.$('.auto-image-grid') },
     replaceThumbsWithFull: { open: thread('<img class="bbImage" src="https://simp6.example.su/images/pic.md.jpg" alt="">', { imagesLoad: true }), seen: p => /\/pic\.jpg$/.test(p.$('.bbWrapper img').getAttribute('src')) },
+    hoverZoom: {
+        open: thread('<img class="bbImage" src="https://img.example/zoom.jpg" alt="">'),
+        act: async p => { const img = p.$('.smg-thead-thumb img'); if (img) img.dispatchEvent(new p.window.MouseEvent('mouseover', { bubbles: true })); await p.settle(10); },
+        seen: p => !!p.$('#smg-hoverzoom.open'),
+    },
     thumbPlaceholders: { open: { url: SMG + FORUM, html: listingPage({ rows: [{ id: 5 }] }) }, seen: p => !!p.$('.structItem--thread .smg-thumb-ph') },
     autoLoadRedgifs: {
         base: { redgifsPlayer: false },

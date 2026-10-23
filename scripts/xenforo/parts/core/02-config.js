@@ -32,6 +32,7 @@
         groupLinks: true,           // agrupa os links de file-host (GoFile/Bunkr/…) numa barra de chips no post
         shareDirectLink: true,      // Compartilhar copia o link direto do post (em vez de abrir o menu de compartilhamento do XF)
         bookmarksFeed: true,        // /account/bookmarks: substitui a lista nativa por um feed com os posts salvos (igual o feed da home)
+        hoverZoom: true,            // foto do cabeçalho do tópico e do rail de alertas amplia num preview flutuante no hover (só mouse)
     };
 
     // persistência (engrenagem na dock) — GM_*Value com fallback p/ localStorage
@@ -63,6 +64,7 @@
             { key: 'autoFullImages', label: 'Image grid in posts', desc: { en: "Lays each post's images out in a masonry mosaic and loads them at medium quality to save data. Off, it keeps the original thumbnails, with no grid.", pt: 'Dispõe as imagens de cada post num mosaico (masonry) e as carrega em qualidade média, para poupar dados. Desligado, mantém as miniaturas originais, sem grade.' } },
             { key: 'replaceThumbsWithFull', label: 'Replace thumbnails with full images', desc: { en: 'Replaces post thumbnails with their full resolution images directly in the post (uses more data).', pt: 'Substitui as miniaturas dos posts pelas imagens finais em resolução completa diretamente no post (consome mais dados).' } },
             { key: 'thumbPlaceholders', label: 'Placeholder for missing thumbnails', desc: { en: 'Puts a branded badge in place of thumbnails that are missing or failed to load.', pt: 'Coloca um selo com a identidade do site no lugar de miniaturas que faltam ou falharam ao carregar.' } },
+            { key: 'hoverZoom', label: 'Zoom pictures on hover', desc: { en: 'Resting the mouse on the thread picture in the header or in the alerts panel shows it enlarged. Mouse only.', pt: 'Ao parar o mouse sobre a foto do tópico no cabeçalho ou no painel de alertas, ela aparece ampliada. Só com mouse.' } },
         ] },
         { section: 'Videos', items: [
             { key: 'autoLoadRedgifs', label: 'RedGifs — load automatically', desc: { en: 'Opens RedGifs players on their own, without requiring a click on the load prompt.', pt: 'Abre os players do RedGifs sozinho, sem exigir o clique no aviso de carregamento.' } },
