@@ -187,6 +187,9 @@
             .block-body--messages {
                 overflow-anchor: auto !important;
             }
+            /* o que fica depois da lista com scroll infinito (markAfterList) nunca é âncora: senão o rodapé
+               "segura" a tela no fim enquanto as páginas novas entram acima dele */
+            [data-smg-after-list] { overflow-anchor: none !important; }
             .auto-image-grid,
             .auto-image-grid > *,
             .auto-image-grid img.bbImage,

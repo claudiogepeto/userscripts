@@ -293,6 +293,15 @@
         }, { rootMargin: FAR_MEDIA_MARGIN }));
         return farMediaIO;
     }
+    // TUDO o que vem DEPOIS da lista (paginador de baixo, resposta rápida, rodapé alto do SMG) sai da escolha
+    // de âncora do scroll anchoring. No fim da página só o rodapé aparece na tela; ele virava a âncora e, como
+    // as páginas novas entram ACIMA dele, o navegador descia junto — o leitor ficava preso no fim e cada
+    // descida disparava a próxima página. Sem âncora ali, a página cresce abaixo de quem está lendo.
+    function markAfterList(container) {
+        for (let n = container; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+            for (let sib = n.nextElementSibling; sib; sib = sib.nextElementSibling) sib.setAttribute('data-smg-after-list', '');
+        }
+    }
     function watchFarMedia(posts) {
         const io = farMediaObserver();
         if (io) posts.forEach(p => io.observe(p));
@@ -439,6 +448,7 @@
         const originalUrl = location.pathname + location.search;
 
         infScrollBound = true;
+        markAfterList(container);
         let lastNum = startPage;
         // thread: posts longe da tela soltam a mídia pesada (vale pros da 1ª página também)
         const farMedia = itemSelector === '.message--post';

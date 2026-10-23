@@ -80,7 +80,9 @@
                 overflow-anchor: none !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08);
                 clip-path: inset(0 -100vmax 0);
-                transition: padding var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), height var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), box-shadow var(--smg-dur-20) ease;
+                /* SÓ a sombra anima: o header está no fluxo, e animar padding/altura fazia o conteúdo deslizar
+                   por baixo a cada vez que ele gruda/solta (o espaçador compensa de uma vez, a animação não) */
+                transition: box-shadow var(--smg-dur-20) ease;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */

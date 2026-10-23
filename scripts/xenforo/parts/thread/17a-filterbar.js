@@ -575,40 +575,42 @@
 
     function createStickySync(header, sentinel, spacer) {
         let topOff = null;
-        let naturalHeight = 0;
-        const stuckHeight = 48;
         let ticking = false;
 
+        // troca o estado SEM mover o conteúdo: mede onde começa o que vem depois do header, troca a classe e
+        // devolve ao espaçador exatamente o que o header encolheu. Antes o espaçador usava a altura natural
+        // medida 1x e um "grudado" fixo de 48px — qualquer diferença (margem, thumb, tags, fonte) virava um
+        // pulo do conteúdo a cada passagem pelo topo.
+        const setStuck = on => {
+            const next = header.nextElementSibling;
+            const before = next ? next.getBoundingClientRect().top : null;
+            header.classList.toggle('is-stuck', on);
+            if (!spacer) return;
+            spacer.style.display = 'none';
+            spacer.style.height = '0px';
+            if (!on || before == null) return;
+            const diff = Math.round(before - next.getBoundingClientRect().top);
+            if (diff > 0) {
+                spacer.style.height = diff + 'px';
+                spacer.style.display = 'block';
+            }
+        };
         const measure = () => {
             if (!header.isConnected) return;
             const wasStuck = header.classList.contains('is-stuck');
-            if (wasStuck) {
-                header.classList.remove('is-stuck');
-                if (spacer) spacer.style.display = 'none';
-            }
-            naturalHeight = header.offsetHeight || 156;
+            if (wasStuck) setStuck(false);
             topOff = parseFloat(getComputedStyle(header).top) || 60;
-            if (wasStuck) {
-                header.classList.add('is-stuck');
-                if (spacer) {
-                    const diff = Math.max(0, naturalHeight - stuckHeight);
-                    spacer.style.height = diff + 'px';
-                    spacer.style.display = diff > 0 ? 'block' : 'none';
-                }
-            }
+            if (wasStuck) setStuck(true);
         };
 
         const syncStuck = () => {
             if (!header.isConnected) return;
             if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) {
-                if (header.classList.contains('is-stuck')) {
-                    header.classList.remove('is-stuck');
-                    if (spacer) spacer.style.display = 'none';
-                }
+                if (header.classList.contains('is-stuck')) setStuck(false);
                 topOff = null;
                 return;
             }
-            if (topOff == null || naturalHeight === 0) measure();
+            if (topOff == null) measure();
 
             const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel ? sentinel.getBoundingClientRect().top : 100;
@@ -616,23 +618,10 @@
 
             if (!stuck) {
                 // SÓ GRUDA QUANDO: scrollY > 40 E sentinela passou do topo
-                if (scrollY > 40 && y <= topOff - 8) {
-                    header.classList.add('is-stuck');
-                    if (spacer) {
-                        const diff = Math.max(0, naturalHeight - stuckHeight);
-                        spacer.style.height = diff + 'px';
-                        spacer.style.display = diff > 0 ? 'block' : 'none';
-                    }
-                }
+                if (scrollY > 40 && y <= topOff - 8) setStuck(true);
             } else {
                 // SÓ DESMARCA QUANDO: voltou ao topo ou sentinela desceu com folga
-                if (scrollY <= 20 || y >= topOff + 45) {
-                    header.classList.remove('is-stuck');
-                    if (spacer) {
-                        spacer.style.display = 'none';
-                        spacer.style.height = '0px';
-                    }
-                }
+                if (scrollY <= 20 || y >= topOff + 45) setStuck(false);
             }
         };
 
@@ -646,7 +635,7 @@
             }
         };
 
-        const onResize = () => { topOff = null; naturalHeight = 0; measure(); syncStuck(); };
+        const onResize = () => { topOff = null; measure(); syncStuck(); };
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', onResize, { passive: true });
         const dispose = () => {

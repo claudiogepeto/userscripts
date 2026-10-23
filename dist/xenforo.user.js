@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.9.1
+// @version      4.10.1
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -203,6 +203,7 @@
         groupLinks: true,           // agrupa os links de file-host (GoFile/Bunkr/…) numa barra de chips no post
         shareDirectLink: true,      // Compartilhar copia o link direto do post (em vez de abrir o menu de compartilhamento do XF)
         bookmarksFeed: true,        // /account/bookmarks: substitui a lista nativa por um feed com os posts salvos (igual o feed da home)
+        hoverZoom: true,            // foto do cabeçalho do tópico e do rail de alertas amplia num preview flutuante no hover (só mouse)
     };
 
     // persistência (engrenagem na dock) — GM_*Value com fallback p/ localStorage
@@ -234,6 +235,7 @@
             { key: 'autoFullImages', label: 'Image grid in posts', desc: { en: "Lays each post's images out in a masonry mosaic and loads them at medium quality to save data. Off, it keeps the original thumbnails, with no grid.", pt: 'Dispõe as imagens de cada post num mosaico (masonry) e as carrega em qualidade média, para poupar dados. Desligado, mantém as miniaturas originais, sem grade.' } },
             { key: 'replaceThumbsWithFull', label: 'Replace thumbnails with full images', desc: { en: 'Replaces post thumbnails with their full resolution images directly in the post (uses more data).', pt: 'Substitui as miniaturas dos posts pelas imagens finais em resolução completa diretamente no post (consome mais dados).' } },
             { key: 'thumbPlaceholders', label: 'Placeholder for missing thumbnails', desc: { en: 'Puts a branded badge in place of thumbnails that are missing or failed to load.', pt: 'Coloca um selo com a identidade do site no lugar de miniaturas que faltam ou falharam ao carregar.' } },
+            { key: 'hoverZoom', label: 'Zoom pictures on hover', desc: { en: 'Resting the mouse on the thread picture in the header or in the alerts panel shows it enlarged. Mouse only.', pt: 'Ao parar o mouse sobre a foto do tópico no cabeçalho ou no painel de alertas, ela aparece ampliada. Só com mouse.' } },
         ] },
         { section: 'Videos', items: [
             { key: 'autoLoadRedgifs', label: 'RedGifs — load automatically', desc: { en: 'Opens RedGifs players on their own, without requiring a click on the load prompt.', pt: 'Abre os players do RedGifs sozinho, sem exigir o clique no aviso de carregamento.' } },
@@ -281,7 +283,7 @@
         'Appearance': 'Aparência', 'Videos': 'Vídeos', 'Links & files': 'Links e arquivos', 'Infinite scroll': 'Rolagem infinita', 'Thread & reading': 'Thread e leitura',
         // settings — labels dos toggles (a descrição é inline no SETTINGS_META)
         'Redesigned top bar': 'Barra superior redesenhada', 'Reworked homepage': 'Página inicial reformulada',
-        'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado',
+        'Notices tucked into an icon': 'Avisos recolhidos num ícone', 'Custom tab icon': 'Ícone da aba personalizado', 'Zoom pictures on hover': 'Zoom nas fotos ao passar o mouse',
         'Image grid in posts': 'Grade de imagens nos posts',
         'Replace thumbnails with full images': 'Substituir miniaturas pelas imagens finais', 'Placeholder for missing thumbnails': 'Marcador para miniatura ausente',
         'RedGifs — load automatically': 'RedGifs — carregar automaticamente', 'RedGifs — built-in player': 'RedGifs — player próprio',
@@ -822,6 +824,9 @@
             .block-body--messages {
                 overflow-anchor: auto !important;
             }
+            /* o que fica depois da lista com scroll infinito (markAfterList) nunca é âncora: senão o rodapé
+               "segura" a tela no fim enquanto as páginas novas entram acima dele */
+            [data-smg-after-list] { overflow-anchor: none !important; }
             .auto-image-grid,
             .auto-image-grid > *,
             .auto-image-grid img.bbImage,
@@ -6548,7 +6553,9 @@
                 overflow-anchor: none !important;
                 box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08);
                 clip-path: inset(0 -100vmax 0);
-                transition: padding var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), height var(--smg-dur-20) cubic-bezier(0.2, 0, 0, 1), box-shadow var(--smg-dur-20) ease;
+                /* SÓ a sombra anima: o header está no fluxo, e animar padding/altura fazia o conteúdo deslizar
+                   por baixo a cada vez que ele gruda/solta (o espaçador compensa de uma vez, a animação não) */
+                transition: box-shadow var(--smg-dur-20) ease;
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -6767,6 +6774,16 @@
             html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
             .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
             .smg-thead-actions:empty { display: none !important; }   /* a mídia foi pra dock: barra vazia não ocupa espaço */
+            /* ZOOM NO HOVER (setupHoverZoom): preview flutuante da foto do cabeçalho e do rail de alertas */
+            #smg-hoverzoom {
+                position: fixed; z-index: var(--smg-z-max); box-sizing: border-box; padding: var(--smg-sp-4);
+                border-radius: var(--smg-r-14); background: var(--smg-s1); border: 1px solid var(--smg-w-10); box-shadow: var(--smg-pop-shadow);
+                pointer-events: none; opacity: 0; visibility: hidden; transform: scale(0.96); transform-origin: left top;
+                transition: opacity var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, visibility var(--smg-dur-15);
+            }
+            #smg-hoverzoom.open { opacity: 1; visibility: visible; transform: scale(1); }
+            #smg-hoverzoom img { display: block; width: 100%; height: auto; max-height: calc(100vh - 32px); object-fit: contain; border-radius: var(--smg-r-10); }
+            @media (prefers-reduced-motion: reduce) { #smg-hoverzoom { transition: none; transform: none; } }
             /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;
@@ -10072,6 +10089,45 @@
         try { thumbCache = JSON.parse(gmGet(THUMBC_KEY, '{}')) || {}; } catch (e) { thumbCache = {}; }
         return thumbCache;
     }
+    // ZOOM NO HOVER: a foto do cabeçalho do tópico e as fotos do rail de alertas abrem ampliadas num preview
+    // flutuante enquanto o mouse está em cima. Um listener delegado no document (cabeçalho e rail se refazem a
+    // cada página); o preview nunca recebe o clique. Só com mouse; o switch (FEATURES.hoverZoom) vale na hora.
+    const HOVER_ZOOM_SEL = '.smg-thead-thumb img, .smg-al-icon--thumb img';
+    function setupHoverZoom() {
+        if (!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+        let box = null, cur = null;
+        const hide = () => { cur = null; if (box) box.classList.remove('open'); };
+        const show = img => {
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'smg-hoverzoom';
+                box.setAttribute('aria-hidden', 'true');
+                box.style.pointerEvents = 'none';
+                box.appendChild(document.createElement('img'));
+                document.body.appendChild(box);
+            }
+            box.firstChild.src = img.currentSrc || img.src;
+            // ao lado da foto: à direita, ou à esquerda quando não cabe (o rail de alertas fica colado na borda)
+            const r = img.getBoundingClientRect();
+            const w = Math.min(360, window.innerWidth - 24);
+            let x = r.right + 12;
+            if (x + w > window.innerWidth - 12) x = Math.max(12, r.left - 12 - w);
+            box.style.left = x + 'px';
+            box.style.top = Math.min(Math.max(12, r.top), Math.max(12, window.innerHeight - 12 - w)) + 'px';
+            box.style.width = w + 'px';
+            box.classList.add('open');
+        };
+        document.addEventListener('mouseover', e => {
+            const img = e.target && e.target.closest ? e.target.closest(HOVER_ZOOM_SEL) : null;
+            if (!img || img === cur || !FEATURES.hoverZoom) return;
+            cur = img;
+            show(img);
+        }, true);
+        document.addEventListener('mouseout', e => { if (cur && e.target === cur) hide(); }, true);
+        window.addEventListener('scroll', hide, { passive: true, capture: true });
+        document.addEventListener('smg:page', hide);
+    }
+
     // ordem: id da thread (exato) → título (único elo quando o link é de /posts/N) → padrão de URL
     function thumbCacheGet(href, title) {
         const id = threadIdOf(href);
@@ -11306,6 +11362,15 @@
         }, { rootMargin: FAR_MEDIA_MARGIN }));
         return farMediaIO;
     }
+    // TUDO o que vem DEPOIS da lista (paginador de baixo, resposta rápida, rodapé alto do SMG) sai da escolha
+    // de âncora do scroll anchoring. No fim da página só o rodapé aparece na tela; ele virava a âncora e, como
+    // as páginas novas entram ACIMA dele, o navegador descia junto — o leitor ficava preso no fim e cada
+    // descida disparava a próxima página. Sem âncora ali, a página cresce abaixo de quem está lendo.
+    function markAfterList(container) {
+        for (let n = container; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+            for (let sib = n.nextElementSibling; sib; sib = sib.nextElementSibling) sib.setAttribute('data-smg-after-list', '');
+        }
+    }
     function watchFarMedia(posts) {
         const io = farMediaObserver();
         if (io) posts.forEach(p => io.observe(p));
@@ -11452,6 +11517,7 @@
         const originalUrl = location.pathname + location.search;
 
         infScrollBound = true;
+        markAfterList(container);
         let lastNum = startPage;
         // thread: posts longe da tela soltam a mídia pesada (vale pros da 1ª página também)
         const farMedia = itemSelector === '.message--post';
@@ -14792,6 +14858,7 @@
                 dockPageKind = nextKind;
                 navWrapper.classList.toggle('smg-dock-as-list', isList);
                 navWrapper.classList.toggle('smg-dock-baronly', !isThread && !isList);
+                arrangeDesktopDock();
                 syncDockRouteControls();
             }
             refreshDockPage();
@@ -15010,30 +15077,36 @@
         dockPagerGroup = makeGroup(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
         dockPagerGroup.classList.add('smg-nav-pager');
         dockPagerGroup.hidden = !pageJump;
-        if (isThread) {
-            // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
-            const actionsGroup = makeGroup(btnWatch, btnMedia);
-            actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
-            pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const scrollGroup = makeGroup(btnUp, btnDown);
-            scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
+        // O arranjo do desktop segue o tipo da página ATUAL, não o do nascimento: a dock sobrevive à navegação
+        // interna (home → tópico), e montar só uma vez deixava o tópico com o arranjo da lista (sort fora de
+        // ordem, sem subir/descer). Remonta o painel com os mesmos nós sempre que o tipo muda.
+        function arrangeDesktopDock() {
+            if (isThread) {
+                // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
+                const actionsGroup = makeGroup(btnWatch, btnMedia);
+                actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
+                const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
+                pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
+                const scrollGroup = makeGroup(btnUp, btnDown);
+                scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
-            panel.append(
-                btnSettings, makeDivider(),
-                contextBar,
-                actionsGroup, makeDivider(),
-                centralGroup, makeDivider(),
-                pagenavGroup, makeDivider(),
-                scrollGroup,
-                btnSheet
-            );
-        } else {
-            const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
-            const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side--desktop-only';
-            panel.append(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
+                panel.replaceChildren(
+                    btnSettings, makeDivider(),
+                    contextBar,
+                    actionsGroup, makeDivider(),
+                    centralGroup, makeDivider(),
+                    pagenavGroup, makeDivider(),
+                    scrollGroup,
+                    btnSheet
+                );
+            } else {
+                const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
+                const listGroup = makeGroup(...listBtns.filter(Boolean));
+                listGroup.className = 'smg-nav-group smg-side--desktop-only';
+                panel.replaceChildren(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
+            }
         }
+        arrangeDesktopDock();
 
         const navWrapper = document.createElement('div');
         navWrapper.id = 'smg-post-nav-wrapper';
@@ -20889,40 +20962,42 @@
 
     function createStickySync(header, sentinel, spacer) {
         let topOff = null;
-        let naturalHeight = 0;
-        const stuckHeight = 48;
         let ticking = false;
 
+        // troca o estado SEM mover o conteúdo: mede onde começa o que vem depois do header, troca a classe e
+        // devolve ao espaçador exatamente o que o header encolheu. Antes o espaçador usava a altura natural
+        // medida 1x e um "grudado" fixo de 48px — qualquer diferença (margem, thumb, tags, fonte) virava um
+        // pulo do conteúdo a cada passagem pelo topo.
+        const setStuck = on => {
+            const next = header.nextElementSibling;
+            const before = next ? next.getBoundingClientRect().top : null;
+            header.classList.toggle('is-stuck', on);
+            if (!spacer) return;
+            spacer.style.display = 'none';
+            spacer.style.height = '0px';
+            if (!on || before == null) return;
+            const diff = Math.round(before - next.getBoundingClientRect().top);
+            if (diff > 0) {
+                spacer.style.height = diff + 'px';
+                spacer.style.display = 'block';
+            }
+        };
         const measure = () => {
             if (!header.isConnected) return;
             const wasStuck = header.classList.contains('is-stuck');
-            if (wasStuck) {
-                header.classList.remove('is-stuck');
-                if (spacer) spacer.style.display = 'none';
-            }
-            naturalHeight = header.offsetHeight || 156;
+            if (wasStuck) setStuck(false);
             topOff = parseFloat(getComputedStyle(header).top) || 60;
-            if (wasStuck) {
-                header.classList.add('is-stuck');
-                if (spacer) {
-                    const diff = Math.max(0, naturalHeight - stuckHeight);
-                    spacer.style.height = diff + 'px';
-                    spacer.style.display = diff > 0 ? 'block' : 'none';
-                }
-            }
+            if (wasStuck) setStuck(true);
         };
 
         const syncStuck = () => {
             if (!header.isConnected) return;
             if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) {
-                if (header.classList.contains('is-stuck')) {
-                    header.classList.remove('is-stuck');
-                    if (spacer) spacer.style.display = 'none';
-                }
+                if (header.classList.contains('is-stuck')) setStuck(false);
                 topOff = null;
                 return;
             }
-            if (topOff == null || naturalHeight === 0) measure();
+            if (topOff == null) measure();
 
             const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel ? sentinel.getBoundingClientRect().top : 100;
@@ -20930,23 +21005,10 @@
 
             if (!stuck) {
                 // SÓ GRUDA QUANDO: scrollY > 40 E sentinela passou do topo
-                if (scrollY > 40 && y <= topOff - 8) {
-                    header.classList.add('is-stuck');
-                    if (spacer) {
-                        const diff = Math.max(0, naturalHeight - stuckHeight);
-                        spacer.style.height = diff + 'px';
-                        spacer.style.display = diff > 0 ? 'block' : 'none';
-                    }
-                }
+                if (scrollY > 40 && y <= topOff - 8) setStuck(true);
             } else {
                 // SÓ DESMARCA QUANDO: voltou ao topo ou sentinela desceu com folga
-                if (scrollY <= 20 || y >= topOff + 45) {
-                    header.classList.remove('is-stuck');
-                    if (spacer) {
-                        spacer.style.display = 'none';
-                        spacer.style.height = '0px';
-                    }
-                }
+                if (scrollY <= 20 || y >= topOff + 45) setStuck(false);
             }
         };
 
@@ -20960,7 +21022,7 @@
             }
         };
 
-        const onResize = () => { topOff = null; naturalHeight = 0; measure(); syncStuck(); };
+        const onResize = () => { topOff = null; measure(); syncStuck(); };
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', onResize, { passive: true });
         const dispose = () => {
@@ -27533,6 +27595,7 @@
         if (FEATURES.topBar) safe(buildTopbar);
         safe(setupPostNavigation);
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
+        safe(setupHoverZoom);   // sempre montado: o switch hoverZoom é lido a cada hover (liga/desliga sem recarregar)
         safe(setupImageClickFeed);
         if (FEATURES.alertsDock) safe(setupAlertsDock);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
