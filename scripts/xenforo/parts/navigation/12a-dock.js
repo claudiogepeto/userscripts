@@ -322,6 +322,7 @@
                 dockPageKind = nextKind;
                 navWrapper.classList.toggle('smg-dock-as-list', isList);
                 navWrapper.classList.toggle('smg-dock-baronly', !isThread && !isList);
+                arrangeDesktopDock();
                 syncDockRouteControls();
             }
             refreshDockPage();
@@ -540,30 +541,36 @@
         dockPagerGroup = makeGroup(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
         dockPagerGroup.classList.add('smg-nav-pager');
         dockPagerGroup.hidden = !pageJump;
-        if (isThread) {
-            // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
-            const actionsGroup = makeGroup(btnWatch, btnMedia);
-            actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
-            pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const scrollGroup = makeGroup(btnUp, btnDown);
-            scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
+        // O arranjo do desktop segue o tipo da página ATUAL, não o do nascimento: a dock sobrevive à navegação
+        // interna (home → tópico), e montar só uma vez deixava o tópico com o arranjo da lista (sort fora de
+        // ordem, sem subir/descer). Remonta o painel com os mesmos nós sempre que o tipo muda.
+        function arrangeDesktopDock() {
+            if (isThread) {
+                // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
+                const actionsGroup = makeGroup(btnWatch, btnMedia);
+                actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
+                const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
+                pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
+                const scrollGroup = makeGroup(btnUp, btnDown);
+                scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
-            panel.append(
-                btnSettings, makeDivider(),
-                contextBar,
-                actionsGroup, makeDivider(),
-                centralGroup, makeDivider(),
-                pagenavGroup, makeDivider(),
-                scrollGroup,
-                btnSheet
-            );
-        } else {
-            const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
-            const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side--desktop-only';
-            panel.append(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
+                panel.replaceChildren(
+                    btnSettings, makeDivider(),
+                    contextBar,
+                    actionsGroup, makeDivider(),
+                    centralGroup, makeDivider(),
+                    pagenavGroup, makeDivider(),
+                    scrollGroup,
+                    btnSheet
+                );
+            } else {
+                const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
+                const listGroup = makeGroup(...listBtns.filter(Boolean));
+                listGroup.className = 'smg-nav-group smg-side--desktop-only';
+                panel.replaceChildren(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
+            }
         }
+        arrangeDesktopDock();
 
         const navWrapper = document.createElement('div');
         navWrapper.id = 'smg-post-nav-wrapper';
