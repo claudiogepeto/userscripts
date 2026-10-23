@@ -25,7 +25,7 @@ const settingsTexts = page => ({
 
 scenario('an English forum gets English UI', async t => {
     const page = await threadIn(t, 'en');
-    assert.equal(page.$('.smg-thead-actions .smg-thead-btn').getAttribute('aria-label'), 'Media');
+    assert.equal(page.$('#smg-thread-media').getAttribute('aria-label'), 'Media');
     assert.equal(page.text('.smg-inf-sep'), 'Page 2');
     const s = settingsTexts(page);
     assert.ok(s.sections.includes('Appearance') && s.labels.includes('Redesigned top bar'));
@@ -34,7 +34,7 @@ scenario('an English forum gets English UI', async t => {
 
 scenario('a Portuguese forum gets Portuguese UI in the same places', async t => {
     const page = await threadIn(t, 'pt');
-    assert.equal(page.$('.smg-thead-actions .smg-thead-btn').getAttribute('aria-label'), 'Mídia');
+    assert.equal(page.$('#smg-thread-media').getAttribute('aria-label'), 'Mídia');
     assert.equal(page.text('.smg-inf-sep'), 'Página 2');
     const s = settingsTexts(page);
     assert.ok(s.sections.includes('Aparência') && s.labels.includes('Barra superior redesenhada'));

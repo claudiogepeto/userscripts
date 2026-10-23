@@ -24,13 +24,13 @@ async function mediaPage(t, extra) {
     return page;
 }
 
-scenario('the thread header has one Media button; it opens the overlay on the Gallery with page 1 media', async t => {
+scenario('the dock has the one Media button; it opens the overlay on the Gallery with page 1 media', async t => {
     const page = await mediaPage(t);
-    const btns = page.$$('.smg-thead-actions .smg-thead-btn');
-    assert.equal(btns.length, 1);
-    assert.equal(btns[0].getAttribute('aria-label'), 'Media');
-    assert.ok(page.$('#smg-thread-media'), 'the dock has the same entry');
-    page.click(btns[0]);
+    const btn = page.$('#smg-thread-media');
+    assert.ok(btn, 'the dock carries the Media entry');
+    assert.equal(btn.getAttribute('aria-label'), 'Media');
+    assert.equal(page.$$('.smg-thead-actions .smg-thead-btn').length, 0, 'the sticky header no longer repeats it');
+    page.click(btn);
     await page.settle(60);
     const root = page.$('#smg-media');
     assert.ok(root.classList.contains('open'));
@@ -45,7 +45,7 @@ scenario('the thread header has one Media button; it opens the overlay on the Ga
 
 scenario('switching Gallery and Feed reuses the same list without fetching again', async t => {
     const page = await mediaPage(t);
-    page.click('.smg-thead-actions .smg-thead-btn');
+    page.click('#smg-thread-media');
     await page.settle(60);
     page.click('#smg-media-view-feed');
     await page.settle(30);
@@ -64,7 +64,7 @@ scenario('switching Gallery and Feed reuses the same list without fetching again
 
 scenario('a gallery tile opens the Feed on that item; a video tile maximise opens it with its player', async t => {
     const page = await mediaPage(t);
-    page.click('.smg-thead-actions .smg-thead-btn');
+    page.click('#smg-thread-media');
     await page.settle(60);
     page.click(page.$$('#smg-gallery .smg-gallery-tile--image')[1]);
     await page.settle(30);
@@ -80,7 +80,7 @@ scenario('a gallery tile opens the Feed on that item; a video tile maximise open
 
 scenario('the gallery lays its tiles on the masonry engine: landscape tiles span 2 of 3 columns', async t => {
     const page = await mediaPage(t);
-    page.click('.smg-thead-actions .smg-thead-btn');
+    page.click('#smg-thread-media');
     await page.settle(60);
     const cols = page.$('#smg-gallery .smg-gallery-cols');
     assert.ok(cols.classList.contains('smg-mason'));
@@ -97,7 +97,7 @@ scenario('the gallery lays its tiles on the masonry engine: landscape tiles span
 
 scenario('closing tears the overlay down; Escape closes it too', async t => {
     const page = await mediaPage(t);
-    page.click('.smg-thead-actions .smg-thead-btn');
+    page.click('#smg-thread-media');
     await page.settle(60);
     const root = page.$('#smg-media');
     assert.equal(root.querySelector('.smg-feed-close'), null, 'the feed has no close button of its own');

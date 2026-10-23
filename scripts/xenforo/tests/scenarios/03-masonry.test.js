@@ -220,7 +220,7 @@ scenario('gallery: a section of only landscape media lays out in pairs', async t
         routes: [[/\/threads\/sample-thread\.100\/(\?|$)/, () => threadPage({ posts: [{ id: 1, body }] })]],
     });
     await page.settle(50);
-    page.click('.smg-thead-actions .smg-thead-btn');
+    page.click('#smg-thread-media');
     await page.settle(60);
     const sec = page.$('#smg-gallery .smg-gallery-cols');
     assert.equal(sec.querySelectorAll('.smg-gallery-tile').length, 3);

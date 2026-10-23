@@ -44,7 +44,7 @@ scenario('opening a thread you watch stores its posts and the thread, in the fee
 scenario('the stored thread name is exactly the title, without the controls the script adds to the header', async t => {
     const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 31 }], watching: true }) });
     await page.settle(150);
-    assert.ok(page.$('.p-body-header .smg-thead-actions'), 'the rebuilt header carries the Media button');
+    assert.ok(page.$('.p-body-header.smg-thead-unified'), 'the header was rebuilt with the script controls');
     assert.deepEqual(page.idbRows('timeline').map(r => r.thread_name), ['Sample Thread']);
     assert.deepEqual(page.idbRows('followed').map(r => r.thread_name), ['Sample Thread']);
 });
