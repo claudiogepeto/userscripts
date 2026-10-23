@@ -5,8 +5,10 @@
     // ── CSS: settings panel ──
     const CSS_SETTINGS = `
             /* ===== painel de settings (estilo painel do Twitter): header + busca + rail de categorias + seções + footer ===== */
-            #smg-settings-pop { width: 460px; max-height: 86vh; padding: 0 !important; gap: 0 !important; overflow: hidden; }
-            #smg-settings-pop .smg-set-body { min-height: 0; }
+            /* tamanho FIXO: com só max-height a caixa media a seção aberta (e a página), e pulava de tamanho
+               a cada aba. Agora a caixa é sempre a mesma e o conteúdo rola dentro dela. */
+            #smg-settings-pop { width: 460px; height: min(620px, 82vh); max-height: none; padding: 0 !important; gap: 0 !important; overflow: hidden; display: flex; flex-direction: column; }
+            #smg-settings-pop .smg-set-body { min-height: 0; flex: 1 1 auto; }
             .smg-set-head { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); border-bottom: 1px solid var(--smg-w-08); }
             .smg-set-logo { flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--smg-r-10); background: var(--smg-link); display: flex; align-items: center; justify-content: center; }
             .smg-set-logo svg { width: 17px; height: 17px; fill: none !important; color: #fff; }
@@ -26,7 +28,7 @@
             .smg-set-tab svg { width: 20px; height: 20px; fill: none !important; }
             .smg-set-tab:hover { background: var(--smg-w-08); color: #fff; }
             .smg-set-tab.active { background: var(--smg-link-soft); color: var(--smg-link); }
-            .smg-set-content { flex: 1; min-width: 0; overflow-y: auto; max-height: 58vh; padding: var(--smg-sp-2) var(--smg-sp-10) var(--smg-sp-12); }
+            .smg-set-content { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--smg-sp-2) var(--smg-sp-10) var(--smg-sp-12); }
             .smg-set-sectitle { font-size: var(--smg-fs-11); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--smg-w-50); padding: var(--smg-sp-12) var(--smg-sp-6) var(--smg-sp-6); }
             .smg-set-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--smg-sp-14); padding: var(--smg-sp-10) var(--smg-sp-6); border-radius: var(--smg-r-10); cursor: pointer; }
             .smg-set-row:hover { background: var(--smg-w-06); }

@@ -1,8 +1,7 @@
 {
     "media/css-grids.js": [
         "#000",
-        "#fff",
-        "rgba(26,26,26,0.95)"
+        "#fff"
     ],
     "media/css-images.js": [
         "#000",
@@ -66,8 +65,7 @@
     "navigation/css-dock.js": [
         "#e0245e",
         "#fff",
-        "rgba(20,21,25,0.97)",
-        "rgba(26,26,26,0.95)"
+        "rgba(20,21,25,0.97)"
     ],
     "navigation/css-search.js": [
         "#141414",
@@ -88,8 +86,7 @@
         "rgba(42,42,50,0.85)"
     ],
     "navigation/css-dock-mobile.js": [
-        "#fff",
-        "rgba(255,119,178,0.12)"
+        "#fff"
     ],
     "listing/css-listing-controls.js": [
         "#000",

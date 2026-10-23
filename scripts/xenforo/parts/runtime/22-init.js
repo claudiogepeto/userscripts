@@ -599,6 +599,8 @@
 
     function softNavigate(url, opts) {
         opts = opts || {};
+        smgCloseModalsForNavigation();
+        document.dispatchEvent(new Event('smg-search-close'));
         let abs;
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
@@ -609,7 +611,9 @@
         }
         const token = ++softNavToken;
         stopWatchedStream();
-        document.dispatchEvent(new Event('smg-search-close'));
+        if (hardSafetyTimer) { clearTimeout(hardSafetyTimer); hardSafetyTimer = 0; }
+        pagePendingStartTime = 0;
+        paintDeadline = 0;
         const root = document.documentElement;
         cancelPagePaintRelease();
         isNavigatingOut = false;
@@ -621,7 +625,9 @@
         ensurePageSkeleton(target.gated ? target.kind : PAINT_PAGE_KINDS.GENERIC);
         try { history.scrollRestoration = 'manual'; } catch (e) {}
         try { window.scrollTo(0, 0); } catch (e) {}
-        fetchDoc(abs.href, { credentials: 'same-origin' }).then(doc => {
+        const controller = new AbortController();
+        const fetchDeadline = setTimeout(() => controller.abort(), 8000);
+        fetchDoc(abs.href, { credentials: 'same-origin', signal: controller.signal }).then(doc => {
             if (token !== softNavToken) return;
             const nextBodies = doc ? Array.from(doc.querySelectorAll('.p-body')) : [];
             const curBodies = Array.from(document.querySelectorAll('.p-body'));
@@ -657,7 +663,10 @@
             softNavUrl = nextUrl;
             if (opts.push !== false) {
                 softNavUsed = true;
-                try { history.pushState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash); } catch (e) {}
+                try {
+                    if (history.state && history.state.smgSheet) history.replaceState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash);
+                    else history.pushState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash);
+                } catch (e) {}
             }
             resetSwappedPage();
             detectPageClasses();
@@ -675,15 +684,11 @@
             if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
-            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
-            if (window.smgAlertsNeedRefresh) {
-                window.smgAlertsNeedRefresh = false;
-                if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
-            }
+            document.dispatchEvent(new CustomEvent('smg:page'));
             processAll([document.body]);
             observePageContent();
             schedulePagePaintRelease();
-        });
+        }).finally(() => clearTimeout(fetchDeadline));
     }
     window.smgSoftNavigate = softNavigate;
 
@@ -699,6 +704,9 @@
     }
 
     window.addEventListener('popstate', () => {
+        if (smgHandleModalPopstate()) return;
+        isNavigatingOut = false;
+        if (navSafetyTimer) clearTimeout(navSafetyTimer);
         if (!softNavUsed) return;
         const now = location.pathname + location.search;
         if (now === softNavUrl) return;

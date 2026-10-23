@@ -662,31 +662,68 @@
         return group;
     }
 
+    // ordenação como controle SEGMENTADO (Data | Reações): as duas opções sempre visíveis e a atual acesa,
+    // em vez de um rótulo que só muda de cor. Continua sendo UM botão (o clique alterna); o dono do botão
+    // ignora o clique no segmento que já está ativo (sortSegClickIsNoop).
+    function makeSortSegments(btn) {
+        btn.classList.remove('smg-nav-labeled');
+        btn.classList.add('smg-sort-seg');
+        const old = btn.querySelector('.smg-nav-btn-text');
+        if (old) old.remove();
+        const segs = document.createElement('span');
+        segs.className = 'smg-sort-segs';
+        segs.innerHTML =
+            '<span class="smg-sort-opt" data-sort="date"><span class="smg-sort-ic">' + ICONS.sortDate + '</span><span class="smg-sort-txt"></span></span>' +
+            '<span class="smg-sort-opt" data-sort="reactions"><span class="smg-sort-ic">' + ICONS.flame + '</span><span class="smg-sort-txt"></span></span>';
+        segs.querySelector('[data-sort="date"] .smg-sort-txt').textContent = i18n('Date');
+        segs.querySelector('[data-sort="reactions"] .smg-sort-txt').textContent = i18n('Reactions');
+        btn.appendChild(segs);
+    }
+    function setSortSegments(btn, isDate) {
+        if (btn) btn.dataset.sort = isDate ? 'date' : 'reactions';
+    }
+    function sortSegClickIsNoop(e, isDate) {
+        const opt = e && e.target && e.target.closest ? e.target.closest('.smg-sort-opt') : null;
+        return !!opt && opt.dataset.sort === (isDate ? 'date' : 'reactions');
+    }
+
     // arrastar pra baixo fecha (bottom sheets / modais mobile). Engata SÓ no topo (~64px = grip/header) → não
     // conflita com o scroll do conteúdo. isActive() opcional gate (ex.: só quando o sheet está aberto + mobile).
-    function addSwipeClose(panel, closeFn, isActive) {
+    // DRAWER (drawer: { isFull, setFull }): duas alturas, metade e cheia (classe .is-full no CSS). O arrasto muda a
+    // altura ao vivo; ao soltar encaixa na mais próxima, e abaixo da metade vira o arrasto de fechar de sempre.
+    const DRAWER_HALF = 0.58;   // fração da tela na altura "metade" — igual ao --smg-drawer-half do CSS (58dvh)
+    function addSwipeClose(panel, closeFn, isActive, drawer) {
         if (!panel || typeof closeFn !== 'function') return;
-        let y0 = 0, dy = 0, drag = false;
+        let y0 = 0, dy = 0, h0 = 0, drag = false;
+        const halfH = () => Math.round(window.innerHeight * DRAWER_HALF);
+        const fullH = () => window.innerHeight - 12;
         panel.addEventListener('touchstart', e => {
             drag = false;
             if (e.touches.length !== 1) return;
             if (isActive && !isActive()) return;
             const r = panel.getBoundingClientRect();
             if (e.touches[0].clientY - r.top > 64) return;   // toque fora da zona do grip/header → deixa o scroll rolar
-            drag = true; y0 = e.touches[0].clientY; dy = 0;
+            drag = true; y0 = e.touches[0].clientY; dy = 0; h0 = r.height;
             panel.style.transition = 'none';
         }, { passive: true });
         panel.addEventListener('touchmove', e => {
             if (!drag) return;
             dy = e.touches[0].clientY - y0;
-            if (dy > 0) panel.style.transform = 'translateY(' + dy + 'px)';
+            if (!drawer) { if (dy > 0) panel.style.transform = 'translateY(' + dy + 'px)'; return; }
+            const h = h0 - dy, half = halfH();
+            if (h >= half) { panel.style.height = Math.min(h, fullH()) + 'px'; panel.style.transform = ''; }
+            else { panel.style.height = half + 'px'; panel.style.transform = 'translateY(' + (half - h) + 'px)'; }
         }, { passive: true });
         panel.addEventListener('touchend', () => {
             if (!drag) return;
             drag = false;
             panel.style.transition = '';
             panel.style.transform = '';
-            if (dy > 90) closeFn();   // passou do limiar → fecha (a transição do CSS leva pro translateY(100%))
+            panel.style.height = '';
+            if (!drawer) { if (dy > 90) closeFn(); return; }   // passou do limiar → fecha (a transição do CSS leva pro translateY(100%))
+            const h = h0 - dy, half = halfH();
+            if (h < half - 90) { closeFn(); return; }
+            drawer.setFull(h > (half + fullH()) / 2);
         });
     }
 
@@ -740,24 +777,36 @@
         }
         return true;
     }
+    function smgCloseModalsForNavigation() {
+        let closed = 0;
+        while (smgSheets.open.length) {
+            const top = smgSheets.open[smgSheets.open.length - 1];
+            if (!smgModalClose(top.key, true)) break;
+            if (typeof top.onPop === 'function') top.onPop();
+            closed++;
+        }
+        return closed;
+    }
     function smgSheetOpen(sheet) {
         if (!sheet || smgModalIsOpen(sheet)) return;
+        sheet.classList.remove('is-full');   // drawer sempre abre na metade
         smgModalOpen(sheet, () => sheet.classList.remove('open'));
         sheet.classList.add('open');
     }
     function smgSheetClose(sheet, fromPop) {
         if (smgModalClose(sheet, fromPop)) sheet.classList.remove('open');
     }
-    window.addEventListener('popstate', () => {
+    function smgHandleModalPopstate() {
         // A UI fecha antes de history.back() entregar seu popstate. Correlacione o eco pela
         // URL para não consumir um Voltar real que chegue primeiro; se a URL mudou, esse
         // evento já é navegação do usuário e não deve ser descartado.
         const echo = smgSheets.backEchoes.indexOf(location.href);
-        if (echo !== -1) { smgSheets.backEchoes.splice(0, echo + 1); return; }
+        if (echo !== -1) { smgSheets.backEchoes.splice(0, echo + 1); return true; }
         smgSheets.backEchoes.length = 0;
         const top = smgSheets.open[smgSheets.open.length - 1];
         if (top && smgModalClose(top.key, true)) top.onPop();
-    });
+        return false;
+    }
 
     // POPOVER: UM registro pra fechar clicando fora, no Esc e reposicionar no scroll. Cada popover
     // diz o que é "dentro" (elementos ou função), como fechar e se está aberto. Exceções por opção:
@@ -791,7 +840,10 @@
     function wireSheetClose(sheet, panel) {
         if (!sheet) return;
         sheet.addEventListener('click', e => { if (e.target === sheet) smgSheetClose(sheet); });
-        addSwipeClose(panel || sheet.firstElementChild, () => smgSheetClose(sheet), () => sheet.classList.contains('open'));
+        const drawer = sheet.classList.contains('smg-sheet--drawer')
+            ? { setFull: full => sheet.classList.toggle('is-full', full) }
+            : null;
+        addSwipeClose(panel || sheet.firstElementChild, () => smgSheetClose(sheet), () => sheet.classList.contains('open'), drawer);
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) smgSheetClose(sheet); });
     }
 

@@ -108,7 +108,7 @@
             .smg-media-dock-panel {
                 position: relative; z-index: var(--smg-z-pop-up);   /* (= #smg-post-nav-panel) acima do goto-pop (z 11) p/ os tooltips do hover aparecerem */
                 display: flex; flex-direction: row; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8);
-                border-radius: var(--smg-r-pill); background: rgba(26,26,26,0.95); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
+                border-radius: var(--smg-r-pill); background: var(--smg-s1); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
                 box-shadow: var(--smg-hl), var(--smg-shadow-3), var(--smg-shadow-1);
             }
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
@@ -121,7 +121,15 @@
                 .smg-media-close { padding: 0 var(--smg-sp-12) !important; } .smg-media-close-label { display: none; }   /* celular: a pílula vira só o X (cabe o seletor + paginação) */
                 .smg-media-views .smg-nav-btn { flex: 0 0 44px !important; width: 44px !important; border-radius: var(--smg-r-12) !important; }   /* a dock mobile divide a largura por flex:1 — o seletor tem alvo fixo de 44px */
                 .smg-media-dock .smg-nav-divider { margin: 0 var(--smg-sp-4); }
-                .smg-media-dock #smg-gal-sort .smg-nav-btn-text { display: none; }   /* sort só com o ícone (o tooltip/aria diz a ordem) → a dock cabe em 402px */
+                .smg-media-dock #smg-gal-sort .smg-sort-txt { display: none; }   /* celular: segmentos só com ícone (calendário | chama) → a dock cabe em 402px */
+                .smg-media-dock #smg-gal-sort .smg-sort-opt { padding: 0 var(--smg-sp-10); }
+                /* mesma dock lisa do desktop: botões sem aro, vista ativa = fundo suave + tinta do tema, paginador em cápsula */
+                .smg-media-dock-panel .smg-nav-btn { border: 0 !important; background: transparent !important; color: var(--smg-w-72); box-shadow: none !important; }
+                .smg-media-dock-panel .smg-media-views .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; color: var(--smg-link) !important; }
+                .smg-media-dock-panel .smg-nav-pager { padding: var(--smg-sp-2); border-radius: var(--smg-r-14); background: var(--smg-w-04); border: 1px solid var(--smg-w-06); }
+                .smg-media-dock-panel .smg-nav-pager .smg-nav-btn { height: 38px !important; }
+                .smg-media-dock-panel #smg-gal-goto { color: #fff; }
+                .smg-media-dock-panel .smg-nav-ico { color: inherit; }   /* o branco fixo da navbar (css-dock-mobile) não vale aqui: o ícone segue o estado do botão */
             }
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio mosaico (motor 08a; anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */

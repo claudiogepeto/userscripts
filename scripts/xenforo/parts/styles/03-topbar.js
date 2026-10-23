@@ -71,26 +71,34 @@
             .smg-tb-nav { display: flex; align-items: center; gap: var(--smg-sp-4); }
             .smg-tb-item {
                 position: relative;
-                display: flex; align-items: center; gap: var(--smg-sp-8); height: 42px; padding: 0 var(--smg-sp-14);
-                border-radius: var(--smg-r-12); border: none; background: transparent; color: var(--smg-w-85);
+                display: flex; align-items: center; gap: var(--smg-sp-8); height: 40px; padding: 0 var(--smg-sp-14);
+                border-radius: var(--smg-r-pill); border: none; background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-15); font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft); color: #fff; }
+            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-w-06); color: #fff; }
+            .smg-tb-item--current { color: #fff; background: var(--smg-w-06); }
+            .smg-tb-item--current .smg-tb-ico { color: var(--smg-link); }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
             .smg-tb-caret svg { width: 14px; height: 14px; opacity: .55; fill: none !important; }
             .smg-tb-item.active .smg-tb-caret { transform: rotate(180deg); }
 
-            .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
+            .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-6); flex: 0 0 auto; }
+            /* avatar no fim, separado dos ícones por um respiro + fio vertical */
+            .smg-tb-actions > .smg-tb-account { margin-left: var(--smg-sp-6); position: relative; }
+            .smg-tb-actions > .smg-tb-account::before {
+                content: ''; position: absolute; left: calc(-1 * var(--smg-sp-8)); top: 50%; width: 1px; height: 22px;
+                transform: translateY(-50%); background: var(--smg-w-10);
+            }
             .smg-tb-act {
                 position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-85);
+                border-radius: var(--smg-r-round); border: none; background: transparent; color: var(--smg-w-72);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-act:hover { background: var(--smg-link-soft); color: #fff; }
+            .smg-tb-act:hover { background: var(--smg-w-08); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
             @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
                 #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
@@ -178,18 +186,18 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
+                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
             }
-            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-link-soft); }
+            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-w-08); }
             .smg-tb-account img { width: 100%; height: 100%; object-fit: cover; }
             .smg-tb-account .avatar,
             .smg-tb-account > img {
                 width: 28px !important; height: 28px !important; margin: 0 !important;
                 border-radius: var(--smg-r-round) !important; display: block; overflow: hidden;
-                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-50);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
+                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-30);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
             }
             .smg-tb-account .avatar > span,
             .smg-tb-account .avatar > img { width: 28px !important; height: 28px !important; display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-13) !important; line-height: 28px !important; border-radius: var(--smg-r-round) !important; }
@@ -223,8 +231,36 @@
                 z-index: var(--smg-z-40);
             }
             .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); z-index: var(--smg-z-40); }
-            .smg-tb-pop--account { min-width: 230px; max-width: 280px; }
-            .smg-tb-acchead { display: flex; align-items: center; gap: var(--smg-sp-8); padding: var(--smg-sp-8) var(--smg-sp-10) var(--smg-sp-8); font-size: var(--smg-fs-13); font-weight: 700; color: #fff; border-bottom: 1px solid var(--smg-w-08); margin-bottom: var(--smg-sp-4); }
+            .smg-tb-pop--account { width: 272px; min-width: 0; max-width: none; padding: var(--smg-sp-6); }
+            /* cabeçalho = cartão do perfil (clicável): avatar 40px + nome + "Ver perfil" */
+            .smg-tb-acchead {
+                display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10); margin-bottom: var(--smg-sp-4);
+                border-radius: var(--smg-r-12); background: var(--smg-w-04); border: 1px solid var(--smg-w-06);
+                text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease;
+            }
+            .smg-tb-acchead:hover { background: var(--smg-w-08); }
+            .smg-tb-accav {
+                flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--smg-r-round); overflow: hidden;
+                display: flex; align-items: center; justify-content: center; background: var(--smg-w-10);
+                font-size: var(--smg-fs-16); font-weight: 800; color: #fff;
+            }
+            .smg-tb-accav .avatar, .smg-tb-accav img, .smg-tb-accav .avatar > span, .smg-tb-accav .avatar > img {
+                width: 40px !important; height: 40px !important; margin: 0 !important; border-radius: var(--smg-r-round) !important;
+                display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-16) !important; line-height: 40px !important; object-fit: cover;
+            }
+            .smg-tb-acctext { display: flex; flex-direction: column; gap: var(--smg-sp-2); min-width: 0; }
+            .smg-tb-accname { font-size: var(--smg-fs-15); font-weight: 750; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-tb-accsub { font-size: var(--smg-fs-12); font-weight: 500; color: var(--smg-w-50); }
+            .smg-tb-acchead:hover .smg-tb-accsub { color: var(--smg-link); }
+            /* linhas compactas: ícone solto (sem caixinha), rótulo 14px; sair fica sozinho na última seção */
+            .smg-tb-pop--account .smg-tb-poprow--sm { gap: var(--smg-sp-10); padding: var(--smg-sp-8) var(--smg-sp-10); border-radius: var(--smg-r-10); }
+            .smg-tb-pop--account .smg-tb-poprow:hover { background: var(--smg-w-06); }
+            .smg-tb-pop--account .smg-tb-popico { width: 20px; height: 20px; background: transparent; color: var(--smg-w-55); }
+            .smg-tb-pop--account .smg-tb-popico svg { width: 18px; height: 18px; }
+            .smg-tb-pop--account .smg-tb-poprow:hover .smg-tb-popico { color: #fff; }
+            .smg-tb-pop--account .smg-tb-poptitle { font-size: var(--smg-fs-14); font-weight: 500; color: var(--smg-w-85); }
+            .smg-tb-pop--account .smg-tb-poprow:hover .smg-tb-poptitle { color: #fff; }
+            .smg-tb-pop--account .smg-tb-popdiv { margin: var(--smg-sp-4) var(--smg-sp-10); background: var(--smg-w-06); }
             /* pílula com quantas NÃO-LIDAS vieram nesta busca (some quando zera) */
             .smg-tb-poprow { display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10) var(--smg-sp-10); border-radius: var(--smg-r-12); text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease; }
             .smg-tb-poprow:hover { background: var(--smg-link-soft); }

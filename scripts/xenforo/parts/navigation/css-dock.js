@@ -12,7 +12,7 @@
 
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-media { display: none !important; }
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -130,7 +130,10 @@
             html.smg-thread #smg-view-toggle-m { display: none !important; }
             html:not(.smg-thread) #smg-post-sort-toggle,
             html:not(.smg-thread) #smg-thread-watch,
-            html:not(.smg-thread) #smg-thread-media { display: none !important; }
+            html:not(.smg-thread) #smg-thread-media,
+            html:not(.smg-thread) #smg-post-sort-toggle-m,
+            html:not(.smg-thread) #smg-thread-watch-m,
+            html:not(.smg-thread) #smg-thread-media-m { display: none !important; }
             #smg-mobile-page-btn.is-off { display: none !important; }
 
             /* ---- dock: container ---- */
@@ -150,7 +153,7 @@
                 gap: var(--smg-sp-6);
                 padding: var(--smg-sp-10) var(--smg-sp-10);
                 border-radius: var(--smg-r-pill);
-                background: rgba(26, 26, 26, 0.95); /* PERF: bg quase-opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
+                background: var(--smg-s1); /* PERF: fundo opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
                 border: 1px solid var(--smg-w-10);
                 box-shadow:
                     var(--smg-hl),
@@ -364,6 +367,78 @@
                 letter-spacing: 0 !important;
                 white-space: nowrap !important;
             }
+
+            /* ---- DOCK DO DESKTOP: barra de ferramentas lisa ----
+               Botões sem borda nem fundo (o hover dá o fundo), cantos de 12px em vez de círculos com aro,
+               um único tamanho (40px) e um único peso de ícone. O paginador é uma cápsula própria; o
+               estado ativo (seguindo, vista atual) é tinta do tema, não um disco preenchido.
+               Vale pra dock do tópico/lista E pra dock do overlay de mídia (galeria/feed): mesma peça.
+               Escopo pelo painel (com #id): vence o .smg-nav-btn.smg-active global e não toca o celular. */
+            @media (min-width: 601px) {
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) { gap: var(--smg-sp-4); padding: var(--smg-sp-6); border-radius: var(--smg-r-20); border-color: var(--smg-w-10); background: var(--smg-s1); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-group { gap: var(--smg-sp-2); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-divider { height: 24px; margin: 0 var(--smg-sp-4); background: var(--smg-w-10); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn {
+                    width: 40px; height: 40px; border-radius: var(--smg-r-12);
+                    border: 0; background: transparent; color: var(--smg-w-72);
+                    transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
+                }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-ico { filter: none; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-ico svg { width: 19px; height: 19px; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:not(:disabled):hover { background: var(--smg-w-08); color: #fff; border: 0; transform: none; box-shadow: none; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:not(:disabled):active { transform: scale(0.94); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:disabled { opacity: 0.28; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; border: 0 !important; color: var(--smg-link) !important; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-nav-labeled { height: 40px !important; border-radius: var(--smg-r-12) !important; padding: 0 var(--smg-sp-12) 0 var(--smg-sp-10) !important; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-nav-labeled .smg-nav-ico svg { width: 17px; height: 17px; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn-text { font-size: var(--smg-fs-13); font-weight: 650; }
+                /* paginador: cápsula com fundo próprio, afastada do sort; o "n / N" é texto, não botão com aro */
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-pager { margin: 0 var(--smg-sp-6); padding: var(--smg-sp-2); border-radius: var(--smg-r-14); background: var(--smg-w-04); border: 1px solid var(--smg-w-06); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-pager .smg-nav-btn { width: 36px; height: 36px; border-radius: var(--smg-r-10); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) :is(#smg-post-goto, #smg-gal-goto) {
+                    width: auto; min-width: 68px !important; height: 36px !important; padding: 0 var(--smg-sp-10) !important;
+                    border-radius: var(--smg-r-10) !important; color: #fff;
+                }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) :is(#smg-post-goto, #smg-gal-goto) .smg-nav-ico { width: auto; font-variant-numeric: tabular-nums; }
+                /* fechar (overlay de mídia): pílula lisa com rótulo, acende no hover */
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close { height: 40px; padding: 0 var(--smg-sp-14) 0 var(--smg-sp-12) !important; border-radius: var(--smg-r-12) !important; color: var(--smg-w-85); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close:not(:disabled):hover { background: var(--smg-w-12) !important; color: #fff; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close-label { font-size: var(--smg-fs-13); font-weight: 650; }
+            }
+            .smg-nav-pager[hidden] { display: none !important; }
+
+            /* ---- ORDENAÇÃO segmentada (Data | Reações): as duas opções à vista, a atual em pílula clara.
+               Um único botão por baixo (makeSortSegments); a cápsula não reage ao hover como botão. ---- */
+            .smg-nav-btn.smg-sort-seg {
+                width: auto !important; height: auto !important; padding: var(--smg-sp-2) !important; gap: 0;
+                border-radius: var(--smg-r-14) !important; background: var(--smg-w-04) !important; border: 1px solid var(--smg-w-06) !important;
+            }
+            .smg-nav-btn.smg-sort-seg:not(:disabled):hover { background: var(--smg-w-04) !important; transform: none !important; box-shadow: none !important; }
+            .smg-nav-btn.smg-sort-seg::after { display: none !important; }   /* sem tooltip: os rótulos já estão escritos */
+            .smg-sort-seg > .smg-nav-ico { display: none !important; }
+            /* duas colunas iguais + um "knob" (::before) que DESLIZA até a opção atual na cor do tema.
+               Colunas iguais = o knob anda por translateX(100%) sem medir nada no JS. */
+            .smg-sort-segs { position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 0; isolation: isolate; }
+            .smg-sort-segs::before {
+                content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 0; width: 50%;
+                border-radius: var(--smg-r-10); background: var(--smg-link-strong);
+                box-shadow: 0 2px 10px var(--smg-link-soft), inset 0 1px 0 var(--smg-w-22);
+                transition: transform var(--smg-dur-30) cubic-bezier(.34,1.36,.5,1), background var(--smg-dur-20) ease;
+            }
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-segs::before { transform: translateX(100%); }
+            .smg-sort-opt {
+                display: inline-flex; align-items: center; justify-content: center; gap: var(--smg-sp-6); height: 34px; padding: 0 var(--smg-sp-12) 0 var(--smg-sp-10);
+                border-radius: var(--smg-r-10); color: var(--smg-w-55); font-size: var(--smg-fs-13); font-weight: 600; white-space: nowrap; line-height: 1;
+                cursor: pointer; transition: color var(--smg-dur-20) ease;
+            }
+            .smg-sort-opt:hover { color: #fff; }
+            .smg-sort-ic { display: inline-flex; transition: transform var(--smg-dur-30) cubic-bezier(.34,1.36,.5,1); }
+            .smg-sort-ic svg { width: 15px; height: 15px; fill: none !important; }
+            .smg-sort-seg[data-sort="date"] .smg-sort-opt[data-sort="date"],
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-opt[data-sort="reactions"] { color: #fff; font-weight: 700; cursor: default; }
+            .smg-sort-seg[data-sort="date"] .smg-sort-opt[data-sort="date"] .smg-sort-ic,
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-opt[data-sort="reactions"] .smg-sort-ic { transform: scale(1.12); }
+            @media (prefers-reduced-motion: reduce) { .smg-sort-segs::before, .smg-sort-ic { transition: none; } }
 
             /* ---- goto: popover de pular pra uma página (thread e galeria: mesmo visual) ---- */
             #smg-goto-pop,

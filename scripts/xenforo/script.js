@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.5.0
+// @version      4.9.1
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -359,7 +359,7 @@
         'Members': 'Membros', 'Member list': 'Lista de membros',
         'Online now': 'Online agora', "Who's online": 'Quem está online',
         // topbar — conta
-        'Profile': 'Perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
+        'Profile': 'Perfil', 'View profile': 'Ver perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
         'Messages': 'Mensagens', 'Your threads': 'Seus tópicos', 'Contributed': 'Participações',
         'Your tickets': 'Seus tickets', 'Bookmarks': 'Salvos', 'Watched forums': 'Fóruns seguidos',
         'Preferences': 'Preferências', 'History': 'Histórico', 'Log out': 'Sair',
@@ -526,8 +526,8 @@
         pageLast: svgIcon('<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>'),
         goto: svgIcon('<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>'),
         postDown: svgIcon('<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'),
-        scrollTop: svgIcon('<path d="M6 7h12"/><path d="m18 17-6-6-6 6"/>'),
-        scrollBottom: svgIcon('<path d="m6 7 6 6 6-6"/><path d="M6 17h12"/>'),
+        scrollTop: svgIcon('<path d="M5 3h14"/><path d="m18 13-6-6-6 6"/><path d="M12 7v14"/>'),
+        scrollBottom: svgIcon('<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>'),
         hide: svgIcon('<path d="m6 9 6 6 6-6"/>'),
         show: svgIcon('<path d="m18 15-6-6-6 6"/>'),
         settings: svgIcon('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
@@ -944,7 +944,7 @@
             .smg-media-dock-panel {
                 position: relative; z-index: var(--smg-z-pop-up);   /* (= #smg-post-nav-panel) acima do goto-pop (z 11) p/ os tooltips do hover aparecerem */
                 display: flex; flex-direction: row; align-items: center; gap: var(--smg-sp-6); padding: var(--smg-sp-8);
-                border-radius: var(--smg-r-pill); background: rgba(26,26,26,0.95); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
+                border-radius: var(--smg-r-pill); background: var(--smg-s1); border: 1px solid var(--smg-w-10);   /* PERF: sem backdrop-filter (dock flutua sobre o scroller mais pesado do script) */
                 box-shadow: var(--smg-hl), var(--smg-shadow-3), var(--smg-shadow-1);
             }
             /* botão fechar = .smg-nav-btn com label VISÍVEL (vira pílula, não círculo) */
@@ -957,7 +957,15 @@
                 .smg-media-close { padding: 0 var(--smg-sp-12) !important; } .smg-media-close-label { display: none; }   /* celular: a pílula vira só o X (cabe o seletor + paginação) */
                 .smg-media-views .smg-nav-btn { flex: 0 0 44px !important; width: 44px !important; border-radius: var(--smg-r-12) !important; }   /* a dock mobile divide a largura por flex:1 — o seletor tem alvo fixo de 44px */
                 .smg-media-dock .smg-nav-divider { margin: 0 var(--smg-sp-4); }
-                .smg-media-dock #smg-gal-sort .smg-nav-btn-text { display: none; }   /* sort só com o ícone (o tooltip/aria diz a ordem) → a dock cabe em 402px */
+                .smg-media-dock #smg-gal-sort .smg-sort-txt { display: none; }   /* celular: segmentos só com ícone (calendário | chama) → a dock cabe em 402px */
+                .smg-media-dock #smg-gal-sort .smg-sort-opt { padding: 0 var(--smg-sp-10); }
+                /* mesma dock lisa do desktop: botões sem aro, vista ativa = fundo suave + tinta do tema, paginador em cápsula */
+                .smg-media-dock-panel .smg-nav-btn { border: 0 !important; background: transparent !important; color: var(--smg-w-72); box-shadow: none !important; }
+                .smg-media-dock-panel .smg-media-views .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; color: var(--smg-link) !important; }
+                .smg-media-dock-panel .smg-nav-pager { padding: var(--smg-sp-2); border-radius: var(--smg-r-14); background: var(--smg-w-04); border: 1px solid var(--smg-w-06); }
+                .smg-media-dock-panel .smg-nav-pager .smg-nav-btn { height: 38px !important; }
+                .smg-media-dock-panel #smg-gal-goto { color: #fff; }
+                .smg-media-dock-panel .smg-nav-ico { color: inherit; }   /* o branco fixo da navbar (css-dock-mobile) não vale aqui: o ícone segue o estado do botão */
             }
             /* SCROLLER vertical · cada PÁGINA é uma seção com seu próprio mosaico (motor 08a; anexar não reembaralha as outras) */
             .smg-gallery-grid { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: var(--smg-sp-8) var(--smg-sp-14) 96px; }   /* 96px embaixo: conteúdo passa por trás da dock flutuante */
@@ -2819,26 +2827,34 @@
             .smg-tb-nav { display: flex; align-items: center; gap: var(--smg-sp-4); }
             .smg-tb-item {
                 position: relative;
-                display: flex; align-items: center; gap: var(--smg-sp-8); height: 42px; padding: 0 var(--smg-sp-14);
-                border-radius: var(--smg-r-12); border: none; background: transparent; color: var(--smg-w-85);
+                display: flex; align-items: center; gap: var(--smg-sp-8); height: 40px; padding: 0 var(--smg-sp-14);
+                border-radius: var(--smg-r-pill); border: none; background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-15); font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-link-soft); color: #fff; }
+            .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-w-06); color: #fff; }
+            .smg-tb-item--current { color: #fff; background: var(--smg-w-06); }
+            .smg-tb-item--current .smg-tb-ico { color: var(--smg-link); }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
             .smg-tb-caret svg { width: 14px; height: 14px; opacity: .55; fill: none !important; }
             .smg-tb-item.active .smg-tb-caret { transform: rotate(180deg); }
 
-            .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-4); flex: 0 0 auto; }
+            .smg-tb-actions { display: flex; align-items: center; gap: var(--smg-sp-6); flex: 0 0 auto; }
+            /* avatar no fim, separado dos ícones por um respiro + fio vertical */
+            .smg-tb-actions > .smg-tb-account { margin-left: var(--smg-sp-6); position: relative; }
+            .smg-tb-actions > .smg-tb-account::before {
+                content: ''; position: absolute; left: calc(-1 * var(--smg-sp-8)); top: 50%; width: 1px; height: 22px;
+                transform: translateY(-50%); background: var(--smg-w-10);
+            }
             .smg-tb-act {
                 position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-btn-r); border: none; background: transparent; color: var(--smg-w-85);
+                border-radius: var(--smg-r-round); border: none; background: transparent; color: var(--smg-w-72);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
-            .smg-tb-act:hover { background: var(--smg-link-soft); color: #fff; }
+            .smg-tb-act:hover { background: var(--smg-w-08); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
             @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
                 #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
@@ -2926,18 +2942,18 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-10); cursor: pointer; padding: 0;
+                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
             }
-            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-link-soft); }
+            .smg-tb-account:hover, .smg-tb-account.active { background: var(--smg-w-08); }
             .smg-tb-account img { width: 100%; height: 100%; object-fit: cover; }
             .smg-tb-account .avatar,
             .smg-tb-account > img {
                 width: 28px !important; height: 28px !important; margin: 0 !important;
                 border-radius: var(--smg-r-round) !important; display: block; overflow: hidden;
-                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-50);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
+                box-shadow: 0 0 0 2px var(--smg-bg), 0 0 0 3.5px var(--smg-w-30);   /* anel visível (fundo + traço claro): o avatar-letra escuro sumia na barra */
             }
             .smg-tb-account .avatar > span,
             .smg-tb-account .avatar > img { width: 28px !important; height: 28px !important; display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-13) !important; line-height: 28px !important; border-radius: var(--smg-r-round) !important; }
@@ -2971,8 +2987,36 @@
                 z-index: var(--smg-z-40);
             }
             .smg-tb-pop.open { opacity: 1; visibility: visible; transform: translateY(0); z-index: var(--smg-z-40); }
-            .smg-tb-pop--account { min-width: 230px; max-width: 280px; }
-            .smg-tb-acchead { display: flex; align-items: center; gap: var(--smg-sp-8); padding: var(--smg-sp-8) var(--smg-sp-10) var(--smg-sp-8); font-size: var(--smg-fs-13); font-weight: 700; color: #fff; border-bottom: 1px solid var(--smg-w-08); margin-bottom: var(--smg-sp-4); }
+            .smg-tb-pop--account { width: 272px; min-width: 0; max-width: none; padding: var(--smg-sp-6); }
+            /* cabeçalho = cartão do perfil (clicável): avatar 40px + nome + "Ver perfil" */
+            .smg-tb-acchead {
+                display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10); margin-bottom: var(--smg-sp-4);
+                border-radius: var(--smg-r-12); background: var(--smg-w-04); border: 1px solid var(--smg-w-06);
+                text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease;
+            }
+            .smg-tb-acchead:hover { background: var(--smg-w-08); }
+            .smg-tb-accav {
+                flex: 0 0 auto; width: 40px; height: 40px; border-radius: var(--smg-r-round); overflow: hidden;
+                display: flex; align-items: center; justify-content: center; background: var(--smg-w-10);
+                font-size: var(--smg-fs-16); font-weight: 800; color: #fff;
+            }
+            .smg-tb-accav .avatar, .smg-tb-accav img, .smg-tb-accav .avatar > span, .smg-tb-accav .avatar > img {
+                width: 40px !important; height: 40px !important; margin: 0 !important; border-radius: var(--smg-r-round) !important;
+                display: flex !important; align-items: center; justify-content: center; font-size: var(--smg-fs-16) !important; line-height: 40px !important; object-fit: cover;
+            }
+            .smg-tb-acctext { display: flex; flex-direction: column; gap: var(--smg-sp-2); min-width: 0; }
+            .smg-tb-accname { font-size: var(--smg-fs-15); font-weight: 750; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .smg-tb-accsub { font-size: var(--smg-fs-12); font-weight: 500; color: var(--smg-w-50); }
+            .smg-tb-acchead:hover .smg-tb-accsub { color: var(--smg-link); }
+            /* linhas compactas: ícone solto (sem caixinha), rótulo 14px; sair fica sozinho na última seção */
+            .smg-tb-pop--account .smg-tb-poprow--sm { gap: var(--smg-sp-10); padding: var(--smg-sp-8) var(--smg-sp-10); border-radius: var(--smg-r-10); }
+            .smg-tb-pop--account .smg-tb-poprow:hover { background: var(--smg-w-06); }
+            .smg-tb-pop--account .smg-tb-popico { width: 20px; height: 20px; background: transparent; color: var(--smg-w-55); }
+            .smg-tb-pop--account .smg-tb-popico svg { width: 18px; height: 18px; }
+            .smg-tb-pop--account .smg-tb-poprow:hover .smg-tb-popico { color: #fff; }
+            .smg-tb-pop--account .smg-tb-poptitle { font-size: var(--smg-fs-14); font-weight: 500; color: var(--smg-w-85); }
+            .smg-tb-pop--account .smg-tb-poprow:hover .smg-tb-poptitle { color: #fff; }
+            .smg-tb-pop--account .smg-tb-popdiv { margin: var(--smg-sp-4) var(--smg-sp-10); background: var(--smg-w-06); }
             /* pílula com quantas NÃO-LIDAS vieram nesta busca (some quando zera) */
             .smg-tb-poprow { display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10) var(--smg-sp-10); border-radius: var(--smg-r-12); text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease; }
             .smg-tb-poprow:hover { background: var(--smg-link-soft); }
@@ -3421,12 +3465,16 @@
                 transform: translateY(100%); transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
             .smg-sheet.open .smg-csheet-panel { transform: translateY(0); }
-            /* DIALOG DE TELA CHEIA (conta): mesma animação de subida, mas ocupa tudo — lista longa
-               num drawer de 80vh mostrava metade e o arrasto-pra-fechar brigava com a rolagem dela */
-            .smg-sheet--full .smg-csheet-panel {
-                top: 0; height: 100%; max-height: none; border-radius: 0; border-top: 0;
-                padding: calc(6px + env(safe-area-inset-top)) var(--smg-sp-14) calc(14px + env(safe-area-inset-bottom));
+            /* DRAWER (conta, alertas no celular): duas alturas fixas, metade e cheia. Altura fixa, não
+               max-height: a lista rola DENTRO do corpo, e o arrasto pelo topo (addSwipeClose) só mexe na
+               altura — nunca briga com a rolagem. */
+            html { --smg-drawer-half: 58dvh; --smg-drawer-full: calc(100dvh - 12px - env(safe-area-inset-top)); }
+            .smg-sheet--drawer .smg-csheet-panel {
+                box-sizing: border-box; height: var(--smg-drawer-half); max-height: var(--smg-drawer-full);
+                transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
+            .smg-sheet--drawer.is-full .smg-csheet-panel { height: var(--smg-drawer-full); }
+            .smg-sheet--drawer .smg-csheet-body { flex: 1 1 auto; min-height: 0; }
             .smg-csheet-x {
                 width: 40px; height: 40px; margin-right: -6px; flex: none; align-self: flex-start;
                 display: inline-flex; align-items: center; justify-content: center;
@@ -3635,7 +3683,7 @@
 
             @media (min-width: 601px) {
                 #smg-nav-home, #smg-nav-discover, #smg-nav-timeline, #smg-thread-search,
-                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn, #smg-thread-media { display: none !important; }
+                #smg-nav-bell, #smg-nav-user, #smg-mobile-page-btn { display: none !important; }
                 .smg-dock-thread-bar { display: none !important; }
                 /* a engrenagem foi pra ESQUERDA → o grupo central (só nav, escondida no desktop) fica vazio: some ele + o divisor seguinte */
                 #smg-post-nav-panel > .smg-nav-center,
@@ -3753,7 +3801,10 @@
             html.smg-thread #smg-view-toggle-m { display: none !important; }
             html:not(.smg-thread) #smg-post-sort-toggle,
             html:not(.smg-thread) #smg-thread-watch,
-            html:not(.smg-thread) #smg-thread-media { display: none !important; }
+            html:not(.smg-thread) #smg-thread-media,
+            html:not(.smg-thread) #smg-post-sort-toggle-m,
+            html:not(.smg-thread) #smg-thread-watch-m,
+            html:not(.smg-thread) #smg-thread-media-m { display: none !important; }
             #smg-mobile-page-btn.is-off { display: none !important; }
 
             /* ---- dock: container ---- */
@@ -3773,7 +3824,7 @@
                 gap: var(--smg-sp-6);
                 padding: var(--smg-sp-10) var(--smg-sp-10);
                 border-radius: var(--smg-r-pill);
-                background: rgba(26, 26, 26, 0.95); /* PERF: bg quase-opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
+                background: var(--smg-s1); /* PERF: fundo opaco no lugar do backdrop-filter (blur 22px re-amostrava a página a CADA frame de scroll — dock fixa sobre a thread; mesmo fix já aplicado na topbar/feed) */
                 border: 1px solid var(--smg-w-10);
                 box-shadow:
                     var(--smg-hl),
@@ -3987,6 +4038,78 @@
                 letter-spacing: 0 !important;
                 white-space: nowrap !important;
             }
+
+            /* ---- DOCK DO DESKTOP: barra de ferramentas lisa ----
+               Botões sem borda nem fundo (o hover dá o fundo), cantos de 12px em vez de círculos com aro,
+               um único tamanho (40px) e um único peso de ícone. O paginador é uma cápsula própria; o
+               estado ativo (seguindo, vista atual) é tinta do tema, não um disco preenchido.
+               Vale pra dock do tópico/lista E pra dock do overlay de mídia (galeria/feed): mesma peça.
+               Escopo pelo painel (com #id): vence o .smg-nav-btn.smg-active global e não toca o celular. */
+            @media (min-width: 601px) {
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) { gap: var(--smg-sp-4); padding: var(--smg-sp-6); border-radius: var(--smg-r-20); border-color: var(--smg-w-10); background: var(--smg-s1); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-group { gap: var(--smg-sp-2); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-divider { height: 24px; margin: 0 var(--smg-sp-4); background: var(--smg-w-10); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn {
+                    width: 40px; height: 40px; border-radius: var(--smg-r-12);
+                    border: 0; background: transparent; color: var(--smg-w-72);
+                    transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
+                }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-ico { filter: none; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-ico svg { width: 19px; height: 19px; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:not(:disabled):hover { background: var(--smg-w-08); color: #fff; border: 0; transform: none; box-shadow: none; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:not(:disabled):active { transform: scale(0.94); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn:disabled { opacity: 0.28; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; border: 0 !important; color: var(--smg-link) !important; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-nav-labeled { height: 40px !important; border-radius: var(--smg-r-12) !important; padding: 0 var(--smg-sp-12) 0 var(--smg-sp-10) !important; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn.smg-nav-labeled .smg-nav-ico svg { width: 17px; height: 17px; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-btn-text { font-size: var(--smg-fs-13); font-weight: 650; }
+                /* paginador: cápsula com fundo próprio, afastada do sort; o "n / N" é texto, não botão com aro */
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-pager { margin: 0 var(--smg-sp-6); padding: var(--smg-sp-2); border-radius: var(--smg-r-14); background: var(--smg-w-04); border: 1px solid var(--smg-w-06); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-nav-pager .smg-nav-btn { width: 36px; height: 36px; border-radius: var(--smg-r-10); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) :is(#smg-post-goto, #smg-gal-goto) {
+                    width: auto; min-width: 68px !important; height: 36px !important; padding: 0 var(--smg-sp-10) !important;
+                    border-radius: var(--smg-r-10) !important; color: #fff;
+                }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) :is(#smg-post-goto, #smg-gal-goto) .smg-nav-ico { width: auto; font-variant-numeric: tabular-nums; }
+                /* fechar (overlay de mídia): pílula lisa com rótulo, acende no hover */
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close { height: 40px; padding: 0 var(--smg-sp-14) 0 var(--smg-sp-12) !important; border-radius: var(--smg-r-12) !important; color: var(--smg-w-85); }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close:not(:disabled):hover { background: var(--smg-w-12) !important; color: #fff; }
+                :is(#smg-post-nav-panel, .smg-media-dock-panel) .smg-media-close-label { font-size: var(--smg-fs-13); font-weight: 650; }
+            }
+            .smg-nav-pager[hidden] { display: none !important; }
+
+            /* ---- ORDENAÇÃO segmentada (Data | Reações): as duas opções à vista, a atual em pílula clara.
+               Um único botão por baixo (makeSortSegments); a cápsula não reage ao hover como botão. ---- */
+            .smg-nav-btn.smg-sort-seg {
+                width: auto !important; height: auto !important; padding: var(--smg-sp-2) !important; gap: 0;
+                border-radius: var(--smg-r-14) !important; background: var(--smg-w-04) !important; border: 1px solid var(--smg-w-06) !important;
+            }
+            .smg-nav-btn.smg-sort-seg:not(:disabled):hover { background: var(--smg-w-04) !important; transform: none !important; box-shadow: none !important; }
+            .smg-nav-btn.smg-sort-seg::after { display: none !important; }   /* sem tooltip: os rótulos já estão escritos */
+            .smg-sort-seg > .smg-nav-ico { display: none !important; }
+            /* duas colunas iguais + um "knob" (::before) que DESLIZA até a opção atual na cor do tema.
+               Colunas iguais = o knob anda por translateX(100%) sem medir nada no JS. */
+            .smg-sort-segs { position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 0; isolation: isolate; }
+            .smg-sort-segs::before {
+                content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 0; width: 50%;
+                border-radius: var(--smg-r-10); background: var(--smg-link-strong);
+                box-shadow: 0 2px 10px var(--smg-link-soft), inset 0 1px 0 var(--smg-w-22);
+                transition: transform var(--smg-dur-30) cubic-bezier(.34,1.36,.5,1), background var(--smg-dur-20) ease;
+            }
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-segs::before { transform: translateX(100%); }
+            .smg-sort-opt {
+                display: inline-flex; align-items: center; justify-content: center; gap: var(--smg-sp-6); height: 34px; padding: 0 var(--smg-sp-12) 0 var(--smg-sp-10);
+                border-radius: var(--smg-r-10); color: var(--smg-w-55); font-size: var(--smg-fs-13); font-weight: 600; white-space: nowrap; line-height: 1;
+                cursor: pointer; transition: color var(--smg-dur-20) ease;
+            }
+            .smg-sort-opt:hover { color: #fff; }
+            .smg-sort-ic { display: inline-flex; transition: transform var(--smg-dur-30) cubic-bezier(.34,1.36,.5,1); }
+            .smg-sort-ic svg { width: 15px; height: 15px; fill: none !important; }
+            .smg-sort-seg[data-sort="date"] .smg-sort-opt[data-sort="date"],
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-opt[data-sort="reactions"] { color: #fff; font-weight: 700; cursor: default; }
+            .smg-sort-seg[data-sort="date"] .smg-sort-opt[data-sort="date"] .smg-sort-ic,
+            .smg-sort-seg[data-sort="reactions"] .smg-sort-opt[data-sort="reactions"] .smg-sort-ic { transform: scale(1.12); }
+            @media (prefers-reduced-motion: reduce) { .smg-sort-segs::before, .smg-sort-ic { transition: none; } }
 
             /* ---- goto: popover de pular pra uma página (thread e galeria: mesmo visual) ---- */
             #smg-goto-pop,
@@ -5142,11 +5265,11 @@
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */
             @media (max-width: 600px) {
                 .smg-side--desktop-only { display: none !important; }
-                html { --smg-navh: 54px; }
+                html { --smg-navh: 54px; }   /* navbar 52 + borda */
                 /* Thread/list docks add a second mobile row. Use page classes already
                    detected at document-start instead of :has(), which invalidates the
                    root style on every DOM mutation. */
-                html.smg-thread, html.smg-threadlist { --smg-navh: 92px; }
+                html.smg-thread, html.smg-threadlist { --smg-navh: 100px; }
                 #smg-post-nav-wrapper {
                     left: 0;
                     right: 0;
@@ -5270,167 +5393,141 @@
                 .smg-search-go { height: 46px; padding: 0 var(--smg-sp-24); } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
 
-                /* Linha 1 (Controles de Thread / Lista no Mobile) */
-                /* Linha 1 (Controles de Thread / Lista no Mobile) */
+                /* ---- Linha 1: barra de contexto (tópico / lista) ----
+                   Uma cápsula acima da navbar. Todo botão tem o mesmo alvo (36px), o mesmo ícone (20px,
+                   traço 1.9) e a mesma cor; as pílulas com texto (página, ordenação) usam ícone 16px +
+                   texto 13px. Ativo = cor do tema, sem fundo extra. */
                 .smg-dock-thread-bar {
                     display: flex !important;
                     flex-direction: row !important;
-                    width: 100% !important;
-                    height: 38px !important;
                     align-items: center !important;
-                    justify-content: space-around !important;
-                    padding: 0 var(--smg-sp-4) !important;
+                    gap: var(--smg-sp-2) !important;
+                    align-self: stretch !important;
+                    width: auto !important;
+                    height: 40px !important;
+                    margin: var(--smg-sp-6) var(--smg-sp-8) 0 !important;
+                    padding: 0 var(--smg-sp-2) !important;
                     box-sizing: border-box !important;
-                    border-bottom: 1px solid var(--smg-w-06) !important;
-                    background: var(--smg-w-02) !important;
-                    gap: 0 !important;
+                    border: 1px solid var(--smg-w-06) !important;
+                    border-radius: var(--smg-r-12) !important;
+                    background: var(--smg-w-04) !important;
                 }
+                /* páginas sem controles próprios (home, conta…): só a navbar */
+                html:not(.smg-thread):not(.smg-threadlist) .smg-dock-thread-bar { display: none !important; }
                 .smg-dock-thread-bar .smg-nav-btn {
                     flex: 1 1 0 !important;
                     min-width: 0 !important;
                     width: auto !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
+                    height: 36px !important;
+                    min-height: 36px !important;
+                    max-height: 36px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
+                    gap: var(--smg-sp-6) !important;
+                    margin: 0 !important;
+                    padding: 0 var(--smg-sp-4) !important;
                     background: transparent !important;
                     border: none !important;
                     border-radius: var(--smg-r-8) !important;
-                    padding: 0 var(--smg-sp-2) !important;
-                    margin: 0 !important;
                     box-shadow: none !important;
-                    vertical-align: middle !important;
+                    color: var(--smg-w-72) !important;
                     transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
                 }
+                .smg-dock-thread-bar .smg-nav-btn:not(:disabled):active { background: var(--smg-w-08) !important; transform: none; }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico {
+                    width: 20px !important;
+                    height: 20px !important;
                     font-size: var(--smg-fs-20) !important;
                     line-height: 1 !important;
-                    height: 19px !important;
-                    width: 19px !important;
-                    color: var(--smg-w-85) !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
+                    flex: 0 0 auto !important;
+                    color: inherit !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico svg {
-                    width: 19px !important;
-                    height: 19px !important;
-                    stroke-width: 2 !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    stroke-width: 1.9 !important;
                     display: block !important;
-                    margin: 0 auto !important;
                 }
-
-                /* Botões com texto no Mobile (Sort e Pages) - Flex uniforme com espaçamento padrão */
-                .smg-dock-thread-bar #smg-post-sort-toggle,
-                .smg-dock-thread-bar #smg-list-sort-m,
-                .smg-dock-thread-bar .smg-sort-pill,
-                .smg-dock-thread-bar #smg-mobile-page-btn {
-                    flex: 1 1 0 !important;
-                    width: auto !important;
-                    min-width: 0 !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
-                    align-self: center !important;
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    border-radius: 0 !important;
-                    padding: 0 var(--smg-sp-2) !important;
-                    gap: var(--smg-sp-4) !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
+                /* pílulas com texto: página (1 / 4) e ordenação (Data / Curtidas) */
+                .smg-dock-thread-bar .smg-nav-labeled { flex: 1.4 1 0 !important; }
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-ico,
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-ico svg {
+                    width: 16px !important;
+                    height: 16px !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-ico svg,
-                .smg-dock-thread-bar #smg-list-sort-m .smg-nav-ico svg,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg,
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
-                    width: 14px !important;
-                    height: 14px !important;
-                    flex-shrink: 0 !important;
-                }
-                .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-list-sort-m .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-btn-text {
                     display: inline-block !important;
-                    font-size: var(--smg-fs-12) !important;
-                    font-weight: 700 !important;
-                    color: var(--smg-w-85) !important;
+                    min-width: 0 !important;
+                    font-size: var(--smg-fs-13) !important;
+                    font-weight: 650 !important;
+                    font-variant-numeric: tabular-nums;
                     line-height: 1 !important;
+                    color: inherit !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
+                /* pager desligado (página sem paginação) some de verdade: a regra de display acima vence o .is-off genérico */
+                .smg-dock-thread-bar #smg-mobile-page-btn.is-off { display: none !important; }
+                /* mesma linguagem da dock do desktop: ativo = fundo suave + tinta do tema; a página (n / N) é uma
+                   pílula própria, como a cápsula do paginador; o sort é o segmentado só com ícones (calendário | chama) */
+                .smg-dock-thread-bar .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; color: var(--smg-link) !important; }
+                .smg-dock-thread-bar #smg-mobile-page-btn { background: var(--smg-w-06) !important; color: #fff !important; margin: 0 var(--smg-sp-2) !important; }
+                .smg-dock-thread-bar .smg-nav-btn.smg-sort-seg {
+                    flex: 0 0 auto !important; height: 32px !important; min-height: 32px !important; max-height: 32px !important;
+                    padding: var(--smg-sp-2) !important; margin: 0 var(--smg-sp-2) !important;
+                    background: var(--smg-w-06) !important; border-radius: var(--smg-r-10) !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link) !important;
-                }
+                .smg-dock-thread-bar .smg-sort-txt { display: none; }
+                .smg-dock-thread-bar .smg-nav-btn.smg-sort-seg > .smg-nav-ico { display: none !important; }
+                .smg-dock-thread-bar .smg-sort-opt { height: 26px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); }
+                .smg-dock-thread-bar .smg-sort-segs::before { border-radius: var(--smg-r-8); }
+                .smg-dock-thread-bar .smg-sort-ic svg { width: 16px; height: 16px; }
 
-                /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
-                .smg-dock-thread-bar #smg-thread-watch.smg-active {
-                    background: rgba(255, 119, 178, 0.12) !important;
-                    border-radius: var(--smg-r-8) !important;
-                }
-                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link) !important;
-                    stroke: var(--smg-link) !important;
-                }
-
-                /* Linha 2 (Navbar Global do Fórum no Mobile) */
+                /* ---- Linha 2: navbar global (5 itens, estilo tab bar) ---- */
                 #smg-post-nav-panel > .smg-nav-center {
                     display: flex !important;
                     flex-direction: row !important;
-                    width: 100% !important;
-                    height: 48px !important;
                     align-items: center !important;
-                    justify-content: space-around !important;
-                    padding: 0 var(--smg-sp-6) !important;
+                    width: 100% !important;
+                    height: 52px !important;
+                    padding: 0 var(--smg-sp-8) !important;
                     box-sizing: border-box !important;
-                    border-top: none !important;
                     gap: 0 !important;
+                    border-top: none !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-btn {
                     flex: 1 1 0 !important;
-                    height: 44px !important;
                     width: auto !important;
+                    height: 48px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
+                    color: var(--smg-w-85) !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-ico {
-                    font-size: var(--smg-fs-22) !important;
-                    color: #fff !important;
+                    width: 24px !important;
+                    height: 24px !important;
+                    font-size: var(--smg-fs-24) !important;
+                    color: inherit !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-ico svg {
-                    width: 22px !important;
-                    height: 22px !important;
+                    width: 24px !important;
+                    height: 24px !important;
+                    stroke-width: 1.9 !important;
                 }
+                #smg-post-nav-panel > .smg-nav-center .smg-nav-btn.smg-nav-active { color: var(--smg-link) !important; }
                 #smg-post-nav-panel > .smg-nav-divider,
                 #smg-dock-sheet-btn,
                 #smg-nav-settings {
@@ -5781,8 +5878,10 @@
     // ── CSS: settings panel ──
     const CSS_SETTINGS = `
             /* ===== painel de settings (estilo painel do Twitter): header + busca + rail de categorias + seções + footer ===== */
-            #smg-settings-pop { width: 460px; max-height: 86vh; padding: 0 !important; gap: 0 !important; overflow: hidden; }
-            #smg-settings-pop .smg-set-body { min-height: 0; }
+            /* tamanho FIXO: com só max-height a caixa media a seção aberta (e a página), e pulava de tamanho
+               a cada aba. Agora a caixa é sempre a mesma e o conteúdo rola dentro dela. */
+            #smg-settings-pop { width: 460px; height: min(620px, 82vh); max-height: none; padding: 0 !important; gap: 0 !important; overflow: hidden; display: flex; flex-direction: column; }
+            #smg-settings-pop .smg-set-body { min-height: 0; flex: 1 1 auto; }
             .smg-set-head { display: flex; align-items: center; gap: var(--smg-sp-10); padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-12); border-bottom: 1px solid var(--smg-w-08); }
             .smg-set-logo { flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--smg-r-10); background: var(--smg-link); display: flex; align-items: center; justify-content: center; }
             .smg-set-logo svg { width: 17px; height: 17px; fill: none !important; color: #fff; }
@@ -5802,7 +5901,7 @@
             .smg-set-tab svg { width: 20px; height: 20px; fill: none !important; }
             .smg-set-tab:hover { background: var(--smg-w-08); color: #fff; }
             .smg-set-tab.active { background: var(--smg-link-soft); color: var(--smg-link); }
-            .smg-set-content { flex: 1; min-width: 0; overflow-y: auto; max-height: 58vh; padding: var(--smg-sp-2) var(--smg-sp-10) var(--smg-sp-12); }
+            .smg-set-content { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--smg-sp-2) var(--smg-sp-10) var(--smg-sp-12); }
             .smg-set-sectitle { font-size: var(--smg-fs-11); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--smg-w-50); padding: var(--smg-sp-12) var(--smg-sp-6) var(--smg-sp-6); }
             .smg-set-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--smg-sp-14); padding: var(--smg-sp-10) var(--smg-sp-6); border-radius: var(--smg-r-10); cursor: pointer; }
             .smg-set-row:hover { background: var(--smg-w-06); }
@@ -6027,6 +6126,7 @@
                     transition: transform var(--smg-dur-30) cubic-bezier(.2,.85,.25,1);
                     box-shadow: var(--smg-sheet-shadow);
                 }
+                #smg-settings-pop { height: 82vh; height: 82dvh; }   /* sheet de altura fixa: não pula de tamanho entre as abas */
                 #smg-post-nav-wrapper.settings-open #smg-settings-pop,
                 #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
                 #smg-post-nav-wrapper.listsort-open #smg-listsort-pop {
@@ -6036,15 +6136,19 @@
                 /* search: bottom sheet com uma barra de entrada única e filtros em grid.
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
+                /* Drawer na altura cheia (não na metade: o teclado já come ~40% da tela). Respiro de 12px
+                   no topo + puxador + cantos arredondados = mesma linguagem dos drawers de conta e alertas;
+                   o arrasto pelo topo fecha (addSwipeClose no 12b). */
                 #smg-search-pop {
                     position: fixed !important; inset: auto !important;
-                    top: var(--smg-kb-top, 0px) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
+                    top: calc(var(--smg-kb-top, 0px) + 12px + env(safe-area-inset-top)) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
                     width: 100vw !important; max-width: 100vw !important;
                     /* --smg-kb-h vem do visualViewport: com o teclado aberto o sheet encolhe
                        até a área visível e o input (order 3) fica acima do teclado */
-                    height: var(--smg-kb-h, 100dvh) !important; max-height: var(--smg-kb-h, 100dvh) !important;
-                    padding: calc(10px + env(safe-area-inset-top)) var(--smg-sp-16) calc(12px + env(safe-area-inset-bottom)) var(--smg-sp-16) !important;
-                    border: none !important; border-radius: 0 !important;
+                    height: calc(var(--smg-kb-h, 100dvh) - 12px - env(safe-area-inset-top)) !important; max-height: calc(var(--smg-kb-h, 100dvh) - 12px - env(safe-area-inset-top)) !important;
+                    padding: var(--smg-sp-6) var(--smg-sp-16) calc(12px + env(safe-area-inset-bottom)) var(--smg-sp-16) !important;
+                    border: none !important; border-top: 1px solid var(--smg-w-10) !important;
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0 !important;
                     box-sizing: border-box !important;
                     display: flex !important; flex-direction: column !important; justify-content: flex-end !important;
                     transform: translateY(100%);
@@ -6052,7 +6156,12 @@
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
                 #smg-search-pop.is-kb { padding-bottom: var(--smg-sp-12) !important; }
-                #smg-search-pop::before { display: none !important; }
+                /* puxador (mesmo visual do .smg-sheet-grip), primeiro item da coluna */
+                #smg-search-pop::before {
+                    content: '' !important; display: block !important; order: -1 !important; flex: 0 0 auto !important;
+                    width: 40px; height: 5px; margin: var(--smg-sp-2) auto var(--smg-sp-6);
+                    border-radius: var(--smg-r-pill); background: var(--smg-w-22);
+                }
 
                 /* Barra de busca na BASE (thumb-friendly) colada aos filtros */
                 #smg-search-pop .smg-search-bar {
@@ -6071,8 +6180,9 @@
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
                     height: 100% !important; font-size: var(--smg-fs-16); font-weight: 500;
                 }
+                /* chip do escopo do tamanho do texto (o 42% fixo sobrava vazio dentro dele); texto longo corta com reticências */
                 #smg-search-pop .smg-search-chip {
-                    flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
+                    flex: 0 1 auto; max-width: 50%; min-width: 0; height: 32px;
                     margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 }
                 #smg-search-pop .smg-search-chip-t { min-width: 0; font-size: var(--smg-fs-12); }
@@ -6195,6 +6305,10 @@
                 #smg-search-pop .smg-search-result-title { font-size: var(--smg-fs-14); }
                 #smg-search-pop .smg-search-result-snippet { font-size: var(--smg-fs-13); }
                 #smg-search-pop .smg-search-result-meta { font-size: var(--smg-fs-11); }
+                /* histórico: a LISTA é quem rola (o scroll dela carrega os lotes), então ela ocupa a
+                   altura toda do sheet; o teto de 46vh do desktop cortava as buscas no meio da tela */
+                #smg-search-pop .smg-search-history:not([hidden]) { display: flex !important; flex-direction: column; overflow: hidden !important; }
+                #smg-search-pop .smg-search-hist-list--scroll { flex: 1 1 auto; min-height: 0; max-height: none; }
                 #smg-search-pop .smg-search-hist-head { padding: 0 var(--smg-sp-4); }
                 #smg-search-pop .smg-search-hist-item { min-height: 44px; padding: var(--smg-sp-8) var(--smg-sp-6); }
 
@@ -6650,6 +6764,7 @@
             html.smg-thread .smg-thead-unified .smg-thead-btn + .smg-thead-btn { border-left: 0 !important; }
             html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
             .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
+            .smg-thead-actions:empty { display: none !important; }   /* a mídia foi pra dock: barra vazia não ocupa espaço */
             /* hero agrupando thumbnail + info (badges + titleline) */
             .smg-thead-hero {
                 display: flex;
@@ -6993,6 +7108,69 @@
                     font-size: var(--smg-fs-11) !important;
                     align-self: center !important;
                 }
+
+                /* CABEÇALHO DO TÓPICO: grade. Imagem à esquerda dos prefixos + título; as tags descem para uma
+                   faixa ÚNICA na largura toda, rolando na horizontal (com 10+ tags o bloco quebrava em 3-4
+                   linhas e o ícone de tag ficava sozinho numa linha acima delas). .smg-thead-info vira
+                   display:contents para os filhos dele entrarem na grade. */
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
+                    display: grid !important;
+                    grid-template-columns: 72px minmax(0, 1fr);
+                    gap: var(--smg-sp-6) var(--smg-sp-12) !important;
+                    align-items: center !important;
+                    width: 100%;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero:not(:has(> .smg-thead-thumb)) { grid-template-columns: minmax(0, 1fr); }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-info { display: contents !important; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-thumb {
+                    grid-row: 1 / span 2; align-self: center !important;
+                    flex: none !important; width: 72px !important; min-width: 72px !important; height: 72px !important;
+                    border-radius: var(--smg-r-14) !important;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-thumb img { border-radius: var(--smg-r-14) !important; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-badges-row { grid-column: -2 / -1; grid-row: 1; align-self: end; justify-content: flex-start !important; gap: var(--smg-sp-4) !important; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-titleline { grid-column: -2 / -1; grid-row: 2; align-self: start; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero:not(:has(.smg-thead-badges-row)) .smg-thead-titleline { grid-row: 1 / span 2; align-self: center; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-titleline .p-title-value {
+                    display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+                    font-size: var(--smg-fs-18) !important; line-height: 1.25 !important; letter-spacing: -0.01em;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-titleline .smg-thead-title-text { font-size: inherit !important; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags,
+                html.smg-smg.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags-bar {
+                    grid-column: 1 / -1; grid-row: 3; min-width: 0; max-width: none !important;
+                    margin: var(--smg-sp-4) 0 0 !important; padding: 0 !important;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .p-description {
+                    display: flex !important; flex-wrap: nowrap !important; align-items: center; gap: var(--smg-sp-6);
+                    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none;
+                    -webkit-mask-image: linear-gradient(90deg, black calc(100% - 28px), transparent);
+                    mask-image: linear-gradient(90deg, black calc(100% - 28px), transparent);
+                    padding-right: var(--smg-sp-24) !important;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .p-description::-webkit-scrollbar { display: none; }
+                /* todo invólucro (lista, item, .tagList, a linha agrupada do JS) some do layout: ícone e
+                   tags viram itens da MESMA faixa, seja qual for o aninhamento que o tema usa */
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .p-description :is(ul, li, .tagList, .tagList-icon, .smg-thead-tags-row) { display: contents !important; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .p-description .fa--xf {
+                    flex: 0 0 auto; display: inline-flex; align-items: center; color: var(--smg-w-50); font-size: var(--smg-fs-14) !important; margin: 0 !important;
+                }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .p-description .fa--xf svg { width: 15px; height: 15px; }
+                html.smg-thread .p-body-header.smg-thead-unified .smg-thead-tags .tagItem {
+                    flex: 0 0 auto; display: inline-flex !important; align-items: center; height: 28px; box-sizing: border-box;
+                    padding: 0 var(--smg-sp-10) !important; white-space: nowrap;
+                    font-size: var(--smg-fs-12) !important; font-weight: 550 !important; line-height: 1 !important;
+                    border-radius: var(--smg-r-pill) !important; background: var(--smg-w-06) !important;
+                    border: 1px solid var(--smg-w-08) !important; color: var(--smg-w-85) !important; text-decoration: none !important;
+                }
+                /* decoração sazonal do tema (teias nas laterais do cabeçalho): sobrepunha a imagem e as tags */
+                html.smg-thread .p-body-header.smg-thead-unified::before,
+                html.smg-thread .p-body-header.smg-thead-unified::after,
+                html.smg-thread .p-body-header.smg-thead-unified .pageContent::before,
+                html.smg-thread .p-body-header.smg-thead-unified .pageContent::after,
+                html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner::before,
+                html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner::after { content: none !important; display: none !important; }
+                html.smg-thread .p-body-header.smg-thead-unified { padding: var(--smg-sp-8) var(--smg-sp-12) var(--smg-sp-10) !important; }
 
                 /* Ocultar do topo no mobile: barra duplicada de páginas/follow/sort e ações */
                 html.smg-thread .smg-thead-controls,
@@ -8640,21 +8818,35 @@
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
                 .smg-tb-bellbtn { display: none !important; }
             }
-            /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
-               página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
+            /* puxador e scrim do drawer: só existem no celular */
+            .smg-aldock-handle, .smg-aldock-scrim { display: none; }
+            /* CELULAR: o mesmo rail vira um DRAWER (aberto pelo sino da navbar) — metade da tela, arrasta pelo
+               topo até a altura cheia ou pra baixo pra fechar; tocar no scrim fecha. Nada de empurrar a
+               página: body/topbar/dock ficam como estavam. Alturas = as do drawer de conta (css-notices). */
             @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; }
                 #smg-aldock {
-                    top: 0; right: 0; bottom: 0; left: 0; width: 100%;
+                    top: auto; right: 0; bottom: 0; left: 0; width: 100%;
+                    height: var(--smg-drawer-half); max-height: var(--smg-drawer-full);
                     z-index: var(--smg-z-sheet-1);                 /* acima da navbar e dos sheets */
-                    border-left: 0; box-shadow: none;
+                    border-left: 0; border-top: 1px solid var(--smg-w-10);
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
+                    background: var(--smg-s1); box-shadow: var(--smg-sheet-shadow);
+                    transition: height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
+                }
+                #smg-aldock.is-full { height: var(--smg-drawer-full); }
+                /* acima do scrim e da navbar: vence o z-index do gate de paint (09-paint, html.smg-sidebar-ready #smg-aldock) */
+                html.smg-aldock-on body > #smg-aldock { z-index: var(--smg-z-sheet-1) !important; }
+                .smg-aldock-handle { display: block; margin-top: var(--smg-sp-8); margin-bottom: 0; }
+                html.smg-aldock-on .smg-aldock-scrim {
+                    display: block; position: fixed; inset: 0; z-index: var(--smg-z-sheet);
+                    background: var(--smg-k-55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
                 }
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
-                .smg-aldock-grip { display: none !important; }        /* não se arrasta largura em tela cheia */
+                .smg-aldock-grip { display: none !important; }        /* largura não se arrasta no celular */
                 .smg-tb-bellbtn { display: none !important; }         /* o controle é o sino da navbar inferior */
-                /* respeita as barras do sistema (notch em cima, gesto embaixo) */
-                .smg-aldock-head { padding-top: calc(10px + env(safe-area-inset-top)); }
+                .smg-aldock-head { height: 52px; border-bottom-color: var(--smg-w-06); }
                 .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
             }
         `;
@@ -9586,31 +9778,68 @@
         return group;
     }
 
+    // ordenação como controle SEGMENTADO (Data | Reações): as duas opções sempre visíveis e a atual acesa,
+    // em vez de um rótulo que só muda de cor. Continua sendo UM botão (o clique alterna); o dono do botão
+    // ignora o clique no segmento que já está ativo (sortSegClickIsNoop).
+    function makeSortSegments(btn) {
+        btn.classList.remove('smg-nav-labeled');
+        btn.classList.add('smg-sort-seg');
+        const old = btn.querySelector('.smg-nav-btn-text');
+        if (old) old.remove();
+        const segs = document.createElement('span');
+        segs.className = 'smg-sort-segs';
+        segs.innerHTML =
+            '<span class="smg-sort-opt" data-sort="date"><span class="smg-sort-ic">' + ICONS.sortDate + '</span><span class="smg-sort-txt"></span></span>' +
+            '<span class="smg-sort-opt" data-sort="reactions"><span class="smg-sort-ic">' + ICONS.flame + '</span><span class="smg-sort-txt"></span></span>';
+        segs.querySelector('[data-sort="date"] .smg-sort-txt').textContent = i18n('Date');
+        segs.querySelector('[data-sort="reactions"] .smg-sort-txt').textContent = i18n('Reactions');
+        btn.appendChild(segs);
+    }
+    function setSortSegments(btn, isDate) {
+        if (btn) btn.dataset.sort = isDate ? 'date' : 'reactions';
+    }
+    function sortSegClickIsNoop(e, isDate) {
+        const opt = e && e.target && e.target.closest ? e.target.closest('.smg-sort-opt') : null;
+        return !!opt && opt.dataset.sort === (isDate ? 'date' : 'reactions');
+    }
+
     // arrastar pra baixo fecha (bottom sheets / modais mobile). Engata SÓ no topo (~64px = grip/header) → não
     // conflita com o scroll do conteúdo. isActive() opcional gate (ex.: só quando o sheet está aberto + mobile).
-    function addSwipeClose(panel, closeFn, isActive) {
+    // DRAWER (drawer: { isFull, setFull }): duas alturas, metade e cheia (classe .is-full no CSS). O arrasto muda a
+    // altura ao vivo; ao soltar encaixa na mais próxima, e abaixo da metade vira o arrasto de fechar de sempre.
+    const DRAWER_HALF = 0.58;   // fração da tela na altura "metade" — igual ao --smg-drawer-half do CSS (58dvh)
+    function addSwipeClose(panel, closeFn, isActive, drawer) {
         if (!panel || typeof closeFn !== 'function') return;
-        let y0 = 0, dy = 0, drag = false;
+        let y0 = 0, dy = 0, h0 = 0, drag = false;
+        const halfH = () => Math.round(window.innerHeight * DRAWER_HALF);
+        const fullH = () => window.innerHeight - 12;
         panel.addEventListener('touchstart', e => {
             drag = false;
             if (e.touches.length !== 1) return;
             if (isActive && !isActive()) return;
             const r = panel.getBoundingClientRect();
             if (e.touches[0].clientY - r.top > 64) return;   // toque fora da zona do grip/header → deixa o scroll rolar
-            drag = true; y0 = e.touches[0].clientY; dy = 0;
+            drag = true; y0 = e.touches[0].clientY; dy = 0; h0 = r.height;
             panel.style.transition = 'none';
         }, { passive: true });
         panel.addEventListener('touchmove', e => {
             if (!drag) return;
             dy = e.touches[0].clientY - y0;
-            if (dy > 0) panel.style.transform = 'translateY(' + dy + 'px)';
+            if (!drawer) { if (dy > 0) panel.style.transform = 'translateY(' + dy + 'px)'; return; }
+            const h = h0 - dy, half = halfH();
+            if (h >= half) { panel.style.height = Math.min(h, fullH()) + 'px'; panel.style.transform = ''; }
+            else { panel.style.height = half + 'px'; panel.style.transform = 'translateY(' + (half - h) + 'px)'; }
         }, { passive: true });
         panel.addEventListener('touchend', () => {
             if (!drag) return;
             drag = false;
             panel.style.transition = '';
             panel.style.transform = '';
-            if (dy > 90) closeFn();   // passou do limiar → fecha (a transição do CSS leva pro translateY(100%))
+            panel.style.height = '';
+            if (!drawer) { if (dy > 90) closeFn(); return; }   // passou do limiar → fecha (a transição do CSS leva pro translateY(100%))
+            const h = h0 - dy, half = halfH();
+            if (h < half - 90) { closeFn(); return; }
+            drawer.setFull(h > (half + fullH()) / 2);
         });
     }
 
@@ -9664,24 +9893,36 @@
         }
         return true;
     }
+    function smgCloseModalsForNavigation() {
+        let closed = 0;
+        while (smgSheets.open.length) {
+            const top = smgSheets.open[smgSheets.open.length - 1];
+            if (!smgModalClose(top.key, true)) break;
+            if (typeof top.onPop === 'function') top.onPop();
+            closed++;
+        }
+        return closed;
+    }
     function smgSheetOpen(sheet) {
         if (!sheet || smgModalIsOpen(sheet)) return;
+        sheet.classList.remove('is-full');   // drawer sempre abre na metade
         smgModalOpen(sheet, () => sheet.classList.remove('open'));
         sheet.classList.add('open');
     }
     function smgSheetClose(sheet, fromPop) {
         if (smgModalClose(sheet, fromPop)) sheet.classList.remove('open');
     }
-    window.addEventListener('popstate', () => {
+    function smgHandleModalPopstate() {
         // A UI fecha antes de history.back() entregar seu popstate. Correlacione o eco pela
         // URL para não consumir um Voltar real que chegue primeiro; se a URL mudou, esse
         // evento já é navegação do usuário e não deve ser descartado.
         const echo = smgSheets.backEchoes.indexOf(location.href);
-        if (echo !== -1) { smgSheets.backEchoes.splice(0, echo + 1); return; }
+        if (echo !== -1) { smgSheets.backEchoes.splice(0, echo + 1); return true; }
         smgSheets.backEchoes.length = 0;
         const top = smgSheets.open[smgSheets.open.length - 1];
         if (top && smgModalClose(top.key, true)) top.onPop();
-    });
+        return false;
+    }
 
     // POPOVER: UM registro pra fechar clicando fora, no Esc e reposicionar no scroll. Cada popover
     // diz o que é "dentro" (elementos ou função), como fechar e se está aberto. Exceções por opção:
@@ -9715,7 +9956,10 @@
     function wireSheetClose(sheet, panel) {
         if (!sheet) return;
         sheet.addEventListener('click', e => { if (e.target === sheet) smgSheetClose(sheet); });
-        addSwipeClose(panel || sheet.firstElementChild, () => smgSheetClose(sheet), () => sheet.classList.contains('open'));
+        const drawer = sheet.classList.contains('smg-sheet--drawer')
+            ? { setFull: full => sheet.classList.toggle('is-full', full) }
+            : null;
+        addSwipeClose(panel || sheet.firstElementChild, () => smgSheetClose(sheet), () => sheet.classList.contains('open'), drawer);
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) smgSheetClose(sheet); });
     }
 
@@ -11110,6 +11354,7 @@
             shownPage = p;
             try { history.replaceState(history.state, '', sep ? sep.dataset.url : originalUrl); } catch {}
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(p);
+            smgPagerShow(p);   // barra da página (filter bar) = mesma página da dock e da URL
 
             // "X of Y" do paginador simples (topo e rodapé)
             document.querySelectorAll('.pageNavSimple-el--current').forEach(el => {
@@ -14286,13 +14531,12 @@
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
-            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
             markNavbarReady();
             return;
         }
 
         // anchors de cada post (ignora respostas em quote); fallback .message. Re-consultado a cada página
-        // (smgRefreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
+        // (refreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
         function queryDockPosts() {
             const anchors = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]'))
                 .filter(el => !el.closest('.message-responseRow'));
@@ -14304,7 +14548,7 @@
         // (e a fiação deles) só fazem sentido numa thread.
         const onThreadUrl = /\/threads\//.test(location.pathname);
         if (onThreadUrl && posts.length === 0) return; // espera os posts da thread carregarem
-        const isThread = onThreadUrl && posts.length > 0;
+        let isThread = onThreadUrl && posts.length > 0;
 
         posts.forEach(el => {
             if (el instanceof HTMLElement) el.style.scrollMarginTop = '0px';
@@ -14346,7 +14590,10 @@
         })();
 
         // ---- botões ----
-        let btnWatchM, btnSortM, btnMediaM, btnListFilterM, btnListSortM, btnViewToggleM;
+        let btnWatchM, btnSortM, btnListFilterM, btnListSortM, btnViewToggleM;
+        let dockPagerGroup = null;   // cápsula do paginador no desktop (montada com os grupos, mais abaixo)
+        const btnMediaM = makeDockButton({ id: 'smg-thread-media-m', icon: ICONS.gallery, label: 'Media' });
+        btnMediaM.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
         const btnSearch = makeDockButton({ id: 'smg-thread-search', icon: ICONS.search, label: 'Search' });
         const btnWatch = makeDockButton({
             id: 'smg-thread-watch',
@@ -14360,6 +14607,7 @@
         btnSort.classList.add('smg-nav-labeled', 'smg-sort-pill');   // pílula com o critério escrito (Data/Reações) — deixa claro pelo quê ordena
         const sortTxt = Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') });
         btnSort.appendChild(sortTxt);
+        makeSortSegments(btnSort);   // desktop: segmentado Data | Reações (o sortTxt sai; o celular segue com o btnSortM)
 
         let currentSortOrder = (new URLSearchParams(location.search).get('order')) || 'last_post_date';
         const getListSortLabel = k => {
@@ -14495,7 +14743,7 @@
             navWrapper.classList.toggle('smg-dock-as-list', list);
             navWrapper.classList.toggle('smg-dock-baronly', !list && !thread);
         }
-        window.smgRefreshDockPage = () => {
+        function refreshDockPage() {
             posts = queryDockPosts();
             syncDockListMode();
             if (typeof closePopovers === 'function') closePopovers();
@@ -14509,6 +14757,7 @@
             if (typeof updateWatchIcon === 'function') updateWatchIcon();
             if (typeof markActiveNav === 'function') markActiveNav();
             const pj = readPageJump();
+            if (dockPagerGroup) dockPagerGroup.hidden = !pj;
             if (!pj) {
                 pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
@@ -14526,7 +14775,25 @@
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(pj.cur);
             else setBtnIcon(btnGoto, `${pj.cur} / ${pj.max}`);
             paintMobilePager();
-        };
+        }
+        document.addEventListener('smg:page', () => {
+            const root = document.documentElement;
+            const nextThread = /\/threads\//.test(location.pathname);
+            const nextList = !nextThread && (!!document.querySelector('.structItem--thread, .structItem--bookmark, .message--articlePreview')
+                || /\/forums\/|\/watched\/|\/account\/bookmarks|\/bookmarks\/|\/search\//.test(location.pathname)
+                || /^forum_view/.test(root.getAttribute('data-template') || '')
+                || root.getAttribute('data-template') === 'search_results');
+            const nextKind = nextThread ? 'thread' : nextList ? 'list' : 'general';
+            if (nextKind !== dockPageKind) {
+                isThread = nextThread;
+                isList = nextList;
+                dockPageKind = nextKind;
+                navWrapper.classList.toggle('smg-dock-as-list', isList);
+                navWrapper.classList.toggle('smg-dock-baronly', !isThread && !isList);
+                syncDockRouteControls();
+            }
+            refreshDockPage();
+        });
 
         // o scroll infinito chama isto pra refletir a página que está na tela
         smgUpdateDockPage = n => {
@@ -14556,8 +14823,8 @@
         };
 
         // modo mídia: UM botão abre o overlay (Galeria; o seletor da dock dele leva ao Feed)
-        const btnMedia = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
-        if (btnMedia) btnMedia.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
+        const btnMedia = makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' });
+        btnMedia.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
 
         if (mobilePagePop) smgPopover({
             inside: [mobilePagePop, btnMobilePageBtn],
@@ -14610,7 +14877,8 @@
             });
         });
 
-        const isList = !isThread && onListUrl && (!!pageJump || !!btnListFilter || !!btnListSort || !!btnViewToggle);
+        let isList = !isThread && onListUrl && (!!pageJump || !!btnListFilter || !!btnListSort || !!btnViewToggle);
+        let dockPageKind = isThread ? 'thread' : isList ? 'list' : 'general';
 
         // ---- navegação global (links) — base do fórum via quick-search (vale em qualquer página) ----
         const boardBase = (() => {
@@ -14626,6 +14894,7 @@
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
+            if (FEATURES.alertsDock) btnBell.setAttribute('data-smg-inplace', '');   // abre o rail; a navegação interna não toca nele
             btnBell.addEventListener('click', e => {
                 if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
@@ -14651,6 +14920,7 @@
             if (ico) { ico.innerHTML = ''; ico.appendChild(navAvatar.cloneNode(true)); ico.classList.add('smg-nav-ico--avatar'); }
         }
         if (btnUser) {
+            btnUser.setAttribute('data-smg-inplace', '');   // abre o sheet de conta, nunca navega
             btnUser.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -14710,92 +14980,57 @@
         btnViewToggleM = makeDockButton({ id: 'smg-view-toggle-m', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) });
         btnViewToggleM.addEventListener('click', () => btnViewToggle.click());
 
+        // Barra de contexto do mobile: UMA só, com os controles de tópico e de lista. A dock nasce uma vez e a
+        // navegação interna troca o tipo de página; o CSS (html.smg-thread / html.smg-threadlist) mostra o grupo
+        // certo. Cada botão vive num lugar só: o mesmo nó na barra e num grupo do desktop era MOVIDO pro grupo
+        // (escondido no celular) e sumia da barra.
+        btnWatchM = makeDockButton({
+            id: 'smg-thread-watch-m',
+            icon: ICONS.watch,
+            label: IS_PT ? 'Seguir este tópico (receber notificações)' : 'Watch thread (receive updates)',
+        });
+        btnWatchM.addEventListener('click', () => btnWatch.click());
+        btnSortM = makeDockButton({ id: 'smg-post-sort-toggle-m', icon: ICONS.sort, label: sortTip });
+        btnSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
+        btnSortM.appendChild(Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') }));
+        makeSortSegments(btnSortM);   // celular: o mesmo segmentado, só com os ícones (CSS)
+        btnSortM.addEventListener('click', e => { if (!sortSegClickIsNoop(e, sortIsDate)) btnSort.click(); });
+        const btnUpM = makeDockButton({ id: 'smg-scroll-top-m', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
+        btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        const btnDownM = makeDockButton({ id: 'smg-scroll-bottom-m', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
+        btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
+        const contextBar = document.createElement('div');
+        contextBar.className = 'smg-dock-thread-bar';
+        contextBar.append(btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnListSortM, btnListFilterM, btnViewToggleM, btnMediaM, btnWatchM);
+
+        // Grupos do desktop (o tipo de página do nascimento decide o arranjo; o CSS esconde o que não vale).
+        // O paginador é UMA cápsula (primeira · anterior · n / N · próxima · última), escondida sem paginação.
+        dockPagerGroup = makeGroup(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
+        dockPagerGroup.classList.add('smg-nav-pager');
+        dockPagerGroup.hidden = !pageJump;
         if (isThread) {
-            // Barra de controles de thread para mobile
-            btnWatchM = makeDockButton({
-                id: 'smg-thread-watch',
-                icon: ICONS.watch,
-                label: IS_PT ? 'Seguir este tópico (receber notificações)' : 'Watch thread (receive updates)',
-            });
-            btnWatchM.addEventListener('click', () => btnWatch.click());
-
-            btnSortM = makeDockButton({ id: 'smg-post-sort-toggle', icon: ICONS.sort, label: sortTip });
-            btnSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
-            const sortTxtM = Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') });
-            btnSortM.appendChild(sortTxtM);
-            btnSortM.addEventListener('click', () => btnSort.click());
-
-            btnMediaM = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
-            if (btnMedia && btnMediaM) btnMediaM.addEventListener('click', e => { e.stopPropagation(); btnMedia.click(); });
-
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-
-            const threadBar = document.createElement('div');
-            threadBar.className = 'smg-dock-thread-bar';
-            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnMediaM, btnWatchM].filter(Boolean);
-            threadBtns.push(btnListSortM, btnListFilterM, btnViewToggleM);
-            threadBar.append(...threadBtns.filter(Boolean));
-
-            // Grupos para Desktop
-            const actionsGroup = makeGroup(btnWatch);
+            // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
+            const actionsGroup = makeGroup(btnWatch, btnMedia);
             actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnMedia);
+            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
             pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
             scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
-                threadBar,
+                contextBar,
                 actionsGroup, makeDivider(),
                 centralGroup, makeDivider(),
                 pagenavGroup, makeDivider(),
                 scrollGroup,
                 btnSheet
             );
-        } else if (isList) {
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-
-            const listBar = document.createElement('div');
-            listBar.className = 'smg-dock-thread-bar';
-            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
-            listBar.append(...listMobileBtns);
-
-            const listBtns = [btnSort, btnWatch];
-            if (pageJump) listBtns.push(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
-            if (btnListFilter) listBtns.push(btnListFilter);
-            if (btnListSort) listBtns.push(btnListSort);
-            if (btnViewToggle) listBtns.push(btnViewToggle);
-            const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side--desktop-only';
-
-            panel.append(
-                btnSettings, makeDivider(),
-                listBar,
-                centralGroup, makeDivider(),
-                listGroup,
-                btnSheet
-            );
         } else {
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-            const listBar = document.createElement('div');
-            listBar.className = 'smg-dock-thread-bar';
-            listBar.append(...[btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean));
-            const listBtns = [btnSort, btnWatch, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnListFilter, btnListSort, btnViewToggle];
+            const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
             const listGroup = makeGroup(...listBtns.filter(Boolean));
             listGroup.className = 'smg-nav-group smg-side--desktop-only';
-            panel.append(btnSettings, makeDivider(), listBar, centralGroup, makeDivider(), listGroup, btnSheet);
+            panel.append(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
         }
 
         const navWrapper = document.createElement('div');
@@ -14939,7 +15174,7 @@
             listFilterPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Filtro' : 'Filter') + '</span><div class="smg-lf-body">' + (IS_PT ? 'Carregando…' : 'Loading…') + '</div>';
         }
 
-        const sortPop = (isList && btnListSort) ? document.createElement('div') : null;
+        const sortPop = btnListSort ? document.createElement('div') : null;
         if (sortPop) {
             sortPop.id = 'smg-listsort-pop';
             sortPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Ordenar' : 'Sort') + '</span><div class="smg-sort-body"></div>';
@@ -14955,6 +15190,11 @@
         if (mobilePagePop) navWrapper.append(mobilePagePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
+        // o arranjo dos botões é por CSS (classes da página); aqui só o FAB, que existe ou não conforme a dock tem ações
+        function syncDockRouteControls() {
+            if (typeof syncSettingsFab === 'function') syncSettingsFab();
+        }
+        syncDockRouteControls();
         markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----
@@ -16583,7 +16823,15 @@
 
             // FAB de configurações: nas páginas onde a dock fica escondida (baronly no desktop), garante
             // acesso ao mod. Clique → revela a dock (só a engrenagem) + abre o settings. O closePopovers reseta.
-            if (navWrapper.classList.contains('smg-dock-baronly') && !document.getElementById('smg-settings-fab')) {
+            syncSettingsFab();
+        };
+        function syncSettingsFab() {
+            const existingFab = document.getElementById('smg-settings-fab');
+            if (!navWrapper.classList.contains('smg-dock-baronly')) {
+                if (existingFab) existingFab.remove();
+                return;
+            }
+            if (!existingFab) {
                 const fab = document.createElement('button');
                 fab.id = 'smg-settings-fab';
                 fab.type = 'button';
@@ -16598,7 +16846,7 @@
                 });
                 document.body.appendChild(fab);
             }
-        };
+        }
         setupSettings();
 
         // ---- filtro e ordenação da listagem (fórum / watched / bookmarks / search) ----
@@ -17355,11 +17603,13 @@
                 setBtnLabel(b, sortTip);
                 const t = b.querySelector('.smg-nav-btn-text');
                 if (t) t.textContent = i18n(sortIsDate ? 'Date' : 'Reactions');
-                b.classList.toggle('smg-active', !sortIsDate);
+                b.classList.toggle('smg-active', !sortIsDate && !b.classList.contains('smg-sort-seg'));
+                setSortSegments(b, sortIsDate);
             });
         }
 
-        btnSort.addEventListener('click', () => {
+        btnSort.addEventListener('click', e => {
+            if (sortSegClickIsNoop(e, sortIsDate)) return;   // clicou na ordenação que já está valendo
             sortIsDate = !sortIsDate;
             updateSortIcon();
             const targetUrl = getSortHref(sortIsDate);
@@ -17392,17 +17642,18 @@
     // Filtros (escopo/ordenar/só-títulos) aplicam NA HORA (navega); query/autor aplicam no Enter/Buscar.
     // =========================================================
     let rsPanelDone = false;
+    document.addEventListener('smg:page', () => { rsPanelDone = false; });
     function buildSearchResultsPanel() {
         if (rsPanelDone) return;
-        if ((document.documentElement.getAttribute('data-template') || '') !== 'search_results') { rsPanelDone = true; return; }
+        if ((document.documentElement.getAttribute('data-template') || '') !== 'search_results') return;
         const header = document.querySelector('.p-body-header');
-        if (!header) { if (document.readyState === 'complete') rsPanelDone = true; return; }   // header ainda não parseado → tenta no próximo frame
-        rsPanelDone = true;
+        if (!header) return;   // header ainda não parseado → tenta no próximo frame
 
         const sp = new URLSearchParams(location.search);
         const q0 = sp.get('q') || '';
         const by0 = sp.get('c[users]') || '';
         if (!q0 && !by0) return;   // busca sem params reconstruíveis (ex.: /search/member) → não monta
+        rsPanelDone = true;
 
         // estado atual lido da URL
         let titlesOn = sp.get('c[title_only]') === '1';
@@ -17787,6 +18038,7 @@
         setBtnLabel(galDockSortBtn, sortTip);
         const t = galDockSortBtn.querySelector('.smg-nav-btn-text');   // texto visível: deixa claro PELO QUÊ está ordenado
         if (t) t.textContent = i18n(isDate ? 'Date' : 'Reactions');
+        setSortSegments(galDockSortBtn, isDate);
     }
     // PERSISTÊNCIA do modo na URL (query param) → F5 reabre galeria/feed em vez de cair na thread.
     // replaceState (não polui o histórico). Params: view=gallery|feed · order=date|reaction (sort da galeria).
@@ -18086,12 +18338,14 @@
         const gSortTip = IS_PT ? 'Ordenação atual: por data. Clique para ordenar por reações' : 'Current sort: by date. Click to sort by reactions';
         const gSort = makeDockButton({ id: 'smg-gal-sort', icon: ICONS.sort, label: gSortTip });
         gSort.classList.add('smg-nav-labeled');
-        gSort.appendChild(Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n('Date') }));
+        makeSortSegments(gSort);
         const gPrev = makeDockButton({ id: 'smg-gal-prev', icon: ICONS.pagePrev, label: IS_PT ? 'Página anterior' : 'Previous page' });
         const gGoto = makeDockButton({ id: 'smg-gal-goto', icon: '1', label: IS_PT ? 'Pular para página específica' : 'Jump to specific page' });
         const gNext = makeDockButton({ id: 'smg-gal-next', icon: ICONS.pageNext, label: IS_PT ? 'Próxima página' : 'Next page' });
         galDockSortBtn = gSort; galDockGotoBtn = gGoto;
-        const gnav = makeGroup(gSort, gPrev, gGoto, gNext);
+        const gpager = makeGroup(gPrev, gGoto, gNext);   // paginador = cápsula, igual à dock da thread
+        gpager.classList.add('smg-nav-pager');
+        const gnav = makeGroup(gSort, gpager);
         gnav.classList.add('smg-media-gal-only');
         const gnavDiv = makeDivider();
         gnavDiv.classList.add('smg-media-gal-only');
@@ -18120,7 +18374,10 @@
         document.body.appendChild(root);
         i18nDom(root);
 
-        gSort.addEventListener('click', () => { if (mediaState) galSetOrder(mediaState.order === 'date' ? 'reaction' : 'date'); });
+        gSort.addEventListener('click', e => {
+            if (!mediaState || sortSegClickIsNoop(e, mediaState.order === 'date')) return;
+            galSetOrder(mediaState.order === 'date' ? 'reaction' : 'date');
+        });
         gPrev.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) - 1));
         gNext.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) + 1));
 
@@ -20055,7 +20312,7 @@
 
     // thread/17a-filterbar.js
     // Owns: the filter bar (pager, sort, actions), thread header, sticky sync, follow button and THE thread card (decorateThreadCard).
-    // Exposes: buildThreadHeader, unifyThreadHeader, createStickySync, threadFollowButton, decorateThreadCard, smgPopHost.
+    // Exposes: buildThreadHeader, unifyThreadHeader, createStickySync, threadFollowButton, decorateThreadCard, smgPopHost, smgPagerShow.
     // Depends on: core/06-helpers, feed/06b-feed-db, feed/22-feed-sync, following/17b-watched-list.
     // =========================================================
     // BARRA ÚNICA SEGMENTADA (filter bar) — SMG · thread + fórum
@@ -20221,37 +20478,30 @@
 
         if (maxNum <= 1 && !tpl) return null;
         if (maxNum < curNum) maxNum = curNum;
+        return smgPagerBuild(tpl, curNum, maxNum, prev ? prev.getAttribute('href') : null, next ? next.getAttribute('href') : null);
+    }
 
+    // href da página n pelo template do próprio XF (/page-%page%, com a query da ordenação): a página 1 é a base
+    function smgPageHref(tpl, n) {
+        if (!tpl) return null;
+        return n <= 1 ? tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : tpl.replace('%page%', String(n));
+    }
+
+    // monta o grupo do pager. prevHref/nextHref: os links nativos da página do servidor (quando existem);
+    // sem eles, sai tudo do template — é o caso da página que o scroll infinito trouxe (smgPagerShow).
+    function smgPagerBuild(tpl, curNum, maxNum, prevHref, nextHref) {
         const g = document.createElement('div');
         g.className = 'smg-bar-group smg-bar-pager';
+        if (tpl) { g.dataset.tpl = tpl; g.dataset.max = String(maxNum); }
+        if (!prevHref && curNum > 1) prevHref = smgPageHref(tpl, curNum - 1);
+        if (!nextHref && curNum < maxNum) nextHref = smgPageHref(tpl, curNum + 1);
 
-        const firstHref = tpl ? tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : null;
-        const prevHref = prev ? prev.getAttribute('href') : (tpl && curNum > 1 ? (curNum - 1 === 1 ? tpl.replace(/\/page-%page%/, '/') : tpl.replace('%page%', String(curNum - 1))) : null);
-        const nextHref = next ? next.getAttribute('href') : (tpl && curNum < maxNum ? tpl.replace('%page%', String(curNum + 1)) : null);
-        const lastHref = tpl ? tpl.replace('%page%', String(maxNum)) : null;
+        g.appendChild(smgBarBtn({ icon: ICONS.pageFirst, title: 'First page', href: smgPageHref(tpl, 1), disabled: curNum <= 1, cls: 'smg-bar-pager-btn' }));
+        g.appendChild(smgBarBtn({ icon: ICONS.pagePrev, title: 'Prev page', href: prevHref, disabled: curNum <= 1 || !prevHref, cls: 'smg-bar-pager-btn' }));
 
-        // Botão 1: pageFirst
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageFirst,
-            title: 'First page',
-            href: firstHref,
-            disabled: curNum <= 1,
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 2: pagePrev
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pagePrev,
-            title: 'Prev page',
-            href: prevHref,
-            disabled: curNum <= 1 || (!prev && !prevHref),
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 3: Goto (número da página atual compacto)
+        // goto: número da página atual compacto
         if (tpl) {
-            const curLabel = `${curNum} / ${maxNum}`;
-            const jump = smgJumpHost(tpl, maxNum, curLabel, curNum, 'smg-bar-cur smg-bar-pager-goto');
+            const jump = smgJumpHost(tpl, maxNum, `${curNum} / ${maxNum}`, curNum, 'smg-bar-cur smg-bar-pager-goto');
             jump.classList.add('smg-bar-curhost');
             g.appendChild(jump);
         } else {
@@ -20261,25 +20511,18 @@
             g.appendChild(compact);
         }
 
-        // Botão 4: pageNext
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageNext,
-            title: 'Next page',
-            href: nextHref,
-            disabled: curNum >= maxNum || (!next && !nextHref),
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 5: pageLast
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageLast,
-            title: 'Last page',
-            href: lastHref,
-            disabled: curNum >= maxNum,
-            cls: 'smg-bar-pager-btn'
-        }));
-
+        g.appendChild(smgBarBtn({ icon: ICONS.pageNext, title: 'Next page', href: nextHref, disabled: curNum >= maxNum || !nextHref, cls: 'smg-bar-pager-btn' }));
+        g.appendChild(smgBarBtn({ icon: ICONS.pageLast, title: 'Last page', href: tpl ? tpl.replace('%page%', String(maxNum)) : null, disabled: curNum >= maxNum, cls: 'smg-bar-pager-btn' }));
         return g;
+    }
+
+    // a página VISÍVEL mudou (scroll infinito): toda barra de pager mostra a mesma página que a dock e a URL,
+    // com os links do template do XF — antes a barra ficava na página do servidor e divergia da dock
+    function smgPagerShow(n) {
+        document.querySelectorAll('.smg-bar-pager[data-tpl]').forEach(g => {
+            const max = Math.max(n, parseInt(g.dataset.max, 10) || n);
+            g.replaceWith(smgPagerBuild(g.dataset.tpl, n, max, null, null));
+        });
     }
 
     // GRUPO 2 — ordenar (data ⇄ reações): dois <a> reais, ativo = knob branco. só thread.
@@ -20466,19 +20709,8 @@
         }
         // linha de ações no topo do header: o modo mídia (galeria/feed), com navegação própria (página 1)
         const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
-        const mk = (icon, title, label, onClick) => {
-            const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-thead-btn';
-            b.title = i18n(title); b.setAttribute('aria-label', i18n(title));
-            b.innerHTML = '<span class="smg-thead-ic">' + icon + '</span>';
-            const l = document.createElement('span'); l.className = 'smg-thead-lbl'; l.textContent = i18n(label);   // visível só no mobile (CSS)
-            b.appendChild(l);
-            if (onClick) b.addEventListener('click', onClick);
-            b.addEventListener('mouseenter', () => smgShowTip(b, b.title));   // reusa o tooltip fixed da barra
-            b.addEventListener('mouseleave', smgHideTip); b.addEventListener('click', smgHideTip);
-            return b;
-        };
-        // UMA entrada: abre o overlay de mídia na Galeria (o Feed fica a um toque, no seletor da dock dele). Label só no mobile.
-        bar.appendChild(mk(ICONS.gallery, 'Media', 'Media', () => openMedia('gallery')));
+        // A entrada da mídia (galeria/feed) mora na dock (desktop: #smg-thread-media; celular: #smg-thread-media-m),
+        // que é sempre montada — o cabeçalho fixo não repete o botão.
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
         // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).
@@ -21797,6 +22029,7 @@
 
     let aldock = null;            // elemento do painel (montado 1×)
     let aldockBound = false;
+    let alertsNeedRefresh = false;
 
     // a fonte do rail: paginar seguindo o "next" nativo, deduplicar, rolagem infinita.
     const RAIL_SRC = {
@@ -22035,7 +22268,11 @@
             });
         return railHardFlight;
     }
-    window.smgRefreshAlertsDock = () => railHardRefresh('alerts');
+    document.addEventListener('smg:page', () => {
+        if (!alertsNeedRefresh) return;
+        alertsNeedRefresh = false;
+        railHardRefresh('alerts');
+    });
 
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
     function railRefresh(tab, force) {
@@ -22120,6 +22357,7 @@
         const alertsSkeleton = paintRailRow('li', 'smg-aldock-skel-row').repeat(6);
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
+            '<div class="smg-sheet-grip smg-aldock-handle"></div>' +   // puxador do drawer (só no celular)
             '<div class="smg-aldock-head">' +
                 '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
@@ -22138,6 +22376,15 @@
         document.body.appendChild(el);
         aldock = el;
         markSidebarReady();
+
+        // celular: o rail é um DRAWER (metade da tela, arrasta até cheia ou pra baixo pra fechar) sobre um
+        // scrim que fecha ao toque. No desktop nenhum dos dois aparece (CSS) e o arrasto não engata.
+        const scrim = document.createElement('div');
+        scrim.className = 'smg-aldock-scrim';
+        scrim.addEventListener('click', () => closeAlertsDock(false));
+        document.body.appendChild(scrim);
+        addSwipeClose(el, () => closeAlertsDock(false), () => aldockPhone() && aldockOpen(),
+            { setFull: full => el.classList.toggle('is-full', full) });
 
         const applyMarkAllReadSuccess = () => {
             el.querySelectorAll('li.alert.is-unread').forEach(row => {
@@ -22201,7 +22448,7 @@
                 if (url.pathname + url.search === location.pathname + location.search) {
                     e.preventDefault();
                     fetch(url.href, { credentials: 'same-origin' }).catch(() => {}).finally(() => {
-                        if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
+                        railHardRefresh('alerts');
                     });
                     const id = (url.hash || '').replace(/^#/, '');
                     const target = id && document.getElementById(id);
@@ -22210,7 +22457,7 @@
                     }
                     return;
                 }
-                window.smgAlertsNeedRefresh = true;
+                alertsNeedRefresh = true;
             });
         }
 
@@ -22258,10 +22505,11 @@
         buildAlertsDock();
         document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
         document.documentElement.classList.add('smg-aldock-on');
-        // celular: tela cheia = trava o fundo e entra no histórico (o "voltar" fecha em vez de sair
-        // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria uma tela cheia na
-        // cara do usuário em toda página — no desktop é uma coluna lateral, aqui é a tela inteira.
+        // celular: drawer = trava o fundo e entra no histórico (o "voltar" fecha em vez de sair
+        // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria um drawer na
+        // cara do usuário em toda página — no desktop é uma coluna lateral, aqui cobre a tela.
         if (aldockPhone()) {
+            aldock.classList.remove('is-full');   // drawer sempre abre na metade
             if (!railPhoneOpen) { railPhoneOpen = true; smgModalOpen(railModalKey, () => closeAlertsDock(false, true)); }
             persist = false;
         }
@@ -22602,6 +22850,14 @@
         const center = document.createElement('div');
         center.className = 'smg-tb-center smg-tb-center--nav';
         center.appendChild(nav);
+        // atalho da página atual (Feed, Seguindo) fica marcado; a topbar sobrevive à navegação interna, então remarca a cada página
+        const markCurrentNav = () => nav.querySelectorAll('a.smg-tb-item').forEach(a => {
+            let here = false;
+            try { const u = new URL(a.href, location.href); here = u.pathname === location.pathname && u.search === location.search; } catch (e) {}
+            a.classList.toggle('smg-tb-item--current', here);
+        });
+        markCurrentNav();
+        document.addEventListener('smg:page', markCurrentNav);
         inner.appendChild(center);
 
         // SEARCH vira OVERLAY que OCUPA a topbar quando aberto (disparado pelo ícone de busca na direita; reusa toda a engine do setupSearch)
@@ -22704,8 +22960,7 @@
         const accPop = document.createElement('div');
         accPop.className = 'smg-tb-pop smg-tb-pop--account';
         const accSections = [
-            [ // conta
-                { label: 'Profile', icon: ICONS.user, href: navHref('profile', 'defaultYourProfile') || '/account/' },
+            [ // conta (o perfil é o cabeçalho do menu, com o avatar)
                 { label: 'Your account', icon: ICONS.settings, href: navHref('defaultYourAccount') || '/account/' },
             ],
             [ // salvos + assistidos — logo abaixo da conta (pedido)
@@ -22724,14 +22979,26 @@
             [ // ações
                 { label: 'Preferences', icon: ICONS.sliders, href: navHref('settings') || '/account/preferences' },
                 { label: 'History', icon: ICONS.sortDate, href: navHref('history') },
-                { label: 'Log out', icon: ICONS.logout, href: navHref('defaultLogOut') || '/logout/' },
+            ],
+            [ // sair, sozinho no fim
+                { label: 'Log out', icon: ICONS.logout, href: navHref('defaultLogOut') || '/logout/', cls: 'smg-tb-poprow--danger' },
             ],
         ];
-        const accRow = it => '<a class="smg-tb-poprow smg-tb-poprow--sm" href="' + safeHref(it.href) + '"><span class="smg-tb-popico">' + it.icon + '</span><span class="smg-tb-poptitle">' + it.label + '</span></a>';
-        accPop.innerHTML = '<div class="smg-tb-acchead"></div>' +
+        const accRow = it => '<a class="smg-tb-poprow smg-tb-poprow--sm' + (it.cls ? ' ' + it.cls : '') + '" href="' + safeHref(it.href) + '"><span class="smg-tb-popico">' + it.icon + '</span><span class="smg-tb-poptitle">' + it.label + '</span></a>';
+        // cabeçalho = cartão do perfil: avatar grande + nome + "Ver perfil" (o clique leva ao perfil)
+        const profileHref = navHref('profile', 'defaultYourProfile') || '/account/';
+        accPop.innerHTML = '<a class="smg-tb-acchead" href="' + safeHref(profileHref) + '"><span class="smg-tb-accav"></span>' +
+            '<span class="smg-tb-acctext"><span class="smg-tb-accname"></span><span class="smg-tb-accsub">' + i18n('View profile') + '</span></span></a>' +
+            '<div class="smg-tb-accbody">' +
             accSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
-                .map(sec => sec.map(accRow).join('')).join('<div class="smg-tb-popdiv"></div>');
-        accPop.querySelector('.smg-tb-acchead').textContent = uname;   // nome do user via textContent (não interpola HTML)
+                .map(sec => sec.map(accRow).join('')).join('<div class="smg-tb-popdiv"></div>') + '</div>';
+        accPop.querySelector('.smg-tb-accname').textContent = uname;   // nome do user via textContent (não interpola HTML)
+        {
+            const navAv0 = userLink && userLink.querySelector('.avatar, img');
+            const slot = accPop.querySelector('.smg-tb-accav');
+            if (navAv0) slot.appendChild(navAv0.cloneNode(true));
+            else slot.textContent = (uname[0] || '?').toUpperCase();
+        }
 
         if (loggedIn) {
             const accBtn = document.createElement('button');
@@ -22742,7 +23009,6 @@
             const navAv = document.querySelector('.p-navgroup-link--user .avatar') || document.querySelector('.p-account .avatar');
             if (navAv) accBtn.appendChild(navAv.cloneNode(true));
             else accBtn.textContent = (uname[0] || '?').toUpperCase();
-            actions.appendChild(accBtn);
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
@@ -22755,6 +23021,7 @@
                 bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
                 actions.appendChild(bellBtn);
             }
+            actions.appendChild(accBtn);   // conta é sempre o item mais à direita (padrão de app: busca · sino · avatar)
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
             // repassa pro link nativo → o overlay de login do XF abre igual ao do tema; sem overlay,
@@ -22851,13 +23118,14 @@
             // helper genérico de bottom sheet (Discover / User)
             // full = dialog de TELA CHEIA (sem alça, sem cantos): pra listas longas o drawer só
             // mostrava metade e ainda disputava o arrasto com a rolagem da própria lista.
-            const makeSheet = (id, title, bodyHTML, full) => {
+            // drawer: abre na metade da tela e arrasta até a altura cheia (ver addSwipeClose)
+            const makeSheet = (id, title, bodyHTML, drawer) => {
                 const s = document.createElement('div');
                 s.id = id;
-                s.className = 'smg-sheet' + (full ? ' smg-sheet--full' : '');
+                s.className = 'smg-sheet' + (drawer ? ' smg-sheet--drawer' : '');
                 s.innerHTML =
                     '<div class="smg-csheet-panel">' +
-                        (full ? '' : '<div class="smg-sheet-grip"></div>') +
+                        '<div class="smg-sheet-grip"></div>' +
                         '<div class="smg-csheet-head"><span>' + title + '</span></div>' +
                         '<div class="smg-csheet-body">' + bodyHTML + '</div>' +
                     '</div>';
@@ -22873,7 +23141,9 @@
                 '</a>';
             const wireSheet = (btnId, sheet) => {
                 const b = document.getElementById(btnId);
-                if (b) b.addEventListener('click', e => { e.preventDefault(); smgSheetOpen(sheet); });
+                if (!b) return;
+                b.setAttribute('data-smg-inplace', '');   // o link abre o sheet; a navegação interna o deixa em paz
+                b.addEventListener('click', e => { e.preventDefault(); smgSheetOpen(sheet); });
             };
 
             // Discover → sheet com os mesmos itens do dropdown da topbar
@@ -22895,7 +23165,7 @@
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X
-                // fecha: em tela cheia não há scrim pra tocar nem alça pra arrastar.
+                // fecha também (além do scrim e do arrasto do drawer).
                 const uHead = uSheet.querySelector('.smg-csheet-head');
                 uHead.textContent = '';
                 uHead.classList.add('smg-csheet-head--id');
@@ -26819,9 +27089,9 @@
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a[href]');
             if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
-            // The mobile alerts link owns its click when the rail is enabled. Let its
-            // handler open the modal instead of starting a page navigation in capture.
-            if (a.id === 'smg-nav-bell' && FEATURES.alertsDock) return;
+            // Links that open a sheet or panel in place (navbar bell, account, discover) own their
+            // click. This listener runs in capture, before their handlers, so they opt out by marker.
+            if (a.hasAttribute('data-smg-inplace')) return;
             if (a.origin && a.origin !== location.origin) return;
             const href = a.getAttribute('href') || a.href || '';
             if (!href || href === '#' || href.startsWith('javascript:')) return;
@@ -26859,10 +27129,6 @@
             }
         });
 
-        window.addEventListener('popstate', () => {
-            isNavigatingOut = false;
-            if (navSafetyTimer) clearTimeout(navSafetyTimer);
-        });
     }
 
     if (typeof window !== 'undefined') {
@@ -27470,6 +27736,8 @@
 
     function softNavigate(url, opts) {
         opts = opts || {};
+        smgCloseModalsForNavigation();
+        document.dispatchEvent(new Event('smg-search-close'));
         let abs;
         try { abs = new URL(url, location.href); } catch (e) { location.href = url; return; }
         if (abs.origin !== location.origin) { location.href = abs.href; return; }
@@ -27480,7 +27748,9 @@
         }
         const token = ++softNavToken;
         stopWatchedStream();
-        document.dispatchEvent(new Event('smg-search-close'));
+        if (hardSafetyTimer) { clearTimeout(hardSafetyTimer); hardSafetyTimer = 0; }
+        pagePendingStartTime = 0;
+        paintDeadline = 0;
         const root = document.documentElement;
         cancelPagePaintRelease();
         isNavigatingOut = false;
@@ -27492,7 +27762,9 @@
         ensurePageSkeleton(target.gated ? target.kind : PAINT_PAGE_KINDS.GENERIC);
         try { history.scrollRestoration = 'manual'; } catch (e) {}
         try { window.scrollTo(0, 0); } catch (e) {}
-        fetchDoc(abs.href, { credentials: 'same-origin' }).then(doc => {
+        const controller = new AbortController();
+        const fetchDeadline = setTimeout(() => controller.abort(), 8000);
+        fetchDoc(abs.href, { credentials: 'same-origin', signal: controller.signal }).then(doc => {
             if (token !== softNavToken) return;
             const nextBodies = doc ? Array.from(doc.querySelectorAll('.p-body')) : [];
             const curBodies = Array.from(document.querySelectorAll('.p-body'));
@@ -27528,7 +27800,10 @@
             softNavUrl = nextUrl;
             if (opts.push !== false) {
                 softNavUsed = true;
-                try { history.pushState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash); } catch (e) {}
+                try {
+                    if (history.state && history.state.smgSheet) history.replaceState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash);
+                    else history.pushState({ smgSoft: true }, '', abs.pathname + abs.search + abs.hash);
+                } catch (e) {}
             }
             resetSwappedPage();
             detectPageClasses();
@@ -27546,15 +27821,11 @@
             if (isThreadRoute()) safe(ingestCurrentThreadPageIfFollowed);
             safe(pinDeepLinkPost);
             safe(syncMobileThreadbar);
-            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
-            if (window.smgAlertsNeedRefresh) {
-                window.smgAlertsNeedRefresh = false;
-                if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
-            }
+            document.dispatchEvent(new CustomEvent('smg:page'));
             processAll([document.body]);
             observePageContent();
             schedulePagePaintRelease();
-        });
+        }).finally(() => clearTimeout(fetchDeadline));
     }
     window.smgSoftNavigate = softNavigate;
 
@@ -27570,6 +27841,9 @@
     }
 
     window.addEventListener('popstate', () => {
+        if (smgHandleModalPopstate()) return;
+        isNavigatingOut = false;
+        if (navSafetyTimer) clearTimeout(navSafetyTimer);
         if (!softNavUsed) return;
         const now = location.pathname + location.search;
         if (now === softNavUrl) return;

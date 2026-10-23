@@ -63,13 +63,12 @@
     function setupPostNavigation() {
         // já montado: sai cedo (não re-escaneia posts a cada mutação)
         if (document.getElementById('smg-post-nav-wrapper')) {
-            if (typeof window.smgRefreshDockPage === 'function') window.smgRefreshDockPage();
             markNavbarReady();
             return;
         }
 
         // anchors de cada post (ignora respostas em quote); fallback .message. Re-consultado a cada página
-        // (smgRefreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
+        // (refreshDockPage): guardar o array da 1ª página prendia o body dela vivo depois da soft-nav.
         function queryDockPosts() {
             const anchors = Array.from(document.querySelectorAll('span.u-anchorTarget[id^="post-"]'))
                 .filter(el => !el.closest('.message-responseRow'));
@@ -81,7 +80,7 @@
         // (e a fiação deles) só fazem sentido numa thread.
         const onThreadUrl = /\/threads\//.test(location.pathname);
         if (onThreadUrl && posts.length === 0) return; // espera os posts da thread carregarem
-        const isThread = onThreadUrl && posts.length > 0;
+        let isThread = onThreadUrl && posts.length > 0;
 
         posts.forEach(el => {
             if (el instanceof HTMLElement) el.style.scrollMarginTop = '0px';
@@ -123,7 +122,10 @@
         })();
 
         // ---- botões ----
-        let btnWatchM, btnSortM, btnMediaM, btnListFilterM, btnListSortM, btnViewToggleM;
+        let btnWatchM, btnSortM, btnListFilterM, btnListSortM, btnViewToggleM;
+        let dockPagerGroup = null;   // cápsula do paginador no desktop (montada com os grupos, mais abaixo)
+        const btnMediaM = makeDockButton({ id: 'smg-thread-media-m', icon: ICONS.gallery, label: 'Media' });
+        btnMediaM.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
         const btnSearch = makeDockButton({ id: 'smg-thread-search', icon: ICONS.search, label: 'Search' });
         const btnWatch = makeDockButton({
             id: 'smg-thread-watch',
@@ -137,6 +139,7 @@
         btnSort.classList.add('smg-nav-labeled', 'smg-sort-pill');   // pílula com o critério escrito (Data/Reações) — deixa claro pelo quê ordena
         const sortTxt = Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') });
         btnSort.appendChild(sortTxt);
+        makeSortSegments(btnSort);   // desktop: segmentado Data | Reações (o sortTxt sai; o celular segue com o btnSortM)
 
         let currentSortOrder = (new URLSearchParams(location.search).get('order')) || 'last_post_date';
         const getListSortLabel = k => {
@@ -272,7 +275,7 @@
             navWrapper.classList.toggle('smg-dock-as-list', list);
             navWrapper.classList.toggle('smg-dock-baronly', !list && !thread);
         }
-        window.smgRefreshDockPage = () => {
+        function refreshDockPage() {
             posts = queryDockPosts();
             syncDockListMode();
             if (typeof closePopovers === 'function') closePopovers();
@@ -286,6 +289,7 @@
             if (typeof updateWatchIcon === 'function') updateWatchIcon();
             if (typeof markActiveNav === 'function') markActiveNav();
             const pj = readPageJump();
+            if (dockPagerGroup) dockPagerGroup.hidden = !pj;
             if (!pj) {
                 pageJump = null;
                 setBtnIcon(btnGoto, ICONS.goto);
@@ -303,7 +307,25 @@
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(pj.cur);
             else setBtnIcon(btnGoto, `${pj.cur} / ${pj.max}`);
             paintMobilePager();
-        };
+        }
+        document.addEventListener('smg:page', () => {
+            const root = document.documentElement;
+            const nextThread = /\/threads\//.test(location.pathname);
+            const nextList = !nextThread && (!!document.querySelector('.structItem--thread, .structItem--bookmark, .message--articlePreview')
+                || /\/forums\/|\/watched\/|\/account\/bookmarks|\/bookmarks\/|\/search\//.test(location.pathname)
+                || /^forum_view/.test(root.getAttribute('data-template') || '')
+                || root.getAttribute('data-template') === 'search_results');
+            const nextKind = nextThread ? 'thread' : nextList ? 'list' : 'general';
+            if (nextKind !== dockPageKind) {
+                isThread = nextThread;
+                isList = nextList;
+                dockPageKind = nextKind;
+                navWrapper.classList.toggle('smg-dock-as-list', isList);
+                navWrapper.classList.toggle('smg-dock-baronly', !isThread && !isList);
+                syncDockRouteControls();
+            }
+            refreshDockPage();
+        });
 
         // o scroll infinito chama isto pra refletir a página que está na tela
         smgUpdateDockPage = n => {
@@ -333,8 +355,8 @@
         };
 
         // modo mídia: UM botão abre o overlay (Galeria; o seletor da dock dele leva ao Feed)
-        const btnMedia = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
-        if (btnMedia) btnMedia.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
+        const btnMedia = makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' });
+        btnMedia.addEventListener('click', e => { e.stopPropagation(); openMedia('gallery'); });
 
         if (mobilePagePop) smgPopover({
             inside: [mobilePagePop, btnMobilePageBtn],
@@ -387,7 +409,8 @@
             });
         });
 
-        const isList = !isThread && onListUrl && (!!pageJump || !!btnListFilter || !!btnListSort || !!btnViewToggle);
+        let isList = !isThread && onListUrl && (!!pageJump || !!btnListFilter || !!btnListSort || !!btnViewToggle);
+        let dockPageKind = isThread ? 'thread' : isList ? 'list' : 'general';
 
         // ---- navegação global (links) — base do fórum via quick-search (vale em qualquer página) ----
         const boardBase = (() => {
@@ -403,6 +426,7 @@
         // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
+            if (FEATURES.alertsDock) btnBell.setAttribute('data-smg-inplace', '');   // abre o rail; a navegação interna não toca nele
             btnBell.addEventListener('click', e => {
                 if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
@@ -428,6 +452,7 @@
             if (ico) { ico.innerHTML = ''; ico.appendChild(navAvatar.cloneNode(true)); ico.classList.add('smg-nav-ico--avatar'); }
         }
         if (btnUser) {
+            btnUser.setAttribute('data-smg-inplace', '');   // abre o sheet de conta, nunca navega
             btnUser.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -487,92 +512,57 @@
         btnViewToggleM = makeDockButton({ id: 'smg-view-toggle-m', icon: viewMode === 'grid' ? ICONS.list : ICONS.gallery, label: getViewToggleLabel(viewMode) });
         btnViewToggleM.addEventListener('click', () => btnViewToggle.click());
 
+        // Barra de contexto do mobile: UMA só, com os controles de tópico e de lista. A dock nasce uma vez e a
+        // navegação interna troca o tipo de página; o CSS (html.smg-thread / html.smg-threadlist) mostra o grupo
+        // certo. Cada botão vive num lugar só: o mesmo nó na barra e num grupo do desktop era MOVIDO pro grupo
+        // (escondido no celular) e sumia da barra.
+        btnWatchM = makeDockButton({
+            id: 'smg-thread-watch-m',
+            icon: ICONS.watch,
+            label: IS_PT ? 'Seguir este tópico (receber notificações)' : 'Watch thread (receive updates)',
+        });
+        btnWatchM.addEventListener('click', () => btnWatch.click());
+        btnSortM = makeDockButton({ id: 'smg-post-sort-toggle-m', icon: ICONS.sort, label: sortTip });
+        btnSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
+        btnSortM.appendChild(Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') }));
+        makeSortSegments(btnSortM);   // celular: o mesmo segmentado, só com os ícones (CSS)
+        btnSortM.addEventListener('click', e => { if (!sortSegClickIsNoop(e, sortIsDate)) btnSort.click(); });
+        const btnUpM = makeDockButton({ id: 'smg-scroll-top-m', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
+        btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        const btnDownM = makeDockButton({ id: 'smg-scroll-bottom-m', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
+        btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
+        const contextBar = document.createElement('div');
+        contextBar.className = 'smg-dock-thread-bar';
+        contextBar.append(btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnListSortM, btnListFilterM, btnViewToggleM, btnMediaM, btnWatchM);
+
+        // Grupos do desktop (o tipo de página do nascimento decide o arranjo; o CSS esconde o que não vale).
+        // O paginador é UMA cápsula (primeira · anterior · n / N · próxima · última), escondida sem paginação.
+        dockPagerGroup = makeGroup(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
+        dockPagerGroup.classList.add('smg-nav-pager');
+        dockPagerGroup.hidden = !pageJump;
         if (isThread) {
-            // Barra de controles de thread para mobile
-            btnWatchM = makeDockButton({
-                id: 'smg-thread-watch',
-                icon: ICONS.watch,
-                label: IS_PT ? 'Seguir este tópico (receber notificações)' : 'Watch thread (receive updates)',
-            });
-            btnWatchM.addEventListener('click', () => btnWatch.click());
-
-            btnSortM = makeDockButton({ id: 'smg-post-sort-toggle', icon: ICONS.sort, label: sortTip });
-            btnSortM.classList.add('smg-nav-labeled', 'smg-sort-pill');
-            const sortTxtM = Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n(sortIsDate ? 'Date' : 'Reactions') });
-            btnSortM.appendChild(sortTxtM);
-            btnSortM.addEventListener('click', () => btnSort.click());
-
-            btnMediaM = isThread ? makeDockButton({ id: 'smg-thread-media', icon: ICONS.gallery, label: 'Media' }) : null;
-            if (btnMedia && btnMediaM) btnMediaM.addEventListener('click', e => { e.stopPropagation(); btnMedia.click(); });
-
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-
-            const threadBar = document.createElement('div');
-            threadBar.className = 'smg-dock-thread-bar';
-            const threadBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSortM, btnMediaM, btnWatchM].filter(Boolean);
-            threadBtns.push(btnListSortM, btnListFilterM, btnViewToggleM);
-            threadBar.append(...threadBtns.filter(Boolean));
-
-            // Grupos para Desktop
-            const actionsGroup = makeGroup(btnWatch);
+            // seguir + mídia (galeria/feed) — a mídia saiu do cabeçalho fixo do tópico e mora aqui
+            const actionsGroup = makeGroup(btnWatch, btnMedia);
             actionsGroup.className = 'smg-nav-group smg-side--desktop-only';
-            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnMedia);
+            const pagenavGroup = makeGroup(btnSort, btnListSort, btnListFilter, btnViewToggle, dockPagerGroup);
             pagenavGroup.className = 'smg-nav-group smg-side--desktop-only';
             const scrollGroup = makeGroup(btnUp, btnDown);
             scrollGroup.className = 'smg-nav-group smg-side--desktop-only';
 
             panel.append(
                 btnSettings, makeDivider(),
-                threadBar,
+                contextBar,
                 actionsGroup, makeDivider(),
                 centralGroup, makeDivider(),
                 pagenavGroup, makeDivider(),
                 scrollGroup,
                 btnSheet
             );
-        } else if (isList) {
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-
-            const listBar = document.createElement('div');
-            listBar.className = 'smg-dock-thread-bar';
-            const listMobileBtns = [btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean);
-            listBar.append(...listMobileBtns);
-
-            const listBtns = [btnSort, btnWatch];
-            if (pageJump) listBtns.push(btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast);
-            if (btnListFilter) listBtns.push(btnListFilter);
-            if (btnListSort) listBtns.push(btnListSort);
-            if (btnViewToggle) listBtns.push(btnViewToggle);
-            const listGroup = makeGroup(...listBtns.filter(Boolean));
-            listGroup.className = 'smg-nav-group smg-side--desktop-only';
-
-            panel.append(
-                btnSettings, makeDivider(),
-                listBar,
-                centralGroup, makeDivider(),
-                listGroup,
-                btnSheet
-            );
         } else {
-            const btnUpM = makeDockButton({ id: 'smg-scroll-top', icon: ICONS.scrollTop, label: IS_PT ? 'Rolar para o topo da página' : 'Scroll to top' });
-            btnUpM.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            const btnDownM = makeDockButton({ id: 'smg-scroll-bottom', icon: ICONS.scrollBottom, label: IS_PT ? 'Rolar para o final da página' : 'Scroll to bottom' });
-            btnDownM.addEventListener('click', () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
-            const listBar = document.createElement('div');
-            listBar.className = 'smg-dock-thread-bar';
-            listBar.append(...[btnUpM, btnDownM, btnMobilePageBtn, btnSort, btnWatch, btnListSortM, btnListFilterM, btnViewToggleM].filter(Boolean));
-            const listBtns = [btnSort, btnWatch, btnPageFirst, btnPagePrev, btnGoto, btnPageNext, btnPageLast, btnListFilter, btnListSort, btnViewToggle];
+            const listBtns = [btnSort, btnWatch, btnMedia, dockPagerGroup, btnListFilter, btnListSort, btnViewToggle];
             const listGroup = makeGroup(...listBtns.filter(Boolean));
             listGroup.className = 'smg-nav-group smg-side--desktop-only';
-            panel.append(btnSettings, makeDivider(), listBar, centralGroup, makeDivider(), listGroup, btnSheet);
+            panel.append(btnSettings, makeDivider(), contextBar, centralGroup, makeDivider(), listGroup, btnSheet);
         }
 
         const navWrapper = document.createElement('div');
@@ -716,7 +706,7 @@
             listFilterPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Filtro' : 'Filter') + '</span><div class="smg-lf-body">' + (IS_PT ? 'Carregando…' : 'Loading…') + '</div>';
         }
 
-        const sortPop = (isList && btnListSort) ? document.createElement('div') : null;
+        const sortPop = btnListSort ? document.createElement('div') : null;
         if (sortPop) {
             sortPop.id = 'smg-listsort-pop';
             sortPop.innerHTML = '<span class="smg-pop-title">' + (IS_PT ? 'Ordenar' : 'Sort') + '</span><div class="smg-sort-body"></div>';
@@ -732,6 +722,11 @@
         if (mobilePagePop) navWrapper.append(mobilePagePop);
         document.body.appendChild(navWrapper);
         i18nDom(navWrapper);
+        // o arranjo dos botões é por CSS (classes da página); aqui só o FAB, que existe ou não conforme a dock tem ações
+        function syncDockRouteControls() {
+            if (typeof syncSettingsFab === 'function') syncSettingsFab();
+        }
+        syncDockRouteControls();
         markNavbarReady();
 
         // ---- estado da dock: ocultar manual + auto-hide no scroll (só no celular) ----

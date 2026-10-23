@@ -225,12 +225,16 @@
                 transform: translateY(100%); transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
             .smg-sheet.open .smg-csheet-panel { transform: translateY(0); }
-            /* DIALOG DE TELA CHEIA (conta): mesma animação de subida, mas ocupa tudo — lista longa
-               num drawer de 80vh mostrava metade e o arrasto-pra-fechar brigava com a rolagem dela */
-            .smg-sheet--full .smg-csheet-panel {
-                top: 0; height: 100%; max-height: none; border-radius: 0; border-top: 0;
-                padding: calc(6px + env(safe-area-inset-top)) var(--smg-sp-14) calc(14px + env(safe-area-inset-bottom));
+            /* DRAWER (conta, alertas no celular): duas alturas fixas, metade e cheia. Altura fixa, não
+               max-height: a lista rola DENTRO do corpo, e o arrasto pelo topo (addSwipeClose) só mexe na
+               altura — nunca briga com a rolagem. */
+            html { --smg-drawer-half: 58dvh; --smg-drawer-full: calc(100dvh - 12px - env(safe-area-inset-top)); }
+            .smg-sheet--drawer .smg-csheet-panel {
+                box-sizing: border-box; height: var(--smg-drawer-half); max-height: var(--smg-drawer-full);
+                transition: transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
             }
+            .smg-sheet--drawer.is-full .smg-csheet-panel { height: var(--smg-drawer-full); }
+            .smg-sheet--drawer .smg-csheet-body { flex: 1 1 auto; min-height: 0; }
             .smg-csheet-x {
                 width: 40px; height: 40px; margin-right: -6px; flex: none; align-self: flex-start;
                 display: inline-flex; align-items: center; justify-content: center;

@@ -14,17 +14,18 @@
     // Filtros (escopo/ordenar/só-títulos) aplicam NA HORA (navega); query/autor aplicam no Enter/Buscar.
     // =========================================================
     let rsPanelDone = false;
+    document.addEventListener('smg:page', () => { rsPanelDone = false; });
     function buildSearchResultsPanel() {
         if (rsPanelDone) return;
-        if ((document.documentElement.getAttribute('data-template') || '') !== 'search_results') { rsPanelDone = true; return; }
+        if ((document.documentElement.getAttribute('data-template') || '') !== 'search_results') return;
         const header = document.querySelector('.p-body-header');
-        if (!header) { if (document.readyState === 'complete') rsPanelDone = true; return; }   // header ainda não parseado → tenta no próximo frame
-        rsPanelDone = true;
+        if (!header) return;   // header ainda não parseado → tenta no próximo frame
 
         const sp = new URLSearchParams(location.search);
         const q0 = sp.get('q') || '';
         const by0 = sp.get('c[users]') || '';
         if (!q0 && !by0) return;   // busca sem params reconstruíveis (ex.: /search/member) → não monta
+        rsPanelDone = true;
 
         // estado atual lido da URL
         let titlesOn = sp.get('c[title_only]') === '1';

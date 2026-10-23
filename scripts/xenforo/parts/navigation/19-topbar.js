@@ -269,6 +269,14 @@
         const center = document.createElement('div');
         center.className = 'smg-tb-center smg-tb-center--nav';
         center.appendChild(nav);
+        // atalho da página atual (Feed, Seguindo) fica marcado; a topbar sobrevive à navegação interna, então remarca a cada página
+        const markCurrentNav = () => nav.querySelectorAll('a.smg-tb-item').forEach(a => {
+            let here = false;
+            try { const u = new URL(a.href, location.href); here = u.pathname === location.pathname && u.search === location.search; } catch (e) {}
+            a.classList.toggle('smg-tb-item--current', here);
+        });
+        markCurrentNav();
+        document.addEventListener('smg:page', markCurrentNav);
         inner.appendChild(center);
 
         // SEARCH vira OVERLAY que OCUPA a topbar quando aberto (disparado pelo ícone de busca na direita; reusa toda a engine do setupSearch)
@@ -371,8 +379,7 @@
         const accPop = document.createElement('div');
         accPop.className = 'smg-tb-pop smg-tb-pop--account';
         const accSections = [
-            [ // conta
-                { label: 'Profile', icon: ICONS.user, href: navHref('profile', 'defaultYourProfile') || '/account/' },
+            [ // conta (o perfil é o cabeçalho do menu, com o avatar)
                 { label: 'Your account', icon: ICONS.settings, href: navHref('defaultYourAccount') || '/account/' },
             ],
             [ // salvos + assistidos — logo abaixo da conta (pedido)
@@ -391,14 +398,26 @@
             [ // ações
                 { label: 'Preferences', icon: ICONS.sliders, href: navHref('settings') || '/account/preferences' },
                 { label: 'History', icon: ICONS.sortDate, href: navHref('history') },
-                { label: 'Log out', icon: ICONS.logout, href: navHref('defaultLogOut') || '/logout/' },
+            ],
+            [ // sair, sozinho no fim
+                { label: 'Log out', icon: ICONS.logout, href: navHref('defaultLogOut') || '/logout/', cls: 'smg-tb-poprow--danger' },
             ],
         ];
-        const accRow = it => '<a class="smg-tb-poprow smg-tb-poprow--sm" href="' + safeHref(it.href) + '"><span class="smg-tb-popico">' + it.icon + '</span><span class="smg-tb-poptitle">' + it.label + '</span></a>';
-        accPop.innerHTML = '<div class="smg-tb-acchead"></div>' +
+        const accRow = it => '<a class="smg-tb-poprow smg-tb-poprow--sm' + (it.cls ? ' ' + it.cls : '') + '" href="' + safeHref(it.href) + '"><span class="smg-tb-popico">' + it.icon + '</span><span class="smg-tb-poptitle">' + it.label + '</span></a>';
+        // cabeçalho = cartão do perfil: avatar grande + nome + "Ver perfil" (o clique leva ao perfil)
+        const profileHref = navHref('profile', 'defaultYourProfile') || '/account/';
+        accPop.innerHTML = '<a class="smg-tb-acchead" href="' + safeHref(profileHref) + '"><span class="smg-tb-accav"></span>' +
+            '<span class="smg-tb-acctext"><span class="smg-tb-accname"></span><span class="smg-tb-accsub">' + i18n('View profile') + '</span></span></a>' +
+            '<div class="smg-tb-accbody">' +
             accSections.map(sec => sec.filter(it => it.href)).filter(sec => sec.length)
-                .map(sec => sec.map(accRow).join('')).join('<div class="smg-tb-popdiv"></div>');
-        accPop.querySelector('.smg-tb-acchead').textContent = uname;   // nome do user via textContent (não interpola HTML)
+                .map(sec => sec.map(accRow).join('')).join('<div class="smg-tb-popdiv"></div>') + '</div>';
+        accPop.querySelector('.smg-tb-accname').textContent = uname;   // nome do user via textContent (não interpola HTML)
+        {
+            const navAv0 = userLink && userLink.querySelector('.avatar, img');
+            const slot = accPop.querySelector('.smg-tb-accav');
+            if (navAv0) slot.appendChild(navAv0.cloneNode(true));
+            else slot.textContent = (uname[0] || '?').toUpperCase();
+        }
 
         if (loggedIn) {
             const accBtn = document.createElement('button');
@@ -409,7 +428,6 @@
             const navAv = document.querySelector('.p-navgroup-link--user .avatar') || document.querySelector('.p-account .avatar');
             if (navAv) accBtn.appendChild(navAv.cloneNode(true));
             else accBtn.textContent = (uname[0] || '?').toUpperCase();
-            actions.appendChild(accBtn);
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
@@ -422,6 +440,7 @@
                 bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
                 actions.appendChild(bellBtn);
             }
+            actions.appendChild(accBtn);   // conta é sempre o item mais à direita (padrão de app: busca · sino · avatar)
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
             // repassa pro link nativo → o overlay de login do XF abre igual ao do tema; sem overlay,
@@ -518,13 +537,14 @@
             // helper genérico de bottom sheet (Discover / User)
             // full = dialog de TELA CHEIA (sem alça, sem cantos): pra listas longas o drawer só
             // mostrava metade e ainda disputava o arrasto com a rolagem da própria lista.
-            const makeSheet = (id, title, bodyHTML, full) => {
+            // drawer: abre na metade da tela e arrasta até a altura cheia (ver addSwipeClose)
+            const makeSheet = (id, title, bodyHTML, drawer) => {
                 const s = document.createElement('div');
                 s.id = id;
-                s.className = 'smg-sheet' + (full ? ' smg-sheet--full' : '');
+                s.className = 'smg-sheet' + (drawer ? ' smg-sheet--drawer' : '');
                 s.innerHTML =
                     '<div class="smg-csheet-panel">' +
-                        (full ? '' : '<div class="smg-sheet-grip"></div>') +
+                        '<div class="smg-sheet-grip"></div>' +
                         '<div class="smg-csheet-head"><span>' + title + '</span></div>' +
                         '<div class="smg-csheet-body">' + bodyHTML + '</div>' +
                     '</div>';
@@ -540,7 +560,9 @@
                 '</a>';
             const wireSheet = (btnId, sheet) => {
                 const b = document.getElementById(btnId);
-                if (b) b.addEventListener('click', e => { e.preventDefault(); smgSheetOpen(sheet); });
+                if (!b) return;
+                b.setAttribute('data-smg-inplace', '');   // o link abre o sheet; a navegação interna o deixa em paz
+                b.addEventListener('click', e => { e.preventDefault(); smgSheetOpen(sheet); });
             };
 
             // Discover → sheet com os mesmos itens do dropdown da topbar
@@ -562,7 +584,7 @@
                 // CABEÇALHO: identidade de verdade — avatar + nome, clicáveis, levando ao perfil.
                 // Antes eram duas linhas mortas dizendo a mesma coisa ("Conta" como título e o nome
                 // solto embaixo), nenhuma delas clicável, ocupando o topo da tela sem função. O X
-                // fecha: em tela cheia não há scrim pra tocar nem alça pra arrastar.
+                // fecha também (além do scrim e do arrasto do drawer).
                 const uHead = uSheet.querySelector('.smg-csheet-head');
                 uHead.textContent = '';
                 uHead.classList.add('smg-csheet-head--id');

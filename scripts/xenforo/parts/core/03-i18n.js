@@ -97,7 +97,7 @@
         'Members': 'Membros', 'Member list': 'Lista de membros',
         'Online now': 'Online agora', "Who's online": 'Quem está online',
         // topbar — conta
-        'Profile': 'Perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
+        'Profile': 'Perfil', 'View profile': 'Ver perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
         'Messages': 'Mensagens', 'Your threads': 'Seus tópicos', 'Contributed': 'Participações',
         'Your tickets': 'Seus tickets', 'Bookmarks': 'Salvos', 'Watched forums': 'Fóruns seguidos',
         'Preferences': 'Preferências', 'History': 'Histórico', 'Log out': 'Sair',

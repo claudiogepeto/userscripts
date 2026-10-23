@@ -117,6 +117,7 @@
         setBtnLabel(galDockSortBtn, sortTip);
         const t = galDockSortBtn.querySelector('.smg-nav-btn-text');   // texto visível: deixa claro PELO QUÊ está ordenado
         if (t) t.textContent = i18n(isDate ? 'Date' : 'Reactions');
+        setSortSegments(galDockSortBtn, isDate);
     }
     // PERSISTÊNCIA do modo na URL (query param) → F5 reabre galeria/feed em vez de cair na thread.
     // replaceState (não polui o histórico). Params: view=gallery|feed · order=date|reaction (sort da galeria).
@@ -416,12 +417,14 @@
         const gSortTip = IS_PT ? 'Ordenação atual: por data. Clique para ordenar por reações' : 'Current sort: by date. Click to sort by reactions';
         const gSort = makeDockButton({ id: 'smg-gal-sort', icon: ICONS.sort, label: gSortTip });
         gSort.classList.add('smg-nav-labeled');
-        gSort.appendChild(Object.assign(document.createElement('span'), { className: 'smg-nav-btn-text', textContent: i18n('Date') }));
+        makeSortSegments(gSort);
         const gPrev = makeDockButton({ id: 'smg-gal-prev', icon: ICONS.pagePrev, label: IS_PT ? 'Página anterior' : 'Previous page' });
         const gGoto = makeDockButton({ id: 'smg-gal-goto', icon: '1', label: IS_PT ? 'Pular para página específica' : 'Jump to specific page' });
         const gNext = makeDockButton({ id: 'smg-gal-next', icon: ICONS.pageNext, label: IS_PT ? 'Próxima página' : 'Next page' });
         galDockSortBtn = gSort; galDockGotoBtn = gGoto;
-        const gnav = makeGroup(gSort, gPrev, gGoto, gNext);
+        const gpager = makeGroup(gPrev, gGoto, gNext);   // paginador = cápsula, igual à dock da thread
+        gpager.classList.add('smg-nav-pager');
+        const gnav = makeGroup(gSort, gpager);
         gnav.classList.add('smg-media-gal-only');
         const gnavDiv = makeDivider();
         gnavDiv.classList.add('smg-media-gal-only');
@@ -450,7 +453,10 @@
         document.body.appendChild(root);
         i18nDom(root);
 
-        gSort.addEventListener('click', () => { if (mediaState) galSetOrder(mediaState.order === 'date' ? 'reaction' : 'date'); });
+        gSort.addEventListener('click', e => {
+            if (!mediaState || sortSegClickIsNoop(e, mediaState.order === 'date')) return;
+            galSetOrder(mediaState.order === 'date' ? 'reaction' : 'date');
+        });
         gPrev.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) - 1));
         gNext.addEventListener('click', () => galJumpTo((mediaState ? (mediaState.viewPage || mediaState.lo) : 1) + 1));
 

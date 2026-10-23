@@ -25,6 +25,7 @@
 
     let aldock = null;            // elemento do painel (montado 1×)
     let aldockBound = false;
+    let alertsNeedRefresh = false;
 
     // a fonte do rail: paginar seguindo o "next" nativo, deduplicar, rolagem infinita.
     const RAIL_SRC = {
@@ -263,7 +264,11 @@
             });
         return railHardFlight;
     }
-    window.smgRefreshAlertsDock = () => railHardRefresh('alerts');
+    document.addEventListener('smg:page', () => {
+        if (!alertsNeedRefresh) return;
+        alertsNeedRefresh = false;
+        railHardRefresh('alerts');
+    });
 
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
     function railRefresh(tab, force) {
@@ -348,6 +353,7 @@
         const alertsSkeleton = paintRailRow('li', 'smg-aldock-skel-row').repeat(6);
         el.innerHTML =
             '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
+            '<div class="smg-sheet-grip smg-aldock-handle"></div>' +   // puxador do drawer (só no celular)
             '<div class="smg-aldock-head">' +
                 '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
                 '<div class="smg-aldock-acts">' +
@@ -366,6 +372,15 @@
         document.body.appendChild(el);
         aldock = el;
         markSidebarReady();
+
+        // celular: o rail é um DRAWER (metade da tela, arrasta até cheia ou pra baixo pra fechar) sobre um
+        // scrim que fecha ao toque. No desktop nenhum dos dois aparece (CSS) e o arrasto não engata.
+        const scrim = document.createElement('div');
+        scrim.className = 'smg-aldock-scrim';
+        scrim.addEventListener('click', () => closeAlertsDock(false));
+        document.body.appendChild(scrim);
+        addSwipeClose(el, () => closeAlertsDock(false), () => aldockPhone() && aldockOpen(),
+            { setFull: full => el.classList.toggle('is-full', full) });
 
         const applyMarkAllReadSuccess = () => {
             el.querySelectorAll('li.alert.is-unread').forEach(row => {
@@ -429,7 +444,7 @@
                 if (url.pathname + url.search === location.pathname + location.search) {
                     e.preventDefault();
                     fetch(url.href, { credentials: 'same-origin' }).catch(() => {}).finally(() => {
-                        if (typeof window.smgRefreshAlertsDock === 'function') window.smgRefreshAlertsDock();
+                        railHardRefresh('alerts');
                     });
                     const id = (url.hash || '').replace(/^#/, '');
                     const target = id && document.getElementById(id);
@@ -438,7 +453,7 @@
                     }
                     return;
                 }
-                window.smgAlertsNeedRefresh = true;
+                alertsNeedRefresh = true;
             });
         }
 
@@ -486,10 +501,11 @@
         buildAlertsDock();
         document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
         document.documentElement.classList.add('smg-aldock-on');
-        // celular: tela cheia = trava o fundo e entra no histórico (o "voltar" fecha em vez de sair
-        // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria uma tela cheia na
-        // cara do usuário em toda página — no desktop é uma coluna lateral, aqui é a tela inteira.
+        // celular: drawer = trava o fundo e entra no histórico (o "voltar" fecha em vez de sair
+        // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria um drawer na
+        // cara do usuário em toda página — no desktop é uma coluna lateral, aqui cobre a tela.
         if (aldockPhone()) {
+            aldock.classList.remove('is-full');   // drawer sempre abre na metade
             if (!railPhoneOpen) { railPhoneOpen = true; smgModalOpen(railModalKey, () => closeAlertsDock(false, true)); }
             persist = false;
         }

@@ -92,7 +92,15 @@
 
             // FAB de configurações: nas páginas onde a dock fica escondida (baronly no desktop), garante
             // acesso ao mod. Clique → revela a dock (só a engrenagem) + abre o settings. O closePopovers reseta.
-            if (navWrapper.classList.contains('smg-dock-baronly') && !document.getElementById('smg-settings-fab')) {
+            syncSettingsFab();
+        };
+        function syncSettingsFab() {
+            const existingFab = document.getElementById('smg-settings-fab');
+            if (!navWrapper.classList.contains('smg-dock-baronly')) {
+                if (existingFab) existingFab.remove();
+                return;
+            }
+            if (!existingFab) {
                 const fab = document.createElement('button');
                 fab.id = 'smg-settings-fab';
                 fab.type = 'button';
@@ -107,7 +115,7 @@
                 });
                 document.body.appendChild(fab);
             }
-        };
+        }
         setupSettings();
 
         // ---- filtro e ordenação da listagem (fórum / watched / bookmarks / search) ----
@@ -864,11 +872,13 @@
                 setBtnLabel(b, sortTip);
                 const t = b.querySelector('.smg-nav-btn-text');
                 if (t) t.textContent = i18n(sortIsDate ? 'Date' : 'Reactions');
-                b.classList.toggle('smg-active', !sortIsDate);
+                b.classList.toggle('smg-active', !sortIsDate && !b.classList.contains('smg-sort-seg'));
+                setSortSegments(b, sortIsDate);
             });
         }
 
-        btnSort.addEventListener('click', () => {
+        btnSort.addEventListener('click', e => {
+            if (sortSegClickIsNoop(e, sortIsDate)) return;   // clicou na ordenação que já está valendo
             sortIsDate = !sortIsDate;
             updateSortIcon();
             const targetUrl = getSortHref(sortIsDate);

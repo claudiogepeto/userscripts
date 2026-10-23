@@ -93,21 +93,35 @@
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
                 .smg-tb-bellbtn { display: none !important; }
             }
-            /* CELULAR: o mesmo rail, em TELA CHEIA (aberto pelo sino da navbar). Nada de empurrar a
-               página — aqui ele cobre tudo, então body/topbar/dock ficam como estavam. */
+            /* puxador e scrim do drawer: só existem no celular */
+            .smg-aldock-handle, .smg-aldock-scrim { display: none; }
+            /* CELULAR: o mesmo rail vira um DRAWER (aberto pelo sino da navbar) — metade da tela, arrasta pelo
+               topo até a altura cheia ou pra baixo pra fechar; tocar no scrim fecha. Nada de empurrar a
+               página: body/topbar/dock ficam como estavam. Alturas = as do drawer de conta (css-notices). */
             @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; }
                 #smg-aldock {
-                    top: 0; right: 0; bottom: 0; left: 0; width: 100%;
+                    top: auto; right: 0; bottom: 0; left: 0; width: 100%;
+                    height: var(--smg-drawer-half); max-height: var(--smg-drawer-full);
                     z-index: var(--smg-z-sheet-1);                 /* acima da navbar e dos sheets */
-                    border-left: 0; box-shadow: none;
+                    border-left: 0; border-top: 1px solid var(--smg-w-10);
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
+                    background: var(--smg-s1); box-shadow: var(--smg-sheet-shadow);
+                    transition: height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
+                }
+                #smg-aldock.is-full { height: var(--smg-drawer-full); }
+                /* acima do scrim e da navbar: vence o z-index do gate de paint (09-paint, html.smg-sidebar-ready #smg-aldock) */
+                html.smg-aldock-on body > #smg-aldock { z-index: var(--smg-z-sheet-1) !important; }
+                .smg-aldock-handle { display: block; margin-top: var(--smg-sp-8); margin-bottom: 0; }
+                html.smg-aldock-on .smg-aldock-scrim {
+                    display: block; position: fixed; inset: 0; z-index: var(--smg-z-sheet);
+                    background: var(--smg-k-55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
                 }
                 html.smg-aldock-on body { padding-right: 0 !important; }
                 html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
                 html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
-                .smg-aldock-grip { display: none !important; }        /* não se arrasta largura em tela cheia */
+                .smg-aldock-grip { display: none !important; }        /* largura não se arrasta no celular */
                 .smg-tb-bellbtn { display: none !important; }         /* o controle é o sino da navbar inferior */
-                /* respeita as barras do sistema (notch em cima, gesto embaixo) */
-                .smg-aldock-head { padding-top: calc(10px + env(safe-area-inset-top)); }
+                .smg-aldock-head { height: 52px; border-bottom-color: var(--smg-w-06); }
                 .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
             }
         `;

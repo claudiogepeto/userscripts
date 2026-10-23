@@ -343,6 +343,7 @@
             shownPage = p;
             try { history.replaceState(history.state, '', sep ? sep.dataset.url : originalUrl); } catch {}
             if (typeof smgUpdateDockPage === 'function') smgUpdateDockPage(p);
+            smgPagerShow(p);   // barra da página (filter bar) = mesma página da dock e da URL
 
             // "X of Y" do paginador simples (topo e rodapé)
             document.querySelectorAll('.pageNavSimple-el--current').forEach(el => {

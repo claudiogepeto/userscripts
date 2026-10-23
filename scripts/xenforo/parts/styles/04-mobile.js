@@ -155,6 +155,7 @@
                     transition: transform var(--smg-dur-30) cubic-bezier(.2,.85,.25,1);
                     box-shadow: var(--smg-sheet-shadow);
                 }
+                #smg-settings-pop { height: 82vh; height: 82dvh; }   /* sheet de altura fixa: não pula de tamanho entre as abas */
                 #smg-post-nav-wrapper.settings-open #smg-settings-pop,
                 #smg-post-nav-wrapper.listfilter-open #smg-listfilter-pop,
                 #smg-post-nav-wrapper.listsort-open #smg-listsort-pop {
@@ -164,15 +165,19 @@
                 /* search: bottom sheet com uma barra de entrada única e filtros em grid.
                    A primeira versão deixava os controles quebrarem dentro do input, o que
                    criava uma segunda linha instável em telas estreitas. */
+                /* Drawer na altura cheia (não na metade: o teclado já come ~40% da tela). Respiro de 12px
+                   no topo + puxador + cantos arredondados = mesma linguagem dos drawers de conta e alertas;
+                   o arrasto pelo topo fecha (addSwipeClose no 12b). */
                 #smg-search-pop {
                     position: fixed !important; inset: auto !important;
-                    top: var(--smg-kb-top, 0px) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
+                    top: calc(var(--smg-kb-top, 0px) + 12px + env(safe-area-inset-top)) !important; bottom: auto !important; left: 0 !important; right: 0 !important;
                     width: 100vw !important; max-width: 100vw !important;
                     /* --smg-kb-h vem do visualViewport: com o teclado aberto o sheet encolhe
                        até a área visível e o input (order 3) fica acima do teclado */
-                    height: var(--smg-kb-h, 100dvh) !important; max-height: var(--smg-kb-h, 100dvh) !important;
-                    padding: calc(10px + env(safe-area-inset-top)) var(--smg-sp-16) calc(12px + env(safe-area-inset-bottom)) var(--smg-sp-16) !important;
-                    border: none !important; border-radius: 0 !important;
+                    height: calc(var(--smg-kb-h, 100dvh) - 12px - env(safe-area-inset-top)) !important; max-height: calc(var(--smg-kb-h, 100dvh) - 12px - env(safe-area-inset-top)) !important;
+                    padding: var(--smg-sp-6) var(--smg-sp-16) calc(12px + env(safe-area-inset-bottom)) var(--smg-sp-16) !important;
+                    border: none !important; border-top: 1px solid var(--smg-w-10) !important;
+                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0 !important;
                     box-sizing: border-box !important;
                     display: flex !important; flex-direction: column !important; justify-content: flex-end !important;
                     transform: translateY(100%);
@@ -180,7 +185,12 @@
                 }
                 #smg-search-overlay.open #smg-search-pop { opacity: 1; transform: translateY(0); }
                 #smg-search-pop.is-kb { padding-bottom: var(--smg-sp-12) !important; }
-                #smg-search-pop::before { display: none !important; }
+                /* puxador (mesmo visual do .smg-sheet-grip), primeiro item da coluna */
+                #smg-search-pop::before {
+                    content: '' !important; display: block !important; order: -1 !important; flex: 0 0 auto !important;
+                    width: 40px; height: 5px; margin: var(--smg-sp-2) auto var(--smg-sp-6);
+                    border-radius: var(--smg-r-pill); background: var(--smg-w-22);
+                }
 
                 /* Barra de busca na BASE (thumb-friendly) colada aos filtros */
                 #smg-search-pop .smg-search-bar {
@@ -199,8 +209,9 @@
                     flex: 1 1 auto !important; min-width: 0 !important; width: auto !important;
                     height: 100% !important; font-size: var(--smg-fs-16); font-weight: 500;
                 }
+                /* chip do escopo do tamanho do texto (o 42% fixo sobrava vazio dentro dele); texto longo corta com reticências */
                 #smg-search-pop .smg-search-chip {
-                    flex: 0 1 42%; max-width: 42%; min-width: 0; height: 32px;
+                    flex: 0 1 auto; max-width: 50%; min-width: 0; height: 32px;
                     margin: 0; padding: 0 var(--smg-sp-6) 0 var(--smg-sp-8); border-radius: var(--smg-chip-r);
                 }
                 #smg-search-pop .smg-search-chip-t { min-width: 0; font-size: var(--smg-fs-12); }
@@ -323,6 +334,10 @@
                 #smg-search-pop .smg-search-result-title { font-size: var(--smg-fs-14); }
                 #smg-search-pop .smg-search-result-snippet { font-size: var(--smg-fs-13); }
                 #smg-search-pop .smg-search-result-meta { font-size: var(--smg-fs-11); }
+                /* histórico: a LISTA é quem rola (o scroll dela carrega os lotes), então ela ocupa a
+                   altura toda do sheet; o teto de 46vh do desktop cortava as buscas no meio da tela */
+                #smg-search-pop .smg-search-history:not([hidden]) { display: flex !important; flex-direction: column; overflow: hidden !important; }
+                #smg-search-pop .smg-search-hist-list--scroll { flex: 1 1 auto; min-height: 0; max-height: none; }
                 #smg-search-pop .smg-search-hist-head { padding: 0 var(--smg-sp-4); }
                 #smg-search-pop .smg-search-hist-item { min-height: 44px; padding: var(--smg-sp-8) var(--smg-sp-6); }
 

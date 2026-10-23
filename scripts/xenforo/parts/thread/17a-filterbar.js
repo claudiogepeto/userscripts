@@ -1,6 +1,6 @@
     // thread/17a-filterbar.js
     // Owns: the filter bar (pager, sort, actions), thread header, sticky sync, follow button and THE thread card (decorateThreadCard).
-    // Exposes: buildThreadHeader, unifyThreadHeader, createStickySync, threadFollowButton, decorateThreadCard, smgPopHost.
+    // Exposes: buildThreadHeader, unifyThreadHeader, createStickySync, threadFollowButton, decorateThreadCard, smgPopHost, smgPagerShow.
     // Depends on: core/06-helpers, feed/06b-feed-db, feed/22-feed-sync, following/17b-watched-list.
     // =========================================================
     // BARRA ÚNICA SEGMENTADA (filter bar) — SMG · thread + fórum
@@ -166,37 +166,30 @@
 
         if (maxNum <= 1 && !tpl) return null;
         if (maxNum < curNum) maxNum = curNum;
+        return smgPagerBuild(tpl, curNum, maxNum, prev ? prev.getAttribute('href') : null, next ? next.getAttribute('href') : null);
+    }
 
+    // href da página n pelo template do próprio XF (/page-%page%, com a query da ordenação): a página 1 é a base
+    function smgPageHref(tpl, n) {
+        if (!tpl) return null;
+        return n <= 1 ? tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : tpl.replace('%page%', String(n));
+    }
+
+    // monta o grupo do pager. prevHref/nextHref: os links nativos da página do servidor (quando existem);
+    // sem eles, sai tudo do template — é o caso da página que o scroll infinito trouxe (smgPagerShow).
+    function smgPagerBuild(tpl, curNum, maxNum, prevHref, nextHref) {
         const g = document.createElement('div');
         g.className = 'smg-bar-group smg-bar-pager';
+        if (tpl) { g.dataset.tpl = tpl; g.dataset.max = String(maxNum); }
+        if (!prevHref && curNum > 1) prevHref = smgPageHref(tpl, curNum - 1);
+        if (!nextHref && curNum < maxNum) nextHref = smgPageHref(tpl, curNum + 1);
 
-        const firstHref = tpl ? tpl.replace(/\/page-%page%/, '/').replace('%page%', '1') : null;
-        const prevHref = prev ? prev.getAttribute('href') : (tpl && curNum > 1 ? (curNum - 1 === 1 ? tpl.replace(/\/page-%page%/, '/') : tpl.replace('%page%', String(curNum - 1))) : null);
-        const nextHref = next ? next.getAttribute('href') : (tpl && curNum < maxNum ? tpl.replace('%page%', String(curNum + 1)) : null);
-        const lastHref = tpl ? tpl.replace('%page%', String(maxNum)) : null;
+        g.appendChild(smgBarBtn({ icon: ICONS.pageFirst, title: 'First page', href: smgPageHref(tpl, 1), disabled: curNum <= 1, cls: 'smg-bar-pager-btn' }));
+        g.appendChild(smgBarBtn({ icon: ICONS.pagePrev, title: 'Prev page', href: prevHref, disabled: curNum <= 1 || !prevHref, cls: 'smg-bar-pager-btn' }));
 
-        // Botão 1: pageFirst
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageFirst,
-            title: 'First page',
-            href: firstHref,
-            disabled: curNum <= 1,
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 2: pagePrev
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pagePrev,
-            title: 'Prev page',
-            href: prevHref,
-            disabled: curNum <= 1 || (!prev && !prevHref),
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 3: Goto (número da página atual compacto)
+        // goto: número da página atual compacto
         if (tpl) {
-            const curLabel = `${curNum} / ${maxNum}`;
-            const jump = smgJumpHost(tpl, maxNum, curLabel, curNum, 'smg-bar-cur smg-bar-pager-goto');
+            const jump = smgJumpHost(tpl, maxNum, `${curNum} / ${maxNum}`, curNum, 'smg-bar-cur smg-bar-pager-goto');
             jump.classList.add('smg-bar-curhost');
             g.appendChild(jump);
         } else {
@@ -206,25 +199,18 @@
             g.appendChild(compact);
         }
 
-        // Botão 4: pageNext
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageNext,
-            title: 'Next page',
-            href: nextHref,
-            disabled: curNum >= maxNum || (!next && !nextHref),
-            cls: 'smg-bar-pager-btn'
-        }));
-
-        // Botão 5: pageLast
-        g.appendChild(smgBarBtn({
-            icon: ICONS.pageLast,
-            title: 'Last page',
-            href: lastHref,
-            disabled: curNum >= maxNum,
-            cls: 'smg-bar-pager-btn'
-        }));
-
+        g.appendChild(smgBarBtn({ icon: ICONS.pageNext, title: 'Next page', href: nextHref, disabled: curNum >= maxNum || !nextHref, cls: 'smg-bar-pager-btn' }));
+        g.appendChild(smgBarBtn({ icon: ICONS.pageLast, title: 'Last page', href: tpl ? tpl.replace('%page%', String(maxNum)) : null, disabled: curNum >= maxNum, cls: 'smg-bar-pager-btn' }));
         return g;
+    }
+
+    // a página VISÍVEL mudou (scroll infinito): toda barra de pager mostra a mesma página que a dock e a URL,
+    // com os links do template do XF — antes a barra ficava na página do servidor e divergia da dock
+    function smgPagerShow(n) {
+        document.querySelectorAll('.smg-bar-pager[data-tpl]').forEach(g => {
+            const max = Math.max(n, parseInt(g.dataset.max, 10) || n);
+            g.replaceWith(smgPagerBuild(g.dataset.tpl, n, max, null, null));
+        });
     }
 
     // GRUPO 2 — ordenar (data ⇄ reações): dois <a> reais, ativo = knob branco. só thread.
@@ -411,19 +397,8 @@
         }
         // linha de ações no topo do header: o modo mídia (galeria/feed), com navegação própria (página 1)
         const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
-        const mk = (icon, title, label, onClick) => {
-            const b = document.createElement('button'); b.type = 'button'; b.className = 'smg-thead-btn';
-            b.title = i18n(title); b.setAttribute('aria-label', i18n(title));
-            b.innerHTML = '<span class="smg-thead-ic">' + icon + '</span>';
-            const l = document.createElement('span'); l.className = 'smg-thead-lbl'; l.textContent = i18n(label);   // visível só no mobile (CSS)
-            b.appendChild(l);
-            if (onClick) b.addEventListener('click', onClick);
-            b.addEventListener('mouseenter', () => smgShowTip(b, b.title));   // reusa o tooltip fixed da barra
-            b.addEventListener('mouseleave', smgHideTip); b.addEventListener('click', smgHideTip);
-            return b;
-        };
-        // UMA entrada: abre o overlay de mídia na Galeria (o Feed fica a um toque, no seletor da dock dele). Label só no mobile.
-        bar.appendChild(mk(ICONS.gallery, 'Media', 'Media', () => openMedia('gallery')));
+        // A entrada da mídia (galeria/feed) mora na dock (desktop: #smg-thread-media; celular: #smg-thread-media-m),
+        // que é sempre montada — o cabeçalho fixo não repete o botão.
         // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
         // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
         // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).

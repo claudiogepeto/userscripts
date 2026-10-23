@@ -733,9 +733,9 @@
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a[href]');
             if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
-            // The mobile alerts link owns its click when the rail is enabled. Let its
-            // handler open the modal instead of starting a page navigation in capture.
-            if (a.id === 'smg-nav-bell' && FEATURES.alertsDock) return;
+            // Links that open a sheet or panel in place (navbar bell, account, discover) own their
+            // click. This listener runs in capture, before their handlers, so they opt out by marker.
+            if (a.hasAttribute('data-smg-inplace')) return;
             if (a.origin && a.origin !== location.origin) return;
             const href = a.getAttribute('href') || a.href || '';
             if (!href || href === '#' || href.startsWith('javascript:')) return;
@@ -773,10 +773,6 @@
             }
         });
 
-        window.addEventListener('popstate', () => {
-            isNavigatingOut = false;
-            if (navSafetyTimer) clearTimeout(navSafetyTimer);
-        });
     }
 
     if (typeof window !== 'undefined') {

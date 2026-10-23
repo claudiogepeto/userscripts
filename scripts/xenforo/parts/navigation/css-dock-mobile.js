@@ -7,11 +7,11 @@
             /* ---- mobile: a dock vira uma navbar full-width colada embaixo ---- */
             @media (max-width: 600px) {
                 .smg-side--desktop-only { display: none !important; }
-                html { --smg-navh: 54px; }
+                html { --smg-navh: 54px; }   /* navbar 52 + borda */
                 /* Thread/list docks add a second mobile row. Use page classes already
                    detected at document-start instead of :has(), which invalidates the
                    root style on every DOM mutation. */
-                html.smg-thread, html.smg-threadlist { --smg-navh: 92px; }
+                html.smg-thread, html.smg-threadlist { --smg-navh: 100px; }
                 #smg-post-nav-wrapper {
                     left: 0;
                     right: 0;
@@ -135,167 +135,141 @@
                 .smg-search-go { height: 46px; padding: 0 var(--smg-sp-24); } /* compacto (não ocupa a linha toda) */
                 .smg-search-hist-remove, .smg-search-hist-act { opacity: 1; } /* sem hover no touch */
 
-                /* Linha 1 (Controles de Thread / Lista no Mobile) */
-                /* Linha 1 (Controles de Thread / Lista no Mobile) */
+                /* ---- Linha 1: barra de contexto (tópico / lista) ----
+                   Uma cápsula acima da navbar. Todo botão tem o mesmo alvo (36px), o mesmo ícone (20px,
+                   traço 1.9) e a mesma cor; as pílulas com texto (página, ordenação) usam ícone 16px +
+                   texto 13px. Ativo = cor do tema, sem fundo extra. */
                 .smg-dock-thread-bar {
                     display: flex !important;
                     flex-direction: row !important;
-                    width: 100% !important;
-                    height: 38px !important;
                     align-items: center !important;
-                    justify-content: space-around !important;
-                    padding: 0 var(--smg-sp-4) !important;
+                    gap: var(--smg-sp-2) !important;
+                    align-self: stretch !important;
+                    width: auto !important;
+                    height: 40px !important;
+                    margin: var(--smg-sp-6) var(--smg-sp-8) 0 !important;
+                    padding: 0 var(--smg-sp-2) !important;
                     box-sizing: border-box !important;
-                    border-bottom: 1px solid var(--smg-w-06) !important;
-                    background: var(--smg-w-02) !important;
-                    gap: 0 !important;
+                    border: 1px solid var(--smg-w-06) !important;
+                    border-radius: var(--smg-r-12) !important;
+                    background: var(--smg-w-04) !important;
                 }
+                /* páginas sem controles próprios (home, conta…): só a navbar */
+                html:not(.smg-thread):not(.smg-threadlist) .smg-dock-thread-bar { display: none !important; }
                 .smg-dock-thread-bar .smg-nav-btn {
                     flex: 1 1 0 !important;
                     min-width: 0 !important;
                     width: auto !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
+                    height: 36px !important;
+                    min-height: 36px !important;
+                    max-height: 36px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
+                    gap: var(--smg-sp-6) !important;
+                    margin: 0 !important;
+                    padding: 0 var(--smg-sp-4) !important;
                     background: transparent !important;
                     border: none !important;
                     border-radius: var(--smg-r-8) !important;
-                    padding: 0 var(--smg-sp-2) !important;
-                    margin: 0 !important;
                     box-shadow: none !important;
-                    vertical-align: middle !important;
+                    color: var(--smg-w-72) !important;
                     transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
                 }
+                .smg-dock-thread-bar .smg-nav-btn:not(:disabled):active { background: var(--smg-w-08) !important; transform: none; }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico {
+                    width: 20px !important;
+                    height: 20px !important;
                     font-size: var(--smg-fs-20) !important;
                     line-height: 1 !important;
-                    height: 19px !important;
-                    width: 19px !important;
-                    color: var(--smg-w-85) !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
+                    flex: 0 0 auto !important;
+                    color: inherit !important;
                 }
                 .smg-dock-thread-bar .smg-nav-btn .smg-nav-ico svg {
-                    width: 19px !important;
-                    height: 19px !important;
-                    stroke-width: 2 !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    stroke-width: 1.9 !important;
                     display: block !important;
-                    margin: 0 auto !important;
                 }
-
-                /* Botões com texto no Mobile (Sort e Pages) - Flex uniforme com espaçamento padrão */
-                .smg-dock-thread-bar #smg-post-sort-toggle,
-                .smg-dock-thread-bar #smg-list-sort-m,
-                .smg-dock-thread-bar .smg-sort-pill,
-                .smg-dock-thread-bar #smg-mobile-page-btn {
-                    flex: 1 1 0 !important;
-                    width: auto !important;
-                    min-width: 0 !important;
-                    height: 34px !important;
-                    min-height: 34px !important;
-                    max-height: 34px !important;
-                    align-self: center !important;
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    border-radius: 0 !important;
-                    padding: 0 var(--smg-sp-2) !important;
-                    gap: var(--smg-sp-4) !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
+                /* pílulas com texto: página (1 / 4) e ordenação (Data / Curtidas) */
+                .smg-dock-thread-bar .smg-nav-labeled { flex: 1.4 1 0 !important; }
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-ico,
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-ico svg {
+                    width: 16px !important;
+                    height: 16px !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-ico svg,
-                .smg-dock-thread-bar #smg-list-sort-m .smg-nav-ico svg,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-ico svg,
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-ico svg {
-                    width: 14px !important;
-                    height: 14px !important;
-                    flex-shrink: 0 !important;
-                }
-                .smg-dock-thread-bar #smg-post-sort-toggle .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-list-sort-m .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-mobile-page-btn .smg-nav-btn-text {
+                .smg-dock-thread-bar .smg-nav-labeled .smg-nav-btn-text {
                     display: inline-block !important;
-                    font-size: var(--smg-fs-12) !important;
-                    font-weight: 700 !important;
-                    color: var(--smg-w-85) !important;
+                    min-width: 0 !important;
+                    font-size: var(--smg-fs-13) !important;
+                    font-weight: 650 !important;
+                    font-variant-numeric: tabular-nums;
                     line-height: 1 !important;
+                    color: inherit !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
+                /* pager desligado (página sem paginação) some de verdade: a regra de display acima vence o .is-off genérico */
+                .smg-dock-thread-bar #smg-mobile-page-btn.is-off { display: none !important; }
+                /* mesma linguagem da dock do desktop: ativo = fundo suave + tinta do tema; a página (n / N) é uma
+                   pílula própria, como a cápsula do paginador; o sort é o segmentado só com ícones (calendário | chama) */
+                .smg-dock-thread-bar .smg-nav-btn.smg-active { background: var(--smg-link-soft) !important; color: var(--smg-link) !important; }
+                .smg-dock-thread-bar #smg-mobile-page-btn { background: var(--smg-w-06) !important; color: #fff !important; margin: 0 var(--smg-sp-2) !important; }
+                .smg-dock-thread-bar .smg-nav-btn.smg-sort-seg {
+                    flex: 0 0 auto !important; height: 32px !important; min-height: 32px !important; max-height: 32px !important;
+                    padding: var(--smg-sp-2) !important; margin: 0 var(--smg-sp-2) !important;
+                    background: var(--smg-w-06) !important; border-radius: var(--smg-r-10) !important;
                 }
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-post-sort-toggle.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-list-sort-m.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar .smg-sort-pill.smg-active .smg-nav-btn-text,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-mobile-page-btn.smg-active .smg-nav-btn-text {
-                    color: var(--smg-link) !important;
-                }
+                .smg-dock-thread-bar .smg-sort-txt { display: none; }
+                .smg-dock-thread-bar .smg-nav-btn.smg-sort-seg > .smg-nav-ico { display: none !important; }
+                .smg-dock-thread-bar .smg-sort-opt { height: 26px; padding: 0 var(--smg-sp-10); border-radius: var(--smg-r-8); }
+                .smg-dock-thread-bar .smg-sort-segs::before { border-radius: var(--smg-r-8); }
+                .smg-dock-thread-bar .smg-sort-ic svg { width: 16px; height: 16px; }
 
-                /* Botão de Notificação no Mobile: ganha cor de destaque quando seguindo */
-                .smg-dock-thread-bar #smg-thread-watch.smg-active {
-                    background: rgba(255, 119, 178, 0.12) !important;
-                    border-radius: var(--smg-r-8) !important;
-                }
-                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico,
-                .smg-dock-thread-bar #smg-thread-watch.smg-active .smg-nav-ico svg {
-                    color: var(--smg-link) !important;
-                    stroke: var(--smg-link) !important;
-                }
-
-                /* Linha 2 (Navbar Global do Fórum no Mobile) */
+                /* ---- Linha 2: navbar global (5 itens, estilo tab bar) ---- */
                 #smg-post-nav-panel > .smg-nav-center {
                     display: flex !important;
                     flex-direction: row !important;
-                    width: 100% !important;
-                    height: 48px !important;
                     align-items: center !important;
-                    justify-content: space-around !important;
-                    padding: 0 var(--smg-sp-6) !important;
+                    width: 100% !important;
+                    height: 52px !important;
+                    padding: 0 var(--smg-sp-8) !important;
                     box-sizing: border-box !important;
-                    border-top: none !important;
                     gap: 0 !important;
+                    border-top: none !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-btn {
                     flex: 1 1 0 !important;
-                    height: 44px !important;
                     width: auto !important;
+                    height: 48px !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     background: transparent !important;
                     border: none !important;
+                    color: var(--smg-w-85) !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-ico {
-                    font-size: var(--smg-fs-22) !important;
-                    color: #fff !important;
+                    width: 24px !important;
+                    height: 24px !important;
+                    font-size: var(--smg-fs-24) !important;
+                    color: inherit !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                 }
                 #smg-post-nav-panel > .smg-nav-center .smg-nav-ico svg {
-                    width: 22px !important;
-                    height: 22px !important;
+                    width: 24px !important;
+                    height: 24px !important;
+                    stroke-width: 1.9 !important;
                 }
+                #smg-post-nav-panel > .smg-nav-center .smg-nav-btn.smg-nav-active { color: var(--smg-link) !important; }
                 #smg-post-nav-panel > .smg-nav-divider,
                 #smg-dock-sheet-btn,
                 #smg-nav-settings {
