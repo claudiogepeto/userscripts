@@ -97,6 +97,8 @@
                 background: linear-gradient(to bottom, transparent, var(--smg-s1) 90%) !important;
                 padding: var(--smg-sp-28) 0 var(--smg-sp-10) !important;
                 text-align: center !important;
+                /* só precisa ficar acima do texto da própria citação; o z-index do tema passava por cima do header fixo */
+                z-index: var(--smg-z-1) !important;
             }
             .bbCodeBlock--quote .bbCodeBlock-expandLink a,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink a {

@@ -67,7 +67,10 @@
                Ao fazer scroll: vira barra fixa compacta (48px) abaixo da topbar com o nome da
                thread à esquerda, botões à direita e padding superior/inferior rigorosamente idênticos. */
             html.smg-thread .p-body-header.smg-thead-unified {
-                position: sticky; top: 60px; z-index: var(--smg-z-30);
+                position: sticky; top: 60px;
+                /* acima de tudo que mora nos posts (o tema dá z-index alto a coisas como o "Clique para expandir"
+                   das citações), abaixo do rail de alertas e da topbar */
+                z-index: var(--smg-z-thead);
                 background: var(--smg-bg);
                 margin: 0 0 var(--smg-sp-12) !important;
                 padding: var(--smg-sp-12) 0 !important;

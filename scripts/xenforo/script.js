@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.10.1
+// @version      4.10.2
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -699,7 +699,7 @@
                 /* camadas de z-index (mesmos números de antes, agora com nome) */
                 --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
                 --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;
-                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-aldock: 101; --smg-z-topbar: 1000;
+                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-thead: 100; --smg-z-aldock: 101; --smg-z-topbar: 1000;
                 --smg-z-topbar-up: 1001; --smg-z-gate: 1100; --smg-z-gate-1: 1101; --smg-z-gate-2: 1102; --smg-z-9999: 9999; --smg-z-10000: 10000;
                 --smg-z-dock-under: 999990; --smg-z-dock: 999999; --smg-z-sheet: 1000000; --smg-z-sheet-1: 1000001; --smg-z-sheet-3: 1000003; --smg-z-sheet-4: 1000004;
                 --smg-z-sheet-5: 1000005; --smg-z-sheet-top: 9999999; --smg-z-overlay: 2147483600; --smg-z-overlay-1: 2147483601; --smg-z-max-1: 2147483646;
@@ -6538,7 +6538,10 @@
                Ao fazer scroll: vira barra fixa compacta (48px) abaixo da topbar com o nome da
                thread à esquerda, botões à direita e padding superior/inferior rigorosamente idênticos. */
             html.smg-thread .p-body-header.smg-thead-unified {
-                position: sticky; top: 60px; z-index: var(--smg-z-30);
+                position: sticky; top: 60px;
+                /* acima de tudo que mora nos posts (o tema dá z-index alto a coisas como o "Clique para expandir"
+                   das citações), abaixo do rail de alertas e da topbar */
+                z-index: var(--smg-z-thead);
                 background: var(--smg-bg);
                 margin: 0 0 var(--smg-sp-12) !important;
                 padding: var(--smg-sp-12) 0 !important;
@@ -8080,6 +8083,8 @@
                 background: linear-gradient(to bottom, transparent, var(--smg-s1) 90%) !important;
                 padding: var(--smg-sp-28) 0 var(--smg-sp-10) !important;
                 text-align: center !important;
+                /* só precisa ficar acima do texto da própria citação; o z-index do tema passava por cima do header fixo */
+                z-index: var(--smg-z-1) !important;
             }
             .bbCodeBlock--quote .bbCodeBlock-expandLink a,
             .bbCodeBlock--expandable.is-expandable .bbCodeBlock-expandLink a {
@@ -9648,7 +9653,12 @@
                     return null;
                 }
                 if (!r.ok) return null;
-                return r.text().then(html => new DOMParser().parseFromString(html, 'text/html'));
+                return r.text().then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    // onde o servidor parou depois de um redirect (/posts/N, /threads/x/latest → .../page-9)
+                    if (r.redirected && r.url) doc.smgLandedUrl = r.url;
+                    return doc;
+                });
             })
             .catch(err => {
                 console.warn('[SMG] Erro de rede em fetchDoc:', err);
@@ -14612,7 +14622,7 @@
 
         // dock é global: monta em qualquer página. Os grupos de navegação/ação
         // (e a fiação deles) só fazem sentido numa thread.
-        const onThreadUrl = /\/threads\//.test(location.pathname);
+        const onThreadUrl = /\/threads\//.test(location.pathname) || document.documentElement.classList.contains('smg-thread');
         if (onThreadUrl && posts.length === 0) return; // espera os posts da thread carregarem
         let isThread = onThreadUrl && posts.length > 0;
 
@@ -14844,7 +14854,7 @@
         }
         document.addEventListener('smg:page', () => {
             const root = document.documentElement;
-            const nextThread = /\/threads\//.test(location.pathname);
+            const nextThread = root.classList.contains('smg-thread');   // mesma regra da página (thread_view, /posts/, /goto/)
             const nextList = !nextThread && (!!document.querySelector('.structItem--thread, .structItem--bookmark, .message--articlePreview')
                 || /\/forums\/|\/watched\/|\/account\/bookmarks|\/bookmarks\/|\/search\//.test(location.pathname)
                 || /^forum_view/.test(root.getAttribute('data-template') || '')
@@ -27834,6 +27844,14 @@
             if (!doc || !nextBodies.length || !curBodies.length) {
                 try { location.href = abs.href; } catch (e) {}
                 return;
+            }
+            // link que redireciona: a URL (e quem lê dela — tipo da dock, página do paginador) segue onde o
+            // servidor parou, não o link. O fetch perde o #fragmento do redirect; /posts/N volta a mirar o post.
+            if (doc.smgLandedUrl) {
+                const landed = new URL(doc.smgLandedUrl);
+                const postId = !abs.hash && abs.pathname.match(/\/posts\/(\d+)/);
+                landed.hash = abs.hash || (postId ? '#post-' + postId[1] : '');
+                if (landed.origin === location.origin) abs = landed;
             }
             const bodySize = el => (el.innerHTML || '').length;
             const nextBody = nextBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
