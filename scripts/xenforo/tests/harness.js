@@ -28,7 +28,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms || 0));
 
 // ---- network stubs -----------------------------------------------------------------------------
 // A route is [matcher, handler]: matcher is a RegExp or (url, opts) => bool; handler returns a
-// string (HTML, 200), an object { status, body, json, headers, delay }, a Promise of one of those,
+// string (HTML, 200), an object { status, body, json, headers, delay, redirect }, a Promise of one of those,
 // or null (network error).
 function matchRoute(routes, url, opts) {
     for (const [m, h] of routes) {
@@ -45,8 +45,9 @@ function toResponse(window, res, url) {
     return {
         ok: status >= 200 && status < 300,
         status,
-        url,
-        redirected: false,
+        // res.redirect: the server answered with a redirect; fetch follows it and reports where it landed
+        url: res.redirect ? new URL(res.redirect, url).href : url,
+        redirected: !!res.redirect,
         headers: { get: k => { const hit = Object.keys(headers).find(h => h.toLowerCase() === String(k).toLowerCase()); return hit ? String(headers[hit]) : null; } },
         text: async () => body,
         json: async () => JSON.parse(body || 'null'),

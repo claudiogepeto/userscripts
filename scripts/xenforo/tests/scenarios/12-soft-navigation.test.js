@@ -193,3 +193,35 @@ scenario('after ten soft navigations the next one is a full page load', async t 
     assert.equal(navLogs(), 1, 'the eleventh asks the browser for a full load');
     assert.ok(page.$('#smg-topbar') && page.$$('.p-body').length === 1, 'the current page is left untouched');
 });
+
+// /posts/N/, /goto/... and /threads/x/latest answer with a redirect to the real page. The address bar,
+// the dock (thread arrangement) and the pager must follow where the server landed, not the link.
+function redirectingSite() {
+    const landed = () => threadPage({ posts: [{ id: 9001 }], page: 2, of: 9 });
+    return site().concat([
+        [/\/posts\/9001\/$/, () => ({ redirect: '/threads/sample-thread.100/page-2', body: landed() })],
+        [/\/threads\/sample-thread\.100\/latest$/, () => ({ redirect: '/threads/sample-thread.100/page-2', body: landed() })],
+    ]);
+}
+const dockShowsThread = page => !!page.$('#smg-post-nav-panel #smg-scroll-top') && !!page.$('#smg-post-nav-panel #smg-scroll-bottom');
+
+scenario('a post link that redirects lands on the thread URL with the thread dock and its real page', async t => {
+    const page = await t.open({ url: SMG + FORUM, html: listingPage({ rows: [{ id: 1 }, { id: 2 }] }), routes: redirectingSite(), before: stubXF });
+    await page.settle(80);
+    assert.equal(dockShowsThread(page), false, 'control: the listing dock has no scroll buttons');
+    await go(page, '/posts/9001/');
+    assert.equal(page.window.location.pathname, '/threads/sample-thread.100/page-2', 'the address is where the server landed');
+    assert.equal(page.window.location.hash, '#post-9001', 'the post it pointed at stays the target');
+    assert.ok(page.document.documentElement.classList.contains('smg-thread'));
+    assert.ok(dockShowsThread(page), 'the dock switches to the thread arrangement');
+    assert.equal(page.$('#smg-post-goto').textContent.trim(), '2 / 9', 'the pager reads the landed page');
+});
+
+scenario('a latest-post thread link that redirects shows the landed page in the pager', async t => {
+    const page = await t.open({ url: SMG + FORUM, html: listingPage({ rows: [{ id: 1 }, { id: 2 }] }), routes: redirectingSite(), before: stubXF });
+    await page.settle(80);
+    await go(page, '/threads/sample-thread.100/latest');
+    assert.equal(page.window.location.pathname, '/threads/sample-thread.100/page-2');
+    assert.ok(dockShowsThread(page));
+    assert.equal(page.$('#smg-post-goto').textContent.trim(), '2 / 9');
+});
