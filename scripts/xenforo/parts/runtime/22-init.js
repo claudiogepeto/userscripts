@@ -636,6 +636,14 @@
                 try { location.href = abs.href; } catch (e) {}
                 return;
             }
+            // link que redireciona: a URL (e quem lê dela — tipo da dock, página do paginador) segue onde o
+            // servidor parou, não o link. O fetch perde o #fragmento do redirect; /posts/N volta a mirar o post.
+            if (doc.smgLandedUrl) {
+                const landed = new URL(doc.smgLandedUrl);
+                const postId = !abs.hash && abs.pathname.match(/\/posts\/(\d+)/);
+                landed.hash = abs.hash || (postId ? '#post-' + postId[1] : '');
+                if (landed.origin === location.origin) abs = landed;
+            }
             const bodySize = el => (el.innerHTML || '').length;
             const nextBody = nextBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);
             const curBody = curBodies.reduce((best, el) => bodySize(el) > bodySize(best) ? el : best);

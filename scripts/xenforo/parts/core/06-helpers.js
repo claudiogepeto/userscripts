@@ -515,7 +515,12 @@
                     return null;
                 }
                 if (!r.ok) return null;
-                return r.text().then(html => new DOMParser().parseFromString(html, 'text/html'));
+                return r.text().then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    // onde o servidor parou depois de um redirect (/posts/N, /threads/x/latest → .../page-9)
+                    if (r.redirected && r.url) doc.smgLandedUrl = r.url;
+                    return doc;
+                });
             })
             .catch(err => {
                 console.warn('[SMG] Erro de rede em fetchDoc:', err);

@@ -78,7 +78,7 @@
 
         // dock é global: monta em qualquer página. Os grupos de navegação/ação
         // (e a fiação deles) só fazem sentido numa thread.
-        const onThreadUrl = /\/threads\//.test(location.pathname);
+        const onThreadUrl = /\/threads\//.test(location.pathname) || document.documentElement.classList.contains('smg-thread');
         if (onThreadUrl && posts.length === 0) return; // espera os posts da thread carregarem
         let isThread = onThreadUrl && posts.length > 0;
 
@@ -310,7 +310,7 @@
         }
         document.addEventListener('smg:page', () => {
             const root = document.documentElement;
-            const nextThread = /\/threads\//.test(location.pathname);
+            const nextThread = root.classList.contains('smg-thread');   // mesma regra da página (thread_view, /posts/, /goto/)
             const nextList = !nextThread && (!!document.querySelector('.structItem--thread, .structItem--bookmark, .message--articlePreview')
                 || /\/forums\/|\/watched\/|\/account\/bookmarks|\/bookmarks\/|\/search\//.test(location.pathname)
                 || /^forum_view/.test(root.getAttribute('data-template') || '')
