@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Bunkr — Theater Player, Gallery, Mirror & Downloader
 // @namespace    bunkr-youtube-player
-// @version      2.15.0
+// @version      2.16.0
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bunkr.user.js
-// @description  Camada visual sobre as páginas de arquivo do Bunkr (vídeo · foto · galeria), aproximando do YouTube. (1) PLAYER GRANDE: tira o cap de 1000px e usa o maior 16:9 que cabe na largura E na altura da viewport (theater), centralizado/arredondado. (2) Player, título e header na MESMA coluna → o título alinha com o vídeo (flush-left). (3) Topbar padronizada: logo direcionando para home do Bunkr, botões Search Albums (balbums.st), Upload e Stats na ponta direita. (4) Respiro maior no rodapé. @include por regex (o TLD do Bunkr muda toda hora). v2.0: Player próprio estilo YouTube, zoom/pan em foto, mirror probe. v2.1: Stage overlay. v2.2: Tema AMOLED. v2.3: Força Advanced View (?advanced=1). v2.4: Carregamento do álbum completo e filtro ?q=. v2.7: Playlist em sidebar lateral. v2.8: Refinamentos no player (controles reordenados, arcos de skip circulares, logo na topbar, fix no falso-positivo de mirror). v2.9: Galeria de álbum redesenhada estilo YouTube com Actionbar integrada, cards nítidos e sanitização de links. v2.9.1: Topbar padronizada e grade ampla. v2.9.2: Preservação do master.css, botão Report alinhado ao lado das informações do álbum, topbar com Search Albums/Upload/Stats na ponta direita e logo apontando para a home do Bunkr (/), e revamp AMOLED completo da homepage. v2.10.0: Identificação de datas no título, ordenação por Data de Envio e Data Extraída (⬇/⬆) na Galeria e na Sidebar, títulos limpos sem data com exibição em texto simples abaixo (sem badges/ícones), botões anterior/próximo lado a lado e botão 1x plano no player. v2.10.1: Correção do congelamento/crash em álbuns (eliminação de loop infinito no MutationObserver com observação restrita a childList sem subtree, proteção contra reentrância e renderização idempotente com chave de cache nos cards), decodificação segura e rápida de entidades HTML para títulos duplamente escapados pelo Bunkr. v2.11.0: Agrupamento inteligente por tipo de arquivo com seções dedicadas, visualizador integrado de texto no Stage, e layout mobile responsivo. v2.11.1: Correção do carregamento do leitor de arquivos .txt no Stage com detecção e bypass de CORS via GM_xmlhttpRequest, botão de download direto de arquivos de texto, e placeholders temáticos AMOLED na barra de playlist para arquivos sem thumbnail ou com erro de imagem. v2.15.0: Bloqueio de anúncios, overlays e popups em páginas de arquivo e álbum.
+// @description  Camada visual sobre as páginas de arquivo do Bunkr (vídeo · foto · galeria), aproximando do YouTube. (1) PLAYER GRANDE: tira o cap de 1000px e usa o maior 16:9 que cabe na largura E na altura da viewport (theater), centralizado/arredondado. (2) Player, título e header na MESMA coluna → o título alinha com o vídeo (flush-left). (3) Topbar padronizada: logo direcionando para home do Bunkr, botões Search Albums (balbums.st), Upload e Stats na ponta direita. (4) Respiro maior no rodapé. @include por regex (o TLD do Bunkr muda toda hora). v2.0: Player próprio estilo YouTube, zoom/pan em foto, mirror probe. v2.1: Stage overlay. v2.2: Tema AMOLED. v2.3: Força Advanced View (?advanced=1). v2.4: Carregamento do álbum completo e filtro ?q=. v2.7: Playlist em sidebar lateral. v2.8: Refinamentos no player (controles reordenados, arcos de skip circulares, logo na topbar, fix no falso-positivo de mirror). v2.9: Galeria de álbum redesenhada estilo YouTube com Actionbar integrada, cards nítidos e sanitização de links. v2.9.1: Topbar padronizada e grade ampla. v2.9.2: Preservação do master.css, botão Report alinhado ao lado das informações do álbum, topbar com Search Albums/Upload/Stats na ponta direita e logo apontando para a home do Bunkr (/), e revamp AMOLED completo da homepage. v2.10.0: Identificação de datas no título, ordenação por Data de Envio e Data Extraída (⬇/⬆) na Galeria e na Sidebar, títulos limpos sem data com exibição em texto simples abaixo (sem badges/ícones), botões anterior/próximo lado a lado e botão 1x plano no player. v2.10.1: Correção do congelamento/crash em álbuns (eliminação de loop infinito no MutationObserver com observação restrita a childList sem subtree, proteção contra reentrância e renderização idempotente com chave de cache nos cards), decodificação segura e rápida de entidades HTML para títulos duplamente escapados pelo Bunkr. v2.11.0: Agrupamento inteligente por tipo de arquivo com seções dedicadas, visualizador integrado de texto no Stage, e layout mobile responsivo. v2.11.1: Correção do carregamento do leitor de arquivos .txt no Stage com detecção e bypass de CORS via GM_xmlhttpRequest, botão de download direto de arquivos de texto, e placeholders temáticos AMOLED na barra de playlist para arquivos sem thumbnail ou com erro de imagem. v2.15.0: Bloqueio de anúncios, overlays e popups em páginas de arquivo e álbum. v2.16.0: Classificação e troca automática de mirrors, status no menu e bloqueio ampliado de anúncios.
 // @author       claudiogepeto
 // @match        *://bunkr.cr/*
 // @match        *://*.bunkr.cr/*
@@ -168,7 +168,7 @@
 // @grant        GM_xmlhttpRequest
 // @connect      *
 // ==/UserScript==
-// GENERATED by scripts/media/build.js from scripts/media/ (core + hosts/bunkr) — edit the parts, not this file. sha256:d0328d6760bbb6e0c3e5f4306b5cbcaef5d2815d77dfa7acfa09b3c437f210fb
+// GENERATED by scripts/media/build.js from scripts/media/ (core + hosts/bunkr) — edit the parts, not this file. sha256:f07db8192b6a54e62e7cbe3d59eb1f1961e4bbd87883b4302d06c421c0fc522e
 
 
 (function () {
@@ -1726,6 +1726,19 @@
         .bunkr-mirror-item:hover { background: #a78bfa; color: #160f24; }
         .bunkr-mirror-item.is-current { background: rgba(167,139,250,0.18); color: #a78bfa; cursor: default; }
         .bunkr-mirror-item.is-current:hover { background: rgba(167,139,250,0.18); color: #a78bfa; }
+        .bunkr-mirror-item { gap: 8px; }
+        .bunkr-mirror-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #92929b; }
+        .bunkr-mirror-ok .bunkr-mirror-dot { background: #4ade80; }
+        .bunkr-mirror-missing .bunkr-mirror-dot { background: #fbbf24; }
+        .bunkr-mirror-down .bunkr-mirror-dot { background: #f87171; }
+        .bunkr-mirror-unknown .bunkr-mirror-dot { background: #92929b; }
+        .bunkr-mirror-testing .bunkr-mirror-dot { background: #a78bfa; animation: bunkr-spin .8s linear infinite; border: 2px dotted rgba(255,255,255,.9); }
+        .bunkr-mirror-vrow.is-testing .bunkr-mirror-spin { animation: bunkr-spin .8s linear infinite; }
+        .bunkr-mirror-nav { display: flex; gap: 8px; padding: 0 2px 9px; }
+        .bunkr-mirror-nav button { flex: 1; padding: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: rgba(255,255,255,.06); color: #fff; cursor: pointer; }
+        .bunkr-mirror-nav button:disabled { opacity: .4; cursor: default; }
+        .bunkr-mirror-search { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-content: center; padding: 28px; background: #101014; color: #eee; text-align: center; font: 600 16px/1.6 Inter, system-ui, sans-serif; }
+        @keyframes bunkr-spin { to { transform: rotate(360deg); } }
 
         /* ===== aviso "mirror pode estar fora" (overlay no topo do player, após o teste falhar) ===== */
         .bunkr-mirror-warn { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 55; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 24px); padding: 10px 16px; border-radius: 12px; background: rgba(176,32,32,0.94); color: #fff; font: 600 13.5px/1.3 Inter, system-ui, sans-serif; box-shadow: 0 12px 34px rgba(0,0,0,0.55); }
@@ -1923,7 +1936,6 @@ ${MEDIA_CSS.misc}
         const video = el("video", { class: "bunkr-video", playsinline: "", preload: "metadata" });
         video.volume = prefs.volume; video.muted = prefs.muted;
         video.addEventListener("volumechange", () => { prefs.volume = video.volume; prefs.muted = video.muted; saveP(); }, { signal: ac.signal });
-        video.addEventListener("error", () => suggestMirror("erro ao reproduzir"), { once: true });
         ["loadedmetadata", "loadeddata", "canplay", "playing", "timeupdate"].forEach(ev => {
             video.addEventListener(ev, dismissMirrorWarn, { signal: ac.signal });
         });
@@ -2244,24 +2256,38 @@ ${MEDIA_CSS.misc}
         const btn = el("button", { type: "button", class: "bunkr-item", title: "Trocar de mirror (domínio)" }, el("span", { class: "bunkr-mirror-spin", "aria-hidden": "true" }));
         btn.insertAdjacentHTML("beforeend", PL_ICONS.dns); btn.append(el("span", null, "Mirror"));
         const menu = el("div", { class: "bunkr-mirror-menu", hidden: "" });
-        menu.innerHTML = '<div class="bunkr-mirror-head">Trocar de mirror · <b>' + cur + '</b></div><div class="bunkr-mirror-grid"></div>';
+        menu.innerHTML = '<div class="bunkr-mirror-head">Trocar de mirror · <b>' + cur + '</b></div><div class="bunkr-mirror-nav"><button type="button" data-dir="-1">← Anterior</button><button type="button" data-dir="1">Próximo →</button></div><div class="bunkr-mirror-grid"></div>';
         const grid = menu.querySelector(".bunkr-mirror-grid");
-        MIRRORS.forEach(d => {
-            const a = el("a", { class: "bunkr-mirror-item" + (d === cur ? " is-current" : "") }, d);
-            if (d === cur) a.addEventListener("click", e => e.preventDefault());
-            else a.href = location.protocol + "//" + d + location.pathname + location.search;
-            grid.appendChild(a);
-        });
+        function renderMirrorItems() {
+            grid.textContent = "";
+            orderMirrors(MIRRORS, currentMirrorHealth(), "").forEach(d => {
+                const health = freshMirrorHealth(d), state = testingMirrors.has(d) ? "testing" : (health?.state || "unknown");
+                const a = el("a", { class: "bunkr-mirror-item bunkr-mirror-" + state + (d === cur ? " is-current" : ""), href: location.protocol + "//" + d + location.pathname + location.search + location.hash }, el("i", { class: "bunkr-mirror-dot", "aria-hidden": "true" }), d);
+                if (d === cur) a.addEventListener("click", event => event.preventDefault());
+                a.dataset.domain = d; grid.appendChild(a);
+            });
+        }
+        renderMirrorItems();
+        const navButtons = menu.querySelectorAll(".bunkr-mirror-nav button");
+        const updateNav = () => navButtons.forEach(b => { const target = nextWorking(MIRRORS, currentMirrorHealth(), cur, Number(b.dataset.dir)); b.disabled = !target; b.dataset.target = target || ""; });
+        navButtons.forEach(b => b.addEventListener("click", () => { if (b.dataset.target) location.href = location.protocol + "//" + b.dataset.target + location.pathname + location.search + location.hash; }));
+        function probeMenu() {
+            mirrorMenuOpen = true;
+            setMirrorTesting(true);
+            findWorking(location.pathname + location.search, { want: 1, onTesting: () => renderMirrorItems(), onUpdate: () => { renderMirrorItems(); updateNav(); }, onSettled: () => { renderMirrorItems(); updateNav(); } }).finally(() => { setMirrorTesting(false); });
+            renderMirrorItems(); updateNav();
+        }
         const setOpen = open => {   // menu em position:FIXED → calcula a posição no open (a vrow tem overflow:hidden, absolute era CORTADO)
             menu.hidden = !open;
             if (!open) return;
+            probeMenu();
             const r = btn.getBoundingClientRect(), w = menu.offsetWidth || 300;
             menu.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + "px";
             const mh = menu.offsetHeight;
             menu.style.top = ((r.bottom + 8 + mh > window.innerHeight) ? Math.max(8, r.top - 8 - mh) : r.bottom + 8) + "px";
         };
         btn.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); setOpen(menu.hidden); });
-        document.addEventListener("click", e => { if (!wrap.contains(e.target)) setOpen(false); });
+        document.addEventListener("click", e => { if (!wrap.contains(e.target)) { mirrorMenuOpen = false; setOpen(false); } });
         wrap.append(btn, menu);
         return wrap;
     }
@@ -2982,6 +3008,71 @@ ${MEDIA_CSS.misc}
         });
     }
 
+    // Classificação pura das respostas dos mirrors; mantida sem DOM para teste e uso no probe.
+    function classifyMirrorPage(input) {
+        const host = String(input.requestedHost || "").replace(/^www\./i, "").toLowerCase();
+        const html = String(input.html || input.responseText || "").replace(/\\\//g, "/").replace(/\\u0026/gi, "&");
+        const status = Number(input.status) || 0;
+        const result = (state, reason, kind = null, sign = null) => ({ state, reason, kind, sign });
+        if (input.error || input.timedOut || status === 0 || status >= 500 || status === 403 || status === 429) return result("down", input.timedOut ? "timeout" : (input.error ? "request error" : "server unavailable"));
+        let finalHost = "";
+        try { finalHost = new URL(input.finalUrl).hostname.replace(/^www\./i, "").toLowerCase(); } catch {}
+        if (finalHost && finalHost !== host) return result("down", "offsite redirect");
+        if (status === 404 || status === 410 || /<title>\s*(?:404\s*)?(?:file\s+)?not found|file not found|file does not exist/i.test(html)) return result("missing", "file not found");
+        if (status < 200 || status >= 400) return result("down", "http " + status);
+        const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || "";
+        if (/redirecting|just a moment|coming soon|is down|cloudflare/i.test(title) || !html.trim()) return result("down", "unavailable page");
+        if (/id=["']galleryGrid["']|class=["'][^"']*files-album/i.test(html) && /\/a\//i.test(input.finalUrl || "")) return result("ok", "album page", "album");
+        if (/id=["']video-container["']|id=["']video-wrapper["']/.test(html)) {
+            const apiSlug = html.match(/\/api\/sign\/['"]\s*\+\s*['"]([\w-]+)/i);
+            const api = /\/api\/sign\//i.test(html) && (apiSlug || html.match(/\/api\/sign\/([\w-]+)/i) || html.match(/\/f\/([\w-]+)/i));
+            if (api) return result("ok", "media page", "video", { type: "api", path: "/api/sign/" + api[1] });
+            const cdnRaw = html.match(/\bjsCDN\s*=\s*['"]([^'"]+)['"]/i);
+            const signRaw = html.match(/\bsignUrl\s*=\s*['"]([^'"]+)['"]/i);
+            if (cdnRaw && signRaw) {
+                const decode = value => value.replace(/\\\\/g, "\\").replace(/\\\//g, "/").replace(/\\u0026/gi, "&");
+                return result("ok", "media page", "video", { type: "inline", cdn: decode(cdnRaw[1]), signUrl: decode(signRaw[1]) });
+            }
+        }
+        if (/\/f\//i.test(input.finalUrl || "") && /<main\b/i.test(html)) {
+            const image = /(?:og:type["']\s+content=["']image|id=["']image-container["']|var\s+jsCDN\s*=\s*["'][^"']+\.(?:jpe?g|png|gif|webp))/i.test(html);
+            return result("ok", "file page", image ? "image" : "file", (() => {
+                const cdnRaw = html.match(/\bjsCDN\s*=\s*['"]([^'"]+)['"]/i), signRaw = html.match(/\bsignUrl\s*=\s*['"]([^'"]+)['"]/i);
+                return cdnRaw && signRaw ? { type: "inline", cdn: cdnRaw[1].replace(/\\\//g, "/"), signUrl: signRaw[1] } : null;
+            })());
+        }
+        return result("down", "unknown page");
+    }
+
+    function classifyMediaProbe(input) {
+        if (input.error || input.timedOut) return "inconclusive";
+        const status = Number(input.status) || 0;
+        if (status === 404 || status === 410 || status === 403) return "missing";
+        if ((status === 200 || status === 206) && /^text\/html\b/i.test(String(input.contentType || ""))) return "missing";
+        if (status === 200 || status === 206) return "ok";
+        return "inconclusive";
+    }
+
+    function orderMirrors(domains, health, current) {
+        const rank = { ok: 0, unknown: 1, missing: 2, down: 3 };
+        return domains.filter(domain => domain !== current).slice().sort((a, b) => {
+            const ah = health[a], bh = health[b];
+            const ar = rank[ah && ah.state] ?? rank.unknown, br = rank[bh && bh.state] ?? rank.unknown;
+            return ar - br || (ar === 0 ? (bh.checkedAt || 0) - (ah.checkedAt || 0) : 0);
+        });
+    }
+
+    function nextWorking(domains, health, current, direction) {
+        if (!domains.length) return null;
+        const step = direction < 0 ? -1 : 1;
+        let index = domains.indexOf(current);
+        for (let i = 0; i < domains.length; i++) {
+            index = index < 0 ? (step > 0 ? 0 : domains.length - 1) : (index + step + domains.length) % domains.length;
+            if (domains[index] !== current && health[domains[index]] && health[domains[index]].state === "ok") return domains[index];
+        }
+        return null;
+    }
+
     // ===== TROCAR MIRROR = trocar de DOMÍNIO (pós-migração do Bunkr, cada domínio aponta pra um mirror diferente:
     // às vezes o arquivo falha num e funciona noutro). Botão no canto sup-direito do player → menu de domínios →
     // abre o MESMO caminho/arquivo no domínio escolhido. Edite MIRRORS conforme os domínios ativos do Bunkr. =====
@@ -3000,18 +3091,165 @@ ${MEDIA_CSS.misc}
         "bunkr.tv", "bunkrr.tv", "bunkr.space", "bunkrr.space", "bunkr.fit", "bunkrr.fit",
         "bunkr.click", "bunkrr.click"
     ];
+    const MIRROR_HEALTH_KEY = "bunkr-mirror-health";
+    const MIRROR_HEALTH_TTL = 30 * 60 * 1000;
+    const mirrorHealth = (() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(MIRROR_HEALTH_KEY) || "{}");
+            return saved && typeof saved === "object" ? saved : {};
+        } catch { return {}; }
+    })();
+    const mirrorMissingByFile = new Map();
+    const testingMirrors = new Set();
+    let mirrorMenuOpen = false;
+    let mirrorProgress = null;
+    function saveMirrorHealth() {
+        try {
+            const persistent = {};
+            for (const [domain, entry] of Object.entries(mirrorHealth)) if (entry.state !== "missing") persistent[domain] = entry;
+            localStorage.setItem(MIRROR_HEALTH_KEY, JSON.stringify(persistent));
+        } catch {}
+    }
+    function setMirrorHealth(domain, state) {
+        if (state === "missing") mirrorMissingByFile.set(domain + location.pathname, true);
+        else { mirrorHealth[domain] = { state, checkedAt: Date.now() }; saveMirrorHealth(); }
+        if (mirrorProgress) mirrorProgress();
+    }
+    function freshMirrorHealth(domain) {
+        if (mirrorMissingByFile.has(domain + location.pathname)) return { state: "missing", checkedAt: 0 };
+        const entry = mirrorHealth[domain];
+        if (entry && Date.now() - (entry.checkedAt || 0) > MIRROR_HEALTH_TTL) delete mirrorHealth[domain];
+        return mirrorHealth[domain] || null;
+    }
+    function requestText(url, options = {}) {
+        return new Promise(resolve => {
+            if (typeof GM_xmlhttpRequest !== "function") return resolve({ error: new Error("GM_xmlhttpRequest unavailable") });
+            let done = false;
+            const finish = value => { if (done) return; done = true; resolve(value); };
+            try {
+                GM_xmlhttpRequest({
+                    method: "GET", url, timeout: options.timeout || 6000, headers: options.headers || {},
+                    onload: response => finish({ status: response.status, finalUrl: response.finalUrl || url, responseText: response.responseText || "", contentType: response.responseHeaders?.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || "" }),
+                    onerror: error => finish({ error }),
+                    ontimeout: () => finish({ timedOut: true }),
+                });
+            } catch (error) { finish({ error }); }
+        });
+    }
+    async function probeMirror(domain, pathAndSearch = location.pathname + location.search) {
+        const response = await requestText("https://" + domain + pathAndSearch, { timeout: 6000 });
+        const result = classifyMirrorPage({ requestedHost: domain, status: response.status, finalUrl: response.finalUrl, html: response.responseText, error: response.error, timedOut: response.timedOut });
+        setMirrorHealth(domain, result.state);
+        return Object.assign({ domain }, result);
+    }
+    function currentMirrorHealth() {
+        const health = {};
+        for (const domain of MIRRORS) health[domain] = freshMirrorHealth(domain) || { state: "unknown", checkedAt: 0 };
+        return health;
+    }
+    async function findWorking(path, options = {}) {
+        const want = Math.max(1, options.want || 1), exclude = new Set(options.exclude || []);
+        const candidates = orderMirrors(MIRRORS.filter(domain => !exclude.has(domain)), currentMirrorHealth(), "");
+        let cursor = 0, active = 0, found = [], settled = false;
+        return new Promise(resolve => {
+            const finishIfDone = () => {
+                if (!settled && active === 0 && cursor >= candidates.length) { settled = true; resolve(found); }
+            };
+            const run = () => {
+                while (active < 8 && cursor < candidates.length && (found.length < want || mirrorMenuOpen)) {
+                    const domain = candidates[cursor++];
+                    const known = freshMirrorHealth(domain);
+                    if (known?.state === "down" && Date.now() - known.checkedAt < MIRROR_HEALTH_TTL) { options.onUpdate?.({ domain, state: "down", found: found.slice() }); continue; }
+                    active++;
+                    testingMirrors.add(domain); options.onTesting?.(domain);
+                    probeMirror(domain, path).then(result => {
+                        if (result.state === "ok" && !found.includes(domain)) found.push(domain);
+                        options.onUpdate?.(Object.assign({ found: found.slice() }, result));
+                    }).finally(() => { testingMirrors.delete(domain); options.onSettled?.(domain); active--; run(); finishIfDone(); });
+                }
+                if (!settled && found.length >= want && !mirrorMenuOpen) { settled = true; resolve(found); }
+                finishIfDone();
+            };
+            run();
+        });
+    }
+    async function signedMediaUrl(domain, slug, sign) {
+        if (!sign) return null;
+        if (sign.type === "api") {
+            const response = await requestText("https://" + domain + "/api/sign/" + encodeURIComponent(slug), { timeout: 6000 });
+            if (response.error || response.timedOut || response.status !== 200) return null;
+            try { const data = JSON.parse(response.responseText); return data.ok && data.url ? data.url : null; } catch { return null; }
+        }
+        if (sign.type === "inline") {
+            const response = await requestText(sign.signUrl + "?path=" + encodeURIComponent(decodeURIComponent(new URL(sign.cdn).pathname)), { timeout: 6000 });
+            if (response.error || response.timedOut || response.status < 200 || response.status >= 300) return null;
+            try {
+                const data = JSON.parse(response.responseText), url = new URL(sign.cdn);
+                for (const [key, value] of Object.entries(data)) if (["token", "ex"].includes(key)) url.searchParams.set(key, value);
+                return url.href;
+            } catch { return null; }
+        }
+        return null;
+    }
+    async function checkMedia(url) {
+        const response = await requestText(url, { timeout: 8000, headers: { Range: "bytes=0-0" } });
+        return classifyMediaProbe({ status: response.status, contentType: response.contentType, error: response.error, timedOut: response.timedOut });
+    }
+    function isMirrorFilePage() { return location.pathname !== "/" && location.pathname !== ""; }
+    function showMirrorSearchPanel(text) {
+        let panel = document.querySelector(".bunkr-mirror-search");
+        if (!panel) {
+            panel = document.createElement("div"); panel.className = "bunkr-mirror-search";
+            (document.body || document.documentElement).appendChild(panel);
+        }
+        panel.textContent = text;
+        return panel;
+    }
+    async function handleCurrentMirrorPage() {
+        const result = classifyMirrorPage({ requestedHost: location.hostname, status: 200, finalUrl: location.href, html: document.documentElement.outerHTML });
+        let tried = [];
+        try { tried = JSON.parse(sessionStorage.getItem("bunkr-mirror-tried:" + location.pathname) || "[]"); } catch {}
+        if (!Array.isArray(tried)) tried = [];
+        const current = location.hostname.replace(/^www\./, "");
+        if (result.state === "ok") {
+            try { sessionStorage.removeItem("bunkr-mirror-tried:" + location.pathname); } catch {}
+            return true;
+        }
+        if (!tried.includes(current)) tried.push(current);
+        try { sessionStorage.setItem("bunkr-mirror-tried:" + location.pathname, JSON.stringify(tried)); } catch {}
+        const panel = showMirrorSearchPanel("Procurando este arquivo em outros mirrors… 0 testados · 0 funcionando");
+        const counts = { ok: 0, missing: 0, down: 0 };
+        for (const domain of tried) {
+            const state = domain === current ? result.state : freshMirrorHealth(domain)?.state;
+            if (state && counts[state] !== undefined) counts[state]++;
+        }
+        let tested = tried.length;
+        const results = await findWorking(location.pathname + location.search, {
+            want: 1, exclude: tried,
+            onUpdate: result => {
+                if (result.state) { tested++; counts[result.state] = (counts[result.state] || 0) + 1; }
+                panel.textContent = "Procurando este arquivo em outros mirrors… " + tested + " testados · " + counts.ok + " funcionando";
+            },
+        });
+        mirrorProgress = null;
+        if (results.length) {
+            const target = results[0];
+            tried.push(target);
+            try { sessionStorage.setItem("bunkr-mirror-tried:" + location.pathname, JSON.stringify(tried)); } catch {}
+            location.replace(location.protocol + "//" + target + location.pathname + location.search + location.hash);
+            return false;
+        }
+        panel.textContent = "Este arquivo não existe em nenhum mirror ativo · " + counts.ok + " funcionando, " + counts.missing + " sem arquivo, " + counts.down + " indisponíveis. Tentados: " + tried.join(", ");
+        return false;
+    }
     function mediaBox() {
         return document.querySelector("#video-container")
             || document.querySelector(".rounded-lg section > div.mx-auto")
             || [...document.querySelectorAll(".rounded-lg")].find(b => !b.closest("header"));   // ignora a nav do header (tbm é .rounded-lg)
     }
-    function nextMirror() {
-        const cur = location.hostname.replace(/^www\./, "");
-        const i = MIRRORS.indexOf(cur);
-        return MIRRORS[((i >= 0 ? i : -1) + 1) % MIRRORS.length] || MIRRORS[0];
-    }
+    function nextMirror() { return nextWorking(MIRRORS, currentMirrorHealth(), location.hostname.replace(/^www\./, ""), 1); }
     function isVideoWorking() {
-        const v = document.querySelector(".bunkr-video, .bunkr-stage video, #video-wrapper video, #player");
+        const v = document.querySelector(".bunkr-video") || document.querySelector(".bunkr-stage video, #video-wrapper video, #player");
         return !!(v && (v.currentTime > 0 || v.readyState >= 2 || !v.paused));
     }
     function dismissMirrorWarn() {
@@ -3019,7 +3257,7 @@ ${MEDIA_CSS.misc}
         setMirrorTesting(false);
     }
     // aviso "mirror fora" no topo do player + botão pro próximo mirror
-    function suggestMirror(reason) {
+    function suggestMirror(reason, target = nextMirror()) {
         if (isVideoWorking()) {
             dismissMirrorWarn();
             return;
@@ -3027,11 +3265,12 @@ ${MEDIA_CSS.misc}
         const box = document.querySelector(".bunkr-stage .bunkr-stage-mid") || mediaBox();   // no stage o aviso vai sobre a mídia; senão, no box antigo
         if (!box || box.querySelector(".bunkr-mirror-warn")) return;
         if (getComputedStyle(box).position === "static") box.style.position = "relative";
-        const nd = nextMirror();
+        const nd = target;
+        if (!nd) return;
         const warn = document.createElement("div"); warn.className = "bunkr-mirror-warn";
         warn.innerHTML = "<div><b>⚠ Esse mirror pode estar fora</b> " + (reason ? "<span>· " + reason + "</span>" : "") + "</div>";
         const a = document.createElement("a"); a.className = "bunkr-mirror-warn-btn"; a.textContent = "Tentar " + nd + " →";
-        a.href = location.protocol + "//" + nd + location.pathname + location.search;
+        a.href = location.protocol + "//" + nd + location.pathname + location.search + location.hash;
         warn.appendChild(a);
         const x = document.createElement("button"); x.className = "bunkr-mirror-warn-x"; x.type = "button";
         x.setAttribute("aria-label", "Dispensar"); x.title = "Dispensar"; x.innerHTML = svgi('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
@@ -3039,40 +3278,93 @@ ${MEDIA_CSS.misc}
         warn.appendChild(x);
         box.appendChild(warn);
     }
-    // TESTE DO PLAYER: probe ESCONDIDO do mp4 que o Bunkr assinou (sem CORS — <video> toca cross-origin; testa rede E
-    // decode). loadedmetadata = vai rodar; error/timeout = mirror fora → sugere trocar. + escuta erro no player real.
-    let probed = false;
-    function testMirror() {
-        if (probed) return;
-        const el = document.querySelector("#video-wrapper video source[src], #player source[src], #video-wrapper video[src], #player[src]");
-        const src = el && (el.getAttribute("src") || el.src);
-        if (!src) return;   // o Bunkr ainda não montou o player → tenta de novo
-        probed = true;
-        setMirrorTesting(true);   // spinner "testando" no botão de mirror enquanto o probe roda
-        const real = document.querySelector("#video-wrapper video, #player");
-        if (real) real.addEventListener("error", () => suggestMirror("erro ao reproduzir"), { once: true });
-        const v = document.createElement("video");
-        v.muted = true; v.preload = "metadata"; v.playsInline = true;
-        v.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none";
-        let done = false;
-        const finish = ok => {
-            if (done) return;
-            done = true;
-            clearTimeout(to);
-            v.removeAttribute("src");
-            v.load && v.load();
-            v.remove();
-            setMirrorTesting(false);
-            if (isVideoWorking()) {
-                dismissMirrorWarn();
+    let playerRecovery = null, errorHooksBound = false, recoverySwaps = 0, recoveryRunning = false, recoveryExhausted = false;
+    function cancelRecovery() {
+        if (playerRecovery) clearTimeout(playerRecovery);
+        playerRecovery = null;
+        dismissMirrorWarn();
+    }
+    function realVideo() { return document.querySelector(".bunkr-video") || document.querySelector(".bunkr-stage video, #video-wrapper video, #player"); }
+    function bindPlayerRecovery() {
+        if (errorHooksBound) return;
+        const video = realVideo();
+        if (!video) return;
+        errorHooksBound = true;
+        ["play", "playing", "timeupdate", "loadeddata"].forEach(event => video.addEventListener(event, cancelRecovery));
+        video.addEventListener("error", () => {
+            if (!video.error || isVideoWorking() || recoveryRunning || recoveryExhausted) return;
+            recoverPlayerSource(video);
+        });
+    }
+    function swapPlayerSource(video, url) {
+        const currentTime = video.currentTime || 0, wasPaused = video.paused;
+        video.src = url;
+        try { video.load(); if (!wasPaused) video.play().catch(() => {}); else video.currentTime = currentTime; } catch {}
+        video.addEventListener("loadedmetadata", () => { try { video.currentTime = currentTime; if (!wasPaused) video.play().catch(() => {}); } catch {} }, { once: true });
+    }
+    async function recoverPlayerSource(video) {
+        recoveryRunning = true;
+        try {
+            const page = classifyMirrorPage({ requestedHost: location.hostname, status: 200, finalUrl: location.href, html: document.documentElement.outerHTML });
+            const slug = (location.pathname.match(/\/(?:f|v|i)\/([^/]+)/) || [])[1];
+            if (!slug || !page.sign) {
+                recoveryExhausted = true;
+                suggestMirror("erro ao reproduzir");
                 return;
             }
-            if (!ok) suggestMirror("o vídeo não carregou");
-        };
-        v.addEventListener("loadedmetadata", () => finish(true), { once: true });
-        v.addEventListener("error", () => finish(false), { once: true });
-        const to = setTimeout(() => finish(false), 10000);   // lento demais → trata como fora
-        v.src = src; (document.body || document.documentElement).appendChild(v); v.load();
+
+            const current = location.hostname.replace(/^www\./, "");
+            if (recoverySwaps >= 2) {
+                recoveryExhausted = true;
+                suggestMirror("a fonte continua indisponível");
+                return;
+            }
+
+            if (recoverySwaps === 0) {
+                const sameMirrorUrl = await signedMediaUrl(current, slug, page.sign);
+                if (sameMirrorUrl) {
+                    const status = await checkMedia(sameMirrorUrl);
+                    if (status === "missing") { showMediaMissing(); recoveryExhausted = true; return; }
+                    if (status === "ok") {
+                        recoverySwaps++;
+                        swapPlayerSource(video, sameMirrorUrl);
+                        toast("Fonte recarregada");
+                        return;
+                    }
+                }
+            }
+
+            const working = await findWorking(location.pathname + location.search, { want: 1, exclude: [current] });
+            const mirror = working[0];
+            if (mirror) {
+                const result = await probeMirror(mirror);
+                const url = await signedMediaUrl(mirror, slug, result.sign || page.sign);
+                if (url) {
+                    const media = await checkMedia(url);
+                    if (media === "missing") { showMediaMissing(); recoveryExhausted = true; return; }
+                    if (media === "ok") {
+                        recoverySwaps++;
+                        swapPlayerSource(video, url);
+                        toast("Fonte recarregada");
+                        return;
+                    }
+                }
+            }
+            recoveryExhausted = true;
+            suggestMirror("a fonte continua indisponível", nextWorking(MIRRORS, currentMirrorHealth(), current, 1));
+        } finally {
+            recoveryRunning = false;
+        }
+    }
+    function showMediaMissing() {
+        const box = document.querySelector(".bunkr-stage .bunkr-stage-mid") || mediaBox();
+        if (!box || box.querySelector(".bunkr-mirror-warn")) return;
+        const warn = document.createElement("div"); warn.className = "bunkr-mirror-warn";
+        warn.textContent = "Arquivo indisponível no CDN — trocar de mirror não resolve";
+        box.appendChild(warn);
+    }
+    function testMirror() {
+        bindPlayerRecovery();
     }
 
 
@@ -3855,6 +4147,13 @@ ${MEDIA_CSS.misc}
         if (!isFile()) setupModernGallery();
     }
     onReady(() => {
+        if (isMirrorFilePage()) {
+            handleCurrentMirrorPage().then(ok => { if (ok) initializeBunkrPage(); });
+            return;
+        }
+        initializeBunkrPage();
+    });
+    function initializeBunkrPage() {
         if (!isFile() && openSingleItemAlbum()) return;
         checkPageType();
         apply(); setTimeout(apply, 700); initFilter();
@@ -3875,8 +4174,7 @@ ${MEDIA_CSS.misc}
                     if (stage._sidebarList) renderRelatedToPlaylist(stage._sidebarList, stage._sbCount);   // mantém o fallback fresco até o álbum baixar (renderPlaylist assume quando playlistFull)
                     testMirror();
                 }
-                const noProbe = !document.querySelector("#video-container, #video-wrapper") || (stage && stage.classList.contains("is-text"));   // imagem/não-vídeo/texto → não há probe de mirror (probed nunca vira true)
-                if (mediaMounted && (probed || noProbe)) stop();
+                if (mediaMounted) stop();
                 else if (++n > 30) {   // ~12s de segurança
                     stop();
                     if (!mediaMounted) { document.documentElement.classList.add("bunkr-fallback"); const st = document.querySelector(".bunkr-stage"); if (st) st.remove(); document.documentElement.classList.remove("bunkr-has-stage"); }
@@ -3885,5 +4183,5 @@ ${MEDIA_CSS.misc}
             tick();   // JÁ no DOMContentLoaded (não espera o 1º intervalo de 400ms) → o stage cobre o placeholder ASAP, sem flash da interface antiga
             if (!done) id = setInterval(tick, 400);
         }
-    });
+    }
 })();

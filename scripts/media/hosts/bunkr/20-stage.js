@@ -9,24 +9,38 @@
         const btn = el("button", { type: "button", class: "bunkr-item", title: "Trocar de mirror (domínio)" }, el("span", { class: "bunkr-mirror-spin", "aria-hidden": "true" }));
         btn.insertAdjacentHTML("beforeend", PL_ICONS.dns); btn.append(el("span", null, "Mirror"));
         const menu = el("div", { class: "bunkr-mirror-menu", hidden: "" });
-        menu.innerHTML = '<div class="bunkr-mirror-head">Trocar de mirror · <b>' + cur + '</b></div><div class="bunkr-mirror-grid"></div>';
+        menu.innerHTML = '<div class="bunkr-mirror-head">Trocar de mirror · <b>' + cur + '</b></div><div class="bunkr-mirror-nav"><button type="button" data-dir="-1">← Anterior</button><button type="button" data-dir="1">Próximo →</button></div><div class="bunkr-mirror-grid"></div>';
         const grid = menu.querySelector(".bunkr-mirror-grid");
-        MIRRORS.forEach(d => {
-            const a = el("a", { class: "bunkr-mirror-item" + (d === cur ? " is-current" : "") }, d);
-            if (d === cur) a.addEventListener("click", e => e.preventDefault());
-            else a.href = location.protocol + "//" + d + location.pathname + location.search;
-            grid.appendChild(a);
-        });
+        function renderMirrorItems() {
+            grid.textContent = "";
+            orderMirrors(MIRRORS, currentMirrorHealth(), "").forEach(d => {
+                const health = freshMirrorHealth(d), state = testingMirrors.has(d) ? "testing" : (health?.state || "unknown");
+                const a = el("a", { class: "bunkr-mirror-item bunkr-mirror-" + state + (d === cur ? " is-current" : ""), href: location.protocol + "//" + d + location.pathname + location.search + location.hash }, el("i", { class: "bunkr-mirror-dot", "aria-hidden": "true" }), d);
+                if (d === cur) a.addEventListener("click", event => event.preventDefault());
+                a.dataset.domain = d; grid.appendChild(a);
+            });
+        }
+        renderMirrorItems();
+        const navButtons = menu.querySelectorAll(".bunkr-mirror-nav button");
+        const updateNav = () => navButtons.forEach(b => { const target = nextWorking(MIRRORS, currentMirrorHealth(), cur, Number(b.dataset.dir)); b.disabled = !target; b.dataset.target = target || ""; });
+        navButtons.forEach(b => b.addEventListener("click", () => { if (b.dataset.target) location.href = location.protocol + "//" + b.dataset.target + location.pathname + location.search + location.hash; }));
+        function probeMenu() {
+            mirrorMenuOpen = true;
+            setMirrorTesting(true);
+            findWorking(location.pathname + location.search, { want: 1, onTesting: () => renderMirrorItems(), onUpdate: () => { renderMirrorItems(); updateNav(); }, onSettled: () => { renderMirrorItems(); updateNav(); } }).finally(() => { setMirrorTesting(false); });
+            renderMirrorItems(); updateNav();
+        }
         const setOpen = open => {   // menu em position:FIXED → calcula a posição no open (a vrow tem overflow:hidden, absolute era CORTADO)
             menu.hidden = !open;
             if (!open) return;
+            probeMenu();
             const r = btn.getBoundingClientRect(), w = menu.offsetWidth || 300;
             menu.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + "px";
             const mh = menu.offsetHeight;
             menu.style.top = ((r.bottom + 8 + mh > window.innerHeight) ? Math.max(8, r.top - 8 - mh) : r.bottom + 8) + "px";
         };
         btn.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); setOpen(menu.hidden); });
-        document.addEventListener("click", e => { if (!wrap.contains(e.target)) setOpen(false); });
+        document.addEventListener("click", e => { if (!wrap.contains(e.target)) { mirrorMenuOpen = false; setOpen(false); } });
         wrap.append(btn, menu);
         return wrap;
     }

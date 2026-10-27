@@ -88,7 +88,6 @@
         const video = el("video", { class: "bunkr-video", playsinline: "", preload: "metadata" });
         video.volume = prefs.volume; video.muted = prefs.muted;
         video.addEventListener("volumechange", () => { prefs.volume = video.volume; prefs.muted = video.muted; saveP(); }, { signal: ac.signal });
-        video.addEventListener("error", () => suggestMirror("erro ao reproduzir"), { once: true });
         ["loadedmetadata", "loadeddata", "canplay", "playing", "timeupdate"].forEach(ev => {
             video.addEventListener(ev, dismissMirrorWarn, { signal: ac.signal });
         });

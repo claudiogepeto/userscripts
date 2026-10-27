@@ -777,6 +777,13 @@
         if (!isFile()) setupModernGallery();
     }
     onReady(() => {
+        if (isMirrorFilePage()) {
+            handleCurrentMirrorPage().then(ok => { if (ok) initializeBunkrPage(); });
+            return;
+        }
+        initializeBunkrPage();
+    });
+    function initializeBunkrPage() {
         if (!isFile() && openSingleItemAlbum()) return;
         checkPageType();
         apply(); setTimeout(apply, 700); initFilter();
@@ -797,8 +804,7 @@
                     if (stage._sidebarList) renderRelatedToPlaylist(stage._sidebarList, stage._sbCount);   // mantém o fallback fresco até o álbum baixar (renderPlaylist assume quando playlistFull)
                     testMirror();
                 }
-                const noProbe = !document.querySelector("#video-container, #video-wrapper") || (stage && stage.classList.contains("is-text"));   // imagem/não-vídeo/texto → não há probe de mirror (probed nunca vira true)
-                if (mediaMounted && (probed || noProbe)) stop();
+                if (mediaMounted) stop();
                 else if (++n > 30) {   // ~12s de segurança
                     stop();
                     if (!mediaMounted) { document.documentElement.classList.add("bunkr-fallback"); const st = document.querySelector(".bunkr-stage"); if (st) st.remove(); document.documentElement.classList.remove("bunkr-has-stage"); }
@@ -807,5 +813,5 @@
             tick();   // JÁ no DOMContentLoaded (não espera o 1º intervalo de 400ms) → o stage cobre o placeholder ASAP, sem flash da interface antiga
             if (!done) id = setInterval(tick, 400);
         }
-    });
+    }
 })();

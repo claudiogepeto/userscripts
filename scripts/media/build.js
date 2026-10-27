@@ -44,6 +44,7 @@ const MANIFEST = {
         '20-stage.js',
         '25-topbar.js',
         '30-file-layout.js',
+        '34-mirror-classify.js',
         '35-mirror.js',
         '40-album.js',
     ],

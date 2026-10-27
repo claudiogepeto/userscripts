@@ -140,6 +140,19 @@
         .bunkr-mirror-item:hover { background: #a78bfa; color: #160f24; }
         .bunkr-mirror-item.is-current { background: rgba(167,139,250,0.18); color: #a78bfa; cursor: default; }
         .bunkr-mirror-item.is-current:hover { background: rgba(167,139,250,0.18); color: #a78bfa; }
+        .bunkr-mirror-item { gap: 8px; }
+        .bunkr-mirror-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #92929b; }
+        .bunkr-mirror-ok .bunkr-mirror-dot { background: #4ade80; }
+        .bunkr-mirror-missing .bunkr-mirror-dot { background: #fbbf24; }
+        .bunkr-mirror-down .bunkr-mirror-dot { background: #f87171; }
+        .bunkr-mirror-unknown .bunkr-mirror-dot { background: #92929b; }
+        .bunkr-mirror-testing .bunkr-mirror-dot { background: #a78bfa; animation: bunkr-spin .8s linear infinite; border: 2px dotted rgba(255,255,255,.9); }
+        .bunkr-mirror-vrow.is-testing .bunkr-mirror-spin { animation: bunkr-spin .8s linear infinite; }
+        .bunkr-mirror-nav { display: flex; gap: 8px; padding: 0 2px 9px; }
+        .bunkr-mirror-nav button { flex: 1; padding: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: rgba(255,255,255,.06); color: #fff; cursor: pointer; }
+        .bunkr-mirror-nav button:disabled { opacity: .4; cursor: default; }
+        .bunkr-mirror-search { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-content: center; padding: 28px; background: #101014; color: #eee; text-align: center; font: 600 16px/1.6 Inter, system-ui, sans-serif; }
+        @keyframes bunkr-spin { to { transform: rotate(360deg); } }
 
         /* ===== aviso "mirror pode estar fora" (overlay no topo do player, após o teste falhar) ===== */
         .bunkr-mirror-warn { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 55; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 24px); padding: 10px 16px; border-radius: 12px; background: rgba(176,32,32,0.94); color: #fff; font: 600 13.5px/1.3 Inter, system-ui, sans-serif; box-shadow: 0 12px 34px rgba(0,0,0,0.55); }
