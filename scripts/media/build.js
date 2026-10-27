@@ -30,6 +30,7 @@ const MANIFEST = {
         '00-meta.js',
         '05-boot.js',
         '06-host.js',
+        '07-adblock.js',
         'core/viewers.js',
         'core/css.js',
         'core/player.js',
