@@ -4,6 +4,9 @@
     // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: embeds, native video player, dead media and post links ──
     const CSS_MEDIA_PLAYERS = `
+            /* vídeo fora de um grupo usa o mesmo teto de altura das imagens solo; a proporção limita sua largura */
+            .smg-solo-video { --smg-media-h: var(--smg-solo-h, 80vh); }
+
             /* ---- turbo/saint embeds (iframe nativo) ---- */
             .generic2wide-iframe-div {
                 position: relative;
@@ -23,14 +26,6 @@
             .generic2wide-iframe-div.smg-tb-vert {
                 max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-tb-r))) !important;
-            }
-            .bbCodeBlock--unfurl .contentRow-figure,
-            .bbCodeBlock--unfurl .contentRow-figure img,
-            .bbCodeBlock--unfurl img.bbImage {
-                max-width: 88px !important;
-                max-height: 88px !important;
-                aspect-ratio: 1 !important;
-                object-fit: cover !important;
             }
             .generic2wide-iframe-div.smg-player-loaded,
             span[data-s9e-mediaembed].smg-player-loaded,
@@ -148,40 +143,120 @@
                 width: auto !important;
                 max-width: 100% !important;
             }
-            /* Preview de link: a regra .smg-wide (100% / height auto) vinha depois e
-               estourava a thumb do unfurl. A figura fica 88px e o texto ao lado. */
+            /* Unfurl nativo: o preview e o favicon têm tamanhos e papéis distintos.
+               Restringir todo img do card a 88px fazia o favicon crescer como uma segunda thumb. */
             .bbCodeBlock--unfurl {
+                display: block !important;
                 max-width: 100% !important;
                 overflow: hidden !important;
             }
             .bbCodeBlock--unfurl .contentRow {
                 display: flex !important;
                 flex-direction: row !important;
-                align-items: flex-start !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch !important;
                 gap: var(--smg-sp-12) !important;
                 min-width: 0 !important;
+                width: 100% !important;
             }
             .bbCodeBlock--unfurl .contentRow-figure {
-                flex: 0 0 88px !important;
-                width: 88px !important;
-                height: 88px !important;
+                flex: 0 0 72px !important;
+                width: 72px !important;
+                height: 72px !important;
                 overflow: hidden !important;
+                border-radius: var(--smg-r-8) !important;
             }
-            .bbCodeBlock--unfurl .contentRow-figure img,
-            .bbCodeBlock--unfurl img,
-            .bbCodeBlock--unfurl img.bbImage,
-            .bbCodeBlock--unfurl img.bbImage.smg-wide {
-                width: 88px !important;
-                height: 88px !important;
-                max-width: 88px !important;
-                max-height: 88px !important;
+            .bbCodeBlock--unfurl .contentRow-figure:not(:has(img[src], img[data-src])) {
+                display: none !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure img {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: 1 !important;
                 object-fit: cover !important;
                 margin: 0 !important;
             }
+            .bbCodeBlock--unfurl .js-unfurl-favicon {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                width: 16px !important;
+                height: 16px !important;
+                overflow: hidden !important;
+                vertical-align: middle !important;
+            }
+            .bbCodeBlock--unfurl .js-unfurl-favicon img,
+            .bbCodeBlock--unfurl img.bbCodeBlockUnfurl-icon {
+                display: block !important;
+                width: 16px !important;
+                height: 16px !important;
+                max-width: 16px !important;
+                max-height: 16px !important;
+                object-fit: contain !important;
+                margin: 0 !important;
+            }
             .bbCodeBlock--unfurl .contentRow-main {
-                flex: 1 1 auto !important;
+                display: flex !important;
+                flex: 1 1 0 !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
                 min-width: 0 !important;
                 overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .smg-unfurl-actions {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                align-items: center !important;
+                gap: var(--smg-sp-6) !important;
+                margin-left: auto !important;
+            }
+            .bbCodeBlock--unfurl .smg-unfurl-actions .smg-fhcard-btn { width: 34px; height: 34px; }
+            .bbCodeBlock--unfurl .contentRow-header {
+                display: -webkit-box !important;
+                width: 100% !important;
+                overflow: hidden !important;
+                -webkit-box-orient: vertical !important;
+                -webkit-line-clamp: 2 !important;
+                line-height: 1.35 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-snippet {
+                display: -webkit-box !important;
+                width: 100% !important;
+                overflow: hidden !important;
+                -webkit-box-orient: vertical !important;
+                -webkit-line-clamp: 2 !important;
+                color: var(--smg-tx2) !important;
+                font-size: var(--smg-fs-12) !important;
+                line-height: 1.4 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-minor {
+                display: flex !important;
+                align-items: center !important;
+                gap: var(--smg-sp-6) !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                margin-top: auto !important;
+                padding-top: var(--smg-sp-4) !important;
+                overflow: hidden !important;
+                color: var(--smg-tx2) !important;
+                font-size: var(--smg-fs-11) !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-minor > :not(.js-unfurl-favicon) {
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            @media (max-width: 600px) {
+                .bbCodeBlock--unfurl .contentRow { gap: var(--smg-sp-8) !important; }
+                .bbCodeBlock--unfurl .smg-unfurl-actions { gap: var(--smg-sp-4) !important; }
+                .bbCodeBlock--unfurl .smg-unfurl-actions .smg-fhcard-btn { width: 32px; height: 32px; }
+                .bbCodeBlock--unfurl .contentRow-figure {
+                    flex-basis: 56px !important;
+                    width: 56px !important;
+                    height: 56px !important;
+                }
             }
             /* Standalone images (a run of one): wrapper is a full-width block so the img width (a % of it) resolves
                from the post column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
@@ -217,6 +292,9 @@
                 margin-left: auto !important;
                 margin-right: auto !important;
             }
+            img.bbImage.smg-vert:not(.auto-image-grid *) {
+                max-height: var(--smg-solo-h) !important;
+            }
 
             .smg-dm-wrap img.bbImage { border-radius: var(--smg-r-10); }
             .smg-dm-video {
@@ -249,34 +327,61 @@
                 background: #000 !important;
             }
 
-            /* ---- redgifs / gifs / youtube: full width igual aos outros ---- */
-            span[data-s9e-mediaembed="youtube"],
-            span[data-s9e-mediaembed="gifs"],
-            span[data-s9e-mediaembed="redgifs"] {
+            /* ---- s9e video providers: the same capped box, with TikTok's portrait ratio ---- */
+            ${VIDEO_S9E_SELECTOR} {
                 display: block !important;
                 width: 100% !important;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * 16 / 9)) !important;
                 margin: var(--smg-sp-16) auto !important;
+                border-radius: var(--smg-img-r) !important;
+                overflow: hidden !important;
+                background: #000 !important;
             }
-            span[data-s9e-mediaembed="youtube"] > span,
-            span[data-s9e-mediaembed="gifs"] > span,
-            span[data-s9e-mediaembed="redgifs"] > span {
+            span[data-s9e-mediaembed="tiktok"] {
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * 9 / 16)) !important;
+            }
+            ${VIDEO_S9E_SELECTOR} > span {
                 display: block !important;
                 width: 100% !important;
                 height: auto !important;
                 padding: 0 !important;
             }
-            span[data-s9e-mediaembed="youtube"] iframe,
-            span[data-s9e-mediaembed="gifs"] iframe,
-            span[data-s9e-mediaembed="redgifs"] iframe {
+            ${VIDEO_S9E_SELECTOR} iframe {
                 position: static !important;
                 display: block !important;
                 width: 100% !important;
                 height: auto !important;
                 aspect-ratio: 16 / 9 !important;
                 border: none !important;
-                border-radius: var(--smg-r-10) !important;
+                border-radius: inherit !important;
                 background: #000 !important;
+            }
+            span[data-s9e-mediaembed="tiktok"] iframe { aspect-ratio: 9 / 16 !important; }
+
+            /* XenForo BB media wrappers use provider ids instead of s9e spans. */
+            ${VIDEO_BBMEDIA_SELECTOR} {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * 16 / 9)) !important;
+                margin: var(--smg-sp-16) auto !important;
+                border-radius: var(--smg-img-r) !important;
+                overflow: hidden !important;
+                background: #000 !important;
+            }
+            ${VIDEO_BBMEDIA_SELECTOR} .bbMediaWrapper-inner {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            ${VIDEO_BBMEDIA_SELECTOR} iframe {
+                position: static !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                aspect-ratio: 16 / 9 !important;
+                border: 0 !important;
+                border-radius: inherit !important;
             }
 
             /* defensivo: o conteúdo do embed NUNCA passa da largura do container.
@@ -339,9 +444,9 @@
                 min-height: 42px !important;
                 margin: var(--smg-sp-4) 0 !important;
                 padding: var(--smg-sp-10) var(--smg-sp-16) !important;
-                border: 1px solid rgba(255, 75, 75, 0.32) !important;
+                border: 1px solid var(--smg-bd2) !important;
                 border-radius: var(--smg-r-10) !important;
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
+                background: var(--smg-s1) !important;
                 color: var(--smg-tx) !important;
                 text-align: left !important;
                 overflow: hidden !important;
@@ -351,24 +456,48 @@
             }
             .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: var(--smg-sp-16) auto !important; }
             .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
-            .smg-dead-code {
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-6) !important;
-                padding: var(--smg-sp-2) var(--smg-sp-8) !important;
-                border-radius: var(--smg-r-6) !important;
-                background: rgba(255, 75, 75, 0.2) !important;
-                border: 1px solid rgba(255, 75, 75, 0.4) !important;
-                font-size: var(--smg-fs-13) !important;
-                font-weight: 800 !important;
-                color: #ff6b6b !important;
-                flex-shrink: 0 !important;
-                white-space: nowrap !important;
+            .smg-dead-ico { display: inline-flex !important; flex: 0 0 auto !important; color: var(--smg-tx2) !important; }
+            .smg-dead-ico svg { width: 18px !important; height: 18px !important; fill: none !important; stroke: currentColor !important; }
+            .smg-dead-text { display: flex !important; flex-direction: column !important; gap: var(--smg-sp-2) !important; min-width: 0 !important; flex: 1 1 auto !important; }
+            .smg-dead-title { display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: var(--smg-sp-6) !important; font-size: var(--smg-fs-14) !important; font-weight: 700 !important; color: var(--smg-tx) !important; line-height: 1.3 !important; }
+            .smg-dead-num { padding: 0 var(--smg-sp-6) !important; border-radius: var(--smg-r-4) !important; background: var(--smg-w-08) !important; border: 1px solid var(--smg-bd2) !important; color: var(--smg-tx2) !important; font-size: var(--smg-fs-11) !important; font-weight: 800 !important; line-height: 1.5 !important; }
+            .smg-dead-num:empty { display: none !important; }
+            .smg-dead-hint { font-size: var(--smg-fs-12) !important; font-weight: 500 !important; color: var(--smg-tx2) !important; line-height: 1.35 !important; overflow-wrap: anywhere !important; }
+            .smg-dead-acts { display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: var(--smg-sp-8) !important; flex: 0 0 auto !important; }
+            .smg-dead-retry {
+                display: inline-flex !important; align-items: center !important; gap: var(--smg-sp-6) !important;
+                height: 30px !important; padding: 0 var(--smg-sp-12) !important; margin: 0 !important;
+                border: 1px solid var(--smg-bd2) !important; border-radius: var(--smg-r-8) !important;
+                background: var(--smg-w-08) !important; color: var(--smg-tx) !important;
+                font: inherit !important; font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
+                cursor: pointer !important; white-space: nowrap !important;
             }
-            .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
-            .smg-dead-code b:empty { display: none; }
-            .smg-dead-sep { color: var(--smg-w-30) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
-            .smg-dead-sub { font-size: var(--smg-fs-13) !important; font-weight: 500 !important; color: var(--smg-w-72) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            .smg-dead-retry:hover { background: var(--smg-w-14) !important; }
+            .smg-dead-retry[hidden] { display: none !important; }
+            .smg-dead-retry svg { width: 14px !important; height: 14px !important; fill: none !important; stroke: currentColor !important; }
+            .smg-dead-host { font-size: var(--smg-fs-12) !important; font-weight: 600 !important; color: var(--smg-tx2) !important; white-space: nowrap !important; }
+            .smg-dead:hover .smg-dead-host { color: var(--smg-tx) !important; text-decoration: underline !important; }
+            /* apagado de vez: sem vermelho de alarme, só o registro calmo de que não existe mais */
+            .smg-dead--gone .smg-dead-ico { color: var(--smg-tx2) !important; }
+            .smg-dead--strip { min-height: 44px !important; height: 44px !important; padding: 0 var(--smg-sp-12) !important; gap: var(--smg-sp-8) !important; }
+            .smg-dead--strip .smg-dead-text { flex-direction: row !important; align-items: center !important; gap: var(--smg-sp-8) !important; }
+            .smg-dead--strip .smg-dead-title { white-space: nowrap !important; }
+            .smg-dead--strip .smg-dead-hint { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+            .smg-dead--strip .smg-dead-acts { margin-left: auto !important; }
+            @media (max-width: 600px) {
+                .smg-dead--strip { height: auto !important; min-height: 44px !important; flex-wrap: wrap !important; }
+                .smg-dead--strip .smg-dead-text { flex-wrap: wrap !important; }
+                .smg-dead--strip .smg-dead-hint { flex-basis: 100% !important; white-space: normal !important; }
+            }
+            /* caixa GRANDE (lugar de player/embed, ou imagem no mosaico): pilha centrada em vez de linha */
+            .smg-dead--media {
+                flex-direction: column !important; justify-content: center !important; text-align: center !important;
+                gap: var(--smg-sp-10) !important; padding: var(--smg-sp-20) !important;
+            }
+            .smg-dead--media .smg-dead-text { flex: 0 0 auto !important; align-items: center !important; }
+            .smg-dead--media .smg-dead-title { justify-content: center !important; }
+            .smg-dead--media .smg-dead-acts { justify-content: center !important; margin-top: var(--smg-sp-4) !important; }
+            .smg-dead--media .smg-dead-ico svg { width: 26px !important; height: 26px !important; }
             /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
             .generic2wide-iframe-div::before,
             .generic2wide-iframe-div::after,
@@ -695,7 +824,10 @@
                body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
             html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-28) !important; padding-bottom: var(--smg-sp-10) !important; }
             @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-16) !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
-            .p-body-header .p-title { text-align: left !important; }
+            .p-body-header .p-title { display: flex !important; align-items: center !important; gap: var(--smg-sp-12); min-width: 0; text-align: left !important; }
+            .p-body-header .p-title-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .p-body-header .p-title-pageAction { flex: 0 0 auto; margin-left: auto; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header .p-title { flex-wrap: wrap; } }
             .p-body-header .p-title-value { font-size: var(--smg-fs-32) !important; font-weight: 800 !important; line-height: 1.2 !important; }
 
             /* ---- remove banners de anúncio (striply etc.) ---- */

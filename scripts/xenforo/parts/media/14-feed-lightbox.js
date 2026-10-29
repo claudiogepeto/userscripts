@@ -38,6 +38,7 @@
         const add = (type, url) => { if (url && !local.has(url)) { local.add(url); items.push({ type, url }); } };
 
         root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="turbo.cr"], iframe[src*="saint"], iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="turbo.cr/"]:not(.smg-turbo-fallback), a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback), a[href*="saint.su/"]:not(.smg-turbo-fallback), a[href*="saint2.su/"]:not(.smg-turbo-fallback)').forEach(el => {
+            if (el.closest('[hidden]')) return;
             // FORMA CRUA (a galeria re-busca a página do servidor, SEM nosso processamento):
             if (el.matches('span[data-s9e-mediaembed-iframe]')) {   // redgifs = <span data-s9e-mediaembed-iframe='[...,"src","https:\/\/…/ifr/ID"]'> (sem <iframe> nem .generic2wide)
                 let arr; try { arr = JSON.parse(el.getAttribute('data-s9e-mediaembed-iframe') || '[]'); } catch (e) { return; }
@@ -55,7 +56,15 @@
                 return;
             }
             if (el.tagName === 'IMG') {
-                add('image', imageUrlOf(el));
+                let url = imageUrlOf(el);
+                // A gallery fetch contains the server's original attachment URL, while the live post
+                // may already have replaced that failed URL with its working thumbnail.
+                if (url) {
+                    const failed = Array.from(document.querySelectorAll('img[data-smg-failed-url]'))
+                        .find(img => img.dataset.smgFailedUrl === absUrl(url));
+                    if (failed) url = imageUrlOf(failed);
+                }
+                add('image', url);
             } else if (el.tagName === 'VIDEO') {   // nosso player já montado: redgifs pelo id; turbo (Simp nativo) pelo _rgFeed
                 if (el.dataset.rgid) add('embed', 'https://www.redgifs.com/ifr/' + el.dataset.rgid);
                 else if (el._rgFeed) add('embed', el._rgFeed);

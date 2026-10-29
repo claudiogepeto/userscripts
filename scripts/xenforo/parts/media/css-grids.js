@@ -79,6 +79,16 @@
             }
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg { overflow: hidden !important; }
+            /* vídeo em pé limitado pelo motor: preserva o slot da coluna e centraliza o player no tamanho real */
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped[data-s9e-mediaembed] > span,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped iframe {
+                left: 50% !important;
+                width: var(--smg-mason-video-w) !important;
+                max-width: none !important;
+                transform: translateX(-50%) !important;
+            }
             /* link de escape do turbo/cyberdrop (só aparece na falha): por cima do slot, no canto */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid > .smg-turbo-fallback {
                 position: absolute !important; left: var(--smg-sp-8); bottom: var(--smg-sp-8); z-index: var(--smg-z-3);
@@ -86,12 +96,18 @@
             /* caixa de imagem morta no mosaico: ocupa o lugar da imagem, conteúdo centrado */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead {
                 display: flex !important;
-                flex-wrap: wrap !important;
-                align-content: center !important;
+                flex-direction: column !important;
+                align-items: center !important;
                 justify-content: center !important;
+                gap: var(--smg-sp-10) !important;
+                padding: var(--smg-sp-16) !important;
                 text-align: center !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; flex: 0 0 auto !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-text { align-items: center !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-title,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-acts { justify-content: center !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-ico svg { width: 26px !important; height: 26px !important; }
             /* MODO MÍDIA: UM overlay (#smg-media) com duas vistas — Galeria (#smg-gallery, padrão) e Feed (#smg-feed);
                data-view no root escolhe qual aparece. A dock flutuante é do overlay (as duas vistas). */
             #smg-media { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; background: var(--smg-bg); }

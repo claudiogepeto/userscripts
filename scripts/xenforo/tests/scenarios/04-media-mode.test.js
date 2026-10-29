@@ -4,7 +4,7 @@
 // closing tears everything down.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');
-const { threadPage, THREAD } = require('../lib');
+const { threadPage, attachmentList, THREAD } = require('../lib');
 
 const URL = 'https://forums.socialmediagirls.com' + THREAD;
 const MEDIA_BODY = '<img class="bbImage" src="https://example.com/media/m1.jpg" width="1080" height="1350">'
@@ -76,6 +76,25 @@ scenario('a gallery tile opens the Feed on that item; a video tile maximise open
     await page.settle(30);
     assert.equal(page.text('#smg-feed .smg-feed-counter'), '3 / 4');
     assert.equal(page.$$('#smg-feed iframe').length, 1, 'the active video slide mounts its player');
+});
+
+scenario('the Feed collector uses a working thumbnail after an attachment full URL fails', async t => {
+    const body = '';
+    const html = threadPage({ posts: [{ id: 710, body, attachments: attachmentList([{ href: '/attachments/a-jpeg.59916/', type: 'image', thumb: 'https://forums.socialmediagirls.com/data/attachments/59916-x.jpg?hash=a' }]) }] });
+    const page = await t.open({ url: URL, html });
+    await page.settle(60);
+    const image = page.$('#js-post-710 .message-body img.bbImage');
+    const fallback = 'https://forums.socialmediagirls.com/data/attachments/59916-x.jpg?hash=a';
+    page.loadImage(image, 257, 560);
+    image.src = image.dataset.smgFull;
+    image.dispatchEvent(new page.window.Event('error'));
+    assert.equal(image.src, fallback, 'the inline attachment has fallen back to its thumbnail');
+
+    image.dispatchEvent(new page.window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
+    await page.settle(30);
+    const feedImages = page.$$('#smg-feed img.smg-feed-media');
+    assert.equal(feedImages.length, 1, 'hidden raw attachment row is not collected as a second item');
+    assert.equal(feedImages[0].getAttribute('src'), fallback, 'the collected Feed item uses the working thumbnail');
 });
 
 scenario('the gallery lays its tiles on the masonry engine: landscape tiles span 2 of 3 columns', async t => {

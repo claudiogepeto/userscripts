@@ -1,6 +1,6 @@
 'use strict';
 // Hover zoom: resting the mouse on the thread header picture, or on a thread picture in the alerts
-// rail, shows that picture enlarged in a floating preview. It is on by default, has its own switch in
+// popover, shows that picture enlarged in a floating preview. It is on by default, has its own switch in
 // the settings panel, never takes clicks away from the row under it, and stays off on touch screens.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');
@@ -33,7 +33,7 @@ scenario('hovering the thread header picture shows it enlarged; leaving hides it
     assert.ok(!shown(page), 'the preview closes when the mouse leaves');
 });
 
-scenario('hovering a thread picture in the alerts rail shows it enlarged', async t => {
+scenario('hovering a thread picture in the alerts popover shows it enlarged', async t => {
     const page = await t.open({ url: SMG + THREAD, html: page1() });
     await page.settle(120);
     const ico = page.document.createElement('span');

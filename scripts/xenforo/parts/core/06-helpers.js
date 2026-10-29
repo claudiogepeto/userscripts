@@ -829,7 +829,7 @@
             document.addEventListener('click', e => {
                 smgPopPrune();
                 smgPopovers.forEach(p => { if (p.isOpen() && !smgPopInside(p, e.target)) p.close(); });
-            });
+            }, true);
             document.addEventListener('keydown', e => {
                 if (e.key !== 'Escape') return;
                 smgPopovers.forEach(p => { if (p.escape !== false && p.isOpen()) p.close(); });
@@ -1099,7 +1099,7 @@
             if (thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
-            const dock = document.getElementById('smg-aldock');
+            const dock = document.getElementById('smg-alpop');
             if (dock) repaintAlertThumbs(dock);
         }
     }
@@ -1116,7 +1116,7 @@
         // colheu foto nova → os alertas JÁ na tela que esperavam por ela pintam agora (sem refresh).
         // Escopado no painel: é onde alerta mora, e evita varrer o documento a cada pass.
         if (!fresh) return;
-        const dock = document.getElementById('smg-aldock');
+        const dock = document.getElementById('smg-alpop');
         if (dock) repaintAlertThumbs(dock);
     }
 
@@ -1225,14 +1225,19 @@
     // request não disputa banda com mídia viva.
     const deadProbeCache = new Map();   // url → status (0 = sem resposta); 1× por sessão
     const deadTasks = makeTaskQueue(3);
-    function deadReason(st) {
-        if (st === 200 || (st > 0 && st < 400)) return { code: i18n('Error'), why: 'load error' };
-        if (st === 404 || st === 410) return { code: '404', why: 'file deleted' };
-        if (st === 401 || st === 403) return { code: '403', why: 'hotlink blocked' };
-        if (st === 429) return { code: '429', why: 'rate limited' };
-        if (st >= 500) return { code: String(st), why: 'host down' };
-        if (st > 0) return { code: String(st), why: 'unavailable' };
-        return { code: i18n('Error'), why: 'unavailable' };
+    // st = status da sonda · undefined = ainda sondando (ou sem como sondar). retry = vale tentar de novo:
+    // só o 404/410 é definitivo; o resto (hotlink, limite, host fora, "existe mas não pintou") pode passar.
+    function deadReason(st, probing) {
+        if (st === undefined) return probing
+            ? { code: '', title: 'Couldn’t load', hint: 'Checking what happened…', retry: true }
+            : { code: '', title: 'Couldn’t load', hint: 'The host didn’t deliver this file', retry: true };
+        if (st === 404 || st === 410) return { code: String(st), title: 'File deleted', hint: 'The host removed this file', retry: false };
+        if (st === 401 || st === 403) return { code: String(st), title: 'Blocked by the host', hint: 'It only opens on the host’s own page', retry: true };
+        if (st === 429) return { code: '429', title: 'Too many requests', hint: 'Wait a moment and try again', retry: true };
+        if (st >= 500) return { code: String(st), title: 'Host is down', hint: 'Try again in a while', retry: true };
+        if (st > 0 && st < 400) return { code: '', title: 'Didn’t load here', hint: 'The file is online; it may have been a hiccup', retry: true };
+        if (st > 0) return { code: String(st), title: 'Unavailable', hint: 'The host refused this file', retry: true };
+        return { code: '', title: 'No response', hint: 'The host didn’t answer', retry: true };
     }
     function deadProbe(url, box, paint) {
         if (deadProbeCache.has(url)) { paint(deadProbeCache.get(url)); return; }
@@ -1261,6 +1266,8 @@
     // · opts.media = true → ocupa a largura do bloco (lugar de player/embed) em vez do tamanho compacto de imagem solta
     // · opts.probeUrl = o que SONDAR, quando difere do que abrir: em jpg6 & cia o link é a PÁGINA do host (que
     //   responde 200 mesmo com a imagem apagada) e quem morreu é o arquivo — sondar a página daria um 200 mentiroso.
+    // · opts.onRetry = recoloca a mídia no lugar da caixa e carrega de novo. Com ele a caixa ganha "Tentar de novo",
+    //   escondido quando a sonda confirma 404/410 (apagado não volta).
     function buildDeadBox(url, opts) {
         opts = opts || {};
         const a = document.createElement('a');
@@ -1278,22 +1285,48 @@
         if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
-        const code = document.createElement('span'); code.className = 'smg-dead-code';
-        code.innerHTML = ICONS.warn;
-        const num = document.createElement('b'); code.appendChild(num);
-        const sep = document.createElement('span'); sep.className = 'smg-dead-sep'; sep.textContent = '·';
-        const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
-        a.append(code, sep, sub);
-        const paint = st => {
-            const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
-            num.textContent = r.code;
-            sub.textContent = i18n(r.why) + (host ? ' · ' + host + ' ↗' : '');
-        };
-        paint(opts.status);   // pinta JÁ: com o status quando o caller já sabe (turbo confirma 404 por GET), genérico senão
+        // ícone · título (+ código HTTP quando há) · dica do que fazer · ações (tentar de novo · abrir no host)
+        const ico = document.createElement('span'); ico.className = 'smg-dead-ico'; ico.innerHTML = ICONS.warn;
+        const text = document.createElement('span'); text.className = 'smg-dead-text';
+        const head = document.createElement('span'); head.className = 'smg-dead-title';
+        const title = document.createElement('span');
+        const num = document.createElement('b'); num.className = 'smg-dead-num';
+        head.append(title, num);
+        const hint = document.createElement('span'); hint.className = 'smg-dead-hint';
+        text.append(head, hint);
+        const acts = document.createElement('span'); acts.className = 'smg-dead-acts';
+        let retry = null;
+        if (typeof opts.onRetry === 'function') {
+            retry = document.createElement('button');
+            retry.type = 'button'; retry.className = 'smg-dead-retry';
+            retry.innerHTML = ICONS.refresh + '<span>' + i18n('Try again') + '</span>';
+            retry.addEventListener('click', e => {
+                e.preventDefault(); e.stopPropagation();   // botão dentro do <a>: não abre o host
+                deadProbeCache.delete(opts.probeUrl || url);   // a próxima falha sonda de novo (o status pode ter mudado)
+                opts.onRetry(a);
+            });
+            acts.appendChild(retry);
+        }
+        if (host) {
+            const open = document.createElement('span'); open.className = 'smg-dead-host';
+            open.textContent = host + ' ↗';
+            acts.appendChild(open);
+        }
+        a.append(ico, text, acts);
+        const probeUrl = opts.probeUrl || url;
         // opts.noProbe: quem já sabe que morreu mas cuja URL de destino responde 200 (redgifs = SPA, a página do
         // gif carrega mesmo com o gif apagado) — sondar ali só produziria um "200 · indisponível" mentiroso.
-        const probeUrl = opts.probeUrl || url;
-        if (opts.status === undefined && !opts.noProbe && probeUrl && /^https?:/i.test(probeUrl)) deadProbe(probeUrl, a, paint);
+        const probing = opts.status === undefined && !opts.noProbe && !!probeUrl && /^https?:/i.test(probeUrl) && typeof GM_xmlhttpRequest === 'function';
+        const paint = (st, pending) => {
+            const r = deadReason(st, pending);
+            title.textContent = i18n(r.title);
+            num.textContent = r.code;
+            hint.textContent = i18n(r.hint);
+            if (retry) retry.hidden = !r.retry;
+            a.classList.toggle('smg-dead--gone', !r.retry);
+        };
+        paint(opts.status, probing);   // pinta JÁ: com o status quando o caller já sabe (turbo confirma 404 por GET), "verificando" se vai sondar
+        if (probing) deadProbe(probeUrl, a, st => paint(st, false));
         return a;
     }
 

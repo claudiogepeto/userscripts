@@ -1,7 +1,7 @@
     // media/08-images-masonry.js
     // Owns: post images (full-size swap, lazy observers, dead-image watchdog), host viewers (GoonBox, Chevereto)
     // and the post block model: runs of images and players become one masonry group.
-    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
+    // Exposes: processImages, processOneImage, placeDeadImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
     // Depends on: media/08a-masonry-engine, media/10-redgifs-player, core/06-helpers, core/02-config.
     // =========================================================
     // FEATURE: auto full images + portrait grid
@@ -13,6 +13,21 @@
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
     let thumbIO = null, medIO = null, fullIO = null;
+    function markImageFullFailed(img, failedUrl, good) {
+        img.dataset.smgFullFailed = '1';
+        img.dataset.smgFailedUrl = absUrl(failedUrl);
+        img.dataset.smgFull = good;
+        img.dataset.smgLink = good;
+        img.setAttribute('data-src', good);
+        delete img.dataset.smgMed;
+        const viewers = [img.closest('.bbImageWrapper'), img.closest('a[href]')].filter((node, index, all) => node && all.indexOf(node) === index);
+        viewers.forEach(viewer => {
+            viewer.dataset.src = good;
+            viewer.dataset.smgFull = good;
+            viewer.dataset.smgLink = good;
+            if (viewer.tagName === 'A') viewer.href = good;
+        });
+    }
     // Swaps in a higher-quality file only once it is downloaded and decoded, so the thumbnail stays visible until
     // the replacement can paint in one frame (no blank/flash). The box size never depends on the file (see
     // setVerticalMaxWidth / the wide rules), so the swap cannot move the page. A failed upgrade keeps the thumbnail.
@@ -22,9 +37,7 @@
         const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
         if (!targetAbs || currentAbs === targetAbs || img.dataset.smgSwapping === targetAbs) return;
         img.dataset.smgSwapping = targetAbs;
-        if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-            img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-        }
+        if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
         const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
         const loadWithPolicy = (policy, canRetry) => {
             const pre = new Image();
@@ -50,6 +63,8 @@
                     loadWithPolicy('no-referrer', false);
                 } else {
                     if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+                    const good = img.dataset.smgGoodSrc;
+                    if (good) markImageFullFailed(img, targetAbs, good);
                 }
             };
             pre.src = targetAbs;
@@ -76,9 +91,7 @@
                 const targetAbs = absUrl(full);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
                 if (targetAbs && targetAbs !== currentAbs) {
-                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                    }
+                    if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
                     swapImgSrc(img, targetAbs);
                 }
             }
@@ -109,10 +122,53 @@
     // Era um chip com a URL crua em texto: num post de 40 imagens mortas virava uma parede de URLs iguais, e não
     // dava pra saber se o arquivo foi apagado ou se o host bloqueou o hotlink. A caixa mantém o lugar/proporção
     // da mídia, é clicável inteira e mostra o código HTTP de verdade quando a sonda volta.
+    function placeDeadImage(img, href, opts) {
+        opts = opts || {};
+        if (!img || !img.parentNode || !href) return null;
+        const src = opts.retrySrc || img.currentSrc || img.getAttribute('src') || '';
+        let replaced = img;
+        const box = buildDeadBox(href, {
+            probeUrl: opts.probeUrl,
+            status: opts.status,
+            onRetry: deadBox => retryFailedImg(img, replaced, deadBox, src),
+        });
+        box.classList.add('smg-dead--img');
+        box.dataset.smgRatio = '0.7500';
+        const flow = mediaFlowNode(img);
+        const wrap = img.closest('a');
+        const lightbox = img.closest('.bbImageWrapper.js-lbImage');
+        if (lightbox && lightbox.querySelectorAll('img').length === 1) replaced = lightbox;
+        else if (flow !== img && flow.parentElement && isPostGroup(flow.parentElement)) replaced = flow;
+        else if (wrap && wrap.querySelectorAll('img').length === 1) replaced = wrap;
+        replaced.replaceWith(box);
+        if (isPostGroup(box.parentElement)) box.dataset.smgGridded = '1';
+        else box.classList.add('smg-dead--strip');
+        dropChipBreaks(box);
+        normalizePostDeadGroups(box.parentElement);
+        relayoutPostGroupOf(box);
+        return box;
+    }
     function imgFailLink(img) {
         if (!img || img.dataset.smgFailed || !img.parentNode) return;
-        img.dataset.smgFailed = '1';
         const direct = img.currentSrc || img.getAttribute('src') || '';
+        // uma versão desta imagem JÁ pintou (a thumb) e quem falhou foi a troca por uma maior → volta pra que
+        // funcionava em vez de trocar uma imagem visível por uma caixa de erro
+        const good = img.dataset.smgGoodSrc;
+        if (good && absUrl(good) !== absUrl(direct)) {
+            markImageFullFailed(img, direct, good);
+            img.addEventListener('load', () => {
+                if (!img.naturalWidth || !img.naturalHeight) return;
+                setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
+                markWide(img, img.naturalWidth, img.naturalHeight, img.naturalWidth);
+                const grid = img.closest('.auto-image-grid');
+                if (grid) masonrySchedule(grid);
+                img.classList.add('smg-img-ready');
+            }, { once: true });
+            img.addEventListener('error', () => imgFailLink(img), { once: true });
+            img.src = good;
+            return;
+        }
+        img.dataset.smgFailed = '1';
         const parentA = img.closest('a[href]');
         const parentHref = parentA ? resolveProxyHref(parentA.getAttribute('href') || '') : '';
         const stored = img.dataset.smgLink ? resolveProxyHref(img.dataset.smgLink) : '';
@@ -122,24 +178,27 @@
         else if (parentHref && /^https?:/i.test(parentHref) && !isFile(parentHref)) href = parentHref;
         else href = resolveProxyHref(stored || direct);
         if (!href || /^data:/.test(href)) { img.classList.add('smg-img-ready'); return; }
-        const box = buildDeadBox(href, {
+        placeDeadImage(img, href, {
             probeUrl: /^https?:/i.test(direct) ? direct : href,
+            retrySrc: direct,
         });
-        // caixa de IMAGEM morta: conta como item de mídia na run (o mosaico guarda o lugar dela) e herda a
-        // proporção que a imagem já tinha, pra o grupo não pular
-        box.classList.add('smg-dead--img');
-        const relH = masonryImgRatio(img);
-        if (relH !== MASONRY_PH_RELH) box.dataset.smgRatio = relH.toFixed(4);
-        // Troca o nó que só embrulha esta imagem (o item inteiro, dentro de um grupo). <a> dentro de <a> é
-        // inválido e o clique deixa de navegar.
-        const flow = mediaFlowNode(img);
-        const wrap = img.closest('a');
-        if (flow !== img && flow.parentElement && isPostGroup(flow.parentElement)) flow.replaceWith(box);
-        else if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
-        else img.replaceWith(box);
-        if (isPostGroup(box.parentElement)) box.dataset.smgGridded = '1';
-        dropChipBreaks(box);
-        relayoutPostGroupOf(box);
+    }
+    // "Tentar de novo" da caixa morta: devolve o nó original ao lugar dela e recarrega a <img>. Alterna a
+    // política de referrer a cada tentativa — o caso comum de 403 é o host recusar o Referer do fórum, e sem
+    // ele a mesma URL costuma passar (mesmo fallback que o swapImgSrc já faz na troca de resolução).
+    function retryFailedImg(img, replaced, box, src) {
+        if (!box.isConnected || !src) return;
+        delete img.dataset.smgFailed;
+        img.classList.remove('smg-img-ready');
+        if (img.referrerPolicy === 'no-referrer') img.removeAttribute('referrerpolicy');
+        else img.referrerPolicy = 'no-referrer';
+        box.replaceWith(replaced);
+        img.addEventListener('load', () => { img.classList.add('smg-img-ready'); relayoutPostGroupOf(img); }, { once: true });
+        img.addEventListener('error', () => imgFailLink(img), { once: true });
+        img.removeAttribute('src');
+        img.src = src;
+        armImgWatchdog(img);
+        relayoutPostGroupOf(img);
     }
     // WATCHDOG do "loading eterno": alguns hosts aceitam a conexão e nunca respondem — a <img> não dispara load
     // NEM error, então nem o onReady nem o imgFailLink rodam e o shimmer gira pra sempre.
@@ -225,7 +284,7 @@
             img.dataset.smgLink = href;
             img.dataset.smgFull = full;
             img.dataset.smgMed = med;
-            if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
+            if (res.width && res.height) setImageAspectRatio(img, res.width, res.height);
             img.addEventListener('load', () => relayoutPostGroupOf(img), { once: true });
             const link = document.createElement('a');
             link.href = full;
@@ -252,7 +311,7 @@
         }
 
         // 1. aspect-ratio inline já estabelecido
-        const styleRatio = img.style && img.style.aspectRatio;
+        const styleRatio = img.dataset.smgPhRatio ? '' : (img.style && img.style.aspectRatio);
         if (styleRatio) {
             const m = styleRatio.match(/([\d.]+)\D+([\d.]+)/);
             if (m && +m[1] && +m[2] && (+m[1] !== 100 || +m[2] !== 100)) {
@@ -300,6 +359,19 @@
         }
 
         return null;
+    }
+
+    // Inline ratios from the paint gate are temporary; real dimensions replace them as soon as available.
+    // Attribute and resolved host dimensions are real measurements and do not carry this marker.
+    function setImageAspectRatio(img, w, h) {
+        if (!img || !w || !h) return false;
+        const current = img.style.aspectRatio;
+        if (img.dataset.smgPhRatio || !current || current === '100 / 100' || (current === '1 / 1' && w !== h)) {
+            img.style.aspectRatio = w + ' / ' + h;
+            delete img.dataset.smgPhRatio;
+            return true;
+        }
+        return false;
     }
 
     function resolveFullImageUrl(img) {
@@ -393,9 +465,7 @@
                 const targetAbs = absUrl(full);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
                 if (targetAbs && targetAbs !== currentAbs) {
-                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                    }
+                    if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
                     swapImgSrc(img, targetAbs);
                 }
             }
@@ -403,6 +473,7 @@
     }
 
     function processOneImage(img) {
+        if (img.dataset.cdResolving === '1') return;   // Cyberdrop direct-file image is resolving before the generic image pipeline
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
         if (!img.dataset.smgLink) {
             const la = img.closest('a.link--external[href]');
@@ -417,9 +488,7 @@
                 const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
                 if (link) link.href = res.original;
                 if (img.dataset.url) img.dataset.url = res.original;
-                if (res.width && res.height && !img.style.aspectRatio) {
-                    img.style.aspectRatio = res.width + ' / ' + res.height;
-                }
+                if (res.width && res.height) setImageAspectRatio(img, res.width, res.height);
                 // Se o feed lightbox estiver aberto com este slide, atualiza o slide para alta resolução
                 const feed = document.getElementById('smg-feed');
                 if (feed && mediaView() === 'feed') {
@@ -462,8 +531,7 @@
         // NADA de timeout-de-link: a img carrega nativa igual ao site padrão (que carrega de boa). Link de fallback SÓ em erro real (onerror) ou complete sem dimensão (404/hotlink) — abaixo. O timeout de 7s trocava imagem offscreen (naturalWidth 0 pq ainda não rolou até ela) por chip de link → "imagem não aparece" no nosso mod.
 
         const dim = extractMediaDimensions(img);
-        if (dim && !img.style.aspectRatio) {
-            img.style.aspectRatio = dim.w + ' / ' + dim.h;
+        if (dim && setImageAspectRatio(img, dim.w, dim.h)) {
             markWide(img, dim.w, dim.h);
             img.classList.add('smg-img-ready');
         }
@@ -489,20 +557,16 @@
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
-            if (img.naturalWidth && img.naturalHeight) {
-                const currentRatio = img.style.aspectRatio;
-                if (!currentRatio || currentRatio === '100 / 100' || (currentRatio === '1 / 1' && img.naturalWidth !== img.naturalHeight)) {
-                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                }
-            }
+            if (img.naturalWidth) img.dataset.smgGoodSrc = img.currentSrc || img.src;   // versão que pintou: o imgFailLink volta pra ela se a troca falhar
+            if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
             // solta: o tamanho natural só limita a caixa quando este já é o arquivo FINAL (a thumb é menor que ele)
-            const finalSrc = !img.dataset.smgFull || absUrl(img.dataset.smgFull) === absUrl(img.currentSrc || img.src || '');
+            const finalSrc = img.dataset.smgFullFailed || !img.dataset.smgFull || absUrl(img.dataset.smgFull) === absUrl(img.currentSrc || img.src || '');
             markWide(img, img.naturalWidth, img.naturalHeight, finalSrc ? img.naturalWidth : 0);
             const grid = img.closest('.auto-image-grid');
             if (grid) masonrySchedule(grid);
             img.classList.add('smg-img-ready');
 
-            const fullTarget = img.dataset.smgFull;
+            const fullTarget = img.dataset.smgFullFailed ? '' : img.dataset.smgFull;
             if (fullTarget) {
                 const targetAbs = absUrl(fullTarget);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
@@ -524,7 +588,7 @@
         }
 
         const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-        if (img.dataset.smgFull) {
+        if (img.dataset.smgFull && !img.dataset.smgFullFailed) {
             const targetAbs = absUrl(img.dataset.smgFull);
             const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
             if (targetAbs && targetAbs !== currentAbs) {
@@ -535,10 +599,51 @@
             }
         }
     }
+    function processPostAttachments(roots) {
+        eachIn(roots, '.message-attachments:not([data-smg-attachments])', section => {
+            const post = section.closest('.message-userContent, .message-content, article.message');
+            const body = section.closest('.message-body') || (post && post.querySelector('.message-body'));
+            const wrapper = body && body.querySelector('.bbWrapper');
+            const list = section.querySelector('.attachmentList');
+            if (!wrapper || !list) return;
+            section.dataset.smgAttachments = '1';
+            Array.from(list.children).forEach(row => {
+                const preview = row.querySelector('a.file-preview[href]');
+                const image = preview && preview.querySelector('img');
+                const type = (preview && preview.getAttribute('data-type') || '').toLowerCase();
+                const href = preview && preview.href;
+                const isImage = image && (type === 'image' || /\.(?:jpe?g|png|gif|webp|avif)(?:$|[?#])/i.test(href || ''));
+                const fileName = row.querySelector('.file-name')?.textContent || '';
+                const isVideo = type === 'video' || /\.(?:mp4|webm|mov|m4v)(?:$|[?#])/i.test((href || '') + ' ' + fileName);
+                if (!href) return;
+                if (!isImage && isVideo) {
+                    const built = buildNativeVideo(href, location.origin + '/', null, 'Attachment');
+                    const box = document.createElement('div'); box.className = 'smg-dm-wrap'; box.appendChild(built.wrap);
+                    wrapper.appendChild(box); rgPrepareUrl(built.video, href, built.wrap, image && image.src);
+                    row.hidden = true; row.dataset.smgAttachmentVideo = '1'; return;
+                }
+                if (!isImage) return;
+                const link = document.createElement('a');
+                link.className = 'bbImageWrapper js-lbImage'; link.href = href; link.dataset.src = href;
+                const media = document.createElement('img');
+                media.className = 'bbImage'; media.src = image.currentSrc || image.src;
+                const thumbWidth = +(image.getAttribute('width') || 0), thumbHeight = +(image.getAttribute('height') || 0);
+                if (thumbWidth > 0 && thumbHeight > 0) {
+                    media.dataset.smgPhRatio = '1';
+                    media.style.aspectRatio = thumbWidth + ' / ' + thumbHeight;
+                }
+                media.alt = image.alt || ''; media.dataset.smgFull = href; media.dataset.smgLink = href;
+                link.appendChild(media); wrapper.appendChild(link);
+                row.hidden = true; row.dataset.smgAttachmentImage = '1';
+            });
+            if (!list.querySelector('li:not([hidden])')) section.hidden = true;
+        });
+    }
     function processImages(roots) {
+        processPostAttachments(roots);
         // o seletor exclui examinadas (data-full-processed) E placeholders sem src (data-smg-lazy-wait,
         // que voltam via seu próprio load). Scope: no boot roots=[body] (full), numa mutação só os subtrees novos.
-        eachIn(roots, 'img.bbImage:not([data-full-processed]):not([data-smg-lazy-wait])', processOneImage);
+        eachIn(roots, 'img.bbImage:not([data-full-processed]):not([data-smg-lazy-wait]):not([data-cd-resolving])', processOneImage);
     }
 
     // hosts de imagem estilo chevereto (jpg6.su / jpg5.su / jpg.church & afins): a página /img/{slug} "cozinha" a URL real
@@ -744,8 +849,7 @@
     const MEDIA_ITEM_SEL = 'img.bbImage, .smg-dead--img';
     // caixa de player de vídeo que o script monta ou reestiliza: direto (.smg-dm-wrap), redgifs/turbo/saint/
     // imagepond/cyberdrop (.generic2wide-iframe-div), embed s9e de vídeo, ou o nosso player solto (.smg-rg)
-    const VIDEO_BOX_SEL = '.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .smg-rg';
-    const VIDEO_S9E_RE = /^(redgifs|gifs|youtube|vimeo|streamable|dailymotion|tiktok|twitch)$/i;
+    const VIDEO_BOX_SEL = '.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], ' + VIDEO_BBMEDIA_SELECTOR + ', .smg-rg';
     const VIDEO_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .bbCodeBlock--unfurl';
     const MEDIA_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-rg, span[data-s9e-mediaembed], .bbCodeBlock--unfurl';
     // filho "vazio" de um wrapper de imagem: espaço, comentário, <noscript>/<br> → não conta como conteúdo
@@ -773,10 +877,10 @@
         }
     }
     // MÍDIA SOLTA (run de 1, fora de grupo): imagem na largura do conteúdo, altura até --smg-solo-h (~80vh),
-    // centrada, e nunca maior que o próprio arquivo quando o tamanho natural do arquivo FINAL é conhecido (natW).
+    // centrada, limitada a 2x a largura natural do arquivo FINAL quando conhecida (natW).
     // STABLE BOX: a largura é uma expressão (proporção × teto), não `auto` — com `auto` a caixa seguia os pixels
     // do arquivo e a troca thumb→original (mesma proporção, mais pixels) empurrava a página.
-    // Vídeo direto (.smg-dm-wrap) mantém a regra antiga: só o vertical ganha teto.
+    // Vídeo direto (.smg-dm-wrap) mantém a regra antiga: só o vertical ganha teto, usando a variável do estado solo.
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
     function setSoloSize(el, w, h, vertical, natW) {
         if (!el || !el.style || !w || !h) return;
@@ -787,7 +891,7 @@
         }
         const ratio = (w / h).toFixed(4);
         let size;
-        if (el.tagName === 'IMG') size = 'min(100%, calc(var(--smg-solo-h, 80vh) * ' + ratio + ')' + (natW > 0 ? ', ' + Math.round(natW) + 'px' : '') + ')';
+        if (el.tagName === 'IMG') size = 'min(100%, calc(var(--smg-solo-h, 80vh) * ' + ratio + ')' + (natW > 0 ? ', ' + Math.round(natW * 2) + 'px' : '') + ')';
         else if (vertical) size = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio + '))';
         else { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
         el.style.setProperty('max-width', size, 'important');
@@ -825,6 +929,7 @@
         if (el.classList.contains('smg-rg')) return true;
         if (el.classList.contains('smg-dm-wrap')) return !!el.querySelector('.smg-rg, video');
         if (el.hasAttribute('data-s9e-mediaembed')) return VIDEO_S9E_RE.test(el.getAttribute('data-s9e-mediaembed') || '') || !!el.querySelector('.smg-rg');
+        if (el.classList.contains('bbMediaWrapper')) return VIDEO_S9E_RE.test(el.getAttribute('data-media-site-id') || '') && !!el.querySelector('iframe');
         if (el.classList.contains('generic2wide-iframe-div')) return !!el.querySelector('.smg-rg, .smg-turbo-slot, video, iframe') || /redgifs/i.test(el.getAttribute('onclick') || '');
         return false;
     }
@@ -852,8 +957,10 @@
         if (fromPlayer) return fromPlayer;
         const v = box.querySelector('video');
         if (v && v.videoWidth && v.videoHeight) return v.videoHeight / v.videoWidth;
-        const plausible = r => r > 1 / 2.8 && r < 1 / 0.3;
         const ifr = box.querySelector('iframe');
+        const provider = box.getAttribute('data-s9e-mediaembed') || '';
+        if (/^tiktok$/i.test(provider) || (ifr && /tiktok\.com/i.test(ifr.src || ''))) return 16 / 9;
+        const plausible = r => r > 1 / 2.8 && r < 1 / 0.3;
         for (const el of [box, ifr]) {
             if (!el) continue;
             const w = +(el.getAttribute('data-width') || el.getAttribute('width') || 0);
@@ -880,8 +987,33 @@
     function postItemSpan(item, relH) {
         return item.classList.contains('smg-dead') ? 1 : masonryOrientSpan(relH);
     }
+    function postItemIsVideo(item) {
+        return item.classList.contains('smg-mvid');
+    }
     function mountPostGroup(grid) {
-        masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan });
+        masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan, getIsVideo: postItemIsVideo });
+    }
+    function dissolvePostGroup(grid, items) {
+        masonryDissolve(grid, items);
+        if (grid.parentNode) grid.replaceWith(...items);
+        items.filter(item => item.classList.contains('smg-dead')).forEach(item => item.classList.add('smg-dead--strip'));
+        items.filter(item => item.classList.contains('smg-mvid')).forEach(item => item.classList.add('smg-solo-video'));
+    }
+    function normalizePostDeadGroups(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const grids = Array.from(scope.matches && scope.matches('.auto-image-grid') ? [scope] : []).concat(Array.from(scope.querySelectorAll('.auto-image-grid')));
+        grids.forEach(grid => {
+            const children = Array.from(grid.children);
+            const dead = children.filter(item => item.classList.contains('smg-dead'));
+            if (!dead.length) return;
+            const liveCount = children.length - dead.length;
+            if (liveCount <= 1) {
+                dissolvePostGroup(grid, children);
+            } else {
+                dead.forEach(item => { item.classList.remove('smg-dead--strip'); item.dataset.smgRatio = '0.5'; });
+                mountPostGroup(grid);
+            }
+        });
     }
     // dissolve formatação SEM texto em volta de imagens (<b><img><img></b>, <span>…) → as imagens ficam
     // irmãs do texto em volta e a run enxerga todas
@@ -937,6 +1069,15 @@
             // quem não está lá: os itens que o alvo já tinha ficam parados (um player não é tirado do DOM).
             const ordered = [];
             items.forEach(it => { if (it.grid) ordered.push.apply(ordered, Array.from(it.grid.children)); else ordered.push(it.flow); });
+            const liveCount = ordered.filter(n => !n.classList.contains('smg-dead')).length;
+            if (liveCount <= 1) {
+                // Dead media are status rows when there is at most one live item.
+                // Dissolving the group preserves DOM order and lets the live item use solo sizing.
+                dissolvePostGroup(target, ordered);
+                items.forEach(it => { if (it.grid && it.grid !== target) { masonryDissolve(it.grid); it.grid.remove(); } });
+                return;
+            }
+            ordered.filter(n => n.classList.contains('smg-dead')).forEach(n => { n.classList.remove('smg-dead--strip'); n.dataset.smgRatio = '0.5'; });
             const kids = target.children;
             ordered.forEach((n, i) => {
                 if (n.dataset.smgGridded !== '1') {
@@ -966,6 +1107,7 @@
         return touched;
     }
     function buildPostGallery(scope) {
+        normalizePostDeadGroups(scope);
         unwrapEmptyMediaFormatting(scope);
         const byParent = new Map();   // pai no fluxo → Set(flow nodes ainda fora de grupo)
         const add = flow => {
@@ -986,6 +1128,11 @@
             add(flow);
         });
         byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
+        scope.querySelectorAll(VIDEO_BOX_SEL).forEach(el => {
+            if (el.closest(VIDEO_SKIP_SEL) || !isVideoBox(el)) return;
+            const flow = videoFlowNode(el);
+            flow.classList.toggle('smg-solo-video', !flow.closest('.auto-image-grid'));
+        });
         markLeadMedia(scope);
     }
     // mídia que ABRE o post (grupo, player ou imagem antes de qualquer texto): as quebras de linha antes dela
@@ -1010,7 +1157,8 @@
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
         const bodies = new Set();
         const imgSeen = 'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])';
-        const videoSeen = '.generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), .smg-rg:not([data-smg-galseen])';
+        const bbMediaSeen = VIDEO_BBMEDIA_SELECTOR.split(',\n            ').map(selector => selector + ':not([data-smg-galseen])').join(', ');
+        const videoSeen = '.generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), ' + bbMediaSeen + ', .smg-rg:not([data-smg-galseen])';
         eachIn(roots, imgSeen + ', ' + videoSeen, el => {
             el.dataset.smgGalseen = '1';
             if (el.closest('.bbCodeQuote, .message-signature')) return;

@@ -1,6 +1,6 @@
     // media/08a-masonry-engine.js
     // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns; a group that would leave a column empty drops to one column fewer), one ResizeObserver, one rAF.
-    // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
+    // Exposes: masonryMount, masonryUnmount, masonryDissolve, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
     // Depends on: nothing.
     // =========================================================
     // MASONRY ENGINE: one layout for every media mosaic (in-post groups, gallery overlay)
@@ -36,6 +36,8 @@
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
         const spansIn = (opts && opts.spans) || [];
+        const videoItems = (opts && opts.videoItems) || [];
+        const maxVideoHeight = +(opts && opts.maxVideoHeight) || 0;
         const spanOf0 = i => Math.max(1, Math.min(want, Math.floor(+spansIn[i]) || 1));
         // every item landscape (span 2) with 3 columns available would leave the third column empty:
         // lay the group out as pairs instead, 2 columns, each item 1 column, row by row
@@ -52,7 +54,8 @@
             const boxes = ratios.map((r, i) => {
                 const c = i % 2;
                 if (c === 0 && i > 0) rowTop = Math.max(heights[0], heights[1]);
-                const h = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
+                const naturalH = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
+                const h = videoItems[i] && maxVideoHeight ? Math.min(naturalH, maxVideoHeight) : naturalH;
                 heights[c] = rowTop + h + gap;
                 return { col: c, span: 1, x: Math.round(c * (colW + gap)), y: Math.round(rowTop), w: Math.round(colW), h };
             });
@@ -62,14 +65,14 @@
         // one landscape: 1 + 1 + 2 = 4 > 3, but the landscape lands under the portraits and the third
         // column stays blank, a third of the post width unused). Lay it out again with one column fewer.
         if (!(opts && opts.cols) && cols > 2) {
-            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf);
+            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight);
             if (res.boxes.length && !res.emptyCol) return res.out;
-            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf).out;
+            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf, videoItems, maxVideoHeight).out;
         }
-        return masonryPlaceIn(ratios, cols, width, gap, spanOf).out;
+        return masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight).out;
     }
     // shortest-column placement in exactly `cols` columns (spans clamped); emptyCol = a column no item touches
-    function masonryPlaceIn(ratios, cols, width, gap, spanOf) {
+    function masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight) {
         const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
         const heights = new Array(cols).fill(0);
         const boxes = ratios.map((r, i) => {
@@ -81,7 +84,8 @@
                 if (m < top - 0.5) { top = m; c = s; }
             }
             const w = colW * k + gap * (k - 1);
-            const h = Math.max(1, Math.round(w * (r > 0 ? r : MASONRY_PH_RELH)));
+            const naturalH = Math.max(1, Math.round(w * (r > 0 ? r : MASONRY_PH_RELH)));
+            const h = videoItems[i] && maxVideoHeight ? Math.min(naturalH, maxVideoHeight) : naturalH;
             const box = { col: c, span: k, x: Math.round(c * (colW + gap)), y: Math.round(top), w: Math.round(w), h };
             for (let j = c; j < c + k; j++) heights[j] = top + h + gap;
             return box;
@@ -96,8 +100,21 @@
         return (relH > 0 && relH < 0.98) ? 2 : 1;
     }
 
-    const masonryState = new WeakMap();    // container -> { width, getRatio, getSpan, gap }
+    const masonryState = new WeakMap();    // container -> { width, getRatio, getSpan, getIsVideo, gap }
     let masonryRO = null, masonRaf = 0, masonDirty = new Set();
+    let masonryCapProbe = null;
+    // CSS custom properties retain `min(70vh, 750px)` as text; a computed height resolves it to pixels.
+    function masonryMediaHeight() {
+        if (typeof getComputedStyle !== 'function') return 0;
+        if (!masonryCapProbe) {
+            masonryCapProbe = document.createElement('i');
+            masonryCapProbe.setAttribute('aria-hidden', 'true');
+            masonryCapProbe.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:var(--smg-media-h);visibility:hidden;pointer-events:none;contain:strict;';
+            (document.documentElement || document.body).appendChild(masonryCapProbe);
+        }
+        const px = parseFloat(getComputedStyle(masonryCapProbe).height);
+        return Number.isFinite(px) ? px : 0;
+    }
     function masonryObserver() {
         if (masonryRO || typeof ResizeObserver === 'undefined') return masonryRO;
         masonryRO = trackObserver(new ResizeObserver(entries => {
@@ -113,7 +130,7 @@
         return masonryRO;
     }
     // registers a container (idempotent). opts.getRatio(item) -> height/width of that item;
-    // opts.getSpan(item) -> columns it wants (default 1).
+    // opts.getSpan(item) -> columns it wants (default 1); opts.getIsVideo(item) opts into the post video cap.
     function masonryMount(container, opts) {
         if (!container) return;
         let st = masonryState.get(container);
@@ -126,6 +143,7 @@
         }
         st.getRatio = (opts && opts.getRatio) || st.getRatio || (() => MASONRY_PH_RELH);
         st.getSpan = (opts && opts.getSpan) || st.getSpan || null;
+        st.getIsVideo = (opts && opts.getIsVideo) || st.getIsVideo || null;
         st.gap = (opts && opts.gap != null) ? opts.gap : (st.gap != null ? st.gap : MASONRY_GAP);
         masonrySchedule(container);
     }
@@ -134,6 +152,25 @@
         masonryState.delete(container);
         masonDirty.delete(container);
         if (masonryRO) masonryRO.unobserve(container);
+    }
+    // Removes every inline value the engine owns before a group returns to document flow.
+    function masonryDissolve(container, items) {
+        if (!container) return;
+        const clearItem = item => {
+            if (!item || item.nodeType !== 1) return;
+            const owned = [item].concat(Array.from(item.querySelectorAll ? item.querySelectorAll('[data-smg-gridded], .smg-mason-capped') : []));
+            owned.forEach(el => {
+                ['position', 'top', 'right', 'bottom', 'left', 'transform', 'translate', 'width', 'height', '--smg-mason-video-w'].forEach(prop => el.style.removeProperty(prop));
+                delete el._smgMason;
+                delete el.dataset.smgGridded;
+                el.classList.remove('smg-mason-capped');
+            });
+        };
+        masonryUnmount(container);
+        (items || Array.from(container.children)).forEach(clearItem);
+        ['height', '--smg-mcols'].forEach(prop => container.style.removeProperty(prop));
+        ['smg-mason', 'smg-mason-capped'].forEach(name => container.classList.remove(name));
+        ['smgCols', 'smgRelayoutDone'].forEach(name => delete container.dataset[name]);
     }
     // ratio changed / item added or removed -> one rAF for every dirty container
     function masonrySchedule(container) {
@@ -156,12 +193,19 @@
         const items = Array.prototype.filter.call(container.children, c => c.nodeType === 1);
         const ratios = items.map(it => { try { return st.getRatio(it); } catch (e) { return MASONRY_PH_RELH; } });
         const spans = st.getSpan ? items.map((it, i) => { try { return st.getSpan(it, ratios[i]); } catch (e) { return 1; } }) : null;
-        const res = masonryPlace(ratios, st.width, { gap: st.gap, spans });
+        const videoItems = st.getIsVideo ? items.map(it => { try { return !!st.getIsVideo(it); } catch (e) { return false; } }) : null;
+        const maxVideoHeight = videoItems && videoItems.some(Boolean) ? masonryMediaHeight() : 0;
+        const res = masonryPlace(ratios, st.width, { gap: st.gap, spans, videoItems, maxVideoHeight });
         if (container.dataset.smgCols !== String(res.cols)) container.dataset.smgCols = res.cols;
         container.dataset.smgRelayoutDone = '1';
         if (!st.width) return res;
         items.forEach((it, i) => {
             const b = res.boxes[i];
+            const naturalH = Math.max(1, Math.round(b.w * (ratios[i] > 0 ? ratios[i] : MASONRY_PH_RELH)));
+            const capped = !!(videoItems && videoItems[i] && maxVideoHeight && naturalH > maxVideoHeight);
+            it.classList.toggle('smg-mason-capped', capped);
+            if (capped) it.style.setProperty('--smg-mason-video-w', Math.min(b.w, b.h / ratios[i]) + 'px');
+            else it.style.removeProperty('--smg-mason-video-w');
             const key = b.x + ',' + b.y + ',' + b.w + ',' + b.h;
             if (it._smgMason === key) return;
             it._smgMason = key;

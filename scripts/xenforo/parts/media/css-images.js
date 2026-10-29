@@ -4,6 +4,12 @@
     // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: post images, link chips and file-host cards ──
     const CSS_MEDIA_IMAGES = `
+            .message-attachments:not([hidden]) { margin-top: var(--smg-sp-8) !important; }
+            .message-attachments:not([hidden]) > .block-textHeader { margin: 0 0 var(--smg-sp-4) !important; font-size: var(--smg-fs-12) !important; color: var(--smg-tx2) !important; }
+            .message-attachments:not([hidden]) .attachmentList { margin: 0 !important; padding: 0 !important; }
+            .message-attachments:not([hidden]) .attachmentList > li { display: flex !important; align-items: center !important; gap: var(--smg-sp-8) !important; padding: var(--smg-sp-4) 0 !important; border: 0 !important; }
+            .message-attachments:not([hidden]) .file-preview { display: none !important; }
+            .message-attachments:not([hidden]) .attachmentList > li:not([data-smg-attachment-image]) .file-preview[data-type="image"] { display: block !important; }
             /* ---- images ---- */
             img.bbImage {
                 width: auto !important;

@@ -51,6 +51,99 @@ scenario('a direct file gets the one control bar: progress, skip, volume, time, 
     assert.ok(wrap.querySelector('.smg-rgc-flash .smg-rgc-play'), 'big centre play');
 });
 
+scenario('a Cyberdrop direct video iframe resolves through the API into our player', async t => {
+    const suffix = 'mXGELVW7';
+    const slug = 'AQqP2PQ6WeaOlO';
+    const directUrl = 'https://cyberdrop.cr/0h15e4lxzx7cpz7rjbg8m_source-' + suffix + '.mp4';
+    const mp4 = 'https://cdn.cyberdrop.cr/files/video.mp4?token=mock';
+    const page = await playerPage(t,
+        '<div class="generic2wide-iframe-div"><iframe class="saint-iframe" src="' + directUrl + '"></iframe></div>',
+        { gmRoutes: [
+            [/cyberdrop\.cr\/0h15e4lxzx7cpz7rjbg8m_source-mXGELVW7\.mp4/, { status: 200, finalUrl: 'https://cyberdrop.cr/f/' + slug }],
+            [/api\.cyberdrop\.cr\/api\/file\/info\//, { json: { type: 'video/mp4', thumbnail_url: 'https://cdn.cyberdrop.cr/poster.jpg', auth_url: 'https://api.cyberdrop.cr/auth/mock' } }],
+            [/api\.cyberdrop\.cr\/auth\/mock/, { json: { url: mp4 } }],
+        ] });
+    page.intersect(page.$('.smg-turbo-slot'));
+    await page.settle(20);
+    const player = page.$('.generic2wide-iframe-div .smg-rg video');
+    assert.ok(player, 'direct video iframe became our player');
+    assert.equal(player.poster, 'https://cdn.cyberdrop.cr/poster.jpg', 'API poster is preserved');
+    assert.equal(player._rgUrl, mp4, 'resolved file URL is prepared for our player');
+    assert.equal(player._rgExt, 'https://cyberdrop.cr/f/' + slug, 'open-file link uses the redirect slug');
+    assert.ok(page.gmRequests.some(req => req.url.includes('/api/file/info/' + slug)), 'API was requested with the redirect slug');
+    assert.ok(!page.gmRequests.some(req => req.url.includes('/api/file/info/' + suffix)), 'API was not requested with the filename suffix');
+});
+
+scenario('a Cyberdrop portrait video applies its real ratio after loadedmetadata', async t => {
+    const directUrl = 'https://cyberdrop.cr/0h15e4lxzx7cpz7rjbg8m_source-mXGELVW7.mp4';
+    const slug = 'AQqP2PQ6WeaOlO';
+    const mp4 = 'https://cdn.cyberdrop.cr/files/portrait.mp4?token=mock';
+    const page = await playerPage(t,
+        '<div class="generic2wide-iframe-div"><iframe class="saint-iframe" src="' + directUrl + '"></iframe></div>',
+        { gmRoutes: [
+            [/cyberdrop\.cr\/0h15e4lxzx7cpz7rjbg8m_source-mXGELVW7\.mp4/, { status: 200, finalUrl: 'https://cyberdrop.cr/f/' + slug }],
+            [/api\.cyberdrop\.cr\/api\/file\/info\//, { json: { type: 'video/mp4', thumbnail_url: 'https://cdn.cyberdrop.cr/poster.jpg', auth_url: 'https://api.cyberdrop.cr/auth/mock' } }],
+            [/api\.cyberdrop\.cr\/auth\/mock/, { json: { url: mp4 } }],
+        ] });
+    page.intersect(page.$('.smg-turbo-slot'));
+    await page.settle(20);
+
+    const video = page.$('.generic2wide-iframe-div .smg-rg video');
+    const player = video.closest('.smg-rg');
+    Object.defineProperty(video, 'videoWidth', { configurable: true, value: 720 });
+    Object.defineProperty(video, 'videoHeight', { configurable: true, value: 1280 });
+    video.dispatchEvent(new page.window.Event('loadedmetadata'));
+
+    assert.equal(player.style.getPropertyValue('--smg-rg-ratio'), '0.5625', 'player stores the portrait ratio used by the other native players');
+    assert.ok(player.classList.contains('smg-rg-vert'), 'player marks the portrait shape');
+    const box = player.closest('.generic2wide-iframe-div');
+    assert.ok(box.classList.contains('smg-player-loaded'), 'embed wrapper releases its iframe-era sizing');
+    assert.equal(box.style.getPropertyValue('--smg-rg-ratio'), '0.5625', 'embed wrapper receives the player ratio');
+    assert.ok(page.$('.smg-turbo-slot').classList.contains('smg-turbo-slot--filled'), 'Cyberdrop slot uses the shared native-player sizing');
+});
+
+scenario('a Cyberdrop direct jpg image resolves into the regular post image path', async t => {
+    const suffix = 'rOS8tuJA';
+    const slug = 'AQqP2PQ6WeaOlO';
+    const directUrl = 'https://cyberdrop.cr/2268x4032_66340f8229e29892eed3884b42771cec-' + suffix + '.jpg';
+    const image = 'https://cdn.cyberdrop.cr/files/image.jpg?token=mock';
+    const page = await playerPage(t,
+        '<a href="' + directUrl + '"><img class="bbImage" src="' + directUrl + '"></a>'
+            + '<img class="bbImage" src="https://example.com/nearby.jpg">',
+        { gmRoutes: [
+            [/cyberdrop\.cr\/2268x4032_66340f8229e29892eed3884b42771cec-rOS8tuJA\.jpg/, { status: 200, headers: { Location: '/f/' + slug } }],
+            [/api\.cyberdrop\.cr\/api\/file\/info\//, { json: { type: 'image/jpeg', auth_url: 'https://api.cyberdrop.cr/auth/image' } }],
+            [/api\.cyberdrop\.cr\/auth\/image/, { json: { url: image } }],
+        ], before: window => { Object.defineProperty(window.HTMLImageElement.prototype, 'complete', { configurable: true, get: () => false }); } });
+    page.intersect(page.$('img[data-cd-resolving]'));
+    await page.settle(20);
+    const img = page.$('.bbWrapper img.bbImage');
+    assert.ok(img, 'resolved image remains a normal post image');
+    assert.equal(img.getAttribute('src'), image, 'image source is replaced by the resolved file URL');
+    assert.equal(img.closest('a').href, image, 'the image link opens the resolved file');
+    assert.equal(page.$$('.auto-image-grid img.bbImage').length, 2, 'the Cyberdrop image joins the adjacent post image in masonry');
+    assert.ok(!page.$('.smg-dead'), 'a resolved image does not become a dead box');
+    assert.ok(page.gmRequests.some(req => req.url.includes('/api/file/info/' + slug)), 'API was requested with the redirect slug');
+    assert.ok(!page.gmRequests.some(req => req.url.includes('/api/file/info/' + suffix)), 'API was not requested with the filename suffix');
+});
+
+scenario('a Cyberdrop direct jpg 404 inside a lightbox wrapper becomes a compact dead tile', async t => {
+    const directUrl = 'https://cyberdrop.cr/2268x4032_66340f8229e29892eed3884b42771cec-rOS8tuJA.jpg';
+    const wrapper = '<div class="bbImageWrapper js-lbImage" data-src="' + directUrl + '"><img class="bbImage" src="' + directUrl + '" width="3376" height="6000"></div>';
+    const page = await playerPage(t,
+        '<img class="bbImage" src="https://example.com/nearby.jpg"><br>' + wrapper,
+        { gmRoutes: [[/cyberdrop\.cr\/2268x4032_66340f8229e29892eed3884b42771cec-rOS8tuJA\.jpg/, { status: 404 }]] });
+    await page.settle(20);
+    const body = page.$('.bbWrapper');
+    const dead = body && body.querySelector('.smg-dead--img');
+    assert.ok(dead, 'the failed image becomes a dead box');
+    assert.ok(dead.querySelector('.smg-dead-num'), dead.outerHTML);
+    assert.equal(dead.querySelector('.smg-dead-num').textContent, '404', 'the dead box shows the HTTP status');
+    assert.equal(dead.closest('.js-lbImage'), null, 'the dead tile replaces the XenForo lightbox wrapper');
+    assert.ok(dead.classList.contains('smg-dead--strip'), 'a dead image beside one live image uses the strip layout');
+    assert.equal(dead.closest('.auto-image-grid'), null, 'the lone live image uses solo layout');
+});
+
 scenario('keys reach the focused player (seek, percent, volume) and never while typing in an editor', async t => {
     const page = await playerPage(t, 'Clip: ' + DIRECT + '<textarea class="reply"></textarea>');
     const wrap = page.$('.smg-dm-wrap .smg-rg');

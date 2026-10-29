@@ -1375,6 +1375,15 @@
     //   GET auth_url                        → { url }  = mp4 direto (token JWT, sem referer-lock → toca direto)
     // Qualquer etapa que falhe → volta o iframe nativo E revela o link de escape: nunca fica buraco no post.
     const CD_EMBED_RE = /^https?:\/\/(?:[a-z0-9-]+\.)?(cyberdrop\.[a-z]+)\/e\/([a-zA-Z0-9_-]+)/i;
+    const CD_DIRECT_RE = /^https?:\/\/(?:[a-z0-9-]+\.)?(cyberdrop\.[a-z]+)\/[^/?#]+\.(mp4|m4v|mov|webm|ogv|mkv|jpg|jpeg|png|gif|webp|avif|bmp)(?:[?#].*)?$/i;
+    const CD_IMAGE_EXTS = /^(?:jpe?g|png|gif|webp|avif|bmp)$/i;
+    function cyberdropMatch(url) {
+        const embed = String(url || '').match(CD_EMBED_RE);
+        if (embed) return { host: embed[1], slug: embed[2], kind: 'video', form: 'embed' };
+        const direct = String(url || '').match(CD_DIRECT_RE);
+        if (direct) return { host: direct[1], slug: '', kind: CD_IMAGE_EXTS.test(direct[2]) ? 'image' : 'video', form: 'direct' };
+        return null;
+    }
     function cyberdropPageUrl(host, slug) { return 'https://' + host + '/f/' + slug; }   // página do arquivo (com download) — o /e/ é só o player
     // espelho sem API própria (api.cyberdrop.me nem resolve DNS) → cai no canônico, que serve o mesmo acervo
     function cyberdropApiHosts(host) {
@@ -1386,6 +1395,49 @@
     const cyberdropCache = new Map();
     const cyberdropInflight = new Map();
     const CD_CACHE_TTL_MS = 10 * 60 * 1000;
+    const cyberdropDirectCache = new Map();
+    const cyberdropDirectInflight = new Map();
+    function cyberdropDirectSlug(url, cb) {
+        const key = String(url || '');
+        if (!GMX || !key) { cb(null); return; }
+        const hit = cyberdropDirectCache.get(key);
+        if (hit && Date.now() - hit.ts < CD_CACHE_TTL_MS) { cb(hit.value); return; }
+        if (cyberdropDirectInflight.has(key)) { cyberdropDirectInflight.get(key).push(cb); return; }
+        cyberdropDirectInflight.set(key, [cb]);
+        const finish = value => {
+            const cbs = cyberdropDirectInflight.get(key) || [];
+            cyberdropDirectInflight.delete(key);
+            if (value) {
+                while (cyberdropDirectCache.size >= 128) cyberdropDirectCache.delete(cyberdropDirectCache.keys().next().value);
+                cyberdropDirectCache.set(key, { value, ts: Date.now() });
+            }
+            cbs.forEach(fn => fn(value));
+        };
+        const fromResponse = r => {
+            const locationHeader = String(r.responseHeaders || '').match(/^\s*location\s*:\s*(.+?)\s*$/im);
+            const candidates = [r.finalUrl || '', locationHeader ? locationHeader[1] : ''];
+            for (const candidate of candidates) {
+                let path = candidate;
+                try { path = new URL(candidate, key).pathname; } catch (e) {}
+                const match = path.match(/\/f\/([a-zA-Z0-9_-]+)(?:[/?#]|$)/);
+                if (match) return { slug: match[1] };
+            }
+            return null;
+        };
+        const request = method => GMX({ method, url: key, timeout: 10000,
+            headers: method === 'GET' ? { Range: 'bytes=0-0' } : {},
+            onload: r => {
+                if (r.status === 404) { finish({ gone: true, status: 404 }); return; }
+                const found = fromResponse(r);
+                if (found) { finish(found); return; }
+                if (method === 'HEAD') { request('GET'); return; }
+                finish(null);
+            },
+            onerror: () => method === 'HEAD' ? request('GET') : finish(null),
+            ontimeout: () => method === 'HEAD' ? request('GET') : finish(null),
+        });
+        request('HEAD');
+    }
     function cyberdropResolve(host, slug, cb) {
         if (!GMX || !slug) { cb(null); return; }
         const key = host + '|' + slug;
@@ -1406,15 +1458,27 @@
     function cyberdropFetch(host, slug, cb) {
         const getJson = (url, ok) => GMX({ method: 'GET', url: url, timeout: 15000,
             headers: { Referer: 'https://' + host + '/', Accept: 'application/json,*/*' },
-            onload: r => { let j = null; try { j = JSON.parse(r.responseText || ''); } catch (e) {} ok(j); },
-            onerror: () => ok(null), ontimeout: () => ok(null) });
+            onload: r => { let j = null; try { j = JSON.parse(r.responseText || ''); } catch (e) {} ok({ json: j, status: r.status }); },
+            onerror: () => ok({ json: null, status: 0 }), ontimeout: () => ok({ json: null, status: 0 }) });
         const hosts = cyberdropApiHosts(host);
+        let allInfoGone = true;
         const tryHost = i => {
-            if (i >= hosts.length) { cb(null); return; }
-            getJson('https://' + hosts[i] + '/api/file/info/' + encodeURIComponent(slug), info => {
-                if (!info || !info.auth_url) { tryHost(i + 1); return; }
-                if (info.type && !/^video\//i.test(info.type)) { cb(null); return; }   // /e/ de não-vídeo: o próprio host redireciona pro /f/ → deixa como está
-                getJson(info.auth_url, auth => cb(auth && auth.url ? { mp4: auth.url, poster: info.thumbnail_url || '' } : null));
+            if (i >= hosts.length) { cb(allInfoGone ? { gone: true } : null); return; }
+            getJson('https://' + hosts[i] + '/api/file/info/' + encodeURIComponent(slug), infoRes => {
+                const info = infoRes && infoRes.json;
+                if (!info || !info.auth_url) {
+                    if (!infoRes || infoRes.status !== 404) allInfoGone = false;
+                    tryHost(i + 1); return;
+                }
+                const type = String(info.type || '').toLowerCase();
+                const isImage = /^image\//.test(type) || type === 'image' || type === 'photo';
+                const isVideo = /^video\//.test(type) || type === 'video';
+                if (!isImage && !isVideo) { cb(null); return; }
+                getJson(info.auth_url, authRes => {
+                    const auth = authRes && authRes.json;
+                    if (auth && auth.url) cb(isImage ? { img: auth.url } : { mp4: auth.url, poster: info.thumbnail_url || '' });
+                    else cb(authRes && authRes.status === 404 ? { gone: true } : null);
+                });
             });
         };
         tryHost(0);
@@ -1442,12 +1506,21 @@
     }
     function cyberdropMount(ctx, host, slug, origHref, restore) {
         ctx.loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
-        queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
+        let pageSlug = slug;
+        queueEmbedResolve(ctx.slot, done => {
+            const resolve = realSlug => realSlug ? cyberdropResolve(host, realSlug, done) : done(null);
+            if (slug) resolve(slug);
+            else cyberdropDirectSlug(origHref, found => {
+                if (found && found.gone) { done(found); return; }
+                pageSlug = found && found.slug || '';
+                resolve(found && found.slug);
+            });
+        }, res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
             mediaResizeKeep(ctx.wrapper);   // spinner 16:9 → player (ou iframe de volta): acima da tela, devolve a diferença no scroll
-            if (!res) { restore(); return; }
+            if (!res || res.gone || !res.mp4) { restore(); return; }
             const { wrap, video } = buildNativeVideo(res.mp4, 'https://' + host + '/', restore, 'Cyberdrop');
-            video._rgExt = cyberdropPageUrl(host, slug);   // "abrir em nova guia" → página do arquivo (tem download)
+            video._rgExt = cyberdropPageUrl(host, pageSlug);   // "abrir em nova guia" → página do arquivo (tem download)
             video._rgFeed = origHref || video._rgExt;
             ctx.loading.remove();
             ctx.slot.appendChild(wrap);
@@ -1458,11 +1531,13 @@
     function processCyberdropEmbeds(roots) {
         if (!(FEATURES.cyberdropEmbeds && GMX)) return;
         eachIn(roots, 'iframe[src*="cyberdrop."]:not([data-cd-done])', ifr => {
-            ifr.dataset.cdDone = '1';
-            if (ifr.closest('.smg-rg, .smg-turbo-slot')) return;   // é o iframe de fallback que NÓS montamos
-            const m = (ifr.src || ifr.getAttribute('src') || '').match(CD_EMBED_RE);
+            if (ifr.closest('.smg-rg, .smg-turbo-slot')) { ifr.dataset.cdDone = '1'; return; }   // fallback deliberado do nosso player
+            const origHref = ifr.getAttribute('src') || ifr.src || '';
+            const m = cyberdropMatch(origHref);
             if (!m) return;
-            const host = m[1], slug = m[2], origHref = ifr.src || ifr.getAttribute('src');
+            const { host, slug, kind } = m;
+            if (kind === 'image') { ifr.dataset.cdDone = '1'; cyberdropImageNode(ifr, host, slug, origHref); return; }
+            ifr.dataset.cdDone = '1';
             const ctx = cyberdropSlot(ifr, host, slug, origHref);
             if (!ctx) return;
             // o iframe nativo já saiu do DOM (para de tentar carregar); guardado pra voltar se a API falhar
@@ -1484,12 +1559,17 @@
         // LINK cru do /e/ (o XF não embeda quando há 2 URLs na mesma linha) → mesmo player. Sem iframe pra restaurar:
         // a falha revela o link de escape, que é o próprio link original de volta.
         eachIn(roots, 'a[href*="cyberdrop."]:not([data-cd-done])', link => {
-            link.dataset.cdDone = '1';
-            if (link.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) return;
-            if (link.querySelector('img')) return;   // link de imagem (lightbox)
-            const m = (link.href || '').match(CD_EMBED_RE);
+            // A dead-image tile keeps the failed direct URL as its href. It is terminal media,
+            // not a fresh Cyberdrop embed; retry restores the original img and handles it there.
+            if (link.classList.contains('smg-dead')) { link.dataset.cdDone = '1'; return; }
+            if (link.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) { link.dataset.cdDone = '1'; return; }
+            const origHref = link.getAttribute('href') || link.href || '';
+            const m = cyberdropMatch(origHref);
             if (!m) return;
-            const host = m[1], slug = m[2], origHref = link.href;
+            const { host, slug, kind } = m;
+            if (kind === 'image') { link.dataset.cdDone = '1'; cyberdropImageNode(link, host, slug, origHref); return; }
+            if (link.querySelector('img')) { link.dataset.cdDone = '1'; return; }   // image lightbox link is handled by its img source
+            link.dataset.cdDone = '1';
             const ctx = cyberdropSlot(link, host, slug, origHref);
             if (!ctx) return;
             const restore = () => { mediaResizeKeep(ctx.wrapper); unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
@@ -1499,6 +1579,64 @@
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
             lazyActivate(ctx.slot, activate);
+        });
+        eachIn(roots, 'img[src*="cyberdrop."]:not([data-cd-done])', img => {
+            if (img.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) { img.dataset.cdDone = '1'; return; }
+            const src = img.getAttribute('src') || img.src || '';
+            const m = cyberdropMatch(src);
+            if (!m || m.kind !== 'image') return;
+            img.dataset.cdDone = '1';
+            cyberdropImageNode(img, m.host, m.slug, src);
+        });
+    }
+
+    function cyberdropImageNode(node, host, slug, origUrl) {
+        const img = node.tagName === 'IMG' ? node : node.tagName === 'A' ? (node.querySelector('img') || document.createElement('img')) : document.createElement('img');
+        const anchor = node.tagName === 'A' ? node : img.closest('a');
+        img.classList.add('bbImage');
+        img.loading = 'lazy';
+        img.alt = img.alt || '';
+        img.dataset.cdDone = '1';
+        img.dataset.cdResolving = '1';
+        if (node.tagName === 'IFRAME') {
+            const wrapper = node.closest('.generic2wide-iframe-div');
+            if (wrapper) wrapper.replaceWith(img); else node.replaceWith(img);
+        } else if (node.tagName === 'A' && !img.parentNode) {
+            anchor.classList.add('smg-imglink');
+            anchor.textContent = '';
+            anchor.appendChild(img);
+        }
+        let realSlug = slug;
+        queueEmbedResolve(img, done => {
+            if (realSlug) { cyberdropResolve(host, realSlug, done); return; }
+            cyberdropDirectSlug(origUrl, found => {
+                if (!found || found.gone) { done(found); return; }
+                realSlug = found.slug;
+                cyberdropResolve(host, realSlug, done);
+            });
+        }, res => {
+            if (!img.isConnected) return;
+            delete img.dataset.cdResolving;
+            if (res && res.img) {
+                img.src = res.img;
+                img.dataset.smgFull = res.img;
+                img.dataset.smgMed = res.img;
+                img.dataset.smgLink = cyberdropPageUrl(host, realSlug);
+                if (anchor) anchor.href = res.img;
+                processOneImage(img);
+                scheduleRun(img.parentElement || img);
+            } else if (res && res.gone) {
+                if (res.status) {
+                    placeDeadImage(img, origUrl, { status: res.status, retrySrc: origUrl });
+                }
+                else {
+                    img.src = origUrl;   // API-only 404: browser confirms the original image is dead
+                    processOneImage(img);
+                }
+            } else {
+                if (anchor) { anchor.textContent = '↗ ' + i18n('Open on cyberdrop'); anchor.classList.add('smg-imglink-fallback'); }
+                else { const a = document.createElement('a'); a.href = origUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.className = 'smg-imglink-fallback'; a.textContent = '↗ ' + i18n('Open on cyberdrop'); img.replaceWith(a); }
+            }
         });
     }
 

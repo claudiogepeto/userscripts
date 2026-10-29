@@ -5,7 +5,7 @@
 // landscape item spans 2 columns.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');
-const { threadPage, THREAD } = require('../lib');
+const { threadPage, THREAD, attachmentList } = require('../lib');
 
 const URL = 'https://forums.socialmediagirls.com' + THREAD;
 
@@ -70,6 +70,21 @@ scenario('engine: each item goes to the shortest column, ties to the left, at co
     assert.equal(r.height, Math.max(...r.boxes.map(b => b.y + b.h)), 'container height = bottom of the tallest column');
 });
 
+scenario('engine: portrait videos cap at the media height while same-ratio images keep their full height', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 1 }] }), units: true });
+    const { masonryPlace } = page.window.__smgTest;
+    const cap = 687;
+    const r = masonryPlace([1280 / 720, 1280 / 720], 1192, {
+        gap: 8,
+        videoItems: [true, false],
+        maxVideoHeight: cap,
+    });
+    assert.equal(r.cols, 2);
+    assert.equal(r.boxes[0].h, cap, 'video height is capped at --smg-media-h');
+    assert.equal(r.boxes[1].h, Math.round(r.boxes[1].w * (1280 / 720)), 'image keeps its uncapped ratio height');
+    assert.equal(r.height, r.boxes[1].h, 'the group height follows the tallest placed item');
+});
+
 scenario('engine: a 2-column item takes the lowest adjacent pair and sits under the taller of the two', async t => {
     const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 1 }] }), units: true });
     const { masonryPlace } = page.window.__smgTest;
@@ -129,6 +144,14 @@ scenario('post: text stays where the author put it; a run of 3 images is one gro
     assert.deepEqual(Array.from(g.querySelectorAll('img')).map(i => i.getAttribute('src').slice(-6)), ['m1.jpg', 'm2.jpg', 'm3.jpg'], 'document order');
 });
 
+scenario('post: solo image scales to the height cap with a 2x natural-width bound; two images form a group', async t => {
+    const page = await postsWith(t, [img(90, 250, 545), img(91, 250, 545) + '<br>' + img(92, 250, 545)]);
+    const solo = page.bodies[0].querySelector('img.bbImage');
+    page.loadImage(solo, 250, 545);
+    assert.match(solo.style.width, /min\(100%,\s*calc\(var\(--smg-solo-h,\s*80vh\)\s*\*\s*0\.4587\),\s*500px\)/, 'solo width keeps the height cap and twice the known natural width');
+    assert.equal(page.bodies[1].querySelector('.auto-image-grid')?.children.length, 2, 'a run of 2 images uses the masonry group treatment');
+});
+
 scenario('post: line breaks, whitespace, comments and scripts between images do not break a run', async t => {
     const page = await postsWith(t, [img(5, 1080, 1350, '') + '\n  <br>\n<br> ' + img(6) + '<!-- c --><script type="application/json">{}</script>' + img(7, 1080, 1350, 'w')]);
     assert.equal(seq(page.bodies[0]), 'G3');
@@ -164,10 +187,91 @@ scenario('post: players join image runs; a landscape player spans 2 of 3 columns
     assert.deepEqual(layout(page, g, 402).slice(0, 3), [197, 402, 197], 'at 2 columns the landscape player takes the whole row');
 });
 
+scenario('post: solo video gets the solo height cap; grouped video keeps the media cap', async t => {
+    const page = await postsWith(t, [direct(720, 1280), direct(1920, 1080) + '<br>' + img(8)]);
+    const solo = page.bodies[0].querySelector('.smg-dm-wrap');
+    const grouped = page.bodies[1].querySelector('.auto-image-grid .smg-dm-wrap');
+    assert.ok(solo.classList.contains('smg-solo-video'), 'solo video carries the solo cap state');
+    assert.ok(!grouped.classList.contains('smg-solo-video'), 'video inside a group does not carry the solo cap state');
+});
+
+scenario('post: Twitch and TikTok s9e embeds join YouTube as video items in the post block model', async t => {
+    const s9e = provider => `<span data-s9e-mediaembed="${provider}"><span><iframe src="https://www.${provider}.com/embed/test" width="800" height="450"></iframe></span></span>`;
+    const page = await postsWith(t, [s9e('youtube') + '<br>' + s9e('twitch') + '<br>' + s9e('tiktok')]);
+    const body = page.bodies[0];
+    const group = body.querySelector('.auto-image-grid');
+    assert.ok(group, 'the consecutive embeds form a post media group');
+    assert.deepEqual(Array.from(group.children).map(item => item.getAttribute('data-s9e-mediaembed')), ['youtube', 'twitch', 'tiktok']);
+    assert.ok(Array.from(group.children).every(item => item.classList.contains('smg-mvid')), 'each provider is marked as a video item');
+});
+
 scenario('post: a landscape image spans 2 columns; square and near-square (1080x1072) images take 1', async t => {
     const page = await postsWith(t, [img(20, 1080, 1350) + '<br>' + img(21, 1920, 1080) + '<br>' + img(22, 1000, 1000) + '<br>' + img(23, 1080, 1072) + '<br>' + img(24, 1080, 1920)]);
     const g = page.bodies[0].querySelector('.auto-image-grid');
     assert.deepEqual(layout(page, g, 1192), [392, 792, 392, 392, 392]);
+});
+
+scenario('post: paint-gate image placeholder ratio is replaced with natural dimensions after load', async t => {
+    const page = await postsWith(t, ['<img class="bbImage" src="https://example.com/portrait.jpg" data-smg-ph-ratio="1" style="aspect-ratio: 4 / 3">']);
+    const image = page.bodies[0].querySelector('img.bbImage');
+    page.loadImage(image, 612, 1331);
+    assert.equal(image.style.aspectRatio, '612 / 1331', 'the loaded portrait replaces the 4:3 paint placeholder');
+});
+
+scenario('post: XenForo YouTube and Twitch wrappers form one video group', async t => {
+    const youtube = '<div class="bbMediaWrapper" data-media-site-id="youtube" data-media-key="abc"><div class="bbMediaWrapper-inner"><iframe src="https://www.youtube.com/embed/abc" width="560" height="315"></iframe></div></div>';
+    const twitch = '<div class="bbMediaWrapper" data-media-site-id="twitch" data-media-key="channel=foo"><div class="bbMediaWrapper-inner"><iframe src="https://player.twitch.tv/?channel=foo" width="560" height="315"></iframe></div></div>';
+    const page = await postsWith(t, ['A post ' + youtube + twitch]);
+    const group = page.bodies[0].querySelector('.auto-image-grid');
+    assert.ok(group, 'consecutive XenForo video wrappers form a group');
+    assert.equal(group.children.length, 2, 'both wrappers remain separate media items');
+    assert.ok(Array.from(group.children).every(item => item.classList.contains('smg-mvid')), 'both wrappers are video items');
+    assert.ok(Array.from(group.children).every(item => !item.classList.contains('smg-solo-video')), 'neither grouped video receives solo treatment');
+});
+
+scenario('post: a Twitch-only XenForo wrapper is a solo video item', async t => {
+    const twitch = '<div class="bbMediaWrapper" data-media-site-id="twitch" data-media-key="channel=foo;clip_id=bar"><div class="bbMediaWrapper-inner"><iframe src="https://player.twitch.tv/?channel=foo" width="560" height="315"></iframe></div></div>';
+    const page = await postsWith(t, [twitch]);
+    const item = page.bodies[0].querySelector('.bbMediaWrapper');
+    assert.ok(item.classList.contains('smg-mvid'), 'Twitch wrapper is recognized as a video item');
+    assert.ok(item.classList.contains('smg-solo-video'), 'standalone Twitch wrapper gets solo treatment');
+});
+
+scenario('post: failed lightbox image replaces its wrapper with a compact grouped dead tile and retry restores it', async t => {
+    const wrapper = '<div class="bbImageWrapper js-lbImage" data-src="https://example.com/3376x6000_dead.jpg"><img class="bbImage" src="https://example.com/3376x6000_dead.jpg" width="3376" height="6000"></div>';
+    const page = await postsWith(t, [img(97, 1080, 1350) + '<br>' + wrapper]);
+    const group = page.bodies[0].querySelector('.auto-image-grid');
+    const image = group.querySelector('.bbImageWrapper img.bbImage');
+    Object.defineProperty(image, 'complete', { configurable: true, value: true });
+    image.dispatchEvent(new page.window.Event('error'));
+    const dead = await page.waitFor(() => page.bodies[0].querySelector('.smg-dead--img'));
+    assert.ok(dead, 'failed image becomes a dead tile');
+    assert.ok(dead.classList.contains('smg-dead--strip'), 'one live image and one dead image use the strip layout');
+    assert.equal(dead.closest('.js-lbImage'), null, 'the dead tile is outside the XenForo lightbox wrapper');
+    page.click(dead.querySelector('.smg-dead-retry'));
+    assert.ok(page.bodies[0].querySelector('.bbImageWrapper.js-lbImage img.bbImage') === image, 'retry restores the original wrapper and image');
+});
+
+scenario('post: a dead image stays the same node across later processing and masonry passes', async t => {
+    const url = 'https://example.com/dead-loop.jpg';
+    const wrapper = `<a href="${url}"><div class="bbImageWrapper js-lbImage" data-src="${url}"><img class="bbImage" src="${url}" width="1080" height="1350"></div></a>`;
+    const page = await postsWith(t, [img(96) + '<br>' + wrapper]);
+    const bw = page.bodies[0];
+    const group = page.bodies[0].querySelector('.auto-image-grid');
+    const image = group.querySelector('.bbImageWrapper img.bbImage');
+    Object.defineProperty(image, 'complete', { configurable: true, value: true });
+    image.dispatchEvent(new page.window.Event('error'));
+    const dead = await page.waitFor(() => bw.querySelector('.smg-dead--img'));
+    assert.ok(dead, 'failed image becomes a dead tile');
+    await page.settle(80);
+    const mutations = [];
+    new page.window.MutationObserver(records => mutations.push(...records)).observe(group, { childList: true, subtree: true });
+    dead.href = 'https://cyberdrop.cr/3376x6000_dead-loop.jpg';
+    const marker = page.document.createElement('i');
+    page.bodies[0].appendChild(marker);
+    await page.settle(80);
+    assert.equal(group.querySelector('.smg-dead--img'), dead, 'later processing preserves the dead tile node');
+    assert.equal(mutations.filter(record => [...record.removedNodes].includes(dead)).length, 0, 'later passes never detach the dead tile');
 });
 
 scenario('post: a single player or text between a player and an image keeps them apart', async t => {
@@ -208,6 +312,188 @@ scenario('post: a group of only landscape images lays out in pairs on desktop an
     const x = el => el.style.transform.match(/translate\((\d+)px/)[1];
     assert.deepEqual(Array.from(g3.children).map(x), ['0', '600', '0'], 'the third item starts a new row at the left');
     assert.deepEqual(layout(page, g3, 402), [402, 402, 402], 'mobile: each landscape item takes the whole row');
+});
+
+scenario('post: dead image beside one live video is a strip and video is solo', async t => {
+    const page = await postsWith(t, [img(130) + '<br>' + direct(720, 1280)]);
+    const bw = page.bodies[0];
+    const image = bw.querySelector('img.bbImage');
+    Object.defineProperty(image, 'complete', { configurable: true, value: true });
+    image.dispatchEvent(new page.window.Event('error'));
+    const dead = await page.waitFor(() => bw.querySelector('.smg-dead--img'));
+    assert.ok(dead.classList.contains('smg-dead--strip'));
+    assert.ok(bw.querySelector('.smg-dm-wrap.smg-solo-video'));
+    assert.ok(!bw.querySelector('.auto-image-grid'));
+});
+
+scenario('post: dead image dissolves the group before video readiness and later relayout stays solo', async t => {
+    const page = await postsWith(t, [img(129) + '<br>' + direct(720, 1280)]);
+    const bw = page.bodies[0];
+    const image = bw.querySelector('img.bbImage');
+    const group = bw.querySelector('.auto-image-grid');
+    const live = group.querySelector('.smg-dm-wrap');
+    const readyVideo = live.querySelector('video');
+    Object.defineProperty(image, 'complete', { configurable: true, value: true });
+    image.dispatchEvent(new page.window.Event('error'));
+    await page.waitFor(() => bw.querySelector('.smg-dead--img'));
+    assert.equal(live.parentElement, bw, 'the remaining video is back in the post body flow');
+    assert.equal(live.closest('article.message'), bw.closest('article.message'));
+    assert.equal(live.style.position, '');
+    assert.equal(live.style.transform, '');
+    assert.equal(live.style.width, '');
+    assert.equal(live.style.height, '');
+    assert.equal(live.dataset.smgGridded, undefined);
+    assert.equal(group.style.height, '', 'the dissolved group has no retained masonry height');
+
+    Object.defineProperty(readyVideo, 'videoWidth', { configurable: true, value: 720 });
+    Object.defineProperty(readyVideo, 'videoHeight', { configurable: true, value: 1280 });
+    readyVideo.dispatchEvent(new page.window.Event('loadedmetadata'));
+    page.resize(group, 1192);
+    await page.settle(40);
+    assert.equal(live.parentElement, bw, 'later video readiness and resize leave it in normal flow');
+    assert.equal(live.style.transform, '');
+    assert.equal(live.style.width, '');
+    assert.equal(live.style.height, '');
+    assert.equal(live.dataset.smgGridded, undefined);
+});
+
+scenario('post: video readiness before dead-image resolution is also cleared when the group dissolves', async t => {
+    const page = await postsWith(t, [img(128) + '<br>' + direct(720, 1280)]);
+    const bw = page.bodies[0];
+    const group = bw.querySelector('.auto-image-grid');
+    const live = group.querySelector('.smg-dm-wrap');
+    const readyVideo = live.querySelector('video');
+    Object.defineProperty(readyVideo, 'videoWidth', { configurable: true, value: 720 });
+    Object.defineProperty(readyVideo, 'videoHeight', { configurable: true, value: 1280 });
+    readyVideo.dispatchEvent(new page.window.Event('loadedmetadata'));
+    page.resize(group, 1192);
+    const image = bw.querySelector('img.bbImage');
+    Object.defineProperty(image, 'complete', { configurable: true, value: true });
+    image.dispatchEvent(new page.window.Event('error'));
+    await page.waitFor(() => bw.querySelector('.smg-dead--img'));
+    assert.equal(live.parentElement, bw);
+    assert.equal(live.style.position, '');
+    assert.equal(live.style.transform, '');
+    assert.equal(live.style.width, '');
+    assert.equal(live.style.height, '');
+    assert.equal(live.dataset.smgGridded, undefined);
+    assert.equal(group.style.height, '');
+    page.resize(group, 800);
+    await page.settle(40);
+    assert.equal(live.parentElement, bw, 'a later resize cannot remount the dissolved group');
+    assert.equal(live.style.transform, '');
+    assert.equal(live.style.width, '');
+    assert.equal(live.style.height, '');
+});
+
+scenario('post: two live images with one dead image keep a compact 2:1 tile', async t => {
+    const page = await postsWith(t, [img(131) + '<br>' + img(132) + '<br>' + img(133)]);
+    const bw = page.bodies[0]; const images = bw.querySelectorAll('img.bbImage');
+    Object.defineProperty(images[1], 'complete', { configurable: true, value: true });
+    images[1].dispatchEvent(new page.window.Event('error'));
+    const dead = await page.waitFor(() => bw.querySelector('.smg-dead--img'));
+    assert.equal(dead.closest('.auto-image-grid').children.length, 3);
+    assert.equal(dead.dataset.smgRatio, '0.5');
+});
+
+scenario('post: all dead images are strips in original order', async t => {
+    const page = await postsWith(t, [img(134) + '<br>' + img(135)]);
+    const bw = page.bodies[0];
+    for (const image of Array.from(bw.querySelectorAll('img.bbImage'))) {
+        Object.defineProperty(image, 'complete', { configurable: true, value: true }); image.dispatchEvent(new page.window.Event('error'));
+    }
+    const dead = await page.waitFor(() => bw.querySelectorAll('.smg-dead--img').length === 2 && bw.querySelectorAll('.smg-dead--img'));
+    assert.equal(dead.length, 2); assert.ok(Array.from(dead).every(n => n.classList.contains('smg-dead--strip')));
+    assert.ok(!bw.querySelector('.auto-image-grid'));
+});
+
+scenario('post: one image attachment becomes a solo full image and hides the legacy list', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 701, body: 'Caption', attachments: attachmentList([{ href: '/attachments/pic.jpg.12/', type: 'image' }]) }] }) });
+    await page.settle(60);
+    const body = page.$('#js-post-701 .message-body'); const image = body.querySelector('img.bbImage');
+    assert.equal(body.querySelector('div[itemprop="text"] > .bbWrapper'), body.querySelector('.bbWrapper'), 'the fixture matches XenForo’s itemprop wrapper');
+    assert.ok(body.querySelector('.js-selectToQuoteEnd'), 'the fixture includes the quote-selection end marker');
+    assert.equal(image.dataset.smgFull, 'https://forums.socialmediagirls.com/attachments/pic.jpg.12/');
+    assert.equal(image.getAttribute('width'), null, 'thumbnail dimensions are not copied as real image dimensions');
+    assert.equal(image.getAttribute('height'), null, 'thumbnail dimensions are not copied as real image dimensions');
+    assert.equal(image.style.aspectRatio, '150 / 265', 'thumbnail ratio is kept as a placeholder while the full image loads');
+    const section = page.$('#js-post-701 .message-attachments');
+    assert.ok(section.hidden);
+    assert.equal(section.parentElement, body.parentElement);
+    assert.equal(body.querySelector('.message-attachments'), null);
+    assert.equal(body.querySelectorAll('.auto-image-grid').length, 0);
+    page.loadImage(image, 612, 1331);
+    assert.equal(image.style.aspectRatio, '612 / 1331', 'the full image natural ratio replaces the thumbnail placeholder');
+});
+
+scenario('post: three image attachments form one masonry group', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 702, body: 'Caption', attachments: attachmentList([1, 2, 3].map(i => ({ href: `/attachments/pic-${i}.jpg.${i}/`, type: 'image' }))) }] }) });
+    await page.settle(60);
+    assert.equal(page.$('#js-post-702 .message-body .auto-image-grid')?.children.length, 3);
+});
+
+scenario('post: attachment full image failure returns to its thumbnail', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 703, body: '', attachments: attachmentList([{ href: '/attachments/fail.jpg.13/', type: 'image', thumb: 'https://simp6.example.su/thumb.jpg' }]) }] }) });
+    await page.settle(60);
+    const image = page.$('#js-post-703 .message-body img.bbImage');
+    page.loadImage(image, 150, 265);
+    image.dataset.smgFull = 'https://forums.socialmediagirls.com/attachments/fail.jpg.13/';
+    image.dataset.smgGoodSrc = 'https://simp6.example.su/thumb.jpg';
+    image.src = image.dataset.smgFull;
+    image.dispatchEvent(new page.window.Event('error'));
+    await page.settle(30);
+    assert.equal(image.src, 'https://simp6.example.su/thumb.jpg');
+    assert.ok(!page.$('#js-post-703 .message-body .smg-dead'));
+});
+
+scenario('post: failed attachment full source is replaced in viewer attributes', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 706, body: '', attachments: attachmentList([{ href: '/attachments/fail.jpg.16/', type: 'image', thumb: 'https://simp6.example.su/thumb.jpg' }]) }] }) });
+    await page.settle(60);
+    const image = page.$('#js-post-706 .message-body img.bbImage');
+    const viewer = image.closest('.bbImageWrapper.js-lbImage');
+    const fallback = 'https://simp6.example.su/thumb.jpg';
+    page.loadImage(image, 150, 265);
+    image.src = image.dataset.smgFull;
+    image.dispatchEvent(new page.window.Event('error'));
+    assert.equal(image.src, fallback);
+    assert.equal(image.dataset.smgFull, fallback);
+    assert.equal(image.dataset.smgLink, fallback);
+    assert.equal(image.getAttribute('data-src'), fallback);
+    assert.equal(viewer.href, fallback);
+    assert.equal(viewer.dataset.src, fallback);
+});
+
+scenario('post: solo fallback image width is capped at twice thumbnail natural width', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 707, body: '', attachments: attachmentList([{ href: '/attachments/fail.jpg.17/', type: 'image', thumb: 'https://simp6.example.su/thumb.jpg' }]) }] }) });
+    await page.settle(60);
+    const image = page.$('#js-post-707 .message-body img.bbImage');
+    page.loadImage(image, 150, 265);
+    image.src = image.dataset.smgFull;
+    image.dispatchEvent(new page.window.Event('error'));
+    page.loadImage(image, 150, 265);
+    assert.match(image.style.maxWidth, /300px/);
+    assert.match(image.style.width, /300px/);
+});
+
+scenario('post: non-image attachment stays in the compact legacy list', async t => {
+    const page = await t.open({ url: URL, html: threadPage({ posts: [{ id: 704, body: '', attachments: attachmentList([{ href: '/attachments/archive.zip.14/', type: 'file', name: 'archive.zip' }]) }] }) });
+    await page.settle(60);
+    const section = page.$('#js-post-704 .message-attachments');
+    assert.ok(section && !section.hidden);
+    assert.ok(section.querySelector('.file-name').textContent.includes('archive.zip'));
+    assert.equal(page.$('#js-post-704 .message-body .auto-image-grid'), null);
+});
+
+scenario('post: an unconverted image attachment keeps its thumbnail visible', async t => {
+    const html = threadPage({ posts: [{ id: 705, body: '', attachments: attachmentList([{ type: 'image' }]) }] })
+        .replace(/<article class="message-body js-selectToQuote">[\s\S]*?<\/article>/, '');
+    const page = await t.open({ url: URL, html });
+    await page.settle(60);
+    const row = page.$('#js-post-705 .message-attachments li');
+    const preview = row.querySelector('.file-preview');
+    assert.ok(row && !row.hidden, 'the legacy attachment row stays available');
+    assert.equal(preview.querySelector('img').getAttribute('src'), 'https://simp6.example.su/simpo/data/attachments/45/45820-1.jpg?hash=thumb');
+    assert.equal(page.window.getComputedStyle(preview).display, 'block', 'the fallback thumbnail is not hidden by compact-list styling');
 });
 
 scenario('gallery: a section of only landscape media lays out in pairs', async t => {
