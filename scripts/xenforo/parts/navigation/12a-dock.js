@@ -424,15 +424,13 @@
         const dockLoggedIn = isLoggedIn();
         const btnHome = makeDockLink({ id: 'smg-nav-home', icon: ICONS.home, label: 'Home', href: boardBase });
 
-        // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
+        // sino de alertas da navbar mobile: abre o drawer da lista (badge via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
-            if (FEATURES.alertsDock) btnBell.setAttribute('data-smg-inplace', '');   // abre o rail; a navegação interna não toca nele
+            btnBell.setAttribute('data-smg-inplace', '');
             btnBell.addEventListener('click', e => {
-                if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
-                e.stopPropagation();
-                toggleAlertsDock();
+                toggleAlertsPopover();
             });
         }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)

@@ -275,10 +275,10 @@
                 if (cmdMenu.classList.contains('open')) cmdClose(); else { cmdOpen(b); try { getSearchInput().focus(); } catch (x) {} }
             });
 
-            // %LIKE%: a busca (MySQL fulltext) não acha por parte da palavra → wildcard de PREFIXO (termo* = LIKE 'termo%').
-            // Infix real (%termo%) o fulltext não suporta; respeita aspas/operadores (+ - " *) do usuário. Liga/desliga na config.
+            // Wildcard de prefixo (termo*) para busca parcial; o motor de busca decide como interpretar o operador.
+            // A normalização abaixo remove pontuação e operadores fornecidos na consulta antes de enviá-la.
             function likeify(q) {
-                if (!cfgLike || !q || /[*"+\-]/.test(q)) return q;
+                if (!cfgLike || !q) return q;
                 return q.split(/\s+/).map(w => (w.length >= 3 && /^[\wÀ-ſ]+$/.test(w)) ? w + '*' : w).join(' ');
             }
 
@@ -303,64 +303,14 @@
                 return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
 
-            // GERAÇÃO FLEXÍVEL DE PALAVRAS-CHAVE:
-            // Permite dar match tanto com espaços ("jade the jaguar") quanto sem espaços ("jadethejaguar"),
-            // delimitadores ("jade_the_jaguar") ou CamelCase ("JadeTheJaguar"), unindo as variantes pelo
-            // operador nativo OR do XenForo. Não abre a busca para palavras genéricas isoladas.
-            // Suporta também extração de handles de redes sociais e normalização de acentos.
+            // Normaliza handles para os tokens que o índice XenForo produz a partir de pontuação.
+            // Envia cada token como alternativa OR; resultados titles-only são filtrados e ordenados localmente.
             function buildFlexibleKeywords(q, isTitlesOnly) {
                 if (!q) return '';
-                const cleanSocial = extractSocialHandle(q);
-                const raw = cleanSocial.trim();
-                // Se contiver aspas explícitas, operadores manuais (+, -, ~) ou operador booleano OR existente:
-                // preserva a intenção literal do usuário sem inventar variantes.
-                if (/[*"+~\-]|\bOR\b/.test(raw)) {
-                    return likeify(raw);
-                }
-
-                const variants = new Set();
-                const addVariantGroup = text => {
-                    if (!text) return;
-                    variants.add(likeify(text));
-
-                    // 1. Termo com espaços → gera versão unificada sem espaços
-                    if (/\s+/.test(text)) {
-                        const unspaced = text.replace(/[\s\-_.]+/g, '');
-                        if (unspaced.length >= 3) {
-                            variants.add(likeify(unspaced));
-                        }
-                    }
-
-                    // 2. Termo com delimitadores (_, -, .) → gera versão espaçada e sem separadores
-                    if (/[\-_.]/.test(text)) {
-                        const spaced = text.replace(/[\-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
-                        if (spaced && spaced !== text) {
-                            variants.add(likeify(spaced));
-                        }
-                        const unspaced = text.replace(/[\s\-_.]+/g, '');
-                        if (unspaced.length >= 3) {
-                            variants.add(likeify(unspaced));
-                        }
-                    }
-
-                    // 3. Termo em CamelCase → gera versão decomposta com espaços
-                    if (/[a-z][A-Z]/.test(text)) {
-                        const deCamel = text.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
-                        if (deCamel && deCamel !== text) {
-                            variants.add(likeify(deCamel));
-                        }
-                    }
-                };
-
-                addVariantGroup(raw);
-
-                // Normalização de acentos: gera também variantes sem acento
-                const unaccented = removeAccents(raw);
-                if (unaccented && unaccented !== raw) {
-                    addVariantGroup(unaccented);
-                }
-
-                return Array.from(variants).filter(Boolean).join(' OR ');
+                const raw = extractSocialHandle(q).replace(/([a-z])([A-Z])/g, '$1 $2');
+                const tokens = removeAccents(raw).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+                const unique = Array.from(new Set(tokens));
+                return unique.map(token => likeify(token)).join(' OR ');
             }
             if (typeof window !== 'undefined') window.buildFlexibleKeywords = buildFlexibleKeywords;
 
@@ -430,20 +380,22 @@
                 const tags = [];
                 if (e.scope && e.scope !== 'everywhere') tags.push(i18n(SCOPE_LABEL[e.scope] || e.scope));
                 if (e.q && e.by) tags.push(i18n('author') + ': ' + e.by);
-                if (e.titles) tags.push(i18n('titles only'));
                 if (e.order === 'date') tags.push(i18n('by date'));
+                const titleTag = e.titles ? i18n('titles only') : '';
+                const detailTags = tags;
                 const otherLabel = /socialmediagirls/i.test(location.hostname) ? 'SimpCity' : 'SocialMediaGirls';
                 row.innerHTML =
-                    '<span class="smg-search-hist-ico">' + ICONS.search + '</span>' +
                     '<span class="smg-search-hist-q"></span>' +
-                    (tags.length ? '<span class="smg-search-hist-meta"></span>' : '') +
+                    (detailTags.length ? '<span class="smg-search-hist-meta"></span>' : '') +
+                    (titleTag ? '<span class="smg-search-hist-titles"></span>' : '') +
                     '<span class="smg-search-hist-acts">' +
                         '<span class="smg-search-hist-act smg-search-hist-edit" role="button" aria-label="' + i18n('Edit in search bar') + '" title="' + i18n('Edit in search bar') + '">' + svgIcon('<line x1="17" y1="17" x2="7" y2="7"/><polyline points="7 17 7 7 17 7"/>') + '</span>' +
                         '<span class="smg-search-hist-act smg-search-hist-cross" role="button" aria-label="' + i18n('Search on') + ' ' + otherLabel + '" title="' + i18n('Search on') + ' ' + otherLabel + '">' + svgIcon('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>') + '</span>' +
                         '<span class="smg-search-hist-act smg-search-hist-remove" role="button" aria-label="' + i18n('Remove') + '">' + ICONS.close + '</span>' +
                     '</span>';
                 row.querySelector('.smg-search-hist-q').textContent = e.q || (i18n('author') + ': ' + e.by);
-                if (tags.length) row.querySelector('.smg-search-hist-meta').textContent = tags.join(' · ');
+                if (detailTags.length) row.querySelector('.smg-search-hist-meta').textContent = detailTags.join(' · ');
+                if (titleTag) row.querySelector('.smg-search-hist-titles').textContent = titleTag;
                 row.addEventListener('click', () => applyHistoryEntry(e));
                 row.querySelector('.smg-search-hist-edit').addEventListener('click', ev => { ev.stopPropagation(); sendToBar(e); });
                 row.querySelector('.smg-search-hist-cross').addEventListener('click', ev => { ev.stopPropagation(); openOnOther(e); });
@@ -606,6 +558,7 @@
 
             function doSearch(addToHistory) {
                 let keywords = getSearchInput().value.trim();
+                const titleQuery = keywords;
                 const titlesOn = toggleTitleOnly?.checked ?? cfgTitles;
                 const orderDate = (sortSelect?.value === 'date') || cfgOrder;
                 const by = authorInput?.value.trim();
@@ -652,10 +605,37 @@
                 if (orderDate) fields.push(['order', 'date']);   // omitido = relevance (default do XF)
                 if (by) fields.push(['c[users]', by]);
 
-                runSearchInline(fields);
+                runSearchInline(fields, titleQuery);
             }
             // === busca INLINE: faz o fetch dos resultados e mostra NO PRÓPRIO dropdown (em vez de navegar) ===
             let searchSeq = 0, searchAbort = null;
+            let titleQueryForResults = '';
+            function invalidateSearch() {
+                searchSeq++;
+                searchPager.reset(null);
+                if (searchAbort) { searchAbort.abort(); searchAbort = null; }
+            }
+            function titleSearchState(query) {
+                const fold = text => removeAccents(String(text || '').normalize('NFD')).toLowerCase()
+                    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+                const phrase = fold(query);
+                const tokens = Array.from(new Set(phrase.split(' ').filter(Boolean)));
+                return { phrase, tokens, fold };
+            }
+            function filterRankTitleResults(results, query) {
+                if (!(toggleTitleOnly?.checked ?? cfgTitles) || currentScope === 'thread' || !query) return results;
+                const state = titleSearchState(query);
+                return results.map((row, index) => ({ row, index, title: state.fold(row.title) }))
+                    .filter(item => state.tokens.some(token => item.title.includes(token)))
+                    .sort((a, b) => {
+                        const phraseA = a.title.includes(state.phrase), phraseB = b.title.includes(state.phrase);
+                        if (phraseA !== phraseB) return phraseA ? -1 : 1;
+                        const allA = state.tokens.every(token => a.title.includes(token));
+                        const allB = state.tokens.every(token => b.title.includes(token));
+                        if (allA !== allB) return allA ? -1 : 1;
+                        return a.index - b.index;
+                    }).map(item => item.row);
+            }
             let searchSentinelEl = null;
             function removeSearchSentinel() {
                 if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
@@ -671,10 +651,10 @@
                 load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
                 apply: (doc, urlFetched) => {
                     const moreResults = parseSearchResults(doc);
-                    let moreFiltered = moreResults;
+                    let moreFiltered = filterRankTitleResults(moreResults, titleQueryForResults);
                     if (activeSearchBadges && activeSearchBadges.size > 0) {
                         const activeLower = Array.from(activeSearchBadges).map(b => b.toLowerCase().trim());
-                        moreFiltered = moreResults.filter(r => {
+                        moreFiltered = moreFiltered.filter(r => {
                             const labelTexts = (r.labels || []).map(l => (l.textContent || '').toLowerCase().replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim());
                             const hasLabel = activeLower.some(ab => labelTexts.some(lt => lt === ab || lt.includes(ab) || ab.includes(lt)));
                             if (hasLabel) return true;
@@ -726,9 +706,10 @@
                 return a;
             }
 
-            function runSearchInline(fields) {
+            function runSearchInline(fields, titleQuery) {
                 refreshPrefixHarvest();
                 const seq = ++searchSeq;
+                titleQueryForResults = titleQuery || '';
                 searchPager.reset(null);   // a página que ainda carregava é da busca anterior: descarta e aborta
                 if (searchAbort) searchAbort.abort();   // mata o POST anterior (full-text é caro no servidor; o seq só descartava a RESPOSTA — a request continuava rodando)
                 const ctrl = searchAbort = (typeof AbortController === 'function') ? new AbortController() : null;
@@ -877,6 +858,7 @@
                         return activeLower.some(ab => tLower.includes(ab));
                     });
                 }
+                filtered = filterRankTitleResults(filtered, titleQueryForResults);
 
                 // Coletar chips dinâmicos de prefixo/tags presentes nestes resultados
                 const tagCountMap = new Map();
@@ -983,7 +965,7 @@
                 });
             }
             function clearResults() {   // volta pro histórico — sem re-render se ele JÁ está na tela (era rebuild por keystroke)
-                searchPager.reset(null);
+                invalidateSearch();
                 removeSearchSentinel();
                 if (!searchResultsEl.hidden) { searchResultsEl.hidden = true; searchResultsEl.innerHTML = ''; }
                 if (searchHistEl.hidden && searchEmptyEl.hidden) renderHistory();
@@ -993,10 +975,12 @@
             let searchDebounce = null;
             function onSearchInput() {
                 clearTimeout(searchDebounce);
+                invalidateSearch();
                 const kw = getSearchInput().value.trim();
                 const by = authorInput ? authorInput.value.trim() : '';
                 const hasBadges = activeSearchBadges && activeSearchBadges.size > 0;
-                if (kw.length < 3 && !by && !hasBadges && currentScope !== 'watched') { clearResults(); return; }   // vazio/curto demais → histórico (XF tem mínimo de caracteres)
+                const titleOnly = currentScope !== 'thread' && (toggleTitleOnly?.checked ?? cfgTitles);
+                if (kw.length < 3 && !(titleOnly && kw) && !by && !hasBadges && currentScope !== 'watched') { clearResults(); return; }
                 searchDebounce = setTimeout(() => doSearch(false), 420);
             }
             document.addEventListener('input', e => {
@@ -1011,7 +995,8 @@
                 const kw = getSearchInput().value.trim();
                 const by = authorInput ? authorInput.value.trim() : '';
                 const hasBadges = activeSearchBadges && activeSearchBadges.size > 0;
-                if (kw.length < 3 && !by && !hasBadges && currentScope !== 'watched') return;
+                const titleOnly = currentScope !== 'thread' && (toggleTitleOnly?.checked ?? cfgTitles);
+                if (kw.length < 3 && !(titleOnly && kw) && !by && !hasBadges && currentScope !== 'watched') return;
                 clearTimeout(searchDebounce);
                 doSearch(false);
             }

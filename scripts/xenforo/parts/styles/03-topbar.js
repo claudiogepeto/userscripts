@@ -20,7 +20,7 @@
             #smg-topbar {
                 position: relative; width: 100%; box-sizing: border-box;
                 background: var(--smg-bg);
-                border: 0; border-bottom: 1px solid var(--smg-w-08);
+                border: 0; border-bottom: 1px solid var(--smg-bd);
                 box-shadow: 0 1px 0 var(--smg-w-02);
                 transition: box-shadow var(--smg-dur-20) ease, background var(--smg-dur-20) ease;
             }
@@ -77,8 +77,9 @@
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-w-06); color: #fff; }
-            .smg-tb-item--current { color: #fff; background: var(--smg-w-06); }
+            .smg-tb-item--current { color: #fff; background: var(--smg-link-soft); }
             .smg-tb-item--current .smg-tb-ico { color: var(--smg-link); }
+            .smg-tb-item:focus-visible, .smg-tb-act:focus-visible, .smg-tb-account:focus-visible { outline: 2px solid var(--smg-link); outline-offset: 2px; }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
@@ -93,7 +94,7 @@
                 transform: translateY(-50%); background: var(--smg-w-10);
             }
             .smg-tb-act {
-                position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+                position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
                 border-radius: var(--smg-r-round); border: none; background: transparent; color: var(--smg-w-72);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
@@ -106,7 +107,7 @@
                 #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
                 #smg-topbar-wrap.floating .smg-tb-act,
-                #smg-topbar-wrap.floating .smg-tb-account { width: 38px; height: 38px; }
+                #smg-topbar-wrap.floating .smg-tb-account { width: 40px; height: 40px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
@@ -186,7 +187,7 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                width: 40px; height: 40px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
@@ -273,38 +274,25 @@
             .smg-tb-poptitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
             .smg-tb-popdesc { font-size: var(--smg-fs-12); color: var(--smg-w-50); }
             .smg-tb-popdiv { height: 1px; background: var(--smg-w-08); margin: var(--smg-sp-6) var(--smg-sp-8); }
-            /* ===== mega-menu do Discover (grid 2-col + painel destacado, estilo Vimeo) ===== */
-            .smg-tb-pop--mega { min-width: 660px; max-width: 720px; padding: var(--smg-sp-18); }
-            .smg-tb-mega-cols { display: flex; gap: var(--smg-sp-18); align-items: stretch; }
-            .smg-tb-mega-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-16); }
+            /* ===== mega-menu Explore: três grupos em colunas, sem painel destacado ===== */
+            .smg-tb-pop--mega { width: min(760px, calc(100vw - 32px)); min-width: min(760px, calc(100vw - 32px)); max-width: calc(100vw - 32px); padding: var(--smg-sp-18); }
+            .smg-tb-mega-cols { display: block; }
+            .smg-tb-mega-main { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--smg-sp-16); }
             .smg-tb-mega-label { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--smg-w-40); padding: 0 var(--smg-sp-8) var(--smg-sp-10); }
-            .smg-tb-mega-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--smg-sp-2); }
+            .smg-tb-mega-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--smg-sp-2); }
             .smg-tb-megaitem { display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10) var(--smg-sp-10); border-radius: var(--smg-r-12); text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease; }
             .smg-tb-megaitem:hover { background: var(--smg-link-soft); }
             .smg-tb-megaico { flex: 0 0 auto; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--smg-r-10); background: var(--smg-w-06); color: var(--smg-w-85); transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease; }
             .smg-tb-megaitem:hover .smg-tb-megaico { background: var(--smg-link); color: #fff; transform: translateY(-1px); }
             .smg-tb-megaico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-megatext { display: flex; flex-direction: column; gap: var(--smg-sp-2); min-width: 0; }
-            .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            /* painel destacado à direita (promove a Timeline) */
-            .smg-tb-mega-feat { flex: 0 0 226px; display: flex; flex-direction: column; border-radius: var(--smg-r-14); overflow: hidden; text-decoration: none; background: var(--smg-s2); border: 1px solid var(--smg-bd); transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-tb-mega-feat:hover { border-color: var(--smg-bd2); transform: translateY(-2px); box-shadow: var(--smg-shadow-2); }
-            .smg-tb-mega-feat-art { height: 112px; display: flex; align-items: center; justify-content: center; color: #fff; background: radial-gradient(120% 110% at 28% 18%, var(--smg-link), transparent 62%), linear-gradient(155deg, var(--smg-s3), var(--smg-s1)); }
-            .smg-tb-mega-feat-art svg { width: 34px; height: 34px; fill: none !important; opacity: .95; }
-            .smg-tb-mega-feat-body { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-16); display: flex; flex-direction: column; gap: var(--smg-sp-6); }
-            .smg-tb-mega-feat-title { font-size: var(--smg-fs-15); font-weight: 800; color: #fff; }
-            .smg-tb-mega-feat-desc { font-size: var(--smg-fs-12); line-height: 1.45; color: var(--smg-w-50); }
-            .smg-tb-mega-feat-cta { margin-top: var(--smg-sp-4); display: inline-flex; align-items: center; gap: var(--smg-sp-6); font-size: var(--smg-fs-13); font-weight: 700; color: var(--smg-link); }
-            .smg-tb-mega-feat-cta svg { width: 14px; height: 14px; fill: none !important; }
+            .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
+            .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); line-height: 1.4; }
             @media (max-width: 800px) {
                 html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
                 .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
-                .smg-tb-mega-cols { flex-direction: column; gap: var(--smg-sp-14); }
-                .smg-tb-mega-feat { flex-basis: auto; }
-                .smg-tb-mega-feat-art { height: 92px; }
-                .smg-tb-mega-grid { grid-template-columns: 1fr; }
+                .smg-tb-mega-main { grid-template-columns: 1fr; }
             }
 
             /* lista nativa do XF embutida (sheet mobile de alertas + painel lateral) */

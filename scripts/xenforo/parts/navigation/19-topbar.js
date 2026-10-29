@@ -1,12 +1,12 @@
     // navigation/19-topbar.js
-    // Owns: the rebuilt topbar, Discover mega-menu, account popover, mobile sheets and header notices.
+    // Owns: the rebuilt topbar, Explore mega-menu, account popover, mobile sheets and header notices.
     // Exposes: buildTopbar, setupHeaderNotices, syncMobileThreadbar.
-    // Depends on: core/06-helpers (popovers, sheets), alerts/19-alerts-dock, listing/15-listing.
+    // Depends on: core/06-helpers (popovers, sheets), alerts/19-alerts-popover, listing/15-listing.
     // =========================================================
     // FEATURE: topbar reformulada (ícones + popovers agrupados)
     // lê os links REAIS da nav nativa via data-nav-id → funciona no simpcity e no smg
     //
-    // buildTopbar() é uma função só; mapa interno (Cmd+F): ZONA ESQUERDA (logo+Discover) ·
+    // buildTopbar() é uma função só; mapa interno (Cmd+F): ZONA ESQUERDA (logo) ·
     //   ZONA CENTRAL (search bar) · ZONA DIREITA (notices/seguindo/alertas/conta) ·
     //   "// ----" abrir/fechar popovers · docked→flutuante · sheets mobile (sino/Discover/User)
     // =========================================================
@@ -103,34 +103,29 @@
             return e ? e.getAttribute('href') : null;
         })();
 
-        // topbar em 3 zonas: ESQUERDA (logo + Discover) · CENTRO (search bar) · DIREITA (Seguindo · Notificações · User)
+        // topbar em 3 zonas: ESQUERDA (logo) · CENTRO (Following · Feed · Explore) · DIREITA (busca · alertas · conta)
         // a navbar inferior (mobile) segue com os mesmos destinos via dock
         const discoverItems = [
-            { section: 'Explore' },
-            { label: 'Trending', desc: 'Most popular right now', icon: ICONS.flame, href: navHref('trending', 'smgtrending', 'trending2') },
-            { label: 'What\'s new', desc: 'Recently posted', icon: ICONS.sparkles, href: navHref('whatsNew', 'whatsNew2') || '/whats-new/' },
-            { label: 'New posts', desc: 'Latest messages', icon: ICONS.layers, href: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
-            { label: 'Featured', desc: 'Featured content', icon: ICONS.star, href: navHref('featured') },
-            { label: 'Activity', desc: 'Activity feed', icon: ICONS.activity, href: navHref('latestActivity') },
+            { section: 'Discover' },
+            { label: 'Trending', desc: 'Threads with the most reactions right now', icon: ICONS.flame, href: navHref('trending', 'smgtrending', 'trending2') },
+            { label: 'What\'s new', desc: 'Latest posts across the forum', icon: ICONS.sparkles, href: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
+            { label: 'Featured', desc: 'Threads selected by the staff', icon: ICONS.star, href: navHref('featured') },
             { section: 'Threads' },
-            { label: 'Find threads', desc: 'Browse threads', icon: ICONS.search, href: navHref('findThreads') || '/find-threads/started' },
-            { label: 'Unanswered', desc: 'Awaiting a reply', icon: ICONS.help, href: navHref('unansweredThreads') || '/find-threads/unanswered' },
+            { label: 'Find threads', desc: 'Find threads you started and filter results', icon: ICONS.search, href: navHref('findThreads') || '/find-threads/started' },
+            { label: 'Unanswered', desc: 'Threads without replies yet', icon: ICONS.help, href: navHref('unansweredThreads') || '/find-threads/unanswered' },
             { section: 'Community' },
-            { label: 'Members', desc: 'Member list', icon: ICONS.users, href: navHref('members') || '/members/' },
-            { label: 'Online now', desc: 'Who\'s online', icon: ICONS.user, href: navHref('currentVisitors') || '/online/' },
+            { label: 'Members', desc: 'Browse the member list', icon: ICONS.users, href: navHref('members') || '/members/' },
+            { label: 'Online now', desc: 'Who is on the forum right now', icon: ICONS.user, href: navHref('currentVisitors') || '/online/' },
+            { label: 'Activity', desc: 'Everything happening across the forum', icon: ICONS.activity, href: navHref('latestActivity') },
         ];
-        // VISITANTE: Timeline (feed das seguidas) e Seguindo exigem conta — pro deslogado seriam só um
-        // caminho pro muro de login. Ficam de fora; Discover é público e continua.
+        // VISITANTE: Feed e Following exigem conta; Explore permanece público.
         const loggedIn = isLoggedIn();
-        // esquerda = só o Discover (dropdown). Seguindo/Notificações/User viram ícones à DIREITA.
+        // A ordem da navegação é Following, Feed e Explore; visitantes veem somente Explore.
         const watchedHref = navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads';
         const groups = [
-            { label: 'Discover', mega: true, icon: ICONS.compass, items: discoverItems, featured: {   // mega-menu (grid 2-col + ícones em tile + painel destacado), estilo Vimeo
-                title: 'Feed', desc: 'Posts from the threads you follow, newest first.', cta: 'Open feed',
-                href: '/?view=feed', icon: ICONS.feed,
-            } },
+            { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },
             { label: 'Feed', icon: ICONS.feed, href: '/?view=feed', member: true },   // feed: river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
-            { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },     // threads que você segue (watched) — ícone Following
+            { label: 'Explore', mega: true, icon: ICONS.compass, items: discoverItems },
         ].filter(g => loggedIn || !g.member);
 
         const wrap = document.createElement('div');
@@ -171,7 +166,7 @@
         if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; }
         else if (logoImg) { const im = document.createElement('img'); im.src = logoImg.getAttribute('src') || ''; im.alt = ''; logoA.appendChild(im); }
         else logoA.textContent = 'Home';
-        // ZONA ESQUERDA: logo + Discover (o logo já é o "Início")
+        // ZONA ESQUERDA: logo (o logo já é o "Início")
         const left = document.createElement('div');
         left.className = 'smg-tb-left';
         left.appendChild(logoA);
@@ -179,7 +174,7 @@
         const popovers = [];
         let closeAllPops = () => {};   // preenchido pelo wirePopovers; quem fecha os popovers de fora (ex.: botão de fixar os alertas)
 
-        // navegação (esquerda) = só o Discover
+        // navegação central com links diretos e o menu Explore
         const nav = document.createElement('div');
         nav.className = 'smg-tb-nav';
 
@@ -189,9 +184,8 @@
             while (out.length && out[out.length - 1].divider) out.pop();
             return out;
         };
-        // mega-menu (Discover): agrupa em seções → grid de 2 colunas (ícone em tile + label + desc) + painel destacado à direita (estilo Vimeo)
-        const arrowR = ICONS.arrowRight;
-        const buildMegaPop = (items, feat) => {
+        // mega-menu (Explore): três grupos em colunas, com ícone, label e descrição
+        const buildMegaPop = items => {
             const secs = [];
             items.forEach(it => {
                 if (it.section) { secs.push({ title: it.section, rows: [] }); return; }
@@ -201,26 +195,18 @@
             });
             const main = secs.filter(s => s.rows.length).map(s =>
                 '<div>' +
-                (s.title ? '<div class="smg-tb-mega-label">' + s.title + '</div>' : '') +
+                (s.title ? '<div class="smg-tb-mega-label">' + i18n(s.title) + '</div>' : '') +
                 '<div class="smg-tb-mega-grid">' +
                 s.rows.map(it =>
                     '<a class="smg-tb-megaitem" href="' + safeHref(it.href) + '">' +
                         '<span class="smg-tb-megaico">' + it.icon + '</span>' +
-                        '<span class="smg-tb-megatext"><span class="smg-tb-megatitle">' + it.label + '</span>' +
-                        (it.desc ? '<span class="smg-tb-megadesc">' + it.desc + '</span>' : '') + '</span>' +
+                        '<span class="smg-tb-megatext"><span class="smg-tb-megatitle">' + i18n(it.label) + '</span>' +
+                        (it.desc ? '<span class="smg-tb-megadesc">' + i18n(it.desc) + '</span>' : '') + '</span>' +
                     '</a>'
                 ).join('') +
                 '</div></div>'
             ).join('');
-            let html = '<div class="smg-tb-mega-cols"><div class="smg-tb-mega-main">' + main + '</div>';
-            if (feat) html += '<a class="smg-tb-mega-feat" href="' + safeHref(feat.href) + '">' +
-                '<div class="smg-tb-mega-feat-art">' + (feat.icon || '') + '</div>' +
-                '<div class="smg-tb-mega-feat-body">' +
-                    '<div class="smg-tb-mega-feat-title">' + feat.title + '</div>' +
-                    '<div class="smg-tb-mega-feat-desc">' + feat.desc + '</div>' +
-                    '<div class="smg-tb-mega-feat-cta">' + feat.cta + arrowR + '</div>' +
-                '</div></a>';
-            return html + '</div>';
+            return '<div class="smg-tb-mega-cols"><div class="smg-tb-mega-main">' + main + '</div></div>';
         };
         groups.forEach(g => {
             if (g.href) { // atalho = link direto (sem dropdown)
@@ -231,14 +217,14 @@
                 nav.appendChild(a);
                 return;
             }
-            if (g.mega) {   // Discover → mega-menu (grid + painel destacado), não a lista simples
+            if (g.mega) {   // Explore → mega-menu (grid + painel destacado), não a lista simples
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'smg-tb-item';
-                btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
+                btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + i18n(g.label) + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
                 const pop = document.createElement('div');
                 pop.className = 'smg-tb-pop smg-tb-pop--mega';
-                pop.innerHTML = buildMegaPop(g.items, g.featured);
+                pop.innerHTML = buildMegaPop(g.items);
                 nav.appendChild(btn);
                 wrap.appendChild(pop);
                 popovers.push({ btn, pop });
@@ -265,7 +251,7 @@
         });
         inner.appendChild(left);   // ESQUERDA = só o logo (a nav foi pro centro)
 
-        // ZONA CENTRAL: navegação (Discover · Timeline · Following), centralizada — estilo Spellbook
+        // ZONA CENTRAL: navegação principal (Following · Feed · Explore)
         const center = document.createElement('div');
         center.className = 'smg-tb-center smg-tb-center--nav';
         center.appendChild(nav);
@@ -353,10 +339,6 @@
             return a;
         };
 
-        // SINO/dropdown de alertas: SAIU da topbar. Os alertas moram no painel lateral (19-alerts-dock.js) —
-        // ter os dois era a mesma lista em dois lugares, e o popover fechava no primeiro clique. O contador
-        // de não lidas migrou pro botão do painel. No MOBILE (sem rail) o sino da navbar inferior + o
-        // bottom sheet continuam sendo o caminho dos alertas.
 
         // NOTICES: ficam no banner nativo DENTRO da página (.notices--block) — não são mais recolhidos pra topbar.
 
@@ -431,15 +413,11 @@
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
-            // ZONA DIREITA, ícone 3 — SINO de alertas: controle ÚNICO do painel lateral (abre/fecha o rail).
-            // Leva o BADGE de alertas não lidos (.smg-rt-alerts é o alvo do sync reativo). No celular some:
-            // lá o sino mora na navbar inferior.
-            if (FEATURES.alertsDock) {
-                const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
-                bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
-                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
-                actions.appendChild(bellBtn);
-            }
+            // O sino abre o mesmo popover em qualquer página; o badge acompanha a contagem reativa.
+            const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
+            bellBtn.classList.add('smg-tb-bellbtn', 'smg-rt-alerts');
+            bellBtn.addEventListener('click', () => { closeAllPops(); toggleAlertsPopover(); });
+            actions.appendChild(bellBtn);
             actions.appendChild(accBtn);   // conta é sempre o item mais à direita (padrão de app: busca · sino · avatar)
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
@@ -494,7 +472,7 @@
                 p.btn.classList.add('active');
                 if (p.right) { // alinha pela direita do botão
                     // medido contra o WRAP, não contra a janela: com o painel lateral aberto o wrap
-                    // termina antes da borda da tela (right: var(--smg-ald-w)), e usar innerWidth
+                    // termina antes da borda da tela (right: var(--smg-alpop-w)), e usar innerWidth
                     // jogava o dropdown a uma largura de rail de distância do avatar.
                     const r = p.btn.getBoundingClientRect();
                     const w = wrap.getBoundingClientRect();
@@ -555,8 +533,8 @@
                 ? '<div class="smg-tb-popdiv"></div>'
                 : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
-                    '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
-                    (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
+                    '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + i18n(it.label) + '</span>' +
+                    (it.desc ? '<span class="smg-tb-popdesc">' + i18n(it.desc) + '</span>' : '') + '</span>' +
                 '</a>';
             const wireSheet = (btnId, sheet) => {
                 const b = document.getElementById(btnId);
@@ -566,7 +544,7 @@
             };
 
             // Discover → sheet com os mesmos itens do dropdown da topbar
-            const dSheet = makeSheet('smg-discover-sheet', 'Discover',
+            const dSheet = makeSheet('smg-discover-sheet', i18n('Explore'),
                 cleanDiv(discoverItems.filter(it => it.divider || it.href)).map(sheetRow).join(''));
             wireSheet('smg-nav-discover', dSheet);
 

@@ -30,13 +30,11 @@
                 display: flex;
                 flex-direction: column;
                 gap: var(--smg-sp-12);
-                padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-24);
-                border-radius: var(--smg-r-20);
+                padding: var(--smg-sp-20) var(--smg-sp-20) var(--smg-sp-18);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
-                border: 1px solid var(--smg-w-12);
-                box-shadow:
-                    var(--smg-hl),
-                    var(--smg-shadow-4);
+                border: 1px solid var(--smg-bd2);
+                box-shadow: var(--smg-pop-shadow);
                 opacity: 0;
                 transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-30) cubic-bezier(.2,.9,.3,1);
             }
@@ -97,7 +95,7 @@
             /* topbar: lupa + input + atalho + fechar (command palette, sem botão) */
             .smg-search-bar {
                 display: flex; align-items: center; gap: var(--smg-sp-12);
-                height: 56px; padding: 0 var(--smg-sp-8) 0 var(--smg-sp-16);
+                height: 50px; padding: 0 var(--smg-sp-8) 0 var(--smg-sp-14);
                 border-radius: var(--smg-r-14);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-10);
@@ -151,19 +149,19 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 color: var(--smg-w-72);
             }
             .smg-search-select-wrap .smg-search-select-ic svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-select-wrap select {
                 appearance: none;
                 -webkit-appearance: none;
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-28) 0 var(--smg-sp-32);
                 border-radius: var(--smg-r-10);
                 background-color: var(--smg-w-06);
@@ -196,8 +194,8 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 34px;
-                height: 34px;
+                width: 32px;
+                height: 32px;
                 box-sizing: border-box;
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-06);
@@ -212,8 +210,8 @@
                 color: #fff;
             }
             .smg-search-author-trigger svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-global-toolbar.author-open .smg-search-tb-row {
@@ -224,7 +222,7 @@
                 align-items: center;
                 gap: var(--smg-sp-10);
                 width: 100%;
-                height: 34px;
+                height: 32px;
                 box-sizing: border-box;
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-08);
@@ -244,8 +242,8 @@
                 flex-shrink: 0;
             }
             .smg-search-author-row .smg-search-author-ic svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-author-row .smg-search-author-inp {
@@ -306,8 +304,8 @@
                 color: #fff;
             }
             .smg-search-tb-row .smg-search-cfg {
-                width: 34px;
-                height: 34px;
+                width: 32px;
+                height: 32px;
                 padding: 0;
                 border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
@@ -328,7 +326,7 @@
                 display: inline-flex;
                 align-items: center;
                 gap: var(--smg-sp-8);
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-12);
                 border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-12);
@@ -355,7 +353,7 @@
                 opacity: 0.7;
             }
             .smg-search-global-toolbar .smg-multiselect-btn {
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-12);
                 font-size: var(--smg-fs-13);
                 font-weight: 600;
@@ -381,7 +379,7 @@
                 display: inline-flex;
                 align-items: center;
                 gap: var(--smg-sp-8);
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-10);
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-04);
@@ -444,7 +442,7 @@
                 border-color: var(--smg-w-30); color: #fff;
             }
             .smg-chip-check { display: none; align-items: center; }
-            .smg-chip-check svg { width: 15px; height: 15px; fill: none; }
+            .smg-chip-check svg { width: 16px; height: 16px; fill: none; }
             .smg-chip-toggle.active .smg-chip-check { display: inline-flex; }
             .smg-search-by {
                 flex: 0 0 auto; width: 100%; min-width: 0; height: 44px; padding: 0 var(--smg-sp-16); box-sizing: border-box;
@@ -460,7 +458,7 @@
             .smg-search-scope { position: relative; }
             .smg-search-scope-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                height: 36px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
+                height: 32px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -480,7 +478,7 @@
             }
             .smg-search-scope-list[hidden] { display: none; }
             .smg-search-scope-list button {
-                display: flex; align-items: center; height: 36px; padding: 0 var(--smg-sp-12);
+                display: flex; align-items: center; height: 32px; padding: 0 var(--smg-sp-12);
                 border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 500; cursor: pointer; text-align: left; white-space: nowrap;
                 transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
@@ -491,7 +489,7 @@
                Vira order=date no POST da busca (= &o=date na URL de resultados). */
             .smg-search-order-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
-                height: 36px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
+                height: 32px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -499,12 +497,12 @@
             }
             .smg-search-order-btn:hover { background: var(--smg-w-10); }
             .smg-search-order-ic { display: inline-flex; opacity: 0.7; }
-            .smg-search-order-ic svg { width: 15px; height: 15px; fill: none; }
+            .smg-search-order-ic svg { width: 16px; height: 16px; fill: none; }
             .smg-search-pop--drop .smg-search-toolbar { gap: var(--smg-sp-8); }   /* dropdown (480px): toolbar ganhou o chip de ordenar → gap menor pra caber numa linha */
             /* SÓ TÍTULOS — switch */
             .smg-search-switch {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-10); margin-left: auto;   /* empurra Só-títulos + autor pra DIREITA (escopo fica na esquerda) */
-                height: 36px; padding: 0 var(--smg-sp-4); border: 0; background: transparent;
+                height: 32px; padding: 0 var(--smg-sp-4); border: 0; background: transparent;
                 color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer;
                 transition: color var(--smg-dur-15) ease;
             }
@@ -518,19 +516,19 @@
                 background: #fff; box-shadow: var(--smg-shadow-1);
                 transition: transform var(--smg-dur-20) cubic-bezier(.3,.8,.3,1);
             }
-            .smg-search-switch.on .smg-search-switch-track { background: #34c759; }
+            .smg-search-switch.on .smg-search-switch-track { background: var(--smg-link); }
             .smg-search-switch.on .smg-search-switch-thumb { transform: translateX(16px); }
             /* AUTOR — ícone que revela o campo (.smg-search-by reusa o estilo existente) */
             .smg-search-author-btn {
                 display: inline-flex; align-items: center; justify-content: center;
-                width: 36px; height: 36px; box-sizing: border-box;
+                width: 32px; height: 32px; box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: var(--smg-w-72); cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
             }
             .smg-search-author-btn:hover { background: var(--smg-w-10); color: #fff; }
             .smg-search-author-btn.open { background: var(--smg-w-10); border-color: var(--smg-w-30); color: #fff; }
-            .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
+            .smg-search-author-btn svg { width: 16px; height: 16px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
             /* AÇÕES DA BARRA — ⇥ (comandos) · funil (avançada) · sliders (defaults) · esc · × têm UM desenho só:
                30px, raio 9, mesma borda/fundo/hover. Antes cada um tinha altura, raio e borda próprios (24/30/36px). */
@@ -559,7 +557,7 @@
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-search-go-ic { display: inline-flex; }
-            .smg-search-go-ic svg { width: 17px; height: 17px; fill: none; stroke-width: 2.4; }
+            .smg-search-go-ic svg { width: 16px; height: 16px; fill: none; stroke-width: 2.4; }
             .smg-search-go:hover { filter: brightness(0.9); }
             .smg-search-go:active { transform: scale(0.97); }
 
@@ -712,7 +710,7 @@
             }
             html.smg-search-form form.block label.iconic--radio > i { border-radius: var(--smg-r-round) !important; }
             html.smg-search-form form.block label.iconic > i::after { position: static !important; margin: 0 !important; font-size: var(--smg-fs-11) !important; line-height: 1 !important; }
-            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong) !important; border-color: var(--smg-link-strong) !important; }
+            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
             html.smg-search-form form.block label.iconic input:checked + i::after { color: #fff !important; }
             /* Order by (Relevance/Date): radios na HORIZONTAL */
             html.smg-search-form form.block .inputChoices { display: flex !important; flex-wrap: wrap; gap: var(--smg-sp-8) var(--smg-sp-24); margin: 0 !important; padding: 0 !important; }
@@ -727,7 +725,7 @@
             html.smg-search-form form.block .formSubmitRow .button--primary {
                 display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 44px; padding: 0 var(--smg-sp-24) !important;
                 border: 0 !important; border-radius: var(--smg-r-12) !important; box-shadow: none !important;
-                background: var(--smg-link-strong) !important; color: #fff !important;
+                background: var(--smg-link) !important; color: #fff !important;
                 font-size: var(--smg-fs-14) !important; font-weight: 700 !important;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
@@ -773,7 +771,7 @@
             .smg-search-empty-hint code { padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: var(--smg-sp-8); margin-bottom: var(--smg-sp-4); }
             .smg-search-hist-title { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--smg-w-40); }
-            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
+            .smg-search-hist-badge { color: var(--smg-w-40); font-size: var(--smg-fs-11); font-weight: 600; font-variant-numeric: tabular-nums; }
             .smg-search-hist-clear {
                 margin-left: auto; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); border: none;
                 background: transparent; color: var(--smg-w-55); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
@@ -782,18 +780,14 @@
             .smg-search-hist-clear:hover { background: var(--smg-w-08); color: #fff; }
             .smg-search-hist-list { display: flex; flex-direction: column; gap: var(--smg-sp-2); }
             .smg-search-hist-item {
-                display: flex; align-items: center; gap: var(--smg-sp-12); width: 100%;
-                padding: var(--smg-sp-8) var(--smg-sp-10); border-radius: var(--smg-r-12); border: none; cursor: pointer; text-align: left;
+                display: flex; align-items: center; gap: var(--smg-sp-8); width: 100%; min-height: 38px;
+                padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-8); border: none; cursor: pointer; text-align: left;
                 background: transparent; color: #fff; transition: background var(--smg-dur-12) ease;
             }
-            .smg-search-hist-item:hover { background: var(--smg-w-08); }
-            .smg-search-hist-ico {
-                flex: 0 0 auto; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-10); background: var(--smg-w-06); color: var(--smg-w-55);
-            }
-            .smg-search-hist-ico svg { width: 16px; height: 16px; fill: none; }
+            .smg-search-hist-item:hover { background: var(--smg-w-06); }
             .smg-search-hist-q { flex: 1 1 auto; min-width: 0; font-size: var(--smg-fs-14); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-search-hist-meta { flex: 0 0 auto; font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; }
+            .smg-search-hist-meta { flex: 0 1 auto; font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; }
+            .smg-search-hist-titles { flex: 0 0 auto; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-chip-r); background: var(--smg-w-06); color: var(--smg-w-50); font-size: var(--smg-fs-10); font-weight: 600; white-space: nowrap; }
             .smg-search-hist-remove {
                 flex: 0 0 auto; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
                 border-radius: var(--smg-r-8); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
@@ -810,6 +804,7 @@
                 opacity: 0; transition: opacity var(--smg-dur-12) ease, background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
             .smg-search-hist-item:hover .smg-search-hist-act { opacity: 1; }
+            .smg-search-hist-act:focus-visible { opacity: 1; outline: 1px solid var(--smg-link); outline-offset: 1px; }
             .smg-search-hist-act:hover { background: var(--smg-w-14); color: #fff; }
             .smg-search-hist-act svg { width: 14px; height: 14px; fill: none; }
             /* resultados da busca INLINE (mostrados no próprio dropdown) */
@@ -889,5 +884,27 @@
             #smg-thread-search .smg-nav-ico svg {
                 fill: none;
                 stroke-width: 2;
+            }
+            @media (max-width: 600px) {
+                #smg-search-pop {
+                    top: max(12px, env(safe-area-inset-top));
+                    max-width: calc(100vw - 24px);
+                    max-height: calc(100vh - 24px);
+                    max-height: calc(100dvh - 24px);
+                    padding: var(--smg-sp-14);
+                    gap: var(--smg-sp-10);
+                }
+                .smg-search-bar { height: 46px; gap: var(--smg-sp-8); }
+                .smg-search-global-toolbar { gap: var(--smg-sp-6); }
+                .smg-search-tb-row { gap: var(--smg-sp-6); }
+                .smg-search-tb-spacer { display: none; }
+                .smg-search-hist-item { flex-wrap: wrap; min-height: 36px; row-gap: var(--smg-sp-4); }
+                .smg-search-hist-q { flex-basis: calc(100% - 88px); }
+                .smg-search-hist-meta { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+                .smg-search-hist-acts,
+                .smg-search-hist-act,
+                .smg-search-hist-remove { opacity: 1; }
+                .smg-search-hist-act,
+                .smg-search-hist-remove { width: 28px; height: 28px; }
             }
 `;
