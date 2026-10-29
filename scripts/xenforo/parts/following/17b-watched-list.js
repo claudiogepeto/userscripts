@@ -240,6 +240,25 @@
 
     let isStreamingWatched = false;
     const onWatchedPage = () => /\/watched\/threads(?:\/|$|\?)/.test(location.pathname) || /\/watched\/threads(?:\/|$|\?)/.test(location.href);
+    function moveWatchedManageAction() {
+        const title = document.querySelector('.p-body-header .p-title');
+        if (!title || title.dataset.smgWatchedAction === '1') return;
+        const opposite = document.querySelector('.p-body-content form .block-outer-opposite, .p-body-content .block-outer-opposite');
+        if (!opposite || !opposite.querySelector('.menuTrigger')) return;
+        const action = document.createElement('div');
+        action.className = 'p-title-pageAction';
+        action.dataset.smgWatchedAction = '1';
+        while (opposite.firstChild) action.appendChild(opposite.firstChild);
+        if (!action.querySelector('.menuTrigger')) return;
+        title.appendChild(action);
+        title.dataset.smgWatchedAction = '1';
+
+        const outer = opposite.closest('.block-outer');
+        const remainingNav = outer && Array.from(outer.querySelectorAll('.pageNavWrapper, .pageNav'));
+        if (outer && !opposite.children.length && (!remainingNav.length || remainingNav.every(node => getComputedStyle(node).display === 'none'))) {
+            outer.style.setProperty('display', 'none', 'important');
+        }
+    }
     function stopWatchedStream() {
         isStreamingWatched = false;
         document.querySelectorAll('.js-replyNewMessageContainer > .structItem--thread, .block--messages .structItem--thread').forEach(el => el.remove());
@@ -261,6 +280,7 @@
                 el.style.setProperty('display', 'none', 'important');
                 el.dataset.smgHidden = '1';
             });
+            moveWatchedManageAction();
             eachIn(roots, '.structItem--thread', decorateWatchedThreadRow);
             // o ingest da lista é do stream (1× pra página aberta + 1× por página buscada), não de cada
             // frame de mutação: as linhas que o stream anexa já foram ingeridas com o doc delas.

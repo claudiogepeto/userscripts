@@ -26,6 +26,15 @@
                 background: var(--smg-bg) !important;
                 border-color: var(--smg-w-06) !important;
             }
+            /* MODO GRADE: remove a superfície do painel que envolve a lista e alinhe os cards ao conteúdo. */
+            html.smg-threadlist.smg-tv-grid .block-container:has(.smg-tl-grid),
+            html.smg-threadlist.smg-tv-grid .block-body:has(.smg-tl-grid),
+            html.smg-threadlist.smg-tv-grid .structItemContainer:has(.smg-tl-grid) {
+                background: transparent !important;
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist.smg-tv-grid .block-body:has(.smg-tl-grid) { padding-inline: 0 !important; }
             /* GRID: quadrado, ocupa a célula toda */
             html.smg-threadlist.smg-tv-grid .structItem--thread.smg-no-thumb .smg-thumb-ph {
                 display: flex !important; width: 100% !important; aspect-ratio: 1 / 1;

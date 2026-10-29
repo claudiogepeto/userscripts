@@ -710,9 +710,85 @@
         thumb.appendChild(btn);
     }
 
+    let cardTagsResizeObserver = null;
+    function updateCardTags(track) {
+        if (!track || !track.isConnected) return;
+        const tags = track.closest('.smg-card-tags');
+        if (!tags) return;
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        const overflowing = maxScroll > 1;
+        const showPrev = overflowing && track.scrollLeft > 1;
+        const showNext = overflowing && track.scrollLeft < maxScroll - 1;
+        const prev = tags.querySelector('.smg-card-tags-prev');
+        const next = tags.querySelector('.smg-card-tags-next');
+        tags.classList.toggle('has-prev', showPrev);
+        tags.classList.toggle('has-next', showNext);
+        if (prev) prev.hidden = !showPrev;
+        if (next) next.hidden = !showNext;
+    }
+
+    function buildCardTags(title) {
+        const candidates = Array.from(title.querySelectorAll('.label, .prefix, .labelLink, .label-append'));
+        const items = [];
+        candidates.forEach(node => {
+            const direct = node;
+            let child = direct;
+            while (child.parentElement && child.parentElement !== title) child = child.parentElement;
+            if (child.parentElement === title && !items.includes(child)) items.push(child);
+        });
+        const labels = items.filter(node => !node.matches('.label-append'));
+        if (!labels.length) return;
+
+        items.filter(node => node.matches('.label-append')).forEach(node => node.remove());
+        const tags = document.createElement('div');
+        tags.className = 'smg-card-tags';
+        const prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'smg-card-tags-prev';
+        prev.setAttribute('aria-label', IS_PT ? 'Rolar etiquetas para a esquerda' : 'Scroll tags left');
+        prev.innerHTML = ICONS.pagePrev;
+        const track = document.createElement('div');
+        track.className = 'smg-card-tags-track';
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'smg-card-tags-next';
+        next.setAttribute('aria-label', IS_PT ? 'Rolar etiquetas para a direita' : 'Scroll tags right');
+        next.innerHTML = ICONS.pageNext;
+        labels.forEach(node => track.appendChild(node));
+        tags.append(prev, track, next);
+
+        const scroll = direction => event => {
+            event.preventDefault();
+            event.stopPropagation();
+            track.scrollBy({ left: Math.max(1, Math.round(track.clientWidth * 0.8)) * direction, behavior: 'smooth' });
+            updateCardTags(track);
+        };
+        prev.addEventListener('click', scroll(-1));
+        next.addEventListener('click', scroll(1));
+        track.addEventListener('scroll', () => updateCardTags(track), { passive: true });
+        if (typeof ResizeObserver !== 'undefined') {
+            if (!cardTagsResizeObserver) {
+                cardTagsResizeObserver = trackObserver(new ResizeObserver(entries => entries.forEach(entry => updateCardTags(entry.target))));
+            }
+            cardTagsResizeObserver.observe(track);
+        }
+        const titleLink = Array.from(title.children).find(node => node.matches('a:not(.label):not(.labelLink)'));
+        title.insertBefore(tags, titleLink || title.firstChild);
+        updateCardTags(track);
+    }
+
     function decorateThreadCard(row) {
         if (!row || row.dataset.smgDecorated) return;
         row.dataset.smgDecorated = '1';
+        const title = row.querySelector('.structItem-title');
+        const thumb = row.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
+        if (row.classList.contains('is-unread') && thumb && !thumb.querySelector('.smg-card-new')) {
+            const badge = document.createElement('span');
+            badge.className = 'smg-card-new';
+            badge.textContent = IS_PT ? 'NOVO' : 'NEW';
+            thumb.appendChild(badge);
+        }
+        if (title && !title.querySelector('.smg-card-tags')) buildCardTags(title);
         const createdEl = row.querySelector('.structItem-startDate time');
         const latestEl = row.querySelector('.structItem-cell--latest time, .structItem-latestDate time');
 
@@ -730,7 +806,6 @@
             if (upText || crText) {
                 datesRow.innerHTML = `
                     ${upText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
-                    ${upText && crText ? `<span class="smg-card-date-sep">·</span>` : ''}
                     ${crText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
                 `;
                 if (mainCell) mainCell.appendChild(datesRow);

@@ -77,7 +77,7 @@
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
         setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
-        aldockSyncCount();   // contador do rail de notificações (se estiver docked)
+        alpopSyncCount();   // contador do popover de alertas (se estiver montado)
     }
     function watchNativeBadges() {
         if (badgeObsBound) return;   // o MutationObserver já mantém os badges em sync ao vivo — não varre todo frame
