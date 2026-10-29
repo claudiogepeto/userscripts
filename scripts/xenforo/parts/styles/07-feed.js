@@ -162,25 +162,6 @@
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
             .smg-fp-content { color: var(--smg-w-95); word-break: break-word; }
-            /* Não forçar display: o card de file-host esconde o unfurl nativo
-               com style inline. display:block !important trazia a URL e o preview
-               de volta, duplicados em cima do nosso card. */
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow {
-                display: flex !important;
-                align-items: flex-start !important;
-                height: auto !important;
-                max-height: none !important;
-                overflow: visible !important;
-                white-space: normal !important;
-            }
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-main,
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-header,
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-snippet {
-                height: auto !important;
-                max-height: none !important;
-                overflow: visible !important;
-                white-space: normal !important;
-            }
             .smg-fp-content .bbCodeBlock--unfurl:has(~ .smg-fhcard),
             .smg-fp-content a.link--external:has(+ .smg-fhcard),
             .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {

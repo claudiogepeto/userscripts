@@ -31,7 +31,7 @@
                 case 'g': click('smg-post-goto'); break;       // ir pra página
                 case 'f': openMedia('feed'); break;   // overlay de mídia na vista Feed (navegação própria, página 1)
                 case 'v': click('smg-view-toggle'); break;     // alterna lista/grade
-                case 'n': if (FEATURES.alertsDock) toggleAlertsDock(); break;   // painel de notificações docked (abre/fecha)
+                case 'n': toggleAlertsPopover(); break;   // abre/fecha alertas
                 case '[': click('smg-post-page-prev'); break;  // página anterior
                 case ']': click('smg-post-page-next'); break;  // próxima página
                 case '/': e.preventDefault(); click('smg-thread-search'); break; // busca

@@ -64,7 +64,7 @@
                 /* camadas de z-index (mesmos números de antes, agora com nome) */
                 --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
                 --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;
-                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-thead: 100; --smg-z-aldock: 101; --smg-z-topbar: 1000;
+                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-thead: 100; --smg-z-topbar: 1000;
                 --smg-z-topbar-up: 1001; --smg-z-gate: 1100; --smg-z-gate-1: 1101; --smg-z-gate-2: 1102; --smg-z-9999: 9999; --smg-z-10000: 10000;
                 --smg-z-dock-under: 999990; --smg-z-dock: 999999; --smg-z-sheet: 1000000; --smg-z-sheet-1: 1000001; --smg-z-sheet-3: 1000003; --smg-z-sheet-4: 1000004;
                 --smg-z-sheet-5: 1000005; --smg-z-sheet-top: 9999999; --smg-z-overlay: 2147483600; --smg-z-overlay-1: 2147483601; --smg-z-max-1: 2147483646;
@@ -115,15 +115,6 @@
             @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
             }
-            /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
-               20% de margem vazia em cima disso desperdiçaria duas vezes a mesma tela. Especificidade
-               maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
-            html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
-            @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
-            @media (max-width: 1400px) and (min-width: 801px) {
-                html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
-            }
-
             /* ---- REMOVE a sidebar fora da home · conteúdo a 100% ----
                a sidebar nativa some em todas as páginas (a home esconde a dela no bloco HOME);
                fora da home o .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).

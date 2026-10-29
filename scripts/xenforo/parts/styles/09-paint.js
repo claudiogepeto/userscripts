@@ -25,13 +25,11 @@
             html.smg-page-pending .p-body,
             html.smg-page-pending .p-pageWrapper { visibility: hidden !important; }
             html.smg-page-pending #smg-topbar-wrap,
-            html.smg-page-pending #smg-aldock,
             html.smg-page-pending #smg-post-nav-wrapper {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
             html.smg-page-pending #smg-topbar-wrap { z-index: var(--smg-z-gate) !important; }
-            html.smg-page-pending #smg-aldock { z-index: var(--smg-z-gate-1) !important; }
             html.smg-page-pending #smg-post-nav-wrapper { z-index: var(--smg-z-gate-2) !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: var(--smg-z-topbar); display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
@@ -39,14 +37,6 @@
             }
             /* o fade de saída (120 ms) vale pra TODA página: o skeleton segue visível enquanto smg-skeleton-fade-out */
             html.smg-page-pending #smg-page-skeleton, html.smg-skeleton-fade-out #smg-page-skeleton { display: block; }
-            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w); }
-            #smg-page-skeleton-rail {
-                position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--smg-z-topbar-up); display: none; width: var(--smg-ald-w);
-                overflow: hidden; pointer-events: none; background: var(--smg-bg); color: #fff;
-                border-left: 1px solid var(--smg-w-10); box-shadow: -10px 0 30px var(--smg-k-25);
-            }
-            html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail,
-            html.smg-skeleton-fade-out.smg-aldock-on #smg-page-skeleton-rail { display: block; }
             /* Component-level loading states & decoupling: */
             html.smg-topbar-ready #smg-topbar-wrap {
                 visibility: visible !important;
@@ -68,14 +58,6 @@
                     min-height: calc(100dvh - 52px) !important;
                 }
             }
-            html.smg-sidebar-ready #smg-aldock {
-                visibility: visible !important;
-                pointer-events: auto !important;
-                z-index: var(--smg-z-gate-1) !important;
-            }
-            html.smg-sidebar-ready #smg-page-skeleton-rail {
-                display: none !important;
-            }
             html.smg-navbar-ready #smg-post-nav-wrapper {
                 visibility: visible !important;
                 pointer-events: auto !important;
@@ -88,16 +70,12 @@
                 visibility: visible !important;
                 pointer-events: auto !important;
             }
-            #smg-page-skeleton, #smg-page-skeleton-rail {
+            #smg-page-skeleton {
                 opacity: 1;
                 transition: opacity var(--smg-dur-12) cubic-bezier(0.2, 0, 0, 1);
                 will-change: opacity;
             }
             html.smg-skeleton-fade-out #smg-page-skeleton,
-            html.smg-skeleton-fade-out #smg-page-skeleton-rail {
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
             html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton {
                 display: none !important;
             }
@@ -185,16 +163,6 @@
             .smg-gallery-tile.is-loading::after,
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; pointer-events: none; }
             @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
-            .smg-page-skeleton-rail-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 62px; padding: 0 var(--smg-sp-16); border-bottom: 1px solid var(--smg-w-08); }
-            .smg-page-skeleton-rail-title { display: block; width: 104px; height: 15px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
-            .smg-page-skeleton-rail-actions { display: flex; gap: var(--smg-sp-8); margin-left: auto; }
-            .smg-page-skeleton-rail-actions i { display: block; width: 28px; height: 28px; border-radius: var(--smg-r-8); background: var(--smg-w-08); }
-            .smg-page-skeleton-rail-list { display: grid; }
-            .smg-page-skeleton-rail-row { display: flex; align-items: center; gap: var(--smg-sp-12); min-height: 86px; padding: var(--smg-sp-12) var(--smg-sp-14); border-bottom: 1px solid var(--smg-w-08); }
-            .smg-page-skeleton-rail-thumb { flex: 0 0 58px; width: 58px; height: 58px; border-radius: var(--smg-r-12); background: var(--smg-w-08); }
-            .smg-page-skeleton-rail-copy { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: var(--smg-sp-10); }
-            .smg-page-skeleton-rail-line { display: block; width: 86%; height: 10px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
-            .smg-page-skeleton-rail-line.short { width: 54%; height: 8px; }
             @media (max-width: 1100px) {
                 .smg-page-skeleton-chrome { height: 52px; padding: 0 var(--smg-sp-14); }
                 .smg-page-skeleton-chrome-logo { flex-basis: 100px; width: 100px; height: 24px; }
@@ -216,7 +184,6 @@
                     min-height: 100vh !important;
                     min-height: 100dvh !important;
                 }
-                #smg-page-skeleton-rail { display: none !important; }
                 .smg-page-skeleton-chrome { height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) var(--smg-sp-14) 0; }
                 .smg-page-skeleton-main { width: 100%; max-width: none; min-height: calc(100vh - 54px); min-height: calc(100dvh - 54px); padding: var(--smg-sp-14) var(--smg-sp-12) 38px; }
                 .smg-page-skeleton-header { min-height: 82px; padding: var(--smg-sp-14) 0 var(--smg-sp-12); }

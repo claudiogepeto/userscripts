@@ -2,7 +2,7 @@
 
 One userscript that redesigns two XenForo 2 forums, SimpCity and
 SocialMediaGirls: topbar, dock, thread and post cards, media overlay, Feed,
-alerts rail, bookmarks feed, settings. Paths below are relative to
+alerts popover, bookmarks feed, settings. Paths below are relative to
 `scripts/xenforo/`. Read this before changing anything; the README is the
 human overview.
 
@@ -67,7 +67,7 @@ Read the summary line, not the exit code of a pipeline. Only
 | Thread header, filter bar, thread card, follow button | `parts/thread/17a-filterbar.js` | `parts/styles/05-filterbar.js`, `parts/styles/06-thread.js` |
 | Post and comment cards | `parts/thread/17c-post-cards.js` | `parts/thread/css-post-cards.js`, `parts/thread/css-comments.js` |
 | Followed threads list | `parts/following/17b-watched-list.js` | `parts/styles/06-thread.js` |
-| Alerts (cleanup and rail) | `parts/alerts/18-alerts.js`, `parts/alerts/19-alerts-dock.js` | `parts/alerts/css-alerts.js`, `parts/styles/08-alertdock.js` |
+| Alerts (cleanup and popover) | `parts/alerts/18-alerts.js`, `parts/alerts/19-alerts-popover.js` | `parts/alerts/css-alerts.js`, `parts/styles/08-alertpopover.js` |
 | Feed, feed sync, cron | `parts/feed/22-feed.js`, `parts/feed/22-feed-sync.js` | `parts/styles/07-feed.js` |
 | Bookmarks feed | `parts/feed/22-bookmarks.js` | `parts/styles/07-feed.js` |
 | IndexedDB | `parts/feed/06b-feed-db.js` | |
@@ -96,7 +96,7 @@ toast, pager, skeleton or masonry is a defect even when it works.
   via `smg-sheet-lock`, one history entry per open sheet, Back closes it).
 - **Infinite loader**: `createPager` in `parts/thread/07-posts-misc.js`. Every
   list that grows at its end uses it: thread and listing pages, Feed, Saved,
-  home carousel (x axis), search results, alerts rail.
+  home carousel (x axis), search results, alerts popover.
 - **Skeleton and paint**: `parts/runtime/22-paint.js` (page kinds,
   `paintSkeletonMarkup`, readiness, release) with `parts/styles/09-paint.js`.
 - **Masonry**: `parts/media/08a-masonry-engine.js` (`masonryMount`,
@@ -118,8 +118,7 @@ toast, pager, skeleton or masonry is a defect even when it works.
 
 Users already have data under these names. Renaming one silently loses it.
 
-- GM storage keys: `smg-features`, `smg-off`, `smg-alerts-dock`,
-  `smg-alerts-dock-w`, `smg-alerts-count`, `smg-feed-cron-last-run`,
+- GM storage keys: `smg-features`, `smg-off`, `smg-alerts-count`, `smg-feed-cron-last-run`,
   `smg-feed-retention-days`, `smg-feed-muted`, `smg-fh-logos`,
   `smg-search-history`, `smg-thumb-cache-<site>`, `smg-thumb-tpl-<site>`,
   `smg-navmode-notice`, `smg-notices-dismissed-ids`, `smg-notices-expanded`,
@@ -133,6 +132,8 @@ Users already have data under these names. Renaming one silently loses it.
   a version bump and an upgrade step in `fdbOpen`.
 - URL parameters: `view` (`gallery`, `feed`) and `order` on thread pages.
 - `SETTINGS_META` keys (they are the keys inside `smg-features`).
+
+Deprecated alerts presentation keys `smg-alerts-dock` and `smg-alerts-dock-w` are ignored; do not read or write them.
 
 ## Recipes
 

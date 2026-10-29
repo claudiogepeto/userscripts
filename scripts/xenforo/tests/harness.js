@@ -190,7 +190,8 @@ async function openPage(opts) {
             if (res == null) { if (req.onerror) req.onerror({ status: 0 }); return; }
             if (typeof res === 'string') res = { status: 200, body: res };
             const body = res.json !== undefined ? JSON.stringify(res.json) : (res.body || '');
-            const response = { status: res.status == null ? 200 : res.status, responseText: body, response: res.response !== undefined ? res.response : (req.responseType === 'json' ? JSON.parse(body || 'null') : body), finalUrl: u, responseHeaders: '' };
+            const responseHeaders = Object.keys(res.headers || {}).map(k => k + ': ' + res.headers[k]).join('\r\n');
+            const response = { status: res.status == null ? 200 : res.status, responseText: body, response: res.response !== undefined ? res.response : (req.responseType === 'json' ? JSON.parse(body || 'null') : body), finalUrl: res.finalUrl ? absolute(window, res.finalUrl) : (res.redirect ? absolute(window, res.redirect) : u), responseHeaders };
             if (req.onload) req.onload(response);
         });
         return { abort() {} };

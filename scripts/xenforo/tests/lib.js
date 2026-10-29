@@ -5,14 +5,14 @@ const { fixture } = require('./harness');
 
 const THREAD = '/threads/sample-thread.100/';
 
-function post({ id, author = 'Author', ts = 1700000000 + id, body = 'Post ' + id, thread = THREAD }) {
+function post({ id, author = 'Author', ts = 1700000000 + id, body = 'Post ' + id, attachments = '', thread = THREAD }) {
     return `<article class="message message--post js-post js-inlineModContainer" data-author="${author}" data-content="post-${id}" id="js-post-${id}">
 <span class="u-anchorTarget" id="post-${id}"></span>
 <div class="message-inner">
 <div class="message-cell message-cell--user"><section class="message-user"><div class="message-avatar"><div class="message-avatar-wrapper"><a href="/members/${author.toLowerCase()}.7/" class="avatar avatar--m"><img src="/data/avatars/m/0/7.jpg" alt="${author}"></a></div></div><div class="message-userDetails"><h4 class="message-name"><a href="/members/${author.toLowerCase()}.7/" class="username">${author}</a></h4></div></section></div>
 <div class="message-cell message-cell--main"><div class="message-main js-quickEditTarget">
 <header class="message-attribution message-attribution--split"><ul class="message-attribution-main listInline"><li class="u-concealed"><a href="${thread}post-${id}" rel="nofollow"><time class="u-dt" dir="auto" data-timestamp="${ts}">Nov 14, 2023</time></a></li></ul><ul class="message-attribution-opposite message-attribution-opposite--list"><li><a href="${thread}post-${id}" class="message-attribution-gadget" data-xf-init="share-tooltip" data-href="/posts/${id}/share" aria-label="Share" rel="nofollow"><i class="fa--xf far fa-share-alt" aria-hidden="true"></i></a></li><li><a href="${thread}post-${id}" rel="nofollow">#${id}</a></li></ul></header>
-<div class="message-content js-messageContent"><div class="message-userContent lbContainer js-lbContainer" data-lb-id="post-${id}"><article class="message-body js-selectToQuote"><div class="bbWrapper">${body}</div></article></div></div>
+<div class="message-content js-messageContent"><div class="message-userContent lbContainer js-lbContainer" data-lb-id="post-${id}"><article class="message-body js-selectToQuote"><div itemprop="text"><div class="bbWrapper">${body}</div></div><div class="js-selectToQuoteEnd"></div></article>${attachments}</div></div>
 <footer class="message-footer"><div class="message-actionBar actionBar"><div class="actionBar-set actionBar-set--external"><a href="/posts/${id}/react?reaction_id=1" class="reaction actionBar-action actionBar-action--reaction" data-xf-click="reaction" data-reaction-id="1"><bdi>Like</bdi></a></div><div class="actionBar-set actionBar-set--internal"><a href="/posts/${id}/bookmark" class="bookmarkLink actionBar-action actionBar-action--bookmark" data-xf-click="bookmark-click" data-sk-bookmarked="addClass:is-bookmarked">Bookmark</a><a href="${thread}reply?quote=${id}" class="actionBar-action actionBar-action--reply" data-xf-click="quote">Reply</a></div></div><div class="reactionsBar js-reactionsList"></div></footer>
 </div></div>
 </div>
@@ -59,6 +59,18 @@ function threadRow({ id, title = 'Thread ' + id, author = 'Starter', ts = 170000
 
 module.exports = { THREAD, post, pageNav, watchButton, threadPage, threadRow };
 
+// Legacy XenForo attachment list as rendered beside article.message-body.
+function attachmentList(items = []) {
+    return `<section class="message-attachments"><h4 class="block-textHeader">Attachments</h4><ul class="attachmentList">${items.map((item, i) => {
+        const href = item.href || `/attachments/photo-${i + 1}.${i + 1}/`;
+        const type = item.type || 'image';
+        const thumb = item.thumb || `https://simp6.example.su/simpo/data/attachments/45/45820-${i + 1}.jpg?hash=thumb`;
+        const name = item.name || (type === 'image' ? `photo-${i + 1}.jpg` : `file-${i + 1}.zip`);
+        return `<li class="file file--linked"><a class="file-preview js-lbImage" href="${href}" data-type="${type}"><img src="${thumb}" width="150" height="265" style="aspect-ratio: 150 / 265"></a><div class="file-content"><div class="file-info"><span class="file-name">${name}</span><div class="file-meta">1 MB · ${i + 2} views</div></div></div></li>`;
+    }).join('')}</ul></section>`;
+}
+module.exports.attachmentList = attachmentList;
+
 const FORUM = '/forums/instagram.5/';
 // a forum listing page (the live page or a fetched next page)
 function listingPage({ rows = [], sticky = [], page = 1, of = 1, base = FORUM, lang = 'en-US' } = {}) {
@@ -73,6 +85,17 @@ function listingPage({ rows = [], sticky = [], page = 1, of = 1, base = FORUM, l
 
 module.exports.FORUM = FORUM;
 module.exports.listingPage = listingPage;
+
+// /watched/threads has its Manage action beside the pager in the list's first outer row.
+function watchedThreadsPage({ rows = [], page = 1, of = 1, lang = 'en-US' } = {}) {
+    const html = listingPage({ rows, page, of, base: '/watched/threads/', lang })
+        .replace(/data-template="forum_view"/g, 'data-template="watched_threads_list"')
+        .replace(/<body data-template="forum_view">/g, '<body data-template="watched_threads_list">')
+        .replace('<h1 class="p-title-value">Instagram</h1>\n    <div class="p-title-pageAction"><a href="/forums/instagram.5/post-thread" class="button--cta button button--icon button--icon--write">Post thread</a></div>', '<h1 class="p-title-value">Followed threads</h1>')
+        .replace('<div class="block-outer"><div class="block-outer-main"></div></div>', '<form><div class="block-outer"><div class="block-outer-main"><nav class="pageNavWrapper" style="display:none"><div class="pageNav"></div></nav></div><div class="block-outer-opposite"><button class="button button--link menuTrigger" data-xf-click="menu"><span class="button-text">Manage watched threads</span></button><div class="menu" data-menu="menu"><a class="menu-linkRow" href="/watched/threads/manage?state=delete">Unfollow selected</a></div></div></div></form>');
+    return html;
+}
+module.exports.watchedThreadsPage = watchedThreadsPage;
 
 // one alert row as XenForo renders it in the alerts popup/page
 function alertRow({ id, unread = false, thread = 'thread-' + id, threadId = id, who = 'Poster', ts = '2026-01-01T00:00:00Z' }) {

@@ -98,10 +98,10 @@ scenario('the previous page stops listening: its infinite loader never fires aga
     assert.equal(page.requested(/sample-thread\.100\/page-2/).length, before, 'after leaving, scrolling never reaches the old loader');
 });
 
-scenario('ten navigations leave one topbar, one dock, one body and a bounded set of scroll listeners', async t => {
+scenario('ten navigations keep one topbar and the alerts popover unmounted until opened', async t => {
     let scrollAdds = 0, scrollRemoves = 0;
     const page = await t.open({
-        url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }], page: 1, of: 2 }), routes: site(), gm: { 'smg-alerts-dock': '1' },
+        url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }], page: 1, of: 2 }), routes: site(),
         before: (w, p) => {
             stubXF(w, p);
             const add = w.addEventListener.bind(w), rem = w.removeEventListener.bind(w);
@@ -109,7 +109,6 @@ scenario('ten navigations leave one topbar, one dock, one body and a bounded set
             w.removeEventListener = (type, fn, o) => { if (type === 'scroll') scrollRemoves++; return rem(type, fn, o); };
         },
     });
-    page.route(/account\/alerts/, { json: { html: { content: '<ol></ol>' } } });
     await page.settle(80);
     await go(page, FORUM);
     const liveAfterOne = scrollAdds - scrollRemoves;
@@ -118,7 +117,7 @@ scenario('ten navigations leave one topbar, one dock, one body and a bounded set
     assert.equal(page.window.location.pathname, FORUM);
     assert.equal(page.$$('#smg-topbar').length, 1);
     assert.equal(page.$$('#smg-post-nav-wrapper').length, 1);
-    assert.equal(page.$$('#smg-aldock').length, 1);
+    assert.equal(page.$$('#smg-alpop').length, 0, 'navigation does not mount the lazy popover');
     assert.equal(page.$$('.p-body').length, 1);
     assert.ok(await page.waitFor(() => !page.$('#smg-page-skeleton')), 'the last page is released');
     assert.ok(scrollAdds - scrollRemoves <= liveAfterOne + 1, 'scroll listeners do not pile up: ' + liveAfterOne + ' after one navigation, ' + (scrollAdds - scrollRemoves) + ' after ten');

@@ -35,9 +35,17 @@
         // cyberdrop
         'Open on cyberdrop': 'Abrir no cyberdrop',
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
-        'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
-        'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
-        'Error': 'Erro', 'load error': 'erro ao carregar',
+        'file deleted': 'arquivo apagado', 'unavailable': 'indisponível', 'Error': 'Erro',
+        'Couldn’t load': 'Não carregou', 'Checking what happened…': 'Verificando o que houve…',
+        'The host didn’t deliver this file': 'O host não entregou este arquivo',
+        'File deleted': 'Arquivo apagado', 'The host removed this file': 'O host removeu este arquivo',
+        'Blocked by the host': 'Bloqueado pelo host', 'It only opens on the host’s own page': 'Só abre na página do próprio host',
+        'Too many requests': 'Muitas requisições', 'Wait a moment and try again': 'Espere um pouco e tente de novo',
+        'Host is down': 'Host fora do ar', 'Try again in a while': 'Tente de novo daqui a pouco',
+        'Didn’t load here': 'Não carregou aqui', 'The file is online; it may have been a hiccup': 'O arquivo está no ar; pode ter sido instabilidade',
+        'Unavailable': 'Indisponível', 'The host refused this file': 'O host recusou este arquivo',
+        'No response': 'Sem resposta', 'The host didn’t answer': 'O host não respondeu',
+        'Try again': 'Tentar de novo',
         // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
         'Done': 'Pronto',
@@ -86,16 +94,16 @@
         'Started by': 'Iniciado por', 'Last updated': 'Última atualização', 'Sort by': 'Ordenar por',
         // estados
         'Loading…': 'Carregando…',
-        // topbar — Discover
-        'Trending': 'Em alta', 'Most popular right now': 'Mais populares agora',
-        "What's new": 'Novidades', 'Recently posted': 'Postado recentemente',
-        'New posts': 'Novos posts', 'Latest messages': 'Últimas mensagens',
-        'Featured': 'Destaques', 'Featured content': 'Conteúdo em destaque',
-        'Activity': 'Atividade', 'Activity feed': 'Feed de atividades',
-        'Find threads': 'Buscar tópicos', 'Browse threads': 'Navegar pelos tópicos',
-        'Unanswered': 'Sem resposta', 'Awaiting a reply': 'Aguardando resposta',
-        'Members': 'Membros', 'Member list': 'Lista de membros',
-        'Online now': 'Online agora', "Who's online": 'Quem está online',
+        // topbar — Explore
+        'Threads': 'Tópicos', 'Community': 'Comunidade',
+        'Trending': 'Em alta', 'Threads with the most reactions right now': 'Tópicos com mais reações neste momento',
+        "What's new": 'Novidades', 'Latest posts across the forum': 'Posts mais recentes de todo o fórum',
+        'Featured': 'Em destaque', 'Threads selected by the staff': 'Tópicos selecionados pela equipe',
+        'Find threads': 'Encontrar tópicos', 'Find threads you started and filter results': 'Encontre tópicos que você iniciou e filtre os resultados',
+        'Unanswered': 'Sem resposta', 'Threads without replies yet': 'Tópicos que ainda não receberam respostas',
+        'Members': 'Membros', 'Browse the member list': 'Explore a lista de membros',
+        'Online now': 'Online agora', 'Who is on the forum right now': 'Quem está no fórum neste momento',
+        'Activity': 'Atividade', 'Everything happening across the forum': 'Tudo o que está acontecendo no fórum',
         // topbar — conta
         'Profile': 'Perfil', 'View profile': 'Ver perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
         'Messages': 'Mensagens', 'Your threads': 'Seus tópicos', 'Contributed': 'Participações',

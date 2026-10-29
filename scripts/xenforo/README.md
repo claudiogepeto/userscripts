@@ -59,7 +59,7 @@ readable. A file may continue a function opened by the previous one: `12b` and
 | `following/17b-watched-list` | Followed-thread list: rows, sync to the database, streaming |
 | `thread/17c-post-cards` | Post and comment cards |
 | `alerts/18-alerts` | Alert cleanup and grouping |
-| `alerts/19-alerts-dock` | Following rail and notification dock |
+| `alerts/19-alerts-popover` | Alerts popover and phone drawer |
 | `navigation/19-topbar` | Topbar and mobile sheets |
 | `navigation/20-thumb-url` | Large thumbnail URL helper |
 | `runtime/21-init-features` | Redirects, media links, file-host cards, and other feature setup |
@@ -100,7 +100,7 @@ composes them in the order below:
 | `thread/css-post-cards` | Post cards |
 | `thread/css-comments` | Comments, editor, and quick reply |
 | `styles/07-feed` | Feed and bookmark feed |
-| `styles/08-alertdock` | Alerts/following rail |
+| `styles/08-alertpopover` | Alerts popover and phone drawer |
 | `styles/09-paint` | Shared paint gate and non-home skeletons |
 
 ## Editing rules

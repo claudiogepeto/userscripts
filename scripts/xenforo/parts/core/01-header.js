@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.10.2
+// @version      4.11.11
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -103,8 +103,8 @@
 //  THUMB cache ....... threadThumbUrl, thumbCacheGet/Put, harvestThreadThumbs (foto da thread nos
 //                      alertas, colhida das listagens que já passam pela tela — sem request extra)
 //  ALERTAS ........... markAlertRead, paintAlertThumb/repaintAlertThumbs, cleanAlertRow, groupAlerts, cleanAlertList
-//  RAIL docked ....... railFetch, watchedRow, buildAlertsDock, railRefresh/More/ShowTab,
-//                      open/close/toggleAlertsDock, setupAlertsDock
+//  RAIL docked ....... railFetch, watchedRow, buildAlertsPopover, railRefresh/More/ShowTab,
+//                      open/close/toggleAlertsPopover, setupAlertsPopover
 //                      (painel fixo à direita: abas Alertas + Seguindo)
 //  TOPBAR ............ buildTopbar()  ← GRANDE: logo, nav, popovers, sheets mobile
 //  HOVER preview ..... dcThumbUrl

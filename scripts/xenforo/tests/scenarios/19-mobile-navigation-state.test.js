@@ -1,6 +1,6 @@
 'use strict';
 // Mobile navigation state: a page swap updates the shared controls once, browser history
-// moves through soft navigations, and the alerts bell opens its rail without following its link.
+// moves through soft navigations, and the alerts bell opens its drawer without following its link.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');
 const { threadPage, listingPage, THREAD, FORUM } = require('../lib');
@@ -57,16 +57,16 @@ scenario('Back and Forward each restore one page through a soft swap', async t =
     assert.ok(await page.waitFor(() => page.window.location.pathname === FORUM && !!page.$('.structItem--thread')), 'Forward restores the forum listing');
 });
 
-scenario('Back closes an open mobile alerts modal without navigating, then the next Back navigates once', async t => {
-    const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }] }), routes: routes(), width: 400, coarse: true, gm: { 'smg-alerts-dock': '1' } });
+scenario('Back closes an open mobile alerts drawer without navigating, then the next Back navigates once', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: threadPage({ posts: [{ id: 1 }] }), routes: routes(), width: 400, coarse: true });
     await page.settle(80);
     await go(page, OTHER);
     page.click('#smg-nav-bell');
     await page.settle(30);
-    assert.ok(page.document.documentElement.classList.contains('smg-aldock-on'));
+    assert.ok(page.$('#smg-alpop')?.classList.contains('open'), 'the alerts drawer opens');
     assert.equal(page.window.location.pathname, OTHER);
     page.window.history.back();
-    assert.ok(await page.waitFor(() => !page.document.documentElement.classList.contains('smg-aldock-on')), 'Back closes the modal');
+    assert.ok(await page.waitFor(() => !page.$('#smg-alpop') || !page.$('#smg-alpop').classList.contains('open')), 'Back closes the drawer');
     assert.equal(page.window.location.pathname, OTHER, 'closing the modal keeps the current page');
     page.window.history.back();
     assert.ok(await page.waitFor(() => page.window.location.pathname === THREAD && !!page.$('#js-post-1')), 'the next Back navigates exactly one page');
@@ -80,7 +80,6 @@ scenario('a real Back closes the options sheet after a lost close echo', async t
         routes: routes(),
         width: 400,
         coarse: true,
-        gm: { 'smg-alerts-dock': '1' },
         before(window) {
             const nativeBack = window.history.back.bind(window.history);
             window.history.back = () => {
@@ -117,7 +116,7 @@ scenario('mobile bell after a soft navigation opens alerts without following its
     const current = page.window.location.href;
     page.click('#smg-nav-bell');
     await page.settle(100);
-    assert.ok(page.document.documentElement.classList.contains('smg-aldock-on'), 'alerts rail opened');
+    assert.ok(page.$('#smg-alpop')?.classList.contains('open'), 'alerts drawer opened');
     assert.equal(page.window.location.href, current, 'bell did not navigate to the alerts page');
     assert.equal(page.requested(/\/account\/alerts(?:\?|$)/).filter(f => !/[?&]_xfResponseType=json(?:&|$)/.test(f.url)).length, 0, 'bell did not request the alerts page for a soft navigation');
 });

@@ -1053,7 +1053,7 @@
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: var(--smg-sp-14) !important;
-                padding: var(--smg-sp-14) !important;
+                padding: var(--smg-sp-14) 0 !important;
                 align-items: stretch !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -1173,11 +1173,13 @@
             }
 
             /* Row 1 (Badges em Linha Única) e Row 2 (Título) */
+            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title::before,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title::after { content: none !important; display: none !important; }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title {
                 display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                align-items: center !important;
+                flex-direction: column !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch !important;
                 gap: var(--smg-sp-4) !important;
                 font-size: var(--smg-fs-15) !important;
                 font-weight: 700 !important;
@@ -1185,6 +1187,71 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags {
+                position: relative !important;
+                display: flex !important;
+                align-items: center !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track {
+                display: flex !important;
+                align-items: center !important;
+                flex: 0 1 auto !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                gap: var(--smg-sp-4) !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                white-space: nowrap !important;
+                scrollbar-width: none !important;
+                scroll-behavior: smooth !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track::-webkit-scrollbar { display: none !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track > * { flex: 0 0 auto !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags.has-prev::before,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags.has-next::after {
+                content: "" !important;
+                position: absolute !important;
+                z-index: var(--smg-z-1) !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                width: 18px !important;
+                pointer-events: none !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags::before {
+                left: 0 !important;
+                background: linear-gradient(90deg, var(--smg-s2), transparent) !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags::after {
+                right: 0 !important;
+                background: linear-gradient(270deg, var(--smg-s2), transparent) !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next {
+                position: absolute !important;
+                z-index: var(--smg-z-2) !important;
+                top: 50% !important;
+                width: 20px !important;
+                height: 20px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                border: 1px solid var(--smg-w-10) !important;
+                border-radius: var(--smg-r-round) !important;
+                background: var(--smg-k-72) !important;
+                color: var(--smg-w-85) !important;
+                box-shadow: var(--smg-shadow-1) !important;
+                transform: translateY(-50%) !important;
+                cursor: pointer !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev { left: 1px !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next { right: 1px !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev[hidden],
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next[hidden] { display: none !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags svg { width: 12px !important; height: 12px !important; }
             .structItem-title .prefix,
             .labelLink .label {
                 font-size: var(--smg-fs-10) !important;
@@ -1200,7 +1267,6 @@
                 -webkit-box-orient: vertical !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
-                min-height: 2.6em !important;
                 line-height: 1.3 !important;
                 margin-top: var(--smg-sp-6) !important;
                 color: #fff !important;
@@ -1285,17 +1351,24 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread input[name="thread_ids[]"] {
                 display: none !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread.is-unread .structItem-title a[href*="/threads/"]::after,
-            html.smg-threadlist.smg-tv-grid .structItem--thread.is-unread .structItem-title a[data-tp-primary]::after {
-                content: "" !important;
-                display: inline-block !important;
-                width: 7px !important;
-                height: 7px !important;
-                border-radius: var(--smg-r-round) !important;
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-new {
+                position: absolute !important;
+                top: 6px !important;
+                left: 6px !important;
+                z-index: var(--smg-z-5) !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                height: 18px !important;
+                padding: 0 var(--smg-sp-8) !important;
+                border-radius: var(--smg-badge-r) !important;
                 background: var(--smg-link) !important;
-                box-shadow: 0 0 6px var(--smg-link-soft) !important;
-                margin-left: var(--smg-sp-6) !important;
-                vertical-align: middle !important;
+                color: #fff !important;
+                font-size: var(--smg-fs-10) !important;
+                font-weight: 700 !important;
+                letter-spacing: .04em !important;
+                line-height: 1 !important;
+                text-transform: uppercase !important;
+                box-shadow: var(--smg-shadow-1) !important;
             }
             html.smg-threadlist .structItem--quickCreate,
             html.smg-threadlist .block-filterBar { display: none !important; }

@@ -56,6 +56,9 @@
         window.addEventListener('click', e => {
             const a = e.target.closest && e.target.closest('a');
             if (!a) return;
+            // botão DENTRO do link (ex.: "Tentar de novo" da caixa de mídia morta) é ação própria, não navegação
+            const btn = e.target.closest('button');
+            if (btn && a.contains(btn)) return;
 
             // Se o clique foi em uma imagem ou dentro de um <a> que embrulha uma imagem (ex.: goonbox, imgbox, smg-imglink, etc.):
             // não sequestra o clique — deixa o visualizador/modal (setupImageClickFeed) abrir a imagem!
@@ -1332,6 +1335,39 @@
         });
     }
 
+    function processUnfurlCardActions(roots) {
+        eachIn(roots, '.bbCodeBlock--unfurl:not([data-smg-actions])', card => {
+            card.dataset.smgActions = '1';
+            if (card.closest('.bbCodeQuote, .message-signature, .smg-fhcard, .smg-tw-card, .smg-dm-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
+            const row = card.querySelector('.contentRow');
+            if (!row || row.querySelector('.smg-unfurl-actions')) return;
+            const titleLink = card.querySelector('.js-unfurl-title[href], .contentRow-header a[href]');
+            const rawUrl = card.getAttribute('data-url') || (titleLink && (titleLink.getAttribute('href') || titleLink.href)) || '';
+            const href = resolveProxyHref(rawUrl) || rawUrl;
+            if (!href) return;
+
+            const actions = document.createElement('div');
+            actions.className = 'smg-unfurl-actions';
+            const copy = document.createElement('button');
+            copy.type = 'button';
+            copy.className = 'smg-fhcard-btn smg-fhcard-copy';
+            copy.title = i18n('Copy link');
+            copy.setAttribute('aria-label', i18n('Copy link'));
+            copy.innerHTML = ICONS.share;
+            copy.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); fhCopy(href, copy); });
+            const open = document.createElement('a');
+            open.className = 'smg-fhcard-btn smg-fhcard-open';
+            open.href = href;
+            open.target = '_blank';
+            open.rel = 'noopener noreferrer';
+            open.title = i18n('Open in new tab');
+            open.setAttribute('aria-label', i18n('Open in new tab'));
+            open.innerHTML = ICONS.rgExternal;
+            actions.append(copy, open);
+            row.appendChild(actions);
+        });
+    }
+
     // =========================================================
     // FEATURE: agrupa os links NÃO-embedados (file hosts: GoFile/Bunkr/Pixeldrain/…) numa barra de chips
     // no fim do post, SEM tirar nada do texto. Pula internos (menção/thread/quote), imagens e embeds.
@@ -1346,7 +1382,7 @@
     function groupPostLinks(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (classList em vez de querySelector todo frame)
         const forumHost = location.hostname;
-        eachIn(roots, '.message--post .message-body > .bbWrapper:not([data-smg-links])', bb => {   // .bbWrapper fica em article.message-body (não é filho direto de .message-userContent)
+        eachIn(roots, '.message--post .message-body .bbWrapper:not([data-smg-links])', bb => {   // XenForo envolve .bbWrapper em [itemprop="text"]
             bb.dataset.smgLinks = '1';
             const links = Array.from(bb.querySelectorAll('a[href^="http"]')).filter(a =>
                 a.hostname !== forumHost                              // externo (pula menção/thread/quote do fórum)

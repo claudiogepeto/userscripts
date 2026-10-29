@@ -1,7 +1,7 @@
     // runtime/22-paint.js
     // Owns: THE paint gate: page kind detection, per-kind skeletons, readiness checks and release, navigation transition.
     // Exposes: classifyPaintPage, ensurePageSkeleton, releasePageSkeleton, mark*Ready, setNavigatingOut, setupNavigationTransition.
-    // Depends on: home/16-home (homeComponentsReady), alerts/19-alerts-dock; styles in styles/09-paint.js.
+    // Depends on: home/16-home (homeComponentsReady); styles in styles/09-paint.js.
     // =========================================================
     // PAINT RUNTIME: page context, skeletons and stable handoff.
     // The native XenForo tree stays mounted for compatibility, but remains hidden
@@ -133,37 +133,6 @@
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
-    // linha-fantasma do rail: a MESMA no skeleton da página e dentro do rail até o 1º fetch
-    // (antes eram duas geometrias, 86 px → 74 px, e a lista "encolhia" no meio do carregamento)
-    function paintRailRow(tag, extraClass) {
-        tag = tag || 'div';
-        return '<' + tag + ' class="smg-page-skeleton-rail-row' + (extraClass ? ' ' + extraClass : '') + '"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
-            + '<div class="smg-page-skeleton-rail-copy"><i class="smg-page-skeleton-rail-line smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></' + tag + '>';
-    }
-
-    function paintRailMarkup() {
-        const row = paintRailRow();
-        return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
-            + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
-            + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';
-    }
-
-    function ensureSkeletonRail() {
-        const root = document.documentElement;
-        const current = document.getElementById('smg-page-skeleton-rail');
-        if (root.classList.contains('smg-sidebar-ready') || !root.classList.contains('smg-page-pending') || !root.classList.contains('smg-aldock-on')) {
-            if (current) current.remove();
-            return;
-        }
-        if (current) return;
-        const rail = document.createElement('aside');
-        rail.id = 'smg-page-skeleton-rail';
-        rail.className = 'smg-page-skeleton smg-page-skeleton-rail';
-        rail.setAttribute('aria-hidden', 'true');
-        rail.innerHTML = paintRailMarkup();
-        root.appendChild(rail);
-    }
 
     // UM skeleton (#smg-page-skeleton) pra toda página. targetKind: o soft-nav passa o tipo da página
     // de DESTINO (mostra o skeleton dela durante o fetch, não o da página que está saindo).
@@ -186,20 +155,17 @@
             shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind + (kind === PAINT_PAGE_KINDS.HOME ? ' smg-home-skeleton' : '');
             shell.innerHTML = paintSkeletonMarkup(kind);
         }
-        ensureSkeletonRail();
     }
 
     function releasePageSkeleton() {
         const shell = document.getElementById('smg-page-skeleton');
-        const rail = document.getElementById('smg-page-skeleton-rail');
-        if (!shell && !rail) return;
+        if (!shell) return;
 
         const root = document.documentElement;
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
             if (shell && shell.parentNode) shell.remove();
-            if (rail && rail.parentNode) rail.remove();
             root.classList.remove('smg-skeleton-fade-out');
         }, 120);
     }
@@ -254,7 +220,6 @@
             if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
                 isNavigatingOut = false;
                 markTopbarReady();
-                markSidebarReady();
                 markNavbarReady();
                 markContentReady(classifyPaintPage());
             }
@@ -284,15 +249,11 @@
     }
 
     let topbarIsReady = false;
-    let sidebarIsReady = false;
     let navbarIsReady = false;
     let contentIsReady = false;
 
     function isTopbarReady() {
         return topbarIsReady && document.documentElement.classList.contains('smg-topbar-ready');
-    }
-    function isSidebarReady() {
-        return sidebarIsReady && document.documentElement.classList.contains('smg-sidebar-ready');
     }
     function isNavbarReady() {
         return navbarIsReady && document.documentElement.classList.contains('smg-navbar-ready');
@@ -300,21 +261,11 @@
     function isContentReady() {
         return contentIsReady && document.documentElement.classList.contains('smg-content-ready');
     }
-
     function markTopbarReady() {
         topbarIsReady = true;
         const root = document.documentElement;
         root.classList.remove('smg-topbar-loading', 'smg-topbar-pending');
         root.classList.add('smg-topbar-ready');
-    }
-
-    function markSidebarReady() {
-        sidebarIsReady = true;
-        const root = document.documentElement;
-        root.classList.remove('smg-sidebar-loading', 'smg-sidebar-pending');
-        root.classList.add('smg-sidebar-ready');
-        const rail = document.getElementById('smg-page-skeleton-rail');
-        if (rail) rail.remove();
     }
 
     function markNavbarReady() {
@@ -354,9 +305,7 @@
     function paintChromeIsReady() {
         const hasNativeNav = !!document.querySelector('.p-nav');
         const topbarReady = !FEATURES.topBar || !hasNativeNav || !!document.getElementById('smg-topbar-wrap');
-        const dockWanted = typeof aldockWanted === 'function' && aldockWanted() && !aldockOnAlertsPage();
-        const dockReady = !FEATURES.alertsDock || !dockWanted || !!document.getElementById('smg-aldock');
-        return topbarReady && dockReady;
+        return topbarReady;
     }
 
     // altura do bloco de mensagens = leitura de layout forçada. O settle a lê 1× quando a assinatura
@@ -487,15 +436,17 @@
         for (const img of imgs) {
             if (img.dataset.smgFailed || img.classList.contains('smg-img-ready')) continue;
             const ar = img.style.aspectRatio;
-            if (ar && ar !== '100 / 100') continue;
+            if (ar && ar !== '100 / 100' && !img.dataset.smgPhRatio) continue;
             if (img.complete && img.naturalWidth && img.naturalHeight) {
                 img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                delete img.dataset.smgPhRatio;
                 continue;
             }
             const w = parseInt(img.getAttribute('width') || img.dataset.width || '', 10);
             const h = parseInt(img.getAttribute('height') || img.dataset.height || '', 10);
             if (w > 0 && h > 0) {
                 img.style.aspectRatio = w + ' / ' + h;
+                delete img.dataset.smgPhRatio;
                 continue;
             }
 
@@ -504,14 +455,17 @@
             const grid = img.closest('.auto-image-grid');
             if (!onScreen) {
                 img.style.aspectRatio = (grid && grid.style.getPropertyValue('--smg-grid-img-ph')) || '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             if (grid && (grid.dataset.smgRelayoutDone === '1' || grid.style.getPropertyValue('--smg-mcols')) && post !== targetPost) {
                 img.style.aspectRatio = grid.style.getPropertyValue('--smg-grid-img-ph') || '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             if (paintMediaDeadline && Date.now() >= paintMediaDeadline) {
                 img.style.aspectRatio = '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             return false;

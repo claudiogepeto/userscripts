@@ -31,7 +31,6 @@ const page2 = [[/page-2/, url => (/forums/.test(url) ? listingPage({ rows: [{ id
 const CASES = {
     topBar: { open: thread('x'), seen: p => !!p.$('#smg-topbar') },
     homeRemake: { open: { url: SMG + '/', html: homePage() }, seen: p => p.document.documentElement.classList.contains('smg-home') },
-    alertsDock: { open: thread('x', { gm: { 'smg-alerts-dock': '1' }, routes: [[/account\/alerts/, { json: { html: { content: '<ol></ol>' } } }]] }), seen: p => !!p.$('#smg-aldock') },
     headerNotices: { open: { url: SMG + '/', html: homePage() }, seen: p => !!p.$('.smg-notices-collapse') },
     customFavicon: { open: thread('x'), seen: p => !!p.$('#smg-favicon') },
     autoFullImages: { open: thread('<img class="bbImage" src="https://example.com/a.jpg" width="9" height="9"><br><img class="bbImage" src="https://example.com/b.jpg" width="9" height="9">'), seen: p => !!p.$('.auto-image-grid') },

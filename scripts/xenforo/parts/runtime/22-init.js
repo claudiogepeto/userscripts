@@ -36,17 +36,18 @@
         if (isContentFeed && contentDirty) {
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
+            if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
             if (FEATURES.replaceThumbsWithFull) safe(applyReplaceThumbsWithFull, true, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
-            if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             safe(processInstagramEmbeds, roots);
             safe(processTwitterEmbeds, roots);
             if (FEATURES.fileHostCards) safe(processFileHostCards, roots);
             if (FEATURES.redgifsPlayer) safe(applyRedgifsPlayer, roots);
             if (FEATURES.autoLoadRedgifs) safe(autoLoadRedgifs, roots);
+            safe(processUnfurlCardActions, roots);
             safe(autoExpandSpoilers, roots);
             safe(markG2wWrappers, roots);
             if (FEATURES.autoFullImages) safe(buildPostGalleries, roots);
@@ -120,7 +121,7 @@
             if (fullScan || rootTouches(roots, '.p-body-content, .smg-search-results', true)) safe(buildSearchResultsPanel, roots);
         }
         if (paintContext.gated && document.documentElement.classList.contains('smg-page-pending')) {
-            // A dock persistida pode ser aberta pelo setupAlertsDock no mesmo frame em que
+            // A dock persistida pode ser aberta pelo setupAlertsPopover no mesmo frame em que
             // ela é montada. Atualiza o rail do shell antes do settle para não deixar uma
             // faixa vazia surgir entre o skeleton e a dock real.
             ensurePageSkeleton();
@@ -183,11 +184,7 @@
             if (FEATURES.topBar && !topbarBuilt && document.querySelector('.p-nav')) {
                 safe(buildTopbar);
             }
-            if (FEATURES.alertsDock && !aldockBound && document.querySelector('.p-navgroup-link--alerts')) {
-                // Mount the persisted dock as soon as its native control exists,
-                // instead of waiting for DOMContentLoaded behind the home paint.
-                safe(setupAlertsDock);
-            }
+            if (!alpopBound && document.querySelector('.p-navgroup-link--alerts')) safe(setupAlertsPopover);
             if (!document.getElementById('smg-post-nav-wrapper') && document.body) {
                 safe(setupPostNavigation);
             }
@@ -269,20 +266,6 @@
     safe(setupImageClickFeed);
     safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
-    // Reserve the persisted desktop dock before the body and topbar are built.
-    // The panel itself is mounted during boot, but this class prevents its
-    // late padding-right from moving the home after the first visible frame.
-    if (FEATURES.alertsDock
-        && aldockWanted() && aldockFits() && !aldockPhone()) {
-        cls.add('smg-aldock-on');
-        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
-        if (!isSidebarAlreadyReady) {
-            cls.add('smg-sidebar-loading');
-            cls.add('smg-sidebar-pending');
-        }
-    } else {
-        markSidebarReady();
-    }
     ensurePageSkeleton();
     if (FEATURES.topBar) cls.add('smg-topbar-on');        // esconde o header nativo já (reserva o espaço)
     // The tiny preflight from the header can leave now that the complete CSS is
@@ -362,8 +345,8 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (aldockPhone()) {
-                closeAlertsDock();
+            if (alpopPhone()) {
+                closeAlertsPopover();
             }
             try {
                 postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -396,7 +379,7 @@
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
         safe(setupHoverZoom);   // sempre montado: o switch hoverZoom é lido a cada hover (liga/desliga sem recarregar)
         safe(setupImageClickFeed);
-        if (FEATURES.alertsDock) safe(setupAlertsDock);
+        safe(setupAlertsPopover);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
         safe(watchNativeBadges);
@@ -600,6 +583,7 @@
 
     function softNavigate(url, opts) {
         opts = opts || {};
+        if (typeof closeAlertsPopover === 'function' && alpopOpen()) closeAlertsPopover(false, true);
         smgCloseModalsForNavigation();
         document.dispatchEvent(new Event('smg-search-close'));
         let abs;
@@ -679,7 +663,6 @@
             }
             resetSwappedPage();
             detectPageClasses();
-            if (FEATURES.alertsDock && aldockBound) safe(aldockReconcile, true);   // /account/alerts esconde o rail
             cls.toggle('smg-watched-feed', feedViewWanted());
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));

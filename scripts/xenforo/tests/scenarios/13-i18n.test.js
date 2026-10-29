@@ -51,11 +51,12 @@ scenario('settings sections, labels and descriptions have Portuguese versions', 
     assert.deepEqual(same(pt.descs, en.descs), [], 'untranslated descriptions');
 });
 
-scenario('Portuguese reaches dynamic text too: toasts and the alerts rail', async t => {
-    const page = await threadIn(t, 'pt', { gm: { 'smg-alerts-dock': '1' }, routes: [[/account\/alerts/, alertsJson([{ id: 1 }], null, 0)]] });
+scenario('Portuguese reaches dynamic text too: toasts and the alerts popover', async t => {
+    const page = await threadIn(t, 'pt', { routes: [[/account\/alerts/, alertsJson([{ id: 1 }], null, 0)]] });
+    page.click('.smg-tb-bellbtn');
     await page.settle(100);
-    assert.equal(page.text('#smg-aldock .smg-aldock-titletext'), 'Alertas');
-    assert.equal(page.text('#smg-aldock .smg-aldock-status'), 'Fim da lista');
+    assert.equal(page.text('#smg-alpop .smg-alpop-titletext'), 'Alertas');
+    assert.equal(page.text('#smg-alpop .smg-alpop-status'), 'Fim da lista');
 });
 
 scenario('forum content is never translated', async t => {

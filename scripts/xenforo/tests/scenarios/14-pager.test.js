@@ -1,6 +1,6 @@
 'use strict';
 // The shared pager engine (createPager, thread/07-posts-misc.js): every list that grows at its end
-// (threads, listings, Feed, Saved, home carousel, dock search, alerts rail) runs on it. Engine rules
+// (threads, listings, Feed, Saved, home carousel, dock search, alerts popover) runs on it. Engine rules
 // are checked through window.__smgTest.createPager; the home carousel is checked through the DOM.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');

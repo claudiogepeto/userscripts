@@ -12,7 +12,6 @@
         redgifsPlayer: true,        // troca o iframe do redgifs por <video> nativo (mp4 da API); à prova de falha (restaura o iframe)
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
-        alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
@@ -56,7 +55,6 @@
         { section: 'Appearance', items: [
             { key: 'topBar', label: 'Redesigned top bar', desc: { en: "Replaces the original header with a lean bar that gathers search, discover, watched, alerts and account into icons.", pt: 'Substitui o cabeçalho original por uma barra enxuta, com busca, descobrir, seguindo, alertas e conta reunidos em ícones.' } },
             { key: 'homeRemake', label: 'Reworked homepage', desc: { en: 'Reorganizes the home into clickable cards, moves the sidebar to the top and merges the smaller sections.', pt: 'Reorganiza a home em cards clicáveis, leva a barra lateral para o topo e agrupa as seções menores.' } },
-            { key: 'alertsDock', label: 'Docked side panel', desc: { en: 'Adds a pin button to the bell and to Following: they turn into a fixed rail on the right side, with tabs for alerts and watched threads and the whole history in infinite scroll. The page is pushed aside instead of covered — and its column widens to use the leftover margin — so you can keep browsing while you go through the list.', pt: 'Adiciona um botão de fixar no sino e no Seguindo: viram um painel fixo na lateral direita, com abas de alertas e tópicos acompanhados e o histórico inteiro em rolagem infinita. A página é empurrada em vez de coberta — e a coluna dela alarga para aproveitar a margem que sobrava — então dá para navegar enquanto passa pela lista.' } },
             { key: 'headerNotices', label: 'Notices tucked into an icon', desc: { en: 'Hides the page notices behind a small in-page icon, freeing up space. Click it to read them.', pt: 'Recolhe os avisos da página atrás de um ícone pequeno, liberando espaço. Clique nele para ler.' } },
             { key: 'customFavicon', label: 'Custom tab icon', desc: { en: "Swaps the icon shown on the browser tab for the site's identity (SocialMediaGirls only).", pt: 'Troca o ícone exibido na aba do navegador pela identidade do site (somente no SocialMediaGirls).' } },
         ] },

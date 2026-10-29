@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.10.2
+// @version      4.11.11
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -103,8 +103,8 @@
 //  THUMB cache ....... threadThumbUrl, thumbCacheGet/Put, harvestThreadThumbs (foto da thread nos
 //                      alertas, colhida das listagens que já passam pela tela — sem request extra)
 //  ALERTAS ........... markAlertRead, paintAlertThumb/repaintAlertThumbs, cleanAlertRow, groupAlerts, cleanAlertList
-//  RAIL docked ....... railFetch, watchedRow, buildAlertsDock, railRefresh/More/ShowTab,
-//                      open/close/toggleAlertsDock, setupAlertsDock
+//  RAIL docked ....... railFetch, watchedRow, buildAlertsPopover, railRefresh/More/ShowTab,
+//                      open/close/toggleAlertsPopover, setupAlertsPopover
 //                      (painel fixo à direita: abas Alertas + Seguindo)
 //  TOPBAR ............ buildTopbar()  ← GRANDE: logo, nav, popovers, sheets mobile
 //  HOVER preview ..... dcThumbUrl
@@ -181,7 +181,6 @@
         redgifsPlayer: true,        // troca o iframe do redgifs por <video> nativo (mp4 da API); à prova de falha (restaura o iframe)
         autoExpandSpoilers: true,   // abre os spoilers automaticamente
         topBar: true,               // topbar reformulada (ícones + popovers agrupados; esconde a nav nativa)
-        alertsDock: true,           // modo "docked" das notificações: rail fixo à direita (empurra o conteúdo) com scroll infinito
         keyboardShortcuts: true,    // atalhos de teclado (j/k/[/]/g/v/f//)
         infiniteScroll: true,       // master switch / rolagem infinita global
         infiniteScrollThreads: true,  // rolagem infinita em tópicos (threads)
@@ -225,7 +224,6 @@
         { section: 'Appearance', items: [
             { key: 'topBar', label: 'Redesigned top bar', desc: { en: "Replaces the original header with a lean bar that gathers search, discover, watched, alerts and account into icons.", pt: 'Substitui o cabeçalho original por uma barra enxuta, com busca, descobrir, seguindo, alertas e conta reunidos em ícones.' } },
             { key: 'homeRemake', label: 'Reworked homepage', desc: { en: 'Reorganizes the home into clickable cards, moves the sidebar to the top and merges the smaller sections.', pt: 'Reorganiza a home em cards clicáveis, leva a barra lateral para o topo e agrupa as seções menores.' } },
-            { key: 'alertsDock', label: 'Docked side panel', desc: { en: 'Adds a pin button to the bell and to Following: they turn into a fixed rail on the right side, with tabs for alerts and watched threads and the whole history in infinite scroll. The page is pushed aside instead of covered — and its column widens to use the leftover margin — so you can keep browsing while you go through the list.', pt: 'Adiciona um botão de fixar no sino e no Seguindo: viram um painel fixo na lateral direita, com abas de alertas e tópicos acompanhados e o histórico inteiro em rolagem infinita. A página é empurrada em vez de coberta — e a coluna dela alarga para aproveitar a margem que sobrava — então dá para navegar enquanto passa pela lista.' } },
             { key: 'headerNotices', label: 'Notices tucked into an icon', desc: { en: 'Hides the page notices behind a small in-page icon, freeing up space. Click it to read them.', pt: 'Recolhe os avisos da página atrás de um ícone pequeno, liberando espaço. Clique nele para ler.' } },
             { key: 'customFavicon', label: 'Custom tab icon', desc: { en: "Swaps the icon shown on the browser tab for the site's identity (SocialMediaGirls only).", pt: 'Troca o ícone exibido na aba do navegador pela identidade do site (somente no SocialMediaGirls).' } },
         ] },
@@ -299,9 +297,17 @@
         // cyberdrop
         'Open on cyberdrop': 'Abrir no cyberdrop',
         // estados da mídia morta (buildDeadBox) — o código HTTP vem da sonda; estes são o "porquê" em texto
-        'file deleted': 'arquivo apagado', 'hotlink blocked': 'hotlink bloqueado', 'host down': 'host fora do ar',
-        'rate limited': 'limite de requisições', 'unavailable': 'indisponível',
-        'Error': 'Erro', 'load error': 'erro ao carregar',
+        'file deleted': 'arquivo apagado', 'unavailable': 'indisponível', 'Error': 'Erro',
+        'Couldn’t load': 'Não carregou', 'Checking what happened…': 'Verificando o que houve…',
+        'The host didn’t deliver this file': 'O host não entregou este arquivo',
+        'File deleted': 'Arquivo apagado', 'The host removed this file': 'O host removeu este arquivo',
+        'Blocked by the host': 'Bloqueado pelo host', 'It only opens on the host’s own page': 'Só abre na página do próprio host',
+        'Too many requests': 'Muitas requisições', 'Wait a moment and try again': 'Espere um pouco e tente de novo',
+        'Host is down': 'Host fora do ar', 'Try again in a while': 'Tente de novo daqui a pouco',
+        'Didn’t load here': 'Não carregou aqui', 'The file is online; it may have been a hiccup': 'O arquivo está no ar; pode ter sido instabilidade',
+        'Unavailable': 'Indisponível', 'The host refused this file': 'O host recusou este arquivo',
+        'No response': 'Sem resposta', 'The host didn’t answer': 'O host não respondeu',
+        'Try again': 'Tentar de novo',
         // cards de mídia e galeria
         'item': 'item', 'items': 'itens', 'File': 'Arquivo', 'Video': 'Vídeo', 'Image': 'Imagem', 'Copy link': 'Copiar link', 'Open': 'Abrir',
         'Done': 'Pronto',
@@ -350,16 +356,16 @@
         'Started by': 'Iniciado por', 'Last updated': 'Última atualização', 'Sort by': 'Ordenar por',
         // estados
         'Loading…': 'Carregando…',
-        // topbar — Discover
-        'Trending': 'Em alta', 'Most popular right now': 'Mais populares agora',
-        "What's new": 'Novidades', 'Recently posted': 'Postado recentemente',
-        'New posts': 'Novos posts', 'Latest messages': 'Últimas mensagens',
-        'Featured': 'Destaques', 'Featured content': 'Conteúdo em destaque',
-        'Activity': 'Atividade', 'Activity feed': 'Feed de atividades',
-        'Find threads': 'Buscar tópicos', 'Browse threads': 'Navegar pelos tópicos',
-        'Unanswered': 'Sem resposta', 'Awaiting a reply': 'Aguardando resposta',
-        'Members': 'Membros', 'Member list': 'Lista de membros',
-        'Online now': 'Online agora', "Who's online": 'Quem está online',
+        // topbar — Explore
+        'Threads': 'Tópicos', 'Community': 'Comunidade',
+        'Trending': 'Em alta', 'Threads with the most reactions right now': 'Tópicos com mais reações neste momento',
+        "What's new": 'Novidades', 'Latest posts across the forum': 'Posts mais recentes de todo o fórum',
+        'Featured': 'Em destaque', 'Threads selected by the staff': 'Tópicos selecionados pela equipe',
+        'Find threads': 'Encontrar tópicos', 'Find threads you started and filter results': 'Encontre tópicos que você iniciou e filtre os resultados',
+        'Unanswered': 'Sem resposta', 'Threads without replies yet': 'Tópicos que ainda não receberam respostas',
+        'Members': 'Membros', 'Browse the member list': 'Explore a lista de membros',
+        'Online now': 'Online agora', 'Who is on the forum right now': 'Quem está no fórum neste momento',
+        'Activity': 'Atividade', 'Everything happening across the forum': 'Tudo o que está acontecendo no fórum',
         // topbar — conta
         'Profile': 'Perfil', 'View profile': 'Ver perfil', 'Your account': 'Sua conta', 'Post thread': 'Criar tópico',
         'Messages': 'Mensagens', 'Your threads': 'Seus tópicos', 'Contributed': 'Participações',
@@ -624,7 +630,7 @@
     // so a page change does not require searching through a monolithic template literal.
     // =========================================================
     function injectStyles() {
-        const css = CSS_BASE + CSS_MEDIA_GRIDS + CSS_MEDIA_IMAGES + CSS_SOCIAL_EMBEDS + CSS_MEDIA_PLAYERS + CSS_HOME + CSS_TOPBAR + CSS_NOTICES + CSS_ALERTS + CSS_DOCK + CSS_SEARCH + CSS_MEDIA_FEED + CSS_DOCK_MOBILE + CSS_LISTING_CONTROLS + CSS_SETTINGS + CSS_MOBILE + CSS_FILTERBAR + CSS_THREAD + CSS_THREAD_CARDS + CSS_POST_CARDS + CSS_COMMENTS + CSS_FEED + CSS_ALERTDOCK + CSS_PAINT;
+        const css = CSS_BASE + CSS_MEDIA_GRIDS + CSS_MEDIA_IMAGES + CSS_SOCIAL_EMBEDS + CSS_MEDIA_PLAYERS + CSS_HOME + CSS_TOPBAR + CSS_NOTICES + CSS_ALERTS + CSS_DOCK + CSS_SEARCH + CSS_MEDIA_FEED + CSS_DOCK_MOBILE + CSS_LISTING_CONTROLS + CSS_SETTINGS + CSS_MOBILE + CSS_FILTERBAR + CSS_THREAD + CSS_THREAD_CARDS + CSS_POST_CARDS + CSS_COMMENTS + CSS_FEED + CSS_ALERTPOPOVER + CSS_PAINT;
         const style = document.createElement('style');
         style.id = 'smg-styles';
         style.textContent = css;
@@ -699,7 +705,7 @@
                 /* camadas de z-index (mesmos números de antes, agora com nome) */
                 --smg-z-1: 1; --smg-z-2: 2; --smg-z-3: 3; --smg-z-4: 4; --smg-z-5: 5; --smg-z-6: 6;
                 --smg-z-7: 7; --smg-z-8: 8; --smg-z-pop: 11; --smg-z-pop-up: 12; --smg-z-15: 15; --smg-z-20: 20;
-                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-thead: 100; --smg-z-aldock: 101; --smg-z-topbar: 1000;
+                --smg-z-30: 30; --smg-z-40: 40; --smg-z-50: 50; --smg-z-60: 60; --smg-z-thead: 100; --smg-z-topbar: 1000;
                 --smg-z-topbar-up: 1001; --smg-z-gate: 1100; --smg-z-gate-1: 1101; --smg-z-gate-2: 1102; --smg-z-9999: 9999; --smg-z-10000: 10000;
                 --smg-z-dock-under: 999990; --smg-z-dock: 999999; --smg-z-sheet: 1000000; --smg-z-sheet-1: 1000001; --smg-z-sheet-3: 1000003; --smg-z-sheet-4: 1000004;
                 --smg-z-sheet-5: 1000005; --smg-z-sheet-top: 9999999; --smg-z-overlay: 2147483600; --smg-z-overlay-1: 2147483601; --smg-z-max-1: 2147483646;
@@ -750,15 +756,6 @@
             @media (max-width: 1400px) and (min-width: 801px) {
                 html.smg-sc, html.smg-smg { --smg-cw: 92%; }
             }
-            /* rail lateral aberto: a coluna do fórum ESTICA (80→94%). O rail já levou ~380px; manter
-               20% de margem vazia em cima disso desperdiçaria duas vezes a mesma tela. Especificidade
-               maior (2 classes) que a regra base, e o override de 1920px vem DEPOIS → os dois valem. */
-            html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 94%; }
-            @media (min-width: 1920px) { html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 92%; } }
-            @media (max-width: 1400px) and (min-width: 801px) {
-                html.smg-aldock-on.smg-sc, html.smg-aldock-on.smg-smg { --smg-cw: 96%; }
-            }
-
             /* ---- REMOVE a sidebar fora da home · conteúdo a 100% ----
                a sidebar nativa some em todas as páginas (a home esconde a dela no bloco HOME);
                fora da home o .p-body-content passa a ocupar todo o espaço (mata grid/flex/float de 2 colunas).
@@ -920,6 +917,16 @@
             }
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-turbo-slot,
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid .smg-rg { overflow: hidden !important; }
+            /* vídeo em pé limitado pelo motor: preserva o slot da coluna e centraliza o player no tamanho real */
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped .smg-turbo-slot,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped .smg-rg,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped[data-s9e-mediaembed] > span,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid.smg-mason-capped iframe {
+                left: 50% !important;
+                width: var(--smg-mason-video-w) !important;
+                max-width: none !important;
+                transform: translateX(-50%) !important;
+            }
             /* link de escape do turbo/cyberdrop (só aparece na falha): por cima do slot, no canto */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-mvid > .smg-turbo-fallback {
                 position: absolute !important; left: var(--smg-sp-8); bottom: var(--smg-sp-8); z-index: var(--smg-z-3);
@@ -927,12 +934,18 @@
             /* caixa de imagem morta no mosaico: ocupa o lugar da imagem, conteúdo centrado */
             html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead {
                 display: flex !important;
-                flex-wrap: wrap !important;
-                align-content: center !important;
+                flex-direction: column !important;
+                align-items: center !important;
                 justify-content: center !important;
+                gap: var(--smg-sp-10) !important;
+                padding: var(--smg-sp-16) !important;
                 text-align: center !important;
             }
-            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead > * { width: auto !important; height: auto !important; flex: 0 0 auto !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-text { align-items: center !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-title,
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-acts { justify-content: center !important; }
+            html.smg-masonry-on .auto-image-grid.smg-mason > .smg-dead .smg-dead-ico svg { width: 26px !important; height: 26px !important; }
             /* MODO MÍDIA: UM overlay (#smg-media) com duas vistas — Galeria (#smg-gallery, padrão) e Feed (#smg-feed);
                data-view no root escolhe qual aparece. A dock flutuante é do overlay (as duas vistas). */
             #smg-media { position: fixed; inset: 0; z-index: var(--smg-z-overlay); display: none; background: var(--smg-bg); }
@@ -1004,12 +1017,19 @@
             .smg-gallery-tile--image.is-loading img { opacity: 0; }
             .smg-gallery-tile--image img { transition: opacity var(--smg-dur-30) ease; }
 `;
+
     // media/css-images.js
     // Owns: CSS for post images, link chips and file-host cards.
     // Exposes: CSS_MEDIA_IMAGES.
     // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: post images, link chips and file-host cards ──
     const CSS_MEDIA_IMAGES = `
+            .message-attachments:not([hidden]) { margin-top: var(--smg-sp-8) !important; }
+            .message-attachments:not([hidden]) > .block-textHeader { margin: 0 0 var(--smg-sp-4) !important; font-size: var(--smg-fs-12) !important; color: var(--smg-tx2) !important; }
+            .message-attachments:not([hidden]) .attachmentList { margin: 0 !important; padding: 0 !important; }
+            .message-attachments:not([hidden]) .attachmentList > li { display: flex !important; align-items: center !important; gap: var(--smg-sp-8) !important; padding: var(--smg-sp-4) 0 !important; border: 0 !important; }
+            .message-attachments:not([hidden]) .file-preview { display: none !important; }
+            .message-attachments:not([hidden]) .attachmentList > li:not([data-smg-attachment-image]) .file-preview[data-type="image"] { display: block !important; }
             /* ---- images ---- */
             img.bbImage {
                 width: auto !important;
@@ -1205,6 +1225,7 @@
                 max-width: none !important;
             }
 `;
+
     // media/css-social-embeds.js
     // Owns: CSS for Twitter/X and Instagram embeds.
     // Exposes: CSS_SOCIAL_EMBEDS.
@@ -1413,12 +1434,24 @@
                 border-radius: var(--smg-r-14) !important;
             }
 `;
+    // media/07-video-providers.js
+    // Owns: supported s9e video providers and selectors shared by the post model and player CSS.
+    // Exposes: VIDEO_S9E_PROVIDERS, VIDEO_S9E_RE, VIDEO_S9E_SELECTOR, VIDEO_BBMEDIA_SELECTOR.
+    // Depends on: none.
+    const VIDEO_S9E_PROVIDERS = Object.freeze(['redgifs', 'gifs', 'youtube', 'vimeo', 'streamable', 'dailymotion', 'tiktok', 'twitch']);
+    const VIDEO_S9E_RE = new RegExp('^(?:' + VIDEO_S9E_PROVIDERS.join('|') + ')$', 'i');
+    const VIDEO_S9E_SELECTOR = VIDEO_S9E_PROVIDERS.map(provider => 'span[data-s9e-mediaembed="' + provider + '"]').join(',\n            ');
+    const VIDEO_BBMEDIA_SELECTOR = VIDEO_S9E_PROVIDERS.map(provider => '.bbMediaWrapper[data-media-site-id="' + provider + '"]').join(',\n            ');
+
     // media/css-players.js
     // Owns: CSS for embeds, the native video player, dead media and post links.
     // Exposes: CSS_MEDIA_PLAYERS.
     // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
     // ── CSS: embeds, native video player, dead media and post links ──
     const CSS_MEDIA_PLAYERS = `
+            /* vídeo fora de um grupo usa o mesmo teto de altura das imagens solo; a proporção limita sua largura */
+            .smg-solo-video { --smg-media-h: var(--smg-solo-h, 80vh); }
+
             /* ---- turbo/saint embeds (iframe nativo) ---- */
             .generic2wide-iframe-div {
                 position: relative;
@@ -1438,14 +1471,6 @@
             .generic2wide-iframe-div.smg-tb-vert {
                 max-height: var(--smg-media-h, min(70vh, 750px)) !important;
                 max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * var(--smg-tb-r))) !important;
-            }
-            .bbCodeBlock--unfurl .contentRow-figure,
-            .bbCodeBlock--unfurl .contentRow-figure img,
-            .bbCodeBlock--unfurl img.bbImage {
-                max-width: 88px !important;
-                max-height: 88px !important;
-                aspect-ratio: 1 !important;
-                object-fit: cover !important;
             }
             .generic2wide-iframe-div.smg-player-loaded,
             span[data-s9e-mediaembed].smg-player-loaded,
@@ -1563,40 +1588,120 @@
                 width: auto !important;
                 max-width: 100% !important;
             }
-            /* Preview de link: a regra .smg-wide (100% / height auto) vinha depois e
-               estourava a thumb do unfurl. A figura fica 88px e o texto ao lado. */
+            /* Unfurl nativo: o preview e o favicon têm tamanhos e papéis distintos.
+               Restringir todo img do card a 88px fazia o favicon crescer como uma segunda thumb. */
             .bbCodeBlock--unfurl {
+                display: block !important;
                 max-width: 100% !important;
                 overflow: hidden !important;
             }
             .bbCodeBlock--unfurl .contentRow {
                 display: flex !important;
                 flex-direction: row !important;
-                align-items: flex-start !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch !important;
                 gap: var(--smg-sp-12) !important;
                 min-width: 0 !important;
+                width: 100% !important;
             }
             .bbCodeBlock--unfurl .contentRow-figure {
-                flex: 0 0 88px !important;
-                width: 88px !important;
-                height: 88px !important;
+                flex: 0 0 72px !important;
+                width: 72px !important;
+                height: 72px !important;
                 overflow: hidden !important;
+                border-radius: var(--smg-r-8) !important;
             }
-            .bbCodeBlock--unfurl .contentRow-figure img,
-            .bbCodeBlock--unfurl img,
-            .bbCodeBlock--unfurl img.bbImage,
-            .bbCodeBlock--unfurl img.bbImage.smg-wide {
-                width: 88px !important;
-                height: 88px !important;
-                max-width: 88px !important;
-                max-height: 88px !important;
+            .bbCodeBlock--unfurl .contentRow-figure:not(:has(img[src], img[data-src])) {
+                display: none !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-figure img {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                aspect-ratio: 1 !important;
                 object-fit: cover !important;
                 margin: 0 !important;
             }
+            .bbCodeBlock--unfurl .js-unfurl-favicon {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                width: 16px !important;
+                height: 16px !important;
+                overflow: hidden !important;
+                vertical-align: middle !important;
+            }
+            .bbCodeBlock--unfurl .js-unfurl-favicon img,
+            .bbCodeBlock--unfurl img.bbCodeBlockUnfurl-icon {
+                display: block !important;
+                width: 16px !important;
+                height: 16px !important;
+                max-width: 16px !important;
+                max-height: 16px !important;
+                object-fit: contain !important;
+                margin: 0 !important;
+            }
             .bbCodeBlock--unfurl .contentRow-main {
-                flex: 1 1 auto !important;
+                display: flex !important;
+                flex: 1 1 0 !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
                 min-width: 0 !important;
                 overflow: hidden !important;
+            }
+            .bbCodeBlock--unfurl .smg-unfurl-actions {
+                display: inline-flex !important;
+                flex: 0 0 auto !important;
+                align-items: center !important;
+                gap: var(--smg-sp-6) !important;
+                margin-left: auto !important;
+            }
+            .bbCodeBlock--unfurl .smg-unfurl-actions .smg-fhcard-btn { width: 34px; height: 34px; }
+            .bbCodeBlock--unfurl .contentRow-header {
+                display: -webkit-box !important;
+                width: 100% !important;
+                overflow: hidden !important;
+                -webkit-box-orient: vertical !important;
+                -webkit-line-clamp: 2 !important;
+                line-height: 1.35 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-snippet {
+                display: -webkit-box !important;
+                width: 100% !important;
+                overflow: hidden !important;
+                -webkit-box-orient: vertical !important;
+                -webkit-line-clamp: 2 !important;
+                color: var(--smg-tx2) !important;
+                font-size: var(--smg-fs-12) !important;
+                line-height: 1.4 !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-minor {
+                display: flex !important;
+                align-items: center !important;
+                gap: var(--smg-sp-6) !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                margin-top: auto !important;
+                padding-top: var(--smg-sp-4) !important;
+                overflow: hidden !important;
+                color: var(--smg-tx2) !important;
+                font-size: var(--smg-fs-11) !important;
+            }
+            .bbCodeBlock--unfurl .contentRow-minor > :not(.js-unfurl-favicon) {
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            @media (max-width: 600px) {
+                .bbCodeBlock--unfurl .contentRow { gap: var(--smg-sp-8) !important; }
+                .bbCodeBlock--unfurl .smg-unfurl-actions { gap: var(--smg-sp-4) !important; }
+                .bbCodeBlock--unfurl .smg-unfurl-actions .smg-fhcard-btn { width: 32px; height: 32px; }
+                .bbCodeBlock--unfurl .contentRow-figure {
+                    flex-basis: 56px !important;
+                    width: 56px !important;
+                    height: 56px !important;
+                }
             }
             /* Standalone images (a run of one): wrapper is a full-width block so the img width (a % of it) resolves
                from the post column, not from the file's pixels. Only the <img> takes clicks (no dead strip beside it). */
@@ -1632,6 +1737,9 @@
                 margin-left: auto !important;
                 margin-right: auto !important;
             }
+            img.bbImage.smg-vert:not(.auto-image-grid *) {
+                max-height: var(--smg-solo-h) !important;
+            }
 
             .smg-dm-wrap img.bbImage { border-radius: var(--smg-r-10); }
             .smg-dm-video {
@@ -1664,34 +1772,61 @@
                 background: #000 !important;
             }
 
-            /* ---- redgifs / gifs / youtube: full width igual aos outros ---- */
-            span[data-s9e-mediaembed="youtube"],
-            span[data-s9e-mediaembed="gifs"],
-            span[data-s9e-mediaembed="redgifs"] {
+            /* ---- s9e video providers: the same capped box, with TikTok's portrait ratio ---- */
+            ${VIDEO_S9E_SELECTOR} {
                 display: block !important;
                 width: 100% !important;
-                max-width: min(1400px, calc(var(--smg-media-h) * 16 / 9)) !important;  /* 16:9 não passa de --smg-media-h de altura */
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * 16 / 9)) !important;
                 margin: var(--smg-sp-16) auto !important;
+                border-radius: var(--smg-img-r) !important;
+                overflow: hidden !important;
+                background: #000 !important;
             }
-            span[data-s9e-mediaembed="youtube"] > span,
-            span[data-s9e-mediaembed="gifs"] > span,
-            span[data-s9e-mediaembed="redgifs"] > span {
+            span[data-s9e-mediaembed="tiktok"] {
+                max-width: min(100%, calc(var(--smg-media-h, min(70vh, 750px)) * 9 / 16)) !important;
+            }
+            ${VIDEO_S9E_SELECTOR} > span {
                 display: block !important;
                 width: 100% !important;
                 height: auto !important;
                 padding: 0 !important;
             }
-            span[data-s9e-mediaembed="youtube"] iframe,
-            span[data-s9e-mediaembed="gifs"] iframe,
-            span[data-s9e-mediaembed="redgifs"] iframe {
+            ${VIDEO_S9E_SELECTOR} iframe {
                 position: static !important;
                 display: block !important;
                 width: 100% !important;
                 height: auto !important;
                 aspect-ratio: 16 / 9 !important;
                 border: none !important;
-                border-radius: var(--smg-r-10) !important;
+                border-radius: inherit !important;
                 background: #000 !important;
+            }
+            span[data-s9e-mediaembed="tiktok"] iframe { aspect-ratio: 9 / 16 !important; }
+
+            /* XenForo BB media wrappers use provider ids instead of s9e spans. */
+            ${VIDEO_BBMEDIA_SELECTOR} {
+                display: block !important;
+                width: 100% !important;
+                max-width: min(1400px, calc(var(--smg-media-h, min(70vh, 750px)) * 16 / 9)) !important;
+                margin: var(--smg-sp-16) auto !important;
+                border-radius: var(--smg-img-r) !important;
+                overflow: hidden !important;
+                background: #000 !important;
+            }
+            ${VIDEO_BBMEDIA_SELECTOR} .bbMediaWrapper-inner {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                padding: 0 !important;
+            }
+            ${VIDEO_BBMEDIA_SELECTOR} iframe {
+                position: static !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                aspect-ratio: 16 / 9 !important;
+                border: 0 !important;
+                border-radius: inherit !important;
             }
 
             /* defensivo: o conteúdo do embed NUNCA passa da largura do container.
@@ -1754,9 +1889,9 @@
                 min-height: 42px !important;
                 margin: var(--smg-sp-4) 0 !important;
                 padding: var(--smg-sp-10) var(--smg-sp-16) !important;
-                border: 1px solid rgba(255, 75, 75, 0.32) !important;
+                border: 1px solid var(--smg-bd2) !important;
                 border-radius: var(--smg-r-10) !important;
-                background: linear-gradient(180deg, rgba(255, 75, 75, 0.08), rgba(255, 75, 75, 0.03)) var(--smg-s1) !important;
+                background: var(--smg-s1) !important;
                 color: var(--smg-tx) !important;
                 text-align: left !important;
                 overflow: hidden !important;
@@ -1766,24 +1901,48 @@
             }
             .smg-dead--media { max-width: none !important; min-height: 0 !important; aspect-ratio: 16 / 9 !important; max-height: var(--smg-media-h) !important; margin: var(--smg-sp-16) auto !important; }
             .smg-turbo-slot > .smg-dead { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; margin: 0 !important; aspect-ratio: auto !important; border-radius: 0 !important; }
-            .smg-dead-code {
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-6) !important;
-                padding: var(--smg-sp-2) var(--smg-sp-8) !important;
-                border-radius: var(--smg-r-6) !important;
-                background: rgba(255, 75, 75, 0.2) !important;
-                border: 1px solid rgba(255, 75, 75, 0.4) !important;
-                font-size: var(--smg-fs-13) !important;
-                font-weight: 800 !important;
-                color: #ff6b6b !important;
-                flex-shrink: 0 !important;
-                white-space: nowrap !important;
+            .smg-dead-ico { display: inline-flex !important; flex: 0 0 auto !important; color: var(--smg-tx2) !important; }
+            .smg-dead-ico svg { width: 18px !important; height: 18px !important; fill: none !important; stroke: currentColor !important; }
+            .smg-dead-text { display: flex !important; flex-direction: column !important; gap: var(--smg-sp-2) !important; min-width: 0 !important; flex: 1 1 auto !important; }
+            .smg-dead-title { display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: var(--smg-sp-6) !important; font-size: var(--smg-fs-14) !important; font-weight: 700 !important; color: var(--smg-tx) !important; line-height: 1.3 !important; }
+            .smg-dead-num { padding: 0 var(--smg-sp-6) !important; border-radius: var(--smg-r-4) !important; background: var(--smg-w-08) !important; border: 1px solid var(--smg-bd2) !important; color: var(--smg-tx2) !important; font-size: var(--smg-fs-11) !important; font-weight: 800 !important; line-height: 1.5 !important; }
+            .smg-dead-num:empty { display: none !important; }
+            .smg-dead-hint { font-size: var(--smg-fs-12) !important; font-weight: 500 !important; color: var(--smg-tx2) !important; line-height: 1.35 !important; overflow-wrap: anywhere !important; }
+            .smg-dead-acts { display: inline-flex !important; align-items: center !important; flex-wrap: wrap !important; gap: var(--smg-sp-8) !important; flex: 0 0 auto !important; }
+            .smg-dead-retry {
+                display: inline-flex !important; align-items: center !important; gap: var(--smg-sp-6) !important;
+                height: 30px !important; padding: 0 var(--smg-sp-12) !important; margin: 0 !important;
+                border: 1px solid var(--smg-bd2) !important; border-radius: var(--smg-r-8) !important;
+                background: var(--smg-w-08) !important; color: var(--smg-tx) !important;
+                font: inherit !important; font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
+                cursor: pointer !important; white-space: nowrap !important;
             }
-            .smg-dead-code svg { width: 15px !important; height: 15px !important; flex: 0 0 auto !important; fill: none !important; stroke: currentColor !important; opacity: 0.95 !important; }
-            .smg-dead-code b:empty { display: none; }
-            .smg-dead-sep { color: var(--smg-w-30) !important; font-weight: 700 !important; flex-shrink: 0 !important; }
-            .smg-dead-sub { font-size: var(--smg-fs-13) !important; font-weight: 500 !important; color: var(--smg-w-72) !important; overflow-wrap: anywhere !important; flex: 1 1 auto !important; }
+            .smg-dead-retry:hover { background: var(--smg-w-14) !important; }
+            .smg-dead-retry[hidden] { display: none !important; }
+            .smg-dead-retry svg { width: 14px !important; height: 14px !important; fill: none !important; stroke: currentColor !important; }
+            .smg-dead-host { font-size: var(--smg-fs-12) !important; font-weight: 600 !important; color: var(--smg-tx2) !important; white-space: nowrap !important; }
+            .smg-dead:hover .smg-dead-host { color: var(--smg-tx) !important; text-decoration: underline !important; }
+            /* apagado de vez: sem vermelho de alarme, só o registro calmo de que não existe mais */
+            .smg-dead--gone .smg-dead-ico { color: var(--smg-tx2) !important; }
+            .smg-dead--strip { min-height: 44px !important; height: 44px !important; padding: 0 var(--smg-sp-12) !important; gap: var(--smg-sp-8) !important; }
+            .smg-dead--strip .smg-dead-text { flex-direction: row !important; align-items: center !important; gap: var(--smg-sp-8) !important; }
+            .smg-dead--strip .smg-dead-title { white-space: nowrap !important; }
+            .smg-dead--strip .smg-dead-hint { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+            .smg-dead--strip .smg-dead-acts { margin-left: auto !important; }
+            @media (max-width: 600px) {
+                .smg-dead--strip { height: auto !important; min-height: 44px !important; flex-wrap: wrap !important; }
+                .smg-dead--strip .smg-dead-text { flex-wrap: wrap !important; }
+                .smg-dead--strip .smg-dead-hint { flex-basis: 100% !important; white-space: normal !important; }
+            }
+            /* caixa GRANDE (lugar de player/embed, ou imagem no mosaico): pilha centrada em vez de linha */
+            .smg-dead--media {
+                flex-direction: column !important; justify-content: center !important; text-align: center !important;
+                gap: var(--smg-sp-10) !important; padding: var(--smg-sp-20) !important;
+            }
+            .smg-dead--media .smg-dead-text { flex: 0 0 auto !important; align-items: center !important; }
+            .smg-dead--media .smg-dead-title { justify-content: center !important; }
+            .smg-dead--media .smg-dead-acts { justify-content: center !important; margin-top: var(--smg-sp-4) !important; }
+            .smg-dead--media .smg-dead-ico svg { width: 26px !important; height: 26px !important; }
             /* Nunca aplica efeito de loading/shimmer sobre containers de vídeo iframe / turbo.cr */
             .generic2wide-iframe-div::before,
             .generic2wide-iframe-div::after,
@@ -2110,7 +2269,10 @@
                body=topbar=76px e o gap é zero). 26px = mesmo valor já usado nas threads (.smg-thread). */
             html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-28) !important; padding-bottom: var(--smg-sp-10) !important; }
             @media (max-width: 600px) { html:not(.smg-thread) .p-body-header { padding-top: var(--smg-sp-16) !important; } }   /* mobile já tem gap (topbar 52 < body 76) → não empilha demais */
-            .p-body-header .p-title { text-align: left !important; }
+            .p-body-header .p-title { display: flex !important; align-items: center !important; gap: var(--smg-sp-12); min-width: 0; text-align: left !important; }
+            .p-body-header .p-title-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .p-body-header .p-title-pageAction { flex: 0 0 auto; margin-left: auto; }
+            @media (max-width: 600px) { html:not(.smg-thread) .p-body-header .p-title { flex-wrap: wrap; } }
             .p-body-header .p-title-value { font-size: var(--smg-fs-32) !important; font-weight: 800 !important; line-height: 1.2 !important; }
 
             /* ---- remove banners de anúncio (striply etc.) ---- */
@@ -2781,7 +2943,7 @@
             #smg-topbar {
                 position: relative; width: 100%; box-sizing: border-box;
                 background: var(--smg-bg);
-                border: 0; border-bottom: 1px solid var(--smg-w-08);
+                border: 0; border-bottom: 1px solid var(--smg-bd);
                 box-shadow: 0 1px 0 var(--smg-w-02);
                 transition: box-shadow var(--smg-dur-20) ease, background var(--smg-dur-20) ease;
             }
@@ -2838,8 +3000,9 @@
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
             .smg-tb-item:hover, .smg-tb-item.active { background: var(--smg-w-06); color: #fff; }
-            .smg-tb-item--current { color: #fff; background: var(--smg-w-06); }
+            .smg-tb-item--current { color: #fff; background: var(--smg-link-soft); }
             .smg-tb-item--current .smg-tb-ico { color: var(--smg-link); }
+            .smg-tb-item:focus-visible, .smg-tb-act:focus-visible, .smg-tb-account:focus-visible { outline: 2px solid var(--smg-link); outline-offset: 2px; }
             .smg-tb-ico { display: flex; align-items: center; }
             .smg-tb-ico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-caret { display: flex; align-items: center; margin-left: -2px; }
@@ -2854,7 +3017,7 @@
                 transform: translateY(-50%); background: var(--smg-w-10);
             }
             .smg-tb-act {
-                position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+                position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
                 border-radius: var(--smg-r-round); border: none; background: transparent; color: var(--smg-w-72);
                 cursor: pointer; text-decoration: none;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, width var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1), height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
@@ -2867,7 +3030,7 @@
                 #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
                 #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
                 #smg-topbar-wrap.floating .smg-tb-act,
-                #smg-topbar-wrap.floating .smg-tb-account { width: 38px; height: 38px; }
+                #smg-topbar-wrap.floating .smg-tb-account { width: 40px; height: 40px; }
             }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
@@ -2947,7 +3110,7 @@
                desenhado a 28px dentro. Antes era um círculo de 38px com anel — do lado de ícones de
                traço de 20px ele lia quase o dobro do tamanho e desalinhava a fileira. */
             .smg-tb-account {
-                width: 42px; height: 42px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
+                width: 40px; height: 40px; flex: 0 0 auto; border-radius: var(--smg-r-round); cursor: pointer; padding: 0;
                 border: 0; background: transparent;
                 display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: var(--smg-fs-13);
                 transition: background var(--smg-dur-15) ease;
@@ -3034,38 +3197,25 @@
             .smg-tb-poptitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
             .smg-tb-popdesc { font-size: var(--smg-fs-12); color: var(--smg-w-50); }
             .smg-tb-popdiv { height: 1px; background: var(--smg-w-08); margin: var(--smg-sp-6) var(--smg-sp-8); }
-            /* ===== mega-menu do Discover (grid 2-col + painel destacado, estilo Vimeo) ===== */
-            .smg-tb-pop--mega { min-width: 660px; max-width: 720px; padding: var(--smg-sp-18); }
-            .smg-tb-mega-cols { display: flex; gap: var(--smg-sp-18); align-items: stretch; }
-            .smg-tb-mega-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--smg-sp-16); }
+            /* ===== mega-menu Explore: três grupos em colunas, sem painel destacado ===== */
+            .smg-tb-pop--mega { width: min(760px, calc(100vw - 32px)); min-width: min(760px, calc(100vw - 32px)); max-width: calc(100vw - 32px); padding: var(--smg-sp-18); }
+            .smg-tb-mega-cols { display: block; }
+            .smg-tb-mega-main { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--smg-sp-16); }
             .smg-tb-mega-label { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--smg-w-40); padding: 0 var(--smg-sp-8) var(--smg-sp-10); }
-            .smg-tb-mega-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--smg-sp-2); }
+            .smg-tb-mega-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--smg-sp-2); }
             .smg-tb-megaitem { display: flex; align-items: center; gap: var(--smg-sp-12); padding: var(--smg-sp-10) var(--smg-sp-10); border-radius: var(--smg-r-12); text-decoration: none; color: #fff; transition: background var(--smg-dur-12) ease; }
             .smg-tb-megaitem:hover { background: var(--smg-link-soft); }
             .smg-tb-megaico { flex: 0 0 auto; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--smg-r-10); background: var(--smg-w-06); color: var(--smg-w-85); transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease; }
             .smg-tb-megaitem:hover .smg-tb-megaico { background: var(--smg-link); color: #fff; transform: translateY(-1px); }
             .smg-tb-megaico svg { width: 18px; height: 18px; fill: none !important; }
             .smg-tb-megatext { display: flex; flex-direction: column; gap: var(--smg-sp-2); min-width: 0; }
-            .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            /* painel destacado à direita (promove a Timeline) */
-            .smg-tb-mega-feat { flex: 0 0 226px; display: flex; flex-direction: column; border-radius: var(--smg-r-14); overflow: hidden; text-decoration: none; background: var(--smg-s2); border: 1px solid var(--smg-bd); transition: border-color var(--smg-dur-15) ease, transform var(--smg-dur-15) ease, box-shadow var(--smg-dur-15) ease; }
-            .smg-tb-mega-feat:hover { border-color: var(--smg-bd2); transform: translateY(-2px); box-shadow: var(--smg-shadow-2); }
-            .smg-tb-mega-feat-art { height: 112px; display: flex; align-items: center; justify-content: center; color: #fff; background: radial-gradient(120% 110% at 28% 18%, var(--smg-link), transparent 62%), linear-gradient(155deg, var(--smg-s3), var(--smg-s1)); }
-            .smg-tb-mega-feat-art svg { width: 34px; height: 34px; fill: none !important; opacity: .95; }
-            .smg-tb-mega-feat-body { padding: var(--smg-sp-14) var(--smg-sp-16) var(--smg-sp-16); display: flex; flex-direction: column; gap: var(--smg-sp-6); }
-            .smg-tb-mega-feat-title { font-size: var(--smg-fs-15); font-weight: 800; color: #fff; }
-            .smg-tb-mega-feat-desc { font-size: var(--smg-fs-12); line-height: 1.45; color: var(--smg-w-50); }
-            .smg-tb-mega-feat-cta { margin-top: var(--smg-sp-4); display: inline-flex; align-items: center; gap: var(--smg-sp-6); font-size: var(--smg-fs-13); font-weight: 700; color: var(--smg-link); }
-            .smg-tb-mega-feat-cta svg { width: 14px; height: 14px; fill: none !important; }
+            .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
+            .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); line-height: 1.4; }
             @media (max-width: 800px) {
                 html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
                 .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
-                .smg-tb-mega-cols { flex-direction: column; gap: var(--smg-sp-14); }
-                .smg-tb-mega-feat { flex-basis: auto; }
-                .smg-tb-mega-feat-art { height: 92px; }
-                .smg-tb-mega-grid { grid-template-columns: 1fr; }
+                .smg-tb-mega-main { grid-template-columns: 1fr; }
             }
 
             /* lista nativa do XF embutida (sheet mobile de alertas + painel lateral) */
@@ -3243,6 +3393,7 @@
                 line-height: 1 !important;
             }
 `;
+
     // navigation/css-notices.js
     // Owns: CSS for header notices and the account dialog.
     // Exposes: CSS_NOTICES.
@@ -3586,7 +3737,7 @@
             .smg-al-tags { display: flex; flex-wrap: nowrap; gap: var(--smg-sp-6); align-items: center; min-width: 0; overflow: hidden; }
             .smg-al-tags > * { flex: 0 0 auto; }
             .smg-al-tags > :first-child { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-            #smg-aldock .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
+            #smg-alpop .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
             .smg-al-tags .smg-al-more {
                 font-size: var(--smg-fs-10); font-weight: 700; line-height: 1.3; padding: var(--smg-sp-2) var(--smg-sp-6);
                 border-radius: var(--smg-r-4); background: var(--smg-w-08); color: var(--smg-w-72); white-space: nowrap;
@@ -3595,8 +3746,8 @@
             .smg-alert-clean .smg-al-tags .smg-al-chip,
             .smg-alert-clean .smg-al-tags .label,
             .smg-alert-clean .smg-al-tags .prefix,
-            #smg-aldock .smg-al-tags .smg-al-chip,
-            #smg-aldock .smg-al-tags .label,
+            #smg-alpop .smg-al-tags .smg-al-chip,
+            #smg-alpop .smg-al-tags .label,
             .smg-al-tags .smg-al-chip {
                 font-size: var(--smg-fs-10) !important;
                 font-weight: 600 !important;
@@ -4269,13 +4420,11 @@
                 display: flex;
                 flex-direction: column;
                 gap: var(--smg-sp-12);
-                padding: var(--smg-sp-24) var(--smg-sp-24) var(--smg-sp-24);
-                border-radius: var(--smg-r-20);
+                padding: var(--smg-sp-20) var(--smg-sp-20) var(--smg-sp-18);
+                border-radius: var(--smg-pop-r);
                 background: var(--smg-s1);
-                border: 1px solid var(--smg-w-12);
-                box-shadow:
-                    var(--smg-hl),
-                    var(--smg-shadow-4);
+                border: 1px solid var(--smg-bd2);
+                box-shadow: var(--smg-pop-shadow);
                 opacity: 0;
                 transition: opacity var(--smg-dur-20) ease, transform var(--smg-dur-30) cubic-bezier(.2,.9,.3,1);
             }
@@ -4336,7 +4485,7 @@
             /* topbar: lupa + input + atalho + fechar (command palette, sem botão) */
             .smg-search-bar {
                 display: flex; align-items: center; gap: var(--smg-sp-12);
-                height: 56px; padding: 0 var(--smg-sp-8) 0 var(--smg-sp-16);
+                height: 50px; padding: 0 var(--smg-sp-8) 0 var(--smg-sp-14);
                 border-radius: var(--smg-r-14);
                 background: var(--smg-w-06);
                 border: 1px solid var(--smg-w-10);
@@ -4390,19 +4539,19 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 color: var(--smg-w-72);
             }
             .smg-search-select-wrap .smg-search-select-ic svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-select-wrap select {
                 appearance: none;
                 -webkit-appearance: none;
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-28) 0 var(--smg-sp-32);
                 border-radius: var(--smg-r-10);
                 background-color: var(--smg-w-06);
@@ -4435,8 +4584,8 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 34px;
-                height: 34px;
+                width: 32px;
+                height: 32px;
                 box-sizing: border-box;
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-06);
@@ -4451,8 +4600,8 @@
                 color: #fff;
             }
             .smg-search-author-trigger svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-global-toolbar.author-open .smg-search-tb-row {
@@ -4463,7 +4612,7 @@
                 align-items: center;
                 gap: var(--smg-sp-10);
                 width: 100%;
-                height: 34px;
+                height: 32px;
                 box-sizing: border-box;
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-08);
@@ -4483,8 +4632,8 @@
                 flex-shrink: 0;
             }
             .smg-search-author-row .smg-search-author-ic svg {
-                width: 15px;
-                height: 15px;
+                width: 16px;
+                height: 16px;
                 fill: none !important;
             }
             .smg-search-author-row .smg-search-author-inp {
@@ -4545,8 +4694,8 @@
                 color: #fff;
             }
             .smg-search-tb-row .smg-search-cfg {
-                width: 34px;
-                height: 34px;
+                width: 32px;
+                height: 32px;
                 padding: 0;
                 border-radius: var(--smg-btn-r);
                 background: var(--smg-w-06);
@@ -4567,7 +4716,7 @@
                 display: inline-flex;
                 align-items: center;
                 gap: var(--smg-sp-8);
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-12);
                 border-radius: var(--smg-btn-r);
                 border: 1px solid var(--smg-w-12);
@@ -4594,7 +4743,7 @@
                 opacity: 0.7;
             }
             .smg-search-global-toolbar .smg-multiselect-btn {
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-12);
                 font-size: var(--smg-fs-13);
                 font-weight: 600;
@@ -4620,7 +4769,7 @@
                 display: inline-flex;
                 align-items: center;
                 gap: var(--smg-sp-8);
-                height: 34px;
+                height: 32px;
                 padding: 0 var(--smg-sp-10);
                 border-radius: var(--smg-r-10);
                 background: var(--smg-w-04);
@@ -4683,7 +4832,7 @@
                 border-color: var(--smg-w-30); color: #fff;
             }
             .smg-chip-check { display: none; align-items: center; }
-            .smg-chip-check svg { width: 15px; height: 15px; fill: none; }
+            .smg-chip-check svg { width: 16px; height: 16px; fill: none; }
             .smg-chip-toggle.active .smg-chip-check { display: inline-flex; }
             .smg-search-by {
                 flex: 0 0 auto; width: 100%; min-width: 0; height: 44px; padding: 0 var(--smg-sp-16); box-sizing: border-box;
@@ -4699,7 +4848,7 @@
             .smg-search-scope { position: relative; }
             .smg-search-scope-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-6);
-                height: 36px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
+                height: 32px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-14); box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -4719,7 +4868,7 @@
             }
             .smg-search-scope-list[hidden] { display: none; }
             .smg-search-scope-list button {
-                display: flex; align-items: center; height: 36px; padding: 0 var(--smg-sp-12);
+                display: flex; align-items: center; height: 32px; padding: 0 var(--smg-sp-12);
                 border: 0; border-radius: var(--smg-r-8); background: transparent; color: var(--smg-w-72);
                 font-size: var(--smg-fs-14); font-weight: 500; cursor: pointer; text-align: left; white-space: nowrap;
                 transition: background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
@@ -4730,7 +4879,7 @@
                Vira order=date no POST da busca (= &o=date na URL de resultados). */
             .smg-search-order-btn {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-8);
-                height: 36px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
+                height: 32px; padding: 0 var(--smg-sp-12); box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: #fff;
                 font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -4738,12 +4887,12 @@
             }
             .smg-search-order-btn:hover { background: var(--smg-w-10); }
             .smg-search-order-ic { display: inline-flex; opacity: 0.7; }
-            .smg-search-order-ic svg { width: 15px; height: 15px; fill: none; }
+            .smg-search-order-ic svg { width: 16px; height: 16px; fill: none; }
             .smg-search-pop--drop .smg-search-toolbar { gap: var(--smg-sp-8); }   /* dropdown (480px): toolbar ganhou o chip de ordenar → gap menor pra caber numa linha */
             /* SÓ TÍTULOS — switch */
             .smg-search-switch {
                 display: inline-flex; align-items: center; gap: var(--smg-sp-10); margin-left: auto;   /* empurra Só-títulos + autor pra DIREITA (escopo fica na esquerda) */
-                height: 36px; padding: 0 var(--smg-sp-4); border: 0; background: transparent;
+                height: 32px; padding: 0 var(--smg-sp-4); border: 0; background: transparent;
                 color: var(--smg-w-85); font-size: var(--smg-fs-14); font-weight: 600; cursor: pointer;
                 transition: color var(--smg-dur-15) ease;
             }
@@ -4757,19 +4906,19 @@
                 background: #fff; box-shadow: var(--smg-shadow-1);
                 transition: transform var(--smg-dur-20) cubic-bezier(.3,.8,.3,1);
             }
-            .smg-search-switch.on .smg-search-switch-track { background: #34c759; }
+            .smg-search-switch.on .smg-search-switch-track { background: var(--smg-link); }
             .smg-search-switch.on .smg-search-switch-thumb { transform: translateX(16px); }
             /* AUTOR — ícone que revela o campo (.smg-search-by reusa o estilo existente) */
             .smg-search-author-btn {
                 display: inline-flex; align-items: center; justify-content: center;
-                width: 36px; height: 36px; box-sizing: border-box;
+                width: 32px; height: 32px; box-sizing: border-box;
                 border-radius: var(--smg-btn-r); border: 1px solid var(--smg-w-14);
                 background: var(--smg-w-06); color: var(--smg-w-72); cursor: pointer;
                 transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, border-color var(--smg-dur-15) ease;
             }
             .smg-search-author-btn:hover { background: var(--smg-w-10); color: #fff; }
             .smg-search-author-btn.open { background: var(--smg-w-10); border-color: var(--smg-w-30); color: #fff; }
-            .smg-search-author-btn svg { width: 17px; height: 17px; fill: none; }
+            .smg-search-author-btn svg { width: 16px; height: 16px; fill: none; }
             .smg-search-author-wrap[hidden] { display: none; }
             /* AÇÕES DA BARRA — ⇥ (comandos) · funil (avançada) · sliders (defaults) · esc · × têm UM desenho só:
                30px, raio 9, mesma borda/fundo/hover. Antes cada um tinha altura, raio e borda próprios (24/30/36px). */
@@ -4798,7 +4947,7 @@
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
             .smg-search-go-ic { display: inline-flex; }
-            .smg-search-go-ic svg { width: 17px; height: 17px; fill: none; stroke-width: 2.4; }
+            .smg-search-go-ic svg { width: 16px; height: 16px; fill: none; stroke-width: 2.4; }
             .smg-search-go:hover { filter: brightness(0.9); }
             .smg-search-go:active { transform: scale(0.97); }
 
@@ -4951,7 +5100,7 @@
             }
             html.smg-search-form form.block label.iconic--radio > i { border-radius: var(--smg-r-round) !important; }
             html.smg-search-form form.block label.iconic > i::after { position: static !important; margin: 0 !important; font-size: var(--smg-fs-11) !important; line-height: 1 !important; }
-            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link-strong) !important; border-color: var(--smg-link-strong) !important; }
+            html.smg-search-form form.block label.iconic input:checked + i { background: var(--smg-link) !important; border-color: var(--smg-link) !important; }
             html.smg-search-form form.block label.iconic input:checked + i::after { color: #fff !important; }
             /* Order by (Relevance/Date): radios na HORIZONTAL */
             html.smg-search-form form.block .inputChoices { display: flex !important; flex-wrap: wrap; gap: var(--smg-sp-8) var(--smg-sp-24); margin: 0 !important; padding: 0 !important; }
@@ -4966,7 +5115,7 @@
             html.smg-search-form form.block .formSubmitRow .button--primary {
                 display: inline-flex !important; align-items: center; gap: var(--smg-sp-8); height: 44px; padding: 0 var(--smg-sp-24) !important;
                 border: 0 !important; border-radius: var(--smg-r-12) !important; box-shadow: none !important;
-                background: var(--smg-link-strong) !important; color: #fff !important;
+                background: var(--smg-link) !important; color: #fff !important;
                 font-size: var(--smg-fs-14) !important; font-weight: 700 !important;
                 transition: filter var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
             }
@@ -5012,7 +5161,7 @@
             .smg-search-empty-hint code { padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-6); background: var(--smg-w-08); color: var(--smg-link); font: 600 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
             .smg-search-hist-head { display: flex; align-items: center; gap: var(--smg-sp-8); margin-bottom: var(--smg-sp-4); }
             .smg-search-hist-title { font-size: var(--smg-fs-11); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--smg-w-40); }
-            .smg-search-hist-badge { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); background: var(--smg-w-08); color: var(--smg-w-50); font-size: var(--smg-fs-11); font-weight: 700; font-variant-numeric: tabular-nums; }
+            .smg-search-hist-badge { color: var(--smg-w-40); font-size: var(--smg-fs-11); font-weight: 600; font-variant-numeric: tabular-nums; }
             .smg-search-hist-clear {
                 margin-left: auto; padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); border: none;
                 background: transparent; color: var(--smg-w-55); font-size: var(--smg-fs-12); font-weight: 600; cursor: pointer;
@@ -5021,18 +5170,14 @@
             .smg-search-hist-clear:hover { background: var(--smg-w-08); color: #fff; }
             .smg-search-hist-list { display: flex; flex-direction: column; gap: var(--smg-sp-2); }
             .smg-search-hist-item {
-                display: flex; align-items: center; gap: var(--smg-sp-12); width: 100%;
-                padding: var(--smg-sp-8) var(--smg-sp-10); border-radius: var(--smg-r-12); border: none; cursor: pointer; text-align: left;
+                display: flex; align-items: center; gap: var(--smg-sp-8); width: 100%; min-height: 38px;
+                padding: var(--smg-sp-4) var(--smg-sp-8); border-radius: var(--smg-r-8); border: none; cursor: pointer; text-align: left;
                 background: transparent; color: #fff; transition: background var(--smg-dur-12) ease;
             }
-            .smg-search-hist-item:hover { background: var(--smg-w-08); }
-            .smg-search-hist-ico {
-                flex: 0 0 auto; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-                border-radius: var(--smg-r-10); background: var(--smg-w-06); color: var(--smg-w-55);
-            }
-            .smg-search-hist-ico svg { width: 16px; height: 16px; fill: none; }
+            .smg-search-hist-item:hover { background: var(--smg-w-06); }
             .smg-search-hist-q { flex: 1 1 auto; min-width: 0; font-size: var(--smg-fs-14); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .smg-search-hist-meta { flex: 0 0 auto; font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; }
+            .smg-search-hist-meta { flex: 0 1 auto; font-size: var(--smg-fs-12); color: var(--smg-w-40); white-space: nowrap; }
+            .smg-search-hist-titles { flex: 0 0 auto; padding: var(--smg-sp-2) var(--smg-sp-6); border-radius: var(--smg-chip-r); background: var(--smg-w-06); color: var(--smg-w-50); font-size: var(--smg-fs-10); font-weight: 600; white-space: nowrap; }
             .smg-search-hist-remove {
                 flex: 0 0 auto; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
                 border-radius: var(--smg-r-8); border: none; background: transparent; color: var(--smg-w-40); cursor: pointer;
@@ -5049,6 +5194,7 @@
                 opacity: 0; transition: opacity var(--smg-dur-12) ease, background var(--smg-dur-12) ease, color var(--smg-dur-12) ease;
             }
             .smg-search-hist-item:hover .smg-search-hist-act { opacity: 1; }
+            .smg-search-hist-act:focus-visible { opacity: 1; outline: 1px solid var(--smg-link); outline-offset: 1px; }
             .smg-search-hist-act:hover { background: var(--smg-w-14); color: #fff; }
             .smg-search-hist-act svg { width: 14px; height: 14px; fill: none; }
             /* resultados da busca INLINE (mostrados no próprio dropdown) */
@@ -5129,7 +5275,30 @@
                 fill: none;
                 stroke-width: 2;
             }
+            @media (max-width: 600px) {
+                #smg-search-pop {
+                    top: max(12px, env(safe-area-inset-top));
+                    max-width: calc(100vw - 24px);
+                    max-height: calc(100vh - 24px);
+                    max-height: calc(100dvh - 24px);
+                    padding: var(--smg-sp-14);
+                    gap: var(--smg-sp-10);
+                }
+                .smg-search-bar { height: 46px; gap: var(--smg-sp-8); }
+                .smg-search-global-toolbar { gap: var(--smg-sp-6); }
+                .smg-search-tb-row { gap: var(--smg-sp-6); }
+                .smg-search-tb-spacer { display: none; }
+                .smg-search-hist-item { flex-wrap: wrap; min-height: 36px; row-gap: var(--smg-sp-4); }
+                .smg-search-hist-q { flex-basis: calc(100% - 88px); }
+                .smg-search-hist-meta { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+                .smg-search-hist-acts,
+                .smg-search-hist-act,
+                .smg-search-hist-remove { opacity: 1; }
+                .smg-search-hist-act,
+                .smg-search-hist-remove { width: 28px; height: 28px; }
+            }
 `;
+
     // media/css-media-feed.js
     // Owns: CSS for feed view of the media overlay.
     // Exposes: CSS_MEDIA_FEED.
@@ -7524,7 +7693,7 @@
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(max(var(--smg-card-min), calc((100% - 70px) / 6)), 1fr)) !important;
                 gap: var(--smg-sp-14) !important;
-                padding: var(--smg-sp-14) !important;
+                padding: var(--smg-sp-14) 0 !important;
                 align-items: stretch !important;
             }
             html.smg-threadlist.smg-tv-grid .smg-tl-grid > .smg-inf-sep { grid-column: 1 / -1 !important; }
@@ -7644,11 +7813,13 @@
             }
 
             /* Row 1 (Badges em Linha Única) e Row 2 (Título) */
+            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title::before,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title::after { content: none !important; display: none !important; }
             html.smg-threadlist.smg-tv-grid .structItem--thread .structItem-title {
                 display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                align-items: center !important;
+                flex-direction: column !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch !important;
                 gap: var(--smg-sp-4) !important;
                 font-size: var(--smg-fs-15) !important;
                 font-weight: 700 !important;
@@ -7656,6 +7827,71 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags {
+                position: relative !important;
+                display: flex !important;
+                align-items: center !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track {
+                display: flex !important;
+                align-items: center !important;
+                flex: 0 1 auto !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                gap: var(--smg-sp-4) !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                white-space: nowrap !important;
+                scrollbar-width: none !important;
+                scroll-behavior: smooth !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track::-webkit-scrollbar { display: none !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-track > * { flex: 0 0 auto !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags.has-prev::before,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags.has-next::after {
+                content: "" !important;
+                position: absolute !important;
+                z-index: var(--smg-z-1) !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                width: 18px !important;
+                pointer-events: none !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags::before {
+                left: 0 !important;
+                background: linear-gradient(90deg, var(--smg-s2), transparent) !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags::after {
+                right: 0 !important;
+                background: linear-gradient(270deg, var(--smg-s2), transparent) !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev,
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next {
+                position: absolute !important;
+                z-index: var(--smg-z-2) !important;
+                top: 50% !important;
+                width: 20px !important;
+                height: 20px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                border: 1px solid var(--smg-w-10) !important;
+                border-radius: var(--smg-r-round) !important;
+                background: var(--smg-k-72) !important;
+                color: var(--smg-w-85) !important;
+                box-shadow: var(--smg-shadow-1) !important;
+                transform: translateY(-50%) !important;
+                cursor: pointer !important;
+            }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev { left: 1px !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next { right: 1px !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-prev[hidden],
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags-next[hidden] { display: none !important; }
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-tags svg { width: 12px !important; height: 12px !important; }
             .structItem-title .prefix,
             .labelLink .label {
                 font-size: var(--smg-fs-10) !important;
@@ -7671,7 +7907,6 @@
                 -webkit-box-orient: vertical !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
-                min-height: 2.6em !important;
                 line-height: 1.3 !important;
                 margin-top: var(--smg-sp-6) !important;
                 color: #fff !important;
@@ -7756,17 +7991,24 @@
             html.smg-threadlist.smg-tv-grid .structItem--thread input[name="thread_ids[]"] {
                 display: none !important;
             }
-            html.smg-threadlist.smg-tv-grid .structItem--thread.is-unread .structItem-title a[href*="/threads/"]::after,
-            html.smg-threadlist.smg-tv-grid .structItem--thread.is-unread .structItem-title a[data-tp-primary]::after {
-                content: "" !important;
-                display: inline-block !important;
-                width: 7px !important;
-                height: 7px !important;
-                border-radius: var(--smg-r-round) !important;
+            html.smg-threadlist.smg-tv-grid .structItem--thread .smg-card-new {
+                position: absolute !important;
+                top: 6px !important;
+                left: 6px !important;
+                z-index: var(--smg-z-5) !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                height: 18px !important;
+                padding: 0 var(--smg-sp-8) !important;
+                border-radius: var(--smg-badge-r) !important;
                 background: var(--smg-link) !important;
-                box-shadow: 0 0 6px var(--smg-link-soft) !important;
-                margin-left: var(--smg-sp-6) !important;
-                vertical-align: middle !important;
+                color: #fff !important;
+                font-size: var(--smg-fs-10) !important;
+                font-weight: 700 !important;
+                letter-spacing: .04em !important;
+                line-height: 1 !important;
+                text-transform: uppercase !important;
+                box-shadow: var(--smg-shadow-1) !important;
             }
             html.smg-threadlist .structItem--quickCreate,
             html.smg-threadlist .block-filterBar { display: none !important; }
@@ -7788,6 +8030,7 @@
                 background: var(--smg-s2) !important;
                 min-height: 160px;
             }`;
+
     // listing/css-thread-cards.js
     // Owns: CSS for thread list placeholders and article view.
     // Exposes: CSS_THREAD_CARDS.
@@ -7816,6 +8059,15 @@
                 background: var(--smg-bg) !important;
                 border-color: var(--smg-w-06) !important;
             }
+            /* MODO GRADE: remove a superfície do painel que envolve a lista e alinhe os cards ao conteúdo. */
+            html.smg-threadlist.smg-tv-grid .block-container:has(.smg-tl-grid),
+            html.smg-threadlist.smg-tv-grid .block-body:has(.smg-tl-grid),
+            html.smg-threadlist.smg-tv-grid .structItemContainer:has(.smg-tl-grid) {
+                background: transparent !important;
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            html.smg-threadlist.smg-tv-grid .block-body:has(.smg-tl-grid) { padding-inline: 0 !important; }
             /* GRID: quadrado, ocupa a célula toda */
             html.smg-threadlist.smg-tv-grid .structItem--thread.smg-no-thumb .smg-thumb-ph {
                 display: flex !important; width: 100% !important; aspect-ratio: 1 / 1;
@@ -7984,6 +8236,7 @@
                 border-color: var(--smg-link-strong) !important;
             }
 `;
+
     // thread/css-post-cards.js
     // Owns: CSS for post cards.
     // Exposes: CSS_POST_CARDS.
@@ -8600,25 +8853,6 @@
             .smg-fp-time { white-space: nowrap; }
             /* CONTEÚDO: full-width, sem caixa escura, texto 15px (= .smg-pc .message-content) */
             .smg-fp-content { color: var(--smg-w-95); word-break: break-word; }
-            /* Não forçar display: o card de file-host esconde o unfurl nativo
-               com style inline. display:block !important trazia a URL e o preview
-               de volta, duplicados em cima do nosso card. */
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow {
-                display: flex !important;
-                align-items: flex-start !important;
-                height: auto !important;
-                max-height: none !important;
-                overflow: visible !important;
-                white-space: normal !important;
-            }
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-main,
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-header,
-            .smg-fp-content .bbCodeBlock--unfurl .contentRow-snippet {
-                height: auto !important;
-                max-height: none !important;
-                overflow: visible !important;
-                white-space: normal !important;
-            }
             .smg-fp-content .bbCodeBlock--unfurl:has(~ .smg-fhcard),
             .smg-fp-content a.link--external:has(+ .smg-fhcard),
             .smg-fp-content a.link--external:has(+ .bbCodeBlock--unfurl + .smg-fhcard) {
@@ -8745,131 +8979,53 @@
             .smg-watched-empty { grid-column: 1 / -1; padding: 60px var(--smg-sp-16); text-align: center; font-size: var(--smg-fs-14); color: var(--smg-w-50); }
         `;
 
-    // styles/08-alertdock.js
-    // Owns: CSS for alerts rail.
-    // Exposes: CSS_ALERTDOCK.
+    // styles/08-alertpopover.js
+    // Owns: CSS for the alerts popover and its phone drawer.
+    // Exposes: CSS_ALERTPOPOVER.
     // Depends on: --smg-* tokens from styles/01-base.js; composed by core/05-styles.js (order matters).
-    // STYLE CONTEXT: Alerts dock
-    const CSS_ALERTDOCK = `/* ============ NOTIFICAÇÕES DOCKED (rail fixo à direita) ============ */
-            /* o painel EMPURRA a página: body ganha padding, a topbar termina onde o rail começa e a
-               dock (pílula centralizada) desloca meio-rail pra esquerda → nada fica escondido atrás. */
-            html { --smg-ald-w: 360px; }
-            #smg-aldock {
-                position: fixed; top: 0; right: 0; bottom: 0; width: var(--smg-ald-w);
-                z-index: var(--smg-z-aldock);   /* 1 acima da topbar: a borda esquerda do rail é a divisa da página */
-                display: none; flex-direction: column; box-sizing: border-box;
-                background: var(--smg-bg); border-left: 1px solid var(--smg-w-10);
-                box-shadow: -10px 0 30px var(--smg-k-35);
+    // STYLE CONTEXT: alerts popover
+    const CSS_ALERTPOPOVER = `
+            #smg-alpop {
+                position: fixed; z-index: var(--smg-z-topbar-up); display: none; flex-direction: column;
+                box-sizing: border-box; max-height: 70vh; max-height: 70dvh; overflow: hidden;
+                border: 1px solid var(--smg-bd2); border-radius: var(--smg-pop-r);
+                background: var(--smg-s1); color: var(--smg-tx); box-shadow: var(--smg-pop-shadow);
             }
-            html.smg-aldock-on #smg-aldock { display: flex; }
-            html.smg-aldock-on body { padding-right: var(--smg-ald-w) !important; }
-            html.smg-aldock-on #smg-topbar-wrap { right: var(--smg-ald-w); width: auto; }
-            html.smg-aldock-on #smg-post-nav-wrapper { margin-left: calc(var(--smg-ald-w) / -2); }
-            html.smg-aldock-resizing { cursor: col-resize; user-select: none; }
-            html.smg-aldock-resizing #smg-aldock { transition: none; }
-            /* pegador de largura: faixa fina na borda esquerda (acende no hover/arrasto) */
-            .smg-aldock-grip {
-                position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; z-index: var(--smg-z-3);
-                cursor: col-resize; background: transparent; transition: background var(--smg-dur-15) ease;
-            }
-            .smg-aldock-grip:hover, html.smg-aldock-resizing .smg-aldock-grip { background: var(--smg-link-soft); }
-            /* cabeçalho: título + contador + ações (atualizar · marcar tudo · fechar) */
-            .smg-aldock-head {
+            #smg-alpop.open { display: flex; }
+            .smg-alpop-head {
                 flex: 0 0 auto; display: flex; align-items: center; gap: var(--smg-sp-8);
-                height: 62px; padding: 0 var(--smg-sp-8) 0 var(--smg-sp-16); box-sizing: border-box;
+                min-height: 52px; padding: 0 var(--smg-sp-10) 0 var(--smg-sp-16); box-sizing: border-box;
                 border-bottom: 1px solid var(--smg-w-08);
             }
-            .smg-aldock-title { display: flex; align-items: center; gap: var(--smg-sp-8); margin-right: auto; font-size: var(--smg-fs-16); font-weight: 800; color: #fff; }
-            .smg-aldock-n {
-                padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums;
-                background: var(--smg-link-soft); color: var(--smg-link);
-            }
-            .smg-aldock-n[hidden] { display: none; }
-            .smg-aldock-acts { display: flex; align-items: center; gap: var(--smg-sp-6); }
-            .smg-aldock-btn {
-                display: inline-flex; align-items: center; justify-content: center;
-                width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-btn-r);
-                background: var(--smg-w-06); color: var(--smg-w-72); font-size: var(--smg-fs-16); cursor: pointer;
-                -webkit-appearance: none; appearance: none; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
-            }
-            .smg-aldock-btn:hover { background: var(--smg-w-12); color: #fff; }
-            .smg-aldock-btn:active { transform: scale(0.92); }
-            .smg-aldock-btn[data-busy] { opacity: 0.45; pointer-events: none; }
-            .smg-aldock-btn svg { width: 16px; height: 16px; display: block; }
-            #smg-aldock svg,
-            #smg-aldock svg *,
-            #smg-aldock .smg-aldock-btn svg,
-            #smg-aldock .smg-aldock-btn svg *,
-            .smg-aldock-acts svg,
-            .smg-aldock-acts svg *,
-            .smg-aldock-acts button svg,
-            .smg-aldock-acts button svg *,
-            .smg-nav-ico svg,
-            .smg-nav-ico svg *,
-            svg.smg-svg-lucide,
-            svg.smg-svg-lucide * {
-                fill: none !important;
-                stroke: currentColor !important;
-                stroke-width: 2px !important;
-            }
-            /* enquanto busca alertas novos: o ícone de atualizar gira (a lista atual continua na tela) */
-            #smg-aldock.smg-aldock--refreshing .smg-aldock-refresh svg { animation: smg-ald-spin .9s linear infinite; }
-            @keyframes smg-ald-spin { to { transform: rotate(360deg); } }
-            /* corpo: ocupa a altura toda (o .smg-tb-listbody base é capado em 62vh, que é do popover) */
-            .smg-aldock-body { flex: 1 1 auto; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
-            .smg-aldock-list { list-style: none; margin: 0; padding: 0; }
-            .smg-aldock-skel-row { list-style: none; }   /* a linha é a MESMA do skeleton do rail (paintRailRow, 09-paint) */
-            .smg-aldock-status { padding: var(--smg-sp-16) var(--smg-sp-14) var(--smg-sp-24); text-align: center; font-size: var(--smg-fs-13); color: var(--smg-w-40); }
-            .smg-aldock-status--busy { color: var(--smg-w-55); }
-            .smg-aldock-foot {
-                flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center;
-                padding: var(--smg-sp-8) var(--smg-sp-10); border-top: 1px solid var(--smg-w-08);
-            }
-            .smg-aldock-foot a { padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; }
-            .smg-aldock-foot a:hover { background: var(--smg-w-10); color: #fff; }
-            /* botão do PAINEL LATERAL — controle único do rail, logo à direita do avatar. Aberto = ícone na cor do
-               tema, SEM caixa preenchida (mesmo tratamento da busca e do avatar; o fundo só no hover, como eles) */
-            .smg-tb-bellbtn.active,
-            html.smg-aldock-on .smg-tb-bellbtn { color: var(--smg-link); }
-            /* faixa do meio: o rail comeria o conteúdo e não é tela cheia → some (o JS também
-               desdocka, isto é a rede de segurança). O celular é tratado logo abaixo. */
-            @media (max-width: 1100px) and (min-width: 601px) {
-                #smg-aldock { display: none !important; }
-                html.smg-aldock-on body { padding-right: 0 !important; }
-                html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
-                html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
+            .smg-alpop-title { display: flex; align-items: center; gap: var(--smg-sp-8); margin-right: auto; font-size: var(--smg-fs-16); font-weight: 800; color: var(--smg-tx); }
+            .smg-alpop-n { padding: var(--smg-sp-2) var(--smg-sp-8); border-radius: var(--smg-badge-r); font-size: var(--smg-fs-11); font-weight: 800; font-variant-numeric: tabular-nums; background: var(--smg-link-soft); color: var(--smg-link); }
+            .smg-alpop-n[hidden] { display: none; }
+            .smg-alpop-acts { display: flex; align-items: center; gap: var(--smg-sp-6); }
+            .smg-alpop-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--smg-btn-r); background: var(--smg-w-06); color: var(--smg-w-72); cursor: pointer; appearance: none; transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease; }
+            .smg-alpop-btn:hover { background: var(--smg-w-12); color: var(--smg-tx); }
+            .smg-alpop-btn[data-busy] { opacity: .45; pointer-events: none; }
+            .smg-alpop-btn svg, .smg-alpop-btn svg * { width: 16px; height: 16px; fill: none !important; stroke: currentColor !important; stroke-width: 2px !important; }
+            #smg-alpop.smg-alpop--refreshing .smg-alpop-refresh svg { animation: smg-alpop-spin .9s linear infinite; }
+            @keyframes smg-alpop-spin { to { transform: rotate(360deg); } }
+            .smg-alpop-body { flex: 1 1 auto; min-height: 0; max-height: none !important; margin: 0 !important; overflow-y: auto; overscroll-behavior: contain; }
+            .smg-alpop-list { list-style: none; margin: 0; padding: 0; }
+            .smg-alpop-skel-row { min-height: 74px; border-bottom: 1px solid var(--smg-w-08); }
+            .smg-alpop-status { padding: var(--smg-sp-16) var(--smg-sp-14) var(--smg-sp-24); text-align: center; font-size: var(--smg-fs-13); color: var(--smg-w-40); }
+            .smg-alpop-status--busy { color: var(--smg-w-55); }
+            .smg-alpop-foot { flex: 0 0 auto; display: flex; justify-content: flex-start; padding: var(--smg-sp-8) var(--smg-sp-10); border-top: 1px solid var(--smg-w-08); }
+            .smg-alpop-foot a { padding: var(--smg-sp-6) var(--smg-sp-10); border-radius: var(--smg-r-8); color: var(--smg-w-60); font-size: var(--smg-fs-13); font-weight: 600; text-decoration: none; }
+            .smg-alpop-foot a:hover { background: var(--smg-w-10); color: var(--smg-tx); }
+            .smg-tb-bellbtn.active { color: var(--smg-link); }
+            .smg-alpop-scrim { display: none; }
+            .smg-alpop-handle { display: none; }
+            @media (max-width: 600px) {
+                #smg-alpop { top: auto !important; right: 0 !important; bottom: 0; left: 0 !important; width: 100% !important; height: var(--smg-drawer-half); max-height: var(--smg-drawer-full); z-index: var(--smg-z-sheet-1); border: 0; border-top: 1px solid var(--smg-w-10); border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0; background: var(--smg-s1); box-shadow: var(--smg-sheet-shadow); transition: height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1); }
+                #smg-alpop.is-full { height: var(--smg-drawer-full); }
+                .smg-alpop-handle { display: block; margin: var(--smg-sp-8) auto 0; }
+                .smg-alpop-scrim.open { display: block; position: fixed; inset: 0; z-index: var(--smg-z-sheet); background: var(--smg-k-55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
                 .smg-tb-bellbtn { display: none !important; }
-            }
-            /* puxador e scrim do drawer: só existem no celular */
-            .smg-aldock-handle, .smg-aldock-scrim { display: none; }
-            /* CELULAR: o mesmo rail vira um DRAWER (aberto pelo sino da navbar) — metade da tela, arrasta pelo
-               topo até a altura cheia ou pra baixo pra fechar; tocar no scrim fecha. Nada de empurrar a
-               página: body/topbar/dock ficam como estavam. Alturas = as do drawer de conta (css-notices). */
-            @media (max-width: 600px) { .smg-nav-ico svg, .smg-nav-ico svg * { stroke-width: 1.9 !important; }
-                #smg-aldock {
-                    top: auto; right: 0; bottom: 0; left: 0; width: 100%;
-                    height: var(--smg-drawer-half); max-height: var(--smg-drawer-full);
-                    z-index: var(--smg-z-sheet-1);                 /* acima da navbar e dos sheets */
-                    border-left: 0; border-top: 1px solid var(--smg-w-10);
-                    border-radius: var(--smg-sheet-r) var(--smg-sheet-r) 0 0;
-                    background: var(--smg-s1); box-shadow: var(--smg-sheet-shadow);
-                    transition: height var(--smg-dur-30) cubic-bezier(.2,.8,.3,1), transform var(--smg-dur-30) cubic-bezier(.2,.8,.3,1);
-                }
-                #smg-aldock.is-full { height: var(--smg-drawer-full); }
-                /* acima do scrim e da navbar: vence o z-index do gate de paint (09-paint, html.smg-sidebar-ready #smg-aldock) */
-                html.smg-aldock-on body > #smg-aldock { z-index: var(--smg-z-sheet-1) !important; }
-                .smg-aldock-handle { display: block; margin-top: var(--smg-sp-8); margin-bottom: 0; }
-                html.smg-aldock-on .smg-aldock-scrim {
-                    display: block; position: fixed; inset: 0; z-index: var(--smg-z-sheet);
-                    background: var(--smg-k-55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
-                }
-                html.smg-aldock-on body { padding-right: 0 !important; }
-                html.smg-aldock-on #smg-topbar-wrap { right: 0; width: 100%; }
-                html.smg-aldock-on #smg-post-nav-wrapper { margin-left: 0; }
-                .smg-aldock-grip { display: none !important; }        /* largura não se arrasta no celular */
-                .smg-tb-bellbtn { display: none !important; }         /* o controle é o sino da navbar inferior */
-                .smg-aldock-head { height: 52px; border-bottom-color: var(--smg-w-06); }
-                .smg-aldock-foot { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+                .smg-alpop-head { min-height: 52px; }
+                .smg-alpop-foot { padding-bottom: calc(var(--smg-sp-8) + env(safe-area-inset-bottom)); }
             }
         `;
 
@@ -8900,13 +9056,11 @@
             html.smg-page-pending .p-body,
             html.smg-page-pending .p-pageWrapper { visibility: hidden !important; }
             html.smg-page-pending #smg-topbar-wrap,
-            html.smg-page-pending #smg-aldock,
             html.smg-page-pending #smg-post-nav-wrapper {
                 visibility: hidden !important;
                 pointer-events: none !important;
             }
             html.smg-page-pending #smg-topbar-wrap { z-index: var(--smg-z-gate) !important; }
-            html.smg-page-pending #smg-aldock { z-index: var(--smg-z-gate-1) !important; }
             html.smg-page-pending #smg-post-nav-wrapper { z-index: var(--smg-z-gate-2) !important; }
             #smg-page-skeleton {
                 position: fixed; inset: 0; z-index: var(--smg-z-topbar); display: none; min-height: 100vh; min-height: 100dvh; overflow: hidden;
@@ -8914,14 +9068,6 @@
             }
             /* o fade de saída (120 ms) vale pra TODA página: o skeleton segue visível enquanto smg-skeleton-fade-out */
             html.smg-page-pending #smg-page-skeleton, html.smg-skeleton-fade-out #smg-page-skeleton { display: block; }
-            html.smg-aldock-on #smg-page-skeleton { right: var(--smg-ald-w); }
-            #smg-page-skeleton-rail {
-                position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--smg-z-topbar-up); display: none; width: var(--smg-ald-w);
-                overflow: hidden; pointer-events: none; background: var(--smg-bg); color: #fff;
-                border-left: 1px solid var(--smg-w-10); box-shadow: -10px 0 30px var(--smg-k-25);
-            }
-            html.smg-page-pending.smg-aldock-on #smg-page-skeleton-rail,
-            html.smg-skeleton-fade-out.smg-aldock-on #smg-page-skeleton-rail { display: block; }
             /* Component-level loading states & decoupling: */
             html.smg-topbar-ready #smg-topbar-wrap {
                 visibility: visible !important;
@@ -8943,14 +9089,6 @@
                     min-height: calc(100dvh - 52px) !important;
                 }
             }
-            html.smg-sidebar-ready #smg-aldock {
-                visibility: visible !important;
-                pointer-events: auto !important;
-                z-index: var(--smg-z-gate-1) !important;
-            }
-            html.smg-sidebar-ready #smg-page-skeleton-rail {
-                display: none !important;
-            }
             html.smg-navbar-ready #smg-post-nav-wrapper {
                 visibility: visible !important;
                 pointer-events: auto !important;
@@ -8963,16 +9101,12 @@
                 visibility: visible !important;
                 pointer-events: auto !important;
             }
-            #smg-page-skeleton, #smg-page-skeleton-rail {
+            #smg-page-skeleton {
                 opacity: 1;
                 transition: opacity var(--smg-dur-12) cubic-bezier(0.2, 0, 0, 1);
                 will-change: opacity;
             }
             html.smg-skeleton-fade-out #smg-page-skeleton,
-            html.smg-skeleton-fade-out #smg-page-skeleton-rail {
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
             html.smg-content-ready:not(.smg-skeleton-fade-out) #smg-page-skeleton {
                 display: none !important;
             }
@@ -9060,16 +9194,6 @@
             .smg-gallery-tile.is-loading::after,
             html.smg-threadlist.smg-tv-grid .structItem--thread:not([data-smg-ph-ready]) .structItem-cell--icon:not(.structItem-cell--iconEnd)::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, var(--smg-w-08), transparent); animation: smg-skel-shimmer 1.3s ease-in-out infinite; pointer-events: none; }
             @keyframes smg-skel-shimmer { 100% { transform: translateX(100%); } }
-            .smg-page-skeleton-rail-head { display: flex; align-items: center; gap: var(--smg-sp-12); height: 62px; padding: 0 var(--smg-sp-16); border-bottom: 1px solid var(--smg-w-08); }
-            .smg-page-skeleton-rail-title { display: block; width: 104px; height: 15px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
-            .smg-page-skeleton-rail-actions { display: flex; gap: var(--smg-sp-8); margin-left: auto; }
-            .smg-page-skeleton-rail-actions i { display: block; width: 28px; height: 28px; border-radius: var(--smg-r-8); background: var(--smg-w-08); }
-            .smg-page-skeleton-rail-list { display: grid; }
-            .smg-page-skeleton-rail-row { display: flex; align-items: center; gap: var(--smg-sp-12); min-height: 86px; padding: var(--smg-sp-12) var(--smg-sp-14); border-bottom: 1px solid var(--smg-w-08); }
-            .smg-page-skeleton-rail-thumb { flex: 0 0 58px; width: 58px; height: 58px; border-radius: var(--smg-r-12); background: var(--smg-w-08); }
-            .smg-page-skeleton-rail-copy { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: var(--smg-sp-10); }
-            .smg-page-skeleton-rail-line { display: block; width: 86%; height: 10px; border-radius: var(--smg-r-6); background: var(--smg-w-10); }
-            .smg-page-skeleton-rail-line.short { width: 54%; height: 8px; }
             @media (max-width: 1100px) {
                 .smg-page-skeleton-chrome { height: 52px; padding: 0 var(--smg-sp-14); }
                 .smg-page-skeleton-chrome-logo { flex-basis: 100px; width: 100px; height: 24px; }
@@ -9091,7 +9215,6 @@
                     min-height: 100vh !important;
                     min-height: 100dvh !important;
                 }
-                #smg-page-skeleton-rail { display: none !important; }
                 .smg-page-skeleton-chrome { height: calc(54px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) var(--smg-sp-14) 0; }
                 .smg-page-skeleton-main { width: 100%; max-width: none; min-height: calc(100vh - 54px); min-height: calc(100dvh - 54px); padding: var(--smg-sp-14) var(--smg-sp-12) 38px; }
                 .smg-page-skeleton-header { min-height: 82px; padding: var(--smg-sp-14) 0 var(--smg-sp-12); }
@@ -9967,7 +10090,7 @@
             document.addEventListener('click', e => {
                 smgPopPrune();
                 smgPopovers.forEach(p => { if (p.isOpen() && !smgPopInside(p, e.target)) p.close(); });
-            });
+            }, true);
             document.addEventListener('keydown', e => {
                 if (e.key !== 'Escape') return;
                 smgPopovers.forEach(p => { if (p.escape !== false && p.isOpen()) p.close(); });
@@ -10237,7 +10360,7 @@
             if (thumbCachePut(path, thumb, title)) fresh++;
         });
         if (fresh) {
-            const dock = document.getElementById('smg-aldock');
+            const dock = document.getElementById('smg-alpop');
             if (dock) repaintAlertThumbs(dock);
         }
     }
@@ -10254,7 +10377,7 @@
         // colheu foto nova → os alertas JÁ na tela que esperavam por ela pintam agora (sem refresh).
         // Escopado no painel: é onde alerta mora, e evita varrer o documento a cada pass.
         if (!fresh) return;
-        const dock = document.getElementById('smg-aldock');
+        const dock = document.getElementById('smg-alpop');
         if (dock) repaintAlertThumbs(dock);
     }
 
@@ -10363,14 +10486,19 @@
     // request não disputa banda com mídia viva.
     const deadProbeCache = new Map();   // url → status (0 = sem resposta); 1× por sessão
     const deadTasks = makeTaskQueue(3);
-    function deadReason(st) {
-        if (st === 200 || (st > 0 && st < 400)) return { code: i18n('Error'), why: 'load error' };
-        if (st === 404 || st === 410) return { code: '404', why: 'file deleted' };
-        if (st === 401 || st === 403) return { code: '403', why: 'hotlink blocked' };
-        if (st === 429) return { code: '429', why: 'rate limited' };
-        if (st >= 500) return { code: String(st), why: 'host down' };
-        if (st > 0) return { code: String(st), why: 'unavailable' };
-        return { code: i18n('Error'), why: 'unavailable' };
+    // st = status da sonda · undefined = ainda sondando (ou sem como sondar). retry = vale tentar de novo:
+    // só o 404/410 é definitivo; o resto (hotlink, limite, host fora, "existe mas não pintou") pode passar.
+    function deadReason(st, probing) {
+        if (st === undefined) return probing
+            ? { code: '', title: 'Couldn’t load', hint: 'Checking what happened…', retry: true }
+            : { code: '', title: 'Couldn’t load', hint: 'The host didn’t deliver this file', retry: true };
+        if (st === 404 || st === 410) return { code: String(st), title: 'File deleted', hint: 'The host removed this file', retry: false };
+        if (st === 401 || st === 403) return { code: String(st), title: 'Blocked by the host', hint: 'It only opens on the host’s own page', retry: true };
+        if (st === 429) return { code: '429', title: 'Too many requests', hint: 'Wait a moment and try again', retry: true };
+        if (st >= 500) return { code: String(st), title: 'Host is down', hint: 'Try again in a while', retry: true };
+        if (st > 0 && st < 400) return { code: '', title: 'Didn’t load here', hint: 'The file is online; it may have been a hiccup', retry: true };
+        if (st > 0) return { code: String(st), title: 'Unavailable', hint: 'The host refused this file', retry: true };
+        return { code: '', title: 'No response', hint: 'The host didn’t answer', retry: true };
     }
     function deadProbe(url, box, paint) {
         if (deadProbeCache.has(url)) { paint(deadProbeCache.get(url)); return; }
@@ -10399,6 +10527,8 @@
     // · opts.media = true → ocupa a largura do bloco (lugar de player/embed) em vez do tamanho compacto de imagem solta
     // · opts.probeUrl = o que SONDAR, quando difere do que abrir: em jpg6 & cia o link é a PÁGINA do host (que
     //   responde 200 mesmo com a imagem apagada) e quem morreu é o arquivo — sondar a página daria um 200 mentiroso.
+    // · opts.onRetry = recoloca a mídia no lugar da caixa e carrega de novo. Com ele a caixa ganha "Tentar de novo",
+    //   escondido quando a sonda confirma 404/410 (apagado não volta).
     function buildDeadBox(url, opts) {
         opts = opts || {};
         const a = document.createElement('a');
@@ -10416,22 +10546,48 @@
         if (opts.media && opts.aspect) a.style.aspectRatio = opts.aspect;
         let host = '';
         try { host = new URL(url, location.href).hostname.replace(/^www\./, ''); } catch (e) {}
-        const code = document.createElement('span'); code.className = 'smg-dead-code';
-        code.innerHTML = ICONS.warn;
-        const num = document.createElement('b'); code.appendChild(num);
-        const sep = document.createElement('span'); sep.className = 'smg-dead-sep'; sep.textContent = '·';
-        const sub = document.createElement('span'); sub.className = 'smg-dead-sub';
-        a.append(code, sep, sub);
-        const paint = st => {
-            const r = (st === undefined) ? { code: i18n('Error'), why: 'unavailable' } : deadReason(st);
-            num.textContent = r.code;
-            sub.textContent = i18n(r.why) + (host ? ' · ' + host + ' ↗' : '');
-        };
-        paint(opts.status);   // pinta JÁ: com o status quando o caller já sabe (turbo confirma 404 por GET), genérico senão
+        // ícone · título (+ código HTTP quando há) · dica do que fazer · ações (tentar de novo · abrir no host)
+        const ico = document.createElement('span'); ico.className = 'smg-dead-ico'; ico.innerHTML = ICONS.warn;
+        const text = document.createElement('span'); text.className = 'smg-dead-text';
+        const head = document.createElement('span'); head.className = 'smg-dead-title';
+        const title = document.createElement('span');
+        const num = document.createElement('b'); num.className = 'smg-dead-num';
+        head.append(title, num);
+        const hint = document.createElement('span'); hint.className = 'smg-dead-hint';
+        text.append(head, hint);
+        const acts = document.createElement('span'); acts.className = 'smg-dead-acts';
+        let retry = null;
+        if (typeof opts.onRetry === 'function') {
+            retry = document.createElement('button');
+            retry.type = 'button'; retry.className = 'smg-dead-retry';
+            retry.innerHTML = ICONS.refresh + '<span>' + i18n('Try again') + '</span>';
+            retry.addEventListener('click', e => {
+                e.preventDefault(); e.stopPropagation();   // botão dentro do <a>: não abre o host
+                deadProbeCache.delete(opts.probeUrl || url);   // a próxima falha sonda de novo (o status pode ter mudado)
+                opts.onRetry(a);
+            });
+            acts.appendChild(retry);
+        }
+        if (host) {
+            const open = document.createElement('span'); open.className = 'smg-dead-host';
+            open.textContent = host + ' ↗';
+            acts.appendChild(open);
+        }
+        a.append(ico, text, acts);
+        const probeUrl = opts.probeUrl || url;
         // opts.noProbe: quem já sabe que morreu mas cuja URL de destino responde 200 (redgifs = SPA, a página do
         // gif carrega mesmo com o gif apagado) — sondar ali só produziria um "200 · indisponível" mentiroso.
-        const probeUrl = opts.probeUrl || url;
-        if (opts.status === undefined && !opts.noProbe && probeUrl && /^https?:/i.test(probeUrl)) deadProbe(probeUrl, a, paint);
+        const probing = opts.status === undefined && !opts.noProbe && !!probeUrl && /^https?:/i.test(probeUrl) && typeof GM_xmlhttpRequest === 'function';
+        const paint = (st, pending) => {
+            const r = deadReason(st, pending);
+            title.textContent = i18n(r.title);
+            num.textContent = r.code;
+            hint.textContent = i18n(r.hint);
+            if (retry) retry.hidden = !r.retry;
+            a.classList.toggle('smg-dead--gone', !r.retry);
+        };
+        paint(opts.status, probing);   // pinta JÁ: com o status quando o caller já sabe (turbo confirma 404 por GET), "verificando" se vai sondar
+        if (probing) deadProbe(probeUrl, a, st => paint(st, false));
         return a;
     }
 
@@ -11108,7 +11264,7 @@
                 case 'g': click('smg-post-goto'); break;       // ir pra página
                 case 'f': openMedia('feed'); break;   // overlay de mídia na vista Feed (navegação própria, página 1)
                 case 'v': click('smg-view-toggle'); break;     // alterna lista/grade
-                case 'n': if (FEATURES.alertsDock) toggleAlertsDock(); break;   // painel de notificações docked (abre/fecha)
+                case 'n': toggleAlertsPopover(); break;   // abre/fecha alertas
                 case '[': click('smg-post-page-prev'); break;  // página anterior
                 case ']': click('smg-post-page-next'); break;  // próxima página
                 case '/': e.preventDefault(); click('smg-thread-search'); break; // busca
@@ -11621,7 +11777,7 @@
 
     // media/08a-masonry-engine.js
     // Owns: THE masonry engine: shortest column, 2 columns up to 600px and 3 above, landscape items span 2 (a group of only landscape items lays out as pairs in 2 columns; a group that would leave a column empty drops to one column fewer), one ResizeObserver, one rAF.
-    // Exposes: masonryMount, masonryUnmount, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
+    // Exposes: masonryMount, masonryUnmount, masonryDissolve, masonrySchedule, masonryRefresh, masonryPlace, masonryColsFor, masonryImgRatio.
     // Depends on: nothing.
     // =========================================================
     // MASONRY ENGINE: one layout for every media mosaic (in-post groups, gallery overlay)
@@ -11657,6 +11813,8 @@
         const gap = (opts && opts.gap != null) ? opts.gap : MASONRY_GAP;
         const want = (opts && opts.cols) || masonryColsFor(width);
         const spansIn = (opts && opts.spans) || [];
+        const videoItems = (opts && opts.videoItems) || [];
+        const maxVideoHeight = +(opts && opts.maxVideoHeight) || 0;
         const spanOf0 = i => Math.max(1, Math.min(want, Math.floor(+spansIn[i]) || 1));
         // every item landscape (span 2) with 3 columns available would leave the third column empty:
         // lay the group out as pairs instead, 2 columns, each item 1 column, row by row
@@ -11673,7 +11831,8 @@
             const boxes = ratios.map((r, i) => {
                 const c = i % 2;
                 if (c === 0 && i > 0) rowTop = Math.max(heights[0], heights[1]);
-                const h = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
+                const naturalH = Math.max(1, Math.round(colW * (r > 0 ? r : MASONRY_PH_RELH)));
+                const h = videoItems[i] && maxVideoHeight ? Math.min(naturalH, maxVideoHeight) : naturalH;
                 heights[c] = rowTop + h + gap;
                 return { col: c, span: 1, x: Math.round(c * (colW + gap)), y: Math.round(rowTop), w: Math.round(colW), h };
             });
@@ -11683,14 +11842,14 @@
         // one landscape: 1 + 1 + 2 = 4 > 3, but the landscape lands under the portraits and the third
         // column stays blank, a third of the post width unused). Lay it out again with one column fewer.
         if (!(opts && opts.cols) && cols > 2) {
-            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf);
+            const res = masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight);
             if (res.boxes.length && !res.emptyCol) return res.out;
-            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf).out;
+            return masonryPlaceIn(ratios, cols - 1, width, gap, spanOf, videoItems, maxVideoHeight).out;
         }
-        return masonryPlaceIn(ratios, cols, width, gap, spanOf).out;
+        return masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight).out;
     }
     // shortest-column placement in exactly `cols` columns (spans clamped); emptyCol = a column no item touches
-    function masonryPlaceIn(ratios, cols, width, gap, spanOf) {
+    function masonryPlaceIn(ratios, cols, width, gap, spanOf, videoItems, maxVideoHeight) {
         const colW = Math.max(0, (width - gap * (cols - 1)) / cols);
         const heights = new Array(cols).fill(0);
         const boxes = ratios.map((r, i) => {
@@ -11702,7 +11861,8 @@
                 if (m < top - 0.5) { top = m; c = s; }
             }
             const w = colW * k + gap * (k - 1);
-            const h = Math.max(1, Math.round(w * (r > 0 ? r : MASONRY_PH_RELH)));
+            const naturalH = Math.max(1, Math.round(w * (r > 0 ? r : MASONRY_PH_RELH)));
+            const h = videoItems[i] && maxVideoHeight ? Math.min(naturalH, maxVideoHeight) : naturalH;
             const box = { col: c, span: k, x: Math.round(c * (colW + gap)), y: Math.round(top), w: Math.round(w), h };
             for (let j = c; j < c + k; j++) heights[j] = top + h + gap;
             return box;
@@ -11717,8 +11877,21 @@
         return (relH > 0 && relH < 0.98) ? 2 : 1;
     }
 
-    const masonryState = new WeakMap();    // container -> { width, getRatio, getSpan, gap }
+    const masonryState = new WeakMap();    // container -> { width, getRatio, getSpan, getIsVideo, gap }
     let masonryRO = null, masonRaf = 0, masonDirty = new Set();
+    let masonryCapProbe = null;
+    // CSS custom properties retain `min(70vh, 750px)` as text; a computed height resolves it to pixels.
+    function masonryMediaHeight() {
+        if (typeof getComputedStyle !== 'function') return 0;
+        if (!masonryCapProbe) {
+            masonryCapProbe = document.createElement('i');
+            masonryCapProbe.setAttribute('aria-hidden', 'true');
+            masonryCapProbe.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:var(--smg-media-h);visibility:hidden;pointer-events:none;contain:strict;';
+            (document.documentElement || document.body).appendChild(masonryCapProbe);
+        }
+        const px = parseFloat(getComputedStyle(masonryCapProbe).height);
+        return Number.isFinite(px) ? px : 0;
+    }
     function masonryObserver() {
         if (masonryRO || typeof ResizeObserver === 'undefined') return masonryRO;
         masonryRO = trackObserver(new ResizeObserver(entries => {
@@ -11734,7 +11907,7 @@
         return masonryRO;
     }
     // registers a container (idempotent). opts.getRatio(item) -> height/width of that item;
-    // opts.getSpan(item) -> columns it wants (default 1).
+    // opts.getSpan(item) -> columns it wants (default 1); opts.getIsVideo(item) opts into the post video cap.
     function masonryMount(container, opts) {
         if (!container) return;
         let st = masonryState.get(container);
@@ -11747,6 +11920,7 @@
         }
         st.getRatio = (opts && opts.getRatio) || st.getRatio || (() => MASONRY_PH_RELH);
         st.getSpan = (opts && opts.getSpan) || st.getSpan || null;
+        st.getIsVideo = (opts && opts.getIsVideo) || st.getIsVideo || null;
         st.gap = (opts && opts.gap != null) ? opts.gap : (st.gap != null ? st.gap : MASONRY_GAP);
         masonrySchedule(container);
     }
@@ -11755,6 +11929,25 @@
         masonryState.delete(container);
         masonDirty.delete(container);
         if (masonryRO) masonryRO.unobserve(container);
+    }
+    // Removes every inline value the engine owns before a group returns to document flow.
+    function masonryDissolve(container, items) {
+        if (!container) return;
+        const clearItem = item => {
+            if (!item || item.nodeType !== 1) return;
+            const owned = [item].concat(Array.from(item.querySelectorAll ? item.querySelectorAll('[data-smg-gridded], .smg-mason-capped') : []));
+            owned.forEach(el => {
+                ['position', 'top', 'right', 'bottom', 'left', 'transform', 'translate', 'width', 'height', '--smg-mason-video-w'].forEach(prop => el.style.removeProperty(prop));
+                delete el._smgMason;
+                delete el.dataset.smgGridded;
+                el.classList.remove('smg-mason-capped');
+            });
+        };
+        masonryUnmount(container);
+        (items || Array.from(container.children)).forEach(clearItem);
+        ['height', '--smg-mcols'].forEach(prop => container.style.removeProperty(prop));
+        ['smg-mason', 'smg-mason-capped'].forEach(name => container.classList.remove(name));
+        ['smgCols', 'smgRelayoutDone'].forEach(name => delete container.dataset[name]);
     }
     // ratio changed / item added or removed -> one rAF for every dirty container
     function masonrySchedule(container) {
@@ -11777,12 +11970,19 @@
         const items = Array.prototype.filter.call(container.children, c => c.nodeType === 1);
         const ratios = items.map(it => { try { return st.getRatio(it); } catch (e) { return MASONRY_PH_RELH; } });
         const spans = st.getSpan ? items.map((it, i) => { try { return st.getSpan(it, ratios[i]); } catch (e) { return 1; } }) : null;
-        const res = masonryPlace(ratios, st.width, { gap: st.gap, spans });
+        const videoItems = st.getIsVideo ? items.map(it => { try { return !!st.getIsVideo(it); } catch (e) { return false; } }) : null;
+        const maxVideoHeight = videoItems && videoItems.some(Boolean) ? masonryMediaHeight() : 0;
+        const res = masonryPlace(ratios, st.width, { gap: st.gap, spans, videoItems, maxVideoHeight });
         if (container.dataset.smgCols !== String(res.cols)) container.dataset.smgCols = res.cols;
         container.dataset.smgRelayoutDone = '1';
         if (!st.width) return res;
         items.forEach((it, i) => {
             const b = res.boxes[i];
+            const naturalH = Math.max(1, Math.round(b.w * (ratios[i] > 0 ? ratios[i] : MASONRY_PH_RELH)));
+            const capped = !!(videoItems && videoItems[i] && maxVideoHeight && naturalH > maxVideoHeight);
+            it.classList.toggle('smg-mason-capped', capped);
+            if (capped) it.style.setProperty('--smg-mason-video-w', Math.min(b.w, b.h / ratios[i]) + 'px');
+            else it.style.removeProperty('--smg-mason-video-w');
             const key = b.x + ',' + b.y + ',' + b.w + ',' + b.h;
             if (it._smgMason === key) return;
             it._smgMason = key;
@@ -11817,7 +12017,7 @@
     // media/08-images-masonry.js
     // Owns: post images (full-size swap, lazy observers, dead-image watchdog), host viewers (GoonBox, Chevereto)
     // and the post block model: runs of images and players become one masonry group.
-    // Exposes: processImages, processOneImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
+    // Exposes: processImages, processOneImage, placeDeadImage, buildPostGalleries, resolveFullImageUrl, swapImgSrc, unlazyImageLinks, mediaResizeKeep.
     // Depends on: media/08a-masonry-engine, media/10-redgifs-player, core/06-helpers, core/02-config.
     // =========================================================
     // FEATURE: auto full images + portrait grid
@@ -11829,6 +12029,21 @@
     //  · fullIO (alcance médio, 1800px): troca pra full mais perto (qualidade). Como a thumb já carregou
     //    e tem a MESMA proporção, o swap não mexe no layout.
     let thumbIO = null, medIO = null, fullIO = null;
+    function markImageFullFailed(img, failedUrl, good) {
+        img.dataset.smgFullFailed = '1';
+        img.dataset.smgFailedUrl = absUrl(failedUrl);
+        img.dataset.smgFull = good;
+        img.dataset.smgLink = good;
+        img.setAttribute('data-src', good);
+        delete img.dataset.smgMed;
+        const viewers = [img.closest('.bbImageWrapper'), img.closest('a[href]')].filter((node, index, all) => node && all.indexOf(node) === index);
+        viewers.forEach(viewer => {
+            viewer.dataset.src = good;
+            viewer.dataset.smgFull = good;
+            viewer.dataset.smgLink = good;
+            if (viewer.tagName === 'A') viewer.href = good;
+        });
+    }
     // Swaps in a higher-quality file only once it is downloaded and decoded, so the thumbnail stays visible until
     // the replacement can paint in one frame (no blank/flash). The box size never depends on the file (see
     // setVerticalMaxWidth / the wide rules), so the swap cannot move the page. A failed upgrade keeps the thumbnail.
@@ -11838,9 +12053,7 @@
         const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
         if (!targetAbs || currentAbs === targetAbs || img.dataset.smgSwapping === targetAbs) return;
         img.dataset.smgSwapping = targetAbs;
-        if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-            img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-        }
+        if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
         const initialPolicy = img.getAttribute('referrerpolicy') || img.referrerPolicy || '';
         const loadWithPolicy = (policy, canRetry) => {
             const pre = new Image();
@@ -11866,6 +12079,8 @@
                     loadWithPolicy('no-referrer', false);
                 } else {
                     if (img.dataset.smgSwapping === targetAbs) delete img.dataset.smgSwapping;
+                    const good = img.dataset.smgGoodSrc;
+                    if (good) markImageFullFailed(img, targetAbs, good);
                 }
             };
             pre.src = targetAbs;
@@ -11892,9 +12107,7 @@
                 const targetAbs = absUrl(full);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
                 if (targetAbs && targetAbs !== currentAbs) {
-                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                    }
+                    if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
                     swapImgSrc(img, targetAbs);
                 }
             }
@@ -11925,10 +12138,53 @@
     // Era um chip com a URL crua em texto: num post de 40 imagens mortas virava uma parede de URLs iguais, e não
     // dava pra saber se o arquivo foi apagado ou se o host bloqueou o hotlink. A caixa mantém o lugar/proporção
     // da mídia, é clicável inteira e mostra o código HTTP de verdade quando a sonda volta.
+    function placeDeadImage(img, href, opts) {
+        opts = opts || {};
+        if (!img || !img.parentNode || !href) return null;
+        const src = opts.retrySrc || img.currentSrc || img.getAttribute('src') || '';
+        let replaced = img;
+        const box = buildDeadBox(href, {
+            probeUrl: opts.probeUrl,
+            status: opts.status,
+            onRetry: deadBox => retryFailedImg(img, replaced, deadBox, src),
+        });
+        box.classList.add('smg-dead--img');
+        box.dataset.smgRatio = '0.7500';
+        const flow = mediaFlowNode(img);
+        const wrap = img.closest('a');
+        const lightbox = img.closest('.bbImageWrapper.js-lbImage');
+        if (lightbox && lightbox.querySelectorAll('img').length === 1) replaced = lightbox;
+        else if (flow !== img && flow.parentElement && isPostGroup(flow.parentElement)) replaced = flow;
+        else if (wrap && wrap.querySelectorAll('img').length === 1) replaced = wrap;
+        replaced.replaceWith(box);
+        if (isPostGroup(box.parentElement)) box.dataset.smgGridded = '1';
+        else box.classList.add('smg-dead--strip');
+        dropChipBreaks(box);
+        normalizePostDeadGroups(box.parentElement);
+        relayoutPostGroupOf(box);
+        return box;
+    }
     function imgFailLink(img) {
         if (!img || img.dataset.smgFailed || !img.parentNode) return;
-        img.dataset.smgFailed = '1';
         const direct = img.currentSrc || img.getAttribute('src') || '';
+        // uma versão desta imagem JÁ pintou (a thumb) e quem falhou foi a troca por uma maior → volta pra que
+        // funcionava em vez de trocar uma imagem visível por uma caixa de erro
+        const good = img.dataset.smgGoodSrc;
+        if (good && absUrl(good) !== absUrl(direct)) {
+            markImageFullFailed(img, direct, good);
+            img.addEventListener('load', () => {
+                if (!img.naturalWidth || !img.naturalHeight) return;
+                setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
+                markWide(img, img.naturalWidth, img.naturalHeight, img.naturalWidth);
+                const grid = img.closest('.auto-image-grid');
+                if (grid) masonrySchedule(grid);
+                img.classList.add('smg-img-ready');
+            }, { once: true });
+            img.addEventListener('error', () => imgFailLink(img), { once: true });
+            img.src = good;
+            return;
+        }
+        img.dataset.smgFailed = '1';
         const parentA = img.closest('a[href]');
         const parentHref = parentA ? resolveProxyHref(parentA.getAttribute('href') || '') : '';
         const stored = img.dataset.smgLink ? resolveProxyHref(img.dataset.smgLink) : '';
@@ -11938,24 +12194,27 @@
         else if (parentHref && /^https?:/i.test(parentHref) && !isFile(parentHref)) href = parentHref;
         else href = resolveProxyHref(stored || direct);
         if (!href || /^data:/.test(href)) { img.classList.add('smg-img-ready'); return; }
-        const box = buildDeadBox(href, {
+        placeDeadImage(img, href, {
             probeUrl: /^https?:/i.test(direct) ? direct : href,
+            retrySrc: direct,
         });
-        // caixa de IMAGEM morta: conta como item de mídia na run (o mosaico guarda o lugar dela) e herda a
-        // proporção que a imagem já tinha, pra o grupo não pular
-        box.classList.add('smg-dead--img');
-        const relH = masonryImgRatio(img);
-        if (relH !== MASONRY_PH_RELH) box.dataset.smgRatio = relH.toFixed(4);
-        // Troca o nó que só embrulha esta imagem (o item inteiro, dentro de um grupo). <a> dentro de <a> é
-        // inválido e o clique deixa de navegar.
-        const flow = mediaFlowNode(img);
-        const wrap = img.closest('a');
-        if (flow !== img && flow.parentElement && isPostGroup(flow.parentElement)) flow.replaceWith(box);
-        else if (wrap && wrap.querySelectorAll('img').length === 1) wrap.replaceWith(box);
-        else img.replaceWith(box);
-        if (isPostGroup(box.parentElement)) box.dataset.smgGridded = '1';
-        dropChipBreaks(box);
-        relayoutPostGroupOf(box);
+    }
+    // "Tentar de novo" da caixa morta: devolve o nó original ao lugar dela e recarrega a <img>. Alterna a
+    // política de referrer a cada tentativa — o caso comum de 403 é o host recusar o Referer do fórum, e sem
+    // ele a mesma URL costuma passar (mesmo fallback que o swapImgSrc já faz na troca de resolução).
+    function retryFailedImg(img, replaced, box, src) {
+        if (!box.isConnected || !src) return;
+        delete img.dataset.smgFailed;
+        img.classList.remove('smg-img-ready');
+        if (img.referrerPolicy === 'no-referrer') img.removeAttribute('referrerpolicy');
+        else img.referrerPolicy = 'no-referrer';
+        box.replaceWith(replaced);
+        img.addEventListener('load', () => { img.classList.add('smg-img-ready'); relayoutPostGroupOf(img); }, { once: true });
+        img.addEventListener('error', () => imgFailLink(img), { once: true });
+        img.removeAttribute('src');
+        img.src = src;
+        armImgWatchdog(img);
+        relayoutPostGroupOf(img);
     }
     // WATCHDOG do "loading eterno": alguns hosts aceitam a conexão e nunca respondem — a <img> não dispara load
     // NEM error, então nem o onReady nem o imgFailLink rodam e o shimmer gira pra sempre.
@@ -12041,7 +12300,7 @@
             img.dataset.smgLink = href;
             img.dataset.smgFull = full;
             img.dataset.smgMed = med;
-            if (res.width && res.height) img.style.aspectRatio = res.width + ' / ' + res.height;
+            if (res.width && res.height) setImageAspectRatio(img, res.width, res.height);
             img.addEventListener('load', () => relayoutPostGroupOf(img), { once: true });
             const link = document.createElement('a');
             link.href = full;
@@ -12068,7 +12327,7 @@
         }
 
         // 1. aspect-ratio inline já estabelecido
-        const styleRatio = img.style && img.style.aspectRatio;
+        const styleRatio = img.dataset.smgPhRatio ? '' : (img.style && img.style.aspectRatio);
         if (styleRatio) {
             const m = styleRatio.match(/([\d.]+)\D+([\d.]+)/);
             if (m && +m[1] && +m[2] && (+m[1] !== 100 || +m[2] !== 100)) {
@@ -12116,6 +12375,19 @@
         }
 
         return null;
+    }
+
+    // Inline ratios from the paint gate are temporary; real dimensions replace them as soon as available.
+    // Attribute and resolved host dimensions are real measurements and do not carry this marker.
+    function setImageAspectRatio(img, w, h) {
+        if (!img || !w || !h) return false;
+        const current = img.style.aspectRatio;
+        if (img.dataset.smgPhRatio || !current || current === '100 / 100' || (current === '1 / 1' && w !== h)) {
+            img.style.aspectRatio = w + ' / ' + h;
+            delete img.dataset.smgPhRatio;
+            return true;
+        }
+        return false;
     }
 
     function resolveFullImageUrl(img) {
@@ -12209,9 +12481,7 @@
                 const targetAbs = absUrl(full);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
                 if (targetAbs && targetAbs !== currentAbs) {
-                    if (!img.style.aspectRatio && img.naturalWidth && img.naturalHeight) {
-                        img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                    }
+                    if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
                     swapImgSrc(img, targetAbs);
                 }
             }
@@ -12219,6 +12489,7 @@
     }
 
     function processOneImage(img) {
+        if (img.dataset.cdResolving === '1') return;   // Cyberdrop direct-file image is resolving before the generic image pipeline
         // guarda o link do host (jpg6.su/jpg5/…) ENQUANTO a img ainda está no <a> — ANTES do lazy-swap e da masonry mover (depois closest('a') falha) → fallback de link
         if (!img.dataset.smgLink) {
             const la = img.closest('a.link--external[href]');
@@ -12233,9 +12504,7 @@
                 const link = img.closest('a') || (img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null);
                 if (link) link.href = res.original;
                 if (img.dataset.url) img.dataset.url = res.original;
-                if (res.width && res.height && !img.style.aspectRatio) {
-                    img.style.aspectRatio = res.width + ' / ' + res.height;
-                }
+                if (res.width && res.height) setImageAspectRatio(img, res.width, res.height);
                 // Se o feed lightbox estiver aberto com este slide, atualiza o slide para alta resolução
                 const feed = document.getElementById('smg-feed');
                 if (feed && mediaView() === 'feed') {
@@ -12278,8 +12547,7 @@
         // NADA de timeout-de-link: a img carrega nativa igual ao site padrão (que carrega de boa). Link de fallback SÓ em erro real (onerror) ou complete sem dimensão (404/hotlink) — abaixo. O timeout de 7s trocava imagem offscreen (naturalWidth 0 pq ainda não rolou até ela) por chip de link → "imagem não aparece" no nosso mod.
 
         const dim = extractMediaDimensions(img);
-        if (dim && !img.style.aspectRatio) {
-            img.style.aspectRatio = dim.w + ' / ' + dim.h;
+        if (dim && setImageAspectRatio(img, dim.w, dim.h)) {
             markWide(img, dim.w, dim.h);
             img.classList.add('smg-img-ready');
         }
@@ -12305,20 +12573,16 @@
         // ao ganhar dimensão (thumb ou full), trava a proporção e tira o shimmer → caixa estável
         const onReady = () => {
             if (img.complete && !img.naturalWidth) { imgFailLink(img); return; }   // completou QUEBRADA (404/hotlink/host fora) → mostra o link no lugar
-            if (img.naturalWidth && img.naturalHeight) {
-                const currentRatio = img.style.aspectRatio;
-                if (!currentRatio || currentRatio === '100 / 100' || (currentRatio === '1 / 1' && img.naturalWidth !== img.naturalHeight)) {
-                    img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-                }
-            }
+            if (img.naturalWidth) img.dataset.smgGoodSrc = img.currentSrc || img.src;   // versão que pintou: o imgFailLink volta pra ela se a troca falhar
+            if (img.naturalWidth && img.naturalHeight) setImageAspectRatio(img, img.naturalWidth, img.naturalHeight);
             // solta: o tamanho natural só limita a caixa quando este já é o arquivo FINAL (a thumb é menor que ele)
-            const finalSrc = !img.dataset.smgFull || absUrl(img.dataset.smgFull) === absUrl(img.currentSrc || img.src || '');
+            const finalSrc = img.dataset.smgFullFailed || !img.dataset.smgFull || absUrl(img.dataset.smgFull) === absUrl(img.currentSrc || img.src || '');
             markWide(img, img.naturalWidth, img.naturalHeight, finalSrc ? img.naturalWidth : 0);
             const grid = img.closest('.auto-image-grid');
             if (grid) masonrySchedule(grid);
             img.classList.add('smg-img-ready');
 
-            const fullTarget = img.dataset.smgFull;
+            const fullTarget = img.dataset.smgFullFailed ? '' : img.dataset.smgFull;
             if (fullTarget) {
                 const targetAbs = absUrl(fullTarget);
                 const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
@@ -12340,7 +12604,7 @@
         }
 
         const tio = getThumbIO(); if (tio) tio.observe(img);   // thumb carrega bem cedo → tamanho fixo antes de aparecer
-        if (img.dataset.smgFull) {
+        if (img.dataset.smgFull && !img.dataset.smgFullFailed) {
             const targetAbs = absUrl(img.dataset.smgFull);
             const currentAbs = absUrl(img.currentSrc || img.src || img.getAttribute('src') || '');
             if (targetAbs && targetAbs !== currentAbs) {
@@ -12351,10 +12615,51 @@
             }
         }
     }
+    function processPostAttachments(roots) {
+        eachIn(roots, '.message-attachments:not([data-smg-attachments])', section => {
+            const post = section.closest('.message-userContent, .message-content, article.message');
+            const body = section.closest('.message-body') || (post && post.querySelector('.message-body'));
+            const wrapper = body && body.querySelector('.bbWrapper');
+            const list = section.querySelector('.attachmentList');
+            if (!wrapper || !list) return;
+            section.dataset.smgAttachments = '1';
+            Array.from(list.children).forEach(row => {
+                const preview = row.querySelector('a.file-preview[href]');
+                const image = preview && preview.querySelector('img');
+                const type = (preview && preview.getAttribute('data-type') || '').toLowerCase();
+                const href = preview && preview.href;
+                const isImage = image && (type === 'image' || /\.(?:jpe?g|png|gif|webp|avif)(?:$|[?#])/i.test(href || ''));
+                const fileName = row.querySelector('.file-name')?.textContent || '';
+                const isVideo = type === 'video' || /\.(?:mp4|webm|mov|m4v)(?:$|[?#])/i.test((href || '') + ' ' + fileName);
+                if (!href) return;
+                if (!isImage && isVideo) {
+                    const built = buildNativeVideo(href, location.origin + '/', null, 'Attachment');
+                    const box = document.createElement('div'); box.className = 'smg-dm-wrap'; box.appendChild(built.wrap);
+                    wrapper.appendChild(box); rgPrepareUrl(built.video, href, built.wrap, image && image.src);
+                    row.hidden = true; row.dataset.smgAttachmentVideo = '1'; return;
+                }
+                if (!isImage) return;
+                const link = document.createElement('a');
+                link.className = 'bbImageWrapper js-lbImage'; link.href = href; link.dataset.src = href;
+                const media = document.createElement('img');
+                media.className = 'bbImage'; media.src = image.currentSrc || image.src;
+                const thumbWidth = +(image.getAttribute('width') || 0), thumbHeight = +(image.getAttribute('height') || 0);
+                if (thumbWidth > 0 && thumbHeight > 0) {
+                    media.dataset.smgPhRatio = '1';
+                    media.style.aspectRatio = thumbWidth + ' / ' + thumbHeight;
+                }
+                media.alt = image.alt || ''; media.dataset.smgFull = href; media.dataset.smgLink = href;
+                link.appendChild(media); wrapper.appendChild(link);
+                row.hidden = true; row.dataset.smgAttachmentImage = '1';
+            });
+            if (!list.querySelector('li:not([hidden])')) section.hidden = true;
+        });
+    }
     function processImages(roots) {
+        processPostAttachments(roots);
         // o seletor exclui examinadas (data-full-processed) E placeholders sem src (data-smg-lazy-wait,
         // que voltam via seu próprio load). Scope: no boot roots=[body] (full), numa mutação só os subtrees novos.
-        eachIn(roots, 'img.bbImage:not([data-full-processed]):not([data-smg-lazy-wait])', processOneImage);
+        eachIn(roots, 'img.bbImage:not([data-full-processed]):not([data-smg-lazy-wait]):not([data-cd-resolving])', processOneImage);
     }
 
     // hosts de imagem estilo chevereto (jpg6.su / jpg5.su / jpg.church & afins): a página /img/{slug} "cozinha" a URL real
@@ -12560,8 +12865,7 @@
     const MEDIA_ITEM_SEL = 'img.bbImage, .smg-dead--img';
     // caixa de player de vídeo que o script monta ou reestiliza: direto (.smg-dm-wrap), redgifs/turbo/saint/
     // imagepond/cyberdrop (.generic2wide-iframe-div), embed s9e de vídeo, ou o nosso player solto (.smg-rg)
-    const VIDEO_BOX_SEL = '.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], .smg-rg';
-    const VIDEO_S9E_RE = /^(redgifs|gifs|youtube|vimeo|streamable|dailymotion|tiktok|twitch)$/i;
+    const VIDEO_BOX_SEL = '.generic2wide-iframe-div, .smg-dm-wrap, span[data-s9e-mediaembed], ' + VIDEO_BBMEDIA_SELECTOR + ', .smg-rg';
     const VIDEO_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .bbCodeBlock--unfurl';
     const MEDIA_SKIP_SEL = '.bbCodeQuote, .bbCodeBlock--quote, .message-signature, .smg-post-links, .smg-fhcard, .smg-tw-card, .generic2wide-iframe-div, .smg-rg, span[data-s9e-mediaembed], .bbCodeBlock--unfurl';
     // filho "vazio" de um wrapper de imagem: espaço, comentário, <noscript>/<br> → não conta como conteúdo
@@ -12589,10 +12893,10 @@
         }
     }
     // MÍDIA SOLTA (run de 1, fora de grupo): imagem na largura do conteúdo, altura até --smg-solo-h (~80vh),
-    // centrada, e nunca maior que o próprio arquivo quando o tamanho natural do arquivo FINAL é conhecido (natW).
+    // centrada, limitada a 2x a largura natural do arquivo FINAL quando conhecida (natW).
     // STABLE BOX: a largura é uma expressão (proporção × teto), não `auto` — com `auto` a caixa seguia os pixels
     // do arquivo e a troca thumb→original (mesma proporção, mais pixels) empurrava a página.
-    // Vídeo direto (.smg-dm-wrap) mantém a regra antiga: só o vertical ganha teto.
+    // Vídeo direto (.smg-dm-wrap) mantém a regra antiga: só o vertical ganha teto, usando a variável do estado solo.
     const WIDE_RELH = 0.9;   // h/w < 0.9 = horizontal (16:9, 21:9, 16:10, 4:3)
     function setSoloSize(el, w, h, vertical, natW) {
         if (!el || !el.style || !w || !h) return;
@@ -12603,7 +12907,7 @@
         }
         const ratio = (w / h).toFixed(4);
         let size;
-        if (el.tagName === 'IMG') size = 'min(100%, calc(var(--smg-solo-h, 80vh) * ' + ratio + ')' + (natW > 0 ? ', ' + Math.round(natW) + 'px' : '') + ')';
+        if (el.tagName === 'IMG') size = 'min(100%, calc(var(--smg-solo-h, 80vh) * ' + ratio + ')' + (natW > 0 ? ', ' + Math.round(natW * 2) + 'px' : '') + ')';
         else if (vertical) size = 'min(75%, 880px, calc(var(--smg-media-h, min(70vh, 750px)) * ' + ratio + '))';
         else { el.style.removeProperty('max-width'); el.style.removeProperty('width'); return; }
         el.style.setProperty('max-width', size, 'important');
@@ -12641,6 +12945,7 @@
         if (el.classList.contains('smg-rg')) return true;
         if (el.classList.contains('smg-dm-wrap')) return !!el.querySelector('.smg-rg, video');
         if (el.hasAttribute('data-s9e-mediaembed')) return VIDEO_S9E_RE.test(el.getAttribute('data-s9e-mediaembed') || '') || !!el.querySelector('.smg-rg');
+        if (el.classList.contains('bbMediaWrapper')) return VIDEO_S9E_RE.test(el.getAttribute('data-media-site-id') || '') && !!el.querySelector('iframe');
         if (el.classList.contains('generic2wide-iframe-div')) return !!el.querySelector('.smg-rg, .smg-turbo-slot, video, iframe') || /redgifs/i.test(el.getAttribute('onclick') || '');
         return false;
     }
@@ -12668,8 +12973,10 @@
         if (fromPlayer) return fromPlayer;
         const v = box.querySelector('video');
         if (v && v.videoWidth && v.videoHeight) return v.videoHeight / v.videoWidth;
-        const plausible = r => r > 1 / 2.8 && r < 1 / 0.3;
         const ifr = box.querySelector('iframe');
+        const provider = box.getAttribute('data-s9e-mediaembed') || '';
+        if (/^tiktok$/i.test(provider) || (ifr && /tiktok\.com/i.test(ifr.src || ''))) return 16 / 9;
+        const plausible = r => r > 1 / 2.8 && r < 1 / 0.3;
         for (const el of [box, ifr]) {
             if (!el) continue;
             const w = +(el.getAttribute('data-width') || el.getAttribute('width') || 0);
@@ -12696,8 +13003,33 @@
     function postItemSpan(item, relH) {
         return item.classList.contains('smg-dead') ? 1 : masonryOrientSpan(relH);
     }
+    function postItemIsVideo(item) {
+        return item.classList.contains('smg-mvid');
+    }
     function mountPostGroup(grid) {
-        masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan });
+        masonryMount(grid, { getRatio: postItemRatio, getSpan: postItemSpan, getIsVideo: postItemIsVideo });
+    }
+    function dissolvePostGroup(grid, items) {
+        masonryDissolve(grid, items);
+        if (grid.parentNode) grid.replaceWith(...items);
+        items.filter(item => item.classList.contains('smg-dead')).forEach(item => item.classList.add('smg-dead--strip'));
+        items.filter(item => item.classList.contains('smg-mvid')).forEach(item => item.classList.add('smg-solo-video'));
+    }
+    function normalizePostDeadGroups(scope) {
+        if (!scope || !scope.querySelectorAll) return;
+        const grids = Array.from(scope.matches && scope.matches('.auto-image-grid') ? [scope] : []).concat(Array.from(scope.querySelectorAll('.auto-image-grid')));
+        grids.forEach(grid => {
+            const children = Array.from(grid.children);
+            const dead = children.filter(item => item.classList.contains('smg-dead'));
+            if (!dead.length) return;
+            const liveCount = children.length - dead.length;
+            if (liveCount <= 1) {
+                dissolvePostGroup(grid, children);
+            } else {
+                dead.forEach(item => { item.classList.remove('smg-dead--strip'); item.dataset.smgRatio = '0.5'; });
+                mountPostGroup(grid);
+            }
+        });
     }
     // dissolve formatação SEM texto em volta de imagens (<b><img><img></b>, <span>…) → as imagens ficam
     // irmãs do texto em volta e a run enxerga todas
@@ -12753,6 +13085,15 @@
             // quem não está lá: os itens que o alvo já tinha ficam parados (um player não é tirado do DOM).
             const ordered = [];
             items.forEach(it => { if (it.grid) ordered.push.apply(ordered, Array.from(it.grid.children)); else ordered.push(it.flow); });
+            const liveCount = ordered.filter(n => !n.classList.contains('smg-dead')).length;
+            if (liveCount <= 1) {
+                // Dead media are status rows when there is at most one live item.
+                // Dissolving the group preserves DOM order and lets the live item use solo sizing.
+                dissolvePostGroup(target, ordered);
+                items.forEach(it => { if (it.grid && it.grid !== target) { masonryDissolve(it.grid); it.grid.remove(); } });
+                return;
+            }
+            ordered.filter(n => n.classList.contains('smg-dead')).forEach(n => { n.classList.remove('smg-dead--strip'); n.dataset.smgRatio = '0.5'; });
             const kids = target.children;
             ordered.forEach((n, i) => {
                 if (n.dataset.smgGridded !== '1') {
@@ -12782,6 +13123,7 @@
         return touched;
     }
     function buildPostGallery(scope) {
+        normalizePostDeadGroups(scope);
         unwrapEmptyMediaFormatting(scope);
         const byParent = new Map();   // pai no fluxo → Set(flow nodes ainda fora de grupo)
         const add = flow => {
@@ -12802,6 +13144,11 @@
             add(flow);
         });
         byParent.forEach((flows, parent) => groupRunsIn(parent, flows).forEach(mountPostGroup));
+        scope.querySelectorAll(VIDEO_BOX_SEL).forEach(el => {
+            if (el.closest(VIDEO_SKIP_SEL) || !isVideoBox(el)) return;
+            const flow = videoFlowNode(el);
+            flow.classList.toggle('smg-solo-video', !flow.closest('.auto-image-grid'));
+        });
         markLeadMedia(scope);
     }
     // mídia que ABRE o post (grupo, player ou imagem antes de qualquer texto): as quebras de linha antes dela
@@ -12826,7 +13173,8 @@
         // corpo do post = .message-userContent · comentário (profile post / SMG) = .comment-body
         const bodies = new Set();
         const imgSeen = 'img.bbImage:not([data-smg-galseen]), .smg-dead--img:not([data-smg-galseen])';
-        const videoSeen = '.generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), .smg-rg:not([data-smg-galseen])';
+        const bbMediaSeen = VIDEO_BBMEDIA_SELECTOR.split(',\n            ').map(selector => selector + ':not([data-smg-galseen])').join(', ');
+        const videoSeen = '.generic2wide-iframe-div:not([data-smg-galseen]), .smg-dm-wrap:not([data-smg-galseen]), span[data-s9e-mediaembed]:not([data-smg-galseen]), ' + bbMediaSeen + ', .smg-rg:not([data-smg-galseen])';
         eachIn(roots, imgSeen + ', ' + videoSeen, el => {
             el.dataset.smgGalseen = '1';
             if (el.closest('.bbCodeQuote, .message-signature')) return;
@@ -14290,6 +14638,15 @@
     //   GET auth_url                        → { url }  = mp4 direto (token JWT, sem referer-lock → toca direto)
     // Qualquer etapa que falhe → volta o iframe nativo E revela o link de escape: nunca fica buraco no post.
     const CD_EMBED_RE = /^https?:\/\/(?:[a-z0-9-]+\.)?(cyberdrop\.[a-z]+)\/e\/([a-zA-Z0-9_-]+)/i;
+    const CD_DIRECT_RE = /^https?:\/\/(?:[a-z0-9-]+\.)?(cyberdrop\.[a-z]+)\/[^/?#]+\.(mp4|m4v|mov|webm|ogv|mkv|jpg|jpeg|png|gif|webp|avif|bmp)(?:[?#].*)?$/i;
+    const CD_IMAGE_EXTS = /^(?:jpe?g|png|gif|webp|avif|bmp)$/i;
+    function cyberdropMatch(url) {
+        const embed = String(url || '').match(CD_EMBED_RE);
+        if (embed) return { host: embed[1], slug: embed[2], kind: 'video', form: 'embed' };
+        const direct = String(url || '').match(CD_DIRECT_RE);
+        if (direct) return { host: direct[1], slug: '', kind: CD_IMAGE_EXTS.test(direct[2]) ? 'image' : 'video', form: 'direct' };
+        return null;
+    }
     function cyberdropPageUrl(host, slug) { return 'https://' + host + '/f/' + slug; }   // página do arquivo (com download) — o /e/ é só o player
     // espelho sem API própria (api.cyberdrop.me nem resolve DNS) → cai no canônico, que serve o mesmo acervo
     function cyberdropApiHosts(host) {
@@ -14301,6 +14658,49 @@
     const cyberdropCache = new Map();
     const cyberdropInflight = new Map();
     const CD_CACHE_TTL_MS = 10 * 60 * 1000;
+    const cyberdropDirectCache = new Map();
+    const cyberdropDirectInflight = new Map();
+    function cyberdropDirectSlug(url, cb) {
+        const key = String(url || '');
+        if (!GMX || !key) { cb(null); return; }
+        const hit = cyberdropDirectCache.get(key);
+        if (hit && Date.now() - hit.ts < CD_CACHE_TTL_MS) { cb(hit.value); return; }
+        if (cyberdropDirectInflight.has(key)) { cyberdropDirectInflight.get(key).push(cb); return; }
+        cyberdropDirectInflight.set(key, [cb]);
+        const finish = value => {
+            const cbs = cyberdropDirectInflight.get(key) || [];
+            cyberdropDirectInflight.delete(key);
+            if (value) {
+                while (cyberdropDirectCache.size >= 128) cyberdropDirectCache.delete(cyberdropDirectCache.keys().next().value);
+                cyberdropDirectCache.set(key, { value, ts: Date.now() });
+            }
+            cbs.forEach(fn => fn(value));
+        };
+        const fromResponse = r => {
+            const locationHeader = String(r.responseHeaders || '').match(/^\s*location\s*:\s*(.+?)\s*$/im);
+            const candidates = [r.finalUrl || '', locationHeader ? locationHeader[1] : ''];
+            for (const candidate of candidates) {
+                let path = candidate;
+                try { path = new URL(candidate, key).pathname; } catch (e) {}
+                const match = path.match(/\/f\/([a-zA-Z0-9_-]+)(?:[/?#]|$)/);
+                if (match) return { slug: match[1] };
+            }
+            return null;
+        };
+        const request = method => GMX({ method, url: key, timeout: 10000,
+            headers: method === 'GET' ? { Range: 'bytes=0-0' } : {},
+            onload: r => {
+                if (r.status === 404) { finish({ gone: true, status: 404 }); return; }
+                const found = fromResponse(r);
+                if (found) { finish(found); return; }
+                if (method === 'HEAD') { request('GET'); return; }
+                finish(null);
+            },
+            onerror: () => method === 'HEAD' ? request('GET') : finish(null),
+            ontimeout: () => method === 'HEAD' ? request('GET') : finish(null),
+        });
+        request('HEAD');
+    }
     function cyberdropResolve(host, slug, cb) {
         if (!GMX || !slug) { cb(null); return; }
         const key = host + '|' + slug;
@@ -14321,15 +14721,27 @@
     function cyberdropFetch(host, slug, cb) {
         const getJson = (url, ok) => GMX({ method: 'GET', url: url, timeout: 15000,
             headers: { Referer: 'https://' + host + '/', Accept: 'application/json,*/*' },
-            onload: r => { let j = null; try { j = JSON.parse(r.responseText || ''); } catch (e) {} ok(j); },
-            onerror: () => ok(null), ontimeout: () => ok(null) });
+            onload: r => { let j = null; try { j = JSON.parse(r.responseText || ''); } catch (e) {} ok({ json: j, status: r.status }); },
+            onerror: () => ok({ json: null, status: 0 }), ontimeout: () => ok({ json: null, status: 0 }) });
         const hosts = cyberdropApiHosts(host);
+        let allInfoGone = true;
         const tryHost = i => {
-            if (i >= hosts.length) { cb(null); return; }
-            getJson('https://' + hosts[i] + '/api/file/info/' + encodeURIComponent(slug), info => {
-                if (!info || !info.auth_url) { tryHost(i + 1); return; }
-                if (info.type && !/^video\//i.test(info.type)) { cb(null); return; }   // /e/ de não-vídeo: o próprio host redireciona pro /f/ → deixa como está
-                getJson(info.auth_url, auth => cb(auth && auth.url ? { mp4: auth.url, poster: info.thumbnail_url || '' } : null));
+            if (i >= hosts.length) { cb(allInfoGone ? { gone: true } : null); return; }
+            getJson('https://' + hosts[i] + '/api/file/info/' + encodeURIComponent(slug), infoRes => {
+                const info = infoRes && infoRes.json;
+                if (!info || !info.auth_url) {
+                    if (!infoRes || infoRes.status !== 404) allInfoGone = false;
+                    tryHost(i + 1); return;
+                }
+                const type = String(info.type || '').toLowerCase();
+                const isImage = /^image\//.test(type) || type === 'image' || type === 'photo';
+                const isVideo = /^video\//.test(type) || type === 'video';
+                if (!isImage && !isVideo) { cb(null); return; }
+                getJson(info.auth_url, authRes => {
+                    const auth = authRes && authRes.json;
+                    if (auth && auth.url) cb(isImage ? { img: auth.url } : { mp4: auth.url, poster: info.thumbnail_url || '' });
+                    else cb(authRes && authRes.status === 404 ? { gone: true } : null);
+                });
             });
         };
         tryHost(0);
@@ -14357,12 +14769,21 @@
     }
     function cyberdropMount(ctx, host, slug, origHref, restore) {
         ctx.loading.classList.remove('smg-loading-idle');   // carga em voo: agora o spinner gira
-        queueEmbedResolve(ctx.slot, done => cyberdropResolve(host, slug, done), res => {
+        let pageSlug = slug;
+        queueEmbedResolve(ctx.slot, done => {
+            const resolve = realSlug => realSlug ? cyberdropResolve(host, realSlug, done) : done(null);
+            if (slug) resolve(slug);
+            else cyberdropDirectSlug(origHref, found => {
+                if (found && found.gone) { done(found); return; }
+                pageSlug = found && found.slug || '';
+                resolve(found && found.slug);
+            });
+        }, res => {
             if (ctx.wrapper.querySelector('.smg-rg')) return;
             mediaResizeKeep(ctx.wrapper);   // spinner 16:9 → player (ou iframe de volta): acima da tela, devolve a diferença no scroll
-            if (!res) { restore(); return; }
+            if (!res || res.gone || !res.mp4) { restore(); return; }
             const { wrap, video } = buildNativeVideo(res.mp4, 'https://' + host + '/', restore, 'Cyberdrop');
-            video._rgExt = cyberdropPageUrl(host, slug);   // "abrir em nova guia" → página do arquivo (tem download)
+            video._rgExt = cyberdropPageUrl(host, pageSlug);   // "abrir em nova guia" → página do arquivo (tem download)
             video._rgFeed = origHref || video._rgExt;
             ctx.loading.remove();
             ctx.slot.appendChild(wrap);
@@ -14373,11 +14794,13 @@
     function processCyberdropEmbeds(roots) {
         if (!(FEATURES.cyberdropEmbeds && GMX)) return;
         eachIn(roots, 'iframe[src*="cyberdrop."]:not([data-cd-done])', ifr => {
-            ifr.dataset.cdDone = '1';
-            if (ifr.closest('.smg-rg, .smg-turbo-slot')) return;   // é o iframe de fallback que NÓS montamos
-            const m = (ifr.src || ifr.getAttribute('src') || '').match(CD_EMBED_RE);
+            if (ifr.closest('.smg-rg, .smg-turbo-slot')) { ifr.dataset.cdDone = '1'; return; }   // fallback deliberado do nosso player
+            const origHref = ifr.getAttribute('src') || ifr.src || '';
+            const m = cyberdropMatch(origHref);
             if (!m) return;
-            const host = m[1], slug = m[2], origHref = ifr.src || ifr.getAttribute('src');
+            const { host, slug, kind } = m;
+            if (kind === 'image') { ifr.dataset.cdDone = '1'; cyberdropImageNode(ifr, host, slug, origHref); return; }
+            ifr.dataset.cdDone = '1';
             const ctx = cyberdropSlot(ifr, host, slug, origHref);
             if (!ctx) return;
             // o iframe nativo já saiu do DOM (para de tentar carregar); guardado pra voltar se a API falhar
@@ -14399,12 +14822,17 @@
         // LINK cru do /e/ (o XF não embeda quando há 2 URLs na mesma linha) → mesmo player. Sem iframe pra restaurar:
         // a falha revela o link de escape, que é o próprio link original de volta.
         eachIn(roots, 'a[href*="cyberdrop."]:not([data-cd-done])', link => {
-            link.dataset.cdDone = '1';
-            if (link.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) return;
-            if (link.querySelector('img')) return;   // link de imagem (lightbox)
-            const m = (link.href || '').match(CD_EMBED_RE);
+            // A dead-image tile keeps the failed direct URL as its href. It is terminal media,
+            // not a fresh Cyberdrop embed; retry restores the original img and handles it there.
+            if (link.classList.contains('smg-dead')) { link.dataset.cdDone = '1'; return; }
+            if (link.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) { link.dataset.cdDone = '1'; return; }
+            const origHref = link.getAttribute('href') || link.href || '';
+            const m = cyberdropMatch(origHref);
             if (!m) return;
-            const host = m[1], slug = m[2], origHref = link.href;
+            const { host, slug, kind } = m;
+            if (kind === 'image') { link.dataset.cdDone = '1'; cyberdropImageNode(link, host, slug, origHref); return; }
+            if (link.querySelector('img')) { link.dataset.cdDone = '1'; return; }   // image lightbox link is handled by its img source
+            link.dataset.cdDone = '1';
             const ctx = cyberdropSlot(link, host, slug, origHref);
             if (!ctx) return;
             const restore = () => { mediaResizeKeep(ctx.wrapper); unfillSlot(ctx.slot); ctx.loading.remove(); ctx.esc.style.removeProperty('display'); };
@@ -14414,6 +14842,64 @@
                 cyberdropMount(ctx, host, slug, origHref, restore);
             };
             lazyActivate(ctx.slot, activate);
+        });
+        eachIn(roots, 'img[src*="cyberdrop."]:not([data-cd-done])', img => {
+            if (img.closest('.smg-rg, .smg-turbo-slot, .smg-fhcard, .bbCodeBlock--unfurl, .bbCodeQuote, .message-signature')) { img.dataset.cdDone = '1'; return; }
+            const src = img.getAttribute('src') || img.src || '';
+            const m = cyberdropMatch(src);
+            if (!m || m.kind !== 'image') return;
+            img.dataset.cdDone = '1';
+            cyberdropImageNode(img, m.host, m.slug, src);
+        });
+    }
+
+    function cyberdropImageNode(node, host, slug, origUrl) {
+        const img = node.tagName === 'IMG' ? node : node.tagName === 'A' ? (node.querySelector('img') || document.createElement('img')) : document.createElement('img');
+        const anchor = node.tagName === 'A' ? node : img.closest('a');
+        img.classList.add('bbImage');
+        img.loading = 'lazy';
+        img.alt = img.alt || '';
+        img.dataset.cdDone = '1';
+        img.dataset.cdResolving = '1';
+        if (node.tagName === 'IFRAME') {
+            const wrapper = node.closest('.generic2wide-iframe-div');
+            if (wrapper) wrapper.replaceWith(img); else node.replaceWith(img);
+        } else if (node.tagName === 'A' && !img.parentNode) {
+            anchor.classList.add('smg-imglink');
+            anchor.textContent = '';
+            anchor.appendChild(img);
+        }
+        let realSlug = slug;
+        queueEmbedResolve(img, done => {
+            if (realSlug) { cyberdropResolve(host, realSlug, done); return; }
+            cyberdropDirectSlug(origUrl, found => {
+                if (!found || found.gone) { done(found); return; }
+                realSlug = found.slug;
+                cyberdropResolve(host, realSlug, done);
+            });
+        }, res => {
+            if (!img.isConnected) return;
+            delete img.dataset.cdResolving;
+            if (res && res.img) {
+                img.src = res.img;
+                img.dataset.smgFull = res.img;
+                img.dataset.smgMed = res.img;
+                img.dataset.smgLink = cyberdropPageUrl(host, realSlug);
+                if (anchor) anchor.href = res.img;
+                processOneImage(img);
+                scheduleRun(img.parentElement || img);
+            } else if (res && res.gone) {
+                if (res.status) {
+                    placeDeadImage(img, origUrl, { status: res.status, retrySrc: origUrl });
+                }
+                else {
+                    img.src = origUrl;   // API-only 404: browser confirms the original image is dead
+                    processOneImage(img);
+                }
+            } else {
+                if (anchor) { anchor.textContent = '↗ ' + i18n('Open on cyberdrop'); anchor.classList.add('smg-imglink-fallback'); }
+                else { const a = document.createElement('a'); a.href = origUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.className = 'smg-imglink-fallback'; a.textContent = '↗ ' + i18n('Open on cyberdrop'); img.replaceWith(a); }
+            }
         });
     }
 
@@ -14968,15 +15454,13 @@
         const dockLoggedIn = isLoggedIn();
         const btnHome = makeDockLink({ id: 'smg-nav-home', icon: ICONS.home, label: 'Home', href: boardBase });
 
-        // sino de alertas da navbar mobile: abre o rail de alertas em tela cheia (badge de não lidas via updateAlertsUnreadBadge)
+        // sino de alertas da navbar mobile: abre o drawer da lista (badge via updateAlertsUnreadBadge)
         const btnBell = dockLoggedIn ? makeDockLink({ id: 'smg-nav-bell', icon: ICONS.alerts, label: 'Alerts', href: boardBase + 'account/alerts' }) : null;
         if (btnBell) {
-            if (FEATURES.alertsDock) btnBell.setAttribute('data-smg-inplace', '');   // abre o rail; a navegação interna não toca nele
+            btnBell.setAttribute('data-smg-inplace', '');
             btnBell.addEventListener('click', e => {
-                if (!FEATURES.alertsDock) return;   // sem rail → navega pra página de alertas
                 e.preventDefault();
-                e.stopPropagation();
-                toggleAlertsDock();
+                toggleAlertsPopover();
             });
         }
         const btnTimeline = dockLoggedIn ? makeDockLink({ id: 'smg-nav-timeline', icon: ICONS.feed, label: 'Feed', href: boardBase + '?view=feed' }) : null;   // espelha o item central da topbar (river das seguidas)
@@ -15775,10 +16259,10 @@
                 if (cmdMenu.classList.contains('open')) cmdClose(); else { cmdOpen(b); try { getSearchInput().focus(); } catch (x) {} }
             });
 
-            // %LIKE%: a busca (MySQL fulltext) não acha por parte da palavra → wildcard de PREFIXO (termo* = LIKE 'termo%').
-            // Infix real (%termo%) o fulltext não suporta; respeita aspas/operadores (+ - " *) do usuário. Liga/desliga na config.
+            // Wildcard de prefixo (termo*) para busca parcial; o motor de busca decide como interpretar o operador.
+            // A normalização abaixo remove pontuação e operadores fornecidos na consulta antes de enviá-la.
             function likeify(q) {
-                if (!cfgLike || !q || /[*"+\-]/.test(q)) return q;
+                if (!cfgLike || !q) return q;
                 return q.split(/\s+/).map(w => (w.length >= 3 && /^[\wÀ-ſ]+$/.test(w)) ? w + '*' : w).join(' ');
             }
 
@@ -15803,64 +16287,14 @@
                 return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
 
-            // GERAÇÃO FLEXÍVEL DE PALAVRAS-CHAVE:
-            // Permite dar match tanto com espaços ("jade the jaguar") quanto sem espaços ("jadethejaguar"),
-            // delimitadores ("jade_the_jaguar") ou CamelCase ("JadeTheJaguar"), unindo as variantes pelo
-            // operador nativo OR do XenForo. Não abre a busca para palavras genéricas isoladas.
-            // Suporta também extração de handles de redes sociais e normalização de acentos.
+            // Normaliza handles para os tokens que o índice XenForo produz a partir de pontuação.
+            // Envia cada token como alternativa OR; resultados titles-only são filtrados e ordenados localmente.
             function buildFlexibleKeywords(q, isTitlesOnly) {
                 if (!q) return '';
-                const cleanSocial = extractSocialHandle(q);
-                const raw = cleanSocial.trim();
-                // Se contiver aspas explícitas, operadores manuais (+, -, ~) ou operador booleano OR existente:
-                // preserva a intenção literal do usuário sem inventar variantes.
-                if (/[*"+~\-]|\bOR\b/.test(raw)) {
-                    return likeify(raw);
-                }
-
-                const variants = new Set();
-                const addVariantGroup = text => {
-                    if (!text) return;
-                    variants.add(likeify(text));
-
-                    // 1. Termo com espaços → gera versão unificada sem espaços
-                    if (/\s+/.test(text)) {
-                        const unspaced = text.replace(/[\s\-_.]+/g, '');
-                        if (unspaced.length >= 3) {
-                            variants.add(likeify(unspaced));
-                        }
-                    }
-
-                    // 2. Termo com delimitadores (_, -, .) → gera versão espaçada e sem separadores
-                    if (/[\-_.]/.test(text)) {
-                        const spaced = text.replace(/[\-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
-                        if (spaced && spaced !== text) {
-                            variants.add(likeify(spaced));
-                        }
-                        const unspaced = text.replace(/[\s\-_.]+/g, '');
-                        if (unspaced.length >= 3) {
-                            variants.add(likeify(unspaced));
-                        }
-                    }
-
-                    // 3. Termo em CamelCase → gera versão decomposta com espaços
-                    if (/[a-z][A-Z]/.test(text)) {
-                        const deCamel = text.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
-                        if (deCamel && deCamel !== text) {
-                            variants.add(likeify(deCamel));
-                        }
-                    }
-                };
-
-                addVariantGroup(raw);
-
-                // Normalização de acentos: gera também variantes sem acento
-                const unaccented = removeAccents(raw);
-                if (unaccented && unaccented !== raw) {
-                    addVariantGroup(unaccented);
-                }
-
-                return Array.from(variants).filter(Boolean).join(' OR ');
+                const raw = extractSocialHandle(q).replace(/([a-z])([A-Z])/g, '$1 $2');
+                const tokens = removeAccents(raw).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+                const unique = Array.from(new Set(tokens));
+                return unique.map(token => likeify(token)).join(' OR ');
             }
             if (typeof window !== 'undefined') window.buildFlexibleKeywords = buildFlexibleKeywords;
 
@@ -15930,20 +16364,22 @@
                 const tags = [];
                 if (e.scope && e.scope !== 'everywhere') tags.push(i18n(SCOPE_LABEL[e.scope] || e.scope));
                 if (e.q && e.by) tags.push(i18n('author') + ': ' + e.by);
-                if (e.titles) tags.push(i18n('titles only'));
                 if (e.order === 'date') tags.push(i18n('by date'));
+                const titleTag = e.titles ? i18n('titles only') : '';
+                const detailTags = tags;
                 const otherLabel = /socialmediagirls/i.test(location.hostname) ? 'SimpCity' : 'SocialMediaGirls';
                 row.innerHTML =
-                    '<span class="smg-search-hist-ico">' + ICONS.search + '</span>' +
                     '<span class="smg-search-hist-q"></span>' +
-                    (tags.length ? '<span class="smg-search-hist-meta"></span>' : '') +
+                    (detailTags.length ? '<span class="smg-search-hist-meta"></span>' : '') +
+                    (titleTag ? '<span class="smg-search-hist-titles"></span>' : '') +
                     '<span class="smg-search-hist-acts">' +
                         '<span class="smg-search-hist-act smg-search-hist-edit" role="button" aria-label="' + i18n('Edit in search bar') + '" title="' + i18n('Edit in search bar') + '">' + svgIcon('<line x1="17" y1="17" x2="7" y2="7"/><polyline points="7 17 7 7 17 7"/>') + '</span>' +
                         '<span class="smg-search-hist-act smg-search-hist-cross" role="button" aria-label="' + i18n('Search on') + ' ' + otherLabel + '" title="' + i18n('Search on') + ' ' + otherLabel + '">' + svgIcon('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>') + '</span>' +
                         '<span class="smg-search-hist-act smg-search-hist-remove" role="button" aria-label="' + i18n('Remove') + '">' + ICONS.close + '</span>' +
                     '</span>';
                 row.querySelector('.smg-search-hist-q').textContent = e.q || (i18n('author') + ': ' + e.by);
-                if (tags.length) row.querySelector('.smg-search-hist-meta').textContent = tags.join(' · ');
+                if (detailTags.length) row.querySelector('.smg-search-hist-meta').textContent = detailTags.join(' · ');
+                if (titleTag) row.querySelector('.smg-search-hist-titles').textContent = titleTag;
                 row.addEventListener('click', () => applyHistoryEntry(e));
                 row.querySelector('.smg-search-hist-edit').addEventListener('click', ev => { ev.stopPropagation(); sendToBar(e); });
                 row.querySelector('.smg-search-hist-cross').addEventListener('click', ev => { ev.stopPropagation(); openOnOther(e); });
@@ -16106,6 +16542,7 @@
 
             function doSearch(addToHistory) {
                 let keywords = getSearchInput().value.trim();
+                const titleQuery = keywords;
                 const titlesOn = toggleTitleOnly?.checked ?? cfgTitles;
                 const orderDate = (sortSelect?.value === 'date') || cfgOrder;
                 const by = authorInput?.value.trim();
@@ -16152,10 +16589,37 @@
                 if (orderDate) fields.push(['order', 'date']);   // omitido = relevance (default do XF)
                 if (by) fields.push(['c[users]', by]);
 
-                runSearchInline(fields);
+                runSearchInline(fields, titleQuery);
             }
             // === busca INLINE: faz o fetch dos resultados e mostra NO PRÓPRIO dropdown (em vez de navegar) ===
             let searchSeq = 0, searchAbort = null;
+            let titleQueryForResults = '';
+            function invalidateSearch() {
+                searchSeq++;
+                searchPager.reset(null);
+                if (searchAbort) { searchAbort.abort(); searchAbort = null; }
+            }
+            function titleSearchState(query) {
+                const fold = text => removeAccents(String(text || '').normalize('NFD')).toLowerCase()
+                    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+                const phrase = fold(query);
+                const tokens = Array.from(new Set(phrase.split(' ').filter(Boolean)));
+                return { phrase, tokens, fold };
+            }
+            function filterRankTitleResults(results, query) {
+                if (!(toggleTitleOnly?.checked ?? cfgTitles) || currentScope === 'thread' || !query) return results;
+                const state = titleSearchState(query);
+                return results.map((row, index) => ({ row, index, title: state.fold(row.title) }))
+                    .filter(item => state.tokens.some(token => item.title.includes(token)))
+                    .sort((a, b) => {
+                        const phraseA = a.title.includes(state.phrase), phraseB = b.title.includes(state.phrase);
+                        if (phraseA !== phraseB) return phraseA ? -1 : 1;
+                        const allA = state.tokens.every(token => a.title.includes(token));
+                        const allB = state.tokens.every(token => b.title.includes(token));
+                        if (allA !== allB) return allA ? -1 : 1;
+                        return a.index - b.index;
+                    }).map(item => item.row);
+            }
             let searchSentinelEl = null;
             function removeSearchSentinel() {
                 if (searchSentinelEl && searchSentinelEl.parentNode) searchSentinelEl.remove();
@@ -16171,10 +16635,10 @@
                 load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
                 apply: (doc, urlFetched) => {
                     const moreResults = parseSearchResults(doc);
-                    let moreFiltered = moreResults;
+                    let moreFiltered = filterRankTitleResults(moreResults, titleQueryForResults);
                     if (activeSearchBadges && activeSearchBadges.size > 0) {
                         const activeLower = Array.from(activeSearchBadges).map(b => b.toLowerCase().trim());
-                        moreFiltered = moreResults.filter(r => {
+                        moreFiltered = moreFiltered.filter(r => {
                             const labelTexts = (r.labels || []).map(l => (l.textContent || '').toLowerCase().replace(/^[#\s\[\]]+|[#\s\[\]]+$/g, '').trim());
                             const hasLabel = activeLower.some(ab => labelTexts.some(lt => lt === ab || lt.includes(ab) || ab.includes(lt)));
                             if (hasLabel) return true;
@@ -16226,9 +16690,10 @@
                 return a;
             }
 
-            function runSearchInline(fields) {
+            function runSearchInline(fields, titleQuery) {
                 refreshPrefixHarvest();
                 const seq = ++searchSeq;
+                titleQueryForResults = titleQuery || '';
                 searchPager.reset(null);   // a página que ainda carregava é da busca anterior: descarta e aborta
                 if (searchAbort) searchAbort.abort();   // mata o POST anterior (full-text é caro no servidor; o seq só descartava a RESPOSTA — a request continuava rodando)
                 const ctrl = searchAbort = (typeof AbortController === 'function') ? new AbortController() : null;
@@ -16377,6 +16842,7 @@
                         return activeLower.some(ab => tLower.includes(ab));
                     });
                 }
+                filtered = filterRankTitleResults(filtered, titleQueryForResults);
 
                 // Coletar chips dinâmicos de prefixo/tags presentes nestes resultados
                 const tagCountMap = new Map();
@@ -16483,7 +16949,7 @@
                 });
             }
             function clearResults() {   // volta pro histórico — sem re-render se ele JÁ está na tela (era rebuild por keystroke)
-                searchPager.reset(null);
+                invalidateSearch();
                 removeSearchSentinel();
                 if (!searchResultsEl.hidden) { searchResultsEl.hidden = true; searchResultsEl.innerHTML = ''; }
                 if (searchHistEl.hidden && searchEmptyEl.hidden) renderHistory();
@@ -16493,10 +16959,12 @@
             let searchDebounce = null;
             function onSearchInput() {
                 clearTimeout(searchDebounce);
+                invalidateSearch();
                 const kw = getSearchInput().value.trim();
                 const by = authorInput ? authorInput.value.trim() : '';
                 const hasBadges = activeSearchBadges && activeSearchBadges.size > 0;
-                if (kw.length < 3 && !by && !hasBadges && currentScope !== 'watched') { clearResults(); return; }   // vazio/curto demais → histórico (XF tem mínimo de caracteres)
+                const titleOnly = currentScope !== 'thread' && (toggleTitleOnly?.checked ?? cfgTitles);
+                if (kw.length < 3 && !(titleOnly && kw) && !by && !hasBadges && currentScope !== 'watched') { clearResults(); return; }
                 searchDebounce = setTimeout(() => doSearch(false), 420);
             }
             document.addEventListener('input', e => {
@@ -16511,7 +16979,8 @@
                 const kw = getSearchInput().value.trim();
                 const by = authorInput ? authorInput.value.trim() : '';
                 const hasBadges = activeSearchBadges && activeSearchBadges.size > 0;
-                if (kw.length < 3 && !by && !hasBadges && currentScope !== 'watched') return;
+                const titleOnly = currentScope !== 'thread' && (toggleTitleOnly?.checked ?? cfgTitles);
+                if (kw.length < 3 && !(titleOnly && kw) && !by && !hasBadges && currentScope !== 'watched') return;
                 clearTimeout(searchDebounce);
                 doSearch(false);
             }
@@ -18042,6 +18511,7 @@
         const add = (type, url) => { if (url && !local.has(url)) { local.add(url); items.push({ type, url }); } };
 
         root.querySelectorAll('img.bbImage, video.smg-rg-v, iframe.saint-iframe, iframe[src*="turbo.cr"], iframe[src*="saint"], iframe[src*="imagepond.net"], span[data-s9e-mediaembed] iframe, span[data-s9e-mediaembed-iframe], .generic2wide-iframe-div iframe, .generic2wide-iframe-div[onclick*="redgifs"], .bbCodeBlock--unfurl[data-url], a[href*="turbo.cr/"]:not(.smg-turbo-fallback), a[href*="saint.cr/"]:not(.smg-turbo-fallback), a[href*="saint2.cr/"]:not(.smg-turbo-fallback), a[href*="saint.su/"]:not(.smg-turbo-fallback), a[href*="saint2.su/"]:not(.smg-turbo-fallback)').forEach(el => {
+            if (el.closest('[hidden]')) return;
             // FORMA CRUA (a galeria re-busca a página do servidor, SEM nosso processamento):
             if (el.matches('span[data-s9e-mediaembed-iframe]')) {   // redgifs = <span data-s9e-mediaembed-iframe='[...,"src","https:\/\/…/ifr/ID"]'> (sem <iframe> nem .generic2wide)
                 let arr; try { arr = JSON.parse(el.getAttribute('data-s9e-mediaembed-iframe') || '[]'); } catch (e) { return; }
@@ -18059,7 +18529,15 @@
                 return;
             }
             if (el.tagName === 'IMG') {
-                add('image', imageUrlOf(el));
+                let url = imageUrlOf(el);
+                // A gallery fetch contains the server's original attachment URL, while the live post
+                // may already have replaced that failed URL with its working thumbnail.
+                if (url) {
+                    const failed = Array.from(document.querySelectorAll('img[data-smg-failed-url]'))
+                        .find(img => img.dataset.smgFailedUrl === absUrl(url));
+                    if (failed) url = imageUrlOf(failed);
+                }
+                add('image', url);
             } else if (el.tagName === 'VIDEO') {   // nosso player já montado: redgifs pelo id; turbo (Simp nativo) pelo _rgFeed
                 if (el.dataset.rgid) add('embed', 'https://www.redgifs.com/ifr/' + el.dataset.rgid);
                 else if (el._rgFeed) add('embed', el._rgFeed);
@@ -19191,7 +19669,7 @@
         const alerts = alertsBadgeCount();
         setReactiveBadge(document.querySelector('#smg-topbar .smg-rt-alerts'), alerts, 'smg-tb-badge');     // topbar (ícone do sino)
         setReactiveBadge(document.querySelector('#smg-nav-bell .smg-nav-ico'), alerts, 'smg-nav-badge');  // dock / navbar mobile
-        aldockSyncCount();   // contador do rail de notificações (se estiver docked)
+        alpopSyncCount();   // contador do popover de alertas (se estiver montado)
     }
     function watchNativeBadges() {
         if (badgeObsBound) return;   // o MutationObserver já mantém os badges em sync ao vivo — não varre todo frame
@@ -21105,9 +21583,85 @@
         thumb.appendChild(btn);
     }
 
+    let cardTagsResizeObserver = null;
+    function updateCardTags(track) {
+        if (!track || !track.isConnected) return;
+        const tags = track.closest('.smg-card-tags');
+        if (!tags) return;
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        const overflowing = maxScroll > 1;
+        const showPrev = overflowing && track.scrollLeft > 1;
+        const showNext = overflowing && track.scrollLeft < maxScroll - 1;
+        const prev = tags.querySelector('.smg-card-tags-prev');
+        const next = tags.querySelector('.smg-card-tags-next');
+        tags.classList.toggle('has-prev', showPrev);
+        tags.classList.toggle('has-next', showNext);
+        if (prev) prev.hidden = !showPrev;
+        if (next) next.hidden = !showNext;
+    }
+
+    function buildCardTags(title) {
+        const candidates = Array.from(title.querySelectorAll('.label, .prefix, .labelLink, .label-append'));
+        const items = [];
+        candidates.forEach(node => {
+            const direct = node;
+            let child = direct;
+            while (child.parentElement && child.parentElement !== title) child = child.parentElement;
+            if (child.parentElement === title && !items.includes(child)) items.push(child);
+        });
+        const labels = items.filter(node => !node.matches('.label-append'));
+        if (!labels.length) return;
+
+        items.filter(node => node.matches('.label-append')).forEach(node => node.remove());
+        const tags = document.createElement('div');
+        tags.className = 'smg-card-tags';
+        const prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'smg-card-tags-prev';
+        prev.setAttribute('aria-label', IS_PT ? 'Rolar etiquetas para a esquerda' : 'Scroll tags left');
+        prev.innerHTML = ICONS.pagePrev;
+        const track = document.createElement('div');
+        track.className = 'smg-card-tags-track';
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'smg-card-tags-next';
+        next.setAttribute('aria-label', IS_PT ? 'Rolar etiquetas para a direita' : 'Scroll tags right');
+        next.innerHTML = ICONS.pageNext;
+        labels.forEach(node => track.appendChild(node));
+        tags.append(prev, track, next);
+
+        const scroll = direction => event => {
+            event.preventDefault();
+            event.stopPropagation();
+            track.scrollBy({ left: Math.max(1, Math.round(track.clientWidth * 0.8)) * direction, behavior: 'smooth' });
+            updateCardTags(track);
+        };
+        prev.addEventListener('click', scroll(-1));
+        next.addEventListener('click', scroll(1));
+        track.addEventListener('scroll', () => updateCardTags(track), { passive: true });
+        if (typeof ResizeObserver !== 'undefined') {
+            if (!cardTagsResizeObserver) {
+                cardTagsResizeObserver = trackObserver(new ResizeObserver(entries => entries.forEach(entry => updateCardTags(entry.target))));
+            }
+            cardTagsResizeObserver.observe(track);
+        }
+        const titleLink = Array.from(title.children).find(node => node.matches('a:not(.label):not(.labelLink)'));
+        title.insertBefore(tags, titleLink || title.firstChild);
+        updateCardTags(track);
+    }
+
     function decorateThreadCard(row) {
         if (!row || row.dataset.smgDecorated) return;
         row.dataset.smgDecorated = '1';
+        const title = row.querySelector('.structItem-title');
+        const thumb = row.querySelector('.structItem-cell--icon:not(.structItem-cell--iconEnd)');
+        if (row.classList.contains('is-unread') && thumb && !thumb.querySelector('.smg-card-new')) {
+            const badge = document.createElement('span');
+            badge.className = 'smg-card-new';
+            badge.textContent = IS_PT ? 'NOVO' : 'NEW';
+            thumb.appendChild(badge);
+        }
+        if (title && !title.querySelector('.smg-card-tags')) buildCardTags(title);
         const createdEl = row.querySelector('.structItem-startDate time');
         const latestEl = row.querySelector('.structItem-cell--latest time, .structItem-latestDate time');
 
@@ -21125,7 +21679,6 @@
             if (upText || crText) {
                 datesRow.innerHTML = `
                     ${upText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Último update às' : 'Updated at'}</span> <span class="smg-card-date-val">${upText}</span></span>` : ''}
-                    ${upText && crText ? `<span class="smg-card-date-sep">·</span>` : ''}
                     ${crText ? `<span class="smg-card-date-item"><span>${IS_PT ? 'Criado em' : 'Created'}</span> <span class="smg-card-date-val">${crText}</span></span>` : ''}
                 `;
                 if (mainCell) mainCell.appendChild(datesRow);
@@ -21398,6 +21951,25 @@
 
     let isStreamingWatched = false;
     const onWatchedPage = () => /\/watched\/threads(?:\/|$|\?)/.test(location.pathname) || /\/watched\/threads(?:\/|$|\?)/.test(location.href);
+    function moveWatchedManageAction() {
+        const title = document.querySelector('.p-body-header .p-title');
+        if (!title || title.dataset.smgWatchedAction === '1') return;
+        const opposite = document.querySelector('.p-body-content form .block-outer-opposite, .p-body-content .block-outer-opposite');
+        if (!opposite || !opposite.querySelector('.menuTrigger')) return;
+        const action = document.createElement('div');
+        action.className = 'p-title-pageAction';
+        action.dataset.smgWatchedAction = '1';
+        while (opposite.firstChild) action.appendChild(opposite.firstChild);
+        if (!action.querySelector('.menuTrigger')) return;
+        title.appendChild(action);
+        title.dataset.smgWatchedAction = '1';
+
+        const outer = opposite.closest('.block-outer');
+        const remainingNav = outer && Array.from(outer.querySelectorAll('.pageNavWrapper, .pageNav'));
+        if (outer && !opposite.children.length && (!remainingNav.length || remainingNav.every(node => getComputedStyle(node).display === 'none'))) {
+            outer.style.setProperty('display', 'none', 'important');
+        }
+    }
     function stopWatchedStream() {
         isStreamingWatched = false;
         document.querySelectorAll('.js-replyNewMessageContainer > .structItem--thread, .block--messages .structItem--thread').forEach(el => el.remove());
@@ -21419,6 +21991,7 @@
                 el.style.setProperty('display', 'none', 'important');
                 el.dataset.smgHidden = '1';
             });
+            moveWatchedManageAction();
             eachIn(roots, '.structItem--thread', decorateWatchedThreadRow);
             // o ingest da lista é do stream (1× pra página aberta + 1× por página buscada), não de cada
             // frame de mutação: as linhas que o stream anexa já foram ingeridas com o doc delas.
@@ -21796,9 +22369,9 @@
 
 
     // alerts/18-alerts.js
-    // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page, popup and rail).
+    // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page and popover).
     // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs, fitAlertTags.
-    // Depends on: core/06-helpers, alerts/19-alerts-dock.
+    // Depends on: core/06-helpers, alerts/19-alerts-popover.
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
     // nativo: "<autor> postou no/replied to <chips> <título>. Podem haver/There may be… · hora · marcar-lido"
@@ -21826,9 +22399,9 @@
                 if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');   // falhou no servidor → NÃO marca local
                 if (li && li.classList) { li.classList.remove('is-unread'); li.classList.add('smg-al-old'); }   // some o dot + esmaece na hora (virou lida)
                 btn.remove();
-                const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+                const st = (typeof alpopState !== 'undefined' && alpopState && alpopState.alerts) ? alpopState.alerts : null;
                 if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-                aldockSyncCount();
+                alpopSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -21853,7 +22426,7 @@
         const unread = root.querySelectorAll('li.alert.is-unread').length;
         const nav = document.querySelector('.p-navgroup-link--alerts');
         const cur = nav ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0) : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
-        const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+        const st = (typeof alpopState !== 'undefined' && alpopState && alpopState.alerts) ? alpopState.alerts : null;
         const hasMore = st ? Boolean(st.next) : false;
         const n = hasMore ? Math.max(cur, unread) : unread;
         gmSet('smg-alerts-count', String(n));
@@ -22074,95 +22647,62 @@
         }
     }
 
-    // alerts/19-alerts-dock.js
-    // Owns: the alerts rail (desktop side rail, phone full-screen sheet): paging, polling, mark all read, width.
-    // Exposes: buildAlertsDock, openAlertsDock, closeAlertsDock, toggleAlertsDock, updateAlertsUnreadBadge, ALDOCK_KEY.
-    // Depends on: thread/07-posts-misc (createPager), alerts/18-alerts, core/06-helpers (sheets), runtime/22-paint.
+    // alerts/19-alerts-popover.js
+    // Owns: the alerts popover and phone drawer: paging, polling, mark all read.
+    // Exposes: buildAlertsPopover, openAlertsPopover, closeAlertsPopover, toggleAlertsPopover, updateAlertsUnreadBadge.
+    // Depends on: thread/07-posts-misc (createPager), alerts/18-alerts, core/06-helpers (popover and modal helpers).
     // =========================================================
-    // FEATURE: painel lateral DOCKED (rail fixo à direita) — ALERTAS
-    // O popover do sino serve pra espiar; ele fecha no primeiro clique e só traz as ~N mais
-    // recentes. Aqui o mesmo conteúdo vira uma COLUNA fixa na direita que sobrevive à navegação
-    // (estado em GM storage → remonta sozinha na próxima página), com o histórico inteiro em
-    // rolagem infinita — dá pra abrir um alerta, ler a thread e continuar descendo a lista.
-    //
-    // Layout: EMPURRA o conteúdo (body padding-right + topbar termina antes do rail) em vez de
-    // cobrir, e ALARGA a coluna do fórum (--smg-cw sobe) — a margem lateral que sobrava vira texto.
-    //
-    // Mapa (Cmd+F): estado/persistência · RAIL_SRC · railFetch (paginação por "next")
-    //   · buildAlertsDock (DOM) · railRefresh/railMore · open/close/toggle · setupAlertsDock (boot + listeners).
-    // =========================================================
-    const ALDOCK_KEY = 'smg-alerts-dock';        // '1' = painel aberto (persiste entre páginas)
-    const ALDOCK_W_KEY = 'smg-alerts-dock-w';    // largura escolhida no arrasto (px)
-    const ALDOCK_MIN_W = 300, ALDOCK_MAX_W = 620, ALDOCK_DEF_W = 360;
-    const ALDOCK_RESP_MIN_W = 340, ALDOCK_RESP_MAX_W = 460;
-    const ALDOCK_MIN_VW = 1100;   // abaixo disso o rail comeria o conteúdo → não docka (o popover/sheet continua valendo)
-    const ALDOCK_POLL_MS = 90000; // busca conteúdo novo de tempos em tempos (o XF não avisa sozinho)
-    const ALDOCK_AUTOFILL = 5;    // teto de páginas puxadas SOZINHO por ação (troca de aba/abertura)
+    const ALPOP_POLL_MS = 90000;
+    const ALPOP_AUTOFILL = 5;    // teto de páginas puxadas SOZINHO por ação (troca de aba/abertura)
 
-    let aldock = null;            // elemento do painel (montado 1×)
-    let aldockBound = false;
+    let alpop = null;            // elemento do painel (montado 1×)
+    let alpopBound = false;
     let alertsNeedRefresh = false;
 
-    // a fonte do rail: paginar seguindo o "next" nativo, deduplicar, rolagem infinita.
-    const RAIL_SRC = {
+    // Fonte da lista: segue o próximo link nativo, deduplica e pagina ao rolar.
+    const ALERTS_SRC = {
         alerts:  { title: 'Alerts',    seeAll: '/account/alerts',  empty: 'No notifications yet' },
     };
     // estado — busy: refresh do topo no ar · dry: páginas seguidas sem nada inédito · autoFill: páginas puxadas
     // sozinho desde a última ação do usuário (teto pra rolagem automática não varrer o histórico inteiro).
     // A rolagem infinita é o motor comum (createPager, 07): st.next É o cursor dele — gravar st.next troca a lista
-    // (reset), e a página que ainda carregava pra lista anterior é descartada. Rolar o rail não é rolar a página:
+    // (reset), e a página que ainda carregava pra lista anterior é descartada. Rolar a lista não é rolar a página:
     // o master switch do scroll infinito não vale aqui.
     const mkState = tab => {
         const st = { busy: false, loaded: false, keys: new Set(), lastFetch: 0, dry: 0, autoFill: 0 };
         st.pager = createPager({
             near: 400,
-            load: url => railFetch(tab, url),
+            load: url => fetchAlerts(tab, url),
             apply: ({ rows, next }) => {
-                const added = aldockInsertRows(tab, rows, false);
+                const added = alpopInsertRows(tab, rows, false);
                 // conteúdo novo desloca a paginação → a página seguinte pode voltar só repetida. Uma tudo-repetida
                 // é normal nesse deslocamento; DUAS seguidas = fim de verdade (e corta o loop de request à toa).
                 st.dry = added ? 0 : st.dry + 1;
-                aldockSyncCount();
+                alpopSyncCount();
                 return { next: st.dry >= 2 ? null : next, added };
             },
-            enabled: () => !!aldock && aldockOpen() && !st.busy && st.loaded,
+            enabled: () => !!alpop && alpopOpen() && !st.busy && st.loaded,
             onFail: () => 'stop',   // erro de rede não vira loop de retry a cada scroll
             onState: kind => {
-                aldockStatus(tab, kind === 'loading' ? 'loading' : '');
-                if (kind !== 'loading') railFillViewport(tab);
+                alpopStatus(tab, kind === 'loading' ? 'loading' : '');
+                if (kind !== 'loading') fillAlertsViewport(tab);
             },
-            listen: false,   // o painel nasce depois (buildAlertsDock): o listener de scroll dele chama check()
+            listen: false,   // o painel nasce depois (buildAlertsPopover): o listener de scroll dele chama check()
         });
         Object.defineProperty(st, 'next', { enumerable: true, get: () => st.pager.cursor, set: v => { st.pager.reset(v); } });
         return st;
     };
-    const aldockState = { alerts: mkState('alerts') };
+    const alpopState = { alerts: mkState('alerts') };
 
-    const aldockViewportMax = () => Math.max(
-        ALDOCK_RESP_MIN_W,
-        Math.min(ALDOCK_RESP_MAX_W, Math.round(window.innerWidth * 0.25))
-    );
-    const aldockWidth = () => {
-        const n = parseInt(gmGet(ALDOCK_W_KEY, ''), 10);
-        const preferred = (n >= ALDOCK_MIN_W && n <= ALDOCK_MAX_W) ? n : ALDOCK_DEF_W;
-        return Math.min(preferred, aldockViewportMax());
-    };
-    // No CELULAR o mesmo rail vira TELA CHEIA (o sino da navbar abre). É a experiência do desktop
-    // — marcar tudo, rolagem infinita — no lugar do
-    // bottom sheet, que só mostrava a lista curta do popup nativo, sem paginação nem filtro.
-    // A faixa do meio (601–1099) continua sem rail: lá ele comeria o conteúdo sem virar tela cheia.
-    const aldockPhone = () => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px)').matches;
-    // na /account/alerts a lista nativa (limpa) é a própria página: o rail só repetiria o conteúdo
-    const aldockOnAlertsPage = () => /\/account\/alerts(?:\/|$)/.test(location.pathname);
-    const aldockFits = () => !aldockOnAlertsPage() && (window.innerWidth >= ALDOCK_MIN_VW || aldockPhone());
-    const aldockWanted = () => gmGet(ALDOCK_KEY, '0') === '1';
-    const aldockOpen = () => document.documentElement.classList.contains('smg-aldock-on');
-    const railBaseUrl = () => RAIL_SRC.alerts.seeAll;
+    const alpopPhone = () => typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 600px)').matches;
+    const alpopOnAlertsPage = () => /\/account\/alerts(?:\/|$)/.test(location.pathname);
+    const alpopOpen = () => !!alpop && alpop.classList.contains('open');
+    const alertsBaseUrl = () => ALERTS_SRC.alerts.seeAll;
 
     // busca UMA página (a `url` já é a próxima, seguindo o link nativo) e devolve as linhas prontas
-    // pro rail + o "next". Seguir o <a> de próxima em vez de montar ?page=N funciona nos 2 sites e
+    // pro popover + o "next". Seguir o <a> de próxima em vez de montar ?page=N funciona nos 2 sites e
     // em qualquer formato de paginação (/page-N, ?page=N) — mesma escolha do scroll infinito.
-    function railFetch(tab, url) {
+    function fetchAlerts(tab, url) {
         const csrf = document.documentElement.getAttribute('data-csrf')
             || (document.querySelector('input[name="_xfToken"]') || {}).value || '';
         const full = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_xfResponseType=json'
@@ -22179,8 +22719,8 @@
                         visitorAlerts = parseInt(j.visitor.alerts_unread, 10);
                     }
                 } catch (e) {}
-                const parsed = new DOMParser().parseFromString('<div id="smg-rail-parse">' + html + '</div>', 'text/html');
-                const tmp = parsed.getElementById('smg-rail-parse') || parsed.body;
+                const parsed = new DOMParser().parseFromString('<div id="smg-alert-parse">' + html + '</div>', 'text/html');
+                const tmp = parsed.getElementById('smg-alert-parse') || parsed.body;
                 // a PÁGINA usa <li class="block-row js-alert">, a POPUP usa <li class="alert"> — todo o
                 // resto (limpeza, CSS, marcar-lido) casa em li.alert, então promovemos a classe aqui.
                 const rows = Array.prototype.slice.call(tmp.querySelectorAll('li.js-alert, li.alert'))
@@ -22203,15 +22743,15 @@
             + '|' + (li.textContent || '').trim().slice(0, 60);
     }
 
-    const railPane = tab => aldock && aldock.querySelector('.smg-aldock-body[data-tab="' + tab + '"]');
-    const railList = tab => aldock && aldock.querySelector('.smg-aldock-body[data-tab="' + tab + '"] .smg-aldock-list');
+    const alertsPane = tab => alpop && alpop.querySelector('.smg-alpop-body[data-tab="' + tab + '"]');
+    const alertsList = tab => alpop && alpop.querySelector('.smg-alpop-body[data-tab="' + tab + '"] .smg-alpop-list');
 
     // insere as linhas inéditas (topo ou fim) e já aplica a limpeza/i18n por linha.
     // Devolve quantas entraram — 0 no refresh significa "nada novo" (não mexe na tela).
-    function aldockInsertRows(tab, rows, atTop) {
-        const ol = railList(tab);
+    function alpopInsertRows(tab, rows, atTop) {
+        const ol = alertsList(tab);
         if (!ol) return 0;
-        const st = aldockState[tab];
+        const st = alpopState[tab];
         const fresh = [];
         rows.forEach(li => {
             const key = alertKey(li);
@@ -22228,14 +22768,14 @@
         return fresh.length;
     }
 
-    function aldockStatus(tab, kind) {
-        const pane = railPane(tab);
-        const el = pane && pane.querySelector('.smg-aldock-status');
+    function alpopStatus(tab, kind) {
+        const pane = alertsPane(tab);
+        const el = pane && pane.querySelector('.smg-alpop-status');
         if (!el) return;
-        const st = aldockState[tab], src = RAIL_SRC[tab];
+        const st = alpopState[tab], src = ALERTS_SRC[tab];
         const rowSel = 'li.alert';
-        const list = railList(tab);
-        if (kind === 'loading' && list && list.querySelector('.smg-aldock-skel-row')) {
+        const list = alertsList(tab);
+        if (kind === 'loading' && list && list.querySelector('.smg-alpop-skel-row')) {
             el.hidden = true;
             el.textContent = '';
             return;
@@ -22247,7 +22787,7 @@
             : (!st.next && st.loaded ? i18n('End of the list') : '');
         el.textContent = txt;
         el.hidden = !txt;
-        el.classList.toggle('smg-aldock-status--busy', kind === 'loading');
+        el.classList.toggle('smg-alpop-status--busy', kind === 'loading');
     }
 
     // badge de alertas não lidos: sino da topbar + sino da navbar mobile
@@ -22264,14 +22804,14 @@
     }
 
     // contador do cabeçalho — atualiza o badge com a contagem de alertas não lidos
-    function aldockSyncCount() {
-        if (!aldock) return;
-        const list = railList('alerts');
+    function alpopSyncCount() {
+        if (!alpop) return;
+        const list = alertsList('alerts');
         const domUnread = (list && list.querySelector('li.alert'))
             ? list.querySelectorAll('li.alert.is-unread').length
             : null;
         const serverCount = alertsBadgeCount();
-        const st = aldockState && aldockState.alerts;
+        const st = alpopState && alpopState.alerts;
         const hasMore = Boolean(st && st.next);
 
         let n;
@@ -22287,7 +22827,7 @@
             n = domUnread;
         }
         n = Math.max(0, parseInt(n, 10) || 0);
-        const el = aldock.querySelector('.smg-aldock-n');
+        const el = alpop.querySelector('.smg-alpop-n');
         if (el) {
             el.textContent = n > 99 ? '99+' : String(n);
             el.hidden = !n;
@@ -22297,94 +22837,94 @@
     }
 
     // fim comum das cargas (incremental e do zero): fotos das threads seguidas, warm, contador, status
-    function railAfterLoad(tab) {
+    function afterAlertsLoad(tab) {
         dbFollowedGetAll().then(items => {
             indexFollowedThumbs(items);
-            repaintAlertThumbs(railList(tab));
+            repaintAlertThumbs(alertsList(tab));
         }).catch(() => {});
         // a carga pode chegar depois de o cache já ter enchido → repinta sempre, e só então decide o warm
-        repaintAlertThumbs(railList(tab));
-        railWarmThumbs();
-        aldockSyncCount();
-        aldockStatus(tab, '');
+        repaintAlertThumbs(alertsList(tab));
+        warmAlertThumbs();
+        alpopSyncCount();
+        alpopStatus(tab, '');
     }
 
     // Zera a lista e busca a primeira página de novo. O refresh incremental
     // só insere chave nova, então um alerta lido no clique continuava na sidebar.
-    let railHardFlight = null;
-    function railHardRefresh(tab) {
-        const st = aldockState[tab];
-        const list = railList(tab);
-        if (!aldock || !st || !list || tab !== 'alerts') return Promise.resolve();
-        if (railHardFlight) return railHardFlight;
+    let alertsHardFlight = null;
+    function refreshAlerts(tab) {
+        const st = alpopState[tab];
+        const list = alertsList(tab);
+        if (!alpop || !st || !list || tab !== 'alerts') return Promise.resolve();
+        if (alertsHardFlight) return alertsHardFlight;
         st.busy = true;
         st.lastFetch = Date.now();
-        aldock.classList.add('smg-aldock--refreshing');
-        railHardFlight = railFetch(tab, railBaseUrl(tab))
+        alpop.classList.add('smg-alpop--refreshing');
+        alertsHardFlight = fetchAlerts(tab, alertsBaseUrl(tab))
             .then(({ rows, next, visitorAlerts }) => {
-                // o contador do servidor; aldockSyncCount (fim desta mesma carga) grava e pinta
+                // o contador do servidor; alpopSyncCount (fim desta mesma carga) grava e pinta
                 if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) st.serverUnread = visitorAlerts;
                 st.keys.clear();
                 list.replaceChildren();
-                aldockInsertRows(tab, rows || [], false);
+                alpopInsertRows(tab, rows || [], false);
                 st.next = next;
                 st.loaded = true;
                 st.dry = 0;
-                railAfterLoad(tab);
+                afterAlertsLoad(tab);
             })
-            .catch(() => { aldockStatus(tab, 'error'); })
+            .catch(() => { alpopStatus(tab, 'error'); })
             .then(() => {
                 st.busy = false;
-                railHardFlight = null;
-                if (aldock) aldock.classList.remove('smg-aldock--refreshing');
+                alertsHardFlight = null;
+                if (alpop) alpop.classList.remove('smg-alpop--refreshing');
             });
-        return railHardFlight;
+        return alertsHardFlight;
     }
     document.addEventListener('smg:page', () => {
         if (!alertsNeedRefresh) return;
         alertsNeedRefresh = false;
-        railHardRefresh('alerts');
+        refreshAlerts('alerts');
     });
 
     // topo da lista: procura conteúdo NOVO (1ª página) e insere sem perder o scroll nem o que já foi lido
-    function railRefresh(tab, force) {
-        const st = aldockState[tab];
-        if (!aldock || st.busy || st.pager.busy) return Promise.resolve();
+    function refreshAlertsIncremental(tab, force) {
+        const st = alpopState[tab];
+        if (!alpop || st.busy || st.pager.busy) return Promise.resolve();
         const now = Date.now();
         if (!force && now - st.lastFetch < 15000) return Promise.resolve();   // clique nervoso/foco repetido não vira rajada de request
         st.busy = true;
         st.lastFetch = now;
         const first = !st.loaded;
         const clearSkeleton = () => {
-            const list = railList(tab);
-            if (list) list.querySelectorAll('.smg-aldock-skel-row').forEach(row => row.remove());
+            const list = alertsList(tab);
+            if (list) list.querySelectorAll('.smg-alpop-skel-row').forEach(row => row.remove());
         };
-        if (first) aldockStatus(tab, 'loading'); else aldock.classList.add('smg-aldock--refreshing');
+        if (first) alpopStatus(tab, 'loading'); else alpop.classList.add('smg-alpop--refreshing');
 
-        return railFetch(tab, railBaseUrl(tab))
+        return fetchAlerts(tab, alertsBaseUrl(tab))
             .then(({ rows, next, visitorAlerts }) => {
                 clearSkeleton();
-                // o contador do servidor; aldockSyncCount (fim desta mesma carga) grava e pinta
+                // o contador do servidor; alpopSyncCount (fim desta mesma carga) grava e pinta
                 if (typeof visitorAlerts === 'number' && !isNaN(visitorAlerts)) st.serverUnread = visitorAlerts;
-                const added = aldockInsertRows(tab, rows, true);
+                const added = alpopInsertRows(tab, rows, true);
                 if (first) { st.next = next; st.loaded = true; }
                 // recontagem do badge a partir do que acabou de chegar
-                if (added) syncAlertBadgeFrom(railList('alerts'));
-                railAfterLoad(tab);
+                if (added) syncAlertBadgeFrom(alertsList('alerts'));
+                afterAlertsLoad(tab);
             })
-            .catch(() => { if (first) { clearSkeleton(); aldockStatus(tab, 'error'); } })
-            .then(() => { st.busy = false; aldock.classList.remove('smg-aldock--refreshing'); });
+            .catch(() => { if (first) { clearSkeleton(); alpopStatus(tab, 'error'); } })
+            .then(() => { st.busy = false; alpop.classList.remove('smg-alpop--refreshing'); });
     }
 
     // Alerta é sobre thread que você ACOMPANHA — e a lista de seguidas (IndexedDB) traz a foto de
     // todas elas. Quando sobra alerta sem foto e essa lista ainda está vazia, busca /watched/threads
-    // UMA vez (a ingestão indexa as fotos e repinta o rail sozinha). Nunca uma requisição por item.
-    let railWarmDone = false;
-    function railWarmThumbs() {
-        if (railWarmDone) return;
-        const list = railList('alerts');
+    // UMA vez (a ingestão indexa as fotos e repinta o popover sozinha). Nunca uma requisição por item.
+    let alertsWarmDone = false;
+    function warmAlertThumbs() {
+        if (alertsWarmDone) return;
+        const list = alertsList('alerts');
         if (!list) return;
-        railWarmDone = true;
+        alertsWarmDone = true;
         const missing = list.querySelectorAll('.smg-al-icon[data-smg-thread]:not([data-smg-thumbed])').length;
         if (missing < 3) return;                                       // cobertura boa → nada a buscar
         dbFollowedGetAll().then(items => {
@@ -22393,69 +22933,63 @@
     }
 
     // fim da lista: próxima página do histórico (rolagem infinita)
-    function railMore(tab) {
-        const st = aldockState[tab];
-        if (!aldock || !aldockOpen() || st.busy || !st.loaded) return Promise.resolve();
+    function moreAlerts(tab) {
+        const st = alpopState[tab];
+        if (!alpop || !alpopOpen() || st.busy || !st.loaded) return Promise.resolve();
         return st.pager.more();
     }
 
     // poucas linhas pra encher o painel → puxa mais até ter o que mostrar (ou acabar).
-    // Teto de ALDOCK_AUTOFILL páginas por ação: sem ele, um painel alto varreria o histórico
+    // Teto de ALPOP_AUTOFILL páginas por ação: sem ele, um painel alto varreria o histórico
     // inteiro numa rajada. Rolar até o fim continua puxando o resto normalmente.
-    function railFillViewport(tab) {
-        const st = aldockState[tab];
-        if (!aldock || !aldockOpen() || st.busy || st.pager.busy || !st.next) return;
-        if (st.autoFill >= ALDOCK_AUTOFILL) return;
-        const pane = railPane(tab), list = railList(tab);
+    function fillAlertsViewport(tab) {
+        const st = alpopState[tab];
+        if (!alpop || !alpopOpen() || st.busy || st.pager.busy || !st.next) return;
+        if (st.autoFill >= ALPOP_AUTOFILL || alpopOnAlertsPage()) return;
+        const pane = alertsPane(tab), list = alertsList(tab);
         if (!pane) return;
         const visible = list.querySelectorAll('li.alert').length;
-        if (visible < 8 || pane.scrollHeight <= pane.clientHeight + 40) { st.autoFill++; railMore(tab); }
+        if (visible < 8 || pane.scrollHeight <= pane.clientHeight + 40) { st.autoFill++; moreAlerts(tab); }
     }
 
     // painel aberto: recontagem + conteúdo novo (a 1ª abertura carrega a lista)
-    function railActivate() {
-        if (!aldock) return;
-        const st = aldockState.alerts;
-        aldockSyncCount();
+    function activateAlertsPopover() {
+        if (!alpop) return;
+        const st = alpopState.alerts;
+        alpopSyncCount();
         st.autoFill = 0;
-        railRefresh('alerts', !st.loaded).then(() => { aldockStatus('alerts', ''); railFillViewport('alerts'); });
+        refreshAlertsIncremental('alerts', !st.loaded).then(() => { alpopStatus('alerts', ''); fillAlertsViewport('alerts'); });
     }
 
-    function buildAlertsDock() {
-        if (aldock) return aldock;
+    function buildAlertsPopover() {
+        if (alpop) return alpop;
         const el = document.createElement('aside');
-        el.id = 'smg-aldock';
+        el.id = 'smg-alpop';
         el.setAttribute('aria-label', i18n('Alerts'));
-        const alertsSkeleton = paintRailRow('li', 'smg-aldock-skel-row').repeat(6);
+        const alertsSkeleton = '<li class="smg-alpop-skel-row" aria-hidden="true"></li>'.repeat(4);
         el.innerHTML =
-            '<div class="smg-aldock-grip" title="' + i18n('Drag to resize') + '"></div>' +
-            '<div class="smg-sheet-grip smg-aldock-handle"></div>' +   // puxador do drawer (só no celular)
-            '<div class="smg-aldock-head">' +
-                '<span class="smg-aldock-title"><span class="smg-aldock-titletext">' + i18n('Alerts') + '</span><span class="smg-aldock-n" hidden></span></span>' +
-                '<div class="smg-aldock-acts">' +
-                    '<button type="button" class="smg-aldock-btn smg-aldock-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
-                    '<button type="button" class="smg-aldock-btn smg-aldock-refresh" title="' + i18n('Refresh') + '" aria-label="' + i18n('Refresh') + '">' + ICONS.refresh + '</button>' +
-                    '<button type="button" class="smg-aldock-btn smg-aldock-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
+            '<div class="smg-sheet-grip smg-alpop-handle"></div>' +
+            '<div class="smg-alpop-head">' +
+                '<span class="smg-alpop-title"><span class="smg-alpop-titletext">' + i18n('Alerts') + '</span><span class="smg-alpop-n" hidden></span></span>' +
+                '<div class="smg-alpop-acts">' +
+                    '<button type="button" class="smg-alpop-btn smg-alpop-markread" title="' + i18n('Mark all as read') + '" aria-label="' + i18n('Mark all as read') + '">' + ICONS.checkAll + '</button>' +
+                    '<button type="button" class="smg-alpop-btn smg-alpop-refresh" title="' + i18n('Refresh') + '" aria-label="' + i18n('Refresh') + '">' + ICONS.refresh + '</button>' +
+                    '<button type="button" class="smg-alpop-btn smg-alpop-close" title="' + i18n('Close panel') + '" aria-label="' + i18n('Close panel') + '">' + ICONS.close + '</button>' +
                 '</div>' +
             '</div>' +
-            '<div class="smg-aldock-body smg-tb-listbody" data-tab="alerts">' +
-                '<ol class="smg-aldock-list smg-alert-clean">' + alertsSkeleton + '</ol>' +
-                '<div class="smg-aldock-status" hidden></div>' +
+            '<div class="smg-alpop-body smg-tb-listbody" data-tab="alerts">' +
+                '<ol class="smg-alpop-list smg-alert-clean">' + alertsSkeleton + '</ol>' +
+                '<div class="smg-alpop-status" hidden></div>' +
             '</div>' +
-            '<div class="smg-aldock-foot">' +
-                '<a class="smg-aldock-seeall" href="/account/alerts">' + i18n('See all') + '</a>' +
+            '<div class="smg-alpop-foot">' +
+                '<a class="smg-alpop-seeall" href="/account/alerts">' + i18n('See all') + '</a>' +
             '</div>';
         document.body.appendChild(el);
-        aldock = el;
-        markSidebarReady();
+        alpop = el;
 
-        // celular: o rail é um DRAWER (metade da tela, arrasta até cheia ou pra baixo pra fechar) sobre um
-        // scrim que fecha ao toque. No desktop nenhum dos dois aparece (CSS) e o arrasto não engata.
-        const scrim = document.createElement('div');
-        scrim.className = 'smg-aldock-scrim';
-        scrim.addEventListener('click', () => closeAlertsDock(false));
-        document.body.appendChild(scrim);
-        addSwipeClose(el, () => closeAlertsDock(false), () => aldockPhone() && aldockOpen(),
+
+        // No celular, o popover vira um drawer modal com detentes de meia tela e tela cheia.
+        addSwipeClose(el, () => closeAlertsPopover(false), () => alpopPhone() && alpopOpen(),
             { setFull: full => el.classList.toggle('is-full', full) });
 
         const applyMarkAllReadSuccess = () => {
@@ -22464,15 +22998,15 @@
                 row.classList.add('smg-al-old');
                 row.querySelectorAll('.smg-al-read').forEach(b => b.remove());
             });
-            const st = aldockState.alerts;
+            const st = alpopState.alerts;
             if (typeof st.serverUnread === 'number') st.serverUnread = 0;
             gmSet('smg-alerts-count', '0');
             const nav = document.querySelector('.p-navgroup-link--alerts');
             if (nav) nav.removeAttribute('data-badge');
-            syncReactiveBadges();   // termina no aldockSyncCount → pílula do painel + sinos
+            syncReactiveBadges();   // termina no alpopSyncCount → pílula do painel + sinos
         };
 
-        const markReadBtn = el.querySelector('.smg-aldock-markread');
+        const markReadBtn = el.querySelector('.smg-alpop-markread');
         if (markReadBtn) {
             markReadBtn.addEventListener('click', () => {
                 if (markReadBtn.dataset.busy) return;
@@ -22504,10 +23038,19 @@
             });
         }
 
-        el.querySelector('.smg-aldock-close').addEventListener('click', () => closeAlertsDock());
-        el.querySelector('.smg-aldock-refresh').addEventListener('click', () => railHardRefresh('alerts'));
+        el.querySelector('.smg-alpop-close').addEventListener('click', () => closeAlertsPopover());
+        el.querySelector('.smg-alpop-refresh').addEventListener('click', () => refreshAlerts('alerts'));
 
-        const alertsBody = el.querySelector('.smg-aldock-body[data-tab="alerts"]');
+        // Fechar ao navegar na aba atual, sem consumir a entrada de history do drawer.
+        // Cliques modificados e destinos em outra aba mantêm o painel aberto.
+        el.addEventListener('click', e => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest('a[href]');
+            if (!a || a.hasAttribute('download') || (a.target && a.target.toLowerCase() !== '_self')) return;
+            closeAlertsPopover(false, true);
+        });
+
+        const alertsBody = el.querySelector('.smg-alpop-body[data-tab="alerts"]');
         if (alertsBody) {
             alertsBody.addEventListener('click', e => {
                 const a = e.target.closest('a[href]');
@@ -22520,7 +23063,7 @@
                 if (url.pathname + url.search === location.pathname + location.search) {
                     e.preventDefault();
                     fetch(url.href, { credentials: 'same-origin' }).catch(() => {}).finally(() => {
-                        railHardRefresh('alerts');
+                        refreshAlerts('alerts');
                     });
                     const id = (url.hash || '').replace(/^#/, '');
                     const target = id && document.getElementById(id);
@@ -22541,125 +23084,97 @@
                 ticking = true;
                 requestAnimationFrame(() => {
                     ticking = false;
-                    aldockState.alerts.autoFill = 0;   // rolar é ação do usuário: zera o teto do auto-preenchimento
-                    aldockState.alerts.pager.check(alertsBody);
+                    alpopState.alerts.autoFill = 0;   // rolar é ação do usuário: zera o teto do auto-preenchimento
+                    alpopState.alerts.pager.check(alertsBody);
                 });
             }, { passive: true });
         }
-
-        // arrastar a borda esquerda pra redimensionar (largura fica salva)
-        const grip = el.querySelector('.smg-aldock-grip');
-        grip.addEventListener('pointerdown', e => {
-            e.preventDefault();
-            grip.setPointerCapture(e.pointerId);
-            document.documentElement.classList.add('smg-aldock-resizing');
-            const move = ev => {
-                const w = Math.max(ALDOCK_MIN_W, Math.min(aldockViewportMax(), window.innerWidth - ev.clientX));
-                document.documentElement.style.setProperty('--smg-ald-w', w + 'px');
-            };
-            const up = () => {
-                grip.removeEventListener('pointermove', move);
-                grip.removeEventListener('pointerup', up);
-                document.documentElement.classList.remove('smg-aldock-resizing');
-                const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--smg-ald-w'), 10);
-                if (cur) gmSet(ALDOCK_W_KEY, String(cur));
-            };
-            grip.addEventListener('pointermove', move);
-            grip.addEventListener('pointerup', up);
-        });
 
         i18nDom(el);
         return el;
     }
 
-    function openAlertsDock(persist) {
-        if (!FEATURES.alertsDock || !aldockFits()) return;
-        buildAlertsDock();
-        document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
-        document.documentElement.classList.add('smg-aldock-on');
-        // celular: drawer = trava o fundo e entra no histórico (o "voltar" fecha em vez de sair
-        // da página). E NUNCA persiste: reabrir sozinho a cada navegação seria um drawer na
-        // cara do usuário em toda página — no desktop é uma coluna lateral, aqui cobre a tela.
-        if (aldockPhone()) {
-            aldock.classList.remove('is-full');   // drawer sempre abre na metade
-            if (!railPhoneOpen) { railPhoneOpen = true; smgModalOpen(railModalKey, () => closeAlertsDock(false, true)); }
-            persist = false;
+    const alpopModalKey = { alerts: true };
+    let alpopPhoneOpen = false;
+
+    function placeAlertsPopover() {
+        if (!alpop || alpopPhone()) return;
+        const trigger = document.querySelector('.smg-tb-bellbtn');
+        if (!trigger) return;
+        const rect = trigger.getBoundingClientRect();
+        const topbar = document.querySelector('#smg-topbar');
+        const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : rect.bottom;
+        const width = Math.min(400, window.innerWidth - 24);
+        alpop.style.width = width + 'px';
+        alpop.style.left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.right - width)) + 'px';
+        alpop.style.top = 'calc(' + Math.round(topbarBottom) + 'px + var(--smg-sp-8))';
+    }
+
+    function openAlertsPopover() {
+        buildAlertsPopover();
+        alpop.classList.add('open');
+        const scrim = document.querySelector('.smg-alpop-scrim');
+        if (scrim) scrim.classList.toggle('open', alpopPhone());
+        if (alpopPhone()) {
+            alpop.classList.remove('is-full');
+            if (!alpopPhoneOpen) {
+                alpopPhoneOpen = true;
+                smgModalOpen(alpopModalKey, () => closeAlertsPopover(false, true));
+            }
+        } else {
+            placeAlertsPopover();
         }
-        if (persist !== false) gmSet(ALDOCK_KEY, '1');
-        railActivate();
+        activateAlertsPopover();
     }
-    let railPhoneOpen = false;
-    const railModalKey = { rail: 'alerts' };   // chave do modal (o painel pode ser recriado)
 
-    function closeAlertsDock(persist, fromPop) {
-        document.documentElement.classList.remove('smg-aldock-on');
-        if (railPhoneOpen) {
-            railPhoneOpen = false;
-            smgModalClose(railModalKey, fromPop);   // sem fromPop: consome o estado que a abertura empurrou
+    function closeAlertsPopover(_persist, fromPop) {
+        if (!alpop) return;
+        alpop.classList.remove('open', 'is-full');
+        const scrim = document.querySelector('.smg-alpop-scrim');
+        if (scrim) scrim.classList.remove('open');
+        if (alpopPhoneOpen) {
+            alpopPhoneOpen = false;
+            smgModalClose(alpopModalKey, fromPop);
         }
-        if (persist !== false) gmSet(ALDOCK_KEY, '0');
     }
 
-    // janela estreitou ou a página virou a /account/alerts → desdocka SEM esquecer a preferência (volta
-    // sozinho ao alargar / sair dela). fromNav: chamado da navegação interna, que já criou a própria
-    // entrada no histórico → fechar a tela cheia do celular não pode dar history.back().
-    function aldockReconcile(fromNav) {
-        if (aldockOpen() && aldockFits() && !aldockPhone()) {
-            document.documentElement.style.setProperty('--smg-ald-w', aldockWidth() + 'px');
-        }
-        if (aldockOpen() && !aldockFits()) closeAlertsDock(false, fromNav);
-        else if (!aldockOpen() && aldockWanted() && aldockFits() && !aldockPhone()) openAlertsDock(false);
+    function toggleAlertsPopover() {
+        if (alpopOpen()) closeAlertsPopover(); else openAlertsPopover();
     }
 
-    // toggle do sino/atalho: fechado → abre; aberto → fecha.
-    function toggleAlertsDock() {
-        if (!aldockOpen()) { openAlertsDock(); return; }
-        closeAlertsDock();
-    }
-
-    function setupAlertsDock() {
-        if (aldockBound || !FEATURES.alertsDock) return;
-        if (!document.querySelector('.p-navgroup-link--alerts')) {
-            // The preference can survive a logout. Remove the early layout
-            // reservation when there is no account control to own the dock.
-            document.documentElement.classList.remove('smg-aldock-on');
-            markSidebarReady();
-            return;
-        }   // deslogado / tema sem sino → não há o que dockar
-        aldockBound = true;
-
+    function setupAlertsPopover() {
+        if (alpopBound) return;
+        alpopBound = true;
         dbFollowedGetAll().then(items => {
             indexFollowedThumbs(items);
-            repaintAlertThumbs(railList('alerts'));
+            repaintAlertThumbs(alertsList('alerts'));
         }).catch(() => {});
-
-        // (o sino da topbar não existe mais — o botão do painel é o único controle e tem o próprio handler)
-
-        // janela estreitou → desdocka SEM esquecer a preferência (volta sozinho ao alargar).
-        // No celular não há "volta sozinho": lá o rail é tela cheia e só abre por gesto do usuário.
-        window.addEventListener('resize', () => aldockReconcile(false));
-
-        // conteúdo novo não avisa: sonda de tempos em tempos e ao voltar pra aba
-        setInterval(() => { if (aldockOpen() && !document.hidden) railRefresh('alerts'); }, ALDOCK_POLL_MS);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden && aldockOpen()) railRefresh('alerts'); });
-
-        if (aldockWanted() && aldockFits() && !aldockPhone()) {
-            openAlertsDock(false);
-        } else {
-            markSidebarReady();
-        }
+        const scrim = document.createElement('div');
+        scrim.className = 'smg-alpop-scrim';
+        scrim.addEventListener('click', () => closeAlertsPopover());
+        document.body.appendChild(scrim);
+        smgPopover({
+            inside: target => !!(target && ((document.querySelector('.smg-tb-bellbtn') || {}).contains(target) || (document.querySelector('#smg-alpop') || {}).contains(target))),
+            isOpen: alpopOpen,
+            close: () => closeAlertsPopover(),
+            place: placeAlertsPopover,
+            alive: () => !!document.querySelector('.smg-tb-bellbtn'),
+        });
+        window.addEventListener('resize', placeAlertsPopover);
+        setInterval(() => { if (alpopOpen() && !document.hidden) refreshAlertsIncremental('alerts'); }, ALPOP_POLL_MS);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && alpopOpen()) refreshAlertsIncremental('alerts'); });
     }
 
 
     // navigation/19-topbar.js
-    // Owns: the rebuilt topbar, Discover mega-menu, account popover, mobile sheets and header notices.
+    // Owns: the rebuilt topbar, Explore mega-menu, account popover, mobile sheets and header notices.
     // Exposes: buildTopbar, setupHeaderNotices, syncMobileThreadbar.
-    // Depends on: core/06-helpers (popovers, sheets), alerts/19-alerts-dock, listing/15-listing.
+    // Depends on: core/06-helpers (popovers, sheets), alerts/19-alerts-popover, listing/15-listing.
     // =========================================================
     // FEATURE: topbar reformulada (ícones + popovers agrupados)
     // lê os links REAIS da nav nativa via data-nav-id → funciona no simpcity e no smg
     //
-    // buildTopbar() é uma função só; mapa interno (Cmd+F): ZONA ESQUERDA (logo+Discover) ·
+    // buildTopbar() é uma função só; mapa interno (Cmd+F): ZONA ESQUERDA (logo) ·
     //   ZONA CENTRAL (search bar) · ZONA DIREITA (notices/seguindo/alertas/conta) ·
     //   "// ----" abrir/fechar popovers · docked→flutuante · sheets mobile (sino/Discover/User)
     // =========================================================
@@ -22756,34 +23271,29 @@
             return e ? e.getAttribute('href') : null;
         })();
 
-        // topbar em 3 zonas: ESQUERDA (logo + Discover) · CENTRO (search bar) · DIREITA (Seguindo · Notificações · User)
+        // topbar em 3 zonas: ESQUERDA (logo) · CENTRO (Following · Feed · Explore) · DIREITA (busca · alertas · conta)
         // a navbar inferior (mobile) segue com os mesmos destinos via dock
         const discoverItems = [
-            { section: 'Explore' },
-            { label: 'Trending', desc: 'Most popular right now', icon: ICONS.flame, href: navHref('trending', 'smgtrending', 'trending2') },
-            { label: 'What\'s new', desc: 'Recently posted', icon: ICONS.sparkles, href: navHref('whatsNew', 'whatsNew2') || '/whats-new/' },
-            { label: 'New posts', desc: 'Latest messages', icon: ICONS.layers, href: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
-            { label: 'Featured', desc: 'Featured content', icon: ICONS.star, href: navHref('featured') },
-            { label: 'Activity', desc: 'Activity feed', icon: ICONS.activity, href: navHref('latestActivity') },
+            { section: 'Discover' },
+            { label: 'Trending', desc: 'Threads with the most reactions right now', icon: ICONS.flame, href: navHref('trending', 'smgtrending', 'trending2') },
+            { label: 'What\'s new', desc: 'Latest posts across the forum', icon: ICONS.sparkles, href: navHref('whatsNewPosts', 'newPosts', 'whatsNewPosts2') || '/whats-new/posts/' },
+            { label: 'Featured', desc: 'Threads selected by the staff', icon: ICONS.star, href: navHref('featured') },
             { section: 'Threads' },
-            { label: 'Find threads', desc: 'Browse threads', icon: ICONS.search, href: navHref('findThreads') || '/find-threads/started' },
-            { label: 'Unanswered', desc: 'Awaiting a reply', icon: ICONS.help, href: navHref('unansweredThreads') || '/find-threads/unanswered' },
+            { label: 'Find threads', desc: 'Find threads you started and filter results', icon: ICONS.search, href: navHref('findThreads') || '/find-threads/started' },
+            { label: 'Unanswered', desc: 'Threads without replies yet', icon: ICONS.help, href: navHref('unansweredThreads') || '/find-threads/unanswered' },
             { section: 'Community' },
-            { label: 'Members', desc: 'Member list', icon: ICONS.users, href: navHref('members') || '/members/' },
-            { label: 'Online now', desc: 'Who\'s online', icon: ICONS.user, href: navHref('currentVisitors') || '/online/' },
+            { label: 'Members', desc: 'Browse the member list', icon: ICONS.users, href: navHref('members') || '/members/' },
+            { label: 'Online now', desc: 'Who is on the forum right now', icon: ICONS.user, href: navHref('currentVisitors') || '/online/' },
+            { label: 'Activity', desc: 'Everything happening across the forum', icon: ICONS.activity, href: navHref('latestActivity') },
         ];
-        // VISITANTE: Timeline (feed das seguidas) e Seguindo exigem conta — pro deslogado seriam só um
-        // caminho pro muro de login. Ficam de fora; Discover é público e continua.
+        // VISITANTE: Feed e Following exigem conta; Explore permanece público.
         const loggedIn = isLoggedIn();
-        // esquerda = só o Discover (dropdown). Seguindo/Notificações/User viram ícones à DIREITA.
+        // A ordem da navegação é Following, Feed e Explore; visitantes veem somente Explore.
         const watchedHref = navHref('watchedThreads', 'watched', 'watchedThreads2') || '/watched/threads';
         const groups = [
-            { label: 'Discover', mega: true, icon: ICONS.compass, items: discoverItems, featured: {   // mega-menu (grid 2-col + ícones em tile + painel destacado), estilo Vimeo
-                title: 'Feed', desc: 'Posts from the threads you follow, newest first.', cta: 'Open feed',
-                href: '/?view=feed', icon: ICONS.feed,
-            } },
+            { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },
             { label: 'Feed', icon: ICONS.feed, href: '/?view=feed', member: true },   // feed: river de posts das threads seguidas; mora SÓ na home (ver 22-feed.js)
-            { label: 'Following', icon: ICONS.watched, href: watchedHref, member: true },     // threads que você segue (watched) — ícone Following
+            { label: 'Explore', mega: true, icon: ICONS.compass, items: discoverItems },
         ].filter(g => loggedIn || !g.member);
 
         const wrap = document.createElement('div');
@@ -22824,7 +23334,7 @@
         if (document.documentElement.classList.contains('smg-smg')) { logoA.innerHTML = SMG_LOGO_HTML; }
         else if (logoImg) { const im = document.createElement('img'); im.src = logoImg.getAttribute('src') || ''; im.alt = ''; logoA.appendChild(im); }
         else logoA.textContent = 'Home';
-        // ZONA ESQUERDA: logo + Discover (o logo já é o "Início")
+        // ZONA ESQUERDA: logo (o logo já é o "Início")
         const left = document.createElement('div');
         left.className = 'smg-tb-left';
         left.appendChild(logoA);
@@ -22832,7 +23342,7 @@
         const popovers = [];
         let closeAllPops = () => {};   // preenchido pelo wirePopovers; quem fecha os popovers de fora (ex.: botão de fixar os alertas)
 
-        // navegação (esquerda) = só o Discover
+        // navegação central com links diretos e o menu Explore
         const nav = document.createElement('div');
         nav.className = 'smg-tb-nav';
 
@@ -22842,9 +23352,8 @@
             while (out.length && out[out.length - 1].divider) out.pop();
             return out;
         };
-        // mega-menu (Discover): agrupa em seções → grid de 2 colunas (ícone em tile + label + desc) + painel destacado à direita (estilo Vimeo)
-        const arrowR = ICONS.arrowRight;
-        const buildMegaPop = (items, feat) => {
+        // mega-menu (Explore): três grupos em colunas, com ícone, label e descrição
+        const buildMegaPop = items => {
             const secs = [];
             items.forEach(it => {
                 if (it.section) { secs.push({ title: it.section, rows: [] }); return; }
@@ -22854,26 +23363,18 @@
             });
             const main = secs.filter(s => s.rows.length).map(s =>
                 '<div>' +
-                (s.title ? '<div class="smg-tb-mega-label">' + s.title + '</div>' : '') +
+                (s.title ? '<div class="smg-tb-mega-label">' + i18n(s.title) + '</div>' : '') +
                 '<div class="smg-tb-mega-grid">' +
                 s.rows.map(it =>
                     '<a class="smg-tb-megaitem" href="' + safeHref(it.href) + '">' +
                         '<span class="smg-tb-megaico">' + it.icon + '</span>' +
-                        '<span class="smg-tb-megatext"><span class="smg-tb-megatitle">' + it.label + '</span>' +
-                        (it.desc ? '<span class="smg-tb-megadesc">' + it.desc + '</span>' : '') + '</span>' +
+                        '<span class="smg-tb-megatext"><span class="smg-tb-megatitle">' + i18n(it.label) + '</span>' +
+                        (it.desc ? '<span class="smg-tb-megadesc">' + i18n(it.desc) + '</span>' : '') + '</span>' +
                     '</a>'
                 ).join('') +
                 '</div></div>'
             ).join('');
-            let html = '<div class="smg-tb-mega-cols"><div class="smg-tb-mega-main">' + main + '</div>';
-            if (feat) html += '<a class="smg-tb-mega-feat" href="' + safeHref(feat.href) + '">' +
-                '<div class="smg-tb-mega-feat-art">' + (feat.icon || '') + '</div>' +
-                '<div class="smg-tb-mega-feat-body">' +
-                    '<div class="smg-tb-mega-feat-title">' + feat.title + '</div>' +
-                    '<div class="smg-tb-mega-feat-desc">' + feat.desc + '</div>' +
-                    '<div class="smg-tb-mega-feat-cta">' + feat.cta + arrowR + '</div>' +
-                '</div></a>';
-            return html + '</div>';
+            return '<div class="smg-tb-mega-cols"><div class="smg-tb-mega-main">' + main + '</div></div>';
         };
         groups.forEach(g => {
             if (g.href) { // atalho = link direto (sem dropdown)
@@ -22884,14 +23385,14 @@
                 nav.appendChild(a);
                 return;
             }
-            if (g.mega) {   // Discover → mega-menu (grid + painel destacado), não a lista simples
+            if (g.mega) {   // Explore → mega-menu (grid + painel destacado), não a lista simples
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'smg-tb-item';
-                btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + g.label + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
+                btn.innerHTML = (g.icon ? '<span class="smg-tb-ico">' + g.icon + '</span>' : '') + '<span>' + i18n(g.label) + '</span><span class="smg-tb-caret">' + ICONS.hide + '</span>';
                 const pop = document.createElement('div');
                 pop.className = 'smg-tb-pop smg-tb-pop--mega';
-                pop.innerHTML = buildMegaPop(g.items, g.featured);
+                pop.innerHTML = buildMegaPop(g.items);
                 nav.appendChild(btn);
                 wrap.appendChild(pop);
                 popovers.push({ btn, pop });
@@ -22918,7 +23419,7 @@
         });
         inner.appendChild(left);   // ESQUERDA = só o logo (a nav foi pro centro)
 
-        // ZONA CENTRAL: navegação (Discover · Timeline · Following), centralizada — estilo Spellbook
+        // ZONA CENTRAL: navegação principal (Following · Feed · Explore)
         const center = document.createElement('div');
         center.className = 'smg-tb-center smg-tb-center--nav';
         center.appendChild(nav);
@@ -23006,10 +23507,6 @@
             return a;
         };
 
-        // SINO/dropdown de alertas: SAIU da topbar. Os alertas moram no painel lateral (19-alerts-dock.js) —
-        // ter os dois era a mesma lista em dois lugares, e o popover fechava no primeiro clique. O contador
-        // de não lidas migrou pro botão do painel. No MOBILE (sem rail) o sino da navbar inferior + o
-        // bottom sheet continuam sendo o caminho dos alertas.
 
         // NOTICES: ficam no banner nativo DENTRO da página (.notices--block) — não são mais recolhidos pra topbar.
 
@@ -23084,15 +23581,11 @@
             wrap.appendChild(accPop);
             popovers.push({ btn: accBtn, pop: accPop, right: true });   // sem noSwitch → abre no HOVER (igual Discover)
 
-            // ZONA DIREITA, ícone 3 — SINO de alertas: controle ÚNICO do painel lateral (abre/fecha o rail).
-            // Leva o BADGE de alertas não lidos (.smg-rt-alerts é o alvo do sync reativo). No celular some:
-            // lá o sino mora na navbar inferior.
-            if (FEATURES.alertsDock) {
-                const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
-                bellBtn.classList.add('smg-tb-bellbtn', 'smg-tb-railbtn', 'smg-rt-alerts');   // railbtn: legacy hook (the bell IS the panel control)
-                bellBtn.addEventListener('click', e => { e.stopPropagation(); closeAllPops(); toggleAlertsDock(); });
-                actions.appendChild(bellBtn);
-            }
+            // O sino abre o mesmo popover em qualquer página; o badge acompanha a contagem reativa.
+            const bellBtn = iconAct(ICONS.alerts, 'Alerts', null, alertsBadgeCount());
+            bellBtn.classList.add('smg-tb-bellbtn', 'smg-rt-alerts');
+            bellBtn.addEventListener('click', () => { closeAllPops(); toggleAlertsPopover(); });
+            actions.appendChild(bellBtn);
             actions.appendChild(accBtn);   // conta é sempre o item mais à direita (padrão de app: busca · sino · avatar)
         } else {
             // VISITANTE: Cadastrar (texto) + Entrar (botão preenchido) no lugar do avatar. O clique
@@ -23147,7 +23640,7 @@
                 p.btn.classList.add('active');
                 if (p.right) { // alinha pela direita do botão
                     // medido contra o WRAP, não contra a janela: com o painel lateral aberto o wrap
-                    // termina antes da borda da tela (right: var(--smg-ald-w)), e usar innerWidth
+                    // termina antes da borda da tela (right: var(--smg-alpop-w)), e usar innerWidth
                     // jogava o dropdown a uma largura de rail de distância do avatar.
                     const r = p.btn.getBoundingClientRect();
                     const w = wrap.getBoundingClientRect();
@@ -23208,8 +23701,8 @@
                 ? '<div class="smg-tb-popdiv"></div>'
                 : '<a class="smg-tb-poprow" href="' + safeHref(it.href) + '">' +
                     '<span class="smg-tb-popico">' + it.icon + '</span>' +
-                    '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + it.label + '</span>' +
-                    (it.desc ? '<span class="smg-tb-popdesc">' + it.desc + '</span>' : '') + '</span>' +
+                    '<span class="smg-tb-poptext"><span class="smg-tb-poptitle">' + i18n(it.label) + '</span>' +
+                    (it.desc ? '<span class="smg-tb-popdesc">' + i18n(it.desc) + '</span>' : '') + '</span>' +
                 '</a>';
             const wireSheet = (btnId, sheet) => {
                 const b = document.getElementById(btnId);
@@ -23219,7 +23712,7 @@
             };
 
             // Discover → sheet com os mesmos itens do dropdown da topbar
-            const dSheet = makeSheet('smg-discover-sheet', 'Discover',
+            const dSheet = makeSheet('smg-discover-sheet', i18n('Explore'),
                 cleanDiv(discoverItems.filter(it => it.divider || it.href)).map(sheetRow).join(''));
             wireSheet('smg-nav-discover', dSheet);
 
@@ -23573,6 +24066,9 @@
         window.addEventListener('click', e => {
             const a = e.target.closest && e.target.closest('a');
             if (!a) return;
+            // botão DENTRO do link (ex.: "Tentar de novo" da caixa de mídia morta) é ação própria, não navegação
+            const btn = e.target.closest('button');
+            if (btn && a.contains(btn)) return;
 
             // Se o clique foi em uma imagem ou dentro de um <a> que embrulha uma imagem (ex.: goonbox, imgbox, smg-imglink, etc.):
             // não sequestra o clique — deixa o visualizador/modal (setupImageClickFeed) abrir a imagem!
@@ -24849,6 +25345,39 @@
         });
     }
 
+    function processUnfurlCardActions(roots) {
+        eachIn(roots, '.bbCodeBlock--unfurl:not([data-smg-actions])', card => {
+            card.dataset.smgActions = '1';
+            if (card.closest('.bbCodeQuote, .message-signature, .smg-fhcard, .smg-tw-card, .smg-dm-wrap, .smg-twitter-embed, blockquote.instagram-media')) return;
+            const row = card.querySelector('.contentRow');
+            if (!row || row.querySelector('.smg-unfurl-actions')) return;
+            const titleLink = card.querySelector('.js-unfurl-title[href], .contentRow-header a[href]');
+            const rawUrl = card.getAttribute('data-url') || (titleLink && (titleLink.getAttribute('href') || titleLink.href)) || '';
+            const href = resolveProxyHref(rawUrl) || rawUrl;
+            if (!href) return;
+
+            const actions = document.createElement('div');
+            actions.className = 'smg-unfurl-actions';
+            const copy = document.createElement('button');
+            copy.type = 'button';
+            copy.className = 'smg-fhcard-btn smg-fhcard-copy';
+            copy.title = i18n('Copy link');
+            copy.setAttribute('aria-label', i18n('Copy link'));
+            copy.innerHTML = ICONS.share;
+            copy.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); fhCopy(href, copy); });
+            const open = document.createElement('a');
+            open.className = 'smg-fhcard-btn smg-fhcard-open';
+            open.href = href;
+            open.target = '_blank';
+            open.rel = 'noopener noreferrer';
+            open.title = i18n('Open in new tab');
+            open.setAttribute('aria-label', i18n('Open in new tab'));
+            open.innerHTML = ICONS.rgExternal;
+            actions.append(copy, open);
+            row.appendChild(actions);
+        });
+    }
+
     // =========================================================
     // FEATURE: agrupa os links NÃO-embedados (file hosts: GoFile/Bunkr/Pixeldrain/…) numa barra de chips
     // no fim do post, SEM tirar nada do texto. Pula internos (menção/thread/quote), imagens e embeds.
@@ -24863,7 +25392,7 @@
     function groupPostLinks(roots) {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (classList em vez de querySelector todo frame)
         const forumHost = location.hostname;
-        eachIn(roots, '.message--post .message-body > .bbWrapper:not([data-smg-links])', bb => {   // .bbWrapper fica em article.message-body (não é filho direto de .message-userContent)
+        eachIn(roots, '.message--post .message-body .bbWrapper:not([data-smg-links])', bb => {   // XenForo envolve .bbWrapper em [itemprop="text"]
             bb.dataset.smgLinks = '1';
             const links = Array.from(bb.querySelectorAll('a[href^="http"]')).filter(a =>
                 a.hostname !== forumHost                              // externo (pula menção/thread/quote do fórum)
@@ -26429,7 +26958,7 @@
     // runtime/22-paint.js
     // Owns: THE paint gate: page kind detection, per-kind skeletons, readiness checks and release, navigation transition.
     // Exposes: classifyPaintPage, ensurePageSkeleton, releasePageSkeleton, mark*Ready, setNavigatingOut, setupNavigationTransition.
-    // Depends on: home/16-home (homeComponentsReady), alerts/19-alerts-dock; styles in styles/09-paint.js.
+    // Depends on: home/16-home (homeComponentsReady); styles in styles/09-paint.js.
     // =========================================================
     // PAINT RUNTIME: page context, skeletons and stable handoff.
     // The native XenForo tree stays mounted for compatibility, but remains hidden
@@ -26561,37 +27090,6 @@
         return chrome + '<main class="smg-page-skeleton-main">' + header + body + '</main>' + bottomNav;
     }
 
-    // linha-fantasma do rail: a MESMA no skeleton da página e dentro do rail até o 1º fetch
-    // (antes eram duas geometrias, 86 px → 74 px, e a lista "encolhia" no meio do carregamento)
-    function paintRailRow(tag, extraClass) {
-        tag = tag || 'div';
-        return '<' + tag + ' class="smg-page-skeleton-rail-row' + (extraClass ? ' ' + extraClass : '') + '"><i class="smg-page-skeleton-rail-thumb smg-skeleton-shimmer"></i>'
-            + '<div class="smg-page-skeleton-rail-copy"><i class="smg-page-skeleton-rail-line smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-rail-line short smg-skeleton-shimmer"></i></div></' + tag + '>';
-    }
-
-    function paintRailMarkup() {
-        const row = paintRailRow();
-        return '<header class="smg-page-skeleton-rail-head"><i class="smg-page-skeleton-rail-title smg-skeleton-shimmer"></i>'
-            + '<span class="smg-page-skeleton-rail-actions"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></span></header>'
-            + '<div class="smg-page-skeleton-rail-list">' + row.repeat(7) + '</div>';
-    }
-
-    function ensureSkeletonRail() {
-        const root = document.documentElement;
-        const current = document.getElementById('smg-page-skeleton-rail');
-        if (root.classList.contains('smg-sidebar-ready') || !root.classList.contains('smg-page-pending') || !root.classList.contains('smg-aldock-on')) {
-            if (current) current.remove();
-            return;
-        }
-        if (current) return;
-        const rail = document.createElement('aside');
-        rail.id = 'smg-page-skeleton-rail';
-        rail.className = 'smg-page-skeleton smg-page-skeleton-rail';
-        rail.setAttribute('aria-hidden', 'true');
-        rail.innerHTML = paintRailMarkup();
-        root.appendChild(rail);
-    }
 
     // UM skeleton (#smg-page-skeleton) pra toda página. targetKind: o soft-nav passa o tipo da página
     // de DESTINO (mostra o skeleton dela durante o fetch, não o da página que está saindo).
@@ -26614,20 +27112,17 @@
             shell.className = 'smg-page-skeleton smg-page-skeleton--' + kind + (kind === PAINT_PAGE_KINDS.HOME ? ' smg-home-skeleton' : '');
             shell.innerHTML = paintSkeletonMarkup(kind);
         }
-        ensureSkeletonRail();
     }
 
     function releasePageSkeleton() {
         const shell = document.getElementById('smg-page-skeleton');
-        const rail = document.getElementById('smg-page-skeleton-rail');
-        if (!shell && !rail) return;
+        if (!shell) return;
 
         const root = document.documentElement;
 
         root.classList.add('smg-skeleton-fade-out');
         setTimeout(() => {
             if (shell && shell.parentNode) shell.remove();
-            if (rail && rail.parentNode) rail.remove();
             root.classList.remove('smg-skeleton-fade-out');
         }, 120);
     }
@@ -26682,7 +27177,6 @@
             if (root.classList.contains('smg-page-pending') || root.classList.contains('smg-content-pending')) {
                 isNavigatingOut = false;
                 markTopbarReady();
-                markSidebarReady();
                 markNavbarReady();
                 markContentReady(classifyPaintPage());
             }
@@ -26712,15 +27206,11 @@
     }
 
     let topbarIsReady = false;
-    let sidebarIsReady = false;
     let navbarIsReady = false;
     let contentIsReady = false;
 
     function isTopbarReady() {
         return topbarIsReady && document.documentElement.classList.contains('smg-topbar-ready');
-    }
-    function isSidebarReady() {
-        return sidebarIsReady && document.documentElement.classList.contains('smg-sidebar-ready');
     }
     function isNavbarReady() {
         return navbarIsReady && document.documentElement.classList.contains('smg-navbar-ready');
@@ -26728,21 +27218,11 @@
     function isContentReady() {
         return contentIsReady && document.documentElement.classList.contains('smg-content-ready');
     }
-
     function markTopbarReady() {
         topbarIsReady = true;
         const root = document.documentElement;
         root.classList.remove('smg-topbar-loading', 'smg-topbar-pending');
         root.classList.add('smg-topbar-ready');
-    }
-
-    function markSidebarReady() {
-        sidebarIsReady = true;
-        const root = document.documentElement;
-        root.classList.remove('smg-sidebar-loading', 'smg-sidebar-pending');
-        root.classList.add('smg-sidebar-ready');
-        const rail = document.getElementById('smg-page-skeleton-rail');
-        if (rail) rail.remove();
     }
 
     function markNavbarReady() {
@@ -26782,9 +27262,7 @@
     function paintChromeIsReady() {
         const hasNativeNav = !!document.querySelector('.p-nav');
         const topbarReady = !FEATURES.topBar || !hasNativeNav || !!document.getElementById('smg-topbar-wrap');
-        const dockWanted = typeof aldockWanted === 'function' && aldockWanted() && !aldockOnAlertsPage();
-        const dockReady = !FEATURES.alertsDock || !dockWanted || !!document.getElementById('smg-aldock');
-        return topbarReady && dockReady;
+        return topbarReady;
     }
 
     // altura do bloco de mensagens = leitura de layout forçada. O settle a lê 1× quando a assinatura
@@ -26915,15 +27393,17 @@
         for (const img of imgs) {
             if (img.dataset.smgFailed || img.classList.contains('smg-img-ready')) continue;
             const ar = img.style.aspectRatio;
-            if (ar && ar !== '100 / 100') continue;
+            if (ar && ar !== '100 / 100' && !img.dataset.smgPhRatio) continue;
             if (img.complete && img.naturalWidth && img.naturalHeight) {
                 img.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+                delete img.dataset.smgPhRatio;
                 continue;
             }
             const w = parseInt(img.getAttribute('width') || img.dataset.width || '', 10);
             const h = parseInt(img.getAttribute('height') || img.dataset.height || '', 10);
             if (w > 0 && h > 0) {
                 img.style.aspectRatio = w + ' / ' + h;
+                delete img.dataset.smgPhRatio;
                 continue;
             }
 
@@ -26932,14 +27412,17 @@
             const grid = img.closest('.auto-image-grid');
             if (!onScreen) {
                 img.style.aspectRatio = (grid && grid.style.getPropertyValue('--smg-grid-img-ph')) || '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             if (grid && (grid.dataset.smgRelayoutDone === '1' || grid.style.getPropertyValue('--smg-mcols')) && post !== targetPost) {
                 img.style.aspectRatio = grid.style.getPropertyValue('--smg-grid-img-ph') || '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             if (paintMediaDeadline && Date.now() >= paintMediaDeadline) {
                 img.style.aspectRatio = '4 / 3';
+                img.dataset.smgPhRatio = '1';
                 continue;
             }
             return false;
@@ -27245,17 +27728,18 @@
         if (isContentFeed && contentDirty) {
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(unlazyImageLinks, roots);
             if (FEATURES.unwrapLinks) safe(unwrapRedirectLinks, roots);
+            if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             if (FEATURES.autoFullImages || FEATURES.replaceThumbsWithFull) safe(processImages, roots);
             if (FEATURES.replaceThumbsWithFull) safe(applyReplaceThumbsWithFull, true, roots);
             if (FEATURES.directMedia) safe(processDirectMedia, roots);
             safe(processTurboEmbeds, roots);
             if (FEATURES.imagepondEmbeds) safe(processImagepondNativeEmbeds, roots);
-            if (FEATURES.cyberdropEmbeds) safe(processCyberdropEmbeds, roots);
             safe(processInstagramEmbeds, roots);
             safe(processTwitterEmbeds, roots);
             if (FEATURES.fileHostCards) safe(processFileHostCards, roots);
             if (FEATURES.redgifsPlayer) safe(applyRedgifsPlayer, roots);
             if (FEATURES.autoLoadRedgifs) safe(autoLoadRedgifs, roots);
+            safe(processUnfurlCardActions, roots);
             safe(autoExpandSpoilers, roots);
             safe(markG2wWrappers, roots);
             if (FEATURES.autoFullImages) safe(buildPostGalleries, roots);
@@ -27329,7 +27813,7 @@
             if (fullScan || rootTouches(roots, '.p-body-content, .smg-search-results', true)) safe(buildSearchResultsPanel, roots);
         }
         if (paintContext.gated && document.documentElement.classList.contains('smg-page-pending')) {
-            // A dock persistida pode ser aberta pelo setupAlertsDock no mesmo frame em que
+            // A dock persistida pode ser aberta pelo setupAlertsPopover no mesmo frame em que
             // ela é montada. Atualiza o rail do shell antes do settle para não deixar uma
             // faixa vazia surgir entre o skeleton e a dock real.
             ensurePageSkeleton();
@@ -27392,11 +27876,7 @@
             if (FEATURES.topBar && !topbarBuilt && document.querySelector('.p-nav')) {
                 safe(buildTopbar);
             }
-            if (FEATURES.alertsDock && !aldockBound && document.querySelector('.p-navgroup-link--alerts')) {
-                // Mount the persisted dock as soon as its native control exists,
-                // instead of waiting for DOMContentLoaded behind the home paint.
-                safe(setupAlertsDock);
-            }
+            if (!alpopBound && document.querySelector('.p-navgroup-link--alerts')) safe(setupAlertsPopover);
             if (!document.getElementById('smg-post-nav-wrapper') && document.body) {
                 safe(setupPostNavigation);
             }
@@ -27478,20 +27958,6 @@
     safe(setupImageClickFeed);
     safe(setupNavigationTransition);
     injectStyles();                                       // CSS já vale enquanto o HTML é parseado
-    // Reserve the persisted desktop dock before the body and topbar are built.
-    // The panel itself is mounted during boot, but this class prevents its
-    // late padding-right from moving the home after the first visible frame.
-    if (FEATURES.alertsDock
-        && aldockWanted() && aldockFits() && !aldockPhone()) {
-        cls.add('smg-aldock-on');
-        const isSidebarAlreadyReady = cls.contains('smg-sidebar-ready') || (isSidebarReady());
-        if (!isSidebarAlreadyReady) {
-            cls.add('smg-sidebar-loading');
-            cls.add('smg-sidebar-pending');
-        }
-    } else {
-        markSidebarReady();
-    }
     ensurePageSkeleton();
     if (FEATURES.topBar) cls.add('smg-topbar-on');        // esconde o header nativo já (reserva o espaço)
     // The tiny preflight from the header can leave now that the complete CSS is
@@ -27571,8 +28037,8 @@
         const postEl = findPostElementById(pid);
         if (postEl) {
             e.preventDefault();
-            if (aldockPhone()) {
-                closeAlertsDock();
+            if (alpopPhone()) {
+                closeAlertsPopover();
             }
             try {
                 postEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -27605,7 +28071,7 @@
         if (FEATURES.keyboardShortcuts) safe(setupKeyboardShortcuts);
         safe(setupHoverZoom);   // sempre montado: o switch hoverZoom é lido a cada hover (liga/desliga sem recarregar)
         safe(setupImageClickFeed);
-        if (FEATURES.alertsDock) safe(setupAlertsDock);
+        safe(setupAlertsPopover);
         if (FEATURES.headerNotices) safe(setupHeaderNotices);
         if (FEATURES.infiniteScroll) safe(setupInfiniteScroll);
         safe(watchNativeBadges);
@@ -27809,6 +28275,7 @@
 
     function softNavigate(url, opts) {
         opts = opts || {};
+        if (typeof closeAlertsPopover === 'function' && alpopOpen()) closeAlertsPopover(false, true);
         smgCloseModalsForNavigation();
         document.dispatchEvent(new Event('smg-search-close'));
         let abs;
@@ -27888,7 +28355,6 @@
             }
             resetSwappedPage();
             detectPageClasses();
-            if (FEATURES.alertsDock && aldockBound) safe(aldockReconcile, true);   // /account/alerts esconde o rail
             cls.toggle('smg-watched-feed', feedViewWanted());
             if (!feedViewWanted()) {
                 document.querySelectorAll('.smg-river-hide').forEach(el => el.classList.remove('smg-river-hide'));
