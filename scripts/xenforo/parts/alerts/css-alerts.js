@@ -80,7 +80,7 @@
             .smg-al-tags { display: flex; flex-wrap: nowrap; gap: var(--smg-sp-6); align-items: center; min-width: 0; overflow: hidden; }
             .smg-al-tags > * { flex: 0 0 auto; }
             .smg-al-tags > :first-child { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-            #smg-aldock .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
+            #smg-alpop .smg-al-tags > .smg-al-chip.smg-al-chip--cut, .smg-alert-clean .smg-al-tags > .smg-al-chip.smg-al-chip--cut.smg-al-chip--cut { display: none !important; }
             .smg-al-tags .smg-al-more {
                 font-size: var(--smg-fs-10); font-weight: 700; line-height: 1.3; padding: var(--smg-sp-2) var(--smg-sp-6);
                 border-radius: var(--smg-r-4); background: var(--smg-w-08); color: var(--smg-w-72); white-space: nowrap;
@@ -89,8 +89,8 @@
             .smg-alert-clean .smg-al-tags .smg-al-chip,
             .smg-alert-clean .smg-al-tags .label,
             .smg-alert-clean .smg-al-tags .prefix,
-            #smg-aldock .smg-al-tags .smg-al-chip,
-            #smg-aldock .smg-al-tags .label,
+            #smg-alpop .smg-al-tags .smg-al-chip,
+            #smg-alpop .smg-al-tags .label,
             .smg-al-tags .smg-al-chip {
                 font-size: var(--smg-fs-10) !important;
                 font-weight: 600 !important;

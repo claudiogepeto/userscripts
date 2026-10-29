@@ -1,7 +1,7 @@
     // alerts/18-alerts.js
-    // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page, popup and rail).
+    // Owns: alert row cleanup, grouping, read marks and alert thumbnails (alerts page and popover).
     // Exposes: cleanAlertList, cleanAlertRow, groupAlerts, markAlertRead, repaintAlertThumbs, fitAlertTags.
-    // Depends on: core/06-helpers, alerts/19-alerts-dock.
+    // Depends on: core/06-helpers, alerts/19-alerts-popover.
     // =========================================================
     // FEATURE: alertas "Limpo" — tira ruído do HTML nativo do XF
     // nativo: "<autor> postou no/replied to <chips> <título>. Podem haver/There may be… · hora · marcar-lido"
@@ -29,9 +29,9 @@
                 if (!ok || (j && (j.errors || j.errorHtml))) throw new Error('xf');   // falhou no servidor → NÃO marca local
                 if (li && li.classList) { li.classList.remove('is-unread'); li.classList.add('smg-al-old'); }   // some o dot + esmaece na hora (virou lida)
                 btn.remove();
-                const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+                const st = (typeof alpopState !== 'undefined' && alpopState && alpopState.alerts) ? alpopState.alerts : null;
                 if (st && typeof st.serverUnread === 'number') st.serverUnread = Math.max(0, st.serverUnread - 1);
-                aldockSyncCount();
+                alpopSyncCount();
                 const nav = document.querySelector('.p-navgroup-link--alerts');   // baixa o contador → o observer sincroniza topbar/dock
                 if (nav) {
                     // parte do que ESTÁ NA TELA (atributo do tema ou o nosso valor guardado): em tema que
@@ -56,7 +56,7 @@
         const unread = root.querySelectorAll('li.alert.is-unread').length;
         const nav = document.querySelector('.p-navgroup-link--alerts');
         const cur = nav ? (parseInt(nav.getAttribute('data-badge') || '0', 10) || 0) : (parseInt(gmGet('smg-alerts-count', '0'), 10) || 0);
-        const st = (typeof aldockState !== 'undefined' && aldockState && aldockState.alerts) ? aldockState.alerts : null;
+        const st = (typeof alpopState !== 'undefined' && alpopState && alpopState.alerts) ? alpopState.alerts : null;
         const hasMore = st ? Boolean(st.next) : false;
         const n = hasMore ? Math.max(cur, unread) : unread;
         gmSet('smg-alerts-count', String(n));
