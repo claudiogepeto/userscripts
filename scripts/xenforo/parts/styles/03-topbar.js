@@ -8,9 +8,9 @@
             html.smg-topbar-on .p-header,
             html.smg-topbar-on .p-navSticky { display: none !important; }
             .u-scrollButtons, .js-scrollButtons { display: none !important; }   /* esconde os botões de scroll nativos do XF (a dock provê scroll topo/fundo) */
-            html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
+            html.smg-topbar-on body { padding-top: 64px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
-            html.smg-topbar-on :target { scroll-margin-top: 86px; }
+            html.smg-topbar-on :target { scroll-margin-top: 78px; }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -32,7 +32,7 @@
                sobra espaço entre logo/Discover e os ícones → não corta o resto em nenhuma resolução. */
             #smg-tb-inner {
                 display: flex; align-items: center; gap: var(--smg-sp-16);
-                height: 72px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
+                height: 64px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
                 position: relative;   /* âncora do overlay de busca (ocupa a topbar) */
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
@@ -281,7 +281,7 @@
             .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
             .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); line-height: 1.4; }
             @media (max-width: 800px) {
-                html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
+                html.smg-topbar-on :target { scroll-margin-top: 62px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 44px; }
                 .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
                 .smg-tb-mega-main { grid-template-columns: 1fr; }

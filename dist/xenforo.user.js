@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.11.17
+// @version      4.11.18
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/xenforo.user.js
 // @author       claudiogepeto
@@ -2933,9 +2933,9 @@
             html.smg-topbar-on .p-header,
             html.smg-topbar-on .p-navSticky { display: none !important; }
             .u-scrollButtons, .js-scrollButtons { display: none !important; }   /* esconde os botões de scroll nativos do XF (a dock provê scroll topo/fundo) */
-            html.smg-topbar-on body { padding-top: 72px !important; }   /* reserve space for the fixed topbar */
+            html.smg-topbar-on body { padding-top: 64px !important; }   /* reserve space for the fixed topbar */
             /* deep-link (#post-X / âncora): cai ABAIXO da topbar fixa, não atrás dela (vale p/ o scroll do browser E o nosso pin) */
-            html.smg-topbar-on :target { scroll-margin-top: 86px; }
+            html.smg-topbar-on :target { scroll-margin-top: 78px; }
 
             /* TOPBAR estilo ehentai: barra FIXA FULL-WIDTH (bg/borda de ponta a ponta),
                com o inner alinhado à MESMA largura do conteúdo (.p-body-inner) via margin:auto. */
@@ -2957,7 +2957,7 @@
                sobra espaço entre logo/Discover e os ícones → não corta o resto em nenhuma resolução. */
             #smg-tb-inner {
                 display: flex; align-items: center; gap: var(--smg-sp-16);
-                height: 72px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
+                height: 64px; max-width: var(--smg-cw); margin: 0 auto; padding: 0; box-sizing: border-box;
                 position: relative;   /* âncora do overlay de busca (ocupa a topbar) */
                 transition: height var(--smg-dur-20) cubic-bezier(0.16, 1, 0.3, 1);
             }
@@ -3206,7 +3206,7 @@
             .smg-tb-megatitle { font-size: var(--smg-fs-14); font-weight: 600; color: #fff; }
             .smg-tb-megadesc { font-size: var(--smg-fs-12); color: var(--smg-w-40); line-height: 1.4; }
             @media (max-width: 800px) {
-                html.smg-topbar-on :target { scroll-margin-top: 66px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 48px; }
+                html.smg-topbar-on :target { scroll-margin-top: 62px; } #smg-tb-inner { max-width: calc(100% - 24px); height: 44px; }
                 .smg-logo-word { font-size: var(--smg-fs-20); } .smg-tb-authlink { display: none; }
                 .smg-tb-pop--mega { min-width: 0; width: calc(100vw - 16px); max-width: calc(100vw - 16px); padding: var(--smg-sp-14); }
                 .smg-tb-mega-main { grid-template-columns: 1fr; }
@@ -3857,7 +3857,7 @@
             #smg-settings-fab:active { transform: scale(0.92); }
             #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
             @media (max-width: 600px) {
-                :root { --smg-mobile-topbar-h: 54px; }
+                :root { --smg-mobile-topbar-h: 50px; }
                 #smg-topbar-wrap {
                     position: fixed !important; top: 0; left: 0; right: 0; width: 100%;
                     height: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top));
@@ -4382,7 +4382,6 @@
                 transform: scale(0.98);
             }
 `;
-
     // navigation/css-search.js
     // Owns: CSS for search dialog, results page, advanced search and dropdown.
     // Exposes: CSS_SEARCH.
@@ -6713,7 +6712,7 @@
             html.smg-thread .smg-thead-sticky {
                 position: fixed;
                 z-index: var(--smg-z-thead);
-                top: 72px;
+                top: 64px;
                 left: 0;
                 width: 100%;
                 height: 48px;
@@ -6746,7 +6745,7 @@
                 text-overflow: ellipsis;
             }
             @media (max-width: 800px) {
-                html.smg-thread .smg-thead-sticky { top: 48px; }
+                html.smg-thread .smg-thead-sticky { top: 44px; }
                 html.smg-thread .smg-thead-sticky-inner {
                     width: calc(100% - 24px);
                     max-width: calc(100% - 24px);

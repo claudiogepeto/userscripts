@@ -36,7 +36,7 @@
             #smg-settings-fab:active { transform: scale(0.92); }
             #smg-post-nav-wrapper.smg-dock-show ~ #smg-settings-fab { display: none !important; }
             @media (max-width: 600px) {
-                :root { --smg-mobile-topbar-h: 54px; }
+                :root { --smg-mobile-topbar-h: 50px; }
                 #smg-topbar-wrap {
                     position: fixed !important; top: 0; left: 0; right: 0; width: 100%;
                     height: calc(var(--smg-mobile-topbar-h) + env(safe-area-inset-top));

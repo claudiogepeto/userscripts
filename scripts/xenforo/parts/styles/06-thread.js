@@ -78,7 +78,7 @@
             html.smg-thread .smg-thead-sticky {
                 position: fixed;
                 z-index: var(--smg-z-thead);
-                top: 72px;
+                top: 64px;
                 left: 0;
                 width: 100%;
                 height: 48px;
@@ -111,7 +111,7 @@
                 text-overflow: ellipsis;
             }
             @media (max-width: 800px) {
-                html.smg-thread .smg-thead-sticky { top: 48px; }
+                html.smg-thread .smg-thead-sticky { top: 44px; }
                 html.smg-thread .smg-thead-sticky-inner {
                     width: calc(100% - 24px);
                     max-width: calc(100% - 24px);
