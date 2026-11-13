@@ -56,19 +56,30 @@ scenario('titles-only requests normalize handles into parser-safe index tokens',
     }
 });
 
-scenario('titles-only results rank whole title phrase, then every token, and filter unrelated rows', async t => {
+scenario('titles-only matches the whole query case-insensitively and ignores accents', async t => {
     const page = await t.open({
         url: ORIGIN + FORUM,
         html: listingPage({ rows: [{ id: 1 }] }),
-        routes: [[/\/search\/search(?:\?|$)/, { body: resultRows(['Other Zara topic', 'Larsson Zara profile', 'Zara Larsson official', 'Unrelated topic']) }]],
+        routes: [[/\/search\/search(?:\?|$)/, { body: resultRows([
+            'Other Zara topic',
+            'Larsson Zara profile',
+            'ZARA LARSSON official',
+            'zArA lArSsOn creator',
+            'Beyoncé live',
+            'Unrelated topic',
+        ]) }]],
         before(window) { window.localStorage.setItem('smg-search-def-titles', '1'); },
     });
     await page.settle(80);
-    search(page, 'Zara Larsson');
+    search(page, 'zArA lArSsOn');
     assert.ok(await page.waitFor(() => page.$$('.smg-search-result').length > 0), 'inline results rendered');
     assert.deepEqual(page.$$('.smg-search-result-title').map(el => el.textContent), [
-        'Zara Larsson official', 'Larsson Zara profile', 'Other Zara topic',
+        'ZARA LARSSON official', 'zArA lArSsOn creator',
     ]);
+
+    search(page, 'BEYONCE');
+    assert.ok(await page.waitFor(() => page.$$('.smg-search-result-title').length === 1), 'accent-insensitive result rendered');
+    assert.equal(page.$('.smg-search-result-title').textContent, 'Beyoncé live');
 });
 
 scenario('a late titles-only response for an older query cannot replace the latest results', async t => {
