@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.11.16
+// @version      4.11.17
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -4380,6 +4380,7 @@
                 transform: scale(0.98);
             }
 `;
+
     // navigation/css-search.js
     // Owns: CSS for search dialog, results page, advanced search and dropdown.
     // Exposes: CSS_SEARCH.
@@ -16170,7 +16171,7 @@
             }
 
             // Normaliza handles para os tokens que o índice XenForo produz a partir de pontuação.
-            // Envia cada token como alternativa OR; resultados titles-only são filtrados e ordenados localmente.
+            // Envia alternativas OR ao servidor; o filtro local exige a frase completa nos títulos.
             function buildFlexibleKeywords(q, isTitlesOnly) {
                 if (!q) return '';
                 const raw = extractSocialHandle(q).replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -16481,26 +16482,15 @@
                 searchPager.reset(null);
                 if (searchAbort) { searchAbort.abort(); searchAbort = null; }
             }
-            function titleSearchState(query) {
-                const fold = text => removeAccents(String(text || '').normalize('NFD')).toLowerCase()
+            function normalizeTitleSearchText(text) {
+                return removeAccents(String(text || '')).toLowerCase()
                     .replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
-                const phrase = fold(query);
-                const tokens = Array.from(new Set(phrase.split(' ').filter(Boolean)));
-                return { phrase, tokens, fold };
             }
-            function filterRankTitleResults(results, query) {
+            function filterTitleResults(results, query) {
                 if (!(toggleTitleOnly?.checked ?? cfgTitles) || currentScope === 'thread' || !query) return results;
-                const state = titleSearchState(query);
-                return results.map((row, index) => ({ row, index, title: state.fold(row.title) }))
-                    .filter(item => state.tokens.some(token => item.title.includes(token)))
-                    .sort((a, b) => {
-                        const phraseA = a.title.includes(state.phrase), phraseB = b.title.includes(state.phrase);
-                        if (phraseA !== phraseB) return phraseA ? -1 : 1;
-                        const allA = state.tokens.every(token => a.title.includes(token));
-                        const allB = state.tokens.every(token => b.title.includes(token));
-                        if (allA !== allB) return allA ? -1 : 1;
-                        return a.index - b.index;
-                    }).map(item => item.row);
+                const phrase = normalizeTitleSearchText(query);
+                if (!phrase) return results;
+                return results.filter(row => normalizeTitleSearchText(row.title).includes(phrase));
             }
             let searchSentinelEl = null;
             function removeSearchSentinel() {
@@ -16517,7 +16507,7 @@
                 load: (url, signal) => fetchDoc(url, { credentials: 'same-origin', signal }),
                 apply: (doc, urlFetched) => {
                     const moreResults = parseSearchResults(doc);
-                    let moreFiltered = filterRankTitleResults(moreResults, titleQueryForResults);
+                    let moreFiltered = filterTitleResults(moreResults, titleQueryForResults);
                     if (activeSearchBadges && activeSearchBadges.size > 0) {
                         const activeLower = Array.from(activeSearchBadges).map(b => b.toLowerCase().trim());
                         moreFiltered = moreFiltered.filter(r => {
@@ -16724,7 +16714,7 @@
                         return activeLower.some(ab => tLower.includes(ab));
                     });
                 }
-                filtered = filterRankTitleResults(filtered, titleQueryForResults);
+                filtered = filterTitleResults(filtered, titleQueryForResults);
 
                 // Coletar chips dinâmicos de prefixo/tags presentes nestes resultados
                 const tagCountMap = new Map();
