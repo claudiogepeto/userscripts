@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BypassBR
 // @namespace    claudiogepeto-bypassbr
-// @version      1.4.1
+// @version      1.4.4
 // @description  Site adapters for age gates and sensitive media restrictions, plus AgeGO, AgeChecker, and AgeVerif overlays on any site.
 // @author       claudiogepeto
 // @match        *://x.com/*
@@ -21,6 +21,8 @@
 // @match        *://*.sex.com/*
 // @match        *://kick.com/*
 // @match        *://*.kick.com/*
+// @match        *://nexusmods.com/*
+// @match        *://*.nexusmods.com/*
 // @run-at       document-start
 // @noframes
 // @grant        none
