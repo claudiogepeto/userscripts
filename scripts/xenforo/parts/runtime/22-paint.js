@@ -106,11 +106,18 @@
 
         const line = (className, extra) => '<i class="smg-page-skeleton-line smg-skeleton-shimmer'
             + (className ? ' ' + className : '') + '"' + (extra || '') + '></i>';
-        const header = '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
-            + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
-            + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
-            + '<div class="smg-page-skeleton-actions"><i class="smg-page-skeleton-action smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-action smg-skeleton-shimmer"></i></div></header>';
+        const header = kind === PAINT_PAGE_KINDS.THREAD
+            ? '<header class="smg-page-skeleton-header smg-page-skeleton-thread-header">'
+                + '<i class="smg-page-skeleton-thread-thumb smg-skeleton-shimmer"></i>'
+                + '<i class="smg-page-skeleton-thread-prefix smg-skeleton-shimmer"></i>'
+                + '<div class="smg-page-skeleton-thread-title"><i class="smg-skeleton-shimmer"></i><i class="short smg-skeleton-shimmer"></i></div>'
+                + '<div class="smg-page-skeleton-meta smg-page-skeleton-thread-tags">'
+                + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></header>'
+            : '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
+                + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
+                + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
+                + '<div class="smg-page-skeleton-actions"><i class="smg-page-skeleton-action smg-skeleton-shimmer"></i>'
+                + '<i class="smg-page-skeleton-action smg-skeleton-shimmer"></i></div></header>';
         const filter = '<div class="smg-page-skeleton-filter"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i>'
             + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>';
         const post = '<article class="smg-page-skeleton-post"><div class="smg-page-skeleton-post-head">'

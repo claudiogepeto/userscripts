@@ -24,6 +24,11 @@ scenario('a thread page is covered by the thread skeleton until its posts are co
     assert.equal(page.firstPaint.pending, true, 'page starts pending');
     assert.match(page.firstPaint.shellClass || '', /smg-page-skeleton--thread/, 'thread skeleton mounted at first paint');
     assert.equal(page.firstPaint.hasCriticalGate, false, 'the critical pre-paint gate hands over once the skeleton exists');
+    const skeletonHeader = page.$('.smg-page-skeleton-thread-header');
+    assert.ok(skeletonHeader, 'thread skeleton has its own header layout');
+    assert.ok(skeletonHeader.querySelector('.smg-page-skeleton-thread-thumb'), 'thread skeleton reserves space for the cover image');
+    assert.equal(skeletonHeader.querySelectorAll('.smg-page-skeleton-meta i').length, 3, 'thread skeleton shows tag placeholders beside the title');
+    assert.equal(skeletonHeader.querySelector('.smg-page-skeleton-actions'), null, 'thread skeleton does not show removed header controls');
     const root = page.document.documentElement;
     assert.ok(await page.waitFor(() => !page.$('#smg-page-skeleton')), 'skeleton leaves');
     assert.ok(root.classList.contains('smg-page-ready'), 'page marked ready');

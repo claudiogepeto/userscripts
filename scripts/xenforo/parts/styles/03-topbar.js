@@ -101,14 +101,6 @@
             }
             .smg-tb-act:hover { background: var(--smg-w-08); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
-                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
-                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
-                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
-                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-                #smg-topbar-wrap.floating .smg-tb-act,
-                #smg-topbar-wrap.floating .smg-tb-account { width: 40px; height: 40px; }
-            }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
                 display: flex; align-items: center; gap: var(--smg-sp-12); width: 100%; max-width: 720px; height: 46px; padding: 0 var(--smg-sp-16); margin: 0;

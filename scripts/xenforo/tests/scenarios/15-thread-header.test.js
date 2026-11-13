@@ -1,8 +1,8 @@
 'use strict';
 // Thread header on SocialMediaGirls. Its UIX theme renders .p-body-header as a sibling BEFORE
 // .p-body (wrapped in .pageContent > .uix_headerInner), not inside it like stock XenForo. The
-// header must show the current page's title, image and pager on a direct load and after any soft
-// navigation, and every page keeps exactly one header and one pager bar in it.
+// header must show the current page's title and image on a direct load and after any soft
+// navigation. The pager stays in its block-outer, outside the title header.
 const assert = require('node:assert/strict');
 const { scenario } = require('../harness');
 const { threadPage, homePage, THREAD } = require('../lib');
@@ -58,14 +58,13 @@ async function go(page, href) {
 function head(page) {
     const headers = page.$$('.p-body-header');
     const h = headers[0];
-    const bars = h ? h.querySelectorAll('.smg-bar') : [];
-    const cur = bars[0] && bars[0].querySelector('.smg-bar-cur');
+    const sticky = page.$('.smg-thead-sticky');
     return {
         headers: headers.length,
         title: h ? (h.querySelector('.smg-thead-title-text') || {}).textContent : null,
         thumb: h ? ((h.querySelector('.smg-thead-thumb img') || {}).src || '') : null,
-        headerBars: bars.length,
-        cur: cur ? cur.textContent.replace(/\s+/g, ' ').trim() : '',
+        stickyTitle: sticky ? (sticky.querySelector('.smg-thead-sticky-title') || {}).textContent : '',
+        headerControls: h ? h.querySelectorAll('.smg-thead-controls, .smg-thead-actions, .smg-bar').length : 0,
         loosePageBars: page.$$('.p-body .block-outer:not(.block-outer--after) .smg-bar').length,
     };
 }
@@ -73,15 +72,15 @@ function assertHeader(got, want, when) {
     assert.equal(got.headers, 1, when + ': exactly one thread header');
     assert.equal(got.title, want.title, when + ': header title');
     assert.equal(got.thumb, want.thumb, when + ': header image');
-    assert.equal(got.headerBars, 1, when + ': one pager bar in the header');
-    assert.match(got.cur, want.cur, when + ': header pager shows the current page');
-    assert.equal(got.loosePageBars, 0, when + ': no second pager bar left above the posts');
+    assert.equal(got.stickyTitle, want.title, when + ': fixed title matches the thread');
+    assert.equal(got.headerControls, 0, when + ': no controls or empty action bar in the header');
+    assert.equal(got.loosePageBars, 1, when + ': pager remains in the top block-outer');
 }
 
 scenario('SMG thread header shows the thread on a direct load', async t => {
     const page = await t.open({ url: SMG + THREAD, html: thread(), routes: site(), before: stubXF });
     await page.settle(120);
-    assertHeader(head(page), { title: 'Sample Thread', thumb: 'https://img.example/a.jpg', cur: /^1\s*\/\s*3$/ }, 'direct load');
+    assertHeader(head(page), { title: 'Sample Thread', thumb: 'https://img.example/a.jpg' }, 'direct load');
 });
 
 scenario('SMG thread header after soft navigation from the forum list is the thread, not the site', async t => {
@@ -89,20 +88,45 @@ scenario('SMG thread header after soft navigation from the forum list is the thr
     await page.settle(80);
     await go(page, OTHER);
     assert.equal(page.window.location.pathname, OTHER);
-    assertHeader(head(page), { title: 'Other Thread', thumb: 'https://img.example/b.jpg', cur: /^1\s*\/\s*9$/ }, 'home -> thread');
+    assertHeader(head(page), { title: 'Other Thread', thumb: 'https://img.example/b.jpg' }, 'home -> thread');
 });
 
 scenario('SMG thread header follows the page and the thread across soft navigations', async t => {
     const page = await t.open({ url: SMG + THREAD, html: thread(), routes: site(), before: stubXF });
     await page.settle(80);
     await go(page, THREAD + 'page-2');
-    assertHeader(head(page), { title: 'Sample Thread', thumb: 'https://img.example/a.jpg', cur: /^2\s*\/\s*3$/ }, 'page 1 -> page 2');
+    assertHeader(head(page), { title: 'Sample Thread', thumb: 'https://img.example/a.jpg' }, 'page 1 -> page 2');
     await go(page, OTHER);
-    assertHeader(head(page), { title: 'Other Thread', thumb: 'https://img.example/b.jpg', cur: /^1\s*\/\s*9$/ }, 'thread -> other thread');
+    assertHeader(head(page), { title: 'Other Thread', thumb: 'https://img.example/b.jpg' }, 'thread -> other thread');
     await go(page, '/');
     assert.equal(page.$$('.p-body-header').length, 1, 'the forum list keeps one header');
     assert.equal(page.$$('.p-body-header .smg-bar').length, 0, 'no thread pager left on the forum list');
     assert.ok(!page.$('.smg-thead-hero'), 'no thread header left on the forum list');
+    assert.equal(page.$('.smg-thead-sticky'), null, 'no fixed thread title left on the forum list');
+});
+
+scenario('the fixed thread title toggles without changing the in-flow header', async t => {
+    const page = await t.open({ url: SMG + THREAD, html: thread(), routes: site(), before: stubXF });
+    await page.settle(120);
+    const header = page.$('.p-body-header');
+    const sticky = page.$('.smg-thead-sticky');
+    const sentinel = page.$('.smg-thead-sentinel');
+    assert.ok(sticky, 'a separate fixed title exists');
+    assert.ok(sentinel, 'the scroll threshold is outside the header');
+
+    let sentinelTop = 60;
+    sentinel.getBoundingClientRect = () => ({ top: sentinelTop });
+    Object.defineProperty(page.window, 'scrollY', { configurable: true, value: 100 });
+    page.window.dispatchEvent(new page.window.Event('scroll'));
+    await page.settle(10);
+    assert.ok(sticky.classList.contains('is-visible'), 'the fixed title appears after the sentinel passes the topbar');
+    assert.ok(!header.classList.contains('is-stuck'), 'scroll state never changes the main header');
+
+    sentinelTop = 130;
+    page.window.dispatchEvent(new page.window.Event('scroll'));
+    await page.settle(10);
+    assert.ok(!sticky.classList.contains('is-visible'), 'the fixed title hides when the page returns above the threshold');
+    assert.ok(!header.classList.contains('is-stuck'), 'the main header remains unchanged');
 });
 
 const SMILIE = '<img class="smilie smilie--emoji" alt="😍" src="https://cdn.jsdelivr.net/joypixels/assets/8.0/png/unicode/64/1f60d.png" title="Smiling face with heart-eyes" width="64" height="64">';

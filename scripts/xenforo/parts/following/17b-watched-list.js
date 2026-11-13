@@ -306,7 +306,6 @@
             Array.from(bo.children).forEach(c => c.style.setProperty('display', 'none', 'important'));
             bo.insertBefore(bar, bo.firstChild);
         });
-        // a barra de cima pertence ao header unificado — tenta juntar (no boot o header pode ter sido
-        // montado antes desta barra existir, e a thread também recarrega barras no scroll infinito)
+        // A barra continua no block-outer; a unificação do header só organiza título, imagem e tags.
         unifyThreadHeader(document.querySelector('.p-body-header[data-smg-thead]'));
     }

@@ -375,8 +375,8 @@
         desc.dataset.smgTagsGrouped = '1';
     }
 
-    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria, maiores) ACIMA do título,
-    // e remove autor + data da linha de descrição (mantém as tags). Roda 1× no boot (header é server-render, estático).
+    // HEADER DA THREAD (.p-body-header): move a thumb para cima do título e das tags, e remove
+    // autor + data da descrição. O header fica estático; só a faixa compacta de título é fixa.
     function buildThreadHeader() {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (fórum tem .p-body-header também)
         const header = document.querySelector('.p-body-header');
@@ -395,35 +395,13 @@
             const t = desc.querySelector('time'); const tl = t && t.closest('li'); if (tl) tl.remove();
             groupThreadTags(desc);
         }
-        // linha de ações no topo do header: o modo mídia (galeria/feed), com navegação própria (página 1)
-        const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
-        // A entrada da mídia (galeria/feed) mora na dock (desktop: #smg-thread-media; celular: #smg-thread-media-m),
-        // que é sempre montada — o cabeçalho fixo não repete o botão.
-        // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
-        // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
-        // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).
-        // matchMedia move o nó só ao cruzar o breakpoint (1 listener, zero custo no scroll/resize comum).
-        const title = header.querySelector('.p-title');
-        // Com o header unificado, as ações ficam SEMPRE na linha de controles (junto do paginador),
-        // inclusive no celular — antes elas desciam pra depois das tags, o que criava um terceiro bloco
-        // solto e empurrava o conteúdo pra baixo.
-        const placeBar = () => {
-            if (title) title.appendChild(bar);
-            else header.insertBefore(bar, header.firstChild);
-        };
-        placeBar();
         unifyThreadHeader(header);
     }
 
-    /* SINGLE THREAD HEADER — the thread top used to be three loose blocks: title+actions, tags,
-     * and the pagination/sort bar (which lived in .block-outer above the posts). They now form one
-     * header: sticky on desktop, in-flow on mobile. When sticky, it compacts (hides tags and shrinks
-     * the title) so it does not consume half the viewport. */
+    /* THREAD HEADER — the title, image and tags stay in normal document flow. A separate fixed
+     * title strip appears after the header passes the topbar, so scroll state cannot change layout. */
     function unifyThreadHeader(header) {
         if (!header || header.dataset.smgUnified) return;
-        // a barra do PRIMEIRO block-outer (a de cima) sobe pro header; a de baixo continua onde está
-        const firstBar = document.querySelector('.block-outer .smg-bar');
-        if (!firstBar) return;   // ainda não montou (buildFilterBars roda depois) → tenta no próximo scan
         header.dataset.smgUnified = '1';
 
         const title = header.querySelector('.p-title');
@@ -532,37 +510,35 @@
             }
         }
 
-        // Agrupa o paginador (.smg-bar) e as ações (.smg-thead-actions) em .smg-thead-controls
-        // à direita, com flex-shrink: 0 para NUNCA quebrarem de linha
-        const actions = header.querySelector('.smg-thead-actions');
-        let controls = header.querySelector('.smg-thead-controls');
-        if (!controls) {
-            controls = document.createElement('div');
-            controls.className = 'smg-thead-controls';
-        }
-        if (firstBar) controls.appendChild(firstBar);
-        if (actions) controls.appendChild(actions);
-        if (title) title.appendChild(controls);
-        else header.appendChild(controls);
-
         header.classList.add('smg-thead-unified');
 
-        let spacer = header.previousElementSibling;
-        if (!spacer || !spacer.classList.contains('smg-thead-spacer')) {
-            spacer = document.createElement('div');
-            spacer.className = 'smg-thead-spacer';
-            header.parentNode.insertBefore(spacer, header);
-        }
-
-        let sentinel = spacer.previousElementSibling;
-        if (!sentinel || !sentinel.classList.contains('smg-thead-sentinel')) {
+        let sentinel = Array.from(header.parentNode.children).find(node => node.classList.contains('smg-thead-sentinel'));
+        if (!sentinel) {
             sentinel = document.createElement('div');
             sentinel.className = 'smg-thead-sentinel';
-            spacer.parentNode.insertBefore(sentinel, spacer);
         }
+        header.parentNode.insertBefore(sentinel, header);
 
-        createStickySync(header, sentinel, spacer);
+        const stickyTitle = createStickyTitle(header);
+        createStickySync(header, sentinel, stickyTitle);
         header.dataset.smgStructureRecorded = '1';
+    }
+
+    function createStickyTitle(header) {
+        const source = header.querySelector('.smg-thead-title-text, .p-title-value');
+        if (!source) return null;
+        const sticky = document.createElement('div');
+        sticky.className = 'smg-thead-sticky';
+        sticky.setAttribute('aria-hidden', 'true');
+        const inner = document.createElement('div');
+        inner.className = 'smg-thead-sticky-inner';
+        const title = document.createElement('span');
+        title.className = 'smg-thead-sticky-title';
+        title.textContent = (source.textContent || '').replace(/\s+/g, ' ').trim();
+        inner.appendChild(title);
+        sticky.appendChild(inner);
+        document.body.appendChild(sticky);
+        return sticky;
     }
 
     // disposers das stickies vivas: o soft-nav troca o header, e os listeners de scroll/resize do header
@@ -573,40 +549,23 @@
         stickySyncDisposers.clear();
     }
 
-    function createStickySync(header, sentinel, spacer) {
+    function createStickySync(header, sentinel, stickyTitle) {
         let topOff = null;
         let ticking = false;
 
-        // troca o estado SEM mover o conteúdo: mede onde começa o que vem depois do header, troca a classe e
-        // devolve ao espaçador exatamente o que o header encolheu. Antes o espaçador usava a altura natural
-        // medida 1x e um "grudado" fixo de 48px — qualquer diferença (margem, thumb, tags, fonte) virava um
-        // pulo do conteúdo a cada passagem pelo topo.
-        const setStuck = on => {
-            const next = header.nextElementSibling;
-            const before = next ? next.getBoundingClientRect().top : null;
-            header.classList.toggle('is-stuck', on);
-            if (!spacer) return;
-            spacer.style.display = 'none';
-            spacer.style.height = '0px';
-            if (!on || before == null) return;
-            const diff = Math.round(before - next.getBoundingClientRect().top);
-            if (diff > 0) {
-                spacer.style.height = diff + 'px';
-                spacer.style.display = 'block';
-            }
+        const setVisible = on => {
+            if (stickyTitle && stickyTitle.classList.contains('is-visible') !== on) stickyTitle.classList.toggle('is-visible', on);
         };
         const measure = () => {
-            if (!header.isConnected) return;
-            const wasStuck = header.classList.contains('is-stuck');
-            if (wasStuck) setStuck(false);
-            topOff = parseFloat(getComputedStyle(header).top) || 60;
-            if (wasStuck) setStuck(true);
+            if (!header.isConnected || !stickyTitle) return;
+            const top = parseFloat(getComputedStyle(stickyTitle).top);
+            topOff = Number.isFinite(top) ? top : (window.innerWidth <= 800 ? 48 : 72);
         };
 
         const syncStuck = () => {
-            if (!header.isConnected) return;
+            if (!header.isConnected || !stickyTitle) return;
             if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) {
-                if (header.classList.contains('is-stuck')) setStuck(false);
+                setVisible(false);
                 topOff = null;
                 return;
             }
@@ -614,14 +573,12 @@
 
             const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel ? sentinel.getBoundingClientRect().top : 100;
-            const stuck = header.classList.contains('is-stuck');
+            const visible = stickyTitle.classList.contains('is-visible');
 
-            if (!stuck) {
-                // SÓ GRUDA QUANDO: scrollY > 40 E sentinela passou do topo
-                if (scrollY > 40 && y <= topOff - 8) setStuck(true);
+            if (!visible) {
+                if (scrollY > 40 && y <= topOff - 4) setVisible(true);
             } else {
-                // SÓ DESMARCA QUANDO: voltou ao topo ou sentinela desceu com folga
-                if (scrollY <= 20 || y >= topOff + 45) setStuck(false);
+                if (scrollY <= 20 || y >= topOff + 48) setVisible(false);
             }
         };
 
@@ -641,6 +598,7 @@
         const dispose = () => {
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('resize', onResize);
+            if (stickyTitle) stickyTitle.remove();
             stickySyncDisposers.delete(dispose);
         };
         stickySyncDisposers.add(dispose);

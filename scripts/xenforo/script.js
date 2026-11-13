@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SimpCity & SocialMediaGirls — Full Redesign
 // @namespace    http://tampermonkey.net/
-// @version      4.11.11
+// @version      4.11.16
 // @author       claudiogepeto
 // @description  Topbar + dock + filter bar redesign · grid/list thread view w/ placeholders · full images + portrait grid · redgifs embeds · pixeldrain/bunkr link cards · auto-expand spoilers · media feed · skip link warning · reveal like-gated posts
 // @match        https://simpcity.cr/*
@@ -3024,14 +3024,6 @@
             }
             .smg-tb-act:hover { background: var(--smg-w-08); color: #fff; }
             .smg-tb-act svg { width: 20px; height: 20px; fill: none !important; }
-            @media (min-width: 801px) { #smg-topbar-wrap.floating #smg-tb-inner { height: 60px; }
-                #smg-topbar-wrap.floating .smg-tb-logo { height: 42px; }
-                #smg-topbar-wrap.floating .smg-tb-logo img { height: 36px; }
-                #smg-topbar-wrap.floating .smg-logo-word { font-size: var(--smg-fs-24); }
-                #smg-topbar-wrap.floating .smg-tb-item { height: 38px; padding: 0 var(--smg-sp-12); font-size: var(--smg-fs-14); }
-                #smg-topbar-wrap.floating .smg-tb-act,
-                #smg-topbar-wrap.floating .smg-tb-account { width: 40px; height: 40px; }
-            }
             /* search bar CENTRAL: cresce com a zona do meio mas capa em 600px e centraliza */
             .smg-tb-search {
                 display: flex; align-items: center; gap: var(--smg-sp-12); width: 100%; max-width: 720px; height: 46px; padding: 0 var(--smg-sp-16); margin: 0;
@@ -6696,22 +6688,13 @@
                 margin: 0 !important;
                 width: 100% !important;
             }
-            /* ===== THREAD HEADER: one block, sticky on desktop and in-flow on mobile =====
-               Antes eram três pedaços soltos (título+ações, tags, e a barra de paginação que ficava no
-               .block-outer acima dos posts). Agora é um header único e sticky: numa thread de 300 páginas
-               dá pra trocar de página, abrir a galeria ou o feed sem voltar ao topo.
-               Ao grudar ele COMPACTA (tags somem, título encolhe) — senão ocuparia meia tela. */
-            /* ===== THREAD HEADER: one block, sticky on desktop and in-flow on mobile =====
-               Quando abre a página: Hero amplo, thumbnail 120x120px à esquerda, título + tags
-               alinhados à esquerda ao lado da imagem, e barra de paginação + botões à direita.
-               Ao fazer scroll: vira barra fixa compacta (48px) abaixo da topbar com o nome da
-               thread à esquerda, botões à direita e padding superior/inferior rigorosamente idênticos. */
+            /* ===== THREAD HEADER: normal flow + independent fixed title =====
+               The main header never changes height while scrolling. A separate title strip handles
+               the compact state so browser scroll anchoring has no layout change to compensate for. */
             html.smg-thread .p-body-header.smg-thead-unified {
-                position: sticky; top: 60px;
-                /* acima de tudo que mora nos posts (o tema dá z-index alto a coisas como o "Clique para expandir"
-                   das citações), abaixo do rail de alertas e da topbar */
-                z-index: var(--smg-z-thead);
-                background: var(--smg-bg);
+                position: relative !important; top: auto !important;
+                z-index: 0 !important;
+                background: transparent;
                 margin: 0 0 var(--smg-sp-12) !important;
                 padding: var(--smg-sp-12) 0 !important;
                 min-height: unset !important;
@@ -6721,11 +6704,53 @@
                 justify-content: space-between !important;
                 box-sizing: border-box !important;
                 overflow-anchor: none !important;
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08);
-                clip-path: inset(0 -100vmax 0);
-                /* SÓ a sombra anima: o header está no fluxo, e animar padding/altura fazia o conteúdo deslizar
-                   por baixo a cada vez que ele gruda/solta (o espaçador compensa de uma vez, a animação não) */
-                transition: box-shadow var(--smg-dur-20) ease;
+                isolation: isolate;
+                transition: none;
+            }
+            html.smg-thread .smg-thead-sticky {
+                position: fixed;
+                z-index: var(--smg-z-thead);
+                top: 72px;
+                left: 0;
+                width: 100%;
+                height: 48px;
+                display: none;
+                box-sizing: border-box;
+                background: var(--smg-bg);
+                border-bottom: 1px solid var(--smg-w-10);
+                box-shadow: var(--smg-shadow-2);
+                pointer-events: none;
+            }
+            html.smg-thread .smg-thead-sticky.is-visible { display: block; }
+            html.smg-thread .smg-thead-sticky-inner {
+                width: var(--smg-cw);
+                max-width: var(--smg-cw);
+                height: 100%;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+            }
+            html.smg-thread .smg-thead-sticky-title {
+                display: block;
+                min-width: 0;
+                overflow: hidden;
+                color: var(--smg-w-95);
+                font-size: var(--smg-fs-15);
+                font-weight: 700;
+                line-height: 1.2;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+            @media (max-width: 800px) {
+                html.smg-thread .smg-thead-sticky { top: 48px; }
+                html.smg-thread .smg-thead-sticky-inner {
+                    width: calc(100% - 24px);
+                    max-width: calc(100% - 24px);
+                }
+            }
+            @media (max-width: 600px) {
+                html.smg-thread .smg-thead-sticky { display: none !important; }
             }
             /* The thread header no longer forms a second fixed bar on mobile; the global topbar
                keeps its own divider for the content that starts below it. */
@@ -6745,19 +6770,35 @@
                 padding: 0 !important;
                 box-sizing: border-box !important;
             }
-            html.smg-thread .p-body-header.smg-thead-unified.is-stuck {
-                top: 60px;
-                margin: 0 !important;
-                padding: var(--smg-sp-8) 0 !important;   /* PADDING SIMÉTRICO: 8px no topo e 8px na base */
-                min-height: 48px !important;
-                height: 48px !important;
-                max-height: 48px !important;
-                box-sizing: border-box !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                clip-path: inset(0 -100vmax 0) !important;
-                box-shadow: 0 0 0 100vmax var(--smg-bg), 0 1px 0 100vmax var(--smg-w-08) !important;
+            html.smg-thread .p-body-header.smg-thead-unified::before {
+                content: "";
+                position: absolute;
+                z-index: -1;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 100vw;
+                transform: translateX(-50%);
+                background: var(--smg-bg);
+                border-bottom: 1px solid var(--smg-w-08);
+                pointer-events: none;
+            }
+            html.smg-thread .p-body-header.smg-thead-unified,
+            html.smg-thread .p-body-header.smg-thead-unified > .p-title,
+            html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner {
+                border-left: 0 !important;
+                border-right: 0 !important;
+                outline: 0 !important;
+            }
+            html.smg-thread .p-body-header.smg-thead-unified > .p-title::before,
+            html.smg-thread .p-body-header.smg-thead-unified > .p-title::after,
+            html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner::before,
+            html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner::after {
+                content: none !important;
+                display: none !important;
+                border: 0 !important;
+                background: none !important;
+                box-shadow: none !important;
             }
             /* Lado ESQUERDO: hero (thumb + info [badges + título + tags]) */
             html.smg-thread .p-body-header.smg-thead-unified .smg-thead-hero {
@@ -6791,7 +6832,7 @@
                 padding: 0 !important;
                 box-sizing: border-box !important;
             }
-            html.smg-thread .p-body-header.smg-thead-unified:not(.is-stuck) .p-title-value {
+            html.smg-thread .p-body-header.smg-thead-unified .p-title-value {
                 font-size: var(--smg-fs-28) !important;
                 font-weight: 800 !important;
                 line-height: 1.25 !important;
@@ -6800,150 +6841,7 @@
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            /* Lado DIREITO: controles (.smg-thead-controls) alinhados à direita */
-            html.smg-thread .smg-thead-controls {
-                display: flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-10) !important;
-                margin-left: auto !important;
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-                padding: 0 !important;
-                flex: 0 0 auto !important;
-                flex-shrink: 0 !important;
-                white-space: nowrap !important;
-            }
-            html.smg-thread .smg-thead-unified .smg-bar { border-radius: var(--smg-r-12); }
-            /* O header é título + tags + o botão de mídia. Paginação, ordenar, seguir e ir-pra-nova moram na dock
-               (no celular o header já escondia tudo). A barra fica no DOM: é a fonte que o header sincroniza. */
-            html.smg-thread .p-body-header .smg-thead-controls > .smg-bar { display: none !important; }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { height: 30px; font-size: var(--smg-fs-13); }
-            /* COMPACTO (barra fixa ao rolar a página):
-               Some a imagem grande, badges e tags. Fica apenas o nome da thread à esquerda,
-               e os botões à direita, ambos com 32px de altura centralizados na barra de 48px. */
-            .smg-thead-unified.is-stuck .smg-thead-tags,
-            .smg-thead-unified.is-stuck .p-description,
-            .smg-thead-unified.is-stuck .smg-thead-tags-bar { display: none !important; }
-            .smg-thead-unified.is-stuck .smg-thead-hero {
-                display: flex !important;
-                align-items: center !important;
-                gap: 0 !important;
-                height: 32px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-info {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
-                gap: 0 !important;
-                height: 32px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-titleline,
-            .smg-thead-unified.is-stuck .smg-bar,
-            .smg-thead-unified.is-stuck .smg-bar-pager,
-            .smg-thead-unified.is-stuck .smg-thead-actions {
-                display: flex !important;
-                align-items: center !important;
-                height: 32px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .smg-thead-unified.is-stuck .p-title-value {
-                font-size: var(--smg-fs-15) !important;
-                font-weight: 700 !important;
-                line-height: 32px !important;
-                height: 32px !important;
-                display: flex !important;
-                align-items: center !important;
-                -webkit-line-clamp: 1 !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-titleline .smg-thead-title-text {
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                display: block !important;
-            }
-            .smg-thead-unified.is-stuck .p-title-value .label,
-            .smg-thead-unified.is-stuck .p-title-value .prefix {
-                display: none !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-controls {
-                height: 32px !important;
-                display: flex !important;
-                align-items: center !important;
-                gap: var(--smg-sp-10) !important;
-                margin-left: auto !important;
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-                padding: 0 !important;
-                flex: 0 0 auto !important;
-                flex-shrink: 0 !important;
-            }
-            .smg-thead-unified.is-stuck .smg-bar-btn { height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-unified.is-stuck .smg-thead-btn { width: 28px !important; height: 28px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-            .smg-thead-spacer {
-                display: none;
-                width: 100%;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow-anchor: none !important;
-            }
             .smg-thead-sentinel { height: 0; margin: 0; padding: 0; overflow-anchor: none !important; }
-            /* barra do header: mais apertada que a versão solta — cada px conta numa faixa fixa */
-            html.smg-thread .smg-thead-unified .smg-bar { height: 36px; padding: 0; }
-            html.smg-thread .smg-thead-unified .smg-bar-group { gap: var(--smg-sp-2); padding: var(--smg-sp-2) var(--smg-sp-4); }
-            html.smg-thread .smg-thead-unified .smg-bar-div { margin: var(--smg-sp-10) var(--smg-sp-2); }
-            html.smg-thread .smg-thead-unified .smg-bar-btn { padding: 0 var(--smg-sp-8); gap: var(--smg-sp-6); }
-            html.smg-thread .smg-thead-unified .smg-bar-btn--icon { width: 30px; padding: 0; }
-            html.smg-thread .smg-thead-unified .smg-bar-cur { min-width: 60px !important; padding: 0 var(--smg-sp-10) !important; }
-            html.smg-thread .smg-thead-unified .smg-bar-pager { gap: var(--smg-sp-2); padding: var(--smg-sp-2) var(--smg-sp-4); }
-            html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-btn,
-            .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-btn {
-                width: 28px !important; height: 28px !important; min-width: 28px !important; padding: 0 !important;
-                border-radius: var(--smg-r-round) !important; font-size: var(--smg-fs-13);
-            }
-            html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-cur,
-            .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-cur {
-                height: 28px !important; min-width: 60px !important; padding: 0 var(--smg-sp-10) !important;
-                border-radius: var(--smg-r-10) !important; font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
-                white-space: nowrap !important;
-            }
-            html.smg-thread .smg-thead-unified .smg-bar-pager .smg-bar-cur.smg-bar-pager-goto,
-            .smg-thead-unified.is-stuck .smg-bar-pager .smg-bar-cur.smg-bar-pager-goto {
-                font-size: var(--smg-fs-12) !important; font-weight: 700 !important;
-            }
-            html.smg-thread .smg-thead-unified .smg-bar-pager svg,
-            .smg-thead-unified.is-stuck .smg-bar-pager svg {
-                width: 14px !important; height: 14px !important;
-            }
-            /* AÇÕES (feed · galeria) com o MESMO desenho do paginador: mesma caixa (fundo,
-               borda, raio, altura) e botões-pílula sem borda própria, em vez do bloco com gradiente e
-               divisórias que tinham antes. Assim as duas metades da direita parecem o mesmo componente. */
-            html.smg-thread .smg-thead-unified .smg-thead-actions {
-                height: 36px; box-sizing: border-box; padding: var(--smg-sp-2) var(--smg-sp-4); align-items: center; gap: var(--smg-sp-2);
-                background: var(--smg-s1) !important; border: 1px solid var(--smg-bd) !important;
-                border-radius: var(--smg-r-12) !important; box-shadow: none !important; overflow: visible;
-            }
-            html.smg-thread .smg-thead-unified .smg-thead-btn {
-                width: 30px; height: 30px; min-width: 30px; padding: 0; font-size: var(--smg-fs-16);
-                border: 0 !important; border-radius: var(--smg-btn-r) !important; background: transparent !important;
-                color: var(--smg-w-95);
-                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease;
-            }
-            html.smg-thread .smg-thead-unified .smg-thead-btn:hover { background: var(--smg-s3) !important; color: #fff; }
-            html.smg-thread .smg-thead-unified .smg-thead-btn + .smg-thead-btn { border-left: 0 !important; }
-            html.smg-thread .smg-thead-unified .smg-thead-ic svg { width: 17px; height: 17px; }
-            .smg-thead-unified.is-stuck .smg-thead-actions { box-sizing: border-box; }
-            .smg-thead-actions:empty { display: none !important; }   /* a mídia foi pra dock: barra vazia não ocupa espaço */
             /* ZOOM NO HOVER (setupHoverZoom): preview flutuante da foto do cabeçalho e do rail de alertas */
             #smg-hoverzoom {
                 position: fixed; z-index: var(--smg-z-max); box-sizing: border-box; padding: var(--smg-sp-4);
@@ -7036,16 +6934,6 @@
                 object-fit: cover !important;
                 display: block !important;
             }
-            .smg-thead-unified.is-stuck .smg-thead-info { align-self: center; }
-            .smg-thead-unified.is-stuck .smg-thead-thumb {
-                display: none !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-badges-row {
-                display: none !important;
-            }
-            .smg-thead-unified.is-stuck .smg-thead-tags {
-                display: none !important;
-            }
             html.smg-thread .smg-thead-tags-bar {
                 margin: var(--smg-sp-6) 0 var(--smg-sp-14) 0 !important;
                 padding: 0 !important;
@@ -7113,33 +7001,12 @@
                 flex: 0 1 auto; max-width: 100%;
             }
             @media (max-width: 800px) {
-                html.smg-thread .p-body-header.smg-thead-unified { top: 48px; }
-                html.smg-thread .p-body-header.smg-thead-unified.is-stuck { top: 48px; }
                 html.smg-thread .smg-thead-unified .p-title { flex-wrap: wrap !important; }
-                html.smg-thread .smg-thead-unified .smg-thead-controls { margin-left: 0; width: 100%; justify-content: space-between; }
                 html.smg-thread .smg-thead-unified .p-title-value { flex: 1 1 100%; }
                 .smg-thead-thumb { flex: 0 0 64px !important; width: 64px !important; height: 64px !important; border-radius: var(--smg-r-12) !important; }
                 html.smg-thread .p-body-header .p-title-value { font-size: var(--smg-fs-20) !important; }
             }
 
-            .smg-thead-actions {
-                display: inline-flex; align-items: stretch; margin-left: auto;
-                border: 1px solid var(--smg-bd2); border-radius: var(--smg-r-14); overflow: hidden;
-                background: linear-gradient(180deg, var(--smg-s2), var(--smg-s1));
-                box-shadow: var(--smg-shadow-2), var(--smg-hl);
-            }
-            .smg-thead-btn {
-                width: 48px; height: 42px; font-size: var(--smg-fs-22); padding: 0; cursor: pointer;
-                display: inline-flex; align-items: center; justify-content: center;
-                border: 0; background: transparent; color: var(--smg-w-95);
-                transition: background var(--smg-dur-15) ease, color var(--smg-dur-15) ease, transform var(--smg-dur-12) ease;
-            }
-            .smg-thead-btn svg { fill: none !important; }   /* ícones outline (o CSS do fórum tentava preencher → play virava blob/sumia) */
-            .smg-thead-ic { display: inline-flex; align-items: center; justify-content: center; }
-            .smg-thead-lbl { display: none; }   /* desktop: só ícone (compacto na linha do título); label aparece no mobile */
-            .smg-thead-btn + .smg-thead-btn { border-left: 1px solid var(--smg-bd); }   /* divisor entre os segmentos */
-            .smg-thead-btn:hover { background: var(--smg-link); color: #fff; }   /* hover de marca: destaca o propósito “maior” */
-            .smg-thead-btn:active { transform: scale(0.9); }
             /* título + descrição alinhados à esquerda (sem centralizar nada) */
             html.smg-thread .p-body-header .p-title,
             html.smg-thread .p-body-header .p-description,
@@ -7147,9 +7014,7 @@
             html.smg-thread .uix_headerInner--opposite { text-align: left !important; }
             html.smg-thread .uix_headerInner--opposite { justify-content: flex-start !important; align-items: flex-start !important; }
             html.smg-thread .p-title-pageAction { display: none !important; }   /* botão Quote/responder do header — removido */
-            /* MOBILE: header UNIFICADO — título → tags (coladas, mesmo bloco visual) → ações full-width →
-               barra de navegação esticada. O JS (buildThreadHeader) move a barra de ações pra DEPOIS das
-               tags no mobile; antes ela entrava no meio e as tags ficavam órfãs depois dos botões. */
+            /* MOBILE: o header permanece no fluxo da página; o título compacto fixo não aparece. */
             @media (max-width: 600px) {
                 /* Header da thread normal (topo) no mobile */
                 html.smg-thread .p-body-header {
@@ -7167,10 +7032,6 @@
                     margin-bottom: var(--smg-sp-4) !important;
                     box-shadow: none !important;
                     clip-path: none !important;
-                }
-                html.smg-thread .p-body-header.smg-thead-unified.is-stuck {
-                    position: static !important; top: auto !important; min-height: 0 !important;
-                    height: auto !important; box-shadow: none !important; clip-path: none !important;
                 }
                 html.smg-thread .smg-thead-hero {
                     display: flex !important;
@@ -7361,15 +7222,7 @@
                 html.smg-thread .p-body-header.smg-thead-unified .uix_headerInner::after { content: none !important; display: none !important; }
                 html.smg-thread .p-body-header.smg-thead-unified { padding: var(--smg-sp-8) var(--smg-sp-12) var(--smg-sp-10) !important; }
 
-                /* Ocultar do topo no mobile: barra duplicada de páginas/follow/sort e ações */
-                html.smg-thread .smg-thead-controls,
-                html.smg-thread .smg-thead-unified .smg-thead-controls,
-                html.smg-thread .smg-thead-unified .smg-bar,
-                html.smg-thread .smg-thead-actions,
-                html.smg-thread .smg-thead-unified .smg-thead-actions,
-                html.smg-thread .p-body-header .smg-bar,
-                html.smg-thread .p-body-header .smg-thead-controls,
-                html.smg-thread .p-body-header > .smg-thead-controls,
+                /* A dock já fornece as ações; não duplica a barra do block-outer no mobile. */
                 html.smg-thread .block-outer--top,
                 html.smg-thread .block-outer:first-of-type {
                     display: none !important;
@@ -9128,6 +8981,9 @@
             .smg-page-skeleton-title,
             .smg-page-skeleton-meta i,
             .smg-page-skeleton-action,
+            .smg-page-skeleton-thread-thumb,
+            .smg-page-skeleton-thread-prefix,
+            .smg-page-skeleton-thread-title i,
             .smg-page-skeleton-filter i,
             .smg-page-skeleton-line,
             .smg-page-skeleton-avatar,
@@ -9149,10 +9005,23 @@
             }
             .smg-page-skeleton-header { display: flex; align-items: center; gap: var(--smg-sp-16); min-height: 94px; padding: var(--smg-sp-20) 0 var(--smg-sp-16); border-bottom: 1px solid var(--smg-w-10); }
             .smg-page-skeleton-header-copy { flex: 1 1 auto; min-width: 0; }
-            .smg-page-skeleton-title { width: min(62%, 520px); height: 25px; border-radius: var(--smg-r-8); }
+            .smg-page-skeleton-title { display: block; width: min(62%, 520px); height: 25px; border-radius: var(--smg-r-8); }
             .smg-page-skeleton-meta { display: flex; align-items: center; gap: var(--smg-sp-8); margin-top: var(--smg-sp-14); }
             .smg-page-skeleton-meta i { display: block; width: 86px; height: 11px; border-radius: var(--smg-r-6); }
             .smg-page-skeleton-meta i:nth-child(2) { width: 130px; opacity: .72; }
+            .smg-page-skeleton-thread-header {
+                display: grid; grid-template-columns: 120px minmax(0, 1fr); grid-template-rows: auto auto auto;
+                align-items: center; column-gap: var(--smg-sp-18); row-gap: var(--smg-sp-6); min-height: 156px;
+            }
+            .smg-page-skeleton-thread-thumb { grid-column: 1; grid-row: 1 / span 3; align-self: center; width: 120px; height: 120px; border-radius: var(--smg-r-16); }
+            .smg-page-skeleton-thread-prefix { grid-column: 2; grid-row: 1; width: 78px; height: 15px; border-radius: var(--smg-r-6); }
+            .smg-page-skeleton-thread-title { display: grid; grid-column: 2; grid-row: 2; gap: var(--smg-sp-6); width: min(82%, 520px); }
+            .smg-page-skeleton-thread-title i { display: block; width: 100%; height: 15px; border-radius: var(--smg-r-6); }
+            .smg-page-skeleton-thread-title i.short { width: 58%; opacity: .72; }
+            .smg-page-skeleton-thread-tags { grid-column: 2; grid-row: 3; flex-wrap: wrap; gap: var(--smg-sp-6); margin-top: var(--smg-sp-2); }
+            .smg-page-skeleton-thread-tags i { width: 76px; height: 22px; border-radius: var(--smg-r-8); }
+            .smg-page-skeleton-thread-tags i:nth-child(2) { width: 102px; opacity: .72; }
+            .smg-page-skeleton-thread-tags i:nth-child(3) { width: 68px; }
             .smg-page-skeleton-actions { display: flex; align-items: center; gap: var(--smg-sp-8); flex: 0 0 auto; }
             .smg-page-skeleton-action { width: 38px; height: 38px; border-radius: var(--smg-r-12); }
             .smg-page-skeleton-filter { display: flex; align-items: center; gap: var(--smg-sp-8); min-height: 48px; margin: var(--smg-sp-16) 0 var(--smg-sp-18); padding: var(--smg-sp-6) var(--smg-sp-8); border: 1px solid var(--smg-w-08); border-radius: var(--smg-r-14); background: var(--smg-w-04); }
@@ -9219,6 +9088,19 @@
                 .smg-page-skeleton-main { width: 100%; max-width: none; min-height: calc(100vh - 54px); min-height: calc(100dvh - 54px); padding: var(--smg-sp-14) var(--smg-sp-12) 38px; }
                 .smg-page-skeleton-header { min-height: 82px; padding: var(--smg-sp-14) 0 var(--smg-sp-12); }
                 .smg-page-skeleton-title { width: 78%; height: 21px; }
+                .smg-page-skeleton-thread-header {
+                    grid-template-columns: 72px minmax(0, 1fr); min-height: 110px;
+                    column-gap: var(--smg-sp-12); row-gap: var(--smg-sp-6); padding: var(--smg-sp-10) 0;
+                }
+                .smg-page-skeleton-thread-thumb { grid-row: 1 / span 2; width: 72px; height: 72px; border-radius: var(--smg-r-14); }
+                .smg-page-skeleton-thread-prefix { width: 64px; height: 12px; }
+                .smg-page-skeleton-thread-title { width: 100%; gap: var(--smg-sp-4); }
+                .smg-page-skeleton-thread-title i { height: 11px; }
+                .smg-page-skeleton-thread-title i.short { width: 72%; }
+                .smg-page-skeleton-thread-tags { grid-column: 1 / -1; grid-row: 3; gap: var(--smg-sp-4); margin-top: var(--smg-sp-2); }
+                .smg-page-skeleton-thread-tags i { width: 52px; height: 20px; }
+                .smg-page-skeleton-thread-tags i:nth-child(2) { width: 66px; }
+                .smg-page-skeleton-thread-tags i:nth-child(3) { width: 48px; }
                 .smg-page-skeleton-action { width: 34px; height: 34px; }
                 .smg-page-skeleton-filter { margin: var(--smg-sp-12) 0 var(--smg-sp-14); overflow: hidden; }
                 .smg-page-skeleton-filter i { flex: 0 0 auto; }
@@ -21248,8 +21130,8 @@
         desc.dataset.smgTagsGrouped = '1';
     }
 
-    // HEADER DA THREAD (.p-body-header): linha de ações (feed · galeria, maiores) ACIMA do título,
-    // e remove autor + data da linha de descrição (mantém as tags). Roda 1× no boot (header é server-render, estático).
+    // HEADER DA THREAD (.p-body-header): move a thumb para cima do título e das tags, e remove
+    // autor + data da descrição. O header fica estático; só a faixa compacta de título é fixa.
     function buildThreadHeader() {
         if (!document.documentElement.classList.contains('smg-thread')) return;   // só em thread (fórum tem .p-body-header também)
         const header = document.querySelector('.p-body-header');
@@ -21268,35 +21150,13 @@
             const t = desc.querySelector('time'); const tl = t && t.closest('li'); if (tl) tl.remove();
             groupThreadTags(desc);
         }
-        // linha de ações no topo do header: o modo mídia (galeria/feed), com navegação própria (página 1)
-        const bar = document.createElement('div'); bar.className = 'smg-thead-actions';
-        // A entrada da mídia (galeria/feed) mora na dock (desktop: #smg-thread-media; celular: #smg-thread-media-m),
-        // que é sempre montada — o cabeçalho fixo não repete o botão.
-        // DESKTOP: na linha do título, fixo à direita (dentro do .p-title → coluna centralizada).
-        // MOBILE: a barra DESCE pra depois das tags → ordem unificada título → tags → ações
-        // (antes a barra full-width entrava no meio e as tags ficavam órfãs DEPOIS dos botões).
-        // matchMedia move o nó só ao cruzar o breakpoint (1 listener, zero custo no scroll/resize comum).
-        const title = header.querySelector('.p-title');
-        // Com o header unificado, as ações ficam SEMPRE na linha de controles (junto do paginador),
-        // inclusive no celular — antes elas desciam pra depois das tags, o que criava um terceiro bloco
-        // solto e empurrava o conteúdo pra baixo.
-        const placeBar = () => {
-            if (title) title.appendChild(bar);
-            else header.insertBefore(bar, header.firstChild);
-        };
-        placeBar();
         unifyThreadHeader(header);
     }
 
-    /* SINGLE THREAD HEADER — the thread top used to be three loose blocks: title+actions, tags,
-     * and the pagination/sort bar (which lived in .block-outer above the posts). They now form one
-     * header: sticky on desktop, in-flow on mobile. When sticky, it compacts (hides tags and shrinks
-     * the title) so it does not consume half the viewport. */
+    /* THREAD HEADER — the title, image and tags stay in normal document flow. A separate fixed
+     * title strip appears after the header passes the topbar, so scroll state cannot change layout. */
     function unifyThreadHeader(header) {
         if (!header || header.dataset.smgUnified) return;
-        // a barra do PRIMEIRO block-outer (a de cima) sobe pro header; a de baixo continua onde está
-        const firstBar = document.querySelector('.block-outer .smg-bar');
-        if (!firstBar) return;   // ainda não montou (buildFilterBars roda depois) → tenta no próximo scan
         header.dataset.smgUnified = '1';
 
         const title = header.querySelector('.p-title');
@@ -21405,37 +21265,35 @@
             }
         }
 
-        // Agrupa o paginador (.smg-bar) e as ações (.smg-thead-actions) em .smg-thead-controls
-        // à direita, com flex-shrink: 0 para NUNCA quebrarem de linha
-        const actions = header.querySelector('.smg-thead-actions');
-        let controls = header.querySelector('.smg-thead-controls');
-        if (!controls) {
-            controls = document.createElement('div');
-            controls.className = 'smg-thead-controls';
-        }
-        if (firstBar) controls.appendChild(firstBar);
-        if (actions) controls.appendChild(actions);
-        if (title) title.appendChild(controls);
-        else header.appendChild(controls);
-
         header.classList.add('smg-thead-unified');
 
-        let spacer = header.previousElementSibling;
-        if (!spacer || !spacer.classList.contains('smg-thead-spacer')) {
-            spacer = document.createElement('div');
-            spacer.className = 'smg-thead-spacer';
-            header.parentNode.insertBefore(spacer, header);
-        }
-
-        let sentinel = spacer.previousElementSibling;
-        if (!sentinel || !sentinel.classList.contains('smg-thead-sentinel')) {
+        let sentinel = Array.from(header.parentNode.children).find(node => node.classList.contains('smg-thead-sentinel'));
+        if (!sentinel) {
             sentinel = document.createElement('div');
             sentinel.className = 'smg-thead-sentinel';
-            spacer.parentNode.insertBefore(sentinel, spacer);
         }
+        header.parentNode.insertBefore(sentinel, header);
 
-        createStickySync(header, sentinel, spacer);
+        const stickyTitle = createStickyTitle(header);
+        createStickySync(header, sentinel, stickyTitle);
         header.dataset.smgStructureRecorded = '1';
+    }
+
+    function createStickyTitle(header) {
+        const source = header.querySelector('.smg-thead-title-text, .p-title-value');
+        if (!source) return null;
+        const sticky = document.createElement('div');
+        sticky.className = 'smg-thead-sticky';
+        sticky.setAttribute('aria-hidden', 'true');
+        const inner = document.createElement('div');
+        inner.className = 'smg-thead-sticky-inner';
+        const title = document.createElement('span');
+        title.className = 'smg-thead-sticky-title';
+        title.textContent = (source.textContent || '').replace(/\s+/g, ' ').trim();
+        inner.appendChild(title);
+        sticky.appendChild(inner);
+        document.body.appendChild(sticky);
+        return sticky;
     }
 
     // disposers das stickies vivas: o soft-nav troca o header, e os listeners de scroll/resize do header
@@ -21446,40 +21304,23 @@
         stickySyncDisposers.clear();
     }
 
-    function createStickySync(header, sentinel, spacer) {
+    function createStickySync(header, sentinel, stickyTitle) {
         let topOff = null;
         let ticking = false;
 
-        // troca o estado SEM mover o conteúdo: mede onde começa o que vem depois do header, troca a classe e
-        // devolve ao espaçador exatamente o que o header encolheu. Antes o espaçador usava a altura natural
-        // medida 1x e um "grudado" fixo de 48px — qualquer diferença (margem, thumb, tags, fonte) virava um
-        // pulo do conteúdo a cada passagem pelo topo.
-        const setStuck = on => {
-            const next = header.nextElementSibling;
-            const before = next ? next.getBoundingClientRect().top : null;
-            header.classList.toggle('is-stuck', on);
-            if (!spacer) return;
-            spacer.style.display = 'none';
-            spacer.style.height = '0px';
-            if (!on || before == null) return;
-            const diff = Math.round(before - next.getBoundingClientRect().top);
-            if (diff > 0) {
-                spacer.style.height = diff + 'px';
-                spacer.style.display = 'block';
-            }
+        const setVisible = on => {
+            if (stickyTitle && stickyTitle.classList.contains('is-visible') !== on) stickyTitle.classList.toggle('is-visible', on);
         };
         const measure = () => {
-            if (!header.isConnected) return;
-            const wasStuck = header.classList.contains('is-stuck');
-            if (wasStuck) setStuck(false);
-            topOff = parseFloat(getComputedStyle(header).top) || 60;
-            if (wasStuck) setStuck(true);
+            if (!header.isConnected || !stickyTitle) return;
+            const top = parseFloat(getComputedStyle(stickyTitle).top);
+            topOff = Number.isFinite(top) ? top : (window.innerWidth <= 800 ? 48 : 72);
         };
 
         const syncStuck = () => {
-            if (!header.isConnected) return;
+            if (!header.isConnected || !stickyTitle) return;
             if (window.matchMedia && window.matchMedia('(max-width: 600px)').matches) {
-                if (header.classList.contains('is-stuck')) setStuck(false);
+                setVisible(false);
                 topOff = null;
                 return;
             }
@@ -21487,14 +21328,12 @@
 
             const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
             const y = sentinel ? sentinel.getBoundingClientRect().top : 100;
-            const stuck = header.classList.contains('is-stuck');
+            const visible = stickyTitle.classList.contains('is-visible');
 
-            if (!stuck) {
-                // SÓ GRUDA QUANDO: scrollY > 40 E sentinela passou do topo
-                if (scrollY > 40 && y <= topOff - 8) setStuck(true);
+            if (!visible) {
+                if (scrollY > 40 && y <= topOff - 4) setVisible(true);
             } else {
-                // SÓ DESMARCA QUANDO: voltou ao topo ou sentinela desceu com folga
-                if (scrollY <= 20 || y >= topOff + 45) setStuck(false);
+                if (scrollY <= 20 || y >= topOff + 48) setVisible(false);
             }
         };
 
@@ -21514,6 +21353,7 @@
         const dispose = () => {
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('resize', onResize);
+            if (stickyTitle) stickyTitle.remove();
             stickySyncDisposers.delete(dispose);
         };
         stickySyncDisposers.add(dispose);
@@ -22017,8 +21857,7 @@
             Array.from(bo.children).forEach(c => c.style.setProperty('display', 'none', 'important'));
             bo.insertBefore(bar, bo.firstChild);
         });
-        // a barra de cima pertence ao header unificado — tenta juntar (no boot o header pode ter sido
-        // montado antes desta barra existir, e a thread também recarrega barras no scroll infinito)
+        // A barra continua no block-outer; a unificação do header só organiza título, imagem e tags.
         unifyThreadHeader(document.querySelector('.p-body-header[data-smg-thead]'));
     }
 
@@ -27063,11 +26902,18 @@
 
         const line = (className, extra) => '<i class="smg-page-skeleton-line smg-skeleton-shimmer'
             + (className ? ' ' + className : '') + '"' + (extra || '') + '></i>';
-        const header = '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
-            + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
-            + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
-            + '<div class="smg-page-skeleton-actions"><i class="smg-page-skeleton-action smg-skeleton-shimmer"></i>'
-            + '<i class="smg-page-skeleton-action smg-skeleton-shimmer"></i></div></header>';
+        const header = kind === PAINT_PAGE_KINDS.THREAD
+            ? '<header class="smg-page-skeleton-header smg-page-skeleton-thread-header">'
+                + '<i class="smg-page-skeleton-thread-thumb smg-skeleton-shimmer"></i>'
+                + '<i class="smg-page-skeleton-thread-prefix smg-skeleton-shimmer"></i>'
+                + '<div class="smg-page-skeleton-thread-title"><i class="smg-skeleton-shimmer"></i><i class="short smg-skeleton-shimmer"></i></div>'
+                + '<div class="smg-page-skeleton-meta smg-page-skeleton-thread-tags">'
+                + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></header>'
+            : '<header class="smg-page-skeleton-header"><div class="smg-page-skeleton-header-copy">'
+                + '<i class="smg-page-skeleton-title smg-skeleton-shimmer"></i><div class="smg-page-skeleton-meta">'
+                + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div></div>'
+                + '<div class="smg-page-skeleton-actions"><i class="smg-page-skeleton-action smg-skeleton-shimmer"></i>'
+                + '<i class="smg-page-skeleton-action smg-skeleton-shimmer"></i></div></header>';
         const filter = '<div class="smg-page-skeleton-filter"><i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i>'
             + '<i class="smg-skeleton-shimmer"></i><i class="smg-skeleton-shimmer"></i></div>';
         const post = '<article class="smg-page-skeleton-post"><div class="smg-page-skeleton-post-head">'
