@@ -53,7 +53,8 @@
             const finish = value => { if (done) return; done = true; resolve(value); };
             try {
                 GM_xmlhttpRequest({
-                    method: "GET", url, timeout: options.timeout || 6000, headers: options.headers || {},
+                    method: options.method || "GET", url, timeout: options.timeout || 6000,
+                    headers: options.headers || {}, data: options.data,
                     onload: response => finish({ status: response.status, finalUrl: response.finalUrl || url, responseText: response.responseText || "", contentType: response.responseHeaders?.match(/^content-type:\s*([^\r\n]+)/im)?.[1] || "" }),
                     onerror: error => finish({ error }),
                     ontimeout: () => finish({ timedOut: true }),
@@ -120,7 +121,11 @@
         const response = await requestText(url, { timeout: 8000, headers: { Range: "bytes=0-0" } });
         return classifyMediaProbe({ status: response.status, contentType: response.contentType, error: response.error, timedOut: response.timedOut });
     }
-    function isMirrorFilePage() { return location.pathname !== "/" && location.pathname !== ""; }
+    function isMirrorFilePage() {
+        // dl.bunkr.* is the direct download host, not a page mirror to fail over.
+        if (/^dl\.bunkr\./i.test(location.hostname)) return false;
+        return location.pathname !== "/" && location.pathname !== "";
+    }
     function showMirrorSearchPanel(text) {
         let panel = document.querySelector(".bunkr-mirror-search");
         if (!panel) {

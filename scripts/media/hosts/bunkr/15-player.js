@@ -54,16 +54,145 @@
         bunkrMark: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style="display:block"><path d="M5 4h8a5 5 0 0 1 0 10H5V4zm0 8h8.5a5 5 0 0 1 0 10H5v-10zm3-5v4h5a2 2 0 1 0 0-4H8zm0 8v4h5.5a2 2 0 1 0 0-4H8z"/></svg>',
     });
 
+    let bunkrDownloadOverlay = null;
+    function setBunkrDownloadLoading(message) {
+        if (!bunkrDownloadOverlay) {
+            bunkrDownloadOverlay = el("div", { class: "bunkr-download-loading", role: "status", "aria-live": "polite" },
+                el("span", { class: "bunkr-download-spinner", "aria-hidden": "true" }),
+                el("span", { class: "bunkr-download-message" })
+            );
+            document.body.appendChild(bunkrDownloadOverlay);
+        }
+        bunkrDownloadOverlay.querySelector(".bunkr-download-message").textContent = message;
+    }
+    function clearBunkrDownloadLoading() {
+        if (!bunkrDownloadOverlay) return;
+        bunkrDownloadOverlay.remove();
+        bunkrDownloadOverlay = null;
+    }
+    function safeBunkrDownloadName(value) {
+        const name = String(value || "download").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").trim();
+        return name || "download";
+    }
+    function currentBunkrDownloadName(mediaUrl) {
+        const heading = document.querySelector("main h1, main h2");
+        if (heading && heading.textContent.trim()) return safeBunkrDownloadName(heading.textContent.trim());
+        try { return safeBunkrDownloadName(decodeURIComponent(mediaUrl.pathname.split("/").pop())); }
+        catch { return "download"; }
+    }
+    function currentSignedBunkrMediaUrl(src) {
+        try {
+            const mediaUrl = new URL(src, location.href);
+            if (mediaUrl.protocol !== "https:" || !/\.cdn\.cr$/i.test(mediaUrl.hostname)
+                || !mediaUrl.pathname.startsWith("/storage/media/")
+                || !mediaUrl.searchParams.has("token") || !mediaUrl.searchParams.has("ex")) return null;
+            const name = currentBunkrDownloadName(mediaUrl);
+            mediaUrl.searchParams.set("n", name);
+            return { url: mediaUrl.href, name };
+        } catch { return null; }
+    }
+    async function getBunkrDownloadUrl(downloadUrl) {
+        const landing = new URL(downloadUrl, location.href);
+        const match = landing.hostname === "dl.bunkr.cr" && landing.pathname.match(/^\/file\/(\d+)\/?$/);
+        if (!match) throw new Error("Link de download do Bunkr inválido");
+
+        const metadataResponse = await requestText(landing.origin + "/api/_001_v2", {
+            method: "POST", timeout: 15000,
+            headers: { "Content-Type": "application/json" },
+            data: JSON.stringify({ id: match[1] }),
+        });
+        if (metadataResponse.error || metadataResponse.timedOut || metadataResponse.status < 200 || metadataResponse.status >= 300) {
+            throw new Error("Não foi possível obter os dados do arquivo");
+        }
+        const metadata = JSON.parse(metadataResponse.responseText || "{}");
+        if (!metadata.mediafiles || !metadata.path || !metadata.original) throw new Error("Resposta de download incompleta");
+        const mediaUrl = new URL(String(metadata.mediafiles) + String(metadata.path));
+        if (mediaUrl.protocol !== "https:" || !/\.cdn\.cr$/i.test(mediaUrl.hostname) || !mediaUrl.pathname.startsWith("/storage/media/")) {
+            throw new Error("Endereço de mídia inválido");
+        }
+        mediaUrl.searchParams.set("n", String(metadata.original));
+
+        let signPath;
+        try { signPath = decodeURIComponent(mediaUrl.pathname); } catch { signPath = mediaUrl.pathname; }
+        const signResponse = await requestText("https://glb-apisign.cdn.cr/sign?path=" + encodeURIComponent(signPath), { timeout: 15000 });
+        if (signResponse.error || signResponse.timedOut || signResponse.status < 200 || signResponse.status >= 300) {
+            throw new Error("Não foi possível assinar o endereço do arquivo");
+        }
+        const signature = JSON.parse(signResponse.responseText || "{}");
+        if (!signature.token || !signature.ex) throw new Error("Assinatura do arquivo incompleta");
+        mediaUrl.searchParams.set("token", signature.token);
+        mediaUrl.searchParams.set("ex", signature.ex);
+        return { url: mediaUrl.href, name: safeBunkrDownloadName(metadata.original) };
+    }
+    function startBunkrTransfer(result) {
+        if (typeof GM_download !== "function") {
+            const link = el("a", { href: result.url, target: "_blank", rel: "noopener", download: result.name });
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            clearBunkrDownloadLoading();
+            return Promise.resolve();
+        }
+        return new Promise((resolve, reject) => {
+            let receivedBytes = false;
+            try {
+                GM_download({
+                    url: result.url,
+                    name: result.name,
+                    saveAs: false,
+                    onprogress: event => {
+                        if (receivedBytes || !event.loaded) return;
+                        receivedBytes = true;
+                        clearBunkrDownloadLoading();
+                        toast("Download em andamento");
+                    },
+                    onload: () => {
+                        clearBunkrDownloadLoading();
+                        if (!receivedBytes) toast("Download concluído");
+                        resolve();
+                    },
+                    onerror: error => {
+                        const failure = new Error("Falha ao iniciar o download");
+                        failure.receivedBytes = receivedBytes;
+                        failure.cause = error;
+                        reject(failure);
+                    },
+                    ontimeout: () => {
+                        const failure = new Error("Tempo limite ao baixar o arquivo");
+                        failure.receivedBytes = receivedBytes;
+                        reject(failure);
+                    },
+                });
+            } catch (error) { reject(error); }
+        });
+    }
+    async function downloadBunkrFile(downloadUrl, fallbackSrc) {
+        setBunkrDownloadLoading("Preparando download…");
+        try {
+            const directResult = currentSignedBunkrMediaUrl(fallbackSrc);
+            if (directResult) {
+                try {
+                    await startBunkrTransfer(directResult);
+                    return;
+                } catch (error) {
+                    if (error.receivedBytes || !downloadUrl) throw error;
+                    setBunkrDownloadLoading("Atualizando link do download…");
+                }
+            }
+            if (!downloadUrl) throw new Error("Link direto do arquivo indisponível");
+            await startBunkrTransfer(await getBunkrDownloadUrl(downloadUrl));
+        } catch (error) {
+            clearBunkrDownloadLoading();
+            toast(error && error.message ? error.message : "Falha ao preparar o download");
+        }
+    }
+
     // Ganchos do bunkr para o player do core: navegação no álbum, download e denúncia da página.
     const BUNKR_PLAYER_HOOKS = {
         nav: dir => navFile(dir),
         download: src => {
             const dlA = document.querySelector('main a[href*="/file/"], a[href*="dl.bunkr"], a[href*="/d/"], a[download]');
-            const a = document.createElement("a");
-            a.href = (dlA && dlA.href) || src;
-            a.download = "";
-            a.rel = "noopener";
-            a.click();
+            downloadBunkrFile((dlA && dlA.href) || "", src);
         },
         report: () => {
             const reportA = document.querySelector('main a[href*="abuse"], a[href*="report"]');
@@ -153,12 +282,7 @@
             const img = host.querySelector(".bunkr-image");
             const targetUrl = (dlA && dlA.href) || (img && (img.currentSrc || img.src)) || "";
             if (!targetUrl) return;
-            const a = document.createElement("a");
-            a.href = targetUrl;
-            a.download = "";
-            a.rel = "noopener";
-            a.target = "_blank";
-            a.click();
+            downloadBunkrFile((dlA && dlA.href) || "", img && (img.currentSrc || img.src));
         });
         const shareBtn = mkAct(PL_ICONS.share, "Compartilhar / Copiar link", () => {
             copyText(location.href).then(ok => {

@@ -153,6 +153,9 @@
         .bunkr-mirror-nav button:disabled { opacity: .4; cursor: default; }
         .bunkr-mirror-search { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-content: center; padding: 28px; background: #101014; color: #eee; text-align: center; font: 600 16px/1.6 Inter, system-ui, sans-serif; }
         @keyframes bunkr-spin { to { transform: rotate(360deg); } }
+        .bunkr-download-loading { position: fixed; inset: 0; z-index: 2147483001; display: grid; place-content: center; justify-items: center; gap: 14px; background: rgba(0,0,0,.28); color: #fff; font: 600 14px/1.4 Inter, system-ui, sans-serif; pointer-events: none; }
+        .bunkr-download-spinner { width: 34px; height: 34px; border: 3px solid rgba(255,255,255,.28); border-top-color: #a78bfa; border-radius: 50%; animation: bunkr-spin .7s linear infinite; }
+        .bunkr-download-message { padding: 8px 14px; border-radius: 9px; background: rgba(18,19,24,.94); box-shadow: 0 8px 26px rgba(0,0,0,.42); }
 
         /* ===== aviso "mirror pode estar fora" (overlay no topo do player, após o teste falhar) ===== */
         .bunkr-mirror-warn { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 55; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 24px); padding: 10px 16px; border-radius: 12px; background: rgba(176,32,32,0.94); color: #fff; font: 600 13.5px/1.3 Inter, system-ui, sans-serif; box-shadow: 0 12px 34px rgba(0,0,0,0.55); }

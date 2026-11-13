@@ -777,6 +777,9 @@
         if (!isFile()) setupModernGallery();
     }
     onReady(() => {
+        if (/^dl\.bunkr\./i.test(location.hostname) && /^\/file\//i.test(location.pathname)) {
+            return;
+        }
         if (isMirrorFilePage()) {
             handleCurrentMirrorPage().then(ok => { if (ok) initializeBunkrPage(); });
             return;
