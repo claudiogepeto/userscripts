@@ -313,7 +313,11 @@
                 const player = findPlayer(gate);
                 if (!player) return;
                 // Kick owns this React subtree. Keep its age-gate node mounted and
-                // let the scoped stylesheet hide it to avoid desynchronizing state.
+                // hide it in place to avoid desynchronizing state.
+                if (gate.style.getPropertyValue('display') !== 'none'
+                    || gate.style.getPropertyPriority('display') !== 'important') {
+                    gate.style.setProperty('display', 'none', 'important');
+                }
                 players.add(player);
             });
             document.querySelectorAll('.bypassbr-kick-ui').forEach(ui => {
@@ -346,6 +350,6 @@
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['class', 'data-nosnippet'],
+            attributeFilter: ['class', 'data-nosnippet', 'style'],
         });
     }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BypassBR
 // @namespace    claudiogepeto-bypassbr
-// @version      1.4.4
+// @version      1.4.5
 // @updateURL    https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js
 // @downloadURL  https://raw.githubusercontent.com/claudiogepeto/userscripts/main/dist/bypassbr.user.js
 // @description  Site adapters for age gates and sensitive media restrictions, plus AgeGO, AgeChecker, and AgeVerif overlays on any site.
@@ -1141,7 +1141,11 @@
                 const player = findPlayer(gate);
                 if (!player) return;
                 // Kick owns this React subtree. Keep its age-gate node mounted and
-                // let the scoped stylesheet hide it to avoid desynchronizing state.
+                // hide it in place to avoid desynchronizing state.
+                if (gate.style.getPropertyValue('display') !== 'none'
+                    || gate.style.getPropertyPriority('display') !== 'important') {
+                    gate.style.setProperty('display', 'none', 'important');
+                }
                 players.add(player);
             });
             document.querySelectorAll('.bypassbr-kick-ui').forEach(ui => {
@@ -1174,7 +1178,7 @@
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['class', 'data-nosnippet'],
+            attributeFilter: ['class', 'data-nosnippet', 'style'],
         });
     }
     if (BypassBR.hostIs('nexusmods.com')) {
