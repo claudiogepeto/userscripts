@@ -125,46 +125,12 @@
         return { url: mediaUrl.href, name: safeBunkrDownloadName(metadata.original) };
     }
     function startBunkrTransfer(result) {
-        if (typeof GM_download !== "function") {
-            const link = el("a", { href: result.url, target: "_blank", rel: "noopener", download: result.name });
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            clearBunkrDownloadLoading();
-            return Promise.resolve();
-        }
-        return new Promise((resolve, reject) => {
-            let receivedBytes = false;
-            try {
-                GM_download({
-                    url: result.url,
-                    name: result.name,
-                    saveAs: false,
-                    onprogress: event => {
-                        if (receivedBytes || !event.loaded) return;
-                        receivedBytes = true;
-                        clearBunkrDownloadLoading();
-                        toast("Download em andamento");
-                    },
-                    onload: () => {
-                        clearBunkrDownloadLoading();
-                        if (!receivedBytes) toast("Download concluído");
-                        resolve();
-                    },
-                    onerror: error => {
-                        const failure = new Error("Falha ao iniciar o download");
-                        failure.receivedBytes = receivedBytes;
-                        failure.cause = error;
-                        reject(failure);
-                    },
-                    ontimeout: () => {
-                        const failure = new Error("Tempo limite ao baixar o arquivo");
-                        failure.receivedBytes = receivedBytes;
-                        reject(failure);
-                    },
-                });
-            } catch (error) { reject(error); }
-        });
+        const link = el("a", { href: result.url, target: "_blank", rel: "noopener", download: result.name });
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        clearBunkrDownloadLoading();
+        toast("Download iniciado no navegador");
     }
     async function downloadBunkrFile(downloadUrl, fallbackSrc) {
         setBunkrDownloadLoading("Preparando download…");
@@ -172,15 +138,15 @@
             const directResult = currentSignedBunkrMediaUrl(fallbackSrc);
             if (directResult) {
                 try {
-                    await startBunkrTransfer(directResult);
+                    startBunkrTransfer(directResult);
                     return;
                 } catch (error) {
-                    if (error.receivedBytes || !downloadUrl) throw error;
+                    if (!downloadUrl) throw error;
                     setBunkrDownloadLoading("Atualizando link do download…");
                 }
             }
             if (!downloadUrl) throw new Error("Link direto do arquivo indisponível");
-            await startBunkrTransfer(await getBunkrDownloadUrl(downloadUrl));
+            startBunkrTransfer(await getBunkrDownloadUrl(downloadUrl));
         } catch (error) {
             clearBunkrDownloadLoading();
             toast(error && error.message ? error.message : "Falha ao preparar o download");
